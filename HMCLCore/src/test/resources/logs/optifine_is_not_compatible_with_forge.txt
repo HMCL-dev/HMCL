@@ -1,0 +1,587 @@
+[17:39:15] [main/INFO]: ModLauncher running: args [--username, xjy, --version, 1.18.2（2), --gameDir, D:\hmcl启动器\.minecraft, --assetsDir, D:\hmcl启动器\.minecraft\assets, --assetIndex, 1.18, --uuid, f879573aee333778962e2a175ad0c481, --accessToken, �7�6�7�6�7�6�7�6�7�6�7�6�7�6�7�6, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, legacy, --versionType, HMCL 3.5.dev-1ec9e41, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker, --launchTarget, forgeclient, --fml.forgeVersion, 40.1.59, --fml.mcVersion, 1.18.2, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20220404.173914]
+[17:39:15] [main/INFO]: ModLauncher 9.1.3+9.1.3+main.9b69c82a starting: java version 17.0.2 by BellSoft
+[17:39:15] [main/INFO]: OptiFineTransformationService.onLoad
+[17:39:15] [main/INFO]: OptiFine ZIP file URL: union:/D:/hmcl启动器/.minecraft/libraries/optifine/OptiFine/1.18.2_HD_U_H7/OptiFine-1.18.2_HD_U_H7.jar%2317!/
+[17:39:15] [main/INFO]: OptiFine ZIP file: D:\hmcl启动器\.minecraft\libraries\optifine\OptiFine\1.18.2_HD_U_H7\OptiFine-1.18.2_HD_U_H7.jar
+[17:39:15] [main/INFO]: Target.PRE_CLASS is available
+[17:39:15] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/D:/hmcl启动器/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%2314!/ Service=ModLauncher Env=CLIENT
+[17:39:15] [main/INFO]: OptiFineTransformationService.initialize
+[17:39:15] [main/INFO]: Found mod file balm-3.2.0+0.jar of type MOD with locator {mods folder locator at D:\hmcl启动器\.minecraft\mods}
+[17:39:15] [main/INFO]: Found mod file buildinggadgets-3.13.1-build.18+mc1.18.2.jar of type MOD with locator {mods folder locator at D:\hmcl启动器\.minecraft\mods}
+[17:39:15] [main/INFO]: Found mod file cgm-1.2.7-1.18.2.jar of type MOD with locator {mods folder locator at D:\hmcl启动器\.minecraft\mods}
+[17:39:15] [main/INFO]: Found mod file framework-0.2.4-1.18.2.jar of type MOD with locator {mods folder locator at D:\hmcl启动器\.minecraft\mods}
+[17:39:15] [main/INFO]: Found mod file ironchest-1.18.2-13.2.11.jar of type MOD with locator {mods folder locator at D:\hmcl启动器\.minecraft\mods}
+[17:39:15] [main/INFO]: Found mod file jei-1.18.2-forge-10.2.1.283.jar of type MOD with locator {mods folder locator at D:\hmcl启动器\.minecraft\mods}
+[17:39:15] [main/INFO]: Found mod file waystones-forge-1.18.2-10.1.0.jar of type MOD with locator {mods folder locator at D:\hmcl启动器\.minecraft\mods}
+[17:39:15] [main/INFO]: Found mod file fmlcore-1.18.2-40.1.59.jar of type LIBRARY with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@235f4c10
+[17:39:15] [main/INFO]: Found mod file javafmllanguage-1.18.2-40.1.59.jar of type LANGPROVIDER with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@235f4c10
+[17:39:15] [main/INFO]: Found mod file lowcodelanguage-1.18.2-40.1.59.jar of type LANGPROVIDER with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@235f4c10
+[17:39:15] [main/INFO]: Found mod file mclanguage-1.18.2-40.1.59.jar of type LANGPROVIDER with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@235f4c10
+[17:39:15] [main/INFO]: Found mod file client-1.18.2-20220404.173914-srg.jar of type MOD with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@235f4c10
+[17:39:15] [main/INFO]: Found mod file forge-1.18.2-40.1.59-universal.jar of type MOD with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@235f4c10
+[17:39:15] [main/INFO]: OptiFineTransformationService.transformers
+[17:39:15] [main/INFO]: Targets: 350
+[17:39:16] [main/INFO]: additionalClassesLocator: [optifine., net.optifine.]
+[17:39:16] [main/INFO]: Compatibility level set to JAVA_17
+[17:39:16] [main/INFO]: Launching target 'forgeclient' with arguments [--version, 1.18.2（2), --gameDir, D:\hmcl启动器\.minecraft, --assetsDir, D:\hmcl启动器\.minecraft\assets, --uuid, f879573aee333778962e2a175ad0c481, --username, xjy, --assetIndex, 1.18, --accessToken, �7�6�7�6�7�6�7�6�7�6�7�6�7�6�7�6, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, legacy, --versionType, HMCL 3.5.dev-1ec9e41, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker]
+[17:39:21] [Render thread/WARN]: Assets URL 'union:/D:/hmcl启动器/.minecraft/libraries/net/minecraft/client/1.18.2-20220404.173914/client-1.18.2-20220404.173914-srg.jar%2363!/assets/.mcassetsroot' uses unexpected schema
+[17:39:21] [Render thread/WARN]: Assets URL 'union:/D:/hmcl启动器/.minecraft/libraries/net/minecraft/client/1.18.2-20220404.173914/client-1.18.2-20220404.173914-srg.jar%2363!/data/.mcassetsroot' uses unexpected schema
+[17:39:21] [Render thread/INFO]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[17:39:23] [Render thread/ERROR]: Failed to verify authentication
+com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401
+	at com.mojang.authlib.exceptions.MinecraftClientHttpException.toAuthenticationException(MinecraftClientHttpException.java:56) ~[authlib-3.3.39.jar%2337!/:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:132) ~[authlib-3.3.39.jar%2337!/:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilUserApiService.<init>(YggdrasilUserApiService.java:44) ~[authlib-3.3.39.jar%2337!/:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService.createUserApiService(YggdrasilAuthenticationService.java:153) ~[authlib-3.3.39.jar%2337!/:?]
+	at net.minecraft.client.Minecraft.m_193585_(Minecraft.java:609) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.client.Minecraft.<init>(Minecraft.java:401) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.client.main.Main.main(Main.java:169) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[?:?]
+	at java.lang.reflect.Method.invoke(Unknown Source) ~[?:?]
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:31) ~[fmlloader-1.18.2-40.1.59.jar%2316!/:?]
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-9.1.3.jar%235!/:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) [modlauncher-9.1.3.jar%235!/:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) [modlauncher-9.1.3.jar%235!/:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:106) [modlauncher-9.1.3.jar%235!/:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:77) [modlauncher-9.1.3.jar%235!/:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) [modlauncher-9.1.3.jar%235!/:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) [modlauncher-9.1.3.jar%235!/:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:149) [bootstraplauncher-1.0.0.jar:?]
+Caused by: com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:78) ~[authlib-3.3.39.jar%2337!/:?]
+	at com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:48) ~[authlib-3.3.39.jar%2337!/:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:113) ~[authlib-3.3.39.jar%2337!/:?]
+	... 18 more
+[17:39:23] [Render thread/INFO]: Setting user: xjy
+[17:39:23] [Render thread/INFO]: Backend library: LWJGL version 3.2.2 SNAPSHOT
+[17:39:24] [Render thread/INFO]: [OptiFine] 
+[17:39:24] [Render thread/INFO]: [OptiFine] OptiFine_1.18.2_HD_U_H7
+[17:39:24] [Render thread/INFO]: [OptiFine] Build: 20220410-185216
+[17:39:24] [Render thread/INFO]: [OptiFine] OS: Windows 10 (amd64) version 10.0
+[17:39:24] [Render thread/INFO]: [OptiFine] Java: 17.0.2, BellSoft
+[17:39:24] [Render thread/INFO]: [OptiFine] VM: OpenJDK 64-Bit Server VM (mixed mode, sharing), BellSoft
+[17:39:24] [Render thread/INFO]: [OptiFine] LWJGL: 3.3.0 Win32 WGL EGL OSMesa VisualC DLL
+[17:39:24] [Render thread/INFO]: [OptiFine] OpenGL: GeForce GTX 1660 Ti/PCIe/SSE2, version 3.2.0 NVIDIA 457.69, NVIDIA Corporation
+[17:39:24] [Render thread/INFO]: [OptiFine] OpenGL Version: 3.2.0
+[17:39:24] [Render thread/INFO]: [OptiFine] Maximum texture size: 32768x32768
+[17:39:24] [VersionCheck/INFO]: [OptiFine] Checking for new version
+[17:39:24] [Render thread/INFO]: [Shaders] OpenGL Version: 3.2.0 NVIDIA 457.69
+[17:39:24] [Render thread/INFO]: [Shaders] Vendor:  NVIDIA Corporation
+[17:39:24] [Render thread/INFO]: [Shaders] Renderer: GeForce GTX 1660 Ti/PCIe/SSE2
+[17:39:24] [Render thread/INFO]: [Shaders] Capabilities:  2.0  2.1  3.0  3.2  - 
+[17:39:24] [Render thread/INFO]: [Shaders] GL_MAX_DRAW_BUFFERS: 8
+[17:39:24] [Render thread/INFO]: [Shaders] GL_MAX_COLOR_ATTACHMENTS: 8
+[17:39:24] [Render thread/INFO]: [Shaders] GL_MAX_TEXTURE_IMAGE_UNITS: 32
+[17:39:24] [Render thread/INFO]: [Shaders] Load shaders configuration.
+[17:39:24] [Render thread/INFO]: [Shaders] Loaded shaderpack: BSL_Edit_Pasquale (2).zip
+[17:39:24] [Render thread/INFO]: [OptiFine] [Shaders] Worlds: -1, 1
+[17:39:24] [Render thread/WARN]: [OptiFine] Ambiguous shader option: POMQuality
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in gbuffers_terrain.fsh, gbuffers_hand.fsh: 32
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in gbuffers_water.fsh: 64
+[17:39:24] [Render thread/WARN]: [OptiFine] Ambiguous shader option: POMDepth
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in gbuffers_terrain.fsh, gbuffers_hand.fsh: 1.00
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in gbuffers_water.fsh: 0.80
+[17:39:24] [Render thread/WARN]: [OptiFine] Ambiguous shader option: POMDistance
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in gbuffers_terrain.fsh: 64.0
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in gbuffers_water.fsh: 32.0
+[17:39:24] [Render thread/INFO]: [OptiFine] java.io.IOException: Included file not found: /shaders/world-1/gbuffers_skytextured.fsh
+[17:39:24] [Render thread/WARN]: [OptiFine] Ambiguous shader option: ColS1
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in composite5.fsh, world-1/composite5.fsh: 1.05
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in world-1/composite5.fsh: 1.10
+[17:39:24] [Render thread/WARN]: [OptiFine] Ambiguous shader option: noiseTextureResolution
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in final.fsh: 256
+[17:39:24] [Render thread/WARN]: [OptiFine]  - in world-1/final.fsh: 512
+[17:39:24] [Render thread/INFO]: [OptiFine] [Shaders] Delayed loading of block mappings after resources are loaded
+[17:39:24] [Render thread/INFO]: [OptiFine] [Shaders] Delayed loading of item mappings after resources are loaded
+[17:39:24] [Render thread/INFO]: [OptiFine] [Shaders] Delayed loading of entity mappings after resources are loaded
+[17:39:24] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.ClassNotFoundException: sun.misc.SharedSecrets
+[17:39:24] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.ClassNotFoundException: jdk.internal.misc.SharedSecrets
+[17:39:24] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.ClassNotFoundException: sun.misc.VM
+[17:39:24] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.reflect.InaccessibleObjectException: Unable to make public static long jdk.internal.misc.VM.maxDirectMemory() accessible: module java.base does not "exports jdk.internal.misc" to module net.optifine
+[17:39:24] [Render thread/INFO]: [Shaders] Custom texture: texture.composite.depthtex2 = tex/dirt.png
+[17:39:24] [Render thread/INFO]: [Shaders] Custom variable: tAmin
+[17:39:24] [Render thread/INFO]: [Shaders] Custom variable: tAlin
+[17:39:24] [Render thread/INFO]: [Shaders] Custom variable: hA
+[17:39:24] [Render thread/INFO]: [Shaders] Custom variable: tAfrc
+[17:39:24] [Render thread/INFO]: [Shaders] Custom variable: tAfrs
+[17:39:24] [Render thread/INFO]: [Shaders] Custom variable: tAmix
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: timeAngle
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: timeBrightness
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: shadowFade
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: isCold
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: isDesert
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: isMesa
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: isSwamp
+[17:39:24] [Render thread/INFO]: [Shaders] Custom uniform: isMushroom
+[17:39:24] [VersionCheck/INFO]: [OptiFine] Version found: H6
+[17:39:24] [modloading-worker-0/INFO]: Forge mod loading, version 40.1.59, for MC 1.18.2 with MCP 20220404.173914
+[17:39:24] [modloading-worker-0/INFO]: MinecraftForge v40.1.59 Initialized
+[17:39:26] [Render thread/INFO]: Narrator library for x64 successfully loaded
+[17:39:26] [Render thread/INFO]: Saving config file: D:\hmcl启动器\.minecraft\config\jei\jei-client.ini
+[17:39:26] [Render thread/INFO]: Reloading ResourceManager: Mod Resources, Default
+[17:39:26] [Render thread/INFO]: [OptiFine] *** Reloading textures ***
+[17:39:26] [Render thread/INFO]: [OptiFine] Resource packs: Mod Resources
+[17:39:26] [modloading-worker-0/WARN]: Configuration file D:\hmcl启动器\.minecraft\config\buildinggadgets-client.toml is not correct. Correcting
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key general was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key general.Default to absolute Coord-Mode was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Configuration file D:\hmcl启动器\.minecraft\config\cgm-client.toml is not correct. Correcting
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.sounds was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.sounds.playSoundWhenHeadshot was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.sounds.headshotSound was corrected from null to its default, minecraft:entity.player.attack.knockback. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.sounds.playSoundWhenCritical was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.sounds.criticalSound was corrected from null to its default, minecraft:entity.player.attack.crit. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.sounds.impactSoundDistance was corrected from null to its default, 32.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.oldAnimations was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.crosshair was corrected from null to its default, minecraft:default. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.cooldownIndicator was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.weaponSway was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.swaySensitivity was corrected from null to its default, 0.3. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.swayType was corrected from null to its default, DRAG. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.cameraRollEffect was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.cameraRollAngle was corrected from null to its default, 1.5. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.sprintingAnimation was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.display.bobbingIntensity was corrected from null to its default, 1.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.particle was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.particle.bulletHoleLifeMin was corrected from null to its default, 150. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.particle.bulletHoleLifeMax was corrected from null to its default, 200. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.particle.bulletHoleFadeThreshold was corrected from null to its default, 0.98. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.particle.enableBlood was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.particle.impactParticleDistance was corrected from null to its default, 32.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.controls was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.controls.aimDownSightSensitivity was corrected from null to its default, 0.75. 
+[17:39:26] [modloading-worker-0/WARN]: Configuration file D:\hmcl启动器\.minecraft\config\cgm-common.toml is not correct. Correcting
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.griefing was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.griefing.enableBlockRemovalOnExplosions was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.griefing.enableGlassBreaking was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.griefing.setFireToBlocks was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.growBoundingBoxAmount was corrected from null to its default, 0.3. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.enableHeadShots was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.headShotDamageMultiplier was corrected from null to its default, 1.25. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.criticalDamageMultiplier was corrected from null to its default, 1.5. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.ignoreLeaves was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.enableKnockback was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.knockbackStrength was corrected from null to its default, 0.15. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.gameplay.improvedHitboxes was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.network was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.network.projectileTrackingRange was corrected from null to its default, 200.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.aggro_mobs was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.aggro_mobs.enabled was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.aggro_mobs.angerHostileMobs was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.aggro_mobs.unsilencedRange was corrected from null to its default, 20.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.aggro_mobs.exemptMobs was corrected from null to its default, []. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.missiles was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.missiles.explosionRadius was corrected from null to its default, 5.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.grenades was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.grenades.explosionRadius was corrected from null to its default, 5.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.effect_criteria was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.effect_criteria.radius was corrected from null to its default, 15.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.effect_criteria.durationMax was corrected from null to its default, 220. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.effect_criteria.durationMin was corrected from null to its default, 10. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.effect_criteria.angleEffect was corrected from null to its default, 170.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.effect_criteria.angleAttenuationMax was corrected from null to its default, 0.75. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.effect_criteria.raytraceOpaqueBlocks was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.blind.blindMobs was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.effect_criteria was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.effect_criteria.radius was corrected from null to its default, 15.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.effect_criteria.durationMax was corrected from null to its default, 280. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.effect_criteria.durationMin was corrected from null to its default, 100. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.effect_criteria.angleEffect was corrected from null to its default, 360.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.effect_criteria.angleAttenuationMax was corrected from null to its default, 0.75. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.effect_criteria.raytraceOpaqueBlocks was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.stun_grenades.deafen.panicMobs was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.projectile_spread was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.projectile_spread.spreadThreshold was corrected from null to its default, 300. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key common.projectile_spread.maxCount was corrected from null to its default, 10. 
+[17:39:26] [modloading-worker-0/WARN]: Configuration file D:\hmcl启动器\.minecraft\config\waystones-common.toml is not correct. Correcting
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.inverseXpCost was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.blocksPerXpLevel was corrected from null to its default, 1000. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.minimumBaseXpCost was corrected from null to its default, 0.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.maximumBaseXpCost was corrected from null to its default, 3.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.xpCostPerLeashed was corrected from null to its default, 1. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.dimensionalWarpXpCost was corrected from null to its default, 3. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.globalWaystoneXpCostMultiplier was corrected from null to its default, 1.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.warpStoneXpCostMultiplier was corrected from null to its default, 0.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.waystoneXpCostMultiplier was corrected from null to its default, 1.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.sharestoneXpCostMultiplier was corrected from null to its default, 1.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.portstoneXpCostMultiplier was corrected from null to its default, 0.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.warpPlateXpCostMultiplier was corrected from null to its default, 0.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key xpCost.inventoryButtonXpCostMultiplier was corrected from null to its default, 0.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.restrictToCreative was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.restrictRenameToOwner was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.generatedWaystonesUnbreakable was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.transportLeashed was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.transportLeashedDimensional was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.leashedDenyList was corrected from null to its default, [minecraft:wither]. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.dimensionalWarp was corrected from null to its default, ALLOW. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.dimensionalWarpAllowList was corrected from null to its default, []. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.dimensionalWarpDenyList was corrected from null to its default, []. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.allowWaystoneToWaystoneTeleport was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key restrictions.globalWaystoneSetupRequiresCreativeMode was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key cooldowns was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [Render thread/INFO]: [OptiFine] *** Reflector Forge ***
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key cooldowns.globalWaystoneCooldownMultiplier was corrected from null to its default, 1.0. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key cooldowns.warpStoneCooldown was corrected from null to its default, 300. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key cooldowns.warpStoneUseTime was corrected from null to its default, 32. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key cooldowns.warpPlateUseTime was corrected from null to its default, 20. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key cooldowns.scrollUseTime was corrected from null to its default, 32. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key cooldowns.inventoryButtonCooldown was corrected from null to its default, 300. 
+[17:39:26] [Render thread/INFO]: [OptiFine] (Reflector) Class not present: mods.betterfoliage.client.BetterFoliageClient
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key inventoryButton was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key inventoryButton.inventoryButton was corrected from null to its default, . 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key inventoryButton.warpButtonX was corrected from null to its default, 58. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key inventoryButton.warpButtonY was corrected from null to its default, 60. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key inventoryButton.creativeWarpButtonX was corrected from null to its default, 88. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key inventoryButton.creativeWarpButtonY was corrected from null to its default, 33. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.worldGenStyle was corrected from null to its default, BIOME. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.frequency was corrected from null to its default, 25. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.dimensionAllowList was corrected from null to its default, [minecraft:overworld, minecraft:the_nether, minecraft:the_end]. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.dimensionDenyList was corrected from null to its default, []. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.nameGenerationMode was corrected from null to its default, PRESET_FIRST. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.customWaystoneNames was corrected from null to its default, []. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.spawnInVillages was corrected from null to its default, true. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key worldGen.forceSpawnInVillages was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.disableTextGlow was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key client.disableParticles was corrected from null to its default, false. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key compatibility was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:26] [modloading-worker-0/WARN]: Incorrect key compatibility.displayWaystonesOnJourneyMap was corrected from null to its default, true. 
+[17:39:26] [Render thread/WARN]: [OptiFine] (Reflector) More than one method found: net.minecraftforge.client.ForgeHooksClient.onFogRender
+[17:39:26] [Render thread/WARN]: [OptiFine] (Reflector)  - public static void net.minecraftforge.client.ForgeHooksClient.onFogRender(net.minecraft.client.renderer.FogRenderer$FogMode,net.minecraft.client.Camera,float,float,float,com.mojang.blaze3d.shaders.FogShape)
+[17:39:26] [Render thread/WARN]: [OptiFine] (Reflector)  - public static void net.minecraftforge.client.ForgeHooksClient.onFogRender(net.minecraft.client.renderer.FogRenderer$FogMode,net.minecraft.client.Camera,float,float)
+[17:39:26] [Render thread/INFO]: [OptiFine] *** Reflector Vanilla ***
+[17:39:26] [Worker-Main-11/INFO]: [OptiFine] Multitexture: false
+[17:39:26] [Worker-Main-6/INFO]: [OptiFine] Multitexture: false
+[17:39:26] [Worker-Main-8/INFO]: [OptiFine] Multitexture: false
+[17:39:26] [Forge Version Check/INFO]: [framework] Starting version check at https://mrcrayfish.com/modupdatejson?id=framework
+[17:39:28] [Worker-Main-9/INFO]: [OptiFine] Multitexture: false
+[17:39:30] [Worker-Main-10/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:30] [Worker-Main-10/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:30] [Worker-Main-10/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:30] [Worker-Main-10/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:30] [Worker-Main-10/INFO]: [OptiFine] Multitexture: false
+[17:39:30] [Worker-Main-10/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:30] [Worker-Main-10/INFO]: [OptiFine] Multipass connected textures: false
+[17:39:30] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/00_glass_white/glass_pane_white.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/00_glass_white/glass_white.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/01_glass_orange/glass_orange.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/01_glass_orange/glass_pane_orange.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/02_glass_magenta/glass_magenta.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/02_glass_magenta/glass_pane_magenta.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/03_glass_light_blue/glass_light_blue.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/03_glass_light_blue/glass_pane_light_blue.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/04_glass_yellow/glass_pane_yellow.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/04_glass_yellow/glass_yellow.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/05_glass_lime/glass_lime.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/05_glass_lime/glass_pane_lime.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/06_glass_pink/glass_pane_pink.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/06_glass_pink/glass_pink.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/07_glass_gray/glass_gray.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/07_glass_gray/glass_pane_gray.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/08_glass_light_gray/glass_light_gray.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/08_glass_light_gray/glass_pane_light_gray.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/09_glass_cyan/glass_cyan.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/09_glass_cyan/glass_pane_cyan.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/10_glass_purple/glass_pane_purple.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/10_glass_purple/glass_purple.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/11_glass_blue/glass_blue.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/11_glass_blue/glass_pane_blue.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/12_glass_brown/glass_brown.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/12_glass_brown/glass_pane_brown.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/13_glass_green/glass_green.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/13_glass_green/glass_pane_green.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/14_glass_red/glass_pane_red.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/14_glass_red/glass_red.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/15_glass_black/glass_black.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/15_glass_black/glass_pane_black.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/20_glass/glass.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/20_glass/glass_pane.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/21_tinted_glass/tinted_glass.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/30_bookshelf/bookshelf.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/40_sandstone/sandstone.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/41_red_sandstone/red_sandstone.properties
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] Multipass connected textures: false
+[17:39:31] [Worker-Main-10/INFO]: [OptiFine] BetterGrass: Parsing default configuration optifine/bettergrass.properties
+[17:39:31] [Forge Version Check/INFO]: [framework] Found status: BETA Current: 0.2.4 Target: 0.2.4
+[17:39:31] [Forge Version Check/INFO]: [cgm] Starting version check at https://raw.githubusercontent.com/MrCrayfish/ModUpdates/master/cgm/update.json
+[17:39:31] [Forge Version Check/WARN]: Failed to process update information
+java.net.ConnectException: null
+	at jdk.internal.net.http.HttpClientImpl.send(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.HttpClientFacade.send(Unknown Source) ~[java.net.http:?]
+	at net.minecraftforge.fml.VersionChecker$1.openUrlString(VersionChecker.java:131) ~[fmlcore-1.18.2-40.1.59.jar%2364!/:?]
+	at net.minecraftforge.fml.VersionChecker$1.process(VersionChecker.java:169) ~[fmlcore-1.18.2-40.1.59.jar%2364!/:?]
+	at java.lang.Iterable.forEach(Unknown Source) [?:?]
+	at net.minecraftforge.fml.VersionChecker$1.run(VersionChecker.java:114) [fmlcore-1.18.2-40.1.59.jar%2364!/:?]
+Caused by: java.net.ConnectException
+	at jdk.internal.net.http.common.Utils.toConnectException(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.PlainHttpConnection.connectAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.AsyncSSLConnection.connectAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Http2Connection.createAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Http2ClientImpl.getConnectionFor(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.ExchangeImpl.get(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.establishExchange(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.responseAsyncImpl0(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.responseAsyncImpl(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.responseAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.MultiExchange.responseAsyncImpl(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.MultiExchange.lambda$responseAsyncImpl$7(Unknown Source) ~[java.net.http:?]
+	at java.util.concurrent.CompletableFuture.uniHandle(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture.uniHandleStage(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture.handle(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.MultiExchange.responseAsyncImpl(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.MultiExchange.lambda$responseAsync0$2(Unknown Source) ~[java.net.http:?]
+	at java.util.concurrent.CompletableFuture$UniCompose.tryFire(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture.postComplete(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.HttpClientImpl$DelegatingExecutor.execute(Unknown Source) ~[java.net.http:?]
+	at java.util.concurrent.CompletableFuture.completeAsync(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.MultiExchange.responseAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.HttpClientImpl.sendAsync(Unknown Source) ~[java.net.http:?]
+	... 6 more
+Caused by: java.nio.channels.UnresolvedAddressException
+	at sun.nio.ch.Net.checkAddress(Unknown Source) ~[?:?]
+	at sun.nio.ch.Net.checkAddress(Unknown Source) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.checkRemote(Unknown Source) ~[?:?]
+	at sun.nio.ch.SocketChannelImpl.connect(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.PlainHttpConnection.lambda$connectAsync$0(Unknown Source) ~[java.net.http:?]
+	at java.security.AccessController.doPrivileged(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.PlainHttpConnection.connectAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.AsyncSSLConnection.connectAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Http2Connection.createAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Http2ClientImpl.getConnectionFor(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.ExchangeImpl.get(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.establishExchange(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.responseAsyncImpl0(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.responseAsyncImpl(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.Exchange.responseAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.MultiExchange.responseAsyncImpl(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.MultiExchange.lambda$responseAsyncImpl$7(Unknown Source) ~[java.net.http:?]
+	at java.util.concurrent.CompletableFuture.uniHandle(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture.uniHandleStage(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture.handle(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.MultiExchange.responseAsyncImpl(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.MultiExchange.lambda$responseAsync0$2(Unknown Source) ~[java.net.http:?]
+	at java.util.concurrent.CompletableFuture$UniCompose.tryFire(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture.postComplete(Unknown Source) ~[?:?]
+	at java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.HttpClientImpl$DelegatingExecutor.execute(Unknown Source) ~[java.net.http:?]
+	at java.util.concurrent.CompletableFuture.completeAsync(Unknown Source) ~[?:?]
+	at jdk.internal.net.http.MultiExchange.responseAsync(Unknown Source) ~[java.net.http:?]
+	at jdk.internal.net.http.HttpClientImpl.sendAsync(Unknown Source) ~[java.net.http:?]
+	... 6 more
+[17:39:31] [Forge Version Check/INFO]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
+[17:39:32] [Forge Version Check/INFO]: [forge] Found status: OUTDATED Current: 40.1.59 Target: 40.1.86
+[17:39:34] [Worker-Main-10/INFO]: [OptiFine] Mipmap levels: 4
+[17:39:34] [Worker-Main-9/INFO]: [OptiFine] Scaled non power of 2: jei:gui/icons/recipe_transfer, 7 -> 14
+[17:39:34] [Render thread/INFO]: Registered synced data key cgm:aiming for minecraft:player
+[17:39:34] [Render thread/INFO]: Registered synced data key cgm:shooting for minecraft:player
+[17:39:34] [Render thread/INFO]: Registered synced data key cgm:reloading for minecraft:player
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Multitexture: false
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Sprite size: 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Mipmap levels: 6
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_copy_paste_gadget, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_template, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[17:39:35] [Worker-Main-10/WARN]: Unused frames in sprite minecraft:missingno: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Multitexture: false
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Sprite size: 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Mipmap levels: 6
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_template, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_copy_paste_gadget, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[17:39:35] [Worker-Main-10/WARN]: Unused frames in sprite minecraft:missingno: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Multitexture: false
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Sprite size: 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Mipmap levels: 6
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_template, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_copy_paste_gadget, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[17:39:35] [Worker-Main-10/WARN]: Unused frames in sprite minecraft:missingno: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Multitexture: false
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Sprite size: 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Mipmap levels: 6
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_template, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_copy_paste_gadget, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[17:39:35] [Worker-Main-10/WARN]: Unused frames in sprite minecraft:missingno: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Multitexture: false
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Sprite size: 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Mipmap levels: 6
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_template, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_copy_paste_gadget, 16 -> 64
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[17:39:35] [Worker-Main-10/WARN]: Unused frames in sprite minecraft:missingno: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+[17:39:35] [Worker-Main-10/INFO]: [OptiFine] Multitexture: false
+[17:39:36] [Worker-Main-10/INFO]: [OptiFine] Sprite size: 64
+[17:39:36] [Worker-Main-10/INFO]: [OptiFine] Mipmap levels: 6
+[17:39:36] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_template, 16 -> 64
+[17:39:36] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: buildinggadgets:gui/slot_copy_paste_gadget, 16 -> 64
+[17:39:36] [Worker-Main-10/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[17:39:36] [Worker-Main-10/WARN]: Unused frames in sprite minecraft:missingno: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+[17:39:37] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft on 扬声器 (3- Realtek(R) Audio)
+[17:39:37] [Render thread/INFO]: Sound engine started
+[17:39:37] [Render thread/INFO]: Created: 1024x1024x4 minecraft:textures/atlas/blocks.png-atlas
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map normal: 1024x1024, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map specular: 1024x1024, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [OptiFine] Animated sprites: 45
+[17:39:37] [Render thread/INFO]: Created: 512x512x4 minecraft:textures/atlas/signs.png-atlas
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x512, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x512, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:37] [Render thread/INFO]: Created: 512x512x4 minecraft:textures/atlas/banner_patterns.png-atlas
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x512, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x512, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:37] [Render thread/INFO]: Created: 512x512x4 minecraft:textures/atlas/shield_patterns.png-atlas
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x512, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x512, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:37] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/chest.png-atlas
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x256, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x256, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:37] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/beds.png-atlas
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x256, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x256, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:37] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/shulker_boxes.png-atlas
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x256, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x256, mipmaps: 4
+[17:39:37] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:38] [Render thread/INFO]: Created: 256x256x0 minecraft:textures/atlas/particles.png-atlas
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map normal: 256x256, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map specular: 256x256, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [OptiFine] Animated sprites: 1
+[17:39:38] [Render thread/INFO]: Created: 256x256x0 minecraft:textures/atlas/paintings.png-atlas
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map normal: 256x256, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map specular: 256x256, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:38] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/mob_effects.png-atlas
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map normal: 128x128, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map specular: 128x128, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:38] [Render thread/INFO]: Created: 256x128x0 jei:textures/atlas/gui.png-atlas
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map normal: 256x128, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [Shaders] Allocate texture map specular: 256x128, mipmaps: 0
+[17:39:38] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[17:39:38] [Render thread/INFO]: [OptiFine] *** Reloading custom textures ***
+[17:39:38] [Render thread/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:38] [Render thread/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:38] [Render thread/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:43] [Render thread/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:43] [Render thread/INFO]: [OptiFine] [Shaders] Parsing block mappings: /shaders/block.properties
+[17:39:43] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:azure_blue
+[17:39:43] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:flowing_lava
+[17:39:43] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:flowing_water
+[17:39:43] [Render thread/INFO]: [OptiFine] [Shaders] Parsing item mappings: /shaders/item.properties
+[17:39:43] [Render thread/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:43] [Render thread/WARN]: [OptiFine] Unknown resource pack file: mod_resources
+[17:39:43] [Render thread/INFO]: [OptiFine] Disable Forge light pipeline
+[17:39:43] [Render thread/INFO]: [OptiFine] Set ForgeConfig.CLIENT.experimentalForgeLightPipelineEnabled=false
+[17:39:44] [Realms Notification Availability checker #1/INFO]: Could not authorize you against Realms server: Invalid session id
+[17:39:51] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[17:39:51] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[17:39:51] [Render thread/WARN]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[17:39:51] [Render thread/WARN]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[17:39:51] [Render thread/WARN]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[17:39:52] [Render thread/INFO]: Loaded 8 recipes
+[17:39:53] [Render thread/INFO]: Loaded 1188 advancements
+[17:39:54] [Render thread/INFO]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[17:39:54] [Server thread/INFO]: Starting integrated minecraft server version 1.18.2
+[17:39:54] [Server thread/INFO]: Generating keypair
+[17:39:54] [Server thread/WARN]: Configuration file D:\hmcl启动器\.minecraft\saves\新的世界\serverconfig\buildinggadgets-server.toml is not correct. Correcting
+[17:39:54] [Server thread/WARN]: Incorrect key general was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key general.Allow Absolute Coords was corrected from null to its default, true. 
+[17:39:54] [Server thread/WARN]: Incorrect key general.MaxBuildDistance was corrected from null to its default, 32.0. 
+[17:39:54] [Server thread/WARN]: Incorrect key general.Allow non-Air-Block-Overwrite was corrected from null to its default, true. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Maximum allowed Range was corrected from null to its default, 15. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Max Placement/Tick was corrected from null to its default, 1024. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Building Gadget was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Building Gadget.Maximum Energy was corrected from null to its default, 500000. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Building Gadget.Energy Cost was corrected from null to its default, 50. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Building Gadget.Max Undo History Size was corrected from null to its default, 10. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Exchanging Gadget was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Exchanging Gadget.Maximum Energy was corrected from null to its default, 500000. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Exchanging Gadget.Energy Cost was corrected from null to its default, 100. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Exchanging Gadget.Max Undo History Size was corrected from null to its default, 10. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Destruction Gadget was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Destruction Gadget.Maximum Energy was corrected from null to its default, 1000000. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Destruction Gadget.Energy Cost was corrected from null to its default, 200. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Destruction Gadget.Max Undo History Size was corrected from null to its default, 1. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Destruction Gadget.Destroy Dimensions was corrected from null to its default, 16. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Destruction Gadget.Non-Fuzzy Mode Multiplier was corrected from null to its default, 2.0. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Destruction Gadget.Non-Fuzzy Mode Enabled was corrected from null to its default, false. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Copy-Paste Gadget was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Copy-Paste Gadget.Maximum Energy was corrected from null to its default, 500000. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Copy-Paste Gadget.Energy Cost was corrected from null to its default, 50. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Copy-Paste Gadget.Max Undo History Size was corrected from null to its default, 1. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Copy-Paste Gadget.Max Copy/Tick was corrected from null to its default, 32768. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Copy-Paste Gadget.Max Copy Dimensions was corrected from null to its default, 256. 
+[17:39:54] [Server thread/WARN]: Incorrect key Gadgets.Copy-Paste Gadget.Max Build Dimensions was corrected from null to its default, 256. 
+[17:39:54] [Server thread/WARN]: Incorrect key Paste Containers was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key Paste Containers.T1 Container Capacity was corrected from null to its default, 512. 
+[17:39:54] [Server thread/WARN]: Incorrect key Paste Containers.T2 Container Capacity was corrected from null to its default, 2048. 
+[17:39:54] [Server thread/WARN]: Incorrect key Paste Containers.T3 Container Capacity was corrected from null to its default, 8192. 
+[17:39:54] [Server thread/WARN]: Configuration file D:\hmcl启动器\.minecraft\saves\新的世界\serverconfig\cgm-server.toml is not correct. Correcting
+[17:39:54] [Server thread/WARN]: Incorrect key server was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.grenade was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.grenade.alphaOverlay was corrected from null to its default, 255. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.grenade.alphaFadeThreshold was corrected from null to its default, 40. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.grenade.soundPercentage was corrected from null to its default, 0.05. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.grenade.soundFadeThreshold was corrected from null to its default, 90. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.grenade.ringVolume was corrected from null to its default, 1.0. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.audio was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.audio.gunShotMaxDistance was corrected from null to its default, 100.0. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.audio.reloadMaxDistance was corrected from null to its default, 24.0. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.enableCameraRecoil was corrected from null to its default, true. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.cooldownThreshold was corrected from null to its default, 0. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.experimental was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.experimental.forceDyeableAttachments was corrected from null to its default, false. 
+[17:39:54] [Server thread/WARN]: Configuration file D:\hmcl启动器\.minecraft\saves\新的世界\serverconfig\jei-server.toml is not correct. Correcting
+[17:39:54] [Server thread/WARN]: Incorrect key cheat mode was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key cheat mode.enableCheatModeForOp was corrected from null to its default, true. 
+[17:39:54] [Server thread/WARN]: Incorrect key cheat mode.enableCheatModeForCreative was corrected from null to its default, true. 
+[17:39:54] [Server thread/WARN]: Incorrect key cheat mode.enableCheatModeForGive was corrected from null to its default, false. 
+[17:39:54] [Server thread/WARN]: Configuration file D:\hmcl启动器\.minecraft\saves\新的世界\serverconfig\forge-server.toml is not correct. Correcting
+[17:39:54] [Server thread/WARN]: Incorrect key server was corrected from null to its default, SimpleCommentedConfig:{}. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.removeErroringBlockEntities was corrected from null to its default, false. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.removeErroringEntities was corrected from null to its default, false. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.fullBoundingBoxLadders was corrected from null to its default, false. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.zombieBaseSummonChance was corrected from null to its default, 0.1. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.zombieBabyChance was corrected from null to its default, 0.05. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.treatEmptyTagsAsAir was corrected from null to its default, false. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.skipEmptyShapelessCheck was corrected from null to its default, true. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.fixAdvancementLoading was corrected from null to its default, true. 
+[17:39:54] [Server thread/WARN]: Incorrect key server.permissionHandler was corrected from null to its default, forge:default_handler. 
+[17:39:54] [Server thread/INFO]: Preparing start region for dimension minecraft:overworld
+[17:39:54] [Server thread/ERROR]: Encountered an unexpected exception
+java.lang.NoSuchMethodError: 'void net.minecraft.server.level.DistanceManager.addRegionTicket(net.minecraft.server.level.TicketType, net.minecraft.world.level.ChunkPos, int, java.lang.Object, boolean)'
+	at net.minecraft.server.level.ServerChunkCache.addRegionTicket(ServerChunkCache.java:429) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.server.level.ServerChunkCache.m_8387_(ServerChunkCache.java:425) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.server.MinecraftServer.m_129940_(MinecraftServer.java:471) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.server.MinecraftServer.m_130006_(MinecraftServer.java:318) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.client.server.IntegratedServer.m_7038_(IntegratedServer.java:84) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.server.MinecraftServer.m_130011_(MinecraftServer.java:661) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at net.minecraft.server.MinecraftServer.m_177918_(MinecraftServer.java:261) ~[client-1.18.2-20220404.173914-srg.jar%2363!/:?]
+	at java.lang.Thread.run(Unknown Source) [?:?]
+[17:39:54] [Server thread/FATAL]: Preparing crash report with UUID 498c0444-95f8-4efc-8096-527b083f1739
+[17:39:55] [Server thread/FATAL]: Preparing crash report with UUID 442dec9f-c942-443e-83e5-f93583cb0c12
+[17:39:55] [Server thread/ERROR]: This crash report has been saved to: D:\hmcl启动器\.minecraft\crash-reports\crash-2022-12-06_17.39.54-server.txt
+[17:39:55] [Server thread/INFO]: Stopping server
+[17:39:55] [Server thread/INFO]: Saving players
+[17:39:55] [Server thread/INFO]: Saving worlds
+[17:39:55] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:overworld
+[17:39:55] [Render thread/FATAL]: Preparing crash report with UUID afc41ea2-ffb3-473d-8438-83a132ab9734
+[17:39:55] [Server thread/INFO]: Saving chunks for level 'ServerLevel[新的世界]'/minecraft:the_nether
