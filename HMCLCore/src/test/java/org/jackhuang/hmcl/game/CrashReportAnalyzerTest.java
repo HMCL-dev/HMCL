@@ -325,15 +325,13 @@ public class CrashReportAnalyzerTest {
         assertEquals("fabric", result.getMatcher().group("mod"));
         assertEquals("[~1.16.2-alpha.20.28.a]", result.getMatcher().group("version"));
     }
-    
-    //@Test
-    //public void duplicatedMod() throws IOException {
-    //    CrashReportAnalyzer.Result result = findResultByRule(
-    //            CrashReportAnalyzer.anaylze(loadLog("/logs/duplicated_mod.txt")),
-    //            CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING_MINECRAFT);
-    //    assertEquals("durabilityviewer", result.getMatcher().group("name"));
-    //    assertEquals("\\[A:\\MC启动器\\..\\MC\\versions\\1.12.2\\mods\\DurabilityViewer-1.12-forge14.21.1.2387-1.6.jar, A:\\MC启动器\\..\\MC\\versions\\1.12.2\\mods\\4659524562224055466@3@38.jar]", result.getMatcher().group("path"));
-    //}
+
+    @Test
+    public void optifineRepeatInstallation() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_repeat_installation.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_REPEAT_INSTALLATION);
+    }
 
     @Test
     public void customNpc() throws IOException {
