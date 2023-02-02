@@ -4,8 +4,6 @@ import javafx.scene.shape.Mesh;
 import javafx.scene.shape.MeshView;
 import javafx.scene.shape.TriangleMesh;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 public class SkinCube extends MeshView {
 
     public static class Model extends TriangleMesh {
@@ -77,13 +75,24 @@ public class SkinCube extends MeshView {
             };
 
             int[] copy = faces.clone();
-            ArrayUtils.reverse(copy);
+
+            // Reverse the copy
+            for (int i = 0, mid = copy.length >> 1, j = copy.length - 1; i < mid; i++, j--) {
+                int tmp = copy[i];
+                copy[i] = copy[j];
+                copy[j] = tmp;
+            }
+
             for (int i = 0; i < copy.length; i += 2) {
                 int tmp = copy[i];
                 copy[i] = copy[i + 1];
                 copy[i + 1] = tmp;
             }
-            return ArrayUtils.addAll(faces, copy);
+
+            int[] result = new int[faces.length + copy.length];
+            System.arraycopy(faces, 0, result, 0, faces.length);
+            System.arraycopy(copy, 0, result, faces.length, copy.length);
+            return result;
         }
 
     }
