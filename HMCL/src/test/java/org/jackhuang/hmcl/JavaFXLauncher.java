@@ -26,7 +26,9 @@ public final class JavaFXLauncher {
     private JavaFXLauncher() {
     }
 
-    public static void start() {
+    private static boolean started = false;
+
+    static {
         // init JavaFX Toolkit
         try {
             // Java 9 or Latter
@@ -35,12 +37,26 @@ public final class JavaFXLauncher {
                             javafx.application.Platform.class, "startup", MethodType.methodType(void.class, Runnable.class));
             startup.invokeExact((Runnable) () -> {
             });
-        } catch (Throwable e) {
+            started = true;
+        } catch (NoSuchMethodException e) {
             // Java 8
             try {
                 Class.forName("javafx.embed.swing.JFXPanel").getDeclaredConstructor().newInstance();
-            } catch (Throwable ignored) {
+                started = true;
+            } catch (Throwable e0) {
+                e0.printStackTrace();
             }
+        } catch (IllegalStateException e) {
+            started = true;
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
+    }
+
+    public static void start() {
+    }
+
+    public static boolean isStarted() {
+        return started;
     }
 }
