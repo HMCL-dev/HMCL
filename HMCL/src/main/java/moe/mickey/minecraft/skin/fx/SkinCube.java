@@ -76,7 +76,6 @@ public class SkinCube extends MeshView {
 
             int[] copy = faces.clone();
 
-            // Reverse the copy
             for (int i = 0, mid = copy.length >> 1, j = copy.length - 1; i < mid; i++, j--) {
                 int tmp = copy[i];
                 copy[i] = copy[j];
