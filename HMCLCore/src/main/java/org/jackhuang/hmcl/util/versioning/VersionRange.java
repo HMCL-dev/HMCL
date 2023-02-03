@@ -121,7 +121,6 @@ public final class VersionRange {
         return new VersionRange(newMinimum, newMaximum);
     }
 
-
     @Override
     public int hashCode() {
         if (isEmpty())
