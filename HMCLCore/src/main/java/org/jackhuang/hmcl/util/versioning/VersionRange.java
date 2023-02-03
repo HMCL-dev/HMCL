@@ -102,7 +102,6 @@ public final class VersionRange {
             return EMPTY;
 
         VersionNumber newMinimum;
-
         if (this.minimum == null)
             newMinimum = that.minimum;
         else if (that.minimum == null)
