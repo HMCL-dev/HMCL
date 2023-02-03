@@ -90,7 +90,7 @@ public final class CrashReportAnalyzer {
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
         CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
-        FABRIC_WARNINGS(Pattern.compile("(Warnings were found!|A potential solution has been determined:)(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
+        FABRIC_WARNINGS(Pattern.compile("(Warnings were found!|Incompatible mod set!)(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
         // Game crashed when ticking entity
         ENTITY(Pattern.compile("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)"), "type", "location"),
         // Game crashed when tesselating block model

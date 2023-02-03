@@ -286,6 +286,20 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void fabricWarnings1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric_warnings2.txt")),
+                CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
+        assertEquals(("net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!\n" +
+                        "A potential solution has been determined:\n" +
+                        "\t - Install roughlyenoughitems, version 6.0.2 or later.\n" +
+                        "Unmet dependency listing:\n" +
+                        "\t - Mod 'Roughly Searchable' (roughlysearchable) 2.2.1+1.17.1 requires version 6.0.2 or later of roughlyenoughitems, which is missing!\n" +
+                        "\tat net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:190) ~").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
     public void fabricConflicts() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-conflict.txt")),
