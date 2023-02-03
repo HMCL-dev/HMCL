@@ -55,9 +55,9 @@ public final class Main {
     }
 
     public static void main(String[] args) {
-        System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
+        System.setProperty("java.net.useSystemProxies", "true");
+        System.setProperty("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
-        System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         // Fix title bar not displaying in GTK systems
         System.getProperties().putIfAbsent("jdk.gtk.version", "2");
 
