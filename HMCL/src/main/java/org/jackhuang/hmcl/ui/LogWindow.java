@@ -163,7 +163,7 @@ public final class LogWindow extends Stage {
             getStyleClass().add("log-window");
 
             boolean flag = false;
-            cboLines.getItems().setAll("500", "2000", "5000");
+            cboLines.getItems().setAll("10000", "5000", "2000", "500");
             for (String i : cboLines.getItems())
                 if (Integer.toString(config().getLogLines()).equals(i)) {
                     cboLines.getSelectionModel().select(i);
