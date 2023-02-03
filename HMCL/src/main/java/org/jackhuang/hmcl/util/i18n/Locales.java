@@ -58,12 +58,12 @@ public final class Locales {
     /**
      * Spanish
      */
-    public static final SupportedLocale ES = new SupportedLocale(new Locale("es"));
+    public static final SupportedLocale ES = new SupportedLocale(Locale.forLanguageTag("es"));
 
     /**
      * Russian
      */
-    public static final SupportedLocale RU = new SupportedLocale(new Locale("ru"));
+    public static final SupportedLocale RU = new SupportedLocale(Locale.forLanguageTag("ru"));
 
     /**
      * Japanese
