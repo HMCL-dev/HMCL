@@ -15,6 +15,5 @@ dependencies {
     api("com.nqzero:permit-reflect:0.3")
     api("org.nanohttpd:nanohttpd:2.3.1")
     api("org.apache.commons:commons-compress:1.21")
-    api("org.apache.commons:commons-lang3:3.12.0")
     compileOnlyApi("org.jetbrains:annotations:16.0.3")
 }
