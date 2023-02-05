@@ -286,7 +286,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         }
 
         private Image getIcon(VersionIconType type) {
-            return icons.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl(), 32, 32, false, true));
+            return icons.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl()));
         }
 
         @Override

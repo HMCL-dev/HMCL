@@ -19,14 +19,18 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -37,6 +41,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
@@ -61,7 +66,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     private final ModManager modManager;
     private final ObservableList<ModUpdateObject> objects;
 
-    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
+    @SuppressWarnings("unchecked")
+    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates, Boolean isModpack) {
         this.modManager = modManager;
 
         getStyleClass().add("gray-background");
@@ -105,7 +111,9 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         JFXButton nextButton = new JFXButton(i18n("mods.check_updates.update"));
         nextButton.getStyleClass().add("jfx-button-raised");
         nextButton.setButtonType(JFXButton.ButtonType.RAISED);
-        nextButton.setOnAction(e -> updateMods());
+        nextButton.setOnAction(e -> {
+            if (isModpack) updateModpackModWarningDialog();
+        });
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("jfx-button-raised");
@@ -126,6 +134,31 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         });
     }
 
+    private void updateModpackModWarningDialog() {
+        JFXDialogLayout warningPane = new JFXDialogLayout();
+        warningPane.setHeading(new Label(i18n("message.warning"), SVG.alert(new ObjectBinding<Paint>() {
+            @Override
+            protected Paint computeValue() {
+                return Color.ORANGERED;
+            }
+        }, -1, -1)));
+        warningPane.setBody(new Label(i18n("mods.update_modpack_mod.warning")));
+        JFXButton yesButton = new JFXButton(i18n("button.yes"));
+        yesButton.getStyleClass().add("dialog-accept");
+        yesButton.setOnAction(event -> {
+            warningPane.fireEvent(new DialogCloseEvent());
+            updateMods();
+        });
+        JFXButton noButton = new JFXButton(i18n("button.cancel"));
+        noButton.getStyleClass().add("dialog-cancel");
+        noButton.setOnAction(event -> {
+            // Do nothing.
+            warningPane.fireEvent(new DialogCloseEvent());
+        });
+        warningPane.setActions(yesButton, noButton);
+        Controllers.dialog(warningPane);
+    }
+
     private void updateMods() {
         ModUpdateTask task = new ModUpdateTask(
                 modManager,
@@ -138,7 +171,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedMods().isEmpty()) {
                         Controllers.dialog(i18n("mods.check_updates.failed") + "\n" +
-                                task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
+                                        task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
                     }
@@ -192,7 +225,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         public ModUpdateObject(LocalModFile.ModUpdate data) {
             this.data = data;
 
-            enabled.set(true);
+            enabled.set(!data.getLocalMod().getModManager().isDisabled(data.getLocalMod().getFile()));
             fileName.set(data.getLocalMod().getFileName());
             currentVersion.set(data.getCurrentVersion().getVersion());
             targetVersion.set(data.getCandidates().get(0).getVersion());
@@ -274,28 +307,37 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             setStage("mods.check_updates.update");
             getProperties().put("total", mods.size());
 
-            dependents = mods.stream()
-                    .map(mod -> {
-                        return Task
-                                .runAsync(Schedulers.javafx(), () -> mod.getKey().setOld(true))
-                                .thenComposeAsync(() -> {
-                                    FileDownloadTask task = new FileDownloadTask(
-                                            new URL(mod.getValue().getFile().getUrl()),
-                                            modManager.getModsDirectory().resolve(mod.getValue().getFile().getFilename()).toFile());
+            this.dependents = new ArrayList<>();
+            for (Pair<LocalModFile, RemoteMod.Version> mod : mods) {
+                LocalModFile local = mod.getKey();
+                RemoteMod.Version remote = mod.getValue();
+                boolean isDisabled = local.getModManager().isDisabled(local.getFile());
 
-                                    task.setName(mod.getValue().getName());
-                                    return task;
-                                })
-                                .whenComplete(Schedulers.javafx(), exception -> {
-                                    if (exception != null) {
-                                        // restore state if failed
-                                        mod.getKey().setOld(false);
-                                        failedMods.add(mod.getKey());
-                                    }
-                                })
-                                .withCounter("mods.check_updates.update");
-                    })
-                    .collect(Collectors.toList());
+                dependents.add(Task
+                        .runAsync(Schedulers.javafx(), () -> local.setOld(true))
+                        .thenComposeAsync(() -> {
+                            String fileName = remote.getFile().getFilename();
+                            if (isDisabled)
+                                fileName += ModManager.DISABLED_EXTENSION;
+
+                            FileDownloadTask task = new FileDownloadTask(
+                                    new URL(remote.getFile().getUrl()),
+                                    modManager.getModsDirectory().resolve(fileName).toFile());
+
+                            task.setName(remote.getName());
+                            return task;
+                        })
+                        .whenComplete(Schedulers.javafx(), exception -> {
+                            if (exception != null) {
+                                // restore state if failed
+                                local.setOld(false);
+                                if (isDisabled)
+                                    local.disable();
+                                failedMods.add(local);
+                            }
+                        })
+                        .withCounter("mods.check_updates.update"));
+            }
         }
 
         public List<LocalModFile> getFailedMods() {

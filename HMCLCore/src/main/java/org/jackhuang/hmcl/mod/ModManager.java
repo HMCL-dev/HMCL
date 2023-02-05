@@ -73,24 +73,27 @@ public final class ModManager {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(modFile), DISABLED_EXTENSION, OLD_EXTENSION);
         String description;
         if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-            try {
-                return ForgeOldModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-            }
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+                try {
+                    return ForgeOldModMetadata.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
 
-            try {
-                return ForgeNewModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-            }
+                try {
+                    return ForgeNewModMetadata.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
 
-            try {
-                return FabricModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-            }
+                try {
+                    return FabricModMetadata.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
 
-            try {
-                return PackMcMeta.fromFile(this, modFile);
-            } catch (Exception ignore) {
+                try {
+                    return PackMcMeta.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
+            } catch (Exception ignored) {
             }
 
             description = "";
@@ -231,7 +234,11 @@ public final class ModManager {
 
     public Path disableMod(Path file) throws IOException {
         if (isOld(file)) return file; // no need to disable an old mod.
-        Path disabled = file.resolveSibling(StringUtils.addSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
+
+        String fileName = FileUtils.getName(file);
+        if (fileName.endsWith(DISABLED_EXTENSION)) return file;
+
+        Path disabled = file.resolveSibling(fileName + DISABLED_EXTENSION);
         if (Files.exists(file))
             Files.move(file, disabled, StandardCopyOption.REPLACE_EXISTING);
         return disabled;

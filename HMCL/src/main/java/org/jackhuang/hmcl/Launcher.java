@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.CookieHandler;
@@ -64,6 +65,14 @@ public final class Launcher extends Application {
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
+        LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
+        try {
+            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
+            LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
+        } catch (Throwable e) {
+            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
+        }
+
         try {
             try {
                 ConfigHolder.init();
@@ -71,45 +80,12 @@ public final class Launcher extends Application {
                 Main.showWarningAndContinue(i18n("fatal.samba"));
             } catch (IOException e) {
                 LOG.log(Level.SEVERE, "Failed to load config", e);
-
-                try {
-                    if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
-                        String owner = Files.getOwner(ConfigHolder.configLocation()).getName();
-                        String userName = System.getProperty("user.name");
-                        if (!Files.isWritable(ConfigHolder.configLocation())
-                                && !userName.equals("root")
-                                && !userName.equals(owner)) {
-
-                            ArrayList<String> files = new ArrayList<>();
-                            {
-                                files.add(ConfigHolder.configLocation().toString());
-                                if (Files.exists(Metadata.HMCL_DIRECTORY))
-                                    files.add(Metadata.HMCL_DIRECTORY.toString());
-
-                                Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
-                                if (Files.exists(mcDir))
-                                    files.add(mcDir.toString());
-                            }
-
-                            String command = new CommandBuilder().add("sudo", "chown", "-R", userName).addAll(files).toString();
-                            ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
-
-                            ButtonType res = new Alert(Alert.AlertType.ERROR, i18n("fatal.config_loading_failure.unix", owner, command), copyAndExit, ButtonType.CLOSE)
-                                    .showAndWait()
-                                    .orElse(null);
-                            if (res == copyAndExit) {
-                                Clipboard.getSystemClipboard()
-                                        .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
-                            }
-                            System.exit(1);
-                        }
-                    }
-                } catch (IOException ioe) {
-                    LOG.log(Level.WARNING, "Failed to get file owner", ioe);
-                }
-                Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize().toString()));
+                checkConfigInTempDir();
+                checkConfigOwner();
+                Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
             }
 
+            checkConfigInTempDir();
             if (ConfigHolder.isOwnerChanged()) {
                 ButtonType res = new Alert(Alert.AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO)
                         .showAndWait()
@@ -138,6 +114,92 @@ public final class Launcher extends Application {
         }
     }
 
+    private static boolean isConfigInTempDir() {
+        String configPath = ConfigHolder.configLocation().toString();
+
+        String tmpdir = System.getProperty("java.io.tmpdir");
+        if (StringUtils.isNotBlank(tmpdir) && configPath.startsWith(tmpdir))
+            return true;
+
+        String[] tempFolderNames = {"Temp", "Cache", "Caches"};
+        for (String name : tempFolderNames) {
+            if (configPath.contains(File.separator + name + File.separator))
+                return true;
+        }
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            return configPath.contains("\\Temporary Internet Files\\")
+                    || configPath.contains("\\INetCache\\")
+                    || configPath.contains("\\$Recycle.Bin\\")
+                    || configPath.contains("\\recycler\\");
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            return configPath.startsWith("/tmp/")
+                    || configPath.startsWith("/var/tmp/")
+                    || configPath.startsWith("/var/cache/")
+                    || configPath.startsWith("/dev/shm/")
+                    || configPath.contains("/Trash/");
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            return configPath.startsWith("/var/folders/")
+                    || configPath.startsWith("/private/var/folders/")
+                    || configPath.startsWith("/tmp/")
+                    || configPath.startsWith("/private/tmp/")
+                    || configPath.startsWith("/var/tmp/")
+                    || configPath.startsWith("/private/var/tmp/")
+                    || configPath.contains("/.Trash/");
+        } else {
+            return false;
+        }
+    }
+
+    private static void checkConfigInTempDir() {
+        if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()) {
+            ButtonType res = new Alert(Alert.AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO)
+                    .showAndWait()
+                    .orElse(null);
+            if (res == ButtonType.NO) {
+                System.exit(0);
+            }
+        }
+    }
+
+    private static void checkConfigOwner() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            return;
+
+        String userName = System.getProperty("user.name");
+        String owner;
+        try {
+            owner = Files.getOwner(ConfigHolder.configLocation()).getName();
+        } catch (IOException ioe) {
+            LOG.log(Level.WARNING, "Failed to get file owner", ioe);
+            return;
+        }
+
+        if (Files.isWritable(ConfigHolder.configLocation()) || userName.equals("root") || userName.equals(owner))
+            return;
+
+        ArrayList<String> files = new ArrayList<>();
+        files.add(ConfigHolder.configLocation().toString());
+        if (Files.exists(Metadata.HMCL_DIRECTORY))
+            files.add(Metadata.HMCL_DIRECTORY.toString());
+
+        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
+        if (Files.exists(mcDir))
+            files.add(mcDir.toString());
+
+        String command = new CommandBuilder().add("sudo", "chown", "-R", userName).addAll(files).toString();
+        ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
+
+        ButtonType res = new Alert(Alert.AlertType.ERROR, i18n("fatal.config_loading_failure.unix", owner, command), copyAndExit, ButtonType.CLOSE)
+                .showAndWait()
+                .orElse(null);
+        if (res == copyAndExit) {
+            Clipboard.getSystemClipboard()
+                    .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
+        }
+        System.exit(1);
+    }
+
     @Override
     public void stop() throws Exception {
         super.stop();
@@ -164,8 +226,11 @@ public final class Launcher extends Application {
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
-            ManagementFactory.getMemoryPoolMXBeans().stream().filter(bean -> bean.getName().equals("Metaspace")).findAny()
-                    .ifPresent(bean -> LOG.info("Metaspace: " + bean.getUsage().getUsed() / 1024 / 1024 + "MB"));
+            LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
+                    .filter(bean -> bean.getName().equals("Metaspace"))
+                    .findAny()
+                    .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
+                    .orElse("Unknown"));
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.

@@ -114,6 +114,8 @@ public final class SelfDependencyPatcher {
                 throw new UncheckedIOException(e);
             }
 
+            if (dependencies == null) return null;
+
             try {
                 ClassLoader classLoader = SelfDependencyPatcher.class.getClassLoader();
                 Class.forName("netscape.javascript.JSObject", false, classLoader);

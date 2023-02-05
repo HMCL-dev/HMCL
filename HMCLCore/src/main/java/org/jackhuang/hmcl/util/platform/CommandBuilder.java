@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.StringUtils;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
@@ -227,8 +225,8 @@ public final class CommandBuilder {
     }
 
     private static class Item {
-        String arg;
-        boolean parse;
+        final String arg;
+        final boolean parse;
 
         Item(String arg, boolean parse) {
             this.arg = arg;
@@ -250,7 +248,7 @@ public final class CommandBuilder {
             return true;
         }
         try {
-            final Process process = Runtime.getRuntime().exec("powershell -Command Get-ExecutionPolicy");
+            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Get-ExecutionPolicy"});
             if (!process.waitFor(5, TimeUnit.SECONDS)) {
                 process.destroy();
                 return false;
@@ -279,28 +277,26 @@ public final class CommandBuilder {
         return true;
     }
 
-    public static String toBatchStringLiteral(String s) {
-        String escape = " \t\"^&<>|";
-        if (StringUtils.containsOne(s, escape.toCharArray()))
-            // The argument has not been quoted, add quotes.
-            return '"' + s
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    + '"';
-        else {
-            return s;
+    private static boolean containsEscape(String str, String escapeChars) {
+        for (int i = 0; i < escapeChars.length(); i++) {
+            if (str.indexOf(escapeChars.charAt(i)) >= 0)
+                return true;
         }
+        return false;
+    }
+
+    private static String escape(String str, char... escapeChars) {
+        for (char ch : escapeChars) {
+            str = str.replace("" + ch, "\\" + ch);
+        }
+        return str;
+    }
+
+    public static String toBatchStringLiteral(String s) {
+        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') : s;
     }
 
     public static String toShellStringLiteral(String s) {
-        String escaping = " \t\"!#$&'()*,;<=>?[\\]^`{|}~";
-        String escaped = "\"$&`";
-        if (s.indexOf(' ') >= 0 || s.indexOf('\t') >= 0 || StringUtils.containsOne(s, escaping.toCharArray())) {
-            // The argument has not been quoted, add quotes.
-            for (char ch : escaped.toCharArray())
-                s = s.replace("" + ch, "\\" + ch);
-            return '"' + s + '"';
-        } else
-            return s;
+        return containsEscape(s, " \t\"!#$&'()*,;<=>?[\\]^`{|}~") ? '"' + escape(s, '"', '$', '&', '`') + '"' : s;
     }
 }

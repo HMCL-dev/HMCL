@@ -1,31 +1,11 @@
+import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.jar.JarFile
-import java.util.jar.JarOutputStream
 import java.util.zip.ZipFile
-import java.util.zip.GZIPOutputStream
-import java.io.ByteArrayOutputStream
-import java.io.ByteArrayInputStream
-import java.net.URI
-
-import org.glavo.pack200.Pack200
-import org.tukaani.xz.LZMA2Options
-import org.tukaani.xz.XZOutputStream
-
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        maven(url = "https://jitpack.io")
-    }
-    dependencies {
-        classpath("org.tukaani:xz:1.8")
-        classpath("org.glavo:pack200:0.3.0")
-    }
-}
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -92,21 +72,6 @@ fun attachSignature(jar: File) {
     }
 }
 
-val packer = Pack200.newPacker().apply {
-    properties()["pack.effort"] = "9"
-}
-
-val unpacker = Pack200.newUnpacker()
-
-// Pack200 does not guarantee that unpacked .class file is bit-wise same as the .class file before packing
-// because of shrinking. So we should pack .class files and unpack it to make sure that after unpacking
-// .class files remain the same.
-fun repack(file: File) {
-    val packed = ByteArrayOutputStream()
-    JarFile(file).use { packer.pack(it, packed) }
-    JarOutputStream(file.outputStream()).use { unpacker.unpack(ByteArrayInputStream(packed.toByteArray()), it) }
-}
-
 val java11 = sourceSets.create("java11") {
     java {
         srcDir("src/main/java11")
@@ -160,6 +125,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.base/com.sun.javafx.runtime",
                 "javafx.graphics/javafx.css",
                 "javafx.graphics/com.sun.javafx.stage",
+                "javafx.graphics/com.sun.prism",
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
                 "javafx.controls/javafx.scene.control.skin"
@@ -168,7 +134,6 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     }
 
     doLast {
-        repack(jarPath) // see repack()
         attachSignature(jarPath)
         createChecksum(jarPath)
     }
@@ -215,46 +180,8 @@ tasks.processResources {
     dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }
 
-val packFile = File(jarPath.parentFile, jarPath.nameWithoutExtension + ".pack")
-
-val makePack = tasks.create("makePack") {
-    dependsOn(tasks.jar)
-
-    doLast {
-        packFile.outputStream().use { out ->
-            JarFile(jarPath).use { jarFile -> packer.pack(jarFile, out) }
-        }
-        createChecksum(packFile)
-    }
-}
-
-val makePackXz = tasks.create("makePackXz") {
-    dependsOn(makePack)
-
-    val packXz = File(packFile.parentFile, packFile.name + ".xz")
-
-    doLast {
-        // Our CI server does not have enough memory space to compress file at highest level.
-        XZOutputStream(packXz.outputStream(), LZMA2Options(5))
-            .use { it.write(packFile.readBytes()) }
-        createChecksum(packXz)
-    }
-}
-
-val makePackGz = tasks.create("makePackGz") {
-    dependsOn(makePack)
-
-    val packGz = File(packFile.parentFile, packFile.name + ".gz")
-
-    doLast {
-        GZIPOutputStream(packGz.outputStream()).use { it.write(packFile.readBytes()) }
-        createChecksum(packGz)
-    }
-}
-
 val makeExecutables = tasks.create("makeExecutables") {
-    dependsOn(makePack)
-
+    dependsOn(tasks.jar)
     doLast {
         createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
         createExecutable("sh", "src/main/resources/assets/HMCLauncher.sh")
@@ -262,7 +189,7 @@ val makeExecutables = tasks.create("makeExecutables") {
 }
 
 tasks.build {
-    dependsOn(makePackXz, makePackGz, makeExecutables)
+    dependsOn(makeExecutables)
 }
 
 tasks.create<JavaExec>("run") {

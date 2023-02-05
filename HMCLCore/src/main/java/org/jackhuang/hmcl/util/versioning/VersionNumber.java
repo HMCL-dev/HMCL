@@ -329,6 +329,10 @@ public class VersionNumber implements Comparable<VersionNumber> {
         return buf.chars().allMatch(Character::isDigit) ? new IntegerItem(buf) : new StringItem(buf);
     }
 
+    public int compareTo(String o) {
+        return compareTo(VersionNumber.asVersion(o));
+    }
+
     @Override
     public int compareTo(VersionNumber o) {
         return items.compareTo(o.items);
