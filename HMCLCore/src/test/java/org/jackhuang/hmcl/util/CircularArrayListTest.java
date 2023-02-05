@@ -24,12 +24,14 @@ public class CircularArrayListTest {
     }
 
     private static void assertListEquals(List<?> expected, CircularArrayList<?> actual) {
-        assertEquals(expected, actual);
+        assertIterableEquals(expected, actual);
         if (expected.isEmpty()) {
             assertEmpty(actual);
         } else {
             assertEquals(expected.get(0), actual.getFirst());
             assertEquals(expected.get(expected.size() - 1), actual.getLast());
+            assertThrows(IndexOutOfBoundsException.class, () -> actual.get(-1));
+            assertThrows(IndexOutOfBoundsException.class, () -> actual.get(actual.size()));
         }
     }
 
