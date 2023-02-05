@@ -1,11 +1,11 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Glavo
