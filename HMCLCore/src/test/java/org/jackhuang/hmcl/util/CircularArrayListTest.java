@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -11,19 +10,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Glavo
  */
 public class CircularArrayListTest {
-    private static void assertThrows(Class<? extends Throwable> type, ExceptionalRunnable<?> action) {
-        try {
-            action.run();
-            throw new AssertionError();
-        } catch (Throwable e) {
-            if (!type.isInstance(e)) {
-                if (e instanceof AssertionError)
-                    throw (AssertionError) e;
-                else
-                    throw new AssertionError("Unexpected exception type thrown: " + e.getClass(), e);
-            }
-        }
-    }
 
     private static void assertEmpty(CircularArrayList<?> list) {
         assertEquals(0, list.size());
