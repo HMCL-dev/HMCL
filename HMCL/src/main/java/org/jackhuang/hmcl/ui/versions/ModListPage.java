@@ -179,7 +179,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void checkUpdates() {
-        Controllers.taskDialog(Task
+        Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
                             if (gameVersion.isPresent()) {
@@ -193,11 +193,20 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
-                                Controllers.navigate(new ModUpdatesPage(modManager, result, profile.getRepository().isModpack(versionId)));
+                                Controllers.navigate(new ModUpdatesPage(modManager, result));
                             }
                         })
                         .withStagesHint(Collections.singletonList("mods.check_updates")),
                 i18n("update.checking"), TaskCancellationAction.NORMAL);
+
+        if (profile.getRepository().isModpack(versionId)) {
+            Controllers.confirm(
+                    i18n("mods.update_modpack_mod.warning"), null,
+                    MessageDialogPane.MessageType.WARNING,
+                    action, null);
+        } else {
+            action.run();
+        }
     }
 
     public void download() {
