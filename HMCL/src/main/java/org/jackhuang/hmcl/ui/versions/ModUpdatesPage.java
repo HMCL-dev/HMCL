@@ -17,20 +17,19 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
-import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.beans.binding.ObjectBinding;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -41,8 +40,10 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -67,38 +68,36 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     private final ObservableList<ModUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates, Boolean isModpack) {
+    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
         this.modManager = modManager;
 
         getStyleClass().add("gray-background");
 
-        JFXTreeTableColumn<ModUpdateObject, Boolean> enabledColumn = new JFXTreeTableColumn<>();
-        enabledColumn.setCellFactory(column -> new JFXCheckBoxTreeTableCell<>());
+        TableColumn<ModUpdateObject, Boolean> enabledColumn = new TableColumn<>();
+        enabledColumn.setCellFactory(CheckBoxTableCell.forTableColumn(enabledColumn));
         setupCellValueFactory(enabledColumn, ModUpdateObject::enabledProperty);
         enabledColumn.setEditable(true);
         enabledColumn.setMaxWidth(40);
         enabledColumn.setMinWidth(40);
 
-        JFXTreeTableColumn<ModUpdateObject, String> fileNameColumn = new JFXTreeTableColumn<>(i18n("mods.check_updates.file"));
+        TableColumn<ModUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("mods.check_updates.file"));
+        fileNameColumn.setPrefWidth(200);
         setupCellValueFactory(fileNameColumn, ModUpdateObject::fileNameProperty);
 
-        JFXTreeTableColumn<ModUpdateObject, String> currentVersionColumn = new JFXTreeTableColumn<>(i18n("mods.check_updates.current_version"));
+        TableColumn<ModUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("mods.check_updates.current_version"));
+        currentVersionColumn.setPrefWidth(200);
         setupCellValueFactory(currentVersionColumn, ModUpdateObject::currentVersionProperty);
 
-        JFXTreeTableColumn<ModUpdateObject, String> targetVersionColumn = new JFXTreeTableColumn<>(i18n("mods.check_updates.target_version"));
+        TableColumn<ModUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("mods.check_updates.target_version"));
+        targetVersionColumn.setPrefWidth(200);
         setupCellValueFactory(targetVersionColumn, ModUpdateObject::targetVersionProperty);
 
-        JFXTreeTableColumn<ModUpdateObject, String> sourceColumn = new JFXTreeTableColumn<>(i18n("mods.check_updates.source"));
+        TableColumn<ModUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
         setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
 
-        RecursiveTreeItem<ModUpdateObject> root = new RecursiveTreeItem<>(
-                objects,
-                RecursiveTreeObject::getChildren);
-
-        JFXTreeTableView<ModUpdateObject> table = new JFXTreeTableView<>(root);
-        table.setShowRoot(false);
+        TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
 
@@ -111,9 +110,6 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         JFXButton nextButton = new JFXButton(i18n("mods.check_updates.update"));
         nextButton.getStyleClass().add("jfx-button-raised");
         nextButton.setButtonType(JFXButton.ButtonType.RAISED);
-        nextButton.setOnAction(e -> {
-            if (isModpack) updateModpackModWarningDialog();
-        });
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("jfx-button-raised");
@@ -125,38 +121,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         setBottom(actions);
     }
 
-    private <T> void setupCellValueFactory(JFXTreeTableColumn<ModUpdateObject, T> column, Function<ModUpdateObject, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
-        });
-    }
-
-    private void updateModpackModWarningDialog() {
-        JFXDialogLayout warningPane = new JFXDialogLayout();
-        warningPane.setHeading(new Label(i18n("message.warning"), SVG.alert(new ObjectBinding<Paint>() {
-            @Override
-            protected Paint computeValue() {
-                return Color.ORANGERED;
-            }
-        }, -1, -1)));
-        warningPane.setBody(new Label(i18n("mods.update_modpack_mod.warning")));
-        JFXButton yesButton = new JFXButton(i18n("button.yes"));
-        yesButton.getStyleClass().add("dialog-accept");
-        yesButton.setOnAction(event -> {
-            warningPane.fireEvent(new DialogCloseEvent());
-            updateMods();
-        });
-        JFXButton noButton = new JFXButton(i18n("button.cancel"));
-        noButton.getStyleClass().add("dialog-cancel");
-        noButton.setOnAction(event -> {
-            // Do nothing.
-            warningPane.fireEvent(new DialogCloseEvent());
-        });
-        warningPane.setActions(yesButton, noButton);
-        Controllers.dialog(warningPane);
+    private <T> void setupCellValueFactory(TableColumn<ModUpdateObject, T> column, Function<ModUpdateObject, ObservableValue<T>> mapper) {
+        column.setCellValueFactory(param -> mapper.apply(param.getValue()));
     }
 
     private void updateMods() {
@@ -189,7 +155,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         return state;
     }
 
-    public static class ModUpdateCell extends MDListCell<LocalModFile.ModUpdate> {
+    public static final class ModUpdateCell extends MDListCell<LocalModFile.ModUpdate> {
         TwoLineListItem content = new TwoLineListItem();
 
         public ModUpdateCell(JFXListView<LocalModFile.ModUpdate> listView, MutableObject<Object> lastCell) {
@@ -214,7 +180,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    private static class ModUpdateObject extends RecursiveTreeObject<ModUpdateObject> {
+    private static final class ModUpdateObject {
         final LocalModFile.ModUpdate data;
         final BooleanProperty enabled = new SimpleBooleanProperty();
         final StringProperty fileName = new SimpleStringProperty();
