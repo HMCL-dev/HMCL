@@ -1,0 +1,22 @@
+[authlib-injector] [INFO] Logging file: C:\Users\Administrator\AppData\Roaming\.minecraft\versions\1.17.1 PxUni\authlib-injector.log
+[authlib-injector] [INFO] Version: 1.2.1
+[authlib-injector] [INFO] Authentication server: http://localhost:52773
+[authlib-injector] [WARNING] You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.
+2023-02-03 07:43:03,385 main WARN JNDI lookup class is not available because this JRE does not support JNDI. JNDI string lookups will not be available, continuing configuration. Ignoring java.lang.ClassCastException: class org.apache.logging.log4j.core.lookup.JndiLookup
+[07:43:03] [main/INFO]: Loading Minecraft 1.17.1 with Fabric Loader 0.14.12
+[07:43:03] [main/WARN]: Can't remove Log4J2 JNDI substitution Lookup: java.lang.RuntimeException: couldn't find JNDI lookup entry
+[07:43:04] [ForkJoinPool-1-worker-3/WARN]: Mod com_github_wearblackallday_javautils uses the version 1b369d41cd which isn't compatible with Loader's extended semantic version format (Could not parse version number component '1b369d41cd'!), SemVer is recommended for reliably evaluating dependencies and prioritizing newer version
+[07:43:04] [main/WARN]: Mod resolution failed
+[07:43:04] [main/INFO]: Immediate reason: [HARD_DEP_NO_CANDIDATE roughlysearchable 2.2.1+1.17.1 {depends roughlyenoughitems @ [>=6.0.2]}, ROOT_FORCELOAD_SINGLE roughlysearchable 2.2.1+1.17.1]
+[07:43:04] [main/INFO]: Reason: [HARD_DEP roughlysearchable 2.2.1+1.17.1 {depends roughlyenoughitems @ [>=6.0.2]}]
+[07:43:04] [main/INFO]: Fix: add [add:roughlyenoughitems 6.0.2 ([[6.0.2,?)])], remove [], replace []
+[07:43:04] [main/ERROR]: Incompatible mod set!
+net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!
+A potential solution has been determined:
+	 - Install roughlyenoughitems, version 6.0.2 or later.
+Unmet dependency listing:
+	 - Mod 'Roughly Searchable' (roughlysearchable) 2.2.1+1.17.1 requires version 6.0.2 or later of roughlyenoughitems, which is missing!
+	at net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:190) ~[fabric-loader-0.14.12.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.Knot.init(Knot.java:148) ~[fabric-loader-0.14.12.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:68) [fabric-loader-0.14.12.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.14.12.jar:?]

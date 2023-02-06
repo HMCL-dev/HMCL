@@ -90,7 +90,7 @@ public final class LogWindow extends Stage {
     private boolean stopCheckLogCount = false;
 
     public LogWindow() {
-        setScene(new Scene(impl, 800, 480));
+        setScene(new Scene(impl, 854, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
