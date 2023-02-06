@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -30,31 +29,24 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.curse.CurseAddon;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -151,31 +143,6 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     @Override
     public ReadOnlyObjectWrapper<State> stateProperty() {
         return state;
-    }
-
-    public static final class ModUpdateCell extends MDListCell<LocalModFile.ModUpdate> {
-        TwoLineListItem content = new TwoLineListItem();
-
-        public ModUpdateCell(JFXListView<LocalModFile.ModUpdate> listView, MutableObject<Object> lastCell) {
-            super(listView, lastCell);
-
-            getContainer().getChildren().setAll(content);
-        }
-
-        @Override
-        protected void updateControl(LocalModFile.ModUpdate item, boolean empty) {
-            if (empty) return;
-            ModTranslations.Mod mod = ModTranslations.MOD.getModById(item.getLocalMod().getId());
-            content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : item.getCurrentVersion().getName());
-            content.setSubtitle(item.getLocalMod().getFileName());
-            content.getTags().setAll();
-
-            if (item.getCurrentVersion().getSelf() instanceof CurseAddon.LatestFile) {
-                content.getTags().add("Curseforge");
-            } else if (item.getCurrentVersion().getSelf() instanceof ModrinthRemoteModRepository.ProjectVersion) {
-                content.getTags().add("Modrinth");
-            }
-        }
     }
 
     private static final class ModUpdateObject {
