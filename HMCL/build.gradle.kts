@@ -132,6 +132,10 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.controls/javafx.scene.control.skin"
             ).joinToString(" ")
         )
+
+        System.getenv("GITHUB_SHA")?.also {
+            attributes("GitHub-SHA" to it)
+        }
     }
 
     doLast {

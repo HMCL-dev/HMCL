@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -125,6 +126,10 @@ public final class IntegrityChecker {
             selfVerified = false;
         }
         return selfVerified;
+    }
+
+    public static boolean isOfficial() {
+        return isSelfVerified() || (Metadata.isNightly() && !Metadata.VERSION.contains("unofficial"));
     }
 
     private static void verifySelf() throws IOException {
