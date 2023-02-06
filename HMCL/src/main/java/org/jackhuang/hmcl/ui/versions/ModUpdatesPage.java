@@ -110,6 +110,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         JFXButton nextButton = new JFXButton(i18n("mods.check_updates.update"));
         nextButton.getStyleClass().add("jfx-button-raised");
         nextButton.setButtonType(JFXButton.ButtonType.RAISED);
+        nextButton.setOnAction(e -> updateMods());
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("jfx-button-raised");
