@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
@@ -81,14 +82,39 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
         {
             TransitionPane toolBarPane = new TransitionPane();
+
+            HBox searchBar = new HBox();
             HBox toolbarNormal = new HBox();
+            HBox toolbarSelecting = new HBox();
+
+            // Search Bar
+            searchBar.setAlignment(Pos.CENTER);
+            searchBar.setPadding(new Insets(0, 5, 0, 5));
+
+            JFXTextField searchField = new JFXTextField();
+            searchField.setPromptText(i18n("search"));
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+
+            JFXButton cancel = createToolbarButton2(null, SVG::close,
+                    () -> {
+                        searchField.clear();
+                        toolBarPane.setContent(toolbarNormal, ContainerAnimations.FADE.getAnimationProducer());
+                    });
+
+            searchBar.getChildren().setAll(searchField, cancel);
+
+            // Toolbar Normal
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
                     createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG::update, skinnable::checkUpdates),
-                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download));
-            HBox toolbarSelecting = new HBox();
+                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download),
+                    createToolbarButton2(i18n("search"), SVG::magnify,
+                            () -> toolBarPane.setContent(searchBar, ContainerAnimations.FADE.getAnimationProducer()))
+            );
+
+            // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
@@ -102,7 +128,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.select_all"), SVG::selectAll, () ->
                             listView.getSelectionModel().selectAll()),
                     createToolbarButton2(i18n("button.cancel"), SVG::cancel, () ->
-                            listView.getSelectionModel().clearSelection()));
+                            listView.getSelectionModel().clearSelection())
+            );
+
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
                 if (selectedItem == null) {
                     toolBarPane.setContent(toolbarNormal, ContainerAnimations.FADE.getAnimationProducer());
