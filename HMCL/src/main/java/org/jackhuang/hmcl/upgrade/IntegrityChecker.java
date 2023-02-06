@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 
@@ -66,7 +67,7 @@ public final class IntegrityChecker {
         byte[] signature = null;
         Map<String, byte[]> fileFingerprints = new TreeMap<>();
         try (ZipFile zip = new ZipFile(jarPath.toFile())) {
-            for (ZipEntry entry : zip.stream().toArray(ZipEntry[]::new)) {
+            for (ZipEntry entry : Lang.toIterable(zip.entries())) {
                 String filename = entry.getName();
                 try (InputStream in = zip.getInputStream(entry)) {
                     if (in == null) {
@@ -107,29 +108,37 @@ public final class IntegrityChecker {
         }
     }
 
-    private static Boolean selfVerified = null;
+    private static volatile Boolean selfVerified = null;
 
     /**
      * Checks whether the current application is verified.
      * This method is blocking.
      */
-    public static synchronized boolean isSelfVerified() {
+    public static boolean isSelfVerified() {
         if (selfVerified != null) {
             return selfVerified;
         }
-        try {
-            verifySelf();
-            LOG.info("Successfully verified current JAR");
-            selfVerified = true;
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to verify myself, is the JAR corrupt?", e);
-            selfVerified = false;
+
+        synchronized (IntegrityChecker.class) {
+            if (selfVerified != null) {
+                return selfVerified;
+            }
+
+            try {
+                verifySelf();
+                LOG.info("Successfully verified current JAR");
+                selfVerified = true;
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to verify myself, is the JAR corrupt?", e);
+                selfVerified = false;
+            }
+
+            return selfVerified;
         }
-        return selfVerified;
     }
 
     public static boolean isOfficial() {
-        return isSelfVerified() || (Metadata.isNightly() && !Metadata.BUILD_CHANNEL.equals("unofficial"));
+        return isSelfVerified() || (Metadata.GITHUB_SHA != null && Metadata.BUILD_CHANNEL.equals("nightly"));
     }
 
     private static void verifySelf() throws IOException {
