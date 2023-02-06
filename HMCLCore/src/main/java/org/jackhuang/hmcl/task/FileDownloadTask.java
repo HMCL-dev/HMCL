@@ -266,8 +266,8 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     public static final IntegrityCheckHandler ZIP_INTEGRITY_CHECK_HANDLER = (filePath, destinationPath) -> {
-        String ext = FileUtils.getExtension(destinationPath);
-        if (ext.equalsIgnoreCase("zip") || ext.equalsIgnoreCase("jar")) {
+        String ext = FileUtils.getExtension(destinationPath).toLowerCase(Locale.ROOT);
+        if (ext.equals("zip") || ext.equals("jar")) {
             try (FileSystem ignored = CompressingUtils.createReadOnlyZipFileSystem(filePath)) {
                 // test for zip format
             }
