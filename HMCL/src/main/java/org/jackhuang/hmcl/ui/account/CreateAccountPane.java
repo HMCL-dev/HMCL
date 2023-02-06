@@ -289,17 +289,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 FlowPane box = new FlowPane();
                 box.setHgap(8);
                 JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-                birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a"));
+                birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
                 JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
-                profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
+                profileLink.setExternalLink("https://account.live.com/editprof.aspx");
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
+                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
-                deauthorizeLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A"));
+                deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
                 JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
-                forgotpasswordLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/password/forgot"));
+                forgotpasswordLink.setExternalLink("https://www.minecraft.net/password/forgot");
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
-                createProfileLink.setOnAction(e -> FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editprofile"));    
-                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
+                createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
                 box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
@@ -310,7 +310,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
                 hintPane.setText(i18n("account.methods.microsoft.snapshot"));
 
-                vbox.getChildren().setAll(hintPane);
+                JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
+                officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
+
+                vbox.getChildren().setAll(hintPane, officialWebsite);
                 btnAccept.setDisable(true);
             }
 
