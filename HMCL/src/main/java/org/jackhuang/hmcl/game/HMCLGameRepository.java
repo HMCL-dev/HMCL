@@ -420,7 +420,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return false;
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
-                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase()))
+                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase(Locale.ROOT)))
             return false;
 
         return OperatingSystem.isNameValid(id);
