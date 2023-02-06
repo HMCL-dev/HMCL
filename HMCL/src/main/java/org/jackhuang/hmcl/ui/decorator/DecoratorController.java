@@ -52,6 +52,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.logging.Level;
@@ -197,7 +198,7 @@ public class DecoratorController {
             candidates = stream
                 .filter(Files::isReadable)
                     .filter(it -> {
-                        String ext = getExtension(it).toLowerCase();
+                        String ext = getExtension(it).toLowerCase(Locale.ROOT);
                         return ext.equals("png") || ext.equals("jpg") || ext.equals("gif");
                     })
                     .collect(toList());

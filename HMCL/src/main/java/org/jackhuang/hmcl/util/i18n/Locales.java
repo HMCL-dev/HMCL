@@ -74,7 +74,7 @@ public final class Locales {
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
-        switch (name.toLowerCase()) {
+        switch (name.toLowerCase(Locale.ROOT)) {
             case "en":
                 return EN;
             case "zh":

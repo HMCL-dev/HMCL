@@ -181,16 +181,19 @@ public final class StringUtils {
     }
 
     public static boolean containsOne(Collection<String> patterns, String... targets) {
-        for (String pattern : patterns)
+        for (String pattern : patterns) {
+            String lowerPattern = pattern.toLowerCase(Locale.ROOT);
             for (String target : targets)
-                if (pattern.toLowerCase().contains(target.toLowerCase()))
+                if (lowerPattern.contains(target.toLowerCase(Locale.ROOT)))
                     return true;
+        }
         return false;
     }
 
     public static boolean containsOne(String pattern, String... targets) {
+        String lowerPattern = pattern.toLowerCase(Locale.ROOT);
         for (String target : targets)
-            if (pattern.toLowerCase().contains(target.toLowerCase()))
+            if (lowerPattern.contains(target.toLowerCase(Locale.ROOT)))
                 return true;
         return false;
     }
