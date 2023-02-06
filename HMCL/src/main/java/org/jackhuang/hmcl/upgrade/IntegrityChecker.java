@@ -129,7 +129,7 @@ public final class IntegrityChecker {
     }
 
     public static boolean isOfficial() {
-        return isSelfVerified() || (Metadata.isNightly() && !Metadata.VERSION.contains("unofficial"));
+        return isSelfVerified() || (Metadata.isNightly() && !Metadata.BUILD_CHANNEL.equals("unofficial"));
     }
 
     private static void verifySelf() throws IOException {

@@ -11,19 +11,21 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
+val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
+        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
+
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
     if (number != null) {
         (number - offset).toString()
     } else {
         val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
-        val isOfficial = System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty()
         val prefix = if (isOfficial) "dev" else "unofficial"
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
 }
 val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"
-val versionType = System.getenv("VERSION_TYPE") ?: "nightly"
+val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
