@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -303,12 +304,18 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
-                vbox.getChildren().setAll(hintPane, box);
+                if (!IntegrityChecker.isOfficial()) {
+                    HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+                    unofficialHint.setText(i18n("unofficial.hint"));
+                    vbox.getChildren().add(unofficialHint);
+                }
+
+                vbox.getChildren().addAll(hintPane, box);
 
                 btnAccept.setDisable(false);
             } else {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hintPane.setText(i18n("account.methods.microsoft.snapshot"));
+                hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
 
                 JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
                 officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
@@ -391,6 +398,15 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             getColumnConstraints().add(col1);
 
             int rowIndex = 0;
+
+            if (!IntegrityChecker.isOfficial() && !(factory instanceof OfflineAccountFactory)) {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                hintPane.setSegment(i18n("unofficial.hint"));
+                GridPane.setColumnSpan(hintPane, 2);
+                add(hintPane, 0, rowIndex);
+
+                rowIndex++;
+            }
 
             if (factory instanceof BoundAuthlibInjectorAccountFactory) {
                 this.server = ((BoundAuthlibInjectorAccountFactory) factory).getServer();
