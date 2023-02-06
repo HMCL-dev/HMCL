@@ -80,11 +80,9 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         container.getChildren().add(list);
 
-        JFXButton btnExport = new JFXButton(i18n("button.export"));
+        JFXButton btnExport = FXUtils.newRaisedButton(i18n("button.export"));
         btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || Files.exists(Paths.get(fileItem.getPath())),
                 txtWorldName.textProperty().isEmpty(), fileItem.pathProperty()));
-        btnExport.setButtonType(JFXButton.ButtonType.RAISED);
-        btnExport.getStyleClass().add("jfx-button-raised");
         btnExport.setOnMouseClicked(e -> skinnable.export());
         HBox bottom = new HBox();
         bottom.setAlignment(Pos.CENTER_RIGHT);

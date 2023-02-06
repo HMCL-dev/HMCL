@@ -59,6 +59,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void jvm321() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit2.txt")),
+                CrashReportAnalyzer.Rule.JVM_32BIT);
+    }
+
+    @Test
     public void modResolution() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution.txt")),
@@ -279,6 +286,20 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void fabricWarnings1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric_warnings2.txt")),
+                CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
+        assertEquals(("net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!\n" +
+                        "A potential solution has been determined:\n" +
+                        "\t - Install roughlyenoughitems, version 6.0.2 or later.\n" +
+                        "Unmet dependency listing:\n" +
+                        "\t - Mod 'Roughly Searchable' (roughlysearchable) 2.2.1+1.17.1 requires version 6.0.2 or later of roughlyenoughitems, which is missing!\n" +
+                        "\tat net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:190) ~").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
     public void fabricConflicts() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-conflict.txt")),
@@ -317,6 +338,34 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING_MINECRAFT);
         assertEquals("fabric", result.getMatcher().group("mod"));
         assertEquals("[~1.16.2-alpha.20.28.a]", result.getMatcher().group("version"));
+    }
+
+    @Test
+    public void optifineRepeatInstallation() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_repeat_installation.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_REPEAT_INSTALLATION);
+    }
+
+    @Test
+    public void forgeRepeatInstallation() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation.txt")),
+                CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
+    }
+
+    @Test
+    public void optifineIsNotCompatibleWithForge() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
+    }
+
+    @Test
+    public void optifineIsNotCompatibleWithForge1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge2.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Test

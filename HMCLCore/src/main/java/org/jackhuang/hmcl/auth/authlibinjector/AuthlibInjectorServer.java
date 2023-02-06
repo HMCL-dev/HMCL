@@ -29,6 +29,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -87,7 +88,7 @@ public class AuthlibInjectorServer implements Observable {
     }
 
     private static String addHttpsIfMissing(String url) {
-        String lowercased = url.toLowerCase();
+        String lowercased = url.toLowerCase(Locale.ROOT);
         if (!lowercased.startsWith("http://") && !lowercased.startsWith("https://")) {
             url = "https://" + url;
         }

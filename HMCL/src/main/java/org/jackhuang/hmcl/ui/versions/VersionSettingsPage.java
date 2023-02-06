@@ -53,6 +53,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -180,11 +181,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             enableSpecificCheckBox.setText(i18n("settings.type.special.enable"));
             BorderPane.setAlignment(enableSpecificCheckBox, Pos.CENTER_RIGHT);
 
-            JFXButton editGlobalSettingsButton = new JFXButton();
+            JFXButton editGlobalSettingsButton = FXUtils.newRaisedButton(i18n("settings.type.global.edit"));
             settingsTypePane.setRight(editGlobalSettingsButton);
-            editGlobalSettingsButton.setText(i18n("settings.type.global.edit"));
-            editGlobalSettingsButton.getStyleClass().add("jfx-button-raised");
-            editGlobalSettingsButton.setButtonType(JFXButton.ButtonType.RAISED);
             editGlobalSettingsButton.disableProperty().bind(enableSpecificCheckBox.selectedProperty());
             BorderPane.setAlignment(editGlobalSettingsButton, Pos.CENTER_RIGHT);
             editGlobalSettingsButton.setOnMouseClicked(e -> editGlobalSettings());
@@ -546,10 +544,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
 
         cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
-        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase())));
+        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT))));
 
         cboProcessPriority.getItems().setAll(ProcessPriority.values());
-        cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase())));
+        cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
     }
 
     private void initialize() {
