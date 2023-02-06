@@ -23,7 +23,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
@@ -60,7 +59,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.*;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -79,31 +78,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         JFXListView<ModInfoObject> listView = new JFXListView<>();
-        JFXTextField searchField = new JFXTextField();
-
-        {
-            HBox searchBar = new HBox();
-            searchBar.setAlignment(Pos.BASELINE_CENTER);
-            searchBar.setPadding(new Insets(8, 8, 8, 8));
-
-            HBox.setHgrow(searchField, Priority.ALWAYS);
-            searchField.setPromptText(i18n("search"));
-
-            JFXButton clearBtn = new JFXButton();
-            clearBtn.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
-            clearBtn.setOnMouseClicked((event) -> {
-                searchField.textProperty().set("");
-            });
-            Node clearBtnWrapped = wrapMargin(clearBtn, new Insets(0, 0, 0, 9));
-            FXUtils.onChangeAndOperate(searchField.textProperty(), (text) -> {
-                if (text.isEmpty() && searchBar.getChildren().contains(clearBtnWrapped))
-                    searchBar.getChildren().remove(clearBtnWrapped);
-                else if (!searchBar.getChildren().contains(clearBtnWrapped))
-                    searchBar.getChildren().add(clearBtnWrapped);
-            });
-            searchBar.getChildren().setAll(searchField);
-            root.getContent().add(searchBar);
-        }
 
         {
             TransitionPane toolBarPane = new TransitionPane();
@@ -113,8 +87,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
                     createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG::update, skinnable::checkUpdates),
-                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download)
-            );
+                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download));
             HBox toolbarSelecting = new HBox();
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
@@ -149,7 +122,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             MutableObject<Object> lastCell = new MutableObject<>();
             listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            Bindings.bindContent(listView.getItems(), skinnable.getFilteredItems(searchField.textProperty()));
+            Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
             center.setContent(listView);
             root.getContent().add(center);
