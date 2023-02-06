@@ -23,6 +23,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
@@ -57,17 +58,35 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
+
+    // FXThread
+    private ThreadPoolExecutor searchPool;
+
+    private final TransitionPane toolbarPane;
+    private final HBox searchBar;
+    private final HBox toolbarNormal;
+    private final HBox toolbarSelecting;
+
+    private final JFXListView<ModInfoObject> listView;
+    private final JFXTextField searchField;
+
+    // FXThread
+    private boolean isSearching = false;
 
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
@@ -78,30 +97,27 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
-        JFXListView<ModInfoObject> listView = new JFXListView<>();
+        listView = new JFXListView<>();
 
         {
-            TransitionPane toolBarPane = new TransitionPane();
+            toolbarPane = new TransitionPane();
 
-            HBox searchBar = new HBox();
-            HBox toolbarNormal = new HBox();
-            HBox toolbarSelecting = new HBox();
+            searchBar = new HBox();
+            toolbarNormal = new HBox();
+            toolbarSelecting = new HBox();
 
             // Search Bar
             searchBar.setAlignment(Pos.CENTER);
             searchBar.setPadding(new Insets(0, 5, 0, 5));
-
-            JFXTextField searchField = new JFXTextField();
+            searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
+            searchField.setOnAction(e -> search());
 
-            JFXButton cancel = createToolbarButton2(null, SVG::close,
-                    () -> {
-                        searchField.clear();
-                        toolBarPane.setContent(toolbarNormal, ContainerAnimations.FADE.getAnimationProducer());
-                    });
+            JFXButton closeSearchBar = createToolbarButton2(null, SVG::close,
+                    () -> changeToolbar(toolbarNormal));
 
-            searchBar.getChildren().setAll(searchField, cancel);
+            searchBar.getChildren().setAll(searchField, closeSearchBar);
 
             // Toolbar Normal
             toolbarNormal.getChildren().setAll(
@@ -110,8 +126,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG::update, skinnable::checkUpdates),
                     createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download),
-                    createToolbarButton2(i18n("search"), SVG::magnify,
-                            () -> toolBarPane.setContent(searchBar, ContainerAnimations.FADE.getAnimationProducer()))
+                    createToolbarButton2(i18n("search"), SVG::magnify, () -> changeToolbar(searchBar))
             );
 
             // Toolbar Selecting
@@ -131,14 +146,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             listView.getSelectionModel().clearSelection())
             );
 
-            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
-                if (selectedItem == null) {
-                    toolBarPane.setContent(toolbarNormal, ContainerAnimations.FADE.getAnimationProducer());
-                } else {
-                    toolBarPane.setContent(toolbarSelecting, ContainerAnimations.FADE.getAnimationProducer());
-                }
-            });
-            root.getContent().add(toolBarPane);
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(isSearching ? searchBar : toolbarNormal);
+                        else
+                            changeToolbar(toolbarSelecting);
+                    });
+            root.getContent().add(toolbarPane);
         }
 
         {
@@ -160,12 +175,57 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         label.prefWidthProperty().bind(pane.widthProperty().add(-100));
 
         FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
-
             if (modded) pane.getChildren().setAll(root);
             else pane.getChildren().setAll(label);
         });
 
         getChildren().setAll(pane);
+    }
+
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE.getAnimationProducer());
+            if (isSearching && newToolbar == toolbarNormal) {
+                isSearching = false;
+                searchField.clear();
+                Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
+            }
+        }
+    }
+
+    private void search() {
+        isSearching = true;
+
+        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
+
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            listView.getItems().setAll(getSkinnable().getItems());
+        } else {
+            listView.getItems().clear();
+
+            Predicate<String> predicate;
+            if (queryString.startsWith("regex:")) {
+                try {
+                    Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
+                    predicate = s -> pattern.matcher(s).find();
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Illegal regular expression", e);
+                    return;
+                }
+            } else {
+                String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
+                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+            }
+
+            // Do we need to search in the background thread?
+            for (ModInfoObject item : getSkinnable().getItems()) {
+                if (predicate.test(item.getModInfo().getFileName())) {
+                    listView.getItems().add(item);
+                }
+            }
+        }
     }
 
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
