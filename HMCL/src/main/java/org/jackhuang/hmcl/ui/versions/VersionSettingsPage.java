@@ -180,11 +180,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             enableSpecificCheckBox.setText(i18n("settings.type.special.enable"));
             BorderPane.setAlignment(enableSpecificCheckBox, Pos.CENTER_RIGHT);
 
-            JFXButton editGlobalSettingsButton = new JFXButton();
+            JFXButton editGlobalSettingsButton = FXUtils.newRaisedButton(i18n("settings.type.global.edit"));
             settingsTypePane.setRight(editGlobalSettingsButton);
-            editGlobalSettingsButton.setText(i18n("settings.type.global.edit"));
-            editGlobalSettingsButton.getStyleClass().add("jfx-button-raised");
-            editGlobalSettingsButton.setButtonType(JFXButton.ButtonType.RAISED);
             editGlobalSettingsButton.disableProperty().bind(enableSpecificCheckBox.selectedProperty());
             BorderPane.setAlignment(editGlobalSettingsButton, Pos.CENTER_RIGHT);
             editGlobalSettingsButton.setOnMouseClicked(e -> editGlobalSettings());

@@ -334,8 +334,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortComboBox.getSelectionModel().select(0);
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
-                JFXButton searchButton = new JFXButton();
-                searchButton.setText(i18n("search"));
+                JFXButton searchButton = new JFXButton(i18n("search"));
                 searchButton.getStyleClass().add("jfx-button-raised");
                 searchButton.setButtonType(JFXButton.ButtonType.RAISED);
                 ObservableList<Node> last = FXCollections.observableArrayList(searchButton);

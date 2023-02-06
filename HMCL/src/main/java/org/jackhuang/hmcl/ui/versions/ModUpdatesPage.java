@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
@@ -107,9 +108,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         actions.setPadding(new Insets(8));
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        JFXButton nextButton = new JFXButton(i18n("mods.check_updates.update"));
-        nextButton.getStyleClass().add("jfx-button-raised");
-        nextButton.setButtonType(JFXButton.ButtonType.RAISED);
+        JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.update"));
         nextButton.setOnAction(e -> updateMods());
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
