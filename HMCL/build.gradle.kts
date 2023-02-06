@@ -17,7 +17,8 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
         (number - offset).toString()
     } else {
         val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
-        val prefix = if (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun") "dev" else "unofficial"
+        val isOfficial = System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty()
+        val prefix = if (isOfficial) "dev" else "unofficial"
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
 }
