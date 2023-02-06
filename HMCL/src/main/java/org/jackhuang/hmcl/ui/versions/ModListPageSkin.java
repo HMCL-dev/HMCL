@@ -74,9 +74,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
 
-    // FXThread
-    private ThreadPoolExecutor searchPool;
-
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
     private final HBox toolbarNormal;
