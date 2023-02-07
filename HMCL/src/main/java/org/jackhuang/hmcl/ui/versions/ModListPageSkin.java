@@ -111,7 +111,13 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             searchField.setOnAction(e -> search());
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG::close,
-                    () -> changeToolbar(toolbarNormal));
+                    () -> {
+                        changeToolbar(toolbarNormal);
+
+                        isSearching = false;
+                        searchField.clear();
+                        Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
+                    });
 
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
@@ -182,11 +188,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE.getAnimationProducer());
-            if (isSearching && newToolbar == toolbarNormal) {
-                isSearching = false;
-                searchField.clear();
-                Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
-            }
         }
     }
 
