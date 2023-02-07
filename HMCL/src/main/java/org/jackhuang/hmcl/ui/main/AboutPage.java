@@ -111,7 +111,7 @@ public class AboutPage extends StackPane {
         {
             IconedTwoLineListItem javafx = new IconedTwoLineListItem();
             javafx.setTitle("JavaFX");
-            javafx.setSubtitle("Copyright © 2013, 2021, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.");
+            javafx.setSubtitle("Copyright © 2013, 2023, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.");
             javafx.setExternalLink("https://openjfx.io/");
 
             IconedTwoLineListItem jfoenix = new IconedTwoLineListItem();
