@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -256,7 +257,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     JFXTextField txtMaxMemory = new JFXTextField();
                     FXUtils.setLimitWidth(txtMaxMemory, 60);
                     FXUtils.setValidateWhileTextChanged(txtMaxMemory, true);
-                    FXUtils.bindInt(txtMaxMemory, maxMemory);
+                    txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
                     lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label("MB"));
