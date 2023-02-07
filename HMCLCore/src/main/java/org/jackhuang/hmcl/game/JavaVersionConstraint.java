@@ -298,7 +298,7 @@ public enum JavaVersionConstraint {
     public static final int RULE_MANDATORY = 1;
     public static final int RULE_SUGGESTED = 2;
 
-    public static class VersionRanges {
+    public static final class VersionRanges {
         private final VersionRange mandatory;
         private final VersionRange suggested;
 
