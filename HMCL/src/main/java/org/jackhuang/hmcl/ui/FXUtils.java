@@ -275,7 +275,7 @@ public final class FXUtils {
     }
 
     public static void smoothScrolling(ScrollPane scrollPane) {
-        JFXScrollPane.smoothScrolling(scrollPane);
+        ScrollUtils.addSmoothScrolling(scrollPane);
     }
 
     public static void installFastTooltip(Node node, Tooltip tooltip) {
