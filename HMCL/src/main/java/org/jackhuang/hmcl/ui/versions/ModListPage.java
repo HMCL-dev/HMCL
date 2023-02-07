@@ -20,9 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -36,7 +34,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
-import org.jackhuang.hmcl.util.Debouncer;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -114,30 +111,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             // https://github.com/huanghongxun/HMCL/issues/938
             System.gc();
         }, Platform::runLater);
-    }
-
-    public FilteredList<ModListPageSkin.ModInfoObject> getFilteredItems(StringProperty queryStringProperty) {
-        FilteredList<ModListPageSkin.ModInfoObject> filteredList = new FilteredList<>(getItems());
-        Debouncer<Integer> searchFieldDebouncer = new Debouncer<>((key) -> runInFX(() -> {
-            String searchText = queryStringProperty.get();
-            if (searchText.isEmpty())
-                filteredList.setPredicate((item) -> true);
-            else
-                filteredList.setPredicate((item) -> {
-                    LocalModFile modInfo = item.getModInfo();
-                    if (searchText.startsWith("$:")) {
-                        // Use regular matching pattern.
-                        try {
-                            return modInfo.getFileName().matches(searchText.substring(2));
-                        } catch (Exception exception) {
-                            return true;
-                        }
-                    }
-                    return modInfo.getFileName().toLowerCase().contains(searchText.toLowerCase());
-                });
-        }), 400);
-        FXUtils.onChangeAndOperate(queryStringProperty, (text) -> searchFieldDebouncer.call(1));
-        return filteredList;
     }
 
     public void add() {
