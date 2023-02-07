@@ -29,6 +29,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 import java.io.File;
@@ -77,11 +78,11 @@ public class FileSelector extends HBox {
 
     public FileSelector() {
         JFXTextField customField = new JFXTextField();
-        customField.textProperty().bindBidirectional(valueProperty());
+        FXUtils.bindString(customField, valueProperty());
 
         JFXButton selectButton = new JFXButton();
         selectButton.setGraphic(SVG.folderOpen(Theme.blackFillBinding(), 15, 15));
-        selectButton.setOnMouseClicked(e -> {
+        selectButton.setOnAction(e -> {
             if (directory) {
                 DirectoryChooser chooser = new DirectoryChooser();
                 chooser.setTitle(chooserTitle);
