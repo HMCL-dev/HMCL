@@ -58,8 +58,6 @@ public final class Main {
         System.setProperty("java.net.useSystemProxies", "true");
         System.setProperty("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
-        // Fix title bar not displaying in GTK systems
-        System.getProperties().putIfAbsent("jdk.gtk.version", "2");
 
         checkDirectoryPath();
 

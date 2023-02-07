@@ -19,13 +19,13 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import com.jfoenix.controls.JFXScrollPane;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -47,7 +47,7 @@ public class HelpPage extends SpinnerPane {
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        JFXScrollPane.smoothScrolling(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
         IconedTwoLineListItem docPane = new IconedTwoLineListItem();
