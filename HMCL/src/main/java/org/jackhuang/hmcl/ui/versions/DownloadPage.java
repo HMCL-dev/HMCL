@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXScrollPane;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
@@ -233,7 +232,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getStyleClass().add("gray-background");
             pane.setPadding(new Insets(10));
             ScrollPane scrollPane = new ScrollPane(pane);
-            JFXScrollPane.smoothScrolling(scrollPane);
+            FXUtils.smoothScrolling(scrollPane);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
 

@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    api("org.glavo:simple-png-javafx:0.3.0")
     api("com.google.code.gson:gson:2.8.1")
     api("com.moandjiezana.toml:toml4j:0.7.2")
     api("org.tukaani:xz:1.8")

@@ -187,7 +187,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
             return emptySet();
         Set<TextureType> result = EnumSet.noneOf(TextureType.class);
         for (String val : prop.split(",")) {
-            val = val.toUpperCase();
+            val = val.toUpperCase(Locale.ROOT);
             TextureType parsed;
             try {
                 parsed = TextureType.valueOf(val);

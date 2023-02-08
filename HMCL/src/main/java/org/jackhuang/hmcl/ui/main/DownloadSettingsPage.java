@@ -48,7 +48,7 @@ public class DownloadSettingsPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        JFXScrollPane.smoothScrolling(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 

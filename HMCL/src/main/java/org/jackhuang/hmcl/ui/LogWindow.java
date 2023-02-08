@@ -26,6 +26,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -37,6 +38,7 @@ import javafx.stage.Stage;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -88,7 +90,7 @@ public final class LogWindow extends Stage {
     private boolean stopCheckLogCount = false;
 
     public LogWindow() {
-        setScene(new Scene(impl, 800, 480));
+        setScene(new Scene(impl, 854, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
@@ -134,7 +136,6 @@ public final class LogWindow extends Stage {
         while (logs.size() > config().getLogLines()) {
             Log removedLog = logs.removeFirst();
             if (!impl.listView.getItems().isEmpty() && impl.listView.getItems().get(0) == removedLog) {
-                // TODO: fix O(n)
                 impl.listView.getItems().remove(0);
             }
         }
@@ -162,8 +163,10 @@ public final class LogWindow extends Stage {
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
+            listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
+
             boolean flag = false;
-            cboLines.getItems().setAll("500", "2000", "5000");
+            cboLines.getItems().setAll("10000", "5000", "2000", "500");
             for (String i : cboLines.getItems())
                 if (Integer.toString(config().getLogLines()).equals(i)) {
                     cboLines.getSelectionModel().select(i);

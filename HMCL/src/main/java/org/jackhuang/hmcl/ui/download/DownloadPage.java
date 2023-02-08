@@ -82,9 +82,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
             ModpackDownloadListPage page = new ModpackDownloadListPage(Versions::downloadModpackImpl, false);
 
-            JFXButton installLocalModpackButton = new JFXButton(i18n("install.modpack"));
-            installLocalModpackButton.setButtonType(JFXButton.ButtonType.RAISED);
-            installLocalModpackButton.getStyleClass().add("jfx-button-raised");
+            JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Versions.importModpack());
 
             page.getActions().add(installLocalModpackButton);

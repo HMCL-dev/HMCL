@@ -68,7 +68,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
@@ -276,7 +275,7 @@ public final class FXUtils {
     }
 
     public static void smoothScrolling(ScrollPane scrollPane) {
-        JFXScrollPane.smoothScrolling(scrollPane);
+        ScrollUtils.addSmoothScrolling(scrollPane);
     }
 
     public static void installFastTooltip(Node node, Tooltip tooltip) {
@@ -671,6 +670,13 @@ public final class FXUtils {
         }
     }
 
+    public static JFXButton newRaisedButton(String text) {
+        JFXButton button = new JFXButton(text);
+        button.getStyleClass().add("jfx-button-raised");
+        button.setButtonType(JFXButton.ButtonType.RAISED);
+        return button;
+    }
+
     public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
         applyDragListener(node, filter, callback, null);
     }
@@ -773,38 +779,6 @@ public final class FXUtils {
                 e.consume();
             }
         });
-    }
-
-    // Based on https://stackoverflow.com/a/57552025
-    // Fix #874: Use it instead of SwingFXUtils.toFXImage
-    public static WritableImage toFXImage(BufferedImage image) {
-        final int iw = image.getWidth();
-        final int ih = image.getHeight();
-
-        WritableImage wr = new WritableImage(iw, ih);
-        PixelWriter pw = wr.getPixelWriter();
-
-        for (int x = 0; x < iw; x++) {
-            for (int y = 0; y < ih; y++) {
-                pw.setArgb(x, y, image.getRGB(x, y));
-            }
-        }
-        return wr;
-    }
-
-    public static BufferedImage fromFXImage(Image image) {
-        final int iw = (int) image.getWidth();
-        final int ih = (int) image.getHeight();
-
-        PixelReader pr = image.getPixelReader();
-        BufferedImage bufferedImage = new BufferedImage(iw, ih, BufferedImage.TYPE_INT_ARGB);
-        for (int x = 0; x < iw; x++) {
-            for (int y = 0; y < ih; y++) {
-                bufferedImage.setRGB(x, y, pr.getArgb(x, y));
-            }
-        }
-
-        return bufferedImage;
     }
 
     public static void copyText(String text) {
