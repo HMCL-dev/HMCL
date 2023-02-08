@@ -90,7 +90,7 @@ public class DownloadSettingsPage extends StackPane {
 
                     JFXComboBox<String> cboDownloadSource = new JFXComboBox<>();
                     cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-                    downloadSourcePane.setCenter(cboDownloadSource);
+                    downloadSourcePane.setRight(cboDownloadSource);
                     FXUtils.setLimitWidth(cboDownloadSource, 420);
 
                     cboDownloadSource.getItems().setAll(DownloadProviders.rawProviders.keySet());
