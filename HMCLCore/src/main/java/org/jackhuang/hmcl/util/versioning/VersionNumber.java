@@ -347,6 +347,14 @@ public class VersionNumber implements Comparable<VersionNumber> {
         return canonical;
     }
 
+    public VersionNumber min(VersionNumber that) {
+        return this.compareTo(that) <= 0 ? this : that;
+    }
+
+    public VersionNumber max(VersionNumber that) {
+        return this.compareTo(that) >= 0 ? this : that;
+    }
+
     @Override
     public boolean equals(Object o) {
         return o instanceof VersionNumber && canonical.equals(((VersionNumber) o).canonical);

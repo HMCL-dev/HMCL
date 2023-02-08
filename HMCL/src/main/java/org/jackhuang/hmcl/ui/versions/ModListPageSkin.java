@@ -32,7 +32,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Theme;
@@ -44,6 +43,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -164,7 +164,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            MutableObject<Object> lastCell = new MutableObject<>();
+            Holder<Object> lastCell = new Holder<>();
             listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
@@ -371,7 +371,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView, MutableObject<Object> lastCell) {
+        ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
 
             HBox container = new HBox(8);
