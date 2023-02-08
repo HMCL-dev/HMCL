@@ -166,19 +166,19 @@ public final class LogWindow extends Stage {
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
 
             boolean flag = false;
-            cboLines.getItems().setAll("10000", "5000", "2000", "500");
+            cboLines.getItems().setAll("500", "2000", "5000", "10000");
             for (String i : cboLines.getItems())
                 if (Integer.toString(config().getLogLines()).equals(i)) {
                     cboLines.getSelectionModel().select(i);
                     flag = true;
                 }
 
+            if (!flag)
+                cboLines.getSelectionModel().select(2);
+
             cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
                 config().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
             });
-
-            if (!flag)
-                cboLines.getSelectionModel().select(0);
 
             Log4jLevel[] levels = new Log4jLevel[]{Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
             String[] suffix = new String[]{"fatals", "errors", "warns", "infos", "debugs"};
