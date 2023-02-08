@@ -66,10 +66,12 @@ public final class VersionRange {
     }
 
     public boolean contains(String versionNumber) {
+        if (versionNumber == null) return false;
         return contains(VersionNumber.asVersion(versionNumber));
     }
 
     public boolean contains(VersionNumber versionNumber) {
+        if (versionNumber == null) return false;
         if (isEmpty()) return false;
         if (isAll()) return true;
 

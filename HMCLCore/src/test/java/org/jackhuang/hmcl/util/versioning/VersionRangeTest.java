@@ -32,6 +32,17 @@ public class VersionRangeTest {
 
         assertTrue(all().contains("0"));
         assertTrue(all().contains("10"));
+
+        assertFalse(all().contains((String) null));
+        assertFalse(empty().contains((String) null));
+        assertFalse(between("0", "10").contains((String) null));
+        assertFalse(atLeast("10").contains((String) null));
+        assertFalse(atMost("10").contains((String) null));
+        assertFalse(all().contains((VersionNumber) null));
+        assertFalse(empty().contains((VersionNumber) null));
+        assertFalse(between("0", "10").contains((VersionNumber) null));
+        assertFalse(atLeast("10").contains((VersionNumber) null));
+        assertFalse(atMost("10").contains((VersionNumber) null));
     }
 
     private static void assertIsOverlappedBy(boolean value, VersionRange range1, VersionRange range2) {
