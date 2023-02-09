@@ -30,7 +30,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class I18n {
 
-    private I18n() {}
+    private I18n() {
+    }
 
     public static SupportedLocale getCurrentLocale() {
         try {
@@ -48,11 +49,14 @@ public final class I18n {
 
     public static String i18n(String key, Object... formatArgs) {
         try {
-            return String.format(i18n(key), formatArgs);
+            return String.format(getResourceBundle().getString(key), formatArgs);
+        } catch (MissingResourceException e) {
+            LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
         } catch (IllegalFormatException e) {
-            LOG.log(Level.SEVERE, "Illegal format string", e);
-            return key + Arrays.toString(formatArgs);
+            LOG.log(Level.SEVERE, "Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
         }
+
+        return key + Arrays.toString(formatArgs);
     }
 
     public static String i18n(String key) {
