@@ -48,9 +48,15 @@ public class OAuthAccountLoginDialog extends DialogPane {
         FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
             if (deviceCode != null) {
                 FXUtils.copyText(deviceCode.getUserCode());
-                hintPane.setSegment(i18n("account.login.refresh.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
+                hintPane.setSegment(
+                        "<b>" + i18n("account.login.refresh.microsoft.hint") + "</b>\n"
+                                + i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri())
+                );
             } else {
-                hintPane.setSegment(i18n("account.login.refresh.microsoft.hint"));
+                hintPane.setSegment(
+                        "<b>" + i18n("account.login.refresh.microsoft.hint") + "</b>\n"
+                                + i18n("account.methods.microsoft.hint")
+                );
             }
         });
         hintPane.setOnMouseClicked(e -> {
