@@ -180,22 +180,14 @@ public class DefaultLauncher extends Launcher {
                 res.addDefault("-Duser.home=", options.getGameDir().getParent());
 
             // Using G1GC with its settings by default
-            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8) {
-                boolean addG1Args = true;
-                for (String javaArg : options.getJavaArguments()) {
-                    if ("-XX:-UseG1GC".equals(javaArg) || (javaArg.startsWith("-XX:+Use") && javaArg.endsWith("GC"))) {
-                        addG1Args = false;
-                        break;
-                    }
-                }
-                if (addG1Args) {
-                    res.addUnstableDefault("UnlockExperimentalVMOptions", true);
-                    res.addUnstableDefault("UseG1GC", true);
-                    res.addUnstableDefault("G1NewSizePercent", "20");
-                    res.addUnstableDefault("G1ReservePercent", "20");
-                    res.addUnstableDefault("MaxGCPauseMillis", "50");
-                    res.addUnstableDefault("G1HeapRegionSize", "32m");
-                }
+            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8
+                    && res.noneMatch(arg -> "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")))) {
+                res.addUnstableDefault("UnlockExperimentalVMOptions", true);
+                res.addUnstableDefault("UseG1GC", true);
+                res.addUnstableDefault("G1NewSizePercent", "20");
+                res.addUnstableDefault("G1ReservePercent", "20");
+                res.addUnstableDefault("MaxGCPauseMillis", "50");
+                res.addUnstableDefault("G1HeapRegionSize", "32m");
             }
 
             res.addUnstableDefault("UseAdaptiveSizePolicy", false);
