@@ -35,9 +35,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -166,19 +166,19 @@ public final class LogWindow extends Stage {
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
 
             boolean flag = false;
-            cboLines.getItems().setAll("10000", "5000", "2000", "500");
+            cboLines.getItems().setAll("500", "2000", "5000", "10000");
             for (String i : cboLines.getItems())
                 if (Integer.toString(config().getLogLines()).equals(i)) {
                     cboLines.getSelectionModel().select(i);
                     flag = true;
                 }
 
+            if (!flag)
+                cboLines.getSelectionModel().select(2);
+
             cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
                 config().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
             });
-
-            if (!flag)
-                cboLines.getSelectionModel().select(0);
 
             Log4jLevel[] levels = new Log4jLevel[]{Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
             String[] suffix = new String[]{"fatals", "errors", "warns", "infos", "debugs"};
@@ -294,7 +294,7 @@ public final class LogWindow extends Stage {
 
                 listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
                         + "; -fx-font-size: " + config().getFontSize() + "px;");
-                MutableObject<Object> lastCell = new MutableObject<>();
+                Holder<Object> lastCell = new Holder<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
                         getStyleClass().add("log-window-list-cell");
@@ -313,9 +313,9 @@ public final class LogWindow extends Stage {
                         super.updateItem(item, empty);
 
                         // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                        if (this == lastCell.getValue() && !isVisible())
+                        if (this == lastCell.value && !isVisible())
                             return;
-                        lastCell.setValue(this);
+                        lastCell.value = this;
 
                         pseudoClassStateChanged(EMPTY, empty);
                         pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
