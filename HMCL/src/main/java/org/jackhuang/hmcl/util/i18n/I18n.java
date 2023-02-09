@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
+import java.util.Arrays;
+import java.util.IllegalFormatException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -45,7 +47,12 @@ public final class I18n {
     }
 
     public static String i18n(String key, Object... formatArgs) {
-        return String.format(i18n(key), formatArgs);
+        try {
+            return String.format(i18n(key), formatArgs);
+        } catch (IllegalFormatException e) {
+            LOG.log(Level.SEVERE, "Illegal format string", e);
+            return key + Arrays.toString(formatArgs);
+        }
     }
 
     public static String i18n(String key) {
