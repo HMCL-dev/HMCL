@@ -107,7 +107,7 @@ public class GameCrashWindow extends Stage {
 
         this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
-        setScene(new Scene(view, 800, 480));
+        setScene(new Scene(view, 854, 700));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
@@ -354,14 +354,10 @@ public class GameCrashWindow extends Stage {
 
             HBox toolBar = new HBox();
             {
-                JFXButton exportGameCrashInfoButton = new JFXButton(i18n("logwindow.export_game_crash_logs"));
-                exportGameCrashInfoButton.setButtonType(JFXButton.ButtonType.RAISED);
-                exportGameCrashInfoButton.getStyleClass().add("jfx-button-raised");
+                JFXButton exportGameCrashInfoButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
                 exportGameCrashInfoButton.setOnMouseClicked(e -> exportGameCrashInfo());
 
-                JFXButton logButton = new JFXButton(i18n("logwindow.title"));
-                logButton.setButtonType(JFXButton.ButtonType.RAISED);
-                logButton.getStyleClass().add("jfx-button-raised");
+                JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
                 logButton.setOnMouseClicked(e -> showLogWindow());
 
                 toolBar.setPadding(new Insets(8));

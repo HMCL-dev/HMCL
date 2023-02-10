@@ -8,7 +8,7 @@ buildscript {
     }
 }
 
-val jfxVersion = "17.0.2"
+val jfxVersion = "19.0.2.1"
 
 data class Platform(
     val name: String,
@@ -76,7 +76,7 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
             val classifier = platform.classifier
             rootProject.subprojects {
                 for (module in jfxModules) {
-                    dependencies.add("implementation", "$groupId:javafx-$module:$version:$classifier")
+                    dependencies.add("compileOnly", "$groupId:javafx-$module:$version:$classifier")
                     dependencies.add("testImplementation", "$groupId:javafx-$module:$version:$classifier")
                 }
             }

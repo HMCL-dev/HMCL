@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
@@ -162,10 +163,8 @@ public class InstallersPage extends Control implements WizardPage {
 
 
             {
-                JFXButton installButton = new JFXButton(i18n("button.install"));
+                JFXButton installButton = FXUtils.newRaisedButton(i18n("button.install"));
                 installButton.disableProperty().bind(control.installable.not());
-                installButton.getStyleClass().add("jfx-button-raised");
-                installButton.setButtonType(JFXButton.ButtonType.RAISED);
                 installButton.setPrefWidth(100);
                 installButton.setPrefHeight(40);
                 installButton.setOnMouseClicked(e -> control.onInstall());

@@ -65,6 +65,7 @@ public final class Launcher extends Application {
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
+        LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
             Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
             LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
