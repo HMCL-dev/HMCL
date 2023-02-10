@@ -89,7 +89,7 @@ public class FileSelector extends HBox {
                 File dir = chooser.showDialog(Controllers.getStage());
                 if (dir != null) {
                     String path = dir.getAbsolutePath();
-                    customField.setText(dir.getAbsolutePath());
+                    customField.setText(path);
                     value.setValue(path);
                 }
             } else {
