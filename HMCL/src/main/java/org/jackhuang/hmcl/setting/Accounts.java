@@ -325,7 +325,7 @@ public final class Accounts {
             Schedulers.io().execute(() -> {
                 try {
                     finalSelected.logIn();
-                } catch (AuthenticationException e) {
+                } catch (Throwable e) {
                     LOG.log(Level.WARNING, "Failed to log " + finalSelected + " in", e);
                 }
             });
