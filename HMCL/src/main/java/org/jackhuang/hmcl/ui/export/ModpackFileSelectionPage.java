@@ -29,6 +29,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -69,10 +70,8 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         nextPane.setPadding(new Insets(16, 16, 16, 0));
         nextPane.setAlignment(Pos.CENTER_RIGHT);
         {
-            JFXButton btnNext = new JFXButton(i18n("wizard.next"));
-            btnNext.getStyleClass().add("jfx-button-raised");
+            JFXButton btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
             btnNext.setPrefSize(100, 40);
-            btnNext.setButtonType(JFXButton.ButtonType.RAISED);
             btnNext.setOnAction(e -> onNext());
 
             nextPane.getChildren().setAll(btnNext);

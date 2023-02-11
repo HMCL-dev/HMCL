@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class SkinCanvas extends Group {
 
-    public static final Image ALEX = new Image(SkinCanvas.class.getResourceAsStream("/assets/img/skin/alex.png"));
-    public static final Image STEVE = new Image(SkinCanvas.class.getResourceAsStream("/assets/img/skin/steve.png"));
+    public static final Image ALEX = new Image("/assets/img/skin/alex.png");
+    public static final Image STEVE = new Image("/assets/img/skin/steve.png");
 
     public static final SkinCube ALEX_LARM = new SkinCube(3, 12, 4, 14F / 64F, 16F / 64F, 32F / 64F, 48F / 64F, 0F, true);
     public static final SkinCube ALEX_RARM = new SkinCube(3, 12, 4, 14F / 64F, 16F / 64F, 40F / 64F, 16F / 64F, 0F, true);
