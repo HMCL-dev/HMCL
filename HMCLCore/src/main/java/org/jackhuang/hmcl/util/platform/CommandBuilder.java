@@ -297,7 +297,7 @@ public final class CommandBuilder {
     }
 
     public static String toBatchStringLiteral(String s) {
-        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') : s;
+        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') + '"' : s;
     }
 
     public static String toShellStringLiteral(String s) {
