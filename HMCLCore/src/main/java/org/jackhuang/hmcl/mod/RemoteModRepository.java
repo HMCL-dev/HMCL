@@ -38,9 +38,9 @@ public interface RemoteModRepository {
     Type getType();
 
     enum SortType {
+        POPULARITY,
         NAME,
         DATE_CREATED,
-        POPULARITY,
         LAST_UPDATED,
         AUTHOR,
         TOTAL_DOWNLOADS
