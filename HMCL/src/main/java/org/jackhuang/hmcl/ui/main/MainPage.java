@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
@@ -254,18 +255,22 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void doAnimation(boolean show) {
-        Duration duration = Duration.millis(320);
-        Timeline nowAnimation = new Timeline();
-        nowAnimation.getKeyFrames().addAll(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(updatePane.translateXProperty(), show ? 260 : 0, SINE)),
-                new KeyFrame(duration,
-                        new KeyValue(updatePane.translateXProperty(), show ? 0 : 260, SINE)));
-        if (show) nowAnimation.getKeyFrames().add(
-                new KeyFrame(Duration.ZERO, e -> updatePane.setVisible(true)));
-        else nowAnimation.getKeyFrames().add(
-                new KeyFrame(duration, e -> updatePane.setVisible(false)));
-        nowAnimation.play();
+        if (AnimationUtils.isAnimationEnabled()) {
+            Duration duration = Duration.millis(320);
+            Timeline nowAnimation = new Timeline();
+            nowAnimation.getKeyFrames().addAll(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(updatePane.translateXProperty(), show ? 260 : 0, SINE)),
+                    new KeyFrame(duration,
+                            new KeyValue(updatePane.translateXProperty(), show ? 0 : 260, SINE)));
+            if (show) nowAnimation.getKeyFrames().add(
+                    new KeyFrame(Duration.ZERO, e -> updatePane.setVisible(true)));
+            else nowAnimation.getKeyFrames().add(
+                    new KeyFrame(duration, e -> updatePane.setVisible(false)));
+            nowAnimation.play();
+        } else {
+            updatePane.setVisible(show);
+        }
     }
 
     private void launch() {
