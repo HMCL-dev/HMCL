@@ -182,7 +182,7 @@ public final class Accounts {
                 globalAccountStorages.setAll((List<Map<Object, Object>>)
                         Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
                         }.getType()));
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 LOG.log(Level.WARNING, "Failed to load global accounts", e);
             }
         }
