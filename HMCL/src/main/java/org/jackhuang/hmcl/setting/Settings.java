@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import javafx.beans.binding.Bindings;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -54,6 +55,7 @@ public final class Settings {
         Accounts.init();
         Profiles.init();
         AuthlibInjectorServers.init();
+        AnimationUtils.init();
 
         CacheRepository.setInstance(HMCLCacheRepository.REPOSITORY);
         HMCLCacheRepository.REPOSITORY.directoryProperty().bind(Bindings.createStringBinding(() -> {

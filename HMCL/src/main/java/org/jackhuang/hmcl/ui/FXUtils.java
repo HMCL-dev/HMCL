@@ -47,6 +47,7 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Logging;
@@ -275,7 +276,8 @@ public final class FXUtils {
     }
 
     public static void smoothScrolling(ScrollPane scrollPane) {
-        ScrollUtils.addSmoothScrolling(scrollPane);
+        if (AnimationUtils.isAnimationEnabled())
+            ScrollUtils.addSmoothScrolling(scrollPane);
     }
 
     public static void installFastTooltip(Node node, Tooltip tooltip) {

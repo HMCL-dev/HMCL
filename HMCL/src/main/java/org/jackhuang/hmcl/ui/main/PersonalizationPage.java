@@ -88,6 +88,12 @@ public class PersonalizationPage extends StackPane {
             titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
+        {
+            OptionToggleButton animationButton = new OptionToggleButton();
+            themeList.getContent().add(animationButton);
+            animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
+            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
+        }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
