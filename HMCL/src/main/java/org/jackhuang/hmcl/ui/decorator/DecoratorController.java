@@ -20,7 +20,8 @@ package org.jackhuang.hmcl.ui.decorator;
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXSnackbar;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -35,6 +36,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
@@ -55,6 +57,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -89,9 +92,22 @@ public class DecoratorController {
         decorator.onBackNavButtonActionProperty().set(e -> back());
         decorator.onRefreshNavButtonActionProperty().set(e -> refresh());
 
-        setupBackground();
-
         setupAuthlibInjectorDnD();
+
+        // Setup background
+        decorator.setContentBackground(getBackground());
+        changeBackgroundListener = o -> {
+            final int currentCount = ++this.changeBackgroundCount;
+            CompletableFuture.supplyAsync(this::getBackground, Schedulers.io())
+                    .thenAcceptAsync(background -> {
+                        if (this.changeBackgroundCount == currentCount)
+                            decorator.setContentBackground(background);
+                    }, Schedulers.javafx());
+        };
+        WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
+        config().backgroundImageTypeProperty().addListener(weakListener);
+        config().backgroundImageProperty().addListener(weakListener);
+        config().backgroundImageUrlProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -134,37 +150,40 @@ public class DecoratorController {
 
     // ==== Background ====
 
-    private void setupBackground() {
-        decorator.contentBackgroundProperty().bind(
-                Bindings.createObjectBinding(
-                        () -> {
-                            Image image = null;
-                            if (config().getBackgroundImageType() == EnumBackgroundImage.CUSTOM && config().getBackgroundImage() != null) {
-                                image = tryLoadImage(Paths.get(config().getBackgroundImage()))
-                                        .orElse(null);
-                            }
-                            if (config().getBackgroundImageType() == EnumBackgroundImage.NETWORK) {
-                                if (!NetworkUtils.isURL(config().getBackgroundImageUrl())) {
-                                    image = loadDefaultBackgroundImage();
-                                } else {
-                                    image = new Image(config().getBackgroundImageUrl(), true);
-                                }
-                            } else if (config().getBackgroundImageType() == EnumBackgroundImage.CLASSIC) {
-                                image = newImage("/assets/img/background-classic.jpg");
-                            } else if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
-                                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
-                            }
-                            if (image == null) {
-                                image = loadDefaultBackgroundImage();
-                            }
-                            return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
-                        },
-                        config().backgroundImageTypeProperty(),
-                        config().backgroundImageProperty(),
-                        config().backgroundImageUrlProperty()));
+    //FXThread
+    private int changeBackgroundCount = 0;
+
+    @SuppressWarnings("FieldCanBeLocal") // Strong reference
+    private final InvalidationListener changeBackgroundListener;
+
+    private Background getBackground() {
+        EnumBackgroundImage imageType = config().getBackgroundImageType();
+
+        Image image = null;
+        switch (imageType) {
+            case CUSTOM:
+                String backgroundImage = config().getBackgroundImage();
+                if (backgroundImage != null)
+                    image = tryLoadImage(Paths.get(backgroundImage)).orElse(null);
+                break;
+            case NETWORK:
+                String backgroundImageUrl = config().getBackgroundImageUrl();
+                if (backgroundImageUrl != null && NetworkUtils.isURL(backgroundImageUrl))
+                    image = tryLoadImage(backgroundImageUrl).orElse(null);
+                break;
+            case CLASSIC:
+                image = newImage("/assets/img/background-classic.jpg");
+                break;
+            case TRANSLUCENT:
+                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
+        }
+        if (image == null) {
+            image = loadDefaultBackgroundImage();
+        }
+        return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
     }
 
-    private Image defaultBackground;
+    private volatile Image defaultBackground;
 
     /**
      * Load background image from bg/, background.png, background.jpg, background.gif
@@ -196,7 +215,7 @@ public class DecoratorController {
         List<Path> candidates;
         try (Stream<Path> stream = Files.list(imageDir)) {
             candidates = stream
-                .filter(Files::isReadable)
+                    .filter(Files::isReadable)
                     .filter(it -> {
                         String ext = getExtension(it).toLowerCase(Locale.ROOT);
                         return ext.equals("png") || ext.equals("jpg") || ext.equals("gif");
@@ -224,9 +243,13 @@ public class DecoratorController {
         if (!Files.isReadable(path))
             return Optional.empty();
 
+        return tryLoadImage(path.toAbsolutePath().toUri().toString());
+    }
+
+    private Optional<Image> tryLoadImage(String url) {
         Image img;
         try {
-            img = new Image(path.toAbsolutePath().toUri().toString());
+            img = new Image(url);
         } catch (IllegalArgumentException e) {
             LOG.log(WARNING, "Couldn't load background image", e);
             return Optional.empty();

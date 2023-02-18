@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -82,8 +83,8 @@ public class GameItem extends Control {
                 ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(version);
                 if (config == null) return;
                 tag.set(config.getVersion());
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to read modpack configuration from ", e);
+            } catch (IOException | JsonParseException e) {
+                LOG.log(Level.WARNING, "Failed to read modpack configuration from " + version, e);
             }
         }, Platform::runLater)
                 .exceptionally(handleUncaught);

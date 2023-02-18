@@ -191,6 +191,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("preferredLoginType")
     private StringProperty preferredLoginType = new SimpleStringProperty();
 
+    @SerializedName("animationDisabled")
+    private BooleanProperty animationDisabled = new SimpleBooleanProperty();
+
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -599,6 +602,18 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty preferredLoginTypeProperty() {
         return preferredLoginType;
+    }
+
+    public boolean isAnimationDisabled() {
+        return animationDisabled.get();
+    }
+
+    public BooleanProperty animationDisabledProperty() {
+        return animationDisabled;
+    }
+
+    public void setAnimationDisabled(boolean animationDisabled) {
+        this.animationDisabled.set(animationDisabled);
     }
 
     public boolean isTitleTransparent() {
