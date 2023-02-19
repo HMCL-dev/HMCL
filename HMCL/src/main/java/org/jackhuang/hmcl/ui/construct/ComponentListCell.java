@@ -152,16 +152,16 @@ class ComponentListCell extends StackPane {
                     list.layout();
                 }
 
-                double newAnimatedHeight = (list.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
-                double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(-1);
-                double contentHeight = expanded ? newAnimatedHeight : 0;
+                Platform.runLater(() -> {
+                    double newAnimatedHeight = (list.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
+                    double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(-1);
+                    double contentHeight = expanded ? newAnimatedHeight : 0;
 
-                if (AnimationUtils.isAnimationEnabled()) {
-                    Platform.runLater(() -> {
-                        if (expanded) {
-                            updateClip(newHeight);
-                        }
+                    if (expanded) {
+                        updateClip(newHeight);
+                    }
 
+                    if (AnimationUtils.isAnimationEnabled()) {
                         expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
                                 new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
                                 new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
@@ -172,26 +172,22 @@ class ComponentListCell extends StackPane {
                         }
 
                         expandAnimation.play();
-                    });
-                } else {
-                    if (expanded) {
-                        updateClip(newHeight);
-                    }
+                    } else {
+                        container.setMinHeight(contentHeight);
+                        container.setMaxHeight(contentHeight);
 
-                    container.setMinHeight(contentHeight);
-                    container.setMaxHeight(contentHeight);
 
-                    if (!expanded) {
-                        updateClip(newHeight);
+                        if (!expanded) {
+                            updateClip(newHeight);
+                        }
                     }
-                }
+                });
             };
 
             headerRippler.setOnMouseClicked(onExpand);
             expandButton.setOnAction((EventHandler<ActionEvent>) (Object) onExpand);
 
-            expandedProperty().addListener((a, b, newValue) ->
-                    expandIcon.setRotate(newValue ? 180 : 0));
+            expandedProperty().addListener((a, b, newValue) -> expandIcon.setRotate(newValue ? 180 : 0));
 
             getChildren().setAll(groupNode);
         } else {
