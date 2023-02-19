@@ -406,7 +406,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
-            this.setPrefHeight(51);
+            this.setMinHeight(50);
         }
     }
 
