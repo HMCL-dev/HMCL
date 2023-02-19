@@ -322,11 +322,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
                             .collect(Collectors.toList())) {
-                        ComponentList sublist = new ComponentList();
-                        sublist.setLazyInitializer(self -> self.getContent().setAll(
+                        ComponentList sublist = new ComponentList(() ->
                                 control.versions.get(gameVersion).stream()
                                         .map(version -> new ModItem(version, control))
-                                        .collect(Collectors.toList())));
+                                        .collect(Collectors.toList()));
                         sublist.getStyleClass().add("no-padding");
                         sublist.setTitle(gameVersion);
 
@@ -405,6 +404,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                     content.getTags().add(i18n("version.game.snapshot"));
                     break;
             }
+
+            // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
+            this.setPrefHeight(51);
         }
     }
 

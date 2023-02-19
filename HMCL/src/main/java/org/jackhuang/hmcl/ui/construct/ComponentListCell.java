@@ -43,7 +43,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 /**
  * @author huangyuhui
  */
-class ComponentListCell extends StackPane {
+final class ComponentListCell extends StackPane {
     private final Node content;
     private Animation expandAnimation;
     private Rectangle clipRect;
@@ -146,9 +146,8 @@ class ComponentListCell extends StackPane {
 
                 boolean expanded = !isExpanded();
                 setExpanded(expanded);
-
                 if (expanded) {
-                    list.onExpand();
+                    list.doLazyInit();
                     list.layout();
                 }
 
@@ -175,7 +174,6 @@ class ComponentListCell extends StackPane {
                     } else {
                         container.setMinHeight(contentHeight);
                         container.setMaxHeight(contentHeight);
-
 
                         if (!expanded) {
                             updateClip(newHeight);

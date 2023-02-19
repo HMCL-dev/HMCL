@@ -38,7 +38,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import java.util.function.Consumer;
+import java.util.List;
+import java.util.function.Supplier;
 
 @DefaultProperty("content")
 public class ComponentList extends Control {
@@ -47,10 +48,15 @@ public class ComponentList extends Control {
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
     private boolean hasSubtitle = false;
     public final ObservableList<Node> content = FXCollections.observableArrayList();
-    private Consumer<ComponentList> lazyInitializer;
+    private Supplier<List<? extends Node>> lazyInitializer;
 
     public ComponentList() {
         getStyleClass().add("options-list");
+    }
+
+    public ComponentList(Supplier<List<? extends Node>> lazyInitializer) {
+        this();
+        this.lazyInitializer = lazyInitializer;
     }
 
     public String getTitle() {
@@ -101,13 +107,9 @@ public class ComponentList extends Control {
         return content;
     }
 
-    public void setLazyInitializer(Consumer<ComponentList> lazyInitializer) {
-        this.lazyInitializer = lazyInitializer;
-    }
-
-    public void onExpand() {
+    void doLazyInit() {
         if (lazyInitializer != null) {
-            lazyInitializer.accept(this);
+            this.getContent().setAll(lazyInitializer.get());
             setNeedsLayout(true);
             lazyInitializer = null;
         }
