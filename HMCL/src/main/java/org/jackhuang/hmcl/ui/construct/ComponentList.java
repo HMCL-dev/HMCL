@@ -47,7 +47,6 @@ public class ComponentList extends Control {
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
     private boolean hasSubtitle = false;
     public final ObservableList<Node> content = FXCollections.observableArrayList();
-    private boolean expanded = false;
     private Consumer<ComponentList> lazyInitializer;
 
     public ComponentList() {
@@ -107,12 +106,11 @@ public class ComponentList extends Control {
     }
 
     public void onExpand() {
-        if (!expanded && lazyInitializer != null) {
+        if (lazyInitializer != null) {
             lazyInitializer.accept(this);
             setNeedsLayout(true);
+            lazyInitializer = null;
         }
-
-        expanded = true;
     }
 
     @Override

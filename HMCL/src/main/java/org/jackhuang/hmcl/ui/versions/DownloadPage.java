@@ -323,11 +323,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                             .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
                             .collect(Collectors.toList())) {
                         ComponentList sublist = new ComponentList();
-                        sublist.setLazyInitializer(self -> {
-                            self.getContent().setAll(control.versions.get(gameVersion).stream()
-                                    .map(version -> new ModItem(version, control))
-                                    .collect(Collectors.toList()));
-                        });
+                        sublist.setLazyInitializer(self -> self.getContent().setAll(
+                                control.versions.get(gameVersion).stream()
+                                        .map(version -> new ModItem(version, control))
+                                        .collect(Collectors.toList())));
                         sublist.getStyleClass().add("no-padding");
                         sublist.setTitle(gameVersion);
 
@@ -391,7 +390,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             content.setTitle(dataItem.getName());
             content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
-            saveAsButton.setOnMouseClicked(e -> selfPage.saveAs(dataItem));
+            saveAsButton.setOnAction(e -> selfPage.saveAs(dataItem));
 
             switch (dataItem.getVersionType()) {
                 case Release:
