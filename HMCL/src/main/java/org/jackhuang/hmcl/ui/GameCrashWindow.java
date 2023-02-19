@@ -28,6 +28,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -347,9 +348,20 @@ public class GameCrashWindow extends Stage {
                 Label reasonTitle = new Label(i18n("game.crash.reason"));
                 reasonTitle.getStyleClass().add("two-line-item-second-large-title");
 
+                ScrollPane reasonPane = new ScrollPane(reasonTextFlow);
+                reasonPane.setFitToWidth(true);
+                reasonPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                reasonPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);
-                gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonTextFlow, feedbackTextFlow));
+                FXUtils.onChangeAndOperate(feedbackTextFlow.visibleProperty(), visible -> {
+                    if (visible) {
+                        gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonPane, feedbackTextFlow));
+                    } else {
+                        gameDirPane.getChildren().setAll(gameDir, javaDir, new VBox(reasonTitle, reasonPane));
+                    }
+                });
             }
 
             HBox toolBar = new HBox();
