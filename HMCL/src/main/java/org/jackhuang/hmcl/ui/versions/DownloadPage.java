@@ -367,20 +367,18 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class ModItem extends StackPane {
+    private static final class ModItem extends RipplerContainer {
         ModItem(RemoteMod.Version dataItem, DownloadPage selfPage) {
-            HBox pane = new HBox(8);
+            super(new HBox(8));
+
+            HBox pane = (HBox) getContainer();
             pane.setPadding(new Insets(8));
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
             StackPane graphicPane = new StackPane();
             JFXButton saveAsButton = new JFXButton();
 
-            RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> {
-                selfPage.download(dataItem);
-            });
-            getChildren().setAll(container);
+            this.setOnMouseClicked(e -> selfPage.download(dataItem));
 
             saveAsButton.getStyleClass().add("toggle-icon4");
             saveAsButton.setGraphic(SVG.contentSaveMoveOutline(Theme.blackFillBinding(), -1, -1));

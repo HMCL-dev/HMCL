@@ -123,7 +123,7 @@ public class ComponentList extends Control {
         return new Skin(this);
     }
 
-    protected static class Skin extends ControlSkinBase<ComponentList> {
+    private static final class Skin extends ControlSkinBase<ComponentList> {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
@@ -131,7 +131,7 @@ public class ComponentList extends Control {
         private final ObjectBinding<Node> firstItem;
         private final ObjectBinding<Node> lastItem;
 
-        protected Skin(ComponentList control) {
+        Skin(ComponentList control) {
             super(control);
 
             list = MappedObservableList.create(control.getContent(), node -> {

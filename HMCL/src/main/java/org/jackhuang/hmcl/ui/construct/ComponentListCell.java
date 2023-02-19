@@ -152,7 +152,7 @@ class ComponentListCell extends StackPane {
                     list.layout();
                 }
 
-                double newAnimatedHeight = (content.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
+                double newAnimatedHeight = (list.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
                 double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(-1);
                 double contentHeight = expanded ? newAnimatedHeight : 0;
 
