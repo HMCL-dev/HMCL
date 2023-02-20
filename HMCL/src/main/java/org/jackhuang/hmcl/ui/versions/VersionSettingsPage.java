@@ -127,9 +127,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             text.textProperty().bind(BindingMapping.of(selectedVersion)
                     .map(selectedVersion -> i18n("settings.type.special.edit.hint", selectedVersion)));
 
-            JFXHyperlink specificSettingsLink = new JFXHyperlink();
-            specificSettingsLink.setText(i18n("settings.type.special.edit"));
-            specificSettingsLink.setOnMouseClicked(e -> editSpecificSettings());
+            JFXHyperlink specificSettingsLink = new JFXHyperlink(i18n("settings.type.special.edit"));
+            specificSettingsLink.setOnAction(e -> editSpecificSettings());
 
             specificSettingsHint.setChildren(text, specificSettingsLink);
             specificSettingsHint.managedProperty().bind(navigateToSpecificSettings);
@@ -167,7 +166,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             settingsTypePane.setRight(editGlobalSettingsButton);
             editGlobalSettingsButton.disableProperty().bind(enableSpecificCheckBox.selectedProperty());
             BorderPane.setAlignment(editGlobalSettingsButton, Pos.CENTER_RIGHT);
-            editGlobalSettingsButton.setOnMouseClicked(e -> editGlobalSettings());
+            editGlobalSettingsButton.setOnAction(e -> editGlobalSettings());
         }
 
         {
