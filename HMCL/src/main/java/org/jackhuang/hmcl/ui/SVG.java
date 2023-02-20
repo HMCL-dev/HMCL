@@ -40,14 +40,15 @@ public final class SVG {
         if (fill != null)
             path.fillProperty().bind(fill);
 
-        if (width < 0 || height < 0) {
+        double scale;
+        if (width < 0 || height < 0 || (scale = Math.min(width / 24, height / 24)) == 1) {
             StackPane pane = new StackPane(path);
             pane.setAlignment(Pos.CENTER);
             return pane;
         }
 
         Group svg = new Group(path);
-        double scale = Math.min(width / 24, height / 24);
+
         svg.setScaleX(scale);
         svg.setScaleY(scale);
 
