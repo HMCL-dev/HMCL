@@ -66,8 +66,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
 
-    private final boolean globalSetting;
-
     private AdvancedVersionSettingPage advancedVersionSettingPage;
 
     private VersionSetting lastVersionSetting = null;
@@ -107,8 +105,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final BooleanProperty modpack = new SimpleBooleanProperty();
 
     public VersionSettingsPage(boolean globalSetting) {
-        this.globalSetting = globalSetting;
-
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
