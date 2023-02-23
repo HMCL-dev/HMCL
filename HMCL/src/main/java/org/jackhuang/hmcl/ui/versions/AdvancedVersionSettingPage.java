@@ -1,15 +1,18 @@
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.game.Renderer;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -17,7 +20,9 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Locale;
 
+import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AdvancedVersionSettingPage extends StackPane implements DecoratorPage {
@@ -38,12 +43,12 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final OptionToggleButton noGameCheckPane;
     private final OptionToggleButton noJVMCheckPane;
     private final OptionToggleButton noNativesPatchPane;
-    private final OptionToggleButton useSoftwareRenderer;
     private final OptionToggleButton useNativeGLFWPane;
     private final OptionToggleButton useNativeOpenALPane;
     private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
+    private final JFXComboBox<Renderer> cboRenderer;
 
     public AdvancedVersionSettingPage(Profile profile, String versionId, VersionSetting versionSetting) {
         this.profile = profile;
@@ -152,6 +157,20 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             nativesDirHint.setText(i18n("settings.advanced.natives_directory.hint"));
             nativesDirItem.getChildren().add(nativesDirHint);
 
+            BorderPane rendererPane = new BorderPane();
+            {
+                Label label = new Label(i18n("settings.advanced.renderer"));
+                rendererPane.setLeft(label);
+                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+                cboRenderer = new JFXComboBox<>();
+                cboRenderer.getItems().setAll(Renderer.values());
+                cboRenderer.setConverter(stringConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT))));
+                rendererPane.setRight(cboRenderer);
+                BorderPane.setAlignment(cboRenderer, Pos.CENTER_RIGHT);
+                FXUtils.setLimitWidth(cboRenderer, 300);
+            }
+
             noJVMArgsPane = new OptionToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
@@ -164,9 +183,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             noNativesPatchPane = new OptionToggleButton();
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
-            useSoftwareRenderer = new OptionToggleButton();
-            useSoftwareRenderer.setTitle(i18n("settings.advanced.use_software_renderer"));
-
             useNativeGLFWPane = new OptionToggleButton();
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
 
@@ -174,9 +190,9 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(
-                    nativesDirSublist,
+                    nativesDirSublist, rendererPane,
                     noJVMArgsPane, noGameCheckPane, noJVMCheckPane, noNativesPatchPane,
-                    useSoftwareRenderer, useNativeGLFWPane, useNativeOpenALPane);
+                    useNativeGLFWPane, useNativeOpenALPane);
         }
 
         rootPane.getChildren().addAll(
@@ -188,6 +204,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         bindProperties();
     }
 
+    @SuppressWarnings("deprecation")
     void bindProperties() {
         nativesDirCustomOption.bindBidirectional(versionSetting.nativesDirProperty());
         FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());
@@ -195,11 +212,11 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
+        FXUtils.bindEnum(cboRenderer, versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
         noNativesPatchPane.selectedProperty().bindBidirectional(versionSetting.notPatchNativesProperty());
-        useSoftwareRenderer.selectedProperty().bindBidirectional(versionSetting.useSoftwareRendererProperty());
         useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
 
@@ -216,11 +233,11 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.unbind(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.unbind(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.unbind(txtPostExitCommand, versionSetting.postExitCommandProperty());
+        FXUtils.unbindEnum(cboRenderer);
         noGameCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());
         noNativesPatchPane.selectedProperty().unbindBidirectional(versionSetting.notPatchNativesProperty());
-        useSoftwareRenderer.selectedProperty().unbindBidirectional(versionSetting.useSoftwareRendererProperty());
         useNativeGLFWPane.selectedProperty().unbindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().unbindBidirectional(versionSetting.useNativeOpenALProperty());
 

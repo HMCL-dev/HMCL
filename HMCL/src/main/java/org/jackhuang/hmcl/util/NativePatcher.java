@@ -1,9 +1,7 @@
 package org.jackhuang.hmcl.util;
 
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -92,9 +90,9 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static Library getSoftwareRendererLoader(JavaVersion javaVersion) {
+    public static Library getMesaLoader(JavaVersion javaVersion, Renderer renderer) {
         Map<String, Library> map = Hole.nativeReplacement.get(javaVersion.getPlatform().toString());
-        return map != null ? map.get("software-renderer-loader") : null;
+        return map != null ? map.get(renderer == Renderer.LLVMPIPE ? "software-renderer-loader" : "mesa-loader") : null;
     }
 
     private static final class Hole {
