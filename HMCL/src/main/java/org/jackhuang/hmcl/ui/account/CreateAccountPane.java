@@ -512,13 +512,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 GridPane.setColumnSpan(box, 2);
 
                 JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
-                migrationLink.setOnAction(e -> FXUtils.openLink("https://aka.ms/MinecraftMigration"));
+                migrationLink.setExternalLink("https://aka.ms/MinecraftMigration");
 
                 JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
-                migrationHowLink.setOnAction(e -> FXUtils.openLink("https://help.minecraft.net/hc/articles/4411173197709"));
+                migrationHowLink.setExternalLink("https://help.minecraft.net/hc/articles/4411173197709");
 
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
-                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
+                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
 
                 box.getChildren().setAll(migrationLink, migrationHowLink, purchaseLink);
                 add(box, 0, rowIndex);
@@ -530,7 +530,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 txtUsername.setPromptText(i18n("account.methods.offline.name.special_characters"));
 
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));
-                purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
+                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
                 HBox linkPane = new HBox(purchaseLink);
                 GridPane.setColumnSpan(linkPane, 2);
                 add(linkPane, 0, rowIndex);

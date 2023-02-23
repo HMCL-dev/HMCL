@@ -91,10 +91,10 @@ public class ClassicAccountLoginDialog extends StackPane {
                 body.getChildren().add(linkPane);
 
                 JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
-                migrationLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PROFILE_URL));
+                migrationLink.setExternalLink(YggdrasilService.PROFILE_URL);
 
                 JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
-                migrationHowLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.MIGRATION_FAQ_URL));
+                migrationHowLink.setExternalLink(YggdrasilService.MIGRATION_FAQ_URL);
 
                 linkPane.getChildren().setAll(migrationLink, migrationHowLink);
             }
