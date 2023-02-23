@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
@@ -91,10 +90,10 @@ public class ClassicAccountLoginDialog extends StackPane {
                 body.getChildren().add(linkPane);
 
                 JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
-                migrationLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PROFILE_URL));
+                migrationLink.setExternalLink(YggdrasilService.PROFILE_URL);
 
                 JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
-                migrationHowLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.MIGRATION_FAQ_URL));
+                migrationHowLink.setExternalLink(YggdrasilService.MIGRATION_FAQ_URL);
 
                 linkPane.getChildren().setAll(migrationLink, migrationHowLink);
             }

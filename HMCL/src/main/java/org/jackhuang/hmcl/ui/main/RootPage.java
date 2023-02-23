@@ -157,7 +157,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             multiplayerItem.setActionButtonVisible(false);
             multiplayerItem.setTitle(i18n("multiplayer"));
             JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
-            link.setOnAction(e -> FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/multiplayer-migrate"));
+            link.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/multiplayer-migrate");
             multiplayerItem.setOnAction(e -> Controllers.dialog(
                     new MessageDialogPane.Builder(i18n("multiplayer.hint"), null, MessageDialogPane.MessageType.INFO)
                             .addAction(link)

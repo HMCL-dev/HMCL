@@ -260,18 +260,18 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 if (getSkinnable().mod != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
-                    openMcmodButton.setOnAction(e -> FXUtils.openLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod)));
+                    openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
 
                     if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
                         JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
-                        openMcbbsButton.setOnAction(e -> FXUtils.openLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs())));
+                        openMcbbsButton.setExternalLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs()));
                         descriptionPane.getChildren().add(openMcbbsButton);
                     }
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
-                openUrlButton.setOnAction(e -> FXUtils.openLink(getSkinnable().addon.getPageUrl()));
+                openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
             }
 
