@@ -38,6 +38,7 @@ import java.lang.reflect.Type;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
@@ -553,18 +554,18 @@ public final class VersionSetting implements Cloneable {
         processPriorityProperty.set(processPriority);
     }
 
-    private final BooleanProperty useSoftwareRenderer = new SimpleBooleanProperty(this, "softwareRenderer", false);
+    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
 
-    public boolean isUseSoftwareRenderer() {
-        return useSoftwareRenderer.get();
+    public Renderer getRenderer() {
+        return rendererProperty.get();
     }
 
-    public BooleanProperty useSoftwareRendererProperty() {
-        return useSoftwareRenderer;
+    public ObjectProperty<Renderer> rendererProperty() {
+        return rendererProperty;
     }
 
-    public void setUseSoftwareRenderer(boolean useSoftwareRenderer) {
-        this.useSoftwareRenderer.set(useSoftwareRenderer);
+    public void setRenderer(Renderer renderer) {
+        this.rendererProperty.set(renderer);
     }
 
     private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
@@ -704,7 +705,7 @@ public final class VersionSetting implements Cloneable {
         gameDirTypeProperty.addListener(listener);
         gameDirProperty.addListener(listener);
         processPriorityProperty.addListener(listener);
-        useSoftwareRenderer.addListener(listener);
+        rendererProperty.addListener(listener);
         useNativeGLFW.addListener(listener);
         useNativeOpenAL.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
@@ -742,7 +743,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setGameDirType(getGameDirType());
         versionSetting.setGameDir(getGameDir());
         versionSetting.setProcessPriority(getProcessPriority());
-        versionSetting.setUseSoftwareRenderer(isUseSoftwareRenderer());
+        versionSetting.setRenderer(getRenderer());
         versionSetting.setUseNativeGLFW(isUseNativeGLFW());
         versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
@@ -781,7 +782,6 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
-            obj.addProperty("useSoftwareRenderer", src.isUseSoftwareRenderer());
             obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
             obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
@@ -789,6 +789,10 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("nativesDir", src.getNativesDir());
             obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
             obj.addProperty("versionIcon", src.getVersionIcon().ordinal());
+
+            obj.addProperty("renderer", src.getRenderer().name());
+            if (src.getRenderer() == Renderer.LLVMPIPE)
+                obj.addProperty("useSoftwareRenderer", true);
 
             return obj;
         }
@@ -836,13 +840,24 @@ public final class VersionSetting implements Cloneable {
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
             vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
-            vs.setUseSoftwareRenderer(Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
             vs.setNativesDirType(getOrDefault(NativesDirectoryType.values(), obj.get("nativesDirType"), NativesDirectoryType.VERSION_FOLDER));
             vs.setVersionIcon(getOrDefault(VersionIconType.values(), obj.get("versionIcon"), VersionIconType.DEFAULT));
+
+            vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
+                    .flatMap(name -> {
+                        try {
+                            return Optional.of(Renderer.valueOf(name.toUpperCase(Locale.ROOT)));
+                        } catch (IllegalArgumentException ignored) {
+                            return Optional.empty();
+                        }
+                    }).orElseGet(() -> {
+                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
+                        return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
+                    }));
 
             return vs;
         }
