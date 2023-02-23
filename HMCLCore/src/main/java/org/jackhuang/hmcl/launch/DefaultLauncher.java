@@ -470,15 +470,21 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         Renderer renderer = options.getRenderer();
-        if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS != OperatingSystem.OSX) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+        if (renderer != Renderer.DEFAULT) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (renderer != Renderer.LLVMPIPE)
+                    env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
-                if (renderer == Renderer.LLVMPIPE)
-                    env.put("LIBGL_ALWAYS_SOFTWARE", "1");
+                switch (renderer) {
+                    case LLVMPIPE:
+                        env.put("LIBGL_ALWAYS_SOFTWARE", "1");
+                        break;
+                    case ZINK:
+                        env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
+                        break;
+                }
             }
-
-            if (renderer != Renderer.LLVMPIPE)
-                env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
         }
 
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
