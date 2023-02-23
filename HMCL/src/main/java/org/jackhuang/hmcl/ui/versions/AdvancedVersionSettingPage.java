@@ -204,7 +204,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         bindProperties();
     }
 
-    @SuppressWarnings("deprecation")
     void bindProperties() {
         nativesDirCustomOption.bindBidirectional(versionSetting.nativesDirProperty());
         FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());

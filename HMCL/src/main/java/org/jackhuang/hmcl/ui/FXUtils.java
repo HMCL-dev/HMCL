@@ -625,16 +625,17 @@ public final class FXUtils {
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
      * @see #unbindEnum(JFXComboBox)
-     * @deprecated Use {@link ExtendedProperties#selectedItemPropertyFor(ComboBox)}
+     * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    public static void bindEnum(JFXComboBox<?> comboBox, Property<? extends Enum<?>> property) {
+    public static <T extends Enum<T>> void bindEnum(JFXComboBox<T> comboBox, Property<T> property) {
         unbindEnum(comboBox);
-        @SuppressWarnings("rawtypes")
-        ChangeListener<Number> listener = (a, b, newValue) ->
-                ((Property) property).setValue(property.getValue().getClass().getEnumConstants()[newValue.intValue()]);
-        comboBox.getSelectionModel().select(property.getValue().ordinal());
+
+        T currentValue = property.getValue();
+        @SuppressWarnings("unchecked")
+        T[] enumConstants = (T[]) currentValue.getClass().getEnumConstants();
+        ChangeListener<Number> listener = (a, b, newValue) -> property.setValue(enumConstants[newValue.intValue()]);
+
+        comboBox.getSelectionModel().select(currentValue.ordinal());
         comboBox.getProperties().put("FXUtils.bindEnum.listener", listener);
         comboBox.getSelectionModel().selectedIndexProperty().addListener(listener);
     }
@@ -645,15 +646,13 @@ public final class FXUtils {
      *
      * @param comboBox the combo box being bound with the property which can be inferred by {@code bindEnum}.
      * @see #bindEnum(JFXComboBox, Property)
-     * @deprecated Use {@link ExtendedProperties#selectedItemPropertyFor(ComboBox)}
+     * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    public static void unbindEnum(JFXComboBox<?> comboBox) {
-        @SuppressWarnings("rawtypes")
-        ChangeListener listener = tryCast(comboBox.getProperties().get("FXUtils.bindEnum.listener"), ChangeListener.class).orElse(null);
-        if (listener == null) return;
-        comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
+    public static void unbindEnum(JFXComboBox<? extends Enum<?>> comboBox) {
+        @SuppressWarnings("unchecked")
+        ChangeListener<Number> listener = (ChangeListener<Number>) comboBox.getProperties().remove("FXUtils.bindEnum.listener");
+        if (listener != null)
+            comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }
 
     /**
