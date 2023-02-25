@@ -260,18 +260,18 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 if (getSkinnable().mod != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
-                    openMcmodButton.setOnAction(e -> FXUtils.openLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod)));
+                    openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
 
                     if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
                         JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
-                        openMcbbsButton.setOnAction(e -> FXUtils.openLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs())));
+                        openMcbbsButton.setExternalLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs()));
                         descriptionPane.getChildren().add(openMcbbsButton);
                     }
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
-                openUrlButton.setOnAction(e -> FXUtils.openLink(getSkinnable().addon.getPageUrl()));
+                openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
             }
 
@@ -322,12 +322,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
                             .collect(Collectors.toList())) {
-                        ComponentList sublist = new ComponentList();
-                        sublist.setLazyInitializer(self -> {
-                            self.getContent().setAll(control.versions.get(gameVersion).stream()
-                                    .map(version -> new ModItem(version, control))
-                                    .collect(Collectors.toList()));
-                        });
+                        ComponentList sublist = new ComponentList(() ->
+                                control.versions.get(gameVersion).stream()
+                                        .map(version -> new ModItem(version, control))
+                                        .collect(Collectors.toList()));
                         sublist.getStyleClass().add("no-padding");
                         sublist.setTitle(gameVersion);
 
@@ -369,6 +367,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class ModItem extends StackPane {
+
         ModItem(RemoteMod.Version dataItem, DownloadPage selfPage) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(8));
@@ -378,9 +377,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             JFXButton saveAsButton = new JFXButton();
 
             RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> {
-                selfPage.download(dataItem);
-            });
+            container.setOnMouseClicked(e -> selfPage.download(dataItem));
             getChildren().setAll(container);
 
             saveAsButton.getStyleClass().add("toggle-icon4");
@@ -391,7 +388,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             content.setTitle(dataItem.getName());
             content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
-            saveAsButton.setOnMouseClicked(e -> selfPage.saveAs(dataItem));
+            saveAsButton.setOnAction(e -> selfPage.saveAs(dataItem));
 
             switch (dataItem.getVersionType()) {
                 case Release:
@@ -407,6 +404,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                     content.getTags().add(i18n("version.game.snapshot"));
                     break;
             }
+
+            // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
+            this.setMinHeight(50);
         }
     }
 

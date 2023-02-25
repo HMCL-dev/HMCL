@@ -308,8 +308,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
-                JFXHyperlink officialPageButton = new JFXHyperlink();
-                officialPageButton.setText(i18n("mods.url"));
+                JFXHyperlink officialPageButton = new JFXHyperlink(i18n("mods.url"));
                 officialPageButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(modInfo.getModInfo().getUrl());
@@ -319,8 +318,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
-                JFXHyperlink mcbbsButton = new JFXHyperlink();
-                mcbbsButton.setText(i18n("mods.mcbbs"));
+                JFXHyperlink mcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
                 mcbbsButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
@@ -329,8 +327,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
-                JFXHyperlink searchButton = new JFXHyperlink();
-                searchButton.setText(i18n("mods.mcmod.search"));
+                JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
@@ -341,8 +338,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 });
                 getActions().add(searchButton);
             } else {
-                JFXHyperlink mcmodButton = new JFXHyperlink();
-                mcmodButton.setText(i18n("mods.mcmod.page"));
+                JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
                 mcmodButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modInfo.getMod()));

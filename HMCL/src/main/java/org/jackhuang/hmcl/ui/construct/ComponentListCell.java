@@ -43,7 +43,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 /**
  * @author huangyuhui
  */
-class ComponentListCell extends StackPane {
+final class ComponentListCell extends StackPane {
     private final Node content;
     private Animation expandAnimation;
     private Rectangle clipRect;
@@ -139,69 +139,53 @@ class ComponentListCell extends StackPane {
             container.getChildren().setAll(content);
             groupNode.getChildren().add(container);
 
-            EventHandler<Event> onExpand;
-            if (AnimationUtils.isAnimationEnabled()) {
-                onExpand = e -> {
-                    if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
-                        expandAnimation.stop();
+            EventHandler<Event> onExpand = e -> {
+                if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
+                    expandAnimation.stop();
+                }
+
+                boolean expanded = !isExpanded();
+                setExpanded(expanded);
+                if (expanded) {
+                    list.doLazyInit();
+                    list.layout();
+                }
+
+                Platform.runLater(() -> {
+                    double newAnimatedHeight = (list.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
+                    double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(-1);
+                    double contentHeight = expanded ? newAnimatedHeight : 0;
+
+                    if (expanded) {
+                        updateClip(newHeight);
                     }
 
-                    setExpanded(!isExpanded());
-
-                    if (isExpanded()) {
-                        list.onExpand();
-                        list.layout();
-                    }
-
-                    Platform.runLater(() -> {
-                        double newAnimatedHeight = (content.prefHeight(-1) + 8 + 10) * (isExpanded() ? 1 : -1);
-                        double newHeight = isExpanded() ? getHeight() + newAnimatedHeight : prefHeight(-1);
-                        double contentHeight = isExpanded() ? newAnimatedHeight : 0;
-
-                        if (isExpanded()) {
-                            updateClip(newHeight);
-                        }
-
+                    if (AnimationUtils.isAnimationEnabled()) {
                         expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
                                 new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
                                 new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
                         ));
 
-                        if (!isExpanded()) {
+                        if (!expanded) {
                             expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
                         }
 
                         expandAnimation.play();
-                    });
-                };
-            } else {
-                onExpand = e -> {
-                    setExpanded(!isExpanded());
+                    } else {
+                        container.setMinHeight(contentHeight);
+                        container.setMaxHeight(contentHeight);
 
-                    double newAnimatedHeight = (content.prefHeight(-1) + 8 + 10) * (isExpanded() ? 1 : -1);
-                    double newHeight = isExpanded() ? getHeight() + newAnimatedHeight : prefHeight(-1);
-                    double contentHeight = isExpanded() ? newAnimatedHeight : 0;
-
-                    if (isExpanded()) {
-                        list.onExpand();
-                        list.layout();
-                        updateClip(newHeight);
+                        if (!expanded) {
+                            updateClip(newHeight);
+                        }
                     }
-
-                    container.setMinHeight(contentHeight);
-                    container.setMaxHeight(contentHeight);
-
-                    if (!isExpanded()) {
-                        updateClip(newHeight);
-                    }
-                };
-            }
+                });
+            };
 
             headerRippler.setOnMouseClicked(onExpand);
             expandButton.setOnAction((EventHandler<ActionEvent>) (Object) onExpand);
 
-            expandedProperty().addListener((a, b, newValue) ->
-                    expandIcon.setRotate(newValue ? 180 : 0));
+            expandedProperty().addListener((a, b, newValue) -> expandIcon.setRotate(newValue ? 180 : 0));
 
             getChildren().setAll(groupNode);
         } else {
