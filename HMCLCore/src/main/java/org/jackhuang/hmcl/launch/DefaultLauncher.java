@@ -503,6 +503,9 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
             env.put("INST_QUILT", "1");
         }
+
+        env.putAll(options.getEnvironmentVariables());
+
         return env;
     }
 

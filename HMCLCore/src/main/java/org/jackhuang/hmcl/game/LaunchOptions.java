@@ -23,9 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.Serializable;
 import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -42,6 +40,7 @@ public class LaunchOptions implements Serializable {
     private final List<String> overrideJavaArguments = new ArrayList<>();
     private final List<String> javaArguments = new ArrayList<>();
     private final List<String> javaAgents = new ArrayList<>(0);
+    private final Map<String, String> environmentVariables = new LinkedHashMap<>();
     private Integer minMemory;
     private Integer maxMemory;
     private Integer metaspace;
@@ -128,6 +127,10 @@ public class LaunchOptions implements Serializable {
     @NotNull
     public List<String> getJavaAgents() {
         return Collections.unmodifiableList(javaAgents);
+    }
+
+    public Map<String, String> getEnvironmentVariables() {
+        return environmentVariables;
     }
 
     /**
@@ -350,6 +353,12 @@ public class LaunchOptions implements Serializable {
         public Builder setJavaAgents(List<String> javaAgents) {
             options.javaAgents.clear();
             options.javaAgents.addAll(javaAgents);
+            return this;
+        }
+
+        public Builder setEnvironmentVariables(Map<String, String> env) {
+            options.environmentVariables.clear();
+            options.environmentVariables.putAll(env);
             return this;
         }
 

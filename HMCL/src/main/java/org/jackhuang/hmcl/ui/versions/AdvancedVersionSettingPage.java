@@ -35,6 +35,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
     private final JFXTextField txtJVMArgs;
     private final JFXTextField txtGameArgs;
+    private final JFXTextField txtEnvironmentVariables;
     private final JFXTextField txtMetaspace;
     private final JFXTextField txtWrapper;
     private final JFXTextField txtPreLaunchCommand;
@@ -132,6 +133,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             txtMetaspace.setValidators(new NumberValidator(i18n("input.number"), true));
             pane.addRow(1, new Label(i18n("settings.advanced.java_permanent_generation_space")), txtMetaspace);
 
+            txtEnvironmentVariables = new JFXTextField();
+            txtEnvironmentVariables.getStyleClass().add("fit-width");
+            pane.addRow(2, new Label(i18n("settings.advanced.environment_variables")), txtEnvironmentVariables);
+
             jvmPane.getContent().setAll(pane);
         }
 
@@ -209,6 +214,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.bindString(txtJVMArgs, versionSetting.javaArgsProperty());
         FXUtils.bindString(txtGameArgs, versionSetting.minecraftArgsProperty());
         FXUtils.bindString(txtMetaspace, versionSetting.permSizeProperty());
+        FXUtils.bindString(txtEnvironmentVariables, versionSetting.environmentVariablesProperty());
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.bindEnum(cboRenderer, versionSetting.rendererProperty());
@@ -229,6 +235,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.unbind(txtJVMArgs, versionSetting.javaArgsProperty());
         FXUtils.unbind(txtGameArgs, versionSetting.minecraftArgsProperty());
         FXUtils.unbind(txtMetaspace, versionSetting.permSizeProperty());
+        FXUtils.unbind(txtEnvironmentVariables, versionSetting.environmentVariablesProperty());
         FXUtils.unbind(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.unbind(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.unbind(txtPostExitCommand, versionSetting.postExitCommandProperty());

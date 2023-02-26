@@ -48,11 +48,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -335,6 +337,16 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())
                 .setMetaspace(Lang.toIntOrNull(vs.getPermSize()))
+                .setEnvironmentVariables(
+                        Lang.mapOf(StringUtils.tokenize(vs.getEnvironmentVariables())
+                                .stream()
+                                .map(it -> {
+                                    int idx = it.indexOf('=');
+                                    return idx >= 0 ? pair(it.substring(0, idx), it.substring(idx + 1)) : pair(it, "");
+                                })
+                                .collect(Collectors.toList())
+                        )
+                )
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
