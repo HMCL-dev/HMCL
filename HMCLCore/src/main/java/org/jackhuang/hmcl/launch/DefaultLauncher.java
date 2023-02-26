@@ -462,7 +462,7 @@ public class DefaultLauncher extends Launcher {
 
     private Map<String, String> getEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
-        Map<String, String> env = new HashMap<>();
+        Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
         env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
@@ -503,6 +503,9 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
             env.put("INST_QUILT", "1");
         }
+
+        env.putAll(options.getEnvironmentVariables());
+
         return env;
     }
 
