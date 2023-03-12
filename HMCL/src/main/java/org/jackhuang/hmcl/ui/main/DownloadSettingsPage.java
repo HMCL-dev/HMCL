@@ -97,7 +97,11 @@ public class DownloadSettingsPage extends StackPane {
                     selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
                 }
 
-                downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
+                HintPane hintPane1 = new HintPane(MessageDialogPane.MessageType.INFO);
+                VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                hintPane1.setText(i18n("settings.launcher.download_source.hint"));
+
+                downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane, hintPane1);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source")), downloadSource);
