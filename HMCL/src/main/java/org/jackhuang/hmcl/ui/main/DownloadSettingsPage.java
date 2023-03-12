@@ -98,7 +98,7 @@ public class DownloadSettingsPage extends StackPane {
                 }
 
                 HintPane hintPane1 = new HintPane(MessageDialogPane.MessageType.INFO);
-                VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                VBox.setMargin(hintPane1, new Insets(0, 0, 0, 30));
                 hintPane1.setText(i18n("settings.launcher.download_source.hint"));
 
                 downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane, hintPane1);
