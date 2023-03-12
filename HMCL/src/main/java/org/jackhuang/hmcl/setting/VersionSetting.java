@@ -341,6 +341,20 @@ public final class VersionSetting implements Cloneable {
         minecraftArgsProperty.set(minecraftArgs);
     }
 
+    private final StringProperty environmentVariablesProperty = new SimpleStringProperty(this, "environmentVariables", "");
+
+    public StringProperty environmentVariablesProperty() {
+        return environmentVariablesProperty;
+    }
+
+    public String getEnvironmentVariables() {
+        return environmentVariablesProperty.get();
+    }
+
+    public void setEnvironmentVariables(String env) {
+        environmentVariablesProperty.set(env);
+    }
+
     private final BooleanProperty noJVMArgsProperty = new SimpleBooleanProperty(this, "noJVMArgs", false);
 
     public BooleanProperty noJVMArgsProperty() {
@@ -482,7 +496,6 @@ public final class VersionSetting implements Cloneable {
     public void setWidth(int width) {
         widthProperty.set(width);
     }
-
 
     private final IntegerProperty heightProperty = new SimpleIntegerProperty(this, "height", 480);
 
@@ -693,6 +706,7 @@ public final class VersionSetting implements Cloneable {
         postExitCommand.addListener(listener);
         javaArgsProperty.addListener(listener);
         minecraftArgsProperty.addListener(listener);
+        environmentVariablesProperty.addListener(listener);
         noJVMArgsProperty.addListener(listener);
         notCheckGameProperty.addListener(listener);
         notCheckJVMProperty.addListener(listener);
@@ -731,6 +745,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setPostExitCommand(getPostExitCommand());
         versionSetting.setJavaArgs(getJavaArgs());
         versionSetting.setMinecraftArgs(getMinecraftArgs());
+        versionSetting.setEnvironmentVariables(getEnvironmentVariables());
         versionSetting.setNoJVMArgs(isNoJVMArgs());
         versionSetting.setNotCheckGame(isNotCheckGame());
         versionSetting.setNotCheckJVM(isNotCheckJVM());
@@ -761,6 +776,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("usesGlobal", src.isUsesGlobal());
             obj.addProperty("javaArgs", src.getJavaArgs());
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
+            obj.addProperty("environmentVariables", src.getEnvironmentVariables());
             obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? OperatingSystem.SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
             obj.addProperty("autoMemory", src.isAutoMemory());
@@ -819,6 +835,7 @@ public final class VersionSetting implements Cloneable {
             vs.setUsesGlobal(Optional.ofNullable(obj.get("usesGlobal")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setJavaArgs(Optional.ofNullable(obj.get("javaArgs")).map(JsonElement::getAsString).orElse(""));
             vs.setMinecraftArgs(Optional.ofNullable(obj.get("minecraftArgs")).map(JsonElement::getAsString).orElse(""));
+            vs.setEnvironmentVariables(Optional.ofNullable(obj.get("environmentVariables")).map(JsonElement::getAsString).orElse(""));
             vs.setMaxMemory(maxMemoryN);
             vs.setMinMemory(Optional.ofNullable(obj.get("minMemory")).map(JsonElement::getAsInt).orElse(null));
             vs.setAutoMemory(Optional.ofNullable(obj.get("autoMemory")).map(JsonElement::getAsBoolean).orElse(true));
