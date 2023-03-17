@@ -112,7 +112,7 @@ public final class Main {
     /**
      * Indicates that a fatal error has occurred, and that the application cannot start.
      */
-    static void showErrorAndExit(String message) {
+    public static void showErrorAndExit(String message) {
         System.err.println(message);
         System.err.println("A fatal error has occurred, forcibly exiting.");
 

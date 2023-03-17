@@ -43,6 +43,7 @@ package org.jackhuang.hmcl.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -169,22 +170,56 @@ public final class SelfDependencyPatcher {
         }
     }
 
+    public enum FindJavaFXStatus {
+        FOUND,
+        NOT_FOUND,
+        CLASS_VERSION_UNSUPPORTED
+    }
+
+    /**
+     * Check if we can find JavaFX
+     */
+    public static FindJavaFXStatus ifCanFindJavaFX() {
+        /*
+         * A map of class name to name of javafx jar that provide that class.
+         */
+        Map<String, String> classNameToJarName = new HashMap<>();
+        classNameToJarName.put("javafx.beans.property.BooleanProperty", "javafx-base");
+        classNameToJarName.put("javafx.application.Application", "javafx-controls");
+        classNameToJarName.put("javafx.stage.Stage", "javafx-graphics");
+
+        for(Map.Entry<String, String> o: classNameToJarName.entrySet()) {
+            try {
+                Class.forName(o.getKey());
+            } catch (ClassNotFoundException e) {
+                LOG.warning(String.format("Cannot find %s (should provide by %s jar):",
+                        o.getKey(), o.getValue()));
+                e.printStackTrace();
+                return FindJavaFXStatus.NOT_FOUND;
+            } catch (UnsupportedClassVersionError e) {
+                LOG.warning(String.format("Class version of %s (should provide by %s jar) is unsupported " +
+                                "for curr jre:",
+                        o.getKey(), o.getValue()));
+                e.printStackTrace();
+                return FindJavaFXStatus.CLASS_VERSION_UNSUPPORTED;
+            }
+        }
+
+        return FindJavaFXStatus.FOUND;
+    }
+
     /**
      * Patch in any missing dependencies, if any.
      */
     public static void patch() throws PatchException, IncompatibleVersionException, CancellationException {
         // Do nothing if JavaFX is detected
-        try {
-            try {
-                Class.forName("javafx.application.Application");
+        switch(ifCanFindJavaFX()){
+            case FOUND:
                 return;
-            } catch (Exception ignored) {
-            }
-        } catch (UnsupportedClassVersionError error) {
-            // Loading the JavaFX class was unsupported.
-            // We are probably on 8 and its on 11
-            throw new IncompatibleVersionException();
+            case CLASS_VERSION_UNSUPPORTED:
+                throw new IncompatibleVersionException();
         }
+
         // So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
         // Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
         // So you're out of luck unless you change your JDK or update Java.
@@ -195,11 +230,12 @@ public final class SelfDependencyPatcher {
         SelfDependencyPatcher patcher = new SelfDependencyPatcher();
 
         // Otherwise we're free to download in Java 11+
-        LOG.info("Missing JavaFX dependencies, attempting to patch in missing classes");
+        LOG.info("Cannot find JvavFX class(es) -- Checking if any JavaFX dependencies are missing");
 
         // Download missing dependencies
         List<DependencyDescriptor> missingDependencies = patcher.checkMissingDependencies();
         if (!missingDependencies.isEmpty()) {
+            LOG.info("Missing JavaFX dependencies detected: " + missingDependencies);
             try {
                 patcher.fetchDependencies(missingDependencies);
             } catch (IOException e) {
@@ -207,6 +243,7 @@ public final class SelfDependencyPatcher {
             }
         }
 
+        LOG.info("Download finished. Start patching...");
         // Add the dependencies
         try {
             patcher.loadFromCache();
@@ -214,6 +251,16 @@ public final class SelfDependencyPatcher {
             throw new PatchException("Failed to load JavaFX cache", ex);
         } catch (ReflectiveOperationException | NoClassDefFoundError ex) {
             throw new PatchException("Failed to add dependencies to classpath!", ex);
+        }
+
+        // Check if we can find javafx classes
+        switch(ifCanFindJavaFX()) {
+            case NOT_FOUND:
+                Main.showErrorAndExit(
+                        String.format(i18n("fatal.dependency_patcher.cannot_find_dependency_after_patch"),
+                                DependencyDescriptor.DEPENDENCIES_DIR_PATH));
+            case CLASS_VERSION_UNSUPPORTED:
+                Main.showErrorAndExit(i18n("fatal.dependency_patcher.dependency_class_version_unsupported_after_patch"));
         }
         LOG.info(" - Done!");
     }
