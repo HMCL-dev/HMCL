@@ -45,6 +45,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.SwingUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -321,6 +322,16 @@ public final class SelfDependencyPatcher {
 
         String[] addOpens = JarUtils.getManifestAttribute("Add-Opens", "").split(" ");
 
+        // Output jars and addOpens
+        {
+            String jarsDiagnosticInfo = "jars: [\n";
+            for (Path currJar : jars) {
+                jarsDiagnosticInfo += "  " + currJar.getFileName() + "\n";
+            }
+            jarsDiagnosticInfo += "]";
+            LOG.info(jarsDiagnosticInfo);
+        }
+        LOG.info("addOpens: " + JsonUtils.GSON.toJson(addOpens));
         JavaFXPatcher.patch(modules, jars, addOpens);
     }
 

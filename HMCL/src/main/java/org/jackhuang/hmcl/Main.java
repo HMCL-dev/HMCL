@@ -33,6 +33,7 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,6 +71,7 @@ public final class Main {
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
+        checkIfRunInJar();
         checkJavaFX();
 
         Launcher.main(args);
@@ -80,6 +82,18 @@ public final class Main {
         AwtUtils.setAppleIcon(image);
     }
 
+    /**
+     * Check if HMCL is running with a jar, ensure we're not
+     * running class file directly.
+     */
+    private static void checkIfRunInJar() {
+        URL url = Main.class.getResource("");
+        String protocol = url.getProtocol();
+        if(!protocol.equals("jar")) {
+            showErrorAndExit(i18n("fatal.not_running_in_jar"));
+        }
+    }
+    
     private static void checkDirectoryPath() {
         String currentDirectory = new File("").getAbsolutePath();
         if (currentDirectory.contains("!")) {
