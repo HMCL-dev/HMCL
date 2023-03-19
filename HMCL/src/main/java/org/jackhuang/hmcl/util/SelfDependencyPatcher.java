@@ -231,7 +231,7 @@ public final class SelfDependencyPatcher {
         SelfDependencyPatcher patcher = new SelfDependencyPatcher();
 
         // Otherwise we're free to download in Java 11+
-        LOG.info("Cannot find JvavFX class(es) -- Checking if any JavaFX dependencies are missing");
+        LOG.info("Cannot find JavaFX class(es) -- Checking if any JavaFX dependencies are missing");
 
         // Download missing dependencies
         List<DependencyDescriptor> missingDependencies = patcher.checkMissingDependencies();
