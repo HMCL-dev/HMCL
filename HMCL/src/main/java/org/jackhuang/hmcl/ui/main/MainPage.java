@@ -112,7 +112,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
-        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getHideAnnouncementDevVersion()))) {
+        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getHideAnnouncementVersion()))) {
             announcementPane = new VBox(16);
             if (Metadata.isNightly()) {
                 announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
@@ -292,7 +292,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     public void hideAnnouncementPane() {
         if (announcementPane != null) {
-            config().setHideAnnouncementDevVersion(Metadata.VERSION);
+            config().setHideAnnouncementVersion(Metadata.VERSION);
             Pane parent = (Pane) announcementPane.getParent();
             if (parent != null)
                 parent.getChildren().remove(announcementPane);
