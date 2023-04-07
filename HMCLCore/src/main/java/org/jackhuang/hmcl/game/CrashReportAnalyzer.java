@@ -115,7 +115,7 @@ public final class CrashReportAnalyzer {
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
 
         //Forge 安装不完整
-        INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(.*?)\\\libraries\\\net\\\minecraftforge\\\forge\\\(.*?)\\\forge-(.*?)-client\\.jar\\]|Failed to find Minecraft resource version (.*?) at (.*?)\\\libraries\\\net\\\minecraftforge\\\forge\\\(.*?)\\\forge-(.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch)")),
+        INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(?:java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(?:.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(?:.*?)\\\\forge-(?:.*?)-client\\.jar\\]|Failed to find Minecraft resource version (?:.*?) at (?:.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(?:.*?)\\\\forge-(?:.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch)")),
 
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
         TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));
