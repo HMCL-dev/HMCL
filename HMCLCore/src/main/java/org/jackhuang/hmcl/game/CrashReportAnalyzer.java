@@ -118,7 +118,7 @@ public final class CrashReportAnalyzer {
         //1. META-INF/MANIFEST.MF 里的 Automatic-Module-Name
         //2. 根据文件名生成。文件名里的 .jar 后缀名先去掉，然后检查是否有 -(\\d+(\\.|$)) 的部分，有的话只取 - 前面的部分，- 后面的部分成为 module 的版本号（即尝试判断文件名里是否有版本号，有的话去掉），然后把不是拉丁字母和数字的字符（正则表达式 [^A-Za-z0-9]）都换成点，然后把连续的多个点换成一个点，最后去掉开头和结尾的点。那么
         //按照 2.，如果你的文件名是拔刀剑.jar，那么这么一通流程下来，你得到的 module 名就是空字符串，而这是不允许的。(来自 @Föhn 说明)
-        MOD_NAME(Pattern.compile("Exception in thread "main" java\\.lang\\.IllegalArgumentException: : Invalid module name: '' is not a Java identifier")),
+        MOD_NAME(Pattern.compile("Invalid module name: '' is not a Java identifier")),
 
         //Forge 安装不完整
         INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(.*?)\\\\forge-(.*?)-client\\.jar\\]|Failed to find Minecraft resource version (.*?) at (.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(.*?)\\\\forge-(.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch)")),
