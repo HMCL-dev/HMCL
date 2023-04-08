@@ -210,6 +210,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void modName() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/mod_name.txt")),
+                CrashReportAnalyzer.Rule.GRAPHICS_DRIVER);
+    }
+
+    @Test
     public void openj9() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/openj9.txt")),
