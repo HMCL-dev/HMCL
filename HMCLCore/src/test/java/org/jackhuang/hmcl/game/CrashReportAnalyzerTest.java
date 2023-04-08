@@ -213,7 +213,7 @@ public class CrashReportAnalyzerTest {
     public void modName() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_name.txt")),
-                CrashReportAnalyzer.Rule.GRAPHICS_DRIVER);
+                CrashReportAnalyzer.Rule.MOD_NAME);
     }
 
     @Test
