@@ -35,12 +35,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.game.GameDumpCreator;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -63,7 +65,6 @@ import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
- *
  * @author huangyuhui
  */
 public final class LogWindow extends Stage {
@@ -89,13 +90,17 @@ public final class LogWindow extends Stage {
 
     private boolean stopCheckLogCount = false;
 
-    public LogWindow() {
+    private final ManagedProcess gameProcess;
+
+    public LogWindow(ManagedProcess gameProcess) {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
 
         levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
+
+        this.gameProcess = gameProcess;
     }
 
     public void logLine(String filteredLine, Log4jLevel level) {
@@ -217,6 +222,29 @@ public final class LogWindow extends Stage {
             });
         }
 
+        private void onExportDump(JFXButton button) {
+            thread(() -> {
+                if (button.getText().equals(i18n("logwindow.export_dump.dependency_ok.button"))) {
+                    if (GameDumpCreator.checkDependencies()) {
+                        Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.doing_button")));
+
+                        Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
+
+                        try {
+                            if (gameProcess.isRunning()){
+                                GameDumpCreator.writeDumpTo(gameProcess.getPID(), dumpFile.toFile());
+                                FXUtils.showFileInExplorer(dumpFile);
+                            }
+                        } catch (Throwable e) {
+                            LOG.log(Level.WARNING, "Failed to create minecraft jstack dump", e);
+                        }
+
+                        Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.button")));
+                    }
+                }
+            });
+        }
+
         private void onExportGameCrashInfo() {
             if (exportGameCrashInfoCallback == null) return;
             exportGameCrashInfoCallback.accept(logs.stream().map(x -> x.log).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
@@ -298,7 +326,7 @@ public final class LogWindow extends Stage {
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
                         getStyleClass().add("log-window-list-cell");
-                        Region clippedContainer = (Region)listView.lookup(".clipped-container");
+                        Region clippedContainer = (Region) listView.lookup(".clipped-container");
                         if (clippedContainer != null) {
                             maxWidthProperty().bind(clippedContainer.widthProperty());
                             prefWidthProperty().bind(clippedContainer.widthProperty());
@@ -353,15 +381,25 @@ public final class LogWindow extends Stage {
                 autoScrollCheckBox.setSelected(true);
                 control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
 
-                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
-                terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
-
                 JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
                 exportLogsButton.setOnMouseClicked(e -> getSkinnable().onExportLogs());
 
+                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
+                terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
+
+                JFXButton exportDumpButton = new JFXButton();
+                if (GameDumpCreator.checkDependencies()) {
+                    exportDumpButton.setText(i18n("logwindow.export_dump.dependency_ok.button"));
+                    exportDumpButton.setOnMouseClicked(e -> getSkinnable().onExportDump(exportDumpButton));
+                } else {
+                    exportDumpButton.setText(i18n("logwindow.export_dump.no_dependency.button"));
+                    exportDumpButton.setTooltip(new Tooltip(i18n("logwindow.export_dump.no_dependency.tooltip")));
+                    exportDumpButton.setButtonType(JFXButton.ButtonType.RAISED);
+                }
+
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
                 clearButton.setOnMouseClicked(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, clearButton);
+                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpButton, clearButton);
 
                 vbox.getChildren().add(bottom);
             }
