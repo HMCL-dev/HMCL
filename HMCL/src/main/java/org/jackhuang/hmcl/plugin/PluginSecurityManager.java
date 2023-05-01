@@ -3,6 +3,7 @@ package org.jackhuang.hmcl.plugin;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.plugin.api.*;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import sun.security.util.SecurityConstants;
 
 import java.io.File;
 import java.io.FilePermission;
@@ -212,7 +213,7 @@ public class PluginSecurityManager extends SecurityManager implements IPluginSec
 
     private static void throwSecurityException(Permission permission) throws SecurityException {
         PluginInfo.getCurrentPluginInfo().getPluginLogger().log(Level.WARNING, "Permission not allowed.");
-        throw new SecurityException(String.format("Permission \"%s\" with action \"%s\" denied.", permission.getName(), permission.getActions()));
+        throw new SecurityException(String.format("Permission \"%s\"[name=\"%s\",action=\"%s\"] denied.", permission.getClass().getName(), permission.getName(), permission.getActions()));
     }
 
     private static void throwSecurityException(Permission permission, PluginInfo.PermissionInterface.PermissionInterfaceItem permissionInterfaceItem) throws SecurityException {
@@ -239,5 +240,33 @@ public class PluginSecurityManager extends SecurityManager implements IPluginSec
     public ThreadGroup getThreadGroup() {
         checkPermission(new RuntimePermission("getThreadGroup"));
         return super.getThreadGroup();
+    }
+
+    @Override
+    public void checkExec(String cmd) {
+        checkPermission(new RuntimePermission("executeCommand", cmd));
+    }
+
+    @Override
+    public void checkAccess(Thread t) {
+        checkPermission(new RuntimePermission("modifyThread"));
+    }
+
+    @Override
+    public void checkAccess(ThreadGroup g) {
+        checkPermission(new RuntimePermission("modifyThreadGroup"));
+    }
+
+    @Override
+    public void checkExit(int status) {
+        checkPermission(new RuntimePermission("exitVM", Integer.toString(status)));
+    }
+
+    @Override
+    public void checkLink(String lib) {
+        if (lib == null) {
+            throw new NullPointerException("library can't be null");
+        }
+        checkPermission(new RuntimePermission("loadLibrary", lib));
     }
 }
