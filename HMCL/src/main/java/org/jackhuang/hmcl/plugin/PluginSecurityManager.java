@@ -66,18 +66,16 @@ public final class PluginSecurityManager extends SecurityManager implements IPlu
         private final Set<File> pluginAllowReadingFiles = new HashSet<>();
 
         public PluginAccessibleFilesBuilder() {
-            if (Metadata.VERSION.equals("@develop@")) {
-                CodeSource codeSource = PluginSecurityManager.class.getProtectionDomain().getCodeSource();
-                if (codeSource != null) {
-                    Path path = null;
-                    try {
-                        path = Paths.get(codeSource.getLocation().toURI());
-                    } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException ignored) {
-                    }
+            CodeSource codeSource = PluginSecurityManager.class.getProtectionDomain().getCodeSource();
+            if (codeSource != null) {
+                Path path = null;
+                try {
+                    path = Paths.get(codeSource.getLocation().toURI());
+                } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException ignored) {
+                }
 
-                    if (path != null) {
-                        this.addFile(path.toFile().getAbsoluteFile());
-                    }
+                if (path != null) {
+                    this.addFile(path.toFile().getAbsoluteFile());
                 }
             }
 
