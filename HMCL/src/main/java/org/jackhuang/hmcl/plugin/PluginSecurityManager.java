@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.plugin;
 
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.plugin.api.IPluginSecurityManager;
 import org.jackhuang.hmcl.plugin.api.PluginInfo;
 import org.jackhuang.hmcl.plugin.api.PluginUnsafeInterface;
