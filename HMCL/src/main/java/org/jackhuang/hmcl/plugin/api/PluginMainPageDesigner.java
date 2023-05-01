@@ -3,7 +3,7 @@ package org.jackhuang.hmcl.plugin.api;
 import java.util.ArrayList;
 
 @PluginAccessible
-public class PluginMainPageDesigner {
+public final class PluginMainPageDesigner {
     public ArrayList<IPluginWidget> getWidgets() {
         PluginUnsafeInterface.checkCallerClassPermission();
 
@@ -15,7 +15,7 @@ public class PluginMainPageDesigner {
     }
 
     @PluginAccessible
-    public static class PluginButtonWidget implements IPluginWidget {
+    public static final class PluginButtonWidget implements IPluginWidget {
         private final Runnable onClick;
 
         private final String text;

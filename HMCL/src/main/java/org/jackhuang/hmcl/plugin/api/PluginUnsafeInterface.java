@@ -5,9 +5,12 @@ import java.util.function.Supplier;
 import java.util.logging.Level;
 
 @PluginAccessible
-public class PluginUnsafeInterface {
+public final class PluginUnsafeInterface {
+    private PluginUnsafeInterface() {
+    }
+
     private static String getCallerClass() {
-        StackTraceElement[] stackTraceElements =  new RuntimeException().getStackTrace();
+        StackTraceElement[] stackTraceElements = new RuntimeException().getStackTrace();
         if (stackTraceElements.length >= 3) {
             return stackTraceElements[2].getClassName();
         } else {

@@ -1,9 +1,10 @@
 package org.jackhuang.hmcl.plugin;
 
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.plugin.api.*;
+import org.jackhuang.hmcl.plugin.api.IPluginSecurityManager;
+import org.jackhuang.hmcl.plugin.api.PluginInfo;
+import org.jackhuang.hmcl.plugin.api.PluginUnsafeInterface;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import sun.security.util.SecurityConstants;
 
 import java.io.File;
 import java.io.FilePermission;
@@ -20,7 +21,7 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class PluginSecurityManager extends SecurityManager implements IPluginSecurityManager {
+public final class PluginSecurityManager extends SecurityManager implements IPluginSecurityManager {
     private static final PluginSecurityManager instance = new PluginSecurityManager();
 
     private static final Map<Class<? extends Permission>, BiConsumer<PluginInfo, Permission>> pluginSecurityRules;
@@ -78,10 +79,10 @@ public class PluginSecurityManager extends SecurityManager implements IPluginSec
                         this.addFile(path.toFile().getAbsoluteFile());
                     }
                 }
-            } else {
-                if (JarUtils.thisJar().isPresent()) {
-                    this.addFile(JarUtils.thisJar().get().toFile().getAbsoluteFile());
-                }
+            }
+
+            if (JarUtils.thisJar().isPresent()) {
+                this.addFile(JarUtils.thisJar().get().toFile().getAbsoluteFile());
             }
         }
 

@@ -8,10 +8,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.logging.Level;
 
-public class PluginClassLoader extends URLClassLoader {
+public final class PluginClassLoader extends URLClassLoader {
     private static final Class<PluginAccessible> pluginAccessibleClass = PluginAccessible.class;
 
     private static final Class<PluginUnsafeInterface> pluginUnsafeInterfaceClass = PluginUnsafeInterface.class;

@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 @PluginAccessible
-public class PluginInfo {
+public final class PluginInfo {
     private static final Map<String, PluginInfo> runningPluginIds = new ConcurrentHashMap<>();
     private static final Map<Thread, PluginInfo> runningPluginThreads = new ConcurrentHashMap<>();
 

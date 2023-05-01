@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PluginGsonTypeAdapterV1 extends TypeAdapter<PluginInfo> {
+public final class PluginGsonTypeAdapterV1 extends TypeAdapter<PluginInfo> {
     private String pluginId = null;
     private String pluginName = null;
     private String pluginVersion = null;

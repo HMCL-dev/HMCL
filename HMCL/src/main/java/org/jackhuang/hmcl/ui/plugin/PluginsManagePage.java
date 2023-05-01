@@ -4,7 +4,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
-import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;

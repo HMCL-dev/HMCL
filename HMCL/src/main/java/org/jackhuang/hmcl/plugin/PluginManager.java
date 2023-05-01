@@ -16,15 +16,16 @@ import java.util.Enumeration;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class PluginManager {
+public final class PluginManager {
+    private PluginManager() {
+    }
+
     private static final Gson CONFIG_GSON = new GsonBuilder().registerTypeAdapter(PluginInfo.class, new PluginGsonTypeAdapterV1()).create();
 
     private static class PluginThread extends Thread {
