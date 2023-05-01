@@ -40,9 +40,14 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.plugin.PluginManager;
+import org.jackhuang.hmcl.plugin.api.IPluginEvents;
+import org.jackhuang.hmcl.plugin.api.PluginMainPageDesigner;
+import org.jackhuang.hmcl.plugin.api.PluginUnsafeInterface;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -161,6 +166,36 @@ public final class MainPage extends StackPane implements DecoratorPage {
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
         }
 
+        StackPane pluginPane = new StackPane();
+        {
+            HBox hBox = new HBox();
+            hBox.setSpacing(12);
+            hBox.setAlignment(Pos.CENTER_LEFT);
+            StackPane.setAlignment(hBox, Pos.CENTER_LEFT);
+            StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
+            pluginPane.getChildren().setAll(hBox);
+
+            PluginManager.sendEvent((pluginInfo, eventHandler) -> {
+                PluginMainPageDesigner pluginMainPageDesigner = eventHandler.onMainPage();
+                PluginUnsafeInterface.runUnsafeAsync(() -> {
+                    FXUtils.runInFX(() -> {
+                        pluginMainPageDesigner.getWidgets().forEach((widget) -> {
+                            if (widget instanceof PluginMainPageDesigner.PluginButtonWidget) {
+                                JFXButton jfxButton = new JFXButton(((PluginMainPageDesigner.PluginButtonWidget) widget).getText());
+                                jfxButton.setOnMouseClicked((mouseEvent) -> {
+                                    PluginManager.sendEvent((pluginInfo2, eventHandler2) -> {
+                                        ((PluginMainPageDesigner.PluginButtonWidget) widget).onClick();
+                                    }, pluginInfo);
+                                });
+                                hBox.getChildren().add(jfxButton);
+                            }
+                        });
+                    });
+                    return null;
+                });
+            });
+        }
+
         StackPane launchPane = new StackPane();
         launchPane.getStyleClass().add("launch-pane");
         launchPane.setMaxWidth(230);
@@ -230,7 +265,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
 
-        getChildren().addAll(updatePane, launchPane);
+        getChildren().addAll(updatePane, pluginPane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);

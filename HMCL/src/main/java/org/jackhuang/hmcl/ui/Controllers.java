@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
+import org.jackhuang.hmcl.ui.main.PluginsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
@@ -97,6 +98,7 @@ public final class Controllers {
         return accountListPage;
     });
     private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static Lazy<PluginsPage> pluginsPage = new Lazy<>(PluginsPage::new); // TODO
 
     private Controllers() {
     }
@@ -127,6 +129,11 @@ public final class Controllers {
     // FXThread
     public static LauncherSettingsPage getSettingsPage() {
         return settingsPage.get();
+    }
+
+    // FXThread
+    public static PluginsPage getPluginPage() {
+        return pluginsPage.get();
     }
 
     // FXThread
@@ -351,6 +358,7 @@ public final class Controllers {
         decorator = null;
         stage = null;
         scene = null;
+        pluginsPage = null;
         onApplicationStop();
     }
 }

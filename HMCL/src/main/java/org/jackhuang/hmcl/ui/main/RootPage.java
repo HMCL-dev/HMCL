@@ -171,6 +171,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
+            // seventh item in left sidebar
+            AdvancedListItem pluginSettingsItem = new AdvancedListItem();
+            pluginSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
+            pluginSettingsItem.setActionButtonVisible(false);
+            pluginSettingsItem.setTitle(i18n("plugins"));
+            pluginSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getPluginPage()));
+
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
                     .startCategory(i18n("account").toUpperCase(Locale.ROOT))
@@ -181,7 +188,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(multiplayerItem)
-                    .add(launcherSettingsItem);
+                    .add(launcherSettingsItem)
+                    .add(pluginSettingsItem);
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);

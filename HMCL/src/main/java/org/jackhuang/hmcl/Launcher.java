@@ -24,6 +24,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.plugin.PluginManager;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
@@ -62,6 +63,10 @@ public final class Launcher extends Application {
     @Override
     public void start(Stage primaryStage) {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
+
+        PluginManager.initialize();
+
+        PluginManager.enablePluginFromFile(new File("HMCLPluginSystem/build/libs/HMCLPluginSystem.jar"));
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 

@@ -1,0 +1,14 @@
+{
+  "manifest_version": 1,
+
+  "name": "HMCL Example Plugin",
+  "id": "hmcl-example-plugin",
+  "version": "1.0.0.0",
+
+  "author": [
+    "Burning_TNT"
+  ],
+  "entrypoints": {
+    "events": "org.jackhuang.hmclpluginexample.entrypoints.EventsImpl"
+  }
+}
