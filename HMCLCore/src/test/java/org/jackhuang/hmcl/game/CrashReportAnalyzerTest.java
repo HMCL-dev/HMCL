@@ -383,6 +383,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void nightconfigfixes() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/night_config_fixes.txt")),
+                CrashReportAnalyzer.Rule.NIGHT_CONFIG_FIXES);
+    }
+
+    @Test
     public void customNpc() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/customnpc.txt")),

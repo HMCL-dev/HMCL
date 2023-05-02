@@ -1,0 +1,151 @@
+Java HotSpot(TM) 64-Bit Server VM warning: Option --illegal-access is deprecated and will be removed in a future release.
+[22:55:37] [main/INFO]: ModLauncher running: args [--username, fmtt1, --version, 1.17.1, --gameDir, F:\新我的世界, --assetsDir, F:\新我的世界\assets, --assetIndex, 1.17, --uuid, 118884b8837d3e2eaf1d48eb68883f95, --accessToken, ❄❄❄❄❄❄❄❄, --userType, legacy, --versionType, HMCL 3.5.4, --width, 854, --height, 480, --launchTarget, forgeclient, --fml.forgeVersion, 37.1.1, --fml.mcVersion, 1.17.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20210706.113038]
+[22:55:37] [main/INFO]: ModLauncher 9.0.7+91+master.8569cdf starting: java version 16.0.1 by Oracle Corporation
+[22:55:37] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.4 Source=union:/F:/新我的世界/libraries/org/spongepowered/mixin/0.8.4/mixin-0.8.4.jar%2319! Service=ModLauncher Env=CLIENT
+[22:55:37] [main/INFO]: Found mod file jei-1.17.1-8.3.1.1002.jar of type MOD with locator {mods folder locator at F:\新我的世界\mods}
+[22:55:37] [main/INFO]: Found mod file journeymap-1.17.1-5.8.0.jar of type MOD with locator {mods folder locator at F:\新我的世界\mods}
+[22:55:37] [main/INFO]: Found mod file fmlcore-1.17.1-37.1.1.jar of type LIBRARY with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@18245eb0
+[22:55:37] [main/INFO]: Found mod file javafmllanguage-1.17.1-37.1.1.jar of type LANGPROVIDER with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@18245eb0
+[22:55:37] [main/INFO]: Found mod file mclanguage-1.17.1-37.1.1.jar of type LANGPROVIDER with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@18245eb0
+[22:55:37] [main/INFO]: Found mod file client-1.17.1-20210706.113038-srg.jar of type MOD with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@18245eb0
+[22:55:37] [main/INFO]: Found mod file forge-1.17.1-37.1.1-universal.jar of type MOD with locator net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@18245eb0
+2023-04-26 22:55:37,463 main WARN Error parsing URI F:\新我的世界\versions\1.17.1\log4j2.xml
+[22:55:38] [main/INFO]: Launching target 'forgeclient' with arguments [--version, 1.17.1, --gameDir, F:\新我的世界, --assetsDir, F:\新我的世界\assets, --uuid, 118884b8837d3e2eaf1d48eb68883f95, --username, fmtt1, --assetIndex, 1.17, --accessToken, ❄❄❄❄❄❄❄❄, --userType, legacy, --versionType, HMCL 3.5.4, --width, 854, --height, 480]
+2023-04-26 22:55:38,406 main WARN Error parsing URI F:\新我的世界\versions\1.17.1\log4j2.xml
+SLF4J: No SLF4J providers were found.
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#noProviders for further details.
+############ Journeymap Coremod Potion Effects Renderer: Injected ############
+[22:55:43] [Render thread/WARN]: Assets URL 'union:/F:/新我的世界/libraries/net/minecraft/client/1.17.1-20210706.113038/client-1.17.1-20210706.113038-srg.jar%2355!/assets/.mcassetsroot' uses unexpected schema
+[22:55:43] [Render thread/WARN]: Assets URL 'union:/F:/新我的世界/libraries/net/minecraft/client/1.17.1-20210706.113038/client-1.17.1-20210706.113038-srg.jar%2355!/data/.mcassetsroot' uses unexpected schema
+[22:55:43] [Render thread/INFO]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[22:55:44] [Render thread/ERROR]: Failed to verify authentication
+com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401
+	at com.mojang.authlib.exceptions.MinecraftClientHttpException.toAuthenticationException(MinecraftClientHttpException.java:56) ~[authlib-2.3.31.jar%2338!:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilSocialInteractionsService.checkPrivileges(YggdrasilSocialInteractionsService.java:112) ~[authlib-2.3.31.jar%2338!:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilSocialInteractionsService.<init>(YggdrasilSocialInteractionsService.java:42) ~[authlib-2.3.31.jar%2338!:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService.createSocialInteractionsService(YggdrasilAuthenticationService.java:151) ~[authlib-2.3.31.jar%2338!:?]
+	at net.minecraft.client.Minecraft.m_91130_(Minecraft.java:601) ~[client-1.17.1-20210706.113038-srg.jar%2355!:?]
+	at net.minecraft.client.Minecraft.<init>(Minecraft.java:404) ~[client-1.17.1-20210706.113038-srg.jar%2355!:?]
+	at net.minecraft.client.main.Main.main(Main.java:151) ~[client-1.17.1-20210706.113038-srg.jar%2355!:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:78) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:567) ~[?:?]
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:45) ~[fmlloader-1.17.1-37.1.1.jar%2323!:?]
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-9.0.7.jar%235!:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) [modlauncher-9.0.7.jar%235!:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) [modlauncher-9.0.7.jar%235!:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:106) [modlauncher-9.0.7.jar%235!:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:77) [modlauncher-9.0.7.jar%235!:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) [modlauncher-9.0.7.jar%235!:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) [modlauncher-9.0.7.jar%235!:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:90) [bootstraplauncher-0.1.17.jar:?]
+Caused by: com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:79) ~[authlib-2.3.31.jar%2338!:?]
+	at com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:47) ~[authlib-2.3.31.jar%2338!:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilSocialInteractionsService.checkPrivileges(YggdrasilSocialInteractionsService.java:104) ~[authlib-2.3.31.jar%2338!:?]
+	... 18 more
+[22:55:44] [Render thread/INFO]: Setting user: fmtt1
+[22:55:44] [Render thread/INFO]: Backend library: LWJGL version 3.2.2 SNAPSHOT
+[22:55:45] [modloading-worker-2/INFO]: Forge mod loading, version 37.1.1, for MC 1.17.1 with MCP 20210706.113038
+[22:55:45] [modloading-worker-2/INFO]: MinecraftForge v37.1.1 Initialized
+[22:55:47] [Render thread/INFO]: Narrator library for x64 successfully loaded
+[22:55:47] [Render thread/INFO]: Reloading ResourceManager: Default, Mod Resources
+[22:55:47] [Worker-Main-10/INFO]: No plugins for JourneyMap API discovered.
+[22:55:47] [Forge Version Check/INFO]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
+[22:55:47] [Render thread/INFO]: Initializing Packet Registries
+[22:55:48] [Render thread/INFO]: Journeymap Initializing
+[22:55:48] [Render thread/INFO]: JourneyMap log initialized.
+[22:55:48] [Render thread/INFO]: initialize ENTER
+[22:55:48] [Render thread/INFO]: [ClientAPI] built with JourneyMap API 1.8-SNAPSHOT
+[22:55:48] [Render thread/INFO]: Initializing plugins with Client API: journeymap.client.api.impl.ClientAPI
+[22:55:48] [Render thread/WARN]: core (Initialized) Bad configField entry during updateFrom(): optionsManagerViewed=null
+[22:55:48] [Render thread/WARN]: core (Initialized) Bad configField entry during updateFrom(): splashViewed=null
+[22:55:48] [Forge Version Check/INFO]: [forge] Found status: UP_TO_DATE Current: 37.1.1 Target: null
+[22:55:48] [Forge Version Check/INFO]: [journeymap] Starting version check at https://forge.curseupdate.com/32274/journeymap
+[22:55:48] [Render thread/INFO]: initialize EXIT, elapsed count 1 avg 508.87ms
+[22:55:49] [Forge Version Check/INFO]: [journeymap] Found status: UP_TO_DATE Current: 5.8.0 Target: null
+[22:56:00] [Render thread/INFO]: Journeymap PostInit
+[22:56:01] [Render thread/INFO]: Preloaded theme textures: 73
+[22:56:01] [Render thread/INFO]: postInitialize EXIT, elapsed count 1 avg 356.59ms
+[22:56:02] [Render thread/INFO]: OpenAL initialized.
+[22:56:02] [Render thread/INFO]: Sound engine started
+[22:56:02] [Render thread/INFO]: Created: 1024x512x4 minecraft:textures/atlas/blocks.png-atlas
+[22:56:02] [Render thread/INFO]: Created: 256x128x4 minecraft:textures/atlas/signs.png-atlas
+[22:56:02] [Render thread/INFO]: Created: 512x512x4 minecraft:textures/atlas/banner_patterns.png-atlas
+[22:56:02] [Render thread/INFO]: Created: 512x512x4 minecraft:textures/atlas/shield_patterns.png-atlas
+[22:56:02] [Render thread/INFO]: Created: 256x256x4 minecraft:textures/atlas/chest.png-atlas
+[22:56:02] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/beds.png-atlas
+[22:56:02] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/shulker_boxes.png-atlas
+[22:56:03] [Render thread/INFO]: Created: 256x256x0 minecraft:textures/atlas/particles.png-atlas
+[22:56:03] [Render thread/INFO]: Created: 256x256x0 minecraft:textures/atlas/paintings.png-atlas
+[22:56:03] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/mob_effects.png-atlas
+[22:56:03] [Render thread/INFO]: Created: 256x128x0 jei:textures/atlas/gui.png-atlas
+[22:56:04] [Realms Notification Availability checker #1/INFO]: Could not authorize you against Realms server: Invalid session id
+[22:56:19] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:56:19] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:56:19] [Render thread/WARN]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[22:56:19] [Render thread/WARN]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[22:56:19] [Render thread/WARN]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:56:19] [Render thread/WARN]: Ambiguity between arguments [waypoint, create, name, dimension, location, color, announce] and [waypoint, create, name, dimension, location, color, player] with inputs: [true, false]
+[22:56:19] [Render thread/WARN]: Ambiguity between arguments [waypoint, delete, name, announce] and [waypoint, delete, name, player] with inputs: [true, false]
+[22:56:19] [Render thread/INFO]: Reloading ResourceManager: Default, forge-1.17.1-37.1.1-universal.jar, journeymap-1.17.1-5.8.0.jar, jei-1.17.1-8.3.1.1002.jar
+[22:56:22] [Render thread/INFO]: Loaded 7 recipes
+[22:56:24] [Render thread/INFO]: Loaded 1137 advancements
+[22:56:52] [pool-6-thread-1/INFO]: World optimizaton finished after 27426 ms
+[22:56:58] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:56:58] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:56:58] [Render thread/WARN]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[22:56:58] [Render thread/WARN]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[22:56:58] [Render thread/WARN]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:56:58] [Render thread/WARN]: Ambiguity between arguments [waypoint, create, name, dimension, location, color, announce] and [waypoint, create, name, dimension, location, color, player] with inputs: [true, false]
+[22:56:58] [Render thread/WARN]: Ambiguity between arguments [waypoint, delete, name, announce] and [waypoint, delete, name, player] with inputs: [true, false]
+[22:56:58] [Render thread/INFO]: Reloading ResourceManager: Default, forge-1.17.1-37.1.1-universal.jar, journeymap-1.17.1-5.8.0.jar, jei-1.17.1-8.3.1.1002.jar
+[22:57:01] [Render thread/INFO]: Loaded 7 recipes
+[22:57:02] [Render thread/INFO]: Loaded 1137 advancements
+[22:57:02] [Render thread/INFO]: Injecting existing registry data into this CLIENT instance
+[22:57:03] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:57:03] [Render thread/WARN]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:57:03] [Render thread/WARN]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[22:57:03] [Render thread/WARN]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[22:57:03] [Render thread/WARN]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[22:57:03] [Render thread/WARN]: Ambiguity between arguments [waypoint, create, name, dimension, location, color, announce] and [waypoint, create, name, dimension, location, color, player] with inputs: [true, false]
+[22:57:03] [Render thread/WARN]: Ambiguity between arguments [waypoint, delete, name, announce] and [waypoint, delete, name, player] with inputs: [true, false]
+[22:57:03] [Render thread/INFO]: Reloading ResourceManager: Default, forge-1.17.1-37.1.1-universal.jar, journeymap-1.17.1-5.8.0.jar, jei-1.17.1-8.3.1.1002.jar
+[22:57:05] [Render thread/INFO]: Loaded 7 recipes
+[22:57:07] [Render thread/INFO]: Loaded 1137 advancements
+[22:57:07] [Render thread/INFO]: Injecting existing registry data into this CLIENT instance
+[22:57:08] [Render thread/INFO]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[22:57:08] [Server thread/INFO]: Starting integrated minecraft server version 1.17.1
+[22:57:08] [Server thread/INFO]: Generating keypair
+[22:57:08] [Server thread/ERROR]: Encountered an unexpected exception
+net.minecraftforge.fml.config.ConfigFileTypeHandler$ConfigLoadingException: Failed loading config file journeymap-server.toml of type SERVER for modid journeymap
+	at net.minecraftforge.fml.config.ConfigFileTypeHandler.lambda$reader$1(ConfigFileTypeHandler.java:61) ~[fmlcore-1.17.1-37.1.1.jar%2356!:?]
+	at net.minecraftforge.fml.config.ConfigTracker.openConfig(ConfigTracker.java:74) ~[fmlcore-1.17.1-37.1.1.jar%2356!:?]
+	at net.minecraftforge.fml.config.ConfigTracker.lambda$loadConfigs$1(ConfigTracker.java:64) ~[fmlcore-1.17.1-37.1.1.jar%2356!:?]
+	at java.lang.Iterable.forEach(Iterable.java:75) ~[?:?]
+	at java.util.Collections$SynchronizedCollection.forEach(Collections.java:2093) ~[?:?]
+	at net.minecraftforge.fml.config.ConfigTracker.loadConfigs(ConfigTracker.java:64) ~[fmlcore-1.17.1-37.1.1.jar%2356!:?]
+	at net.minecraftforge.fmllegacy.server.ServerLifecycleHooks.handleServerAboutToStart(ServerLifecycleHooks.java:95) ~[forge-1.17.1-37.1.1-universal.jar%2359!:?]
+	at net.minecraft.client.server.IntegratedServer.m_7038_(IntegratedServer.java:64) ~[client-1.17.1-20210706.113038-srg.jar%2355!:?]
+	at net.minecraft.server.MinecraftServer.m_130011_(MinecraftServer.java:660) ~[client-1.17.1-20210706.113038-srg.jar%2355!:?]
+	at net.minecraft.server.MinecraftServer.m_177918_(MinecraftServer.java:258) ~[client-1.17.1-20210706.113038-srg.jar%2355!:?]
+	at java.lang.Thread.run(Thread.java:831) [?:?]
+Caused by: com.electronwill.nightconfig.core.io.ParsingException: Not enough data available
+	at com.electronwill.nightconfig.core.io.ParsingException.notEnoughData(ParsingException.java:22) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.core.io.ReaderInput.directReadChar(ReaderInput.java:36) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.core.io.AbstractInput.readChar(AbstractInput.java:49) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.core.io.AbstractInput.readCharsUntil(AbstractInput.java:123) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.toml.TableParser.parseKey(TableParser.java:166) ~[toml-3.6.3.jar%238!:?]
+	at com.electronwill.nightconfig.toml.TableParser.parseDottedKey(TableParser.java:145) ~[toml-3.6.3.jar%238!:?]
+	at com.electronwill.nightconfig.toml.TableParser.parseNormal(TableParser.java:55) ~[toml-3.6.3.jar%238!:?]
+	at com.electronwill.nightconfig.toml.TomlParser.parse(TomlParser.java:44) ~[toml-3.6.3.jar%238!:?]
+	at com.electronwill.nightconfig.toml.TomlParser.parse(TomlParser.java:37) ~[toml-3.6.3.jar%238!:?]
+	at com.electronwill.nightconfig.core.io.ConfigParser.parse(ConfigParser.java:113) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.core.io.ConfigParser.parse(ConfigParser.java:219) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.core.io.ConfigParser.parse(ConfigParser.java:202) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.core.file.WriteSyncFileConfig.load(WriteSyncFileConfig.java:73) ~[core-3.6.3.jar%237!:?]
+	at com.electronwill.nightconfig.core.file.AutosaveCommentedFileConfig.load(AutosaveCommentedFileConfig.java:85) ~[core-3.6.3.jar%237!:?]
+	at net.minecraftforge.fml.config.ConfigFileTypeHandler.lambda$reader$1(ConfigFileTypeHandler.java:57) ~[fmlcore-1.17.1-37.1.1.jar%2356!:?]
+	... 10 more
