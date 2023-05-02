@@ -33,7 +33,7 @@ public class IconedTwoLineListItem extends HBox {
         JFXButton button = new JFXButton();
         button.getStyleClass().add("toggle-icon4");
         button.setGraphic(SVG.openInNew(Theme.blackFillBinding(), -1, -1));
-        button.setExternalLink(externalLink.get());
+        button.setOnAction(e -> FXUtils.openLink(externalLink.get()));
         return button;
     });
     @SuppressWarnings("FieldCanBeLocal")
