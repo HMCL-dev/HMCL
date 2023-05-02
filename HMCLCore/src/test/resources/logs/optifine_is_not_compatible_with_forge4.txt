@@ -1,0 +1,1781 @@
+[authlib-injector] [INFO] Logging file: E:\.minecraft\versions\1.19.3\authlib-injector.log
+[authlib-injector] [INFO] Version: 1.2.2
+[authlib-injector] [INFO] Authentication server: http://localhost:12011
+[authlib-injector] [WARNING] You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.
+[16:34:52] [main/INFO]: ModLauncher running: args [--username, sroYors, --version, 1.19.3, --gameDir, E:\\.minecraft\versions\1.19.3, --assetsDir, E:\.minecraft\assets, --assetIndex, 2, --uuid, 8872cb99f6a830e0bd038210ff4122c4, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, legacy, --versionType, HMCL **.**.**.**, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker, --launchTarget, forgeclient, --fml.forgeVersion, 44.1.23, --fml.mcVersion, 1.19.3, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20221207.122022]
+[16:34:52] [main/INFO]: ModLauncher 10.0.8+10.0.8+main.0ef7e830 starting: java version 17.0.6 by BellSoft; OS Windows 10 arch amd64 version 10.0
+[16:34:52] [main/INFO]: OptiFineTransformationService.onLoad
+[16:34:52] [main/INFO]: OptiFine ZIP file URL: union:/E:/.minecraft/libraries/optifine/OptiFine/1.19.3_HD_U_I2_pre5/OptiFine-1.19.3_HD_U_I2_pre5.jar%2399!/
+[16:34:52] [main/INFO]: OptiFine ZIP file: E:\.minecraft\libraries\optifine\OptiFine\1.19.3_HD_U_I2_pre5\OptiFine-1.19.3_HD_U_I2_pre5.jar
+[16:34:52] [main/INFO]: Target.PRE_CLASS is available
+[16:34:52] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/E:/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%2394!/ Service=ModLauncher Env=CLIENT
+[16:34:52] [main/INFO]: OptiFineTransformationService.initialize
+[2023-04-10 16:34:53] [INFO]: I18nUpdate Mod 3.4.1 is loaded in 1.19.3 with Forge
+[2023-04-10 16:34:53] [INFO]: Downloading: http://downloader1.meitangdehulu.com:22943/Minecraft-Mod-Language-Modpack-1-19.zip -> C:\Users\********\.i18nupdatemod\1.19.3\Minecraft-Mod-Language-Modpack-1-19.zip.tmp
+[2023-04-10 16:35:05] [INFO]: Downloading: http://downloader1.meitangdehulu.com:22943/Minecraft-Mod-Language-Modpack-1-18.zip -> C:\Users\********\.i18nupdatemod\1.18.2\Minecraft-Mod-Language-Modpack-1-18.zip.tmp
+[2023-04-10 16:35:28] [INFO]: Converting: C:\Users\********\.i18nupdatemod\1.19.3\Minecraft-Mod-Language-Modpack-1-19.zip
+[2023-04-10 16:35:28] [INFO]: Converting: C:\Users\********\.i18nupdatemod\1.18.2\Minecraft-Mod-Language-Modpack-1-18.zip
+[2023-04-10 16:35:31] [INFO]: Converted: [C:\Users\********\.i18nupdatemod\1.19.3\Minecraft-Mod-Language-Modpack-1-19.zip, C:\Users\********\.i18nupdatemod\1.18.2\Minecraft-Mod-Language-Modpack-1-18.zip] -> C:\Users\********\.i18nupdatemod\1.19.3\Minecraft-Mod-Language-Modpack-Converted-12.zip
+[2023-04-10 16:35:31] [INFO]: Synchronized: C:\Users\********\.i18nupdatemod\1.19.3\Minecraft-Mod-Language-Modpack-Converted-12.zip -> E:\.minecraft\versions\1.19.3\resourcepacks\Minecraft-Mod-Language-Modpack-Converted-12.zip
+[16:35:31] [main/ERROR]: Locator {mods folder locator at E:\.minecraft\versions\1.19.3\mods} found an invalid mod file net.minecraftforge.fml.loading.moddiscovery.ModFileInfo@6968bcec
+net.minecraftforge.fml.loading.moddiscovery.InvalidModFileException: Illegal version number specified forge-1.0-BetaPreview2-1.19.3 (mythicupgrades-forge-1.0-BetaPreview2-1.19.3.jar)
+	at net.minecraftforge.fml.loading.moddiscovery.ModInfo.<init>(ModInfo.java:104) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.ModFileInfo.lambda$new$2(ModFileInfo.java:69) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at java.util.stream.ReferencePipeline$3$1.accept(Unknown Source) ~[?:?]
+	at java.util.ArrayList$ArrayListSpliterator.forEachRemaining(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.copyInto(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(Unknown Source) ~[?:?]
+	at java.util.stream.ReduceOps$ReduceOp.evaluateSequential(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.evaluate(Unknown Source) ~[?:?]
+	at java.util.stream.ReferencePipeline.collect(Unknown Source) ~[?:?]
+	at net.minecraftforge.fml.loading.moddiscovery.ModFileInfo.<init>(ModFileInfo.java:70) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.ModFileParser.modsTomlParser(ModFileParser.java:47) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.ModFileParser.readModList(ModFileParser.java:31) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.ModFile.<init>(ModFile.java:79) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.ModFile.<init>(ModFile.java:68) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.AbstractModProvider.createMod(AbstractModProvider.java:52) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.AbstractJarFileModLocator.lambda$scanMods$0(AbstractJarFileModLocator.java:19) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at java.util.stream.ReferencePipeline$3$1.accept(Unknown Source) ~[?:?]
+	at java.util.ArrayList.forEach(Unknown Source) ~[?:?]
+	at java.util.stream.SortedOps$RefSortingSink.end(Unknown Source) ~[?:?]
+	at java.util.stream.Sink$ChainedReference.end(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.copyInto(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.evaluate(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.evaluateToArrayNode(Unknown Source) ~[?:?]
+	at java.util.stream.ReferencePipeline.toArray(Unknown Source) ~[?:?]
+	at java.util.stream.ReferencePipeline.toArray(Unknown Source) ~[?:?]
+	at java.util.stream.ReferencePipeline.toList(Unknown Source) ~[?:?]
+	at net.minecraftforge.fml.loading.moddiscovery.AbstractJarFileModLocator.scanMods(AbstractJarFileModLocator.java:19) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.moddiscovery.ModDiscoverer.discoverMods(ModDiscoverer.java:74) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at net.minecraftforge.fml.loading.FMLLoader.beginModScan(FMLLoader.java:166) ~[fmlloader-1.19.3-44.1.23.jar:1.0]
+	at net.minecraftforge.fml.loading.FMLServiceProvider.beginScanning(FMLServiceProvider.java:86) ~[fmlloader-1.19.3-44.1.23.jar:1.0]
+	at cpw.mods.modlauncher.TransformationServiceDecorator.runScan(TransformationServiceDecorator.java:112) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.lambda$runScanningTransformationServices$8(TransformationServicesHandler.java:100) ~[modlauncher-10.0.8.jar:?]
+	at java.util.stream.ReferencePipeline$3$1.accept(Unknown Source) ~[?:?]
+	at java.util.HashMap$ValueSpliterator.forEachRemaining(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.copyInto(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.evaluate(Unknown Source) ~[?:?]
+	at java.util.stream.AbstractPipeline.evaluateToArrayNode(Unknown Source) ~[?:?]
+	at java.util.stream.ReferencePipeline.toArray(Unknown Source) ~[?:?]
+	at java.util.stream.ReferencePipeline.toArray(Unknown Source) ~[?:?]
+	at java.util.stream.ReferencePipeline.toList(Unknown Source) ~[?:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.runScanningTransformationServices(TransformationServicesHandler.java:102) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:55) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:87) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:77) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?]
+[16:35:31] [main/WARN]: Mod file E:\.minecraft\libraries\net\minecraftforge\fmlcore\1.19.3-44.1.23\fmlcore-1.19.3-44.1.23.jar is missing mods.toml file
+[16:35:31] [main/WARN]: Mod file E:\.minecraft\libraries\net\minecraftforge\javafmllanguage\1.19.3-44.1.23\javafmllanguage-1.19.3-44.1.23.jar is missing mods.toml file
+[16:35:31] [main/WARN]: Mod file E:\.minecraft\libraries\net\minecraftforge\lowcodelanguage\1.19.3-44.1.23\lowcodelanguage-1.19.3-44.1.23.jar is missing mods.toml file
+[16:35:31] [main/WARN]: Mod file E:\.minecraft\libraries\net\minecraftforge\mclanguage\1.19.3-44.1.23\mclanguage-1.19.3-44.1.23.jar is missing mods.toml file
+[16:35:32] [main/INFO]: Found mod file fmlcore-1.19.3-44.1.23.jar of type LIBRARY with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@889a8a8
+[16:35:32] [main/INFO]: Found mod file javafmllanguage-1.19.3-44.1.23.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@889a8a8
+[16:35:32] [main/INFO]: Found mod file lowcodelanguage-1.19.3-44.1.23.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@889a8a8
+[16:35:32] [main/INFO]: Found mod file mclanguage-1.19.3-44.1.23.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@889a8a8
+[16:35:32] [main/INFO]: Found mod file client-1.19.3-20221207.122022-srg.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@889a8a8
+[16:35:32] [main/INFO]: Found mod file forge-1.19.3-44.1.23-universal.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@889a8a8
+[16:35:32] [main/INFO]: No dependencies to load found. Skipping!
+[16:35:32] [main/INFO]: OptiFineTransformationService.transformers
+[16:35:32] [main/INFO]: Targets: 394
+[16:35:32] [main/INFO]: additionalClassesLocator: [optifine., net.optifine.]
+[16:35:33] [main/INFO]: Launching target 'forgeclient' with arguments [--version, 1.19.3, --gameDir, E:\.minecraft\versions\1.19.3, --assetsDir, E:\.minecraft\assets, --uuid, 8872cb99f6a830e0bd038210ff4122c4, --username, sroYors, --assetIndex, 2, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, legacy, --versionType, HMCL **.**.**.**, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker]
+[authlib-injector] [INFO] Transformed [net.minecraft.client.main.Main] with [Main Arguments Transformer]
+[authlib-injector] [INFO] Transformed [com.mojang.authlib.properties.Property] with [Yggdrasil Public Key Transformer]
+Completely ignored arguments: [--tweakClass, optifine.OptiFineTweaker]
+[authlib-injector] [INFO] Httpd is running on port 12231
+[authlib-injector] [INFO] Transformed [net.minecraft.client.player.AbstractClientPlayer] with [Constant URL Transformer]
+[authlib-injector] [INFO] Transformed [com.mojang.authlib.HttpAuthenticationService] with [ConcatenateURL Workaround]
+[authlib-injector] [INFO] Transformed [net.minecraft.client.main.Main] with [Main Arguments Transformer]
+[16:35:36] [pool-3-thread-1/INFO]: Building unoptimized datafixer
+[16:35:38] [Render thread/WARN]: Assets URL 'union:/E:/.minecraft/libraries/net/minecraft/client/1.19.3-20221207.122022/client-1.19.3-20221207.122022-srg.jar%23312!/assets/.mcassetsroot' uses unexpected schema
+[16:35:38] [Render thread/WARN]: Assets URL 'union:/E:/.minecraft/libraries/net/minecraft/client/1.19.3-20221207.122022/client-1.19.3-20221207.122022-srg.jar%23312!/data/.mcassetsroot' uses unexpected schema
+[authlib-injector] [INFO] Transformed [com.mojang.authlib.yggdrasil.YggdrasilEnvironment] with [Constant URL Transformer]
+[authlib-injector] [INFO] Transformed [com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo] with [Yggdrasil Public Key Transformer]
+[16:35:38] [Render thread/INFO]: Environment: authHost='http://localhost:12011/authserver', accountsHost='http://127.0.0.1:12231/https/api.mojang.com', sessionHost='http://127.0.0.1:12231/https/sessionserver.mojang.com', servicesHost='http://127.0.0.1:12231/https/api.minecraftservices.com', name='PROD'
+[authlib-injector] [INFO] Transformed [com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService] with [Texture Whitelist Transformer]
+[16:35:38] [Render thread/INFO]: Setting user: sroYors
+[16:35:38] [Render thread/INFO]: Backend library: LWJGL version 3.3.1 build 7
+[16:35:39] [Render thread/INFO]: [OptiFine] 
+[16:35:39] [Render thread/INFO]: [OptiFine] OptiFine_1.19.3_HD_U_I2_pre5
+[16:35:39] [Render thread/INFO]: [OptiFine] Build: 20230219-203817
+[16:35:39] [Render thread/INFO]: [OptiFine] OS: Windows 10 (amd64) version 10.0
+[16:35:39] [Render thread/INFO]: [OptiFine] Java: 17.0.6, BellSoft
+[16:35:39] [Render thread/INFO]: [OptiFine] VM: OpenJDK 64-Bit Server VM (mixed mode, sharing), BellSoft
+[16:35:39] [Render thread/INFO]: [OptiFine] LWJGL: 3.4.0 Win32 WGL Null EGL OSMesa VisualC DLL
+[16:35:39] [Render thread/INFO]: [OptiFine] OpenGL: Intel(R) Iris(R) Xe Graphics, version 3.2.0 - Build 31.0.101.3358, Intel
+[16:35:39] [Render thread/INFO]: [OptiFine] OpenGL Version: 3.2.0
+[16:35:39] [Render thread/INFO]: [OptiFine] Maximum texture size: 16384x16384
+[16:35:39] [VersionCheck/INFO]: [OptiFine] Checking for new version
+[16:35:39] [Render thread/INFO]: [Shaders] OpenGL Version: 3.2.0 - Build 31.0.101.3358
+[16:35:39] [Render thread/INFO]: [Shaders] Vendor:  Intel
+[16:35:39] [Render thread/INFO]: [Shaders] Renderer: Intel(R) Iris(R) Xe Graphics
+[16:35:39] [Render thread/INFO]: [Shaders] Capabilities:  2.0  2.1  3.0  3.2  - 
+[16:35:39] [Render thread/INFO]: [Shaders] GL_MAX_DRAW_BUFFERS: 8
+[16:35:39] [Render thread/INFO]: [Shaders] GL_MAX_COLOR_ATTACHMENTS: 8
+[16:35:39] [Render thread/INFO]: [Shaders] GL_MAX_TEXTURE_IMAGE_UNITS: 32
+[16:35:39] [Render thread/INFO]: [Shaders] Load shaders configuration.
+[16:35:39] [Render thread/INFO]: [Shaders] Loaded shaderpack: ComplementaryReimagined_r2.0.1.zip
+[16:35:39] [Render thread/INFO]: [OptiFine] [Shaders] Worlds: -1, 0, 1
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: WATER_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 1
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 3
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: AURORA_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 1
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 2
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: SUN_MOON_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 1
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 2
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: CLOUD_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 1
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 3
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: WATER_STYLE
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: WATER_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: WATER_STYLE_DEFINE
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: AURORA_STYLE
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: AURORA_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: AURORA_STYLE_DEFINE
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: SUN_MOON_STYLE
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: SUN_MOON_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: SUN_MOON_STYLE_DEFINE
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: CLOUD_STYLE
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: CLOUD_STYLE_DEFAULT
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: CLOUD_STYLE_DEFINE
+[16:35:39] [Render thread/WARN]: [OptiFine] Ambiguous shader option: sunPathRotation
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: 0.0
+[16:35:39] [Render thread/WARN]: [OptiFine]  - in world-1/gbuffers_basic.vsh: -40.0
+[16:35:39] [VersionCheck/INFO]: [OptiFine] java.io.FileNotFoundException: http://optifine.net/version/1.19.3/HD_U.txt
+[16:35:39] [Render thread/INFO]: [OptiFine] [Shaders] Delayed loading of block mappings after resources are loaded
+[16:35:39] [Render thread/INFO]: [OptiFine] [Shaders] Delayed loading of item mappings after resources are loaded
+[16:35:39] [Render thread/INFO]: [OptiFine] [Shaders] Delayed loading of entity mappings after resources are loaded
+[16:35:40] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.ClassNotFoundException: sun.misc.SharedSecrets
+[16:35:40] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.ClassNotFoundException: jdk.internal.misc.SharedSecrets
+[16:35:40] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.ClassNotFoundException: sun.misc.VM
+[16:35:40] [Render thread/WARN]: [OptiFine] (Reflector) java.lang.reflect.InaccessibleObjectException: Unable to make public static long jdk.internal.misc.VM.maxDirectMemory() accessible: module java.base does not "exports jdk.internal.misc" to module net.optifine
+[16:35:40] [Render thread/INFO]: [Shaders] Custom texture: texture.deferred.colortex3 = lib/textures/clouds.png
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: framemod8
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: isEyeInCave
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: isDry
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: isRainy
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: isSnowy
+[16:35:40] [Render thread/INFO]: [Shaders] Custom variable: difX
+[16:35:40] [Render thread/INFO]: [Shaders] Custom variable: difY
+[16:35:40] [Render thread/INFO]: [Shaders] Custom variable: difZ
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: velocity
+[16:35:40] [Render thread/INFO]: [Shaders] Custom variable: difSum
+[16:35:40] [Render thread/INFO]: [Shaders] Custom variable: moving
+[16:35:40] [Render thread/INFO]: [Shaders] Custom variable: moved
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: starter
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: frameTimeSmooth
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: eyeBrightnessM
+[16:35:40] [Render thread/INFO]: [Shaders] Custom uniform: rainFactor
+[16:35:40] [modloading-worker-0/INFO]: Forge mod loading, version 44.1.23, for MC 1.19.3 with MCP 20221207.122022
+[16:35:40] [modloading-worker-0/INFO]: MinecraftForge v44.1.23 Initialized
+[16:35:41] [Render thread/INFO]: Narrator library for x64 successfully loaded
+[16:35:41] [Render thread/INFO]: Reloading ResourceManager: vanilla, file/Minecraft-Mod-Language-Modpack-Converted-12.zip, file/FreshAnimations_v1.8.zip, file/Better-Leaves-7.1-1.19+.zip, file/Resource+pack+for+Better+End+Sky+mod.zip, file/Stay_True_1.19.zip, mod_resources
+[16:35:41] [Render thread/INFO]: [OptiFine] *** Reloading textures ***
+[16:35:41] [Render thread/INFO]: [OptiFine] Resource packs: file/Minecraft-Mod-Language-Modpack-Converted-12.zip, file/FreshAnimations_v1.8.zip, file/Better-Leaves-7.1-1.19+.zip, file/Resource+pack+for+Better+End+Sky+mod.zip, file/Stay_True_1.19.zip, mod_resources
+[16:35:41] [Render thread/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:41] [Render thread/INFO]: [OptiFine] *** Reflector Forge ***
+[16:35:41] [Forge Version Check/INFO]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
+[16:35:41] [Render thread/INFO]: [OptiFine] *** Reflector Vanilla ***
+[16:35:41] [Render thread/INFO]: [OptiFine] Loading optifine/color.properties
+[16:35:41] [Render thread/INFO]: [OptiFine] screen.loading = 111114
+[16:35:41] [Render thread/INFO]: [OptiFine] screen.loading.bar = 72655b
+[16:35:41] [Render thread/INFO]: [OptiFine] screen.loading.progress = ece5d9
+[16:35:42] [Forge Version Check/INFO]: [forge] Found status: AHEAD Current: 44.1.23 Target: null
+[16:35:43] [Worker-Main-3/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/signs.png
+[16:35:43] [Worker-Main-3/INFO]: [OptiFine] Multitexture: false
+[16:35:43] [Worker-Main-3/INFO]: [OptiFine] Sprite size: 64
+[16:35:43] [Worker-Main-3/INFO]: [OptiFine] Mipmap levels: 6
+[16:35:43] [Worker-Main-1/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/banner_patterns.png
+[16:35:43] [Worker-Main-1/INFO]: [OptiFine] Multitexture: false
+[16:35:43] [Worker-Main-1/INFO]: [OptiFine] Sprite size: 64
+[16:35:43] [Worker-Main-1/INFO]: [OptiFine] Mipmap levels: 6
+[16:35:44] [Worker-Main-6/WARN]: Exception loading blockstate definition: 'minecraft:blockstates/cut_sandstone.json' in resourcepack: 'file/Stay_True_1.19.zip' for variant: 'axis=z': Unknown blockstate property: 'axis'
+[16:35:44] [Worker-Main-6/WARN]: Exception loading blockstate definition: 'minecraft:blockstates/cut_sandstone.json' in resourcepack: 'file/Stay_True_1.19.zip' for variant: 'axis=x': Unknown blockstate property: 'axis'
+[16:35:44] [Worker-Main-6/WARN]: Exception loading blockstate definition: 'minecraft:blockstates/cut_sandstone.json' in resourcepack: 'file/Stay_True_1.19.zip' for variant: 'axis=y': Unknown blockstate property: 'axis'
+[16:35:45] [Worker-Main-6/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:45] [Worker-Main-6/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:45] [Worker-Main-6/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:45] [Worker-Main-6/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:45] [Worker-Main-3/INFO]: [OptiFine] Scaled too small texture: minecraft:missingno, 16 -> 64
+[16:35:45] [Worker-Main-3/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[16:35:45] [Worker-Main-1/INFO]: [OptiFine] Scaled too small texture: minecraft:missingno, 16 -> 64
+[16:35:45] [Worker-Main-1/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[16:35:46] [Worker-Main-5/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/shield_patterns.png
+[16:35:46] [Worker-Main-5/INFO]: [OptiFine] Multitexture: false
+[16:35:46] [Worker-Main-5/INFO]: [OptiFine] Sprite size: 64
+[16:35:46] [Worker-Main-5/INFO]: [OptiFine] Mipmap levels: 6
+[16:35:46] [Worker-Main-2/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/chest.png
+[16:35:46] [Worker-Main-2/INFO]: [OptiFine] Multitexture: false
+[16:35:46] [Worker-Main-2/INFO]: [OptiFine] Sprite size: 64
+[16:35:46] [Worker-Main-2/INFO]: [OptiFine] Mipmap levels: 6
+[16:35:47] [Worker-Main-3/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/shulker_boxes.png
+[16:35:47] [Worker-Main-3/INFO]: [OptiFine] Multitexture: false
+[16:35:47] [Worker-Main-3/INFO]: [OptiFine] Sprite size: 64
+[16:35:47] [Worker-Main-3/INFO]: [OptiFine] Mipmap levels: 6
+[16:35:47] [Worker-Main-5/INFO]: [OptiFine] Scaled too small texture: minecraft:missingno, 16 -> 64
+[16:35:47] [Worker-Main-5/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[16:35:48] [Worker-Main-6/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/beds.png
+[16:35:48] [Worker-Main-6/INFO]: [OptiFine] Multitexture: false
+[16:35:48] [Worker-Main-6/INFO]: [OptiFine] Sprite size: 64
+[16:35:48] [Worker-Main-6/INFO]: [OptiFine] Mipmap levels: 6
+[16:35:48] [Worker-Main-2/INFO]: [OptiFine] Scaled too small texture: minecraft:missingno, 16 -> 64
+[16:35:48] [Worker-Main-2/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/blocks.png
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] Multitexture: false
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] Multipass connected textures: false
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/andesite/andesite.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/bricks/bricks.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/coal_ore/coal_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/coarse_dirt/coarse_dirt.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:pumking
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:jack_o'lantern
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/copper_ore/copper_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/cracked_stone_bricks/cracked_stone_bricks.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/crimson_nylium/crimson_nylium.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:chiseled_sanstone
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hay_bale_side
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:deepslate_emerald
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/diamond_ore/diamond_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/dirt/dirt.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:pumking
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:jack_o'lantern
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/emerald_ore/emerald_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/end_stone_bricks/end_stone_bricks.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/gold_ore/gold_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/granite/granite.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/grass_block/grass_block.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:chiseled_sanstone
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/gravel/gravel.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:chiseled_sanstone
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:farmland_moist
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: stone
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/iron_ore/iron_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/lapis_ore/lapis_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/log_dirt_cmt/acacia_dirt/acacia_log.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/log_dirt_cmt/birch_dirt/birch_log.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/log_dirt_cmt/darkoak_dirt/dark_oak_log.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/log_dirt_cmt/jungle_dirt/jungle_log.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/log_dirt_cmt/mangrove_dirt/mangrove_log.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/log_dirt_cmt/oak_dirt/oak_logs.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/log_dirt_cmt/spruce_dirt/spruce_log.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/moss_block/moss_block.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:chiseled_sanstone
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:mossy_block
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/mossy_stone_bricks/mossy_stone_bricks.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/mushroom_stem_dirt/mushroom_stem.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] Invalid tiles, must be at least 47: optifine/ctm/_overlays/mushroom_stem_dirt/mushroom_stem.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/nether_bricks/nether_bricks.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/nether_gold_ore/nether_gold_ore.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: netherrack
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/nether_quartz_ore/nether_quartz_ore.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: netherrack
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/netherrack/netherrack.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: netherrack
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/podzol/podzol.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:pumking
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:jack_o'lantern
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:farmland_moist
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: podzol
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/red_nether_bricks/red_nether_bricks.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/red_sand/red_sand.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:chiseled_sanstone
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:farmland_moist
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: sand
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/redstone_ore/redstone_ore.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/rooted_dirt/rooted_dirt.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:pumking
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:jack_o'lantern
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/sand/sand.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:farmland_moist
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: sand
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/sandstone/sandstone.properties
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/soul_soil/soul_soil.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:farmland_moist
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:grass_path
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: soul_soil
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/stone_bricks/stone_bricks.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:48] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/_overlays/warped_nylium/warped_nylium.properties
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:chiseled_sanstone
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:48] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hay_bale_side
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/acacia_log/acacia_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/acacia_planks/acacia_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/birch_log/birch_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/birch_planks/birch_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/chiseled_sandstone/chiseled_sandstone.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/crack_polished_blackstone_bricks/cracked_polished_blackstone_bricks.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:basalt_top
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/cracked_deepslate_bricks/cracked_deepslate_bricks.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/crimson_planks/crimson_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/cut_sandstone/cut_sandstone.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/dark_oak_log/dark_oak_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/dark_oak_planks/dark_oak_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/deepslate_bricks/deepslate_bricks.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/glass/aregular/glass.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/glass/aregular/glass_pane.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/jungle_log/jungle_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/jungle_planks/jungle_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/leaves/birch_leaves/cherry_blossom/birch_leaves.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_hills
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:snowy_tundra
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:snowy_taiga_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:gravelly_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:mountain_edge
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:snowy_mountains
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/leaves/birch_leaves/cherry_blossom/birch_leaves_bushy.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_hills
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:snowy_tundra
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:snowy_taiga_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:gravelly_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:mountain_edge
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: snowy_mountains
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/leaves/birch_leaves/cherry_blossom/birch_leaves_bushy1.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_hills
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:snowy_tundra
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:snowy_taiga_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:gravelly_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:wooded_mountains
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:mountain_edge
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: minecraft:
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Biome not found: snowy_mountains
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/leaves/birch_leaves/orange/birch_leaves.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/leaves/birch_leaves/orange/birch_leaves_bushy.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/leaves/birch_leaves/orange/birch_leaves_bushy1.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mangrove_log/mangrove_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mangrove_planks/mangrove_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mud/mud.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:black_terracottaterracotta
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:planks
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:silver_glazed_terracotta
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:stained_hardened_clay
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:hardened_clay
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:pumking
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:jack_o'lantern
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_cracked_stone_brick
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bed_rock
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:bone_blok
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:infested_stonebrick
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/mushroom_stem/muchsroom_stem.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/nether_gold_ore/nether_gold_ore.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: netherrack
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/nether_quartz_ore/nether_quartz_ore.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: netherrack
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/netherrack/netherrack.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Invalid number: netherrack
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/oak_log/oak_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/oak_planks/oak_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/polished_blackstone_bricks/polished_blackstone_bricks.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:netherrack_gold_ore
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:basalt_top
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/purpur_pillar/purpure_pillar.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/quartz_bricks/quartz_bricks.properties
+[16:35:49] [Worker-Main-4/WARN]: [OptiFine] ConnectedTextures: Block not found for name: minecraft:light_glazed_terracotta
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/quartz_pillar/quartz_pillar.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/spruce_log/spruce_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/spruce_planks/spruce_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stone/stone.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stripped_acacia_log/stripped_acacia_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stripped_birch_log/stripped_birch_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stripped_dark_oak_log/stripped_dark_oak_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stripped_jungle_log/stripped_jungle_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stripped_mangrove_log/stripped_mangrove_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stripped_oak_log/stripped_oak_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/stripped_spruce_log/stripped_spruce_log.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/warped_planks/warped_planks.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] Multipass connected textures: false
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] Multipass connected textures: false
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] Multipass connected textures: false
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] Multipass connected textures: false
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] Multipass connected textures: false
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/00_glass_white/glass_pane_white.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/00_glass_white/glass_white.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/01_glass_orange/glass_orange.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/01_glass_orange/glass_pane_orange.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/02_glass_magenta/glass_magenta.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/02_glass_magenta/glass_pane_magenta.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/03_glass_light_blue/glass_light_blue.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/03_glass_light_blue/glass_pane_light_blue.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/04_glass_yellow/glass_pane_yellow.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/04_glass_yellow/glass_yellow.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/05_glass_lime/glass_lime.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/05_glass_lime/glass_pane_lime.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/06_glass_pink/glass_pane_pink.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/06_glass_pink/glass_pink.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/07_glass_gray/glass_gray.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/07_glass_gray/glass_pane_gray.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/08_glass_light_gray/glass_light_gray.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/08_glass_light_gray/glass_pane_light_gray.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/09_glass_cyan/glass_cyan.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/09_glass_cyan/glass_pane_cyan.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/10_glass_purple/glass_pane_purple.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/10_glass_purple/glass_purple.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/11_glass_blue/glass_blue.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/11_glass_blue/glass_pane_blue.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/12_glass_brown/glass_brown.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/12_glass_brown/glass_pane_brown.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/13_glass_green/glass_green.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/13_glass_green/glass_pane_green.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/14_glass_red/glass_pane_red.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/14_glass_red/glass_red.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/15_glass_black/glass_black.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/15_glass_black/glass_pane_black.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] ConnectedTextures: optifine/ctm/default/21_tinted_glass/tinted_glass.properties
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] Multipass connected textures: false
+[16:35:49] [Worker-Main-4/INFO]: [OptiFine] BetterGrass: Parsing default configuration optifine/bettergrass.properties
+[16:35:49] [Worker-Main-3/INFO]: [OptiFine] Scaled too small texture: minecraft:missingno, 16 -> 64
+[16:35:49] [Worker-Main-3/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[16:35:49] [Worker-Main-2/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/paintings.png
+[16:35:49] [Worker-Main-2/INFO]: [OptiFine] Multitexture: false
+[16:35:50] [Worker-Main-1/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/particles.png
+[16:35:50] [Worker-Main-1/INFO]: [OptiFine] Multitexture: false
+[16:35:50] [Worker-Main-5/INFO]: [OptiFine] Scaled too small texture: minecraft:missingno, 16 -> 64
+[16:35:50] [Worker-Main-5/INFO]: [OptiFine] Scaled too small texture: minecraft:optifine/ctm/default/empty, 16 -> 64
+[16:35:50] [Worker-Main-3/INFO]: [OptiFine] Pre-stitch: minecraft:textures/atlas/mob_effects.png
+[16:35:50] [Worker-Main-3/INFO]: [OptiFine] Multitexture: false
+[16:35:51] [Worker-Main-4/INFO]: [OptiFine] Mipmap levels: 4
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_axe_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_axe_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_axe_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_axe_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_boots_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_boots_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_boots_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_boots_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_chestplate_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_chestplate_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_chestplate_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_chestplate_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_helmet_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_helmet_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_helmet_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_helmet_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_hoe_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_hoe_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_hoe_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_hoe_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_leggings_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_leggings_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_leggings_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_leggings_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_pickaxe_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_pickaxe_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_pickaxe_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_pickaxe_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_shovel_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_shovel_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_shovel_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_shovel_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_sword_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_sword_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/netherite_sword_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/netherite_sword_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/pack_n.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/pack_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/cool netherrite/pack_s.png: Invalid segment 'cool netherrite' in path 'textures/item/cool netherrite/pack_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_boots_n.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_boots_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_boots_s.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_boots_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_chestplate_n.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_chestplate_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_chestplate_s.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_chestplate_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_helmet_n.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_helmet_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_helmet_s.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_helmet_s.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_leggings_n.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_leggings_n.png'
+[16:35:52] [Worker-Main-4/ERROR]: Invalid path minecraft:textures/item/netherite no gold/netherite_leggings_s.png: Invalid segment 'netherite no gold' in path 'textures/item/netherite no gold/netherite_leggings_s.png'
+[16:35:53] [Worker-Main-6/WARN]: Missing textures in model minecraft:grass_block#snowy=false:
+    minecraft:textures/atlas/blocks.png:minecraft:block/dirts
+[16:35:55] [Render thread/WARN]: Skipped language file: carpet_trapdoors:lang/zh_cn.json (java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonObject.entrySet()" because "jsonobject" is null)
+[16:35:56] [Render thread/WARN]: Missing sound for event: minecraft:item.goat_horn.play
+[16:35:56] [Render thread/WARN]: Missing sound for event: minecraft:entity.goat.screaming.horn_break
+[16:35:57] [Render thread/INFO]: OpenAL initialized on device OpenAL Soft on 扬声器 (Realtek(R) Audio)
+[16:35:57] [Render thread/INFO]: Sound engine started
+[16:35:57] [Render thread/INFO]: Created: 2048x1024x4 minecraft:textures/atlas/blocks.png-atlas
+[16:35:57] [Render thread/INFO]: [Shaders] Allocate texture map normal: 2048x1024, mipmaps: 4
+[16:35:57] [Render thread/INFO]: [Shaders] Allocate texture map specular: 2048x1024, mipmaps: 4
+[16:35:57] [Render thread/INFO]: [OptiFine] Animated sprites: 80
+[16:35:58] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/signs.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[16:35:58] [Render thread/INFO]: Created: 1024x512x4 minecraft:textures/atlas/banner_patterns.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 1024x512, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 1024x512, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[16:35:58] [Render thread/INFO]: Created: 1024x512x4 minecraft:textures/atlas/shield_patterns.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 1024x512, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 1024x512, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[16:35:58] [Render thread/INFO]: Created: 256x256x4 minecraft:textures/atlas/chest.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 256x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 256x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 1
+[16:35:58] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/beds.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[16:35:58] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/shulker_boxes.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x256, mipmaps: 4
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[16:35:58] [Render thread/WARN]: Shader rendertype_entity_translucent_emissive could not find sampler named Sampler2 in the specified shader program.
+[16:35:58] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 512x256, mipmaps: 0
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 512x256, mipmaps: 0
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 1
+[16:35:58] [Render thread/INFO]: Created: 256x256x0 minecraft:textures/atlas/paintings.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 256x256, mipmaps: 0
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 256x256, mipmaps: 0
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[16:35:58] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/mob_effects.png-atlas
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map normal: 256x128, mipmaps: 0
+[16:35:58] [Render thread/INFO]: [Shaders] Allocate texture map specular: 256x128, mipmaps: 0
+[16:35:58] [Render thread/INFO]: [OptiFine] Animated sprites: 0
+[16:35:58] [Render thread/INFO]: [OptiFine] *** Reloading custom textures ***
+[16:35:58] [Render thread/INFO]: [OptiFine] Natural Textures: Parsing default configuration "optifine/natural.properties"
+[16:35:58] [Render thread/INFO]: [OptiFine] Natural Textures: Valid only for textures from default resource pack
+[16:35:58] [Render thread/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:58] [Render thread/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:58] [Render thread/INFO]: [OptiFine] CustomColors: Loading optifine/color.properties
+[16:35:58] [Render thread/INFO]: [OptiFine] CustomColors: text.xpbar = a7d431
+[16:35:58] [Render thread/INFO]: [OptiFine] CustomColors: Wolf collar colors: 16
+[16:35:58] [Render thread/INFO]: [OptiFine] CustomColors: Sheep colors: 16
+[16:35:58] [Render thread/INFO]: [OptiFine] CustomColors: Map colors: 1
+[16:35:58] [Render thread/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: chest_boat, name: chest_base
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: chest_boat, name: chest_lid
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: chest_boat, name: chest_knob
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: vex, name: head
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: vex, name: headwear
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: vex, name: body
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: vex, name: left_arm
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: vex, name: right_arm
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: vex, name: left_leg
+[16:35:59] [Render thread/WARN]: [OptiFine] Model renderer not found, model: vex, name: right_leg
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/axolotl.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/axolotl_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/axolotl_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/blaze.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/blaze_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/blaze_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/blaze_layer1.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/blaze_layer2.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/blaze_layer3.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/cave_spider.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_middle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_lfm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_rfm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_lbm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_rbm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_right.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_right.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_right.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cave_spider_legs_right.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/chicken.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/chicken_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/chicken_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/chicken_right_wing.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/chicken_left_wing.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/chicken_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/chicken_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/cat.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_tail.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/cow.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cow_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/cod.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cod_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/creeper.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/donkey.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_tail.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_left_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_right_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_headpiece_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_left_chest.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/donkey_right_chest.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/dolphin.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/dolphin_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/drowned.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/elder_guardian.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/elder_guardian_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/enderman.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/enderman_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/enderman_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/enderman_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/enderman_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/enderman_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/enderman_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/evoker.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_right_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_left_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_arms.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/evoker_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/fox.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/fox_tail.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/frog.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/frog_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/frog_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/frog_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/frog_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/frog_leg_rb.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/ghast.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ghast_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/giant.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/giant_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/giant_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/giant_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/giant_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/giant_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/giant_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/guardian.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/guardian_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/hoglin.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/hoglin_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/hoglin_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/hoglin_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/hoglin_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/hoglin_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/hoglin_leg_rf.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/horse.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_tail.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_left_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_right_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_headpiece_neck.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/husk.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/husk_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/husk_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/husk_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/husk_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/husk_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/husk_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/illusioner.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/illusioner_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/illusioner_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/illusioner_arms.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/illusioner_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/illusioner_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/illusioner_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/illusioner_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/iron_golem.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/iron_golem_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/iron_golem_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/iron_golem_waist.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/iron_golem_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/iron_golem_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/iron_golem_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/iron_golem_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/llama.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_left_chest.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_right_chest.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/magma_cube.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_core.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer1.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer2.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer3.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer4.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer5.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer6.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer7.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/magma_cube_layer8.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/mooshroom.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mooshroom_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/mule.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_tail.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_left_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_right_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_headpiece_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_left_chest.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/mule_right_chest.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/ocelot.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ocelot_tail.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/parrot.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/parrot_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/parrot_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/phantom.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/phantom_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/pig.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/piglin.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/piglin_brute.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_brute_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_brute_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_brute_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_brute_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_brute_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/piglin_brute_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/pillager.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_right_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_left_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pillager_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/puffer_fish_big.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pufferfish_large_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/puffer_fish_medium.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pufferfish_medium_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/puffer_fish_small.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pufferfish_small_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/ravager.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_legs.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_legs.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_legs.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/ravager_legs.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/salmon.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/salmon_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/sheep.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/silverfish.jem
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/skeleton.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/skeleton_horse.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_tail.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_left_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_right_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/skeleton_horse_headpiece_neck.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/slime.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/slime_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/spider.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_middle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_lfm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_rfm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_lbm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_rbm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_right.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_right.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_right.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_left.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/spider_legs_right.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/stray.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/strider.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/strider_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/strider_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/strider_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/tadpole.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/tadpole_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/trader_llama.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_left_chest.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_right_chest.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/tropical_fish_a.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/tropical_fish_a_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/tropical_fish_b.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/tropical_fish_b_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/turtle.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/turtle_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/vex.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vex_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vex_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vex_body2.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vex_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vex_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vex_right_wing.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vex_left_wing.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Model part not found: head, model: net.minecraft.client.model.VexModel@250e9655
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/villager.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_left_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_right_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_arms.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/vindicator.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_right_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_left_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_arms.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/vindicator_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/wandering_trader.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_left_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_right_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_arms.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wandering_trader_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/witch.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/witch_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/witch_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/witch_arms.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/witch_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/witch_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/witch_hat.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/wither_skeleton.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wither_skeleton_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wither_skeleton_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wither_skeleton_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wither_skeleton_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wither_skeleton_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wither_skeleton_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/wolf.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_tail.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/zoglin.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zoglin_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zoglin_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zoglin_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zoglin_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zoglin_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zoglin_leg_rf.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/zombie.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/zombie_horse.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_tail.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_left_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_right_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_horse_headpiece_neck.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/zombie_villager.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_left_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_right_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombie_villager_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/zombified_piglin.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombified_piglin_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombified_piglin_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombified_piglin_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombified_piglin_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombified_piglin_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/zombified_piglin_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/cat_collar.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/cat_collar_tail.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/creeper_charge.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/creeper_charge_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/drowned_outer.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_outer_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_outer_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_outer_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_outer_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_outer_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/drowned_outer_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/horse_armor.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_neck.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_tail.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_back_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_left_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_baby_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: child_front_right_leg_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_left_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_right_saddle.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/horse_armor_headpiece_neck.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/llama_decor.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_left_chest.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_right_chest.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/pig_saddle.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/pig_saddle_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/sheep_wool.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/sheep_wool_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/slime_outer.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/slime_outer.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/stray_outer.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_outer_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_outer_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_outer_left_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_outer_right_arm.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_outer_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/stray_outer_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/strider_saddle.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/strider_saddle_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/strider_saddle_left_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/strider_saddle_right_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/trader_llama_decor.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_left_chest.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/llama_decor_right_chest.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/tropical_fish_pattern_a.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/tropical_fish_pattern_a_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/tropical_fish_pattern_b.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/tropical_fish_pattern_b_body.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModel: optifine/cem/wolf_collar.jem
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_leg_lb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_leg_rb.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_leg_lf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_leg_rf.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg1_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg2_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg3_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_legs.jpm
+[16:35:59] [Render thread/WARN]: [OptiFine] Duplicate model ID: leg4_part
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/wolf_collar_tail.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomEntityModels: optifine/cem/villager.jem, properties: optifine/cem/villager.properties
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_head.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_left_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_right_brow.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_body.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_arms.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_right_leg.jpm
+[16:35:59] [Render thread/ERROR]: [OptiFine] java.io.FileNotFoundException: minecraft:optifine/cem/villager_left_leg.jpm
+[16:35:59] [Render thread/INFO]: [OptiFine] [Shaders] Parsing block mappings: /shaders/block.properties
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:leaves
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:leaves2
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:double_plant
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:stonebrick
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone_slab}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:monster_egg
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:monster_egg
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:monster_egg
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:monster_egg
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:golden_rail
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:flowing_lava
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:grass_path
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone_slab}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:monster_egg
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:planks
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wooden_slab
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wooden_door
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:trapdoor
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:fence
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:fence_gate
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:log
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:planks
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wooden_slab
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:log
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:planks
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wooden_slab
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:log
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:planks
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wooden_slab
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:log
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:planks
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wooden_slab
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:log2
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:planks
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wooden_slab
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:log2
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone_slab}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:stone_slab2
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone_slab}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:quartz_ore
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:snow_layer
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:lit_pumpkin
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:nether_brick
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Property not found: variant, block: Block{minecraft:stone_slab}
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:melon_block
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:end_bricks
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:hardened_clay
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:stained_hardened_clay
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:magma
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:concrete
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:concrete_powder
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:waterlily
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:lit_furnace
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:noteblock
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:powered_repeater
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:unpowered_repeater
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:powered_comparator
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:unpowered_comparator
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:carpet
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:wool
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:mob_spawner
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:stained_glass
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:stained_glass_pane
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:slime
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:portal
+[16:35:59] [Render thread/WARN]: [OptiFine] Shaders: Block not found for name: minecraft:flowing_water
+[16:35:59] [Render thread/WARN]: [OptiFine] [Shaders] Invalid block ID mapping: block.60024=
+[16:35:59] [Render thread/INFO]: [OptiFine] [Shaders] Parsing item mappings: /shaders/item.properties
+[16:35:59] [Render thread/INFO]: [OptiFine] [Shaders] Parsing entity mappings: /shaders/entity.properties
+[16:35:59] [Render thread/WARN]: [OptiFine] [Shaders] Invalid entity ID mapping: entity.50012=
+[16:35:59] [Render thread/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:59] [Render thread/WARN]: [OptiFine] Unknown resource pack type: net.minecraftforge.resource.DelegatingPackResources: mod_resources
+[16:35:59] [Render thread/INFO]: [OptiFine] CustomBlockLayers: shaders/block.properties
+[16:35:59] [Render thread/INFO]: [OptiFine] Disable Forge light pipeline
+[16:35:59] [Render thread/INFO]: [OptiFine] Set ForgeConfig.CLIENT.experimentalForgeLightPipelineEnabled=false
+[16:36:01] [Render thread/ERROR]: Reported exception thrown!
+net.minecraft.ReportedException: Rendering overlay
+	at net.minecraft.client.renderer.GameRenderer.m_109093_(GameRenderer.java:1342) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?]
+	at net.minecraft.client.Minecraft.m_91383_(Minecraft.java:1135) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?]
+	at net.minecraft.client.Minecraft.m_91374_(Minecraft.java:713) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?]
+	at net.minecraft.client.main.Main.m_239872_(Main.java:212) ~[1.19.3.jar:?]
+	at net.minecraft.client.main.Main.main(Main.java:51) ~[1.19.3.jar:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[?:?]
+	at java.lang.reflect.Method.invoke(Unknown Source) ~[?:?]
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:27) ~[fmlloader-1.19.3-44.1.23.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:106) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:77) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.8.jar:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?]
+Caused by: java.lang.NoSuchMethodError: 'net.minecraft.network.chat.FormattedText net.minecraft.client.gui.Font.ellipsize(net.minecraft.network.chat.FormattedText, int)'
+	at net.minecraftforge.client.gui.widget.ExtendedButton.m_6303_(ExtendedButton.java:54) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?]
+	at net.minecraft.client.gui.components.AbstractWidget.m_86412_(AbstractWidget.java:74) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?]
+	at net.minecraftforge.client.gui.LoadingErrorScreen.lambda$render$4(LoadingErrorScreen.java:86) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?]
+	at java.util.ArrayList.forEach(Unknown Source) ~[?:?]
+	at net.minecraftforge.client.gui.LoadingErrorScreen.m_86412_(LoadingErrorScreen.java:86) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?]
+	at net.minecraft.client.gui.screens.LoadingOverlay.m_86412_(LoadingOverlay.java:109) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?]
+	at net.minecraft.client.renderer.GameRenderer.m_109093_(GameRenderer.java:1332) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?]
+	... 17 more
+[16:36:01] [Render thread/FATAL]: Preparing crash report with UUID 9f5030e7-62cd-418f-843a-bc24ad862ba0
+[16:36:02] [Render thread/FATAL]: Preparing crash report with UUID 8c962cea-bfbb-4d8b-ac3a-025da5aa3a7b
+---- Minecraft Crash Report ----
+// Don't be sad, have a hug! <3
+
+Time: 2023-04-10 16:36:02
+Description: Rendering overlay
+
+java.lang.NoSuchMethodError: 'net.minecraft.network.chat.FormattedText net.minecraft.client.gui.Font.ellipsize(net.minecraft.network.chat.FormattedText, int)'
+	at net.minecraftforge.client.gui.widget.ExtendedButton.m_6303_(ExtendedButton.java:54) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?] {re:classloading}
+	at net.minecraft.client.gui.components.AbstractWidget.m_86412_(AbstractWidget.java:74) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraftforge.client.gui.LoadingErrorScreen.lambda$render$4(LoadingErrorScreen.java:86) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?] {re:classloading}
+	at java.util.ArrayList.forEach(Unknown Source) ~[?:?] {}
+	at net.minecraftforge.client.gui.LoadingErrorScreen.m_86412_(LoadingErrorScreen.java:86) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?] {re:classloading}
+	at net.minecraft.client.gui.screens.LoadingOverlay.m_86412_(LoadingOverlay.java:109) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.renderer.GameRenderer.m_109093_(GameRenderer.java:1332) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,xf:OptiFine:default}
+	at net.minecraft.client.Minecraft.m_91383_(Minecraft.java:1135) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.m_91374_(Minecraft.java:713) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.m_239872_(Main.java:212) ~[1.19.3.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:51) ~[1.19.3.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Unknown Source) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:27) ~[fmlloader-1.19.3-44.1.23.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:106) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:77) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at net.minecraftforge.client.gui.widget.ExtendedButton.m_6303_(ExtendedButton.java:54) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?] {re:classloading}
+	at net.minecraft.client.gui.components.AbstractWidget.m_86412_(AbstractWidget.java:74) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraftforge.client.gui.LoadingErrorScreen.lambda$render$4(LoadingErrorScreen.java:86) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?] {re:classloading}
+	at java.util.ArrayList.forEach(Unknown Source) ~[?:?] {}
+	at net.minecraftforge.client.gui.LoadingErrorScreen.m_86412_(LoadingErrorScreen.java:86) ~[forge-1.19.3-44.1.23-universal.jar%23317!/:?] {re:classloading}
+	at net.minecraft.client.gui.screens.LoadingOverlay.m_86412_(LoadingOverlay.java:109) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,xf:OptiFine:default}
+-- Overlay render details --
+Details:
+	Overlay name: net.minecraft.client.gui.screens.LoadingOverlay
+Stacktrace:
+	at net.minecraft.client.renderer.GameRenderer.m_109093_(GameRenderer.java:1332) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,xf:OptiFine:default}
+	at net.minecraft.client.Minecraft.m_91383_(Minecraft.java:1135) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.m_91374_(Minecraft.java:713) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.m_239872_(Main.java:212) ~[1.19.3.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:51) ~[1.19.3.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Unknown Source) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:27) ~[fmlloader-1.19.3-44.1.23.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:106) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:77) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+
+
+-- Last reload --
+Details:
+	Reload number: 1
+	Reload reason: initial
+	Finished: Yes
+	Packs: vanilla, file/Minecraft-Mod-Language-Modpack-Converted-12.zip, file/FreshAnimations_v1.8.zip, file/Better-Leaves-7.1-1.19+.zip, file/Resource+pack+for+Better+End+Sky+mod.zip, file/Stay_True_1.19.zip, mod_resources
+Stacktrace:
+	at net.minecraft.client.ResourceLoadStateTracker.m_168562_(ResourceLoadStateTracker.java:49) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading}
+	at net.minecraft.client.Minecraft.m_91354_(Minecraft.java:2328) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.m_91374_(Minecraft.java:730) ~[client-1.19.3-20221207.122022-srg.jar%23312!/:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.m_239872_(Main.java:212) ~[1.19.3.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:51) ~[1.19.3.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Unknown Source) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:27) ~[fmlloader-1.19.3-44.1.23.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:106) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:77) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.8.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.19.3
+	Minecraft Version ID: 1.19.3
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 17.0.6, BellSoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), BellSoft
+	Memory: 1152326624 bytes (1098 MiB) / 1711276032 bytes (1632 MiB) up to 8019509248 bytes (7648 MiB)
+	CPUs: 8
+	Processor Vendor: GenuineIntel
+	Processor Name: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz
+	Identifier: Intel64 Family 6 Model 140 Stepping 1
+	Microarchitecture: Tiger Lake
+	Frequency (GHz): 2.42
+	Number of physical packages: 1
+	Number of physical CPUs: 4
+	Number of logical CPUs: 8
+	Graphics card #0 name: Intel(R) Iris(R) Xe Graphics
+	Graphics card #0 vendor: Intel Corporation (0x8086)
+	Graphics card #0 VRAM (MB): 1024.00
+	Graphics card #0 deviceId: 0x9a49
+	Graphics card #0 versionInfo: DriverVersion=31.0.101.3358
+	Memory slot #0 capacity (MB): 8192.00
+	Memory slot #0 clockSpeed (GHz): 3.20
+	Memory slot #0 type: DDR4
+	Memory slot #1 capacity (MB): 8192.00
+	Memory slot #1 clockSpeed (GHz): 3.20
+	Memory slot #1 type: DDR4
+	Virtual memory max (MB): 17088.26
+	Virtual memory used (MB): 8522.84
+	Swap memory total (MB): 1024.00
+	Swap memory used (MB): 9.09
+	JVM Flags: 13 total; -XX:+ExplicitGCInvokesConcurrent -XX:+UseCompressedOops -Xmx7629m -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32m -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:-DontCompileHugeMethods -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	Launched Version: 1.19.3
+	Backend library: LWJGL version 3.3.1 build 7
+	Backend API: Intel(R) Iris(R) Xe Graphics GL version 3.2.0 - Build 31.0.101.3358, Intel
+	Window size: 1920x1080
+	GL Caps: Using framebuffer using OpenGL 3.2
+	GL debug messages: 
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'forge'
+	Type: Client (map_client.txt)
+	Graphics mode: fancy
+	Resource Packs: vanilla, file/Minecraft-Mod-Language-Modpack-Converted-12.zip, file/FreshAnimations_v1.8.zip (incompatible), file/Better-Leaves-7.1-1.19+.zip (incompatible), file/Resource+pack+for+Better+End+Sky+mod.zip (incompatible), file/Stay_True_1.19.zip (incompatible), mod_resources
+	Current Language: 简体中文 (中国大陆)
+	CPU: 8x 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz
+	OptiFine Version: OptiFine_1.19.3_HD_U_I2_pre5
+	OptiFine Build: 20230219-203817
+	Render Distance Chunks: 7
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: ComplementaryReimagined_r2.0.1.zip
+	OpenGlVersion: 3.2.0 - Build 31.0.101.3358
+	OpenGlRenderer: Intel(R) Iris(R) Xe Graphics
+	OpenGlVendor: Intel
+	CpuCount: 8
+	ModLauncher: 10.0.8+10.0.8+main.0ef7e830
+	ModLauncher launch target: forgeclient
+	ModLauncher naming: srg
+	ModLauncher services: 
+		mixin-0.8.5.jar mixin PLUGINSERVICE 
+		eventbus-6.0.3.jar eventbus PLUGINSERVICE 
+		fmlloader-1.19.3-44.1.23.jar slf4jfixer PLUGINSERVICE 
+		fmlloader-1.19.3-44.1.23.jar object_holder_definalize PLUGINSERVICE 
+		fmlloader-1.19.3-44.1.23.jar runtime_enum_extender PLUGINSERVICE 
+		fmlloader-1.19.3-44.1.23.jar capability_token_subclass PLUGINSERVICE 
+		accesstransformers-8.0.4.jar accesstransformer PLUGINSERVICE 
+		fmlloader-1.19.3-44.1.23.jar runtimedistcleaner PLUGINSERVICE 
+		modlauncher-10.0.8.jar mixin TRANSFORMATIONSERVICE 
+		modlauncher-10.0.8.jar OptiFine TRANSFORMATIONSERVICE 
+		modlauncher-10.0.8.jar fml TRANSFORMATIONSERVICE 
+		modlauncher-10.0.8.jar I18nUpdateMod TRANSFORMATIONSERVICE 
+	FML Language Providers: 
+		minecraft@1.0
+		lowcodefml@null
+		javafml@null
+	Mod List: 
+		client-1.19.3-20221207.122022-srg.jar             |Minecraft                     |minecraft                     |1.19.3              |DONE      |Manifest: ****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****
+		forge-1.19.3-44.1.23-universal.jar                |Forge                         |forge                         |44.1.23             |DONE      |Manifest: ****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****:****
+	Crash Report UUID: 8c962cea-bfbb-4d8b-ac3a-025da5aa3a7b
+	FML: 44.1
+	Forge: net.minecraftforge:44.1.23
+[16:36:02] [Render thread/FATAL]: Preparing crash report with UUID 51a28f7b-3f93-4777-b628-1741b60fb5d9
+#@!@# Game crashed! Crash report saved to: #@!@# E:\.minecraft\versions\1.19.3\crash-reports\crash-2023-04-10_16.36.01-client.txt
