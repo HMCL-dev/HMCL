@@ -91,11 +91,13 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                         installNewGameItem.setTitle(i18n("install.new_game"));
                         installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG::plusCircleOutline));
                         installNewGameItem.setOnAction(e -> Versions.addNewGame());
+                        runInFX(() -> FXUtils.installFastTooltip(installNewGameItem, i18n("install.new_game")));
                     })
                     .addNavigationDrawerItem(installModpackItem -> {
                         installModpackItem.setTitle(i18n("install.modpack"));
                         installModpackItem.setLeftGraphic(VersionPage.wrap(SVG::pack));
                         installModpackItem.setOnAction(e -> Versions.importModpack());
+                        runInFX(() -> FXUtils.installFastTooltip(installModpackItem, i18n("install.modpack")));
                     })
                     .addNavigationDrawerItem(refreshItem -> {
                         refreshItem.setTitle(i18n("button.refresh"));
@@ -106,6 +108,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                         globalManageItem.setTitle(i18n("settings.type.global.manage"));
                         globalManageItem.setLeftGraphic(VersionPage.wrap(SVG::gearOutline));
                         globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
+                        runInFX(() -> FXUtils.installFastTooltip(globalManageItem, i18n("settings.type.global.manage")));
                     });
             FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
