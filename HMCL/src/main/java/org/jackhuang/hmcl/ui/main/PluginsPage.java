@@ -33,7 +33,7 @@ public final class PluginsPage extends DecoratorAnimatedPage implements Decorato
         {
             AdvancedListBox sideBar = new AdvancedListBox()
                     .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("plugins.manager"));
+                        settingsItem.setTitle(i18n("plugin.manager"));
                         settingsItem.setLeftGraphic(wrap(SVG::puzzle));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(pluginsManageTab));
                         settingsItem.setOnAction(e -> tab.select(pluginsManageTab));

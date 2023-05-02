@@ -28,6 +28,11 @@ public final class PluginManager {
 
     private static final Gson CONFIG_GSON = new GsonBuilder().registerTypeAdapter(PluginInfo.class, new PluginGsonTypeAdapterV1()).create();
 
+    public static void submitPluginException(PluginInfo pluginInfo, Throwable throwable) {
+        LOG.log(Level.WARNING, String.format("An Error happend in plugin %s", pluginInfo.getPluginId()));
+        pluginInfo.getExceptions().add(throwable);
+    }
+
     private static class PluginThread extends Thread {
         private IPluginEvents eventsHandler = null;
         private final PluginInfo pluginInfo;

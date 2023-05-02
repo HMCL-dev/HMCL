@@ -30,6 +30,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -55,6 +56,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.plugin.PluginMainPageCard;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
@@ -116,6 +118,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
+        VBox rightPart = new VBox(16);
+
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getHideAnnouncementVersion()))) {
             announcementPane = new VBox(16);
             if (Metadata.isNightly()) {
@@ -123,8 +127,48 @@ public final class MainPage extends StackPane implements DecoratorPage {
             } else if (Metadata.isDev()) {
                 announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
             }
-            getChildren().add(announcementPane);
+            rightPart.getChildren().add(announcementPane);
         }
+
+        {
+            VBox launchButtonHolder = new VBox();
+            FXUtils.setLimitHeight(launchButtonHolder, 55);
+            rightPart.getChildren().add(launchButtonHolder);
+        }
+
+        {
+            VBox pluginMainPagePane = new VBox(16);
+
+            ScrollPane pluginScrollPane = new ScrollPane();
+            pluginScrollPane.setContent(pluginMainPagePane);
+            pluginScrollPane.setFitToWidth(true);
+            pluginScrollPane.setFitToHeight(true);
+
+            VBox pluginScrollPaneContainer = new VBox();
+            pluginScrollPaneContainer.getChildren().add(pluginScrollPane);
+            pluginScrollPaneContainer.getStyleClass().add("card");
+            pluginScrollPaneContainer.setPadding(new Insets(0));
+
+            rightPart.getChildren().add(rightPart.getChildren().size() - 1, pluginScrollPaneContainer);
+
+            PluginManager.sendEvent((pluginInfo, eventHandler) -> {
+                PluginMainPageDesigner pluginMainPageDesigner = eventHandler.onMainPage();
+                PluginUnsafeInterface.runUnsafeAsync(() -> {
+                    synchronized (pluginMainPagePane) {
+                        if (!pluginMainPageDesigner.hasFrozen()) {
+                            PluginManager.submitPluginException(pluginInfo, new RuntimeException("PluginMainPageDesigner is not frozen!"));
+                        }
+
+                        PluginMainPageCard pluginMainPageCard = new PluginMainPageCard(pluginInfo);
+                        pluginMainPageCard.accept(pluginMainPageDesigner);
+                        pluginMainPagePane.getChildren().add(pluginMainPageCard);
+                    }
+                    return null;
+                });
+            });
+        }
+
+        getChildren().add(rightPart);
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
@@ -162,36 +206,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             closeUpdateButton.setOnMouseClicked(e -> closeUpdateBubble());
 
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
-        }
-
-        StackPane pluginPane = new StackPane();
-        {
-            HBox hBox = new HBox();
-            hBox.setSpacing(12);
-            hBox.setAlignment(Pos.CENTER_LEFT);
-            StackPane.setAlignment(hBox, Pos.CENTER_LEFT);
-            StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
-            pluginPane.getChildren().setAll(hBox);
-
-            PluginManager.sendEvent((pluginInfo, eventHandler) -> {
-                PluginMainPageDesigner pluginMainPageDesigner = eventHandler.onMainPage();
-                PluginUnsafeInterface.runUnsafeAsync(() -> {
-                    FXUtils.runInFX(() -> {
-                        pluginMainPageDesigner.getWidgets().forEach((widget) -> {
-                            if (widget instanceof PluginMainPageDesigner.PluginButtonWidget) {
-                                JFXButton jfxButton = new JFXButton(((PluginMainPageDesigner.PluginButtonWidget) widget).getText());
-                                jfxButton.setOnMouseClicked((mouseEvent) -> {
-                                    PluginManager.sendEvent((pluginInfo2, eventHandler2) -> {
-                                        ((PluginMainPageDesigner.PluginButtonWidget) widget).onClick();
-                                    }, pluginInfo);
-                                });
-                                hBox.getChildren().add(jfxButton);
-                            }
-                        });
-                    });
-                    return null;
-                });
-            });
         }
 
         StackPane launchPane = new StackPane();
@@ -263,7 +277,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
 
-        getChildren().addAll(updatePane, pluginPane, launchPane);
+        getChildren().addAll(updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);

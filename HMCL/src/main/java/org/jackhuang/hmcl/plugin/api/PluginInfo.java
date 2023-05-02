@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.plugin.PluginClassLoader;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,7 @@ public final class PluginInfo {
     private final String pluginVersion;
     private final String[] pluginAuthors;
     private final Map<String, String> pluginEntrypoints;
+    private final List<Throwable> exceptions = new ArrayList<>();
 
     private boolean enabled = false;
 
@@ -106,6 +108,10 @@ public final class PluginInfo {
         runningPluginIds.put(this.pluginId, this);
         runningPluginThreads.put(this.thread, this);
         pluginThread.start();
+    }
+
+    public List<Throwable> getExceptions() {
+        return this.exceptions;
     }
 
     public static class PermissionInterface {

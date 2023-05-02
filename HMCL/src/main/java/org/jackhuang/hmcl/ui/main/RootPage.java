@@ -175,7 +175,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             AdvancedListItem pluginSettingsItem = new AdvancedListItem();
             pluginSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
             pluginSettingsItem.setActionButtonVisible(false);
-            pluginSettingsItem.setTitle(i18n("plugins"));
+            pluginSettingsItem.setTitle(i18n("plugin"));
             pluginSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getPluginPage()));
 
             // the left sidebar

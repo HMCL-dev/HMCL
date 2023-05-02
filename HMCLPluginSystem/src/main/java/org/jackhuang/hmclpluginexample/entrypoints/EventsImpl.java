@@ -24,6 +24,19 @@ public class EventsImpl implements IPluginEvents {
     public PluginMainPageDesigner onMainPage() {
         return new PluginMainPageDesigner().pushButton("Button 1 Text", () -> {
             PluginInfo.getCurrentPluginInfo().getPluginLogger().log(Level.INFO, "Button 1");
-        });
+        }).pushText("Hello I'm Plugin.").pushButton("Button 2 Text", () -> {
+            PluginInfo.getCurrentPluginInfo().getPluginLogger().log(Level.INFO, "Button 2");
+        }).pushLinebreak().pushButton("Button 3 Text", () -> {
+            PluginInfo.getCurrentPluginInfo().getPluginLogger().log(Level.INFO, "Button 3");
+        }).pushHorizontalSeparator().pushButton("Button 3 Text", () -> {
+            PluginInfo.getCurrentPluginInfo().getPluginLogger().log(Level.INFO, "Button 3");
+        }).pushText("A very long text. ---------------------------------------------------------------------------------------------")
+                .pushLinebreak().pushLinebreak().pushLinebreak()
+                .pushLinebreak().pushLinebreak().pushLinebreak()
+                .pushLinebreak().pushLinebreak().pushLinebreak()
+                .pushLinebreak().pushLinebreak().pushLinebreak()
+                .pushLinebreak().pushLinebreak().pushLinebreak()
+                .pushLinebreak().pushLinebreak().pushLinebreak()
+                .pushText("A very long text. ---------------------------------------------------------------------------------------").freeze();
     }
 }
