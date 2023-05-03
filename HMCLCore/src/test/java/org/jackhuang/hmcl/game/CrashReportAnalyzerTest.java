@@ -383,6 +383,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void shadersMod() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/shaders_mod.txt")),
+                CrashReportAnalyzer.Rule.SHADERS_MOD);
+    }
+
+    @Test
     public void nightconfigfixes() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/night_config_fixes.txt")),

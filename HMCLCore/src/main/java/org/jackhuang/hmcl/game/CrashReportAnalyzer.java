@@ -115,6 +115,8 @@ public final class CrashReportAnalyzer {
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
 
         NIGHT_CONFIG_FIXES(Pattern.compile("com\\.electronwill\\.nightconfig\\.core\\.io\\.ParsingException: Not enough data available")),//https://github.com/Fuzss/nightconfigfixes
+        //Shaders Mod detected. Please remove it, OptiFine has built-in support for shaders.
+        SHADERS_MOD(Pattern.compile("java\\.lang\\.RuntimeException: Shaders Mod detected\\. Please remove it, OptiFine has built-in support for shaders\\.")),
 
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
         TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));

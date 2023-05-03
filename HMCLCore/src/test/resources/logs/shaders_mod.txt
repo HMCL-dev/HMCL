@@ -1,0 +1,418 @@
+[10:04:22] [main/INFO]: Loading tweak class name cpw.mods.fml.common.launcher.FMLTweaker
+[10:04:22] [main/INFO]: Using primary tweak class name cpw.mods.fml.common.launcher.FMLTweaker
+[10:04:22] [main/INFO]: Loading tweak class name com.mumfrey.liteloader.launch.LiteLoaderTweaker
+[10:04:22] [main/INFO]: Calling tweak class cpw.mods.fml.common.launcher.FMLTweaker
+[10:04:22] [main/INFO]: Forge Mod Loader version 7.99.40.1614 for Minecraft 1.7.10 loading
+[10:04:22] [main/INFO]: Java is Java HotSpot(TM) 64-Bit Server VM, version 1.8.0_371, running on Windows 10:amd64:10.0, installed at C:\Program Files\Java\jre-1.8
+[10:04:22] [main/WARN]: The coremod atomicstryker.dynamiclights.common.DLFMLCorePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:22] [main/INFO]: [AppEng] Core Init
+[10:04:22] [main/WARN]: The coremod codechicken.core.launch.CodeChickenCorePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: [codechicken.core.launch.DepLoader$DepLoadInst:checkExisting:436]: Warning: version of CodeChickenLib, **.**.**.** is newer than request **.**.**.**
+[10:04:23] [main/WARN]: The coremod cofh.asm.LoadingPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod DummyCore.ASM.DCLoadingPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod codechicken.core.launch.DepLoader does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: Loading tweaker i18nupdatemod.launchwrapper.LaunchWrapperTweaker from I18nUpdateMod-3.4.2-all.jar
+[10:04:23] [main/WARN]: The coremod mekanism.common.asm.LoadingHook does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod openblocks.OpenBlocksCorePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod openmods.core.OpenModsCorePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: Loading tweaker optifine.OptiFineForgeTweaker from OptiFine_1.7.10_HD_U_E7.jar
+[10:04:23] [main/WARN]: The coremod ak.potionextension.asm.PotionExtensionCorePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod lumien.resourceloader.asm.LoadingPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod thaumcraft.codechicken.core.launch.DepLoader does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod thaumic.tinkerer.preloader.ThaumicTLoaderContainer does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod codechicken.core.launch.DepLoader does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod makeo.gadomancy.coremod.GadomancyCore does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod ic2.core.coremod.IC2core does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: Loading tweaker forestry.shade.javacheck.Java7Checker from 【Technology】工业联动-林业 forestry_1.7.10-4.2.16.64.jar
+[10:04:23] [main/WARN]: The coremod micdoodle8.mods.miccore.MicdoodlePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: [micdoodle8.mods.miccore.DepLoader$DepLoadInst:<init>:333]: MicdoodleCore searching for dependencies in mods file: E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods
+[10:04:23] [main/WARN]: The coremod codechicken.nei.asm.NEICorePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod invtweaks.forge.asm.FMLPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/WARN]: The coremod lain.mods.inputfix.InputFix does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: Loading tweaker shadersmodcore.loading.SMCTweaker from 【基础】光影核心 shadersmod（低配甚用）.jar
+[10:04:23] [main/WARN]: The coremod fastcraft.LoadingPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: Loading tweaker me.guichaguri.betterfps.tweaker.BetterFpsTweaker from 【基础】更好的FPS-Ex-BetterFps-1.0.1.jar
+[10:04:23] [main/WARN]: The coremod lumien.nonausea.asm.LoadingPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[10:04:23] [main/INFO]: Loading tweaker i18nupdatemod.launchwrapper.LaunchWrapperTweaker from 汉化1.7.10.jar
+[10:04:23] [main/INFO]: Calling tweak class com.mumfrey.liteloader.launch.LiteLoaderTweaker
+[10:04:23] [main/INFO]: Bootstrapping LiteLoader 1.7.10
+[10:04:23] [main/INFO]: Registering API provider class com.mumfrey.liteloader.client.api.LiteLoaderCoreAPIClient
+[10:04:23] [main/INFO]: Spawning API provider class 'com.mumfrey.liteloader.client.api.LiteLoaderCoreAPIClient' ...
+[10:04:23] [main/INFO]: API provider class 'com.mumfrey.liteloader.client.api.LiteLoaderCoreAPIClient' provides API 'liteloader'
+[10:04:23] [main/INFO]: Initialising API 'liteloader' ...
+[10:04:23] [main/INFO]: LiteLoader begin PREINIT...
+[10:04:23] [main/INFO]: Initialising Loader properties...
+[10:04:23] [main/INFO]: Setting up logger...
+[10:04:23] [main/INFO]: LiteLoader 1.7.10_04 starting up...
+[10:04:23] [main/INFO]: Java reports OS="windows 10"
+[10:04:23] [main/INFO]: Enumerating class path...
+[10:04:23] [main/INFO]: Class path separator=";"
+[10:04:23] [main/INFO]: Class path entries=(
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\mumfrey\liteloader\1.7.10_04\liteloader-1.7.10_04.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\net\minecraft\launchwrapper\1.12\launchwrapper-1.12.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\ow2\asm\asm-all\5.0.3\asm-all-5.0.3.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\net\minecraftforge\forge\1.7.10-10.13.4.1614-1.7.10\forge-1.7.10-10.13.4.1614-1.7.10.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\typesafe\akka\akka-actor_2.11\2.3.3\akka-actor_2.11-2.3.3.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\typesafe\config\1.2.1\config-1.2.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\scala-actors-migration_2.11\1.1.0\scala-actors-migration_2.11-1.1.0.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\scala-compiler\2.11.1\scala-compiler-2.11.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\plugins\scala-continuations-library_2.11\1.0.2\scala-continuations-library_2.11-1.0.2.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\plugins\scala-continuations-plugin_2.11.1\1.0.2\scala-continuations-plugin_2.11.1-1.0.2.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\scala-library\2.11.1\scala-library-2.11.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\scala-parser-combinators_2.11\1.0.1\scala-parser-combinators_2.11-1.0.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\scala-reflect\2.11.1\scala-reflect-2.11.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\scala-swing_2.11\1.0.1\scala-swing_2.11-1.0.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\scala-lang\scala-xml_2.11\1.0.2\scala-xml_2.11-1.0.2.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\lzma\lzma\0.0.1\lzma-0.0.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\net\sf\jopt-simple\jopt-simple\4.5\jopt-simple-4.5.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\google\guava\guava\17.0\guava-17.0.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\apache\commons\commons-lang3\3.3.2\commons-lang3-3.3.2.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\mojang\realms\1.2.4\realms-1.2.4.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\apache\commons\commons-compress\1.8.1\commons-compress-1.8.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\apache\httpcomponents\httpclient\4.3.3\httpclient-4.3.3.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\commons-logging\commons-logging\1.1.3\commons-logging-1.1.3.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\apache\httpcomponents\httpcore\4.3.2\httpcore-4.3.2.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\java3d\vecmath\1.3.1\vecmath-1.3.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\net\sf\trove4j\trove4j\3.0.3\trove4j-3.0.3.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\ibm\icu\icu4j-core-mojang\51.2\icu4j-core-mojang-51.2.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\paulscode\codecjorbis\20101023\codecjorbis-20101023.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\paulscode\codecwav\20101023\codecwav-20101023.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\paulscode\libraryjavasound\20101123\libraryjavasound-20101123.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\paulscode\librarylwjglopenal\20100824\librarylwjglopenal-20100824.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\paulscode\soundsystem\20120107\soundsystem-20120107.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\io\netty\netty-all\4.0.10.Final\netty-all-4.0.10.Final.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\commons-io\commons-io\2.4\commons-io-2.4.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\commons-codec\commons-codec\1.9\commons-codec-1.9.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\net\java\jinput\jinput\2.0.5\jinput-2.0.5.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\net\java\jutils\jutils\1.0.0\jutils-1.0.0.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\google\code\gson\gson\2.2.4\gson-2.2.4.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\com\mojang\authlib\1.5.13\authlib-1.5.13.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\apache\logging\log4j\log4j-api\2.0-beta9\log4j-api-2.0-beta9.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\apache\logging\log4j\log4j-core\2.0-beta9\log4j-core-2.0-beta9.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\lwjgl\lwjgl\lwjgl\2.9.1\lwjgl-2.9.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\org\lwjgl\lwjgl\lwjgl_util\2.9.1\lwjgl_util-2.9.1.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\libraries\tv\twitch\twitch\5.16\twitch-5.16.jar
+   classpathEntry=E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\versions\1.7.10\1.7.10.jar
+)
+[10:04:23] [main/INFO]: Registering discovery module EnumeratorModuleClassPath: [<Java Class Path>]
+[10:04:23] [main/INFO]: Registering discovery module EnumeratorModuleFolder: [E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods]
+[10:04:23] [main/INFO]: Registering discovery module EnumeratorModuleFolder: [E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10]
+[10:04:23] [main/INFO]: Adding supported mod class prefix 'LiteMod'
+[10:04:23] [main/INFO]: Discovering tweaks on class path...
+[10:04:23] [main/INFO]: Discovering valid mod files in folder E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods
+[10:04:23] [main/INFO]: Discovering valid mod files in folder E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10
+[10:04:23] [main/INFO]: Searching for tweaks in 'Baubles-1.7.10-1.0.1.10.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\Baubles-1.7.10-1.0.1.10.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'bdlib-1.9.4.109-mc1.7.10.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\bdlib-1.9.4.109-mc1.7.10.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'CodeChickenCore-1.7.10-1.0.7.47-universal.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\CodeChickenCore-1.7.10-1.0.7.47-universal.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'CodeChickenLib-1.7.10-1.1.3.140-universal.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\CodeChickenLib-1.7.10-1.1.3.140-universal.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'CoFHCore-[1.7.10]3.1.4-329.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\CoFHCore-[1.7.10]3.1.4-329.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'CoFHLib-[1.7.10]1.1.2-182.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\CoFHLib-[1.7.10]1.1.2-182.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'CookieCore-1.7.10-1.4.0-11.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\CookieCore-1.7.10-1.4.0-11.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'Custom Crosshair Mod.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\Custom Crosshair Mod.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'CustomMainMenu-MC1.7.10-1.9.2.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\CustomMainMenu-MC1.7.10-1.9.2.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'DummyCore1.13.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\DummyCore1.13.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'ForgeMultipart-1.7.10-1.1.2.331-universal.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\ForgeMultipart-1.7.10-1.1.2.331-universal.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'Guide-API-1.7.10-1.0.1-23.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\Guide-API-1.7.10-1.0.1-23.jar'
+[10:04:23] [main/INFO]: Considering valid mod file: E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\mod_voxelMap_1.6.17_for_1.7.10.litemod
+[10:04:23] [main/INFO]: Searching for tweaks in 'PotionExtension-1.7.10-1.1.0.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\PotionExtension-1.7.10-1.1.0.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'ResourceLoader-1.2.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\ResourceLoader-1.2.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'SonarCore-1.7.10-1.1.3.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\SonarCore-1.7.10-1.1.3.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in 'YuutoLib-1.7.10-1.0.2.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\YuutoLib-1.7.10-1.0.2.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】NEI-本体模组 NotEnoughItems-1.7.10-1.0.5.120-universal.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】NEI-本体模组 NotEnoughItems-1.7.10-1.0.5.120-universal.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】NEI-神秘插件 Thaumcraftneiplugin-1.7.10-1.6a.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】NEI-神秘插件 Thaumcraftneiplugin-1.7.10-1.6a.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】R键整理-InventoryTweaks-1.58-147.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】R键整理-InventoryTweaks-1.58-147.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】中文输入补丁-InputFix-1.7.10-v5.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】中文输入补丁-InputFix-1.7.10-v5.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】内存清理-MemoryCleaner-1.4-mc.1.7.10.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】内存清理-MemoryCleaner-1.4-mc.1.7.10.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】快速模组-fastcraft-1.21.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】快速模组-fastcraft-1.21.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】更好的FPS-Ex-BetterFps-1.0.1.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】死亡不会掉落-Keeping Inventory.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】死亡不会掉落-Keeping Inventory.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】没有反胃！-NoNausea-MC1.7.10-1.0.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】没有反胃！-NoNausea-MC1.7.10-1.0.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】耐久显示-Durability Show 1.7.10.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】耐久显示-Durability Show 1.7.10.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】重置堆放数量 stacksize-1.7.10.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】重置堆放数量 stacksize-1.7.10.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】高亮显示主体-Waila-1.5.10_1.7.10.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】高亮显示主体-Waila-1.5.10_1.7.10.jar'
+[10:04:23] [main/INFO]: Searching for tweaks in '【基础】高亮显示扩展-WailaHarvestability-mc1.7.10-1.1.6.jar'
+[10:04:23] [main/WARN]: Error parsing manifest entries in 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】高亮显示扩展-WailaHarvestability-mc1.7.10-1.1.6.jar'
+[10:04:23] [main/INFO]: Considering valid mod file: E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】鼠标手势-MouseTweaks-2.4.4-mc1.7.10.jar
+[10:04:23] [main/INFO]: Adding newest valid mod file 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\mod_voxelMap_1.6.17_for_1.7.10.litemod' at revision 1617.0000
+[10:04:23] [main/INFO]: Adding newest valid mod file 'E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\1.7.10\【基础】鼠标手势-MouseTweaks-2.4.4-mc1.7.10.jar' at revision 184.0000
+[10:04:23] [main/INFO]: Mod file '【基础】更好的FPS-Ex-BetterFps-1.0.1.jar' provides tweakClass 'me.guichaguri.betterfps.tweaker.BetterFpsTweaker', adding to Launch queue with priority 600
+[10:04:23] [main/INFO]: Mod file 'mod_voxelMap_1.6.17_for_1.7.10.litemod' provides classTransformer 'com.thevoxelbox.voxelmap.litemod.VoxelMapTransformer', adding to class loader
+[10:04:23] [main/INFO]: classTransformer 'com.thevoxelbox.voxelmap.litemod.VoxelMapTransformer' was successfully added
+[10:04:23] [main/INFO]: LiteLoader PREINIT complete
+[10:04:23] [main/INFO]: Sorting registered packet transformers by priority
+[10:04:23] [main/INFO]: Added 0 packet transformer classes to the transformer list
+[10:04:23] [main/INFO]: Injecting required class transformer 'com.mumfrey.liteloader.transformers.event.EventProxyTransformer'
+[10:04:23] [main/INFO]: Injecting required class transformer 'com.mumfrey.liteloader.launch.LiteLoaderTransformer'
+[10:04:23] [main/INFO]: Injecting required class transformer 'com.mumfrey.liteloader.client.transformers.CrashReportTransformer'
+[10:04:23] [main/INFO]: Queuing required class transformer 'com.mumfrey.liteloader.common.transformers.LiteLoaderPacketTransformer'
+[10:04:23] [main/INFO]: Queuing required class transformer 'com.mumfrey.liteloader.client.transformers.LiteLoaderEventInjectionTransformer'
+[10:04:23] [main/INFO]: Queuing required class transformer 'com.mumfrey.liteloader.client.transformers.MinecraftOverlayTransformer'
+[10:04:23] [main/INFO]: Loading tweak class name cpw.mods.fml.common.launcher.FMLInjectionAndSortingTweaker
+[10:04:23] [main/INFO]: Loading tweak class name i18nupdatemod.launchwrapper.LaunchWrapperTweaker
+[10:04:23] [main/INFO]: Loading tweak class name optifine.OptiFineForgeTweaker
+[10:04:23] [main/INFO]: Loading tweak class name forestry.shade.javacheck.Java7Checker
+[10:04:23] [main/INFO]: Loading tweak class name shadersmodcore.loading.SMCTweaker
+[10:04:23] [main/INFO]: Loading tweak class name me.guichaguri.betterfps.tweaker.BetterFpsTweaker
+[10:04:23] [main/WARN]: Tweak class name i18nupdatemod.launchwrapper.LaunchWrapperTweaker has already been visited -- skipping
+[10:04:23] [main/INFO]: Loading tweak class name cpw.mods.fml.common.launcher.FMLDeobfTweaker
+[10:04:23] [main/INFO]: Calling tweak class cpw.mods.fml.common.launcher.FMLInjectionAndSortingTweaker
+[10:04:23] [main/INFO]: Calling tweak class cpw.mods.fml.common.launcher.FMLInjectionAndSortingTweaker
+[10:04:23] [main/INFO]: Calling tweak class optifine.OptiFineForgeTweaker
+[10:04:23] [main/INFO]: [optifine.OptiFineForgeTweaker:dbg:56]: OptiFineForgeTweaker: acceptOptions
+[10:04:23] [main/INFO]: [optifine.OptiFineForgeTweaker:dbg:56]: OptiFineForgeTweaker: injectIntoClassLoader
+[10:04:23] [main/INFO]: [optifine.OptiFineClassTransformer:dbg:221]: OptiFine ClassTransformer
+[10:04:23] [main/INFO]: [optifine.OptiFineClassTransformer:dbg:221]: OptiFine ZIP file: E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\mods\OptiFine_1.7.10_HD_U_E7.jar
+[10:04:23] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Found valid fingerprint for Minecraft. Certificate fingerprint cd99959656f753dc28d863b46769f7f8fbaefcfc
+[10:04:25] [main/ERROR]: FML appears to be missing any signature data. This is not a good thing
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: Loaded library EJML-core-0.26.jar.
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:25] [main/INFO]: [micdoodle8.mods.miccore.MicdoodlePlugin:getASMTransformerClass:102]: Successfully Registered Transformer
+[10:04:25] [main/INFO]: Failed to find MicdoodleCore file in mods folder, skipping GC version check.
+[10:04:25] [main/INFO]: [micdoodle8.mods.miccore.MicdoodlePlugin:injectData:295]: [Micdoodle8Core]: Patching game...
+[10:04:25] [main/INFO]: [micdoodle8.mods.miccore.MicdoodlePlugin:injectData:295]: [Micdoodle8Core]: Patching game...
+[10:04:25] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:26] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:26] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:26] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:26] [main/INFO]: Calling tweak class forestry.shade.javacheck.Java7Checker
+[10:04:26] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:26] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:26] [main/INFO]: Calling tweak class i18nupdatemod.launchwrapper.LaunchWrapperTweaker
+[10:04:29] [main/INFO]: Calling tweak class me.guichaguri.betterfps.tweaker.BetterFpsTweaker
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.common.launcher.FMLDeobfTweaker
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:29] [main/INFO]: Starting to apply transformations
+[10:04:29] [main/INFO]: Starting to apply transformations
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:29] [main/INFO]: Calling tweak class shadersmodcore.loading.SMCTweaker
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.relauncher.CoreModManager$FMLPluginWrapper
+[10:04:29] [main/INFO]: Loading tweak class name cpw.mods.fml.common.launcher.TerminalTweaker
+[10:04:29] [main/INFO]: Calling tweak class cpw.mods.fml.common.launcher.TerminalTweaker
+[10:04:29] [main/INFO]: [optifine.OptiFineForgeTweaker:dbg:56]: OptiFineForgeTweaker: getLaunchArguments
+[10:04:29] [main/INFO]: Launching wrapped minecraft {net.minecraft.client.main.Main}
+[10:04:29] [main/INFO]: Injecting downstream transformers
+[10:04:29] [main/INFO]: Injecting additional class transformer class 'com.mumfrey.liteloader.client.transformers.LiteLoaderEventInjectionTransformer'
+[10:04:30] [main/INFO]: Injecting additional class transformer class 'com.mumfrey.liteloader.client.transformers.MinecraftOverlayTransformer'
+[10:04:30] [main/INFO]: Injecting additional class transformer class 'com.mumfrey.liteloader.common.transformers.LiteLoaderPacketTransformer'
+[10:04:30] [main/INFO]: Injecting additional class transformer class 'com.thevoxelbox.voxelmap.litemod.VoxelMapTransformer'
+[10:04:30] [main/INFO]: Patching Game Start...
+[10:04:30] [main/INFO]: Injecting onstartupcomplete[x1] in func_71384_a in Minecraft
+[10:04:30] [main/INFO]: Injecting prerenderfbo[x1] in func_71411_J in Minecraft
+[10:04:30] [main/INFO]: Injecting postrenderfbo[x1] in func_71411_J in Minecraft
+[10:04:30] [main/INFO]: Injecting ontimerupdate[x1] in func_71411_J in Minecraft
+[10:04:30] [main/INFO]: Injecting onrender[x1] in func_71411_J in Minecraft
+[10:04:30] [main/INFO]: Injecting ontick[x1] in func_71411_J in Minecraft
+[10:04:30] [main/INFO]: Injecting shutdown[x1] in func_71400_g in Minecraft
+[10:04:30] [main/INFO]: Injecting updateframebuffersize[x1] in func_147119_ah in Minecraft
+[10:04:30] [main/INFO]: Injecting newtick[x1] in func_71407_l in Minecraft
+[10:04:30] [main/INFO]: Applying overlay com.mumfrey.liteloader.client.overlays.MinecraftOverlay to net.minecraft.client.Minecraft
+[10:04:30] [main/INFO]: MinecraftOverlayTransformer found INIT injection point, this is good.
+[10:04:30] [main/INFO]: [atomicstryker.dynamiclights.common.DLTransformer:handleWorldTransform:70]: **************** Dynamic Lights transform running on World, obf: true *********************** 
+[10:04:30] [main/INFO]: [atomicstryker.dynamiclights.common.DLTransformer:handleWorldTransform:83]: In target method! Patching!
+[10:04:30] [main/INFO]: [atomicstryker.dynamiclights.common.DLTransformer:handleWorldTransform:106]: Bytecode ISTORE 6 case!
+[10:04:30] [main/INFO]: [atomicstryker.dynamiclights.common.DLTransformer:handleWorldTransform:166]: Patching Complete!
+[10:04:30] [main/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: ahb (1 / 1)
+[10:04:30] [main/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: sv (1 / 1)
+[10:04:30] [main/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: sa (1 / 1)
+[10:04:30] [main/INFO]: [GadomancyTransformer] Transforming sv: net.minecraft.entity.EntityLivingBase
+[10:04:30] [main/INFO]: [EntityLivingBaseTransformer]INSIDE OBFUSCATED ENTITYLIVINGBASE CLASS - ABOUT TO PATCH: sv (net.minecraft.entity.EntityLivingBase)
+[10:04:30] [main/INFO]: [PlayerTransformer]INSIDE OBFUSCATED PLAYER CLASS - ABOUT TO PATCH: yz (net.minecraft.entity.player.EntityPlayer)
+[10:04:30] [main/INFO]: Injecting onoutboundchat[x1] in func_71165_d in EntityClientPlayerMP
+[10:04:30] [main/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: bdi (1 / 1)
+[10:04:30] [main/INFO]: Injecting onc16packetclientstatus[x1] in func_148833_a in C16PacketClientStatus
+[10:04:30] [main/INFO]: func_146977_a(Lnet/minecraft/inventory/Slot;)V - Transformed
+[10:04:30] [main/INFO]: func_146977_a_original(Lnet/minecraft/inventory/Slot;)V - New Method
+[10:04:30] [main/INFO]: func_146977_a(Lnet/minecraft/inventory/Slot;)V - Invoke Virtual
+[10:04:30] [main/INFO]: Injecting onrenderchat[x1] in func_73830_a in GuiIngame
+[10:04:30] [main/INFO]: Injecting postrenderchat[x1] in func_73830_a in GuiIngame
+[10:04:30] [main/INFO]: Injecting onc00handshake[x1] in func_148833_a in C00Handshake
+[10:04:30] [main/INFO]: Injecting onc00packetloginstart[x1] in func_148833_a in C00PacketLoginStart
+[10:04:30] [main/INFO]: Injecting ons03packettimeupdate[x1] in func_148833_a in S03PacketTimeUpdate
+[10:04:31] [main/INFO]: Setting user: Candle_Dragon
+[10:04:31] [main/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: xk (1 / 1)
+[10:04:31] [main/INFO]: Patching leaves.
+[10:04:31] [main/INFO]: Found leaf Class: net/minecraft/block/BlockLeavesBase
+[10:04:32] [main/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: zc (1 / 1)
+[10:04:32] [main/INFO]: Transforming Class [net.minecraft.entity.projectile.EntityArrow], Method [func_70071_h_]
+[10:04:32] [main/INFO]: Transforming net.minecraft.entity.projectile.EntityArrow Finished.
+[10:04:32] [main/INFO]: [PlayerMPTransformer]INSIDE OBFUSCATED PLAYER MP CLASS - ABOUT TO PATCH: mw (net.minecraft.entity.player.EntityPlayerMP)
+[10:04:32] [main/INFO]: Injecting ons34packetmaps[x1] in func_148833_a in S34PacketMaps
+[10:04:32] [main/INFO]: Transforming Class [net.minecraft.item.ItemStack], Method [func_77953_t]
+[10:04:32] [main/INFO]: Transforming net.minecraft.item.ItemStack Finished.
+[10:04:32] [main/INFO]: InvTweaks: net.minecraft.inventory.Container
+[10:04:32] [main/INFO]: InvTweaks: net.minecraft.inventory.ContainerFurnace
+[10:04:32] [main/INFO]: Transforming Class [net.minecraft.inventory.ContainerFurnace], Method [func_82846_b]
+[10:04:32] [main/INFO]: Transforming net.minecraft.inventory.ContainerFurnace Finished.
+[10:04:32] [main/INFO]: Patching Minecraft using Riven's "Half" Algorithm
+[10:04:32] [Client thread/INFO]: Injecting onc15packetclientsettings[x1] in func_148833_a in C15PacketClientSettings
+[10:04:33] [Client thread/INFO]: Patching Key Event...
+[10:04:33] [Client thread/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: bkn (1 / 1)
+[10:04:33] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: ModLoader
+[10:04:33] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: LightCache
+[10:04:33] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: BlockCoord
+[10:04:33] [Client thread/INFO]: Injecting ons23packetblockchange[x1] in func_148833_a in S23PacketBlockChange
+[10:04:33] [Client thread/INFO]: InvTweaks: net.minecraft.inventory.ContainerRepair
+[10:04:33] [Client thread/INFO]: Transforming Class [net.minecraft.inventory.ContainerRepair], Method [func_82848_d]
+[10:04:33] [Client thread/INFO]: Transforming net.minecraft.inventory.ContainerRepair Finished.
+[10:04:33] [Client thread/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: net/minecraftforge/client/ForgeHooksClient (1 / 1)
+[10:04:33] [Client thread/INFO]: [RenderTransformer]INSIDE OBFUSCATED RENDER CLASS - ABOUT TO PATCH: bno
+[10:04:33] [Client thread/INFO]: Injecting oncreateintegratedserver[x1] in <init> in IntegratedServer
+[10:04:33] [Client thread/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: bjb (2 / 2)
+[10:04:33] [Client thread/INFO]: Injecting constructchunkfrompacket[x1] in func_76607_a in Chunk
+[10:04:33] [Client thread/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printResultsAndReset:1905]: Potential problem: Galacticraft did not complete injection of bytecode into: blt (4 / 5)
+[10:04:33] [Client thread/INFO]: [EntityRendererTransformer]INSIDE OBFUSCATED RENDERER CLASS - ABOUT TO PATCH: blt
+[10:04:33] [Client thread/INFO]: Injecting prerendergui[x1] in func_78480_b in EntityRenderer
+[10:04:33] [Client thread/INFO]: Injecting onrenderhud[x1] in func_78480_b in EntityRenderer
+[10:04:33] [Client thread/INFO]: Injecting postrenderhud[x1] in func_78480_b in EntityRenderer
+[10:04:33] [Client thread/INFO]: Injecting onrenderworld[x1] in func_78471_a in EntityRenderer
+[10:04:33] [Client thread/INFO]: Injecting onsetupcameratransform[x1] in func_78471_a in EntityRenderer
+[10:04:33] [Client thread/INFO]: Injecting postrenderentities[x1] in func_78471_a in EntityRenderer
+[10:04:33] [Client thread/INFO]: Injecting postrender[x1] in func_78471_a in EntityRenderer
+[10:04:33] [Client thread/INFO]: Injecting postrender[x1] in func_78471_a in EntityRenderer
+[10:04:33] [Client thread/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: boh (1 / 1)
+[10:04:34] [Client thread/INFO]: Injecting ons35packetupdatetileentity[x1] in func_148833_a in S35PacketUpdateTileEntity
+[10:04:34] [Client thread/INFO]: [micdoodle8.mods.miccore.MicdoodleTransformer:printLog:1989]: Galacticraft successfully injected bytecode into: bly (1 / 1)
+[10:04:34] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.fml.common.Loader
+[10:04:34] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.fml.common.ModContainer
+[10:04:34] [Client thread/INFO]: LWJGL Version: 2.9.1
+[10:04:34] [Client thread/INFO]: Injecting renderfbo[x1] in func_147615_c in Framebuffer
+[10:04:34] [Client thread/INFO]: [OptiFine] 
+[10:04:34] [Client thread/INFO]: [OptiFine] OptiFine_1.7.10_HD_U_E7
+[10:04:34] [Client thread/INFO]: [OptiFine] Build: 20180404-111312
+[10:04:34] [Client thread/INFO]: [OptiFine] OS: Windows 10 (amd64) version 10.0
+[10:04:34] [Client thread/INFO]: [OptiFine] Java: 1.8.0_371, Oracle Corporation
+[10:04:34] [Client thread/INFO]: [OptiFine] VM: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+[10:04:34] [Client thread/INFO]: [OptiFine] LWJGL: 2.9.1
+[10:04:34] [Client thread/INFO]: [OptiFine] OpenGL: NVIDIA GeForce GTX 1050 Ti/PCIe/SSE2, version 4.6.0 NVIDIA 531.68, NVIDIA Corporation
+[10:04:34] [Client thread/INFO]: [OptiFine] OpenGL Version: 4.6.0
+[10:04:34] [Client thread/INFO]: [OptiFine] Maximum texture size: 32768x32768
+[10:04:34] [Thread-7/INFO]: [OptiFine] Checking for new version
+[10:04:35] [Client thread/INFO]: [net.minecraft.client.Minecraft:func_71377_b:349]: ---- Minecraft Crash Report ----
+// Shall we play a game?
+
+Time: 23-5-3 上午10:04
+Description: Initializing game
+
+java.lang.RuntimeException: Shaders Mod detected. Please remove it, OptiFine has built-in support for shaders.
+	at shadersmod.client.Shaders.checkShadersModInstalled(Shaders.java:5623)
+	at shadersmod.client.Shaders.startup(Shaders.java:1881)
+	at Config.initDisplay(Config.java:216)
+	at net.minecraft.client.renderer.OpenGlHelper.func_77474_a(OpenGlHelper.java:82)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:455)
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:878)
+	at net.minecraft.client.main.Main.main(SourceFile:148)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Stacktrace:
+	at shadersmod.client.Shaders.checkShadersModInstalled(Shaders.java:5623)
+	at shadersmod.client.Shaders.startup(Shaders.java:1881)
+	at Config.initDisplay(Config.java:216)
+	at net.minecraft.client.renderer.OpenGlHelper.func_77474_a(OpenGlHelper.java:82)
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:455)
+
+-- Initialization --
+Details:
+Stacktrace:
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:878)
+	at net.minecraft.client.main.Main.main(SourceFile:148)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135)
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.7.10
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 1.8.0_371, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 152017256 bytes (144 MB) / 268435456 bytes (256 MB) up to 10603200512 bytes (10112 MB)
+	JVM Flags: 11 total; -Xmx10110m -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32m -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:-DontCompileHugeMethods -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	AABB Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: 
+	Launched Version: M.T.A 璇瑜之路
+	LWJGL: 2.9.1
+	OpenGL: NVIDIA GeForce GTX 1050 Ti/PCIe/SSE2 GL version 4.6.0 NVIDIA 531.68, NVIDIA Corporation
+	GL Caps: 
+	Is Modded: Definitely; Client brand changed to 'fml,forge'
+	Type: Client (map_client.txt)
+	Resource Packs: [Minecraft-Mod-Language-Modpack-Converted-1.zip, R3D SR 锟接诧拷锟斤拷图-256x.zip, [锟斤拷詹锟斤拷锟�.zip, 锟斤拷锟斤拷锟斤拷纸.zip]
+	Current Language: ~~ERROR~~ NullPointerException: null
+	Profiler Position: N/A (disabled)
+	Vec3 Pool Size: 0 (0 bytes; 0 MB) allocated, 0 (0 bytes; 0 MB) used
+	Anisotropic Filtering: Off (1)
+	OptiFine Version: OptiFine_1.7.10_HD_U_E7
+	Render Distance Chunks: 9
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: 4.6.0 NVIDIA 531.68
+	OpenGlRenderer: NVIDIA GeForce GTX 1050 Ti/PCIe/SSE2
+	OpenGlVendor: NVIDIA Corporation
+	CpuCount: 12
+[10:04:35] [Client thread/INFO]: [net.minecraft.client.Minecraft:func_71377_b:359]: #@!@# Game crashed! Crash report saved to: #@!@# E:\000000000000000000000000000000\M.T.A-ModPack\M.T.A-ModPack 1.1（正式）\联机\M.T.A-ModPack 1.1（埃罗芒老师的主场） (2)\M.T.A-ModPack 1.1（埃罗芒老师的主场）\.minecraft\crash-reports\crash-2023-05-03_10.04.34-client.txt
