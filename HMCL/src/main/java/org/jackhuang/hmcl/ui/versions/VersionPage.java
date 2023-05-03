@@ -235,6 +235,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 versionSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
                 versionSettingsItem.setActionButtonVisible(false);
                 versionSettingsItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.versionSettingsTab));
+                runInFX(() -> FXUtils.installFastTooltip(versionSettingsItem, i18n("settings.game")));
                 versionSettingsItem.setOnAction(e -> control.tab.select(control.versionSettingsTab));
 
                 AdvancedListItem modListItem = new AdvancedListItem();
@@ -243,6 +244,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 modListItem.setLeftGraphic(wrap(SVG::puzzle));
                 modListItem.setActionButtonVisible(false);
                 modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
+                runInFX(() -> FXUtils.installFastTooltip(modListItem, i18n("mods.manage")));
                 modListItem.setOnAction(e -> control.tab.select(control.modListTab));
 
                 AdvancedListItem installerListItem = new AdvancedListItem();
@@ -251,6 +253,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 installerListItem.setLeftGraphic(wrap(SVG::cube));
                 installerListItem.setActionButtonVisible(false);
                 installerListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.installerListTab));
+                runInFX(() -> FXUtils.installFastTooltip(installerListItem, i18n("settings.tabs.installers")));
                 installerListItem.setOnAction(e -> control.tab.select(control.installerListTab));
 
                 AdvancedListItem worldListItem = new AdvancedListItem();
@@ -259,6 +262,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 worldListItem.setLeftGraphic(wrap(SVG::earth));
                 worldListItem.setActionButtonVisible(false);
                 worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
+                runInFX(() -> FXUtils.installFastTooltip(worldListItem, i18n("world.manage")));
                 worldListItem.setOnAction(e -> control.tab.select(control.worldListTab));
 
                 AdvancedListBox sideBar = new AdvancedListBox()
