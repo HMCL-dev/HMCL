@@ -390,6 +390,20 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void cannotFindLaunchTargetFmlclient() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient.txt")),
+                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
+    }
+
+    @Test
+    public void cannotFindLaunchTargetFmlclient2() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient2.txt")),
+                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
+    }
+
+    @Test
     public void nightconfigfixes() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/night_config_fixes.txt")),

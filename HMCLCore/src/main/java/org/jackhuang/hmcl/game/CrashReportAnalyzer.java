@@ -117,6 +117,8 @@ public final class CrashReportAnalyzer {
         NIGHT_CONFIG_FIXES(Pattern.compile("com\\.electronwill\\.nightconfig\\.core\\.io\\.ParsingException: Not enough data available")),//https://github.com/Fuzss/nightconfigfixes
         //Shaders Mod detected. Please remove it, OptiFine has built-in support for shaders.
         SHADERS_MOD(Pattern.compile("java\\.lang\\.RuntimeException: Shaders Mod detected\\. Please remove it, OptiFine has built-in support for shaders\\.")),
+        //Cannot find launch target fmlclient, unable to launch
+        CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT(Pattern.compile("Cannot find launch target fmlclient, unable to launch")),
 
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
         TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));
