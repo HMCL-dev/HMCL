@@ -10,7 +10,10 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class CurrentJava {
+public final class CurrentJava {
+    private CurrentJava() {
+    }
+
     private static final boolean toolsPackageStatus = tryLoadJDKToolsJar();
 
     public static boolean checkToolPackageDepdencies() {

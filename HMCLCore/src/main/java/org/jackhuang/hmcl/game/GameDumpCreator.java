@@ -5,9 +5,9 @@ import com.sun.tools.attach.VirtualMachine;
 import org.jackhuang.hmcl.util.platform.CurrentJava;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import sun.tools.attach.HotSpotVirtualMachine;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -17,7 +17,10 @@ import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class GameDumpCreator {
+public final class GameDumpCreator {
+    private GameDumpCreator() {
+    }
+
     private static class DumpHead {
         private final Map<String, String> infos = new LinkedHashMap<>();
 
@@ -27,8 +30,8 @@ public class GameDumpCreator {
 
         private static final byte[] multipleLinePrefix = "    ".getBytes(StandardCharsets.UTF_8);
 
-        public String push(String key, String value) {
-            return infos.put(key, value);
+        public void push(String key, String value) {
+            infos.put(key, value);
         }
 
         public void writeTo(OutputStream outputStream) throws IOException {
@@ -126,6 +129,14 @@ public class GameDumpCreator {
         }
     }
 
+    private static InputStream executeJCmd(VirtualMachine vm, String command) {
+        try {
+            return (InputStream) vm.getClass().getMethod("executeJCmd", String.class).invoke(vm, command);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void writeHeadDumpTo(long pid, OutputStream outputStream) throws IOException {
         DumpHead dumpHead = new DumpHead();
         dumpHead.push("Tool Version", String.valueOf(TOOL_VERSION));
@@ -134,7 +145,7 @@ public class GameDumpCreator {
             StringBuilder stringBuilder = new StringBuilder();
             try {
                 VirtualMachine vm = VirtualMachine.attach(String.valueOf(pid));
-                safeReadVMInputstream(((HotSpotVirtualMachine) vm).executeJCmd("VM.command_line"), stringBuilder::append);
+                safeReadVMInputstream(executeJCmd(vm, "VM.command_line"), stringBuilder::append);
                 vm.detach();
             } catch (AttachNotSupportedException e) {
                 LOG.log(Level.WARNING, String.format("An Error happend while attaching vm %d", pid), e);
@@ -145,7 +156,7 @@ public class GameDumpCreator {
             StringBuilder stringBuilder = new StringBuilder();
             try {
                 VirtualMachine vm = VirtualMachine.attach(String.valueOf(pid));
-                safeReadVMInputstream(((HotSpotVirtualMachine) vm).executeJCmd("VM.version"), stringBuilder::append);
+                safeReadVMInputstream(executeJCmd(vm, "VM.version"), stringBuilder::append);
                 vm.detach();
             } catch (AttachNotSupportedException e) {
                 LOG.log(Level.WARNING, String.format("An Error happend while attaching vm %d", pid), e);
@@ -159,7 +170,7 @@ public class GameDumpCreator {
     private static void writeDataDumpTo(long pid, OutputStream outputStream) {
         try {
             VirtualMachine vm = VirtualMachine.attach(String.valueOf(pid));
-            safeReadVMInputstream(((HotSpotVirtualMachine) vm).remoteDataDump("-e -l"), (char[] data) -> {
+            safeReadVMInputstream(executeJCmd(vm, "threaddump"), (char[] data) -> {
                 try {
                     outputStream.write(new String(data).getBytes(StandardCharsets.UTF_8));
                 } catch (IOException e) {

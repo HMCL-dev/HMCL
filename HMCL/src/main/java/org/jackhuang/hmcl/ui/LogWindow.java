@@ -231,7 +231,7 @@ public final class LogWindow extends Stage {
                         Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
 
                         try {
-                            if (gameProcess.isRunning()){
+                            if (gameProcess.isRunning()) {
                                 GameDumpCreator.writeDumpTo(gameProcess.getPID(), dumpFile.toFile());
                                 FXUtils.showFileInExplorer(dumpFile);
                             }
