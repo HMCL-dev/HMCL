@@ -71,7 +71,6 @@ public final class NativePatcher {
                     if (!(settings.isUseNativeGLFW() && library.getArtifactId().contains("glfw"))
                             && !(settings.isUseNativeOpenAL() && library.getArtifactId().contains("openal"))) {
                         LOG.warning("No alternative native library " + library.getName() + " provided for platform " + javaVersion.getPlatform());
-                        return version;
                     }
                     newLibraries.add(library);
                 } else if (replacement != null) {
