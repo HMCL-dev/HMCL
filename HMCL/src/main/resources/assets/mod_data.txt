@@ -1,6 +1,6 @@
 #
 # Hello Minecraft! Launcher
-# Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
+# Copyright (C) 2023  huangyuhui <huanghongxun2008@126.com> and contributors
 #
 # mcmod.cn
 # Copyright (C) 2023. All Rights Reserved.
@@ -395,7 +395,7 @@ jaopcaagriculture;1163;;jaopca,oredictinit;JAOPCA神秘农业附属;JAOPCA Agric
 sky-resources;1164;817623;skyresources;空岛资源;Sky Resources;SR
 hexxit-gear;1165;;;Hexxit装备;Hexxit Gear;
 ;1166;;itemrender;渲染图片导出续作;Item Render Rebirth;IRR
-magic-clover#t1:other-downloads;1167;;magicclover;幸运四叶草;Magic Clover;
+magic-clover;1167;;magicclover;幸运四叶草;Magic Clover;
 inventory-crafting-grid;1168;;;背包工作台;Inventory Crafting Grid;
 kleeslabs;1169;;kleeslabs;更好地破坏半砖;KleeSlabs;
 atum;117;1207987;atum;阿图姆：沙漠之旅/亚图姆：金沙之旅;Atum 2: Return to the Sands;ATUM2
@@ -1847,7 +1847,7 @@ thaumcraft;2536;776706;;神秘时代2;Thaumcraft 2;TC2
 gregtech-chill-edition;2537;;gregtech;格雷科技轻松版;GregTech: Chill Edition;
 custom-player-model-cpm;2538;950601;;自定义玩家模型;Custom Player Model;CPM
 roughly-enough-resources;2539;1046041;roughlyenoughresources;Roughly Enough Resources;;RER
-files?page=2;254;;foundry;金属工坊;Foundry;
+files;254;;foundry;金属工坊;Foundry;
 so-many-enchantments;2540;927418;somanyenchantments;更多附魔;So Many Enchantments;
 sisser;2542;;sisser;Sisser;;
 hxcenchants;2543;;HxCEnchants;多样化附魔;HxCEnchants;
@@ -5623,7 +5623,7 @@ applied-mekanistics;6055;;appmek;应用能源：通用机械附属;Applied Mekan
 craftdumper;6056;;craftdumper;CraftDumper;;
 immersive-weathering-fabric;6057;;immersive_weathering;沉浸式风化;Immersive Weathering;IW
 replay-mod-for-forge;6058;;replaymod;Replay Mod for Forge;;
-bigtrees?msclkid=89e07e3ab26f11ecb62c62d3638fe0a6;6059;376937;bigtrees;BigTrees;;
+bigtrees;6059;376937;bigtrees;BigTrees;;
 ivtoolkit;606;;ivtoolkit;IvToolkit;;
 absolutely-not-a-zoom-mod;6060;;anazm;绝对不是一个缩放模组;Absolutely Not A Zoom Mod;ANAZM
 glymworld-lush-caves;6061;;gwlushcaves;Lush Caves;;
@@ -6763,7 +6763,7 @@ nock-enough-arrows;7095;;nock_enough_arrows;Nock Enough Arrows;;
 every-compat;7096;;everycomp;泛用兼容：木材;Every Compat: Wood Good;EC
 offline-mode;7097;;offlinemode;Disable online mode/Offline Mode;;
 ghastly-wail;7098;;;Ghastly Wail;;
-immersive-weapons#c71;7099;;;Immersive Weapons;;IW
+immersive-weapons;7099;;;Immersive Weapons;;IW
 computercraft;71;473694;ComputerCraft;电脑;Computer Craft;CC
 celestial-craft;710;;celestialcraft;天体;Celestial Craft;
 ;7100;;petphraseclient;口癖;Pet Phrase;PP
@@ -8130,7 +8130,7 @@ saltymod-expanded;8349;;saltymod;SaltyMod Expanded;;
 masonry-blocks;8350;;;Masonry Blocks;;
 ;8351;;sqlib;SQlib;;
 mssql-jdbc;8352;;mssql_jdbc;Microsoft SQL JDBC;;
-packages#c20;8353;;packages;自定义包裹;Packages;
+packages;8353;;packages;自定义包裹;Packages;
 giant-spawn;8354;;giantspawn,giantspawn-fabric;Giant Spawn;;
 serene-shrubbery;8356;;serene_shrubbery;Serene Shrubbery;;
 gardens-of-the-dead;8357;;gardens_of_the_dead;Gardens of the Dead;;
@@ -9125,7 +9125,7 @@ aa-farmer-compat;9253;;farmeradditions;AA Farmer Compat;;
 better-crates;9257;;bettercrates;Better Crates;;
 nightmare-craft-auto-factory;9258;;nmcfactory;Nightmare Craft: Auto Factory;;
 ;9259;;vanillaicecreamfix;VanillaIcecreamFix;;
-mcmusicplayer#t1:description;926;;;MCMusic player;;
+mcmusicplayer;926;;;MCMusic player;;
 actually-unbreaking-fabric;9260;;actuallyunbreaking;Actually Unbreaking;;
 handcrafted;9261;;handcrafted;精巧手艺;Handcrafted;
 ;9262;;nonether;No Nether Teleport;;
@@ -9416,6 +9416,7 @@ bonsai-man-mod;9520;;bonsaimanmod;盆栽人;Bonsai Man Mod;
 ;9521;824335;chatcopier;聊天复制;Chat Copier;
 pet-cemetery;9522;;pet_cemetery;Pet Cemetery;;
 chemcraft-geocraft;9523;;redgear_geocraft;Geocraft;;
+;9524;;steamcraft;Steamcraft;;
 angel-of-vengeance;953;;aov;复仇天使;Angel of Vengeance;AoV
 tammodized;954;;tammodized;TamModized;;
 ex-nihilo-creatio;955;727225;exnihilocreatio;无中生有：创世;Ex Nihilo: Creatio;ExNC
@@ -9466,7 +9467,6 @@ fazcraft-mod;9868;;fazcraft;Fazcraft;;
 mod-menu-no-more;9869;;;Mod Menu No More;;
 starcraft-mod-scmc;987;;Starcraft;星际争霸2;StarCraft II in MineCraft;SCMC
 ;9870;;;Slime Craft;;
-;9524;;steamcraft;Steamcraft;;
 way2wayfabric;9871;;way2wayfabric;way2wayfabric;;
 cloche-profit-peripheral;9872;;clochepp;Cloche Profit Peripheral;;
 l2weaponry;9873;;l2weaponry;莱特兰-武器;L2 Weaponry;
@@ -9595,7 +9595,7 @@ fog-looks-good-now;9986;;foglooksgoodnow;Fog Looks Good Now;;
 guarding;9987;;guarding;Guarding!;;
 cats-expanded;9988;;catsexpanded;Cats Expanded;;
 modular-bosses;9989;;examplemod;Modular Bosses;;MB
-colorutility#t1:description;999;;ColorUtility;颜色代码;ColorUtility;
+colorutility;999;;ColorUtility;颜色代码;ColorUtility;
 experience-obelisk;9990;;experienceobelisk;Experience Obelisk;;
 here-be-no-dragons;9991;;here-be-no-dragons;Here be no Dragons!;;
 gnumus-settlement;9992;;gnumus;Gnumus Settlement;;
