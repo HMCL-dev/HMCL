@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.Collection;
@@ -38,6 +39,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
         dependents = mods.stream()
                 .map(mod -> Task.supplyAsync(() -> {
                     return mod.checkUpdates(gameVersion, CurseForgeRemoteModRepository.MODS);
+                    return mod.checkUpdates(gameVersion, ModrinthRemoteModRepository.MODS);
                 }).setSignificance(TaskSignificance.MAJOR).setName(mod.getFileName()).withCounter("mods.check_updates"))
                 .collect(Collectors.toList());
 
