@@ -38,8 +38,10 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
 
         dependents = mods.stream()
                 .map(mod -> Task.supplyAsync(() -> {
-                    mod.checkUpdates(gameVersion, CurseForgeRemoteModRepository.MODS);
-                    return mod.checkUpdates(gameVersion, ModrinthRemoteModRepository.MODS);
+                    List<ModUpdate> updates = new ArrayList<>();
+                    updates.addAll(mod.checkUpdates(gameVersion, CurseForgeRemoteModRepository.MODS));
+                    updates.addAll(mod.checkUpdates(gameVersion, ModrinthRemoteModRepository.MODS));
+                    return updates;
                 }).setSignificance(TaskSignificance.MAJOR).setName(mod.getFileName()).withCounter("mods.check_updates"))
                 .collect(Collectors.toList());
 
