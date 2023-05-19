@@ -31,6 +31,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
     private final String gameVersion;
     private final Collection<LocalModFile> mods;
     private final Collection<Task<LocalModFile.ModUpdate>> dependents;
+    private final Collection<Task<LocalModFile.ModUpdate>> mdependents;
 
     public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
         this.gameVersion = gameVersion;
@@ -42,7 +43,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
                 }).setSignificance(TaskSignificance.MAJOR).setName(mod.getFileName()).withCounter("mods.check_updates"))
                 .collect(Collectors.toList());
         
-        dependents = mods.stream()
+        mdependents = mods.stream()
                 .map(mod -> Task.supplyAsync(() -> {
                     return mod.checkUpdates(gameVersion, ModrinthRemoteModRepository.MODS);
                 }).setSignificance(TaskSignificance.MAJOR).setName(mod.getFileName()).withCounter("mods.check_updates"))
@@ -50,6 +51,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
 
         setStage("mods.check_updates");
         getProperties().put("total", dependents.size());
+        getProperties().put("total", mdependents.size());
     }
 
     @Override
@@ -68,6 +70,10 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
     }
 
     @Override
+    public Collection<? extends Task<?>> getDependents() {
+        return mdependents;
+    }
+    @Override
     public boolean isRelyingOnDependents() {
         return false;
     }
@@ -75,6 +81,14 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
     @Override
     public void execute() throws Exception {
         setResult(dependents.stream()
+                .filter(task -> task.getResult() != null)
+                .map(Task::getResult)
+                .collect(Collectors.toList()));
+    }
+
+    @Override
+    public void execute() throws Exception {
+        setResult(mdependents.stream()
                 .filter(task -> task.getResult() != null)
                 .map(Task::getResult)
                 .collect(Collectors.toList()));
