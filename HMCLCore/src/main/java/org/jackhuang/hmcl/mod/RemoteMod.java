@@ -98,7 +98,7 @@ public class RemoteMod {
             return this.remoteModRepository;
         }
 
-        private Type(RemoteModRepository remoteModRepository) {
+        Type(RemoteModRepository remoteModRepository) {
             this.remoteModRepository = remoteModRepository;
         }
     }
