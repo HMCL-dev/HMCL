@@ -21,9 +21,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
@@ -74,10 +72,14 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
     @Override
     public void execute() throws Exception {
         setResult(dependents.stream()
-                .flatMap(tasks -> tasks.stream()
+                .map(tasks -> tasks.stream()
                         .filter(task -> task.getResult() != null)
                         .map(Task::getResult)
+                        .filter(modUpdate -> !modUpdate.getCandidates().isEmpty())
+                        .max(Comparator.comparing((LocalModFile.ModUpdate modUpdate) -> modUpdate.getCandidates().get(0).getDatePublished()))
+                        .orElse(null)
                 )
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
     }
 }
