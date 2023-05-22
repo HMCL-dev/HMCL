@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.util.logging.Level;
 
@@ -162,7 +163,9 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     private String resolveFetchExceptionMessage(Throwable exception) {
-        if (exception instanceof IOException) {
+        if (exception instanceof SSLException) {
+            return i18n("account.failed.ssl");
+        } else if (exception instanceof IOException) {
             return i18n("account.failed.connect_injector_server");
         } else {
             return exception.getClass().getName() + ": " + exception.getLocalizedMessage();
