@@ -7,10 +7,10 @@
 | ARM64                      | 👌 (1.8+)<br/>✅ (use x86 emulation) | 👌                                       | 👌 (1.6~1.18.2)<br/>✅ (1.19+)<br/>✅ (use Rosetta 2) | ❔       |
 | ARM32                      | /️                                  | 👌                                       | /                                                   | /       |
 | MIPS64el                   | /                                   | 👌                                       | /                                                   | /       |
+| RISC-V 64                  | /                                   | 👌 (1.13+)                               | /                                                   | /       |
 | LoongArch64                | /                                   | 👌 (for Old World)<br/>❔ (for New World) | /                                                   | /       |
 | PowerPC-64 (Little-Endian) | /                                   | ❔                                        | /                                                   | /       |
 | S390x                      | /                                   | ❔                                        | /                                                   | /       |
-| RISC-V                     | /                                   | ❔                                        | /                                                   | /       |
 
 Legend:
 
