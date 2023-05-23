@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util.versioning;
 
-import org.jackhuang.hmcl.util.StringUtils;
-
 import java.math.BigInteger;
 import java.util.*;
 
@@ -29,7 +27,9 @@ import java.util.*;
  * Maybe we can migrate to org.jenkins-ci:version-number:1.7?
  * @see <a href="http://maven.apache.org/pom.html#Version_Order_Specification">Specification</a>
  */
-public class VersionNumber implements Comparable<VersionNumber> {
+public final class VersionNumber implements Comparable<VersionNumber> {
+
+    public static final Comparator<String> VERSION_COMPARATOR = Comparator.comparing(VersionNumber::asVersion);
 
     public static VersionNumber asVersion(String version) {
         Objects.requireNonNull(version);
@@ -41,68 +41,85 @@ public class VersionNumber implements Comparable<VersionNumber> {
     }
 
     public static boolean isIntVersionNumber(String version) {
-        if (version.chars().noneMatch(ch -> ch != '.' && (ch < '0' || ch > '9'))
-                && !version.contains("..") && StringUtils.isNotBlank(version)) {
-            String[] arr = version.split("\\.");
-            for (String str : arr)
-                if (str.length() > 9)
-                    // Numbers which are larger than 1e9 cannot be stored as integer.
-                    return false;
-            return true;
-        } else {
+        if (version.isEmpty()) {
             return false;
         }
+
+        int idx = 0;
+        boolean cont = true;
+        do {
+            int dotIndex = version.indexOf('.', idx);
+            if (dotIndex == idx || dotIndex == version.length() - 1) {
+                return false;
+            }
+
+            int endIndex;
+            if (dotIndex < 0) {
+                cont = false;
+                endIndex = version.length();
+            } else {
+                endIndex = dotIndex;
+            }
+
+            if (endIndex - idx > 9)
+                // Numbers which are larger than 10^10 cannot be stored as integer
+                return false;
+
+            for (int i = idx; i < endIndex; i++) {
+                char ch = version.charAt(i);
+                if (ch < '0' || ch > '9')
+                    return false;
+            }
+
+            idx = endIndex + 1;
+        } while (cont);
+
+        return true;
     }
 
-    private String value;
-    private String canonical;
-    private ListItem items;
-
     private interface Item {
-        int INTEGER_ITEM = 0;
-        int STRING_ITEM = 1;
-        int LIST_ITEM = 2;
+        int LONG_ITEM = 0;
+        int BIGINTEGER_ITEM = 1;
+        int STRING_ITEM = 2;
+        int LIST_ITEM = 3;
 
         int compareTo(Item item);
 
         int getType();
 
         boolean isNull();
+
+        void appendTo(StringBuilder buf);
     }
 
-    /**
-     * Represents a numeric item in the version item list.
-     */
-    private static class IntegerItem
-            implements Item {
-        private final BigInteger value;
+    private static final class LongItem implements Item {
+        private final long value;
 
-        public static final IntegerItem ZERO = new IntegerItem();
+        public static final LongItem ZERO = new LongItem(0L);
 
-        private IntegerItem() {
-            this.value = BigInteger.ZERO;
-        }
-
-        IntegerItem(String str) {
-            this.value = new BigInteger(str);
+        LongItem(long value) {
+            this.value = value;
         }
 
         public int getType() {
-            return INTEGER_ITEM;
+            return LONG_ITEM;
         }
 
         public boolean isNull() {
-            return BigInteger.ZERO.equals(value);
+            return value == 0L;
         }
 
         public int compareTo(Item item) {
             if (item == null) {
-                return BigInteger.ZERO.equals(value) ? 0 : 1; // 1.0 == 1, 1.1 > 1
+                return value == 0L ? 0 : 1; // 1.0 == 1, 1.1 > 1
             }
 
             switch (item.getType()) {
-                case INTEGER_ITEM:
-                    return value.compareTo(((IntegerItem) item).value);
+                case LONG_ITEM:
+                    long itemValue = ((LongItem) item).value;
+                    return Long.compare(value, itemValue);
+                case BIGINTEGER_ITEM:
+                    return -1;
 
                 case STRING_ITEM:
                     return 1; // 1.1 > 1-sp
@@ -111,8 +128,66 @@ public class VersionNumber implements Comparable<VersionNumber> {
                     return 1; // 1.1 > 1-1
 
                 default:
-                    throw new RuntimeException("invalid item: " + item.getClass());
+                    throw new AssertionError("invalid item: " + item.getClass());
             }
+        }
+
+        @Override
+        public void appendTo(StringBuilder buf) {
+            buf.append(value);
+        }
+
+        public String toString() {
+            return Long.toString(value);
+        }
+    }
+
+    /**
+     * Represents a numeric item in the version item list.
+     */
+    private static final class BigIntegerItem implements Item {
+        private final BigInteger value;
+
+        BigIntegerItem(String str) {
+            this.value = new BigInteger(str);
+        }
+
+        public int getType() {
+            return BIGINTEGER_ITEM;
+        }
+
+        public boolean isNull() {
+            // Never be 0
+            // return BigInteger.ZERO.equals(value);
+            return false;
+        }
+
+        public int compareTo(Item item) {
+            if (item == null) {
+                // return BigInteger.ZERO.equals(value) ? 0 : 1; // 1.0 == 1, 1.1 > 1
+                return 1;
+            }
+
+            switch (item.getType()) {
+                case LONG_ITEM:
+                    return 1;
+                case BIGINTEGER_ITEM:
+                    return value.compareTo(((BigIntegerItem) item).value);
+
+                case STRING_ITEM:
+                    return 1; // 1.1 > 1-sp
+
+                case LIST_ITEM:
+                    return 1; // 1.1 > 1-1
+
+                default:
+                    throw new AssertionError("invalid item: " + item.getClass());
+            }
+        }
+
+        @Override
+        public void appendTo(StringBuilder buf) {
+            buf.append(value);
         }
 
         public String toString() {
@@ -123,9 +198,8 @@ public class VersionNumber implements Comparable<VersionNumber> {
     /**
      * Represents a string in the version item list, usually a qualifier.
      */
-    private static class StringItem
-            implements Item {
-        private String value;
+    private static final class StringItem implements Item {
+        private final String value;
 
         StringItem(String value) {
             this.value = value;
@@ -145,7 +219,8 @@ public class VersionNumber implements Comparable<VersionNumber> {
                 return 1;
             }
             switch (item.getType()) {
-                case INTEGER_ITEM:
+                case LONG_ITEM:
+                case BIGINTEGER_ITEM:
                     return -1; // 1.any < 1.1 ?
 
                 case STRING_ITEM:
@@ -155,8 +230,13 @@ public class VersionNumber implements Comparable<VersionNumber> {
                     return -1; // 1.any < 1-1
 
                 default:
-                    throw new RuntimeException("invalid item: " + item.getClass());
+                    throw new AssertionError("invalid item: " + item.getClass());
             }
+        }
+
+        @Override
+        public void appendTo(StringBuilder buf) {
+            buf.append(value);
         }
 
         public String toString() {
@@ -168,14 +248,14 @@ public class VersionNumber implements Comparable<VersionNumber> {
      * Represents a version list item. This class is used both for the global item list and for sub-lists (which start
      * with '-(number)' in the version specification).
      */
-    private static class ListItem
-            extends ArrayList<Item>
-            implements Item {
-        Character separator;
+    private static final class ListItem extends ArrayList<Item> implements Item {
+        private final Character separator;
 
-        public ListItem() {}
+        ListItem() {
+            this.separator = null;
+        }
 
-        public ListItem(char separator) {
+        ListItem(char separator) {
             this.separator = separator;
         }
 
@@ -184,7 +264,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
         }
 
         public boolean isNull() {
-            return (size() == 0);
+            return size() == 0;
         }
 
         void normalize() {
@@ -209,7 +289,8 @@ public class VersionNumber implements Comparable<VersionNumber> {
                 return first.compareTo(null);
             }
             switch (item.getType()) {
-                case INTEGER_ITEM:
+                case LONG_ITEM:
+                case BIGINTEGER_ITEM:
                     return -1; // 1-1 < 1.0.x
 
                 case STRING_ITEM:
@@ -234,36 +315,46 @@ public class VersionNumber implements Comparable<VersionNumber> {
                     return 0;
 
                 default:
-                    throw new RuntimeException("invalid item: " + item.getClass());
+                    throw new AssertionError("invalid item: " + item.getClass());
+            }
+        }
+
+        @Override
+        public void appendTo(StringBuilder buf) {
+            if (separator != null) {
+                buf.append((char) separator);
+            }
+
+            final int initLength = buf.length();
+
+            for (Item item : this) {
+                if (buf.length() > initLength) {
+                    if (!(item instanceof ListItem))
+                        buf.append('.');
+                }
+                item.appendTo(buf);
             }
         }
 
         public String toString() {
             StringBuilder buffer = new StringBuilder();
-            for (Item item : this) {
-                if (buffer.length() > 0) {
-                    if (!(item instanceof ListItem))
-                        buffer.append('.');
-                }
-                buffer.append(item);
-            }
-            if (separator != null)
-                return separator + buffer.toString();
-            else
-                return buffer.toString();
+            appendTo(buffer);
+            return buffer.toString();
         }
     }
 
-    public VersionNumber(String version) {
-        parseVersion(version);
-    }
+    private static final int MAX_LONGITEM_LENGTH = 18;
 
-    private void parseVersion(String version) {
+    private final String value;
+    public final ListItem items;
+    private final String canonical;
+
+    private VersionNumber(String version) {
         this.value = version;
 
-        ListItem list = items = new ListItem();
+        ListItem list = this.items = new ListItem();
 
-        Stack<Item> stack = new Stack<>();
+        Deque<Item> stack = new ArrayDeque<>();
         stack.push(list);
 
         boolean isDigit = false;
@@ -275,14 +366,14 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
             if (c == '.') {
                 if (i == startIndex) {
-                    list.add(IntegerItem.ZERO);
+                    list.add(LongItem.ZERO);
                 } else {
                     list.add(parseItem(version.substring(startIndex, i)));
                 }
                 startIndex = i + 1;
             } else if ("!\"#$%&'()*+,-/:;<=>?@[\\]^_`{|}~".indexOf(c) != -1) {
                 if (i == startIndex) {
-                    list.add(IntegerItem.ZERO);
+                    list.add(LongItem.ZERO);
                 } else {
                     list.add(parseItem(version.substring(startIndex, i)));
                 }
@@ -290,7 +381,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
                 list.add(list = new ListItem(c));
                 stack.push(list);
-            } else if (Character.isDigit(c)) {
+            } else if (c >= '0' && c <= '9') {
                 if (!isDigit && i > startIndex) {
                     list.add(parseItem(version.substring(startIndex, i)));
                     startIndex = i;
@@ -322,11 +413,42 @@ public class VersionNumber implements Comparable<VersionNumber> {
             list.normalize();
         }
 
-        canonical = items.toString();
+        this.canonical = items.toString();
+    }
+
+    // For simple version
+    private VersionNumber(String version, ListItem items) {
+        this.value = version;
+        this.items = items;
+        this.canonical = version;
     }
 
     private static Item parseItem(String buf) {
-        return buf.chars().allMatch(Character::isDigit) ? new IntegerItem(buf) : new StringItem(buf);
+        int numberLength = 0;
+        boolean leadingZero = true;
+        for (int i = 0; i < buf.length(); i++) {
+            char ch = buf.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                if (ch != '0') {
+                    leadingZero = false;
+                }
+
+                if (!leadingZero) {
+                    numberLength++;
+                }
+            } else {
+                return new StringItem(buf);
+            }
+        }
+
+        if (numberLength == 0) {
+            return LongItem.ZERO;
+        } else if (numberLength <= MAX_LONGITEM_LENGTH) {
+            // Numbers which are larger than 10^19 cannot be stored as long
+            return new LongItem(Long.parseLong(buf));
+        } else {
+            return new BigIntegerItem(buf);
+        }
     }
 
     public int compareTo(String o) {
@@ -364,6 +486,4 @@ public class VersionNumber implements Comparable<VersionNumber> {
     public int hashCode() {
         return canonical.hashCode();
     }
-
-    public static final Comparator<String> VERSION_COMPARATOR = Comparator.comparing(VersionNumber::asVersion);
 }
