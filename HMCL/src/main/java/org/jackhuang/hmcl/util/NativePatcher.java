@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public final class NativePatcher {
     private static Map<String, Library> getNatives(Platform platform) {
         return natives.computeIfAbsent(platform, p -> {
             //noinspection ConstantConditions
-            try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"))) {
+            try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"), StandardCharsets.UTF_8)) {
                 Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Library>>>() {
                 }.getType());
 
