@@ -89,7 +89,7 @@ public final class VersionNumber implements Comparable<VersionNumber> {
 
         boolean isNull();
 
-        void appendTo(StringBuilder buf);
+        void appendTo(StringBuilder buffer);
     }
 
     private static final class LongItem implements Item {
@@ -133,8 +133,8 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         }
 
         @Override
-        public void appendTo(StringBuilder buf) {
-            buf.append(value);
+        public void appendTo(StringBuilder buffer) {
+            buffer.append(value);
         }
 
         public String toString() {
@@ -186,8 +186,8 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         }
 
         @Override
-        public void appendTo(StringBuilder buf) {
-            buf.append(value);
+        public void appendTo(StringBuilder buffer) {
+            buffer.append(value);
         }
 
         public String toString() {
@@ -235,8 +235,8 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         }
 
         @Override
-        public void appendTo(StringBuilder buf) {
-            buf.append(value);
+        public void appendTo(StringBuilder buffer) {
+            buffer.append(value);
         }
 
         public String toString() {
@@ -320,19 +320,19 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         }
 
         @Override
-        public void appendTo(StringBuilder buf) {
+        public void appendTo(StringBuilder buffer) {
             if (separator != null) {
-                buf.append((char) separator);
+                buffer.append((char) separator);
             }
 
-            final int initLength = buf.length();
+            final int initLength = buffer.length();
 
             for (Item item : this) {
-                if (buf.length() > initLength) {
+                if (buffer.length() > initLength) {
                     if (!(item instanceof ListItem))
-                        buf.append('.');
+                        buffer.append('.');
                 }
-                item.appendTo(buf);
+                item.appendTo(buffer);
             }
         }
 
