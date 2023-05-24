@@ -35,7 +35,7 @@ public final class NativePatcher {
                 Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Library>>>() {
                 }.getType());
 
-                return natives.getOrDefault(platform.toString(), Collections.emptyMap());
+                return natives.getOrDefault(p.toString(), Collections.emptyMap());
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to load native library list", e);
                 return Collections.emptyMap();
