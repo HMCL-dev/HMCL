@@ -57,12 +57,15 @@ public class VersionNumberTest {
         assertFalse(isIntVersionNumber("3.2-5"));
         assertFalse(isIntVersionNumber("1.9999999999"));
 
+        assertTrue(isIntVersionNumber("0"));
+        assertTrue(isIntVersionNumber("1"));
         assertTrue(isIntVersionNumber("0.1"));
         assertTrue(isIntVersionNumber("0.1.0"));
         assertTrue(isIntVersionNumber("1.8"));
         assertTrue(isIntVersionNumber("1.12.2"));
         assertTrue(isIntVersionNumber("1.13.1"));
         assertTrue(isIntVersionNumber("1.999999999"));
+        assertTrue(isIntVersionNumber("999999999.0"));
     }
 
     private static void assertLessThan(String s1, String s2) {
@@ -93,6 +96,8 @@ public class VersionNumberTest {
     public void testSorting() {
         final Comparator<String> comparator = VersionNumber.VERSION_COMPARATOR.thenComparing(String::compareTo);
         final List<String> input = Collections.unmodifiableList(Arrays.asList(
+                "0",
+                "0.10.0",
                 "1.6.4",
                 "1.6.4-Forge9.11.1.1345",
                 "1.7.10",
@@ -132,14 +137,17 @@ public class VersionNumberTest {
                 "1.12.2",
                 "1.12.2_Modern_Skyblock-3.4.2",
                 "1.13.1",
-                "1.99999999999999999999"));
+                "1.99999999999999999999",
+                "2",
+                "2.0",
+                "2.1"));
 
         List<String> output = new ArrayList<>(input);
         output.sort(comparator);
         assertIterableEquals(input, output);
 
         Collections.shuffle(output, new Random(0));
-        output.sort(VersionNumber.VERSION_COMPARATOR.thenComparing(String::compareTo));
+        output.sort(comparator);
         assertIterableEquals(input, output);
     }
 }
