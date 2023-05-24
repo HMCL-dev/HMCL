@@ -555,8 +555,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             } else if (javaAutoDeterminedOption.isSelected()) {
                 versionSetting.setJavaAutoSelected();
             } else {
-                //noinspection unchecked
-                versionSetting.setJavaVersion(((Pair<JavaVersionType, JavaVersion>) newValue.getUserData()).getValue());
+                @SuppressWarnings("unchecked")
+                JavaVersion version = ((Pair<JavaVersionType, JavaVersion>) newValue.getUserData()).getValue();
+                versionSetting.setJavaVersion(version);
             }
         });
 

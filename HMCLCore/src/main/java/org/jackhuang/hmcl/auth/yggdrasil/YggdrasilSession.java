@@ -84,6 +84,7 @@ public class YggdrasilSession {
         String name = tryCast(storage.get("displayName"), String.class).orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
         String clientToken = tryCast(storage.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
         String accessToken = tryCast(storage.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
+        @SuppressWarnings("unchecked")
         Map<String, String> userProperties = tryCast(storage.get("userProperties"), Map.class).orElse(null);
         return new YggdrasilSession(clientToken, accessToken, new GameProfile(uuid, name), null, userProperties);
     }
