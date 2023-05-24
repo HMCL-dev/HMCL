@@ -84,6 +84,9 @@ public class VersionNumberTest {
         assertLessThan("1.7.0_22", "1.7.99");
         assertLessThan("1.12.2-14.23.4.2739", "1.12.2-14.23.5.2760");
         assertLessThan("1.9", "1.99999999999999999999");
+        assertLessThan("1.99999999999999999999", "1.199999999999999999999");
+        assertLessThan("1.99999999999999999999", "2");
+        assertLessThan("1.99999999999999999999", "2.0");
     }
 
     @Test
