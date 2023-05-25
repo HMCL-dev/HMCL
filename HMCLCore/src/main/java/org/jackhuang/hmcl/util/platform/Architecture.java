@@ -69,12 +69,6 @@ public enum Architecture {
         this.bits = bits;
     }
 
-    Architecture(Bits bits, String displayName, String identifier) {
-        this.checkedName = identifier;
-        this.displayName = displayName;
-        this.bits = bits;
-    }
-
     public Bits getBits() {
         return bits;
     }
