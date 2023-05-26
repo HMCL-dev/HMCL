@@ -31,10 +31,10 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.*;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -668,6 +668,14 @@ public final class FXUtils {
             return new Image(url);
         } catch (IllegalArgumentException e) {
             throw new ResourceNotFoundError("Cannot access image: " + url, e);
+        }
+    }
+
+    public static Image newImage(InputStream inputStream) {
+        try {
+            return new Image(inputStream);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundError("Cannot access image from current inputstream", e);
         }
     }
 

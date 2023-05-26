@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.ResourceTransformer;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
@@ -202,7 +203,7 @@ public class DecoratorController {
 
         return image.orElseGet(() -> {
             if (defaultBackground == null)
-                defaultBackground = newImage("/assets/img/background.jpg");
+                defaultBackground = newImage(ResourceTransformer.webpResourceTransformer.getTransformedResource("/assets/img/background.webp"));
             return defaultBackground;
         });
     }
