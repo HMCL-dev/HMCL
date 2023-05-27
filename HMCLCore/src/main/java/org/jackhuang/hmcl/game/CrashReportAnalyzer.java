@@ -109,7 +109,7 @@ public final class CrashReportAnalyzer {
         MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
         MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|ModResolutionException: Duplicate)")),//Mod重复安装
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错,Forge可能已经提供了错误信息
-        MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message: MISSING)")),//可能是Mod问题
+        MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message:)")),//可能是Mod问题
         FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
@@ -198,10 +198,10 @@ public final class CrashReportAnalyzer {
     private static final Pattern STACK_TRACE_LINE_PATTERN = Pattern.compile("at (?<method>.*?)\\((?<sourcefile>.*?)\\)");
     private static final Pattern STACK_TRACE_LINE_MODULE_PATTERN = Pattern.compile("\\{(?<tokens>.*)}");
     private static final Set<String> PACKAGE_KEYWORD_BLACK_LIST = new HashSet<>(Arrays.asList(
-            "net", "minecraft", "item", "setup", "block", "assist", "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", // minecraft
+            "net", "minecraft", "item", "setup", "block", "assist", "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", "map", "dsi", // minecraft
             "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
             "monster", "passive", "ai", "integrated", "tile", "state", "play", "override", "transformers", "structure", "nbt", "pathfinding", "chunk", "audio", "entities", "items", "renderers",
-            "storage",
+            "storage", "universal", 
             "java", "lang", "util", "nio", "io", "sun", "reflect", "zip", "jar", "jdk", "nashorn", "scripts", "runtime", "internal", // java
             "mods", "mod", "impl", "org", "com", "cn", "cc", "jp", // title
             "core", "config", "registries", "lib", "ruby", "mc", "codec", "recipe", "channel", "embedded", "done", "net", "netty", "network", "load", "github", "handler", "content", "feature", // misc
