@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -427,7 +428,11 @@ public final class Accounts {
         if (exception instanceof NoCharacterException) {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
-            return i18n("account.failed.connect_authentication_server");
+            if (exception.getCause() instanceof SSLException) {
+                return i18n("account.failed.ssl");
+            } else {
+                return i18n("account.failed.connect_authentication_server");
+            }
         } else if (exception instanceof ServerResponseMalformedException) {
             return i18n("account.failed.server_response_malformed");
         } else if (exception instanceof RemoteAuthenticationException) {
