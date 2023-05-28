@@ -65,6 +65,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -339,11 +340,13 @@ public class GameCrashWindow extends Stage {
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
                 gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
+                runInFX(() -> FXUtils.installFastTooltip(gameDir, i18n("game.directory")));
 
                 TwoLineListItem javaDir = new TwoLineListItem();
                 javaDir.getStyleClass().setAll("two-line-item-second-large");
                 javaDir.setTitle(i18n("settings.game.java_directory"));
                 javaDir.setSubtitle(launchOptions.getJava().getBinary().toAbsolutePath().toString());
+                runInFX(() -> FXUtils.installFastTooltip(javaDir, i18n("settings.game.java_directory")));
 
                 Label reasonTitle = new Label(i18n("game.crash.reason"));
                 reasonTitle.getStyleClass().add("two-line-item-second-large-title");
