@@ -87,8 +87,8 @@ public final class Launcher extends Application {
             }
 
             // https://lapcatsoftware.com/articles/app-translocation.html
-            if (ConfigHolder.isNewlyCreated()
-                    && OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+                    && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
 
                 if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
