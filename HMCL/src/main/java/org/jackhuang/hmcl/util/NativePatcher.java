@@ -7,13 +7,16 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -23,10 +26,24 @@ public final class NativePatcher {
 
     private static final Library NONEXISTENT_LIBRARY = new Library(null);
 
-    public static Version patchNative(Version version, String gameVersion, JavaVersion javaVersion, VersionSetting settings) {
-        if (settings.isNotPatchNatives())
-            return version;
+    private static final Map<Platform, Map<String, Library>> natives = new HashMap<>();
 
+    private static Map<String, Library> getNatives(Platform platform) {
+        return natives.computeIfAbsent(platform, p -> {
+            //noinspection ConstantConditions
+            try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"), StandardCharsets.UTF_8)) {
+                Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Library>>>() {
+                }.getType());
+
+                return natives.getOrDefault(p.toString(), Collections.emptyMap());
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to load native library list", e);
+                return Collections.emptyMap();
+            }
+        });
+    }
+
+    public static Version patchNative(Version version, String gameVersion, JavaVersion javaVersion, VersionSetting settings) {
         if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
             if (gameVersion != null && VersionNumber.VERSION_COMPARATOR.compare(gameVersion, "1.19") < 0)
                 return version;
@@ -45,6 +62,34 @@ public final class NativePatcher {
             return version.setLibraries(newLibraries);
         }
 
+        final boolean useNativeGLFW = settings.isUseNativeGLFW();
+        final boolean useNativeOpenAL = settings.isUseNativeOpenAL();
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
+                && (useNativeGLFW || useNativeOpenAL)
+                && VersionNumber.VERSION_COMPARATOR.compare(gameVersion, "1.19") >= 0) {
+
+            version = version.setLibraries(version.getLibraries().stream()
+                    .filter(library -> {
+                        if (library.getClassifier() != null && library.getClassifier().startsWith("natives")
+                                && "org.lwjgl".equals(library.getGroupId())) {
+                            if ((useNativeGLFW && "lwjgl-glfw".equals(library.getArtifactId()))
+                                    || (useNativeOpenAL && "lwjgl-openal".equals(library.getArtifactId()))) {
+                                LOG.info("Filter out " + library.getName());
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    })
+                    .collect(Collectors.toList()));
+        }
+
+        // Try patch natives
+
+        if (settings.isNotPatchNatives())
+            return version;
+
         if (javaVersion.getArchitecture().isX86())
             return version;
 
@@ -54,8 +99,8 @@ public final class NativePatcher {
                 && VersionNumber.VERSION_COMPARATOR.compare(gameVersion, "1.19") >= 0)
             return version;
 
-        Map<String, Library> replacements = Hole.nativeReplacement.get(javaVersion.getPlatform().toString());
-        if (replacements == null) {
+        Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
+        if (replacements.isEmpty()) {
             LOG.warning("No alternative native library provided for platform " + javaVersion.getPlatform());
             return version;
         }
@@ -68,11 +113,7 @@ public final class NativePatcher {
             if (library.isNative()) {
                 Library replacement = replacements.getOrDefault(library.getName() + ":natives", NONEXISTENT_LIBRARY);
                 if (replacement == NONEXISTENT_LIBRARY) {
-                    if (!(settings.isUseNativeGLFW() && library.getArtifactId().contains("glfw"))
-                            && !(settings.isUseNativeOpenAL() && library.getArtifactId().contains("openal"))) {
-                        LOG.warning("No alternative native library " + library.getName() + " provided for platform " + javaVersion.getPlatform());
-                        return version;
-                    }
+                    LOG.warning("No alternative native library " + library.getName() + " provided for platform " + javaVersion.getPlatform());
                     newLibraries.add(library);
                 } else if (replacement != null) {
                     newLibraries.add(replacement);
@@ -91,22 +132,6 @@ public final class NativePatcher {
     }
 
     public static Library getMesaLoader(JavaVersion javaVersion, Renderer renderer) {
-        Map<String, Library> map = Hole.nativeReplacement.get(javaVersion.getPlatform().toString());
-        return map != null ? map.get(renderer == Renderer.LLVMPIPE ? "software-renderer-loader" : "mesa-loader") : null;
-    }
-
-    private static final class Hole {
-        static Map<String, Map<String, Library>> nativeReplacement;
-
-        static {
-            //noinspection ConstantConditions
-            try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"))) {
-                nativeReplacement = JsonUtils.GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Library>>>() {
-                }.getType());
-            } catch (IOException e) {
-                nativeReplacement = Collections.emptyMap();
-                LOG.log(Level.WARNING, "Failed to load native library list", e);
-            }
-        }
+        return getNatives(javaVersion.getPlatform()).get(renderer == Renderer.LLVMPIPE ? "software-renderer-loader" : "mesa-loader");
     }
 }
