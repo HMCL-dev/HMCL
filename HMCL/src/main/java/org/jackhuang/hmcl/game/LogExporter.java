@@ -96,6 +96,22 @@ public final class LogExporter {
                     LOG.log(Level.WARNING, "Failed to find vm crash log", e);
                 }
 
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory.resolve("crash-reports"), "crash-*.txt")) {
+                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+
+                    for (Path file : stream) {
+                        if (Files.isRegularFile(file)) {
+                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
+                            if (time.toMillis() >= processStartTime) {
+                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
+                                zipper.putTextFile(crashLog, file.getFileName().toString());
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Failed to find crash reports log", e);
+                }
+
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
                     if (Files.exists(versionJson)) {
