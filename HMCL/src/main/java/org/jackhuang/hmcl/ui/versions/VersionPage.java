@@ -163,6 +163,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         FileUtils.deleteDirectoryQuietly(new File(getProfile().getRepository().getBaseDirectory(), "libraries"));
     }
 
+    private void clearAssets() {
+        FileUtils.deleteDirectoryQuietly(new File(getProfile().getRepository().getBaseDirectory(), "assets"));
+    }
+
     private void clearJunkFiles() {
         Versions.cleanVersion(getProfile(), getVersion());
     }
@@ -291,6 +295,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(control::export, managementPopup)),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), FXUtils.withJFXPopupClosing(control::redownloadAssetIndex, managementPopup)),
+                        new IconedMenuItem(null, i18n("version.manage.remove_assets"), FXUtils.withJFXPopupClosing(control::clearAssets, managementPopup)),
                         new IconedMenuItem(null, i18n("version.manage.remove_libraries"), FXUtils.withJFXPopupClosing(control::clearLibraries, managementPopup)),
                         new IconedMenuItem(null, i18n("version.manage.clean"), FXUtils.withJFXPopupClosing(control::clearJunkFiles, managementPopup)).addTooltip(i18n("version.manage.clean.tooltip"))
                 );
