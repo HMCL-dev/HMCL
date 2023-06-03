@@ -1,0 +1,115 @@
+2023-06-03 23:02:04,125 main ERROR Error processing element Queue ([Appenders: null]): CLASS_NOT_FOUND
+[23:02:04] [main/INFO]: ModLauncher running: args [--username, Xianxianzzz, --version, Minecraft 1.16.5 - 寮傜晫鐢熸椿骞绘兂, --gameDir, C:\Users\********\Desktop\寮傜晫鐢熸椿骞绘兂-Isekai-Life's-Fantasy v1.3\.minecraft, --assetsDir, C:\Users\********\Desktop\寮傜晫鐢熸椿骞绘兂-Isekai-Life's-Fantasy v1.3\.minecraft\assets, --assetIndex, 1.16, --uuid, 0ca3ecd984a34f60840dd218ee1e4c71, --accessToken, 鉂勨潉鉂勨潉鉂勨潉鉂勨潉, --userType, mojang, --versionType, HMCL 3.5.4, --width, 1280, --height, 720, --launchTarget, fmlclient, --fml.forgeVersion, 36.2.39, --fml.mcVersion, 1.16.5, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20210115.111550]
+[23:02:04] [main/INFO]: ModLauncher 8.1.3+8.1.3+main-8.1.x.c94d18ec starting: java version 1.8.0_333 by Oracle Corporation
+[23:02:04] [main/INFO]: OptiFineTransformationService.onLoad
+[23:02:04] [main/INFO]: OptiFine ZIP file: C:\Users\********\Desktop\寮傜晫鐢熸椿骞绘兂-Isekai-Life's-Fantasy v1.3\.minecraft\mods\OptiFine_1.16.5_HD_U_G8.jar
+[23:02:04] [main/INFO]: Target.PRE_CLASS is available
+[23:02:04] [main/INFO]: Added Lets Encrypt root certificates as additional trust
+[23:02:04] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.4 Source=file:/C:/Users/********/Desktop/%e5%bc%82%e7%95%8c%e7%94%9f%e6%b4%bb%e5%b9%bb%e6%83%b3-Isekai-Life's-Fantasy%20v1.3/.minecraft/libraries/org/spongepowered/mixin/0.8.4/mixin-0.8.4.jar Service=ModLauncher Env=CLIENT
+[23:02:04] [main/INFO]: OptiFineTransformationService.initialize
+[23:02:06] [main/INFO]: [org.antlr.v4.runtime.ConsoleErrorListener:syntaxError:38]: line 1:0 token recognition error at: '~'
+[23:02:06] [main/INFO]: OptiFineTransformationService.transformers
+[23:02:06] [main/INFO]: Targets: 311
+Init ItemPhysic coremods ...
+Init CreativeCore coremods ...
+[23:02:08] [main/INFO]: additionalClassesLocator: [optifine., net.optifine.]
+[23:02:08] [main/ERROR]: Mixin config drippyloadingscreen.mixin.json does not specify "minVersion" property
+[23:02:08] [main/INFO]: Successfully loaded Mixin Connector [tictim.paraglider.MixinConnector]
+[23:02:08] [main/INFO]: Successfully loaded Mixin Connector [icyllis.modernui.core.MixinConnector]
+[23:02:08] [main/INFO]: Successfully loaded Mixin Connector [vazkii.patchouli.common.MixinConnector]
+[23:02:08] [main/INFO]: Successfully loaded Mixin Connector [com.fuzs.easymagic.mixin.MixinConnector]
+[23:02:08] [main/INFO]: Successfully loaded Mixin Connector [com.performant.coremod.mixin.Connector]
+[23:02:08] [main/INFO]: Launching target 'fmlclient' with arguments [--version, Minecraft 1.16.5 - 寮傜晫鐢熸椿骞绘兂, --gameDir, C:\Users\********\Desktop\寮傜晫鐢熸椿骞绘兂-Isekai-Life's-Fantasy v1.3\.minecraft, --assetsDir, C:\Users\********\Desktop\寮傜晫鐢熸椿骞绘兂-Isekai-Life's-Fantasy v1.3\.minecraft\assets, --uuid, 0ca3ecd984a34f60840dd218ee1e4c71, --username, Xianxianzzz, --assetIndex, 1.16, --accessToken, 鉂勨潉鉂勨潉鉂勨潉鉂勨潉, --userType, mojang, --versionType, HMCL 3.5.4, --width, 1280, --height, 720]
+[23:02:09] [main/WARN]: Reference map 'nethers_delight.refmap.json' for nethers_delight.mixins.json could not be read. If this is a development environment you can ignore this message
+[23:02:09] [main/INFO]: Performant configs loaded
+[23:02:09] [main/INFO]: Patching LivingEntity#attackEntityFrom
+[23:02:09] [main/INFO]: Transforming class: net.minecraft.entity.Entity
+[23:02:09] [main/INFO]: Transforming class: net.minecraft.entity.Entity
+[23:02:10] [main/INFO]: start
+[23:02:10] [main/INFO]: find block call
+[23:02:10] [main/INFO]: Patching PlayerContainer#<init>
+[23:02:10] [main/INFO]: Patching PlayerContainer#onCraftMatrixChanged
+[23:02:10] [main/INFO]: Patching PlayerContainer#transferStackInSlot
+[23:02:10] [main/INFO]: Transforming class: net.minecraft.tileentity.TileEntity
+[Serene Seasons Transformer]: Transforming func_176224_k in net/minecraft/block/CauldronBlock
+[Serene Seasons Transformer]: Patched 1 calls
+[23:02:10] [main/INFO]: Patching LivingEntity#attackEntityFrom
+[23:02:10] [main/INFO]: Transforming method: setupTerrain net.minecraft.client.renderer.WorldRenderer
+[23:02:10] [main/INFO]: Transforming method: updateCameraAndRender net.minecraft.client.renderer.WorldRenderer
+[Serene Seasons Transformer]: Transforming func_228438_a_ in net/minecraft/client/renderer/WorldRenderer
+[Serene Seasons Transformer]: Patched 1 calls
+[Serene Seasons Transformer]: Transforming func_228436_a_ in net/minecraft/client/renderer/WorldRenderer
+[Serene Seasons Transformer]: Patched 1 calls
+[23:02:10] [main/INFO]: Patching ModelBakery#<init>
+[Serene Seasons Transformer]: Transforming func_201854_a in net/minecraft/world/biome/Biome
+[Serene Seasons Transformer]: Patched 1 calls
+[Serene Seasons Transformer]: Transforming func_201850_b in net/minecraft/world/biome/Biome
+[Serene Seasons Transformer]: Patched 1 calls
+[23:02:11] [main/WARN]: Error loading class: biomesoplenty/common/world/BOPBiomeProvider (java.lang.ClassNotFoundException: null)
+[23:02:11] [main/WARN]: Error loading class: xiroc/dungeoncrawl/dungeon/Dungeon (java.lang.ClassNotFoundException: null)
+[23:02:11] [main/INFO]: Transforming class: net.minecraft.tileentity.TileEntity
+[23:02:11] [main/INFO]: Patching ItemStack#onItemUse
+[23:02:11] [main/INFO]: start
+[23:02:11] [main/INFO]: find block call
+[23:02:12] [main/INFO]: Not enabling mixin forcom.performant.coremod.mixin.forge.BasicEventHooksMixin as config disables it.
+[23:02:12] [main/INFO]: Not enabling mixin forcom.performant.coremod.mixin.world.WorldMixin as config disables it.
+[23:02:12] [main/INFO]: Not enabling mixin forcom.performant.coremod.mixin.entity.LivingEntityUpdateEventMixin as config disables it.
+[23:02:13] [main/INFO]: Transforming class: net.minecraft.entity.Entity
+[23:02:13] [main/INFO]: Patching BlockModelShapes#getModelLocation
+[23:02:13] [main/INFO]: Patching PlayerContainer#<init>
+[23:02:13] [main/INFO]: Patching PlayerContainer#onCraftMatrixChanged
+[23:02:13] [main/INFO]: Patching PlayerContainer#transferStackInSlot
+[23:02:13] [main/INFO]: Patching LivingEntity#attackEntityFrom
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: java.lang.RuntimeException: java.lang.reflect.InvocationTargetException
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:39)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.Launcher.run(Launcher.java:82)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: Caused by: java.lang.reflect.InvocationTargetException
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at java.lang.reflect.Method.invoke(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:37)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37)
+[23:02:13] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:-1]: 	... 4 more
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: Caused by: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClass(MixinTransformer.java:250)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.service.modlauncher.MixinTransformationHandler.processClass(MixinTransformationHandler.java:131)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.launch.MixinLaunchPluginLegacy.processClass(MixinLaunchPluginLegacy.java:131)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.serviceapi.ILaunchPluginService.processClassWithFlags(ILaunchPluginService.java:154)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.LaunchPluginHandler.offerClassNodeToPlugins(LaunchPluginHandler.java:85)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.ClassTransformer.transform(ClassTransformer.java:120)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.TransformingClassLoader$DelegatedClassLoader.findClass(TransformingClassLoader.java:265)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.TransformingClassLoader.loadClass(TransformingClassLoader.java:136)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.TransformingClassLoader.loadClass(TransformingClassLoader.java:98)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at java.lang.ClassLoader.loadClass(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at java.lang.ClassLoader.defineClass1(Native Method)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at java.lang.ClassLoader.defineClass(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.TransformingClassLoader.loadClass(TransformingClassLoader.java:138)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.TransformingClassLoader.loadClass(TransformingClassLoader.java:98)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at java.lang.ClassLoader.loadClass(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at java.lang.ClassLoader.defineClass1(Native Method)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at java.lang.ClassLoader.defineClass(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.TransformingClassLoader.loadClass(TransformingClassLoader.java:138)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at cpw.mods.modlauncher.TransformingClassLoader.loadClass(TransformingClassLoader.java:98)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at java.lang.ClassLoader.loadClass(Unknown Source)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at net.optifine.reflect.Reflector.<clinit>(Reflector.java:282)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at net.minecraft.crash.CrashReport.func_71504_g(CrashReport.java:101)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at net.minecraft.crash.CrashReport.<init>(CrashReport.java:54)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at net.minecraft.crash.CrashReport.func_230188_h_(CrashReport.java:425)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at net.minecraft.client.main.Main.main(Main.java:122)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	... 10 more
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Redirector OnisOnLadder(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/LivingEntity;)Z in performant.mixins.json:entity.LivingEntityMixin failed injection check, (0/1) succeeded. Scanned 1 target(s). Using refmap performant.refmap.json
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.injection.struct.InjectionInfo.postInject(InjectionInfo.java:468)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.applyInjections(MixinTargetContext.java:1362)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyInjections(MixinApplicatorStandard.java:1051)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMixin(MixinApplicatorStandard.java:400)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:325)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:383)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:365)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:363)
+[23:02:13] [main/INFO]: [java.lang.Throwable:printStackTrace:-1]: 	... 35 more
+Exception in thread "main"

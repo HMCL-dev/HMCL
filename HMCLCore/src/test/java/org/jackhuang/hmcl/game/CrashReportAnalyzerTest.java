@@ -332,6 +332,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void performantOptiFineIncompatible() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/performant_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.Rule.PERFORMANT_FOREST_OPTIFINE);
+    }
+
+    @Test
     public void fabricMissingMinecraft() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),

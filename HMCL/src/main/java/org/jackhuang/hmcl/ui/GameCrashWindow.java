@@ -167,6 +167,7 @@ public class GameCrashWindow extends Stage {
                                     result.getMatcher().group("version")), Controllers::onHyperlinkAction));
                             break;
                         case TWILIGHT_FOREST_OPTIFINE:
+                        case PERFORMANT_FOREST_OPTIFINE:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.mod", "OptiFine"), Controllers::onHyperlinkAction));
                             break;
                         default:

@@ -120,8 +120,10 @@ public final class CrashReportAnalyzer {
         //Cannot find launch target fmlclient, unable to launch
         CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT(Pattern.compile("Cannot find launch target fmlclient, unable to launch")),
 
+        // PERFORMANT is not compatible with OptiFine
+        PERFORMANT_FOREST_OPTIFINE(Pattern.compile("org\\.spongepowered\\.asm\\.mixin\\.injection\\.throwables\\.InjectionError: Critical injection failure: Redirector OnisOnLadder\\(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/LivingEntity;\\)Z in performant\\.mixins\\.json:entity\\.LivingEntityMixin failed injection check, \\(0/1\\) succeeded\\. Scanned 1 target\\(s\\)\\. Using refmap performant\\.refmap\\.json")),
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
-        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));
+        TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java\\.lang\\.IllegalArgumentException: (.*) outside of image bounds (.*)"));
 
         private final Pattern pattern;
         private final String[] groupNames;
