@@ -25,10 +25,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.*;
 
 /**
@@ -41,20 +39,20 @@ public final class Logging {
     public static final Logger LOG = Logger.getLogger("HMCL");
     private static final ByteArrayOutputStream storedLogs = new ByteArrayOutputStream(IOUtils.DEFAULT_BUFFER_SIZE);
 
-    private static final ConcurrentMap<String, String> forbiddenTokens = new ConcurrentHashMap<>();
+    private static volatile String[] accessTokens = new String[0];
 
-    public static void registerForbiddenToken(String token, String replacement) {
-        forbiddenTokens.put(token, replacement);
-    }
+    public static synchronized void registerAccessToken(String token) {
+        final String[] oldAccessTokens = accessTokens;
+        final String[] newAccessTokens = Arrays.copyOf(oldAccessTokens, oldAccessTokens.length + 1);
 
-    public static void registerAccessToken(String accessToken) {
-        registerForbiddenToken(accessToken, "<access token>");
+        newAccessTokens[oldAccessTokens.length] = token;
+
+        accessTokens = newAccessTokens;
     }
 
     public static String filterForbiddenToken(String message) {
-        for (Map.Entry<String, String> entry : forbiddenTokens.entrySet()) {
-            message = message.replace(entry.getKey(), entry.getValue());
-        }
+        for (String token : accessTokens)
+            message = message.replace(token, "<access token>");
         return message;
     }
 
