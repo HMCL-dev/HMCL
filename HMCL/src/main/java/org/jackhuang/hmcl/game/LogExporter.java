@@ -75,6 +75,23 @@ public final class LogExporter {
                 if (Files.exists(logsDir.resolve("fml-client-latest.log"))) {
                     zipper.putFile(logsDir.resolve("fml-client-latest.log"), "fml-client-latest.log");
                 }
+                //I18nUpdateMod
+                if (Files.exists(logsDir.resolve("I18nUpdateMod.log"))) {
+                    zipper.putFile(logsDir.resolve("I18nUpdateMod.log"), "I18nUpdateMod.log");
+                }
+                //REI
+                if (Files.exists(logsDir.resolve("rei.log"))) {
+                    zipper.putFile(logsDir.resolve("rei.log"), "rei.log");
+                }
+                //ReplayMod
+                if (Files.exists(runDirectory.resolve("export.log"))) {
+                    zipper.putFile(runDirectory.resolve("export.log"), "export.log");
+                }
+
+                Path logsDir1 = runDirectory.resolve("liteconfig");
+                if (Files.exists(logsDir1.resolve("liteloader.log"))) {
+                    zipper.putFile(logsDir1.resolve("liteloader.log"), "liteloader.log");
+                }
 
                 zipper.putTextFile(Logging.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
