@@ -65,69 +65,73 @@ public final class LogExporter {
 
         return CompletableFuture.runAsync(() -> {
             try (Zipper zipper = new Zipper(zipFile)) {
-                Path logsDir = runDirectory.resolve("logs");
-                if (Files.exists(logsDir.resolve("debug.log"))) {
-                    zipper.putFile(logsDir.resolve("debug.log"), "debug.log");
-                }
-                if (Files.exists(logsDir.resolve("latest.log"))) {
-                    zipper.putFile(logsDir.resolve("latest.log"), "latest.log");
-                }
-                if (Files.exists(logsDir.resolve("fml-client-latest.log"))) {
-                    zipper.putFile(logsDir.resolve("fml-client-latest.log"), "fml-client-latest.log");
-                }
-                //I18nUpdateMod
-                if (Files.exists(logsDir.resolve("I18nUpdateMod.log"))) {
-                    zipper.putFile(logsDir.resolve("I18nUpdateMod.log"), "I18nUpdateMod.log");
-                }
-                //REI
-                if (Files.exists(logsDir.resolve("rei.log"))) {
-                    zipper.putFile(logsDir.resolve("rei.log"), "rei.log");
-                }
-                //ReplayMod
-                if (Files.exists(runDirectory.resolve("export.log"))) {
-                    zipper.putFile(runDirectory.resolve("export.log"), "export.log");
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory.resolve("liteconfig"), "*.log")) {
+                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+
+                    for (Path file : stream) {
+                        if (Files.isRegularFile(file)) {
+                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
+                            if (time.toMillis() >= processStartTime) {
+                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
+                                zipper.putTextFile(crashLog, file.getFileName().toString());
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Failed to find any log on liteconfig", e);
                 }
 
-                Path logsDir1 = runDirectory.resolve("liteconfig");
-                if (Files.exists(logsDir1.resolve("liteloader.log"))) {
-                    zipper.putFile(logsDir1.resolve("liteloader.log"), "liteloader.log");
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory.resolve("logs"), "*.log")) {
+                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+
+                    for (Path file : stream) {
+                        if (Files.isRegularFile(file)) {
+                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
+                            if (time.toMillis() >= processStartTime) {
+                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
+                                zipper.putTextFile(crashLog, file.getFileName().toString());
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Failed to find any log on logs", e);
+                }
+
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory, "*.log")) {
+                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+
+                    for (Path file : stream) {
+                        if (Files.isRegularFile(file)) {
+                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
+                            if (time.toMillis() >= processStartTime) {
+                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
+                                zipper.putTextFile(crashLog, file.getFileName().toString());
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Failed to find any log on runDirectory", e);
+                }
+
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory.resolve("crash-reports"), "*.txt")) {
+                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+
+                    for (Path file : stream) {
+                        if (Files.isRegularFile(file)) {
+                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
+                            if (time.toMillis() >= processStartTime) {
+                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
+                                zipper.putTextFile(crashLog, file.getFileName().toString());
+                            }
+                        }
+                    }
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Failed to find any txt log on crash-reports", e);
                 }
 
                 zipper.putTextFile(Logging.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
                 zipper.putTextFile(Logging.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
-
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory, "hs_err_*.log")) {
-                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
-
-                    for (Path file : stream) {
-                        if (Files.isRegularFile(file)) {
-                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
-                            if (time.toMillis() >= processStartTime) {
-                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
-                                zipper.putTextFile(crashLog, file.getFileName().toString());
-                            }
-                        }
-                    }
-                } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Failed to find vm crash log", e);
-                }
-
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(runDirectory.resolve("crash-reports"), "crash-*.txt")) {
-                    long processStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
-
-                    for (Path file : stream) {
-                        if (Files.isRegularFile(file)) {
-                            FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
-                            if (time.toMillis() >= processStartTime) {
-                                String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
-                                zipper.putTextFile(crashLog, file.getFileName().toString());
-                            }
-                        }
-                    }
-                } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Failed to find crash reports log", e);
-                }
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
