@@ -1,0 +1,21 @@
+name: "Feature Request"
+description: "为 HMCL 提出新功能"
+labels: [feature request]
+body:
+- type: markdown
+  attributes:
+    value: "提交前请确保查看 issues 列表是否有重复的项目！"
+- type: textarea
+  id: "yml-2"
+  attributes:
+    label: 描述 Description
+    description: "详细描述你想加入的新功能"
+  validations:
+    required: true
+- type: textarea
+  id: "yml-3"
+  attributes:
+    label: 原因 Why
+    description: "描述该功能带来的好处及原因"
+  validations:
+    required: true
