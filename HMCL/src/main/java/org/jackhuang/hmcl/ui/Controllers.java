@@ -204,7 +204,7 @@ public final class Controllers {
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
 
-        stage.getIcons().add(newImage("/assets/img/icon.png"));
+        stage.getIcons().add(newImage("/assets/img/icon.webp"));
         stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);

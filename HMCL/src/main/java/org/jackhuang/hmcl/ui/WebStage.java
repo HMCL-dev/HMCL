@@ -44,7 +44,7 @@ public class WebStage extends Stage {
     public WebStage(int width, int height) {
         setScene(new Scene(pane, width, height));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
-        getIcons().add(newImage("/assets/img/icon.png"));
+        getIcons().add(newImage("/assets/img/icon.webp"));
         webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
         webView.setContextMenuEnabled(false);
         progressBar.progressProperty().bind(webView.getEngine().getLoadWorker().progressProperty());

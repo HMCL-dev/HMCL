@@ -93,7 +93,7 @@ public final class LogWindow extends Stage {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
-        getIcons().add(newImage("/assets/img/icon.png"));
+        getIcons().add(newImage("/assets/img/icon.webp"));
 
         levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
     }

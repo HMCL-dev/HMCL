@@ -97,12 +97,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
         if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9) {
             // JavaFX 8 has some problems with @2x images
             // Force load the original icon
-            try (InputStream is = MainPage.class.getResourceAsStream("/assets/img/icon.png")) {
+            try (InputStream is = MainPage.class.getResourceAsStream("/assets/img/icon.webp")) {
                 titleIcon.setImage(new Image(is, 20, 20, false, false));
             } catch (IOException ignored) {
             }
         } else {
-            titleIcon.setImage(new Image("/assets/img/icon.png", 20, 20, false, false));
+            titleIcon.setImage(new Image("/assets/img/icon.webp", 20, 20, false, false));
         }
 
         Label titleLabel = new Label(Metadata.FULL_TITLE);
