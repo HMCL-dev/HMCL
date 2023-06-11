@@ -1,6 +1,6 @@
 name: "Feature Request"
 description: "为 HMCL 提出新功能"
-labels: [feature request]
+labels: feature request
 body:
 - type: markdown
   attributes:
