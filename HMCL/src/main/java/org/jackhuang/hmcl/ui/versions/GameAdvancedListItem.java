@@ -72,7 +72,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             Tooltip.uninstall(this,tooltip);
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
-            imageView.setImage(newImage("/assets/img/grass.png"));
+            imageView.setImage(newImage("/assets/img/grass.webp"));
             tooltip.setText("");
         }
     }

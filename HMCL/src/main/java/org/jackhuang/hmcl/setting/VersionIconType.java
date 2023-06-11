@@ -18,17 +18,17 @@
 package org.jackhuang.hmcl.setting;
 
 public enum VersionIconType {
-    DEFAULT("/assets/img/grass.png"),
+    DEFAULT("/assets/img/grass.webp"),
 
-    GRASS("/assets/img/grass.png"),
-    CHEST("/assets/img/chest.png"),
-    CHICKEN("/assets/img/chicken.png"),
-    COMMAND("/assets/img/command.png"),
-    CRAFT_TABLE("/assets/img/craft_table.png"),
-    FABRIC("/assets/img/fabric.png"),
-    FORGE("/assets/img/forge.png"),
-    FURNACE("/assets/img/furnace.png"),
-    QUILT("/assets/img/quilt.png");
+    GRASS("/assets/img/grass.webp"),
+    CHEST("/assets/img/chest.webp"),
+    CHICKEN("/assets/img/chicken.webp"),
+    COMMAND("/assets/img/command.webp"),
+    CRAFT_TABLE("/assets/img/craft_table.webp"),
+    FABRIC("/assets/img/fabric.webp"),
+    FORGE("/assets/img/forge.webp"),
+    FURNACE("/assets/img/furnace.webp"),
+    QUILT("/assets/img/quilt.webp");
 
     // Please append new items at last
 

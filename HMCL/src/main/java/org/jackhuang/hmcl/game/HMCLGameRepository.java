@@ -263,7 +263,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newImage("/assets/img/grass.png");
+            return newImage("/assets/img/grass.webp");
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
         VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
@@ -274,9 +274,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
             if (iconFile.exists())
                 return new Image("file:" + iconFile.getAbsolutePath());
             else if (LibraryAnalyzer.isModded(this, version))
-                return newImage("/assets/img/furnace.png");
+                return newImage("/assets/img/furnace.webp");
             else
-                return newImage("/assets/img/grass.png");
+                return newImage("/assets/img/grass.webp");
         } else {
             return newImage(iconType.getResourceUrl());
         }

@@ -74,24 +74,24 @@ public class InstallerItem extends Control {
 
         switch (id) {
             case "game":
-                imageUrl = "/assets/img/grass.png";
+                imageUrl = "/assets/img/grass.webp";
                 break;
             case "fabric":
             case "fabric-api":
-                imageUrl = "/assets/img/fabric.png";
+                imageUrl = "/assets/img/fabric.webp";
                 break;
             case "forge":
-                imageUrl = "/assets/img/forge.png";
+                imageUrl = "/assets/img/forge.webp";
                 break;
             case "liteloader":
-                imageUrl = "/assets/img/chicken.png";
+                imageUrl = "/assets/img/chicken.webp";
                 break;
             case "optifine":
-                imageUrl = "/assets/img/command.png";
+                imageUrl = "/assets/img/command.webp";
                 break;
             case "quilt":
             case "quilt-api":
-                imageUrl = "/assets/img/quilt.png";
+                imageUrl = "/assets/img/quilt.webp";
                 break;
             default:
                 imageUrl = null;

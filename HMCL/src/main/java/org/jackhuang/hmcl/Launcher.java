@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import net.burningtnt.webp.jfx.WEBPImageLoaderFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,6 +65,8 @@ public final class Launcher extends Application {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
 
         CookieHandler.setDefault(COOKIE_MANAGER);
+
+        WEBPImageLoaderFactory.setupListener();
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
