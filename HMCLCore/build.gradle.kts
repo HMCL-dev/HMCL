@@ -13,4 +13,6 @@ dependencies {
     api("org.nanohttpd:nanohttpd:2.3.1")
     api("org.apache.commons:commons-compress:1.23.0")
     compileOnlyApi("org.jetbrains:annotations:24.0.1")
+
+    testImplementation(project(":HMCL"))
 }

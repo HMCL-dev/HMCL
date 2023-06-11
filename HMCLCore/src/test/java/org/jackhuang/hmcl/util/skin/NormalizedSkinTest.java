@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.util.skin;
 
 import javafx.scene.image.Image;
+import net.burningtnt.webp.jfx.WEBPImageLoaderFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
@@ -10,13 +11,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class NormalizedSkinTest {
     private static NormalizedSkin getSkin(String name) throws InvalidSkinException {
-        String path = Paths.get("../HMCL/src/main/resources/assets/img/skin/" + name + ".png").normalize().toAbsolutePath().toUri().toString();
+        String path = Paths.get("../HMCL/src/main/resources/assets/img/skin/" + name + ".webp").normalize().toAbsolutePath().toUri().toString();
         return new NormalizedSkin(new Image(path));
     }
 
     @Test
     @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
     public void testIsSlim() throws Exception {
+        WEBPImageLoaderFactory.setupListener();
+
         assertFalse(getSkin("steve").isSlim());
         assertTrue(getSkin("alex").isSlim());
         assertTrue(getSkin("noor").isSlim());

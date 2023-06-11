@@ -37,7 +37,6 @@ version = "$versionRoot.$buildNumber"
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
-    implementation("com.github.burningtnt:SimpleWEBP:${"d5038d4d8963311d65178857e1c5c63292cc4302".substring(0,10)}")
 }
 
 fun digest(algorithm: String, bytes: ByteArray) = MessageDigest.getInstance(algorithm).digest(bytes)
