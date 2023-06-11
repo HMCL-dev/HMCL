@@ -31,10 +31,10 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.*;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -46,6 +46,7 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
@@ -449,7 +450,8 @@ public final class FXUtils {
                 } catch (Throwable e) {
                     LOG.log(Level.WARNING, "An exception occurred while calling rundll32", e);
                 }
-            } if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            }
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 for (String browser : linuxBrowsers) {
                     try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
                         if (is.read() != -1) {
@@ -494,7 +496,7 @@ public final class FXUtils {
                 frame.setSize(width, height);
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.setLocationByPlatform(true);
-                frame.setIconImage(new ImageIcon(FXUtils.class.getResource("/assets/img/icon.webp")).getImage());
+                frame.setIconImage(new ImageIcon(PNGJavaFXUtils.writeImageToArray(new Image("/assets/img/icon.webp"))).getImage());
                 frame.setLayout(new BorderLayout());
 
                 final JProgressBar progressBar = new JProgressBar();
