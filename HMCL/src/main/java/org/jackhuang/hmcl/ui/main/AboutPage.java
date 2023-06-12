@@ -68,7 +68,13 @@ public class AboutPage extends StackPane {
             glavo.setTitle("Glavo");
             glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
             glavo.setExternalLink("https://github.com/Glavo");
-            
+
+            IconedTwoLineListItem burningtnt = new IconedTwoLineListItem();
+            burningtnt.setImage(new Image("/assets/img/burningtnt.webp"));
+            burningtnt.setTitle("Burning_TNT");
+            burningtnt.setSubtitle(i18n("about.thanks_to.burningtnt.statement"));
+            burningtnt.setExternalLink("https://github.com/burningtnt/");
+
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
             gamerteam.setImage(new Image("/assets/img/gamerteam.webp"));
@@ -104,7 +110,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, burningtnt, mcbbs, mcmod, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();
@@ -144,12 +150,17 @@ public class AboutPage extends StackPane {
             openNBT.setSubtitle("Copyright © 2013-2021 Steveice10.\nLicensed under the MIT License.");
             openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
 
+            IconedTwoLineListItem simpleWebp = new IconedTwoLineListItem();
+            simpleWebp.setTitle("SimpleWEBP");
+            simpleWebp.setSubtitle("Copyright © Copyright 2023 Burning_TNT.\nLicensed under the Apache 2.0 License.");
+            simpleWebp.setExternalLink("https://github.com/burningtnt/SimpleWEBP");
+
             IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
             minecraftJFXSkin.setTitle("minecraft-jfx-skin");
             minecraftJFXSkin.setSubtitle("Copyright © 2016 InfinityStudio.\nLicensed under the GPL 3.");
             minecraftJFXSkin.setExternalLink("https://github.com/InfinityStudio/minecraft-jfx-skin");
 
-            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, minecraftJFXSkin);
+            dep.getContent().setAll(javafx, jfoenix, gson, xz, fxgson, constantPoolScanner, openNBT, simpleWebp, minecraftJFXSkin);
         }
 
         ComponentList legal = new ComponentList();
