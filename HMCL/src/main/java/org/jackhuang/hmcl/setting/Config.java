@@ -172,9 +172,6 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("promptedVersion")
     private StringProperty promptedVersion = new SimpleStringProperty();
 
-    @SerializedName("hideAnnouncementVersion")
-    private StringProperty hideAnnouncementVersion = new SimpleStringProperty();
-
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
@@ -196,6 +193,9 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("animationDisabled")
     private BooleanProperty animationDisabled = new SimpleBooleanProperty();
+
+    @SerializedName("shownTips")
+    private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
     private transient ObservableHelper helper = new ObservableHelper(this);
 
@@ -643,15 +643,7 @@ public final class Config implements Cloneable, Observable {
         this.promptedVersion.set(promptedVersion);
     }
 
-    public String getHideAnnouncementVersion() {
-        return hideAnnouncementVersion.get();
-    }
-
-    public StringProperty hideAnnouncementVersionProperty() {
-        return hideAnnouncementVersion;
-    }
-
-    public void setHideAnnouncementVersion(String hideAnnouncementDevVersion) {
-        this.hideAnnouncementVersion.set(hideAnnouncementDevVersion);
+    public ObservableMap<String, Object> getShownTips() {
+        return shownTips;
     }
 }
