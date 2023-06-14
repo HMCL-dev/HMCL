@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
@@ -80,6 +81,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
+    private static final Pattern USERNAME_CHECKER = Pattern.compile("^[A-Za-z0-9_]+$");
 
     private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
@@ -222,35 +224,50 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             additionalData = null;
         }
 
-        logging.set(true);
-        deviceCode.set(null);
+        if (factory instanceof OfflineAccountFactory && username != null) {
+            if (!USERNAME_CHECKER.matcher(username).matches()) {
+                Controllers.confirm(
+                        i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
+                        MessageDialogPane.MessageType.WARNING,
+                        () -> {
+                            logging.set(true);
+                            deviceCode.set(null);
 
-        loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
-                .whenComplete(Schedulers.javafx(), account -> {
-                    int oldIndex = Accounts.getAccounts().indexOf(account);
-                    if (oldIndex == -1) {
-                        Accounts.getAccounts().add(account);
-                    } else {
-                        // adding an already-added account
-                        // instead of discarding the new account, we first remove the existing one then add the new one
-                        Accounts.getAccounts().remove(oldIndex);
-                        Accounts.getAccounts().add(oldIndex, account);
-                    }
+                            loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
+                                    .whenComplete(Schedulers.javafx(), account -> {
+                                        int oldIndex = Accounts.getAccounts().indexOf(account);
+                                        if (oldIndex == -1) {
+                                            Accounts.getAccounts().add(account);
+                                        } else {
+                                            // adding an already-added account
+                                            // instead of discarding the new account, we first remove the existing one then add the new one
+                                            Accounts.getAccounts().remove(oldIndex);
+                                            Accounts.getAccounts().add(oldIndex, account);
+                                        }
 
-                    // select the new account
-                    Accounts.setSelectedAccount(account);
+                                        // select the new account
+                                        Accounts.setSelectedAccount(account);
 
-                    spinner.hideSpinner();
-                    fireEvent(new DialogCloseEvent());
-                }, exception -> {
-                    if (exception instanceof NoSelectedCharacterException) {
-                        fireEvent(new DialogCloseEvent());
-                    } else {
-                        lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
-                    }
-                    body.setDisable(false);
-                    spinner.hideSpinner();
-                }).executor(true);
+                                        spinner.hideSpinner();
+                                        fireEvent(new DialogCloseEvent());
+                                    }, exception -> {
+                                        if (exception instanceof NoSelectedCharacterException) {
+                                            fireEvent(new DialogCloseEvent());
+                                        } else {
+                                            lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
+                                        }
+                                        body.setDisable(false);
+                                        spinner.hideSpinner();
+                                    }).executor(true);
+                        },
+                        () -> {
+                            lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                            body.setDisable(false);
+                            spinner.hideSpinner();
+                        }
+                );
+            }
+        }
     }
 
     private void onCancel() {
