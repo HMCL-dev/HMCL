@@ -432,6 +432,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void optifineIsNotCompatibleWithForge4() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge5.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
+    }
+
+    @Test
     public void shadersMod() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/shaders_mod.txt")),

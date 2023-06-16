@@ -1,0 +1,51 @@
+[19:59:16] [main/INFO]: ModLauncher running: args [--username, ljjjjj, --version, 1.20, --gameDir, F:\鎴戠殑涓栫晫\.minecraft\versions\1.20, --assetsDir, F:\鎴戠殑涓栫晫\.minecraft\assets, --assetIndex, 5, --uuid, dad18d8b1bc53620bb6b9288bee30929, --accessToken, 鉂勨潉鉂勨潉鉂勨潉鉂勨潉, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, msa, --versionType, HMCL **.**.**.**, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker, --launchTarget, forgeclient, --fml.forgeVersion, 46.0.14, --fml.mcVersion, 1.20, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230608.053357]
+[19:59:16] [main/INFO]: ModLauncher 10.0.8+10.0.8+main.0ef7e830 starting: java version 17.0.7 by BellSoft; OS Windows 10 arch amd64 version 10.0
+[19:59:16] [main/INFO]: OptiFineTransformationService.onLoad
+[19:59:16] [main/INFO]: OptiFine ZIP file URL: union:/F:/鎴戠殑涓栫晫/.minecraft/libraries/optifine/OptiFine/1.20_HD_U_I5_pre3/OptiFine-1.20_HD_U_I5_pre3.jar%23106!/
+[19:59:16] [main/INFO]: OptiFine ZIP file: F:\鎴戠殑涓栫晫\.minecraft\libraries\optifine\OptiFine\1.20_HD_U_I5_pre3\OptiFine-1.20_HD_U_I5_pre3.jar
+[19:59:16] [main/INFO]: Target.PRE_CLASS is available
+[19:59:16] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/F:/鎴戠殑涓栫晫/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%23101!/ Service=ModLauncher Env=CLIENT
+[19:59:16] [main/INFO]: OptiFineTransformationService.initialize
+[19:59:16] [main/WARN]: Configuration file F:\鎴戠殑涓栫晫\.minecraft\versions\1.20\config\fml.toml is not correct. Correcting
+[19:59:16] [main/WARN]: Incorrect key [defaultConfigPath] was corrected from null to defaultconfigs
+[19:59:17] [main/WARN]: Mod file F:\鎴戠殑涓栫晫\.minecraft\libraries\net\minecraftforge\fmlcore\1.20-46.0.14\fmlcore-1.20-46.0.14.jar is missing mods.toml file
+[19:59:17] [main/WARN]: Mod file F:\鎴戠殑涓栫晫\.minecraft\libraries\net\minecraftforge\javafmllanguage\1.20-46.0.14\javafmllanguage-1.20-46.0.14.jar is missing mods.toml file
+[19:59:17] [main/WARN]: Mod file F:\鎴戠殑涓栫晫\.minecraft\libraries\net\minecraftforge\lowcodelanguage\1.20-46.0.14\lowcodelanguage-1.20-46.0.14.jar is missing mods.toml file
+[19:59:17] [main/WARN]: Mod file F:\鎴戠殑涓栫晫\.minecraft\libraries\net\minecraftforge\mclanguage\1.20-46.0.14\mclanguage-1.20-46.0.14.jar is missing mods.toml file
+[19:59:17] [main/INFO]: Found mod file fmlcore-1.20-46.0.14.jar of type LIBRARY with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@51a06cbe
+[19:59:17] [main/INFO]: Found mod file javafmllanguage-1.20-46.0.14.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@51a06cbe
+[19:59:17] [main/INFO]: Found mod file lowcodelanguage-1.20-46.0.14.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@51a06cbe
+[19:59:17] [main/INFO]: Found mod file mclanguage-1.20-46.0.14.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@51a06cbe
+[19:59:17] [main/INFO]: Found mod file client-1.20-20230608.053357-srg.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@51a06cbe
+[19:59:17] [main/INFO]: Found mod file forge-1.20-46.0.14-universal.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@51a06cbe
+[19:59:17] [main/INFO]: No dependencies to load found. Skipping!
+[19:59:17] [main/INFO]: OptiFineTransformationService.transformers
+[19:59:17] [main/INFO]: Targets: 410
+[19:59:17] [main/INFO]: additionalClassesLocator: [optifine., net.optifine.]
+[19:59:18] [main/INFO]: Launching target 'forgeclient' with arguments [--version, 1.20, --gameDir, F:\鎴戠殑涓栫晫\.minecraft\versions\1.20, --assetsDir, F:\鎴戠殑涓栫晫\.minecraft\assets, --uuid, dad18d8b1bc53620bb6b9288bee30929, --username, ljjjjj, --assetIndex, 5, --accessToken, 鉂勨潉鉂勨潉鉂勨潉鉂勨潉, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, msa, --versionType, HMCL **.**.**.**, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker]
+2023-06-16 19:59:18,190 main WARN Error parsing URI F:\鎴戠殑涓栫晫\.minecraft\versions\1.20\log4j2.xml
+2023-06-16 19:59:18,229 main WARN Advanced terminal features are not available in this environment
+Completely ignored arguments: [--tweakClass, optifine.OptiFineTweaker]
+[19:59:23] [Datafixer Bootstrap/INFO] [mojang/DataFixerBuilder]: 188 Datafixer optimizations took 170 milliseconds
+Exception in thread "Render thread" java.lang.RuntimeException: java.lang.reflect.InvocationTargetException
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:32)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.Launcher.run(Launcher.java:106)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.Launcher.main(Launcher.java:77)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.1.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at MC-BOOTSTRAP/fmlloader@1.20-46.0.14/net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:28)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30)
+	... 7 more
+Caused by: java.lang.NoSuchMethodError: 'java.lang.String com.mojang.blaze3d.systems.RenderSystem.getBackendDescription()'
+	at TRANSFORMER/minecraft@1.20/net.minecraft.client.Minecraft.m_167850_(Minecraft.java:2339)
+	at TRANSFORMER/minecraft@1.20/net.minecraft.client.Minecraft.m_167872_(Minecraft.java:2332)
+	at TRANSFORMER/minecraft@1.20/net.minecraft.client.main.Main.main(Main.java:191)
+	... 13 more
