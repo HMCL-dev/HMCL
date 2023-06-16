@@ -390,6 +390,20 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void needJDK11() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk11.txt")),
+                CrashReportAnalyzer.Rule.NEED_JDK11);
+    }
+
+    @Test
+    public void needJDK112() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk112.txt")),
+                CrashReportAnalyzer.Rule.NEED_JDK11);
+    }
+
+    @Test
     public void optifineIsNotCompatibleWithForge() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge.txt")),
