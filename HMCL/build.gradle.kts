@@ -56,7 +56,12 @@ fun createChecksum(file: File) {
 }
 
 fun attachSignature(jar: File) {
-    val keyLocation = System.getenv("HMCL_SIGNATURE_KEY") ?: return
+    val keyLocation = System.getenv("HMCL_SIGNATURE_KEY")
+    if (keyLocation == null) {
+        logger.warn("Missing signature key")
+        return
+    }
+
     val privatekey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(File(keyLocation).readBytes()))
     val signer = Signature.getInstance("SHA512withRSA")
     signer.initSign(privatekey)

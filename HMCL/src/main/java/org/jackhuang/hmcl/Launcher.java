@@ -20,6 +20,7 @@ package org.jackhuang.hmcl;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
@@ -85,12 +86,18 @@ public final class Launcher extends Application {
                 Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
             }
 
-            checkConfigInTempDir();
+            // https://lapcatsoftware.com/articles/app-translocation.html
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+                    && ConfigHolder.isNewlyCreated()
+                    && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
+                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                    return;
+            } else {
+                checkConfigInTempDir();
+            }
+
             if (ConfigHolder.isOwnerChanged()) {
-                ButtonType res = new Alert(Alert.AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO)
-                        .showAndWait()
-                        .orElse(null);
-                if (res == ButtonType.NO)
+                if (showAlert(AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
                     return;
             }
 
@@ -112,6 +119,10 @@ public final class Launcher extends Application {
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
+    }
+
+    private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
+        return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
     }
 
     private static boolean isConfigInTempDir() {
@@ -152,13 +163,9 @@ public final class Launcher extends Application {
     }
 
     private static void checkConfigInTempDir() {
-        if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()) {
-            ButtonType res = new Alert(Alert.AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO)
-                    .showAndWait()
-                    .orElse(null);
-            if (res == ButtonType.NO) {
-                System.exit(0);
-            }
+        if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
+                && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+            System.exit(0);
         }
     }
 
@@ -190,10 +197,9 @@ public final class Launcher extends Application {
         String command = new CommandBuilder().add("sudo", "chown", "-R", userName).addAll(files).toString();
         ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
 
-        ButtonType res = new Alert(Alert.AlertType.ERROR, i18n("fatal.config_loading_failure.unix", owner, command), copyAndExit, ButtonType.CLOSE)
-                .showAndWait()
-                .orElse(null);
-        if (res == copyAndExit) {
+        if (showAlert(AlertType.ERROR,
+                i18n("fatal.config_loading_failure.unix", owner, command),
+                copyAndExit, ButtonType.CLOSE) == copyAndExit) {
             Clipboard.getSystemClipboard()
                     .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
         }
@@ -222,7 +228,7 @@ public final class Launcher extends Application {
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
-            LOG.info("Current Directory: " + Paths.get("").toAbsolutePath());
+            LOG.info("Current Directory: " + System.getProperty("user.dir"));
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
@@ -231,6 +237,8 @@ public final class Launcher extends Application {
                     .findAny()
                     .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
                     .orElse("Unknown"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+                LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.

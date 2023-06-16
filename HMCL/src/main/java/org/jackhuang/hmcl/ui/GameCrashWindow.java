@@ -74,6 +74,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class GameCrashWindow extends Stage {
     private final Version version;
     private final String memory;
+    private final String total_memory;
     private final String java;
     private final LibraryAnalyzer analyzer;
     private final StringProperty os = new SimpleStringProperty(OperatingSystem.SYSTEM_NAME);
@@ -100,6 +101,8 @@ public class GameCrashWindow extends Stage {
         this.analyzer = LibraryAnalyzer.analyze(version);
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
+
+        total_memory = Optional.ofNullable(OperatingSystem.TOTAL_MEMORY).map(i -> i + " MB").orElse("-");
 
         this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
                 ? launchOptions.getJava().getVersion()
@@ -293,6 +296,11 @@ public class GameCrashWindow extends Stage {
                 version.setTitle(i18n("archive.game_version"));
                 version.setSubtitle(GameCrashWindow.this.version.getId());
 
+                TwoLineListItem total_memory = new TwoLineListItem();
+                total_memory.getStyleClass().setAll("two-line-item-second-large");
+                total_memory.setTitle(i18n("settings.physical_memory"));
+                total_memory.setSubtitle(GameCrashWindow.this.total_memory);
+
                 TwoLineListItem memory = new TwoLineListItem();
                 memory.getStyleClass().setAll("two-line-item-second-large");
                 memory.setTitle(i18n("settings.memory"));
@@ -313,7 +321,7 @@ public class GameCrashWindow extends Stage {
                 arch.setTitle(i18n("system.architecture"));
                 arch.subtitleProperty().bind(GameCrashWindow.this.arch);
 
-                infoPane.getChildren().setAll(launcher, version, memory, java, os, arch);
+                infoPane.getChildren().setAll(launcher, version, total_memory, memory, java, os, arch);
             }
 
             HBox moddedPane = new HBox(8);

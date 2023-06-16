@@ -472,6 +472,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
@@ -555,7 +556,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             } else if (javaAutoDeterminedOption.isSelected()) {
                 versionSetting.setJavaAutoSelected();
             } else {
-                //noinspection unchecked
                 versionSetting.setJavaVersion(((Pair<JavaVersionType, JavaVersion>) newValue.getUserData()).getValue());
             }
         });

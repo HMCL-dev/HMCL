@@ -30,6 +30,7 @@ import java.util.UUID;
  */
 @Immutable
 public class AuthInfo implements AutoCloseable {
+    public static final String USER_TYPE_MSA = "msa";
     public static final String USER_TYPE_MOJANG = "mojang";
     public static final String USER_TYPE_LEGACY = "legacy";
 
