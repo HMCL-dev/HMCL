@@ -80,7 +80,7 @@ public class TaskTest {
     public void testThenAccept() {
         AtomicBoolean flag = new AtomicBoolean();
         boolean result = Task.supplyAsync(JavaVersion::fromCurrentEnvironment)
-                .thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
+                .thenAcceptAsync(Schedulers.io(), javaVersion -> {
                     flag.set(true);
                     assertEquals(javaVersion, JavaVersion.fromCurrentEnvironment());
                 })

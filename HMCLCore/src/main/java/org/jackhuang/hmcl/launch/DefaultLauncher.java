@@ -207,7 +207,7 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
 
-        List<String> classpath = repository.getClasspath(version);
+        Set<String> classpath = repository.getClasspath(version);
 
         File jar = repository.getVersionJar(version);
         if (!jar.exists() || !jar.isFile())
