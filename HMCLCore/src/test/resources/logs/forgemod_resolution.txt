@@ -1,0 +1,83 @@
+[08:45:13] [main/INFO]: ModLauncher running: args [--username, Chase, --version, 1.19.3, --gameDir, E:\姝ｇ増MC\.minecraft, --assetsDir, E:\姝ｇ増MC\.minecraft\assets, --assetIndex, 2, --uuid, beb1f0e1a20e397e9661e2e380a8e954, --accessToken, 鉂勨潉鉂勨潉鉂勨潉鉂勨潉, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, legacy, --versionType, HMCL 3.5.4, --width, 854, --height, 480, --launchTarget, forgeclient, --fml.forgeVersion, 44.1.22, --fml.mcVersion, 1.19.3, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20221207.122022]
+[08:45:13] [main/INFO]: ModLauncher 10.0.8+10.0.8+main.0ef7e830 starting: java version 17.0.7 by Oracle Corporation; OS Windows 10 arch amd64 version 10.0
+[08:45:13] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/E:/姝ｇ増MC/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%2398!/ Service=ModLauncher Env=CLIENT
+[08:45:13] [main/INFO]: Found mod file Werewolves-1.19.3-1.1.0.0.jar of type MOD with provider {mods folder locator at E:\姝ｇ増MC\.minecraft\mods}
+[08:45:14] [main/WARN]: Mod file E:\姝ｇ増MC\.minecraft\libraries\net\minecraftforge\fmlcore\1.19.3-44.1.22\fmlcore-1.19.3-44.1.22.jar is missing mods.toml file
+[08:45:14] [main/WARN]: Mod file E:\姝ｇ増MC\.minecraft\libraries\net\minecraftforge\javafmllanguage\1.19.3-44.1.22\javafmllanguage-1.19.3-44.1.22.jar is missing mods.toml file
+[08:45:14] [main/WARN]: Mod file E:\姝ｇ増MC\.minecraft\libraries\net\minecraftforge\lowcodelanguage\1.19.3-44.1.22\lowcodelanguage-1.19.3-44.1.22.jar is missing mods.toml file
+[08:45:14] [main/WARN]: Mod file E:\姝ｇ増MC\.minecraft\libraries\net\minecraftforge\mclanguage\1.19.3-44.1.22\mclanguage-1.19.3-44.1.22.jar is missing mods.toml file
+[08:45:14] [main/INFO]: Found mod file fmlcore-1.19.3-44.1.22.jar of type LIBRARY with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@2d35442b
+[08:45:14] [main/INFO]: Found mod file javafmllanguage-1.19.3-44.1.22.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@2d35442b
+[08:45:14] [main/INFO]: Found mod file lowcodelanguage-1.19.3-44.1.22.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@2d35442b
+[08:45:14] [main/INFO]: Found mod file mclanguage-1.19.3-44.1.22.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@2d35442b
+[08:45:14] [main/INFO]: Found mod file client-1.19.3-20221207.122022-srg.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@2d35442b
+[08:45:14] [main/INFO]: Found mod file forge-1.19.3-44.1.22-universal.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@2d35442b
+[08:45:14] [main/INFO]: No dependencies to load found. Skipping!
+[08:45:14] [main/ERROR]: Missing or unsupported mandatory dependencies:
+	Mod ID: 'vampirism', Requested by: 'werewolves', Expected range: '[1.9.0-beta.1,)', Actual version: '[MISSING]'
+[08:45:17] [main/INFO]: Compatibility level set to JAVA_17
+[08:45:17] [main/INFO]: Launching target 'forgeclient' with arguments [--version, 1.19.3, --gameDir, E:\姝ｇ増MC\.minecraft, --assetsDir, E:\姝ｇ増MC\.minecraft\assets, --uuid, beb1f0e1a20e397e9661e2e380a8e954, --username, Chase, --assetIndex, 2, --accessToken, 鉂勨潉鉂勨潉鉂勨潉鉂勨潉, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, legacy, --versionType, HMCL 3.5.4, --width, 854, --height, 480]
+[08:45:21] [pool-3-thread-1/WARN]: Error loading class: de/teamlapen/vampirism/entity/player/FactionBasePlayer (java.lang.ClassNotFoundException: de.teamlapen.vampirism.entity.player.FactionBasePlayer)
+[08:45:21] [pool-3-thread-1/WARN]: Error loading class: de/teamlapen/vampirism/api/entity/player/IFactionPlayer (java.lang.ClassNotFoundException: de.teamlapen.vampirism.api.entity.player.IFactionPlayer)
+[08:45:21] [pool-3-thread-1/WARN]: Error loading class: de/teamlapen/vampirism/api/entity/factions/IFactionEntity (java.lang.ClassNotFoundException: de.teamlapen.vampirism.api.entity.factions.IFactionEntity)
+[08:45:21] [pool-3-thread-1/WARN]: Error loading class: de/teamlapen/vampirism/api/entity/player/skills/ISkillHandler (java.lang.ClassNotFoundException: de.teamlapen.vampirism.api.entity.player.skills.ISkillHandler)
+Exception in thread "main" java.lang.RuntimeException: java.lang.reflect.InvocationTargetException
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:32)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.Launcher.run(Launcher.java:106)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.Launcher.main(Launcher.java:77)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.1.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at MC-BOOTSTRAP/fmlloader@1.19.3-44.1.22/net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$launchService$0(CommonClientLaunchHandler.java:27)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30)
+	... 7 more
+Caused by: java.lang.RuntimeException: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+	at MC-BOOTSTRAP/fmlloader@1.19.3-44.1.22/net.minecraftforge.fml.loading.BackgroundWaiter.runAndTick(BackgroundWaiter.java:29)
+	at TRANSFORMER/minecraft@1.19.3/net.minecraft.client.main.Main.m_239872_(Main.java:145)
+	at TRANSFORMER/minecraft@1.19.3/net.minecraft.client.main.Main.main(Main.java:51)
+	... 13 more
+Caused by: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClass(MixinTransformer.java:250)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.service.modlauncher.MixinTransformationHandler.processClass(MixinTransformationHandler.java:131)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.launch.MixinLaunchPluginLegacy.processClass(MixinLaunchPluginLegacy.java:131)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.serviceapi.ILaunchPluginService.processClassWithFlags(ILaunchPluginService.java:156)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.LaunchPluginHandler.offerClassNodeToPlugins(LaunchPluginHandler.java:88)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.ClassTransformer.transform(ClassTransformer.java:120)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.TransformingClassLoader.maybeTransformClassBytes(TransformingClassLoader.java:50)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.readerToClass(ModuleClassLoader.java:113)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.lambda$findClass$15(ModuleClassLoader.java:219)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadFromModule(ModuleClassLoader.java:229)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.findClass(ModuleClassLoader.java:219)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:135)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:520)
+	at TRANSFORMER/forge@44.1.22/net.minecraftforge.registries.GameData.init(GameData.java:136)
+	at TRANSFORMER/forge@44.1.22/net.minecraftforge.registries.GameData.<clinit>(GameData.java:121)
+	at TRANSFORMER/minecraft@1.19.3/net.minecraft.core.registries.BuiltInRegistries.forge(BuiltInRegistries.java:420)
+	at TRANSFORMER/minecraft@1.19.3/net.minecraft.core.registries.BuiltInRegistries.forge(BuiltInRegistries.java:400)
+	at TRANSFORMER/minecraft@1.19.3/net.minecraft.core.registries.BuiltInRegistries.<clinit>(BuiltInRegistries.java:117)
+	at TRANSFORMER/minecraft@1.19.3/net.minecraft.server.Bootstrap.m_135870_(Bootstrap.java:37)
+	at TRANSFORMER/minecraft@1.19.3/net.minecraft.client.main.Main.lambda$run$0(Main.java:145)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:833)
+Caused by: org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: de.teamlapen.vampirism.api.entity.player.skills.ISkillHandler
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinPreProcessorStandard.transformMethod(MixinPreProcessorStandard.java:754)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinPreProcessorStandard.transform(MixinPreProcessorStandard.java:739)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinPreProcessorStandard.attach(MixinPreProcessorStandard.java:310)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinPreProcessorStandard.createContextFor(MixinPreProcessorStandard.java:280)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinInfo.createContextFor(MixinInfo.java:1288)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:292)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:383)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:365)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:363)
+	... 25 more

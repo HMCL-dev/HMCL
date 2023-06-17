@@ -78,6 +78,14 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void forgemodResolution() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forgemod_resolution.txt")),
+                CrashReportAnalyzer.Rule.FORGEMOD_RESOLUTION);
+        assertEquals(("	Mod ID: 'vampirism', Requested by: 'werewolves', Expected range: '[1.9.0-beta.1,)', Actual version: '[MISSING]'\n").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+    @Test
     public void modResolutionCollection() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
