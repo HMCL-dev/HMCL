@@ -35,8 +35,7 @@ subprojects {
 
     dependencies {
         "testImplementation"("org.junit.jupiter:junit-jupiter:5.9.1")
-        "implementation"("com.github.burningtnt:SimpleWEBP:2f826f8aa7368d85e390c49b9e2a3e89c227cd95")
-        "testImplementation"("com.github.burningtnt:SimpleWEBP:2f826f8aa7368d85e390c49b9e2a3e89c227cd95")
+        "implementation"("com.github.burningtnt:SimpleWEBP:0114800e07105eb459c48f8fcd7546d914814d89")
     }
 
     tasks.withType<Test> {
