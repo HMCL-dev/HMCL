@@ -14,10 +14,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class GameDumpCreator {
+    private static final Pattern ACCESS_TOKEN_HIDER = Pattern.compile("--accessToken [0-9a-f]*");
+
     private GameDumpCreator() {
     }
 
@@ -150,7 +153,7 @@ public final class GameDumpCreator {
             } catch (AttachNotSupportedException e) {
                 LOG.log(Level.WARNING, String.format("An Error happend while attaching vm %d", pid), e);
             }
-            dumpHead.push("VM Command Line", stringBuilder.toString());
+            dumpHead.push("VM Command Line", ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"));
         }
         {
             StringBuilder stringBuilder = new StringBuilder();
