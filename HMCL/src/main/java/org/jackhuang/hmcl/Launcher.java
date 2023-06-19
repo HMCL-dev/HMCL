@@ -51,7 +51,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -68,7 +67,30 @@ public final class Launcher extends Application {
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
-        Skin.registerDefaultSkinLoader((type) -> Skin.class.getResourceAsStream(String.format("/assets/img/skin/%s.png", type.name().toLowerCase(Locale.ENGLISH))));
+        Skin.registerDefaultSkinLoader((type) -> {
+            switch (type) {
+                case ALEX:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
+                case ARI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
+                case EFE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
+                case KAI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
+                case MAKENA:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
+                case NOOR:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
+                case STEVE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
+                case SUNNY:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
+                case ZURI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
+                default:
+                    return null;
+            }
+        });
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
