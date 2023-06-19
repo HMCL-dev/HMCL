@@ -25,6 +25,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
@@ -50,6 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -65,6 +67,8 @@ public final class Launcher extends Application {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
 
         CookieHandler.setDefault(COOKIE_MANAGER);
+
+        Skin.registerDefaultSkinLoader((type) -> Skin.class.getResourceAsStream(String.format("/assets/img/skin/%s.png", type.name().toLowerCase(Locale.ENGLISH))));
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
