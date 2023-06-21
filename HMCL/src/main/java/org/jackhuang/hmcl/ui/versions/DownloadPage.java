@@ -406,7 +406,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     break;
             }
 
-            content.getTags().addAll(dataItem.getLoaders().stream().filter(loader -> loader != ModLoaderType.UNKNOWN).map(Enum::name).collect(Collectors.toList()));
+            content.getTags().addAll(dataItem.getLoaders().stream()
+                    .filter(loader -> loader != ModLoaderType.UNKNOWN)
+                    .map(loader -> i18n("install.installer." + loader.name().toLowerCase()))
+                    .collect(Collectors.toList()));
 
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
             this.setMinHeight(50);
