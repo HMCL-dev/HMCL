@@ -562,6 +562,8 @@ public class CurseAddon implements RemoteMod.IMod {
                 modLoaderType = ModLoaderType.FORGE;
             } else if (gameVersions.contains("Fabric")) {
                 modLoaderType = ModLoaderType.FABRIC;
+            } else if (gameVersions.contains("Quilt")) {
+                modLoaderType = ModLoaderType.QUILT;
             } else {
                 modLoaderType = ModLoaderType.UNKNOWN;
             }
