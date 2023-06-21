@@ -557,17 +557,6 @@ public class CurseAddon implements RemoteMod.IMod {
                     break;
             }
 
-            ModLoaderType modLoaderType;
-            if (gameVersions.contains("Forge")) {
-                modLoaderType = ModLoaderType.FORGE;
-            } else if (gameVersions.contains("Fabric")) {
-                modLoaderType = ModLoaderType.FABRIC;
-            } else if (gameVersions.contains("Quilt")) {
-                modLoaderType = ModLoaderType.QUILT;
-            } else {
-                modLoaderType = ModLoaderType.UNKNOWN;
-            }
-
             return new RemoteMod.Version(
                     this,
                     Integer.toString(modId),
@@ -579,7 +568,12 @@ public class CurseAddon implements RemoteMod.IMod {
                     new RemoteMod.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
                     Collections.emptyList(),
                     gameVersions.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
-                    Collections.singletonList(modLoaderType)
+                    gameVersions.stream().flatMap(version -> {
+                        if ("fabric".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FABRIC);
+                        else if ("forge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FORGE);
+                        else if ("quilt".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.QUILT);
+                        else return Stream.empty();
+                    }).collect(Collectors.toList())
             );
         }
     }
