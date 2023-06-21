@@ -70,7 +70,7 @@ public final class CrashReportAnalyzer {
         DUPLICATED_MOD(Pattern.compile("Found a duplicate mod (?<name>.*) at (?<path>.*)"), "name", "path"),
         // Fabric mod resolution
         MOD_RESOLUTION(Pattern.compile("ModResolutionException: (?<reason>(.*)[\\n\\r]*( - (.*)[\\n\\r]*)+)"), "reason"),
-        FORGEMOD_RESOLUTION(Pattern.compile("Missing or unsupported mandatory dependencies:(?<reason>(.*)[\\n\\r]*(	Mod ID(.*)[\\n\\r]*)+)"), "reason"),
+        FORGEMOD_RESOLUTION(Pattern.compile("Missing or unsupported mandatory dependencies:(?<reason>(.*)[\\n\\r]*((.*)Mod ID(.*)[\\n\\r]*)+)"), "reason"),
         MOD_RESOLUTION_CONFLICT(Pattern.compile("ModResolutionException: Found conflicting mods: (?<sourcemod>.*) conflicts with (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING(Pattern.compile("ModResolutionException: Could not find required mod: (?<sourcemod>.*) requires (?<destmod>.*)"), "sourcemod", "destmod"),
         MOD_RESOLUTION_MISSING_MINECRAFT(Pattern.compile("ModResolutionException: Could not find required mod: (?<mod>.*) requires \\{minecraft @ (?<version>.*)}"), "mod", "version"),
