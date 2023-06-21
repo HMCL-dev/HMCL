@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.task.FileDownloadAndProcessTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Logging;
@@ -33,11 +34,14 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -141,7 +145,22 @@ public final class CurseCompletionTask extends Task<Void> {
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {
                 if (!modManager.hasSimpleMod(file.getFileName())) {
-                    FileDownloadTask task = new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile());
+                    FileDownloadTask task = new FileDownloadAndProcessTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile(), downloadedFile -> {
+                        boolean shouldMove = downloadedFile.getName().endsWith(".zip");
+                        if (!shouldMove) {
+                            try (JarFile jarFile = new JarFile(downloadedFile)) {
+                                shouldMove = jarFile.getEntry("META-INF/MANIFEST.MF") == null;
+                            }
+                        }
+
+                        if (shouldMove) {
+                            Path toPath = this.repository.getVersionRoot(this.version).toPath().resolve("resourcepacks").resolve(downloadedFile.getName()).toAbsolutePath();
+                            if (!toPath.getParent().toFile().exists()) {
+                                toPath.getParent().toFile().mkdirs();
+                            }
+                            Files.move(downloadedFile.toPath(), toPath);
+                        }
+                    });
                     task.setCacheRepository(dependency.getCacheRepository());
                     task.setCaching(true);
                     dependencies.add(task.withCounter("hmcl.modpack.download"));
