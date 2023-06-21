@@ -85,6 +85,7 @@ public class CrashReportAnalyzerTest {
         assertEquals(("\tMod ID: 'vampirism', Requested by: 'werewolves', Expected range: '[1.9.0-beta.1,)', Actual version: '[MISSING]'\n").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
+
     @Test
     public void modResolutionCollection() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
