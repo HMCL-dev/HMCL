@@ -35,6 +35,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -404,6 +405,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                     content.getTags().add(i18n("version.game.snapshot"));
                     break;
             }
+
+            content.getTags().addAll(dataItem.getLoaders().stream().filter(loader -> loader != ModLoaderType.UNKNOWN).map(Enum::name).collect(Collectors.toList()));
 
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
             this.setMinHeight(50);
