@@ -38,7 +38,7 @@ public final class CrashReportAnalyzer {
         OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible|\\.J9VMInternals\\.)")),
         NEED_JDK11(Pattern.compile("(no such method: sun\\.misc\\.Unsafe\\.defineAnonymousClass\\(Class,byte\\[\\],Object\\[\\]\\)Class/invokeVirtual|java\\.lang\\.UnsupportedClassVersionError: icyllis/modernui/forge/MixinConnector has been compiled by a more recent version of the Java Runtime \\(class file version 55\\.0\\), this version of the Java Runtime only recognizes class file versions up to 52\\.0)")),
         TOO_OLD_JAVA(Pattern.compile("java\\.lang\\.UnsupportedClassVersionError: (.*?) version (?<expected>\\d+)\\.0"), "expected"),
-        JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?)KB object heap|The specified size exceeds the maximum representable size)")),
+        JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?)KB object heap|The specified size exceeds the maximum representable size|Invalid maximum heap size)")),
 
         // Some mods/shader packs do incorrect GL operations.
         GL_OPERATION_FAILURE(Pattern.compile("(1282: Invalid operation|Maybe try a lower resolution resourcepack\\?)")),
@@ -108,9 +108,8 @@ public final class CrashReportAnalyzer {
 
         // Mod issues
         //https://github.com/huanghongxun/HMCL/pull/2038
-        MODMIXIN_FAILURE(Pattern.compile("(Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
-        MOD_REPEAT_INSTALLATION(Pattern.compile("(DuplicateModsFoundException|ModResolutionException: Duplicate)")),//Mod重复安装
-        FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt.")),//Forge报错,Forge可能已经提供了错误信息
+        MODMIXIN_FAILURE(Pattern.compile("(MixinApplyError|Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
+        FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt\\.(?<reason>(.*)[\\n\\r]*((.*)[\\n\\r]*)+)at "), "reason"),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(Multiple entries with same key: |Failure message:)")),//可能是Mod问题
         FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
@@ -214,7 +213,7 @@ public final class CrashReportAnalyzer {
             "net", "minecraft", "item", "setup", "block", "assist", "optifine", "player", "unimi", "fastutil", "tileentity", "events", "common", "blockentity", "client", "entity", "mojang", "main", "gui", "world", "server", "dedicated", "map", "dsi", // minecraft
             "renderer", "chunk", "model", "loading", "color", "pipeline", "inventory", "launcher", "physics", "particle", "gen", "registry", "worldgen", "texture", "biomes", "biome",
             "monster", "passive", "ai", "integrated", "tile", "state", "play", "override", "transformers", "structure", "nbt", "pathfinding", "chunk", "audio", "entities", "items", "renderers",
-            "storage", "universal", 
+            "storage", "universal", "oshi", "platform",
             "java", "lang", "util", "nio", "io", "sun", "reflect", "zip", "jar", "jdk", "nashorn", "scripts", "runtime", "internal", // java
             "mods", "mod", "impl", "org", "com", "cn", "cc", "jp", // title
             "core", "config", "registries", "lib", "ruby", "mc", "codec", "recipe", "channel", "embedded", "done", "net", "netty", "network", "load", "github", "handler", "content", "feature", // misc

@@ -1,0 +1,72 @@
+[19:28:17] [main/INFO] [LaunchWrapper]: Loading tweak class name net.minecraftforge.fml.common.launcher.FMLTweaker
+[19:28:17] [main/INFO] [LaunchWrapper]: Using primary tweak class name net.minecraftforge.fml.common.launcher.FMLTweaker
+[19:28:17] [main/INFO] [LaunchWrapper]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLTweaker
+[19:28:17] [main/INFO] [FML]: Forge Mod Loader version 14.23.5.2829 for Minecraft 1.12.2 loading
+[19:28:17] [main/INFO] [FML]: Java is Java HotSpot(TM) 64-Bit Server VM, version 1.8.0_131, running on Windows 7:amd64:6.1, installed at C:\Program Files\Java\jdk1.8.0_131\jre
+[19:28:17] [main/INFO] [FML]: Searching D:\GAME\wdsj\.minecraft\versions\1.12.2-Forge_14.23.5.2829\mods for mods
+[19:28:17] [main/INFO] [LaunchWrapper]: Loading tweak class name net.minecraftforge.fml.common.launcher.FMLInjectionAndSortingTweaker
+[19:28:17] [main/INFO] [LaunchWrapper]: Loading tweak class name net.minecraftforge.fml.common.launcher.FMLDeobfTweaker
+[19:28:17] [main/INFO] [LaunchWrapper]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLInjectionAndSortingTweaker
+[19:28:17] [main/INFO] [LaunchWrapper]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLInjectionAndSortingTweaker
+[19:28:17] [main/INFO] [LaunchWrapper]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[19:28:18] [main/INFO] [FML]: Found valid fingerprint for Minecraft Forge. Certificate fingerprint e3c3d50c7c986df74c645c0ac54639741c90a557
+[19:28:18] [main/INFO] [FML]: Found valid fingerprint for Minecraft. Certificate fingerprint cd99959656f753dc28d863b46769f7f8fbaefcfc
+[19:28:18] [main/INFO] [LaunchWrapper]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[19:28:18] [main/INFO] [LaunchWrapper]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLDeobfTweaker
+[19:28:19] [main/INFO] [LaunchWrapper]: Loading tweak class name net.minecraftforge.fml.common.launcher.TerminalTweaker
+[19:28:19] [main/INFO] [LaunchWrapper]: Calling tweak class net.minecraftforge.fml.common.launcher.TerminalTweaker
+[19:28:19] [main/INFO] [LaunchWrapper]: Launching wrapped minecraft {net.minecraft.client.main.Main}
+[19:28:19] [main/INFO] [STDOUT]: [net.minecraft.client.main.Main:main:55]: Completely ignored arguments: [480, PCL2, ]
+[19:28:20] [Client thread/INFO] [minecraft/Minecraft]: Setting user: kuk
+[19:28:23] [Client thread/WARN] [minecraft/GameSettings]: Skipping bad option: 
+[19:28:23] [Client thread/WARN] [minecraft/GameSettings]: Skipping bad option: 
+[19:28:23] [Client thread/WARN] [minecraft/GameSettings]: Skipping bad option: 
+[19:28:23] [Client thread/WARN] [minecraft/GameSettings]: Skipping bad option: 
+[19:28:23] [Client thread/INFO] [minecraft/Minecraft]: LWJGL Version: 2.9.4
+[19:28:24] [Client thread/INFO] [FML]: -- System Details --
+Details:
+	Minecraft Version: 1.12.2
+	Operating System: Windows 7 (amd64) version 6.1
+	Java Version: 1.8.0_131, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 35712520 bytes (34 MB) / 400556032 bytes (382 MB) up to 11811160064 bytes (11264 MB)
+	JVM Flags: 6 total; -XX:+UseG1GC -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xmn256m -Xmx11264m
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: 
+	Loaded coremods (and transformers): 
+	GL info: ' Vendor: 'Intel' Version: '4.3.0 - Build 10.18.14.5180' Renderer: 'Intel(R) HD Graphics 4600'
+[19:28:24] [Client thread/INFO] [FML]: MinecraftForge v14.23.5.2829 Initialized
+[19:28:24] [Client thread/INFO] [FML]: Starts to replace vanilla recipe ingredients with ore ingredients.
+[19:28:24] [Thread-3/ERROR] [FML]: Splash thread Exception
+java.lang.IllegalStateException: Texture creation: Invalid enum
+	at net.minecraftforge.fml.client.SplashProgress.checkGLError(SplashProgress.java:937) ~[SplashProgress.class:?]
+	at net.minecraftforge.fml.client.SplashProgress$Texture.<init>(SplashProgress.java:803) ~[SplashProgress$Texture.class:?]
+	at net.minecraftforge.fml.client.SplashProgress$Texture.<init>(SplashProgress.java:753) ~[SplashProgress$Texture.class:?]
+	at net.minecraftforge.fml.client.SplashProgress$2.run(SplashProgress.java:255) ~[SplashProgress$2.class:?]
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_131]
+[19:28:24] [Client thread/INFO] [FML]: Replaced 1036 ore ingredients
+[19:28:24] [Client thread/INFO] [FML]: Searching D:\GAME\wdsj\.minecraft\versions\1.12.2-Forge_14.23.5.2829\mods for mods
+[19:28:25] [Client thread/INFO] [FML]: Forge Mod Loader has identified 6 mods to load
+[19:28:26] [Client thread/FATAL] [FML]: net.minecraftforge.fml.common.MissingModsException: Mod pixelmon (Pixelmon) requires [forge@[14.23.5.2860,)]
+[19:28:26] [Client thread/ERROR] [FML]: An exception was thrown, the game will display an error screen and halt.
+net.minecraftforge.fml.common.MissingModsException: Mod pixelmon (Pixelmon) requires [forge@[14.23.5.2860,)]
+	at net.minecraftforge.fml.common.Loader.sortModList(Loader.java:264) ~[Loader.class:?]
+	at net.minecraftforge.fml.common.Loader.loadMods(Loader.java:570) ~[Loader.class:?]
+	at net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:232) [FMLClientHandler.class:?]
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:467) [bib.class:?]
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:378) [bib.class:?]
+	at net.minecraft.client.main.Main.main(SourceFile:123) [Main.class:?]
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]
+	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135) [launchwrapper-1.12.jar:?]
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28) [launchwrapper-1.12.jar:?]
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]
+	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]
+	at oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]
+	at oolloo.jlw.Wrapper.main(Wrapper.java:51) [JavaWrapper.jar:?]
+[19:28:26] [Client thread/WARN] [FML]: EventBus 0 shutting down - future events will not be posted.
+[19:28:26] [Client thread/INFO] [minecraft/SimpleReloadableResourceManager]: Reloading ResourceManager: Default, FMLFileResourcePack:Forge Mod Loader, FMLFileResourcePack:Minecraft Forge, FMLFileResourcePack:Pixelmon, FMLFileResourcePack:Pixelmon TCG

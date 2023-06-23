@@ -96,6 +96,32 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void forgeEroor() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/forge_error.txt")),
+                CrashReportAnalyzer.Rule.FORGE_ERROR);
+        assertEquals(("\nnet.minecraftforge.fml.common.MissingModsException: Mod pixelmon (Pixelmon) requires [forge@[14.23.5.2860,)]\n" +
+                        "\tat net.minecraftforge.fml.common.Loader.sortModList(Loader.java:264) ~[Loader.class:?]\n" +
+                        "\tat net.minecraftforge.fml.common.Loader.loadMods(Loader.java:570) ~[Loader.class:?]\n" +
+                        "\tat net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:232) [FMLClientHandler.class:?]\n" +
+                        "\tat net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:467) [bib.class:?]\n" +
+                        "\tat net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:378) [bib.class:?]\n" +
+                        "\tat net.minecraft.client.main.Main.main(SourceFile:123) [Main.class:?]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]\n" +
+                        "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
+                        "\tat net.minecraft.launchwrapper.Launch.launch(Launch.java:135) [launchwrapper-1.12.jar:?]\n" +
+                        "\tat net.minecraft.launchwrapper.Launch.main(Launch.java:28) [launchwrapper-1.12.jar:?]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]\n" +
+                        "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
+                        "\tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]\n").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
     public void tooOldJava() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/too_old_java.txt")),
