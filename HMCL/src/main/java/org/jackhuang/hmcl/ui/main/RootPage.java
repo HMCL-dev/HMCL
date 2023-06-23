@@ -150,6 +150,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+            runInFX(() -> FXUtils.installFastTooltip(downloadItem, i18n("download.hint")));
 
             // fifth item in left sidebar
             AdvancedListItem multiplayerItem = new AdvancedListItem();

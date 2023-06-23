@@ -69,6 +69,7 @@ import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MainPage extends StackPane implements DecoratorPage {
@@ -227,6 +228,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
             graphic.setTranslateX(12);
+            runInFX(() -> FXUtils.installFastTooltip(menuButton, i18n("version.switch")));
             menuButton.setGraphic(graphic);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
