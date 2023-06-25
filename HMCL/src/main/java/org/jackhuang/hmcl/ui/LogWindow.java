@@ -177,7 +177,7 @@ public final class LogWindow extends Stage {
                 cboLines.getSelectionModel().select(2);
 
             cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-                config().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
+                config().setLogLines(newValue == null ? 1000 : Integer.parseInt(newValue));
             });
 
             Log4jLevel[] levels = new Log4jLevel[]{Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};

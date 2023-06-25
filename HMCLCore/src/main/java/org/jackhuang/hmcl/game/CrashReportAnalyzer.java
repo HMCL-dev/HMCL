@@ -88,7 +88,7 @@ public final class CrashReportAnalyzer {
         MODLAUNCHER_8(Pattern.compile("java\\.lang\\.NoSuchMethodError: ('void sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(java\\.util\\.jar\\.Manifest\\)'|sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(Ljava/util/jar/Manifest;\\)V)")),
         // Manually triggerd debug crash
         DEBUG_CRASH(Pattern.compile("Manually triggered debug crash")),
-        CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type SERVER for modid (?<id>.*)"), "id", "file"),
+        CONFIG(Pattern.compile("Failed loading config file (?<file>.*?) of type (.*?) for modid (?<id>.*)"), "id", "file"),
         // Fabric gives some warnings
         FABRIC_WARNINGS(Pattern.compile("(Warnings were found!|Incompatible mod set!)(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\["), "reason"),
         // Game crashed when ticking entity
@@ -113,6 +113,15 @@ public final class CrashReportAnalyzer {
         FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
+        
+        //Forge 默认会把每一个 mod jar 都当做一个 JPMS 的模块（Module）加载。在这个 jar 没有给出 module-info 声明的情况下，JPMS 会采用这样的顺序决定 module 名字：
+        //1. META-INF/MANIFEST.MF 里的 Automatic-Module-Name
+        //2. 根据文件名生成。文件名里的 .jar 后缀名先去掉，然后检查是否有 -(\\d+(\\.|$)) 的部分，有的话只取 - 前面的部分，- 后面的部分成为 module 的版本号（即尝试判断文件名里是否有版本号，有的话去掉），然后把不是拉丁字母和数字的字符（正则表达式 [^A-Za-z0-9]）都换成点，然后把连续的多个点换成一个点，最后去掉开头和结尾的点。那么
+        //按照 2.，如果你的文件名是拔刀剑.jar，那么这么一通流程下来，你得到的 module 名就是空字符串，而这是不允许的。(来自 @Föhn 说明)
+        MOD_NAME(Pattern.compile("Invalid module name: '' is not a Java identifier")),
+
+        //Forge 安装不完整
+        INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(.*?)\\\\forge-(.*?)-client\\.jar\\]|Failed to find Minecraft resource version (.*?) at (.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(.*?)\\\\forge-(.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch)")),
 
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
         TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java.lang.IllegalArgumentException: (.*) outside of image bounds (.*)"));

@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -98,6 +99,12 @@ public class Skin {
         }
     }
 
+    private static Function<Type, InputStream> defaultSkinLoader = null;
+
+    public static void registerDefaultSkinLoader(Function<Type, InputStream> defaultSkinLoader0) {
+        defaultSkinLoader = defaultSkinLoader0;
+    }
+
     private final Type type;
     private final String cslApi;
     private final TextureModel textureModel;
@@ -137,23 +144,18 @@ public class Skin {
             case DEFAULT:
                 return Task.supplyAsync(() -> null);
             case ALEX:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/alex.webp")), null));
             case ARI:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/ari.webp")), null));
             case EFE:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/efe.webp")), null));
             case KAI:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/kai.webp")), null));
             case MAKENA:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/makena.webp")), null));
             case NOOR:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/noor.webp")), null));
             case STEVE:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/steve.webp")), null));
             case SUNNY:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/sunny.webp")), null));
             case ZURI:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/skin/zuri.webp")), null));
+                if (defaultSkinLoader == null) {
+                    return Task.supplyAsync(() -> null);
+                }
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(defaultSkinLoader.apply(type)), null));
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
                     Texture skin = null, cape = null;

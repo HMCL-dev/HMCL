@@ -62,8 +62,10 @@ if [ -n "${HMCL_JAVA_HOME+x}" ]; then
   else
     if [ "$_HMCL_USE_CHINESE" == true ]; then
       echo "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。" 1>&2
+      echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
     else
       echo "The value of the environment variable HMCL_JAVA_HOME is invalid, please set it to a valid Java path." 1>&2
+      echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
     fi
     exit 1
   fi
@@ -124,9 +126,11 @@ fi
 if [[ "$_HMCL_OS" == "unknown" || "$_HMCL_ARCH" == "unknown" ]]; then
   if [ "$_HMCL_USE_CHINESE" == true ]; then
     echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
+    echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
   else
     echo "The Java runtime environment is required to run HMCL. " 1>&2
     echo "Please install Java and set the environment variables and try again." 1>&2
+    echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
   fi
   exit 1
 fi
@@ -134,9 +138,11 @@ fi
 if [[ "$_HMCL_ARCH" == "loongarch64" ]]; then
   if [ "$_HMCL_USE_CHINESE" == true ]; then
     echo "运行 HMCL 需要 Java 运行时环境，请安装龙芯 JDK8 (https://docs.hmcl.net/downloads/loongnix.html) 并设置环境变量后重试。" 1>&2
+    echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
   else
     echo "The Java runtime environment is required to run HMCL." 1>&2
     echo "Please install Loongson JDK8 (https://docs.hmcl.net/downloads/loongnix.html) and set the environment variables, then try again." 1>&2
+    echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
   fi
   exit 1
 fi
@@ -175,9 +181,11 @@ _HMCL_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_H
 if [ "$_HMCL_USE_CHINESE" == true ]; then
   echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
   echo "$_HMCL_DOWNLOAD_PAGE" 1>&2
+  echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
 else
   echo "The Java runtime environment is required to run HMCL. " 1>&2
   echo "Please install Java and set the environment variables and try again." 1>&2
   echo "$_HMCL_DOWNLOAD_PAGE" 1>&2
+  echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
 fi
 exit 1

@@ -210,6 +210,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void modName() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/mod_name.txt")),
+                CrashReportAnalyzer.Rule.MOD_NAME);
+    }
+
+    @Test
     public void openj9() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/openj9.txt")),
@@ -345,6 +352,27 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_repeat_installation.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_REPEAT_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation2() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation2.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation3() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation3.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test

@@ -228,25 +228,31 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
+        private final String title;
         private final String message;
         private final ModTranslations.Mod mod;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
-            StringBuilder message = new StringBuilder(localModFile.getName());
+
+            StringBuilder title = new StringBuilder(localModFile.getName());
             if (isNotBlank(localModFile.getVersion()))
-                message.append(", ").append(i18n("archive.version")).append(": ").append(localModFile.getVersion());
+                title.append(" ").append(localModFile.getVersion());
+            this.title = title.toString();
+
+            StringBuilder message = new StringBuilder(localModFile.getFileName());
             if (isNotBlank(localModFile.getGameVersion()))
                 message.append(", ").append(i18n("archive.game_version")).append(": ").append(localModFile.getGameVersion());
             if (isNotBlank(localModFile.getAuthors()))
                 message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
             this.message = message.toString();
+
             this.mod = ModTranslations.MOD.getModById(localModFile.getId());
         }
 
         String getTitle() {
-            return localModFile.getFileName();
+            return title;
         }
 
         String getSubtitle() {
