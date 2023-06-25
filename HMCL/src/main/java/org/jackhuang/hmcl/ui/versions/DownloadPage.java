@@ -421,6 +421,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                     case LITE_LOADER:
                         content.getTags().add(i18n("install.installer.liteloader"));
                         break;
+                    case QUILT:
+                        content.getTags().add(i18n("install.installer.quilt"));
+                        break;
                 }
             }
 
