@@ -81,7 +81,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
-    private static final Pattern USERNAME_CHECKER = Pattern.compile("^[A-Za-z0-9_]+$");
+    private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
     private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
@@ -225,7 +225,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         if (factory instanceof OfflineAccountFactory && username != null) {
-            if (!USERNAME_CHECKER.matcher(username).matches()) {
+            if (!USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
                 Controllers.confirm(
                         i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
                         MessageDialogPane.MessageType.WARNING,
