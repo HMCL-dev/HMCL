@@ -413,15 +413,12 @@ public class DownloadPage extends Control implements DecoratorPage {
             for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
                 switch (modLoaderType) {
                     case FORGE:
-                        graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
                         content.getTags().add(i18n("install.installer.forge"));
                         break;
                     case FABRIC:
-                        graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
                         content.getTags().add(i18n("install.installer.fabric"));
                         break;
                     case LITE_LOADER:
-                        graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
                         content.getTags().add(i18n("install.installer.liteloader"));
                         break;
                 }
