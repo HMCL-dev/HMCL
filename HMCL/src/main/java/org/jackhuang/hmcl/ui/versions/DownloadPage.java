@@ -35,6 +35,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -65,6 +66,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 public class DownloadPage extends Control implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -104,9 +106,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         setFailed(false);
 
         Task.allOf(
-                Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
-                Task.supplyAsync(() -> {
-                    Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
+                        Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
+                        Task.supplyAsync(() -> {
+                            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -114,8 +116,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 //                                            .filter(file -> file.getGameVersions().contains(gameVersion.get())));
 //                                }
 //                            }
-                    return sortVersions(versions);
-                }))
+                            return sortVersions(versions);
+                        }))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         @SuppressWarnings("unchecked")
@@ -262,17 +264,20 @@ public class DownloadPage extends Control implements DecoratorPage {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
+                    runInFX(() -> FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod")));
 
                     if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
                         JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
                         openMcbbsButton.setExternalLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs()));
                         descriptionPane.getChildren().add(openMcbbsButton);
+                        runInFX(() -> FXUtils.installFastTooltip(openMcbbsButton, i18n("mods.mcbbs")));
                     }
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
+                runInFX(() -> FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage()));
             }
 
             {
@@ -403,6 +408,23 @@ public class DownloadPage extends Control implements DecoratorPage {
                     graphicPane.getChildren().setAll(SVG.alphaCircleOutline(Theme.blackFillBinding(), 24, 24));
                     content.getTags().add(i18n("version.game.snapshot"));
                     break;
+            }
+
+            for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
+                switch (modLoaderType) {
+                    case FORGE:
+                        graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
+                        content.getTags().add(i18n("install.installer.forge"));
+                        break;
+                    case FABRIC:
+                        graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
+                        content.getTags().add(i18n("install.installer.fabric"));
+                        break;
+                    case LITE_LOADER:
+                        graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
+                        content.getTags().add(i18n("install.installer.liteloader"));
+                        break;
+                }
             }
 
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129

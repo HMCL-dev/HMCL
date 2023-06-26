@@ -186,7 +186,7 @@ public class DefaultGameRepository implements GameRepository {
         } catch (JsonParseException ignored) {
         }
 
-        LOG.warning("Cannot parse version json + " + file.toString() + "\n" + jsonText);
+        LOG.warning("Cannot parse version json: " + file.toString() + "\n" + jsonText);
         throw new JsonParseException("Version json incorrect");
     }
 
