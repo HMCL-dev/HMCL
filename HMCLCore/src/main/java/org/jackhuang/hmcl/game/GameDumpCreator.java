@@ -5,13 +5,14 @@ import com.sun.tools.attach.VirtualMachine;
 import org.jackhuang.hmcl.util.platform.CurrentJava;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -24,71 +25,79 @@ public final class GameDumpCreator {
     private GameDumpCreator() {
     }
 
-    private static class DumpHead {
+    private static final class DumpHead {
         private final Map<String, String> infos = new LinkedHashMap<>();
-
-        private static final byte[] head = "----- Minecraft JStack Dump -----\n".getBytes(StandardCharsets.UTF_8);
-
-        private static final byte[] keyValueSinglelineSplit = ": ".getBytes(StandardCharsets.UTF_8);
-
-        private static final byte[] multipleLinePrefix = "    ".getBytes(StandardCharsets.UTF_8);
 
         public void push(String key, String value) {
             infos.put(key, value);
         }
 
-        public void writeTo(OutputStream outputStream) throws IOException {
-            outputStream.write(head);
+        public void writeTo(PrintWriter printWriter) {
+            printWriter.write("===== Minecraft JStack Dump =====\n");
             for (Map.Entry<String, String> entry : infos.entrySet()) {
-                outputStream.write(entry.getKey().getBytes(StandardCharsets.UTF_8));
-                outputStream.write(keyValueSinglelineSplit);
+                printWriter.write(entry.getKey());
+                printWriter.write(": ");
 
                 if (entry.getValue().contains("\n")) {
                     // Multiple Line Value
-                    outputStream.write('{');
-                    outputStream.write('\n');
+                    printWriter.write('{');
+                    printWriter.write('\n');
 
                     String[] lines = entry.getValue().split("\n");
                     for (int i = 0; i < lines.length; i++) {
                         if (i != lines.length - 1) {
-                            outputStream.write(multipleLinePrefix);
-                            outputStream.write(lines[i].getBytes(StandardCharsets.UTF_8));
-                            outputStream.write('\n');
+                            printWriter.write("    ");
+                            printWriter.write(lines[i]);
+                            printWriter.write('\n');
                         } else {
                             // Last line
                             if (lines[i].length() == 0) {
                                 // An empty last Line
-                                outputStream.write('}');
+                                printWriter.write('}');
                             } else {
                                 // Not an empty last lien
-                                outputStream.write(multipleLinePrefix);
-                                outputStream.write(lines[i].getBytes(StandardCharsets.UTF_8));
-                                outputStream.write('\n');
-                                outputStream.write('}');
+                                printWriter.write("    ");
+                                printWriter.write(lines[i]);
+                                printWriter.write('\n');
+                                printWriter.write('}');
                             }
                         }
                     }
                 } else {
                     // Single Line Value
-                    outputStream.write(entry.getValue().getBytes(StandardCharsets.UTF_8));
+                    printWriter.write(entry.getValue());
                 }
-                outputStream.write('\n');
+                printWriter.write('\n');
             }
-            outputStream.write('\n');
-            outputStream.write('\n');
+            printWriter.write('\n');
+            printWriter.write('\n');
+        }
+    }
+
+    private static final class StringBuilderWriter extends Writer {
+        private final StringBuilder stringBuilder;
+
+        public StringBuilderWriter(StringBuilder stringBuilder) {
+            this.stringBuilder = stringBuilder;
+        }
+
+        @Override
+        public void write(char @NotNull [] cbuf, int off, int len) {
+            stringBuilder.append(cbuf, off, len);
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() {
         }
     }
 
     private static final int TOOL_VERSION = 8;
 
     private static final int DUMP_TIME = 3;
-
-    private static final byte[] spritLine = new byte[22];
-
-    static {
-        Arrays.fill(spritLine, (byte) '-');
-        Arrays.fill(spritLine, 20, spritLine.length, (byte) '\n');
-    }
 
     public static boolean checkDependencies() {
         if (!CurrentJava.checkToolPackageDepdencies()) {
@@ -111,104 +120,90 @@ public final class GameDumpCreator {
         return false;
     }
 
-    public static void writeDumpTo(long pid, File file) {
+    public static void writeDumpTo(long pid, File file) throws IOException, InterruptedException, ClassNotFoundException {
         if (!checkDependencies()) {
-            throw new UnsupportedOperationException(new ClassNotFoundException("com.sun.tools.attach.VirtualMachine"));
+            throw new ClassNotFoundException("com.sun.tools.attach.VirtualMachine");
         }
 
-        try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-            writeHeadDumpTo(pid, fileOutputStream);
+        try (PrintWriter printWriter = new PrintWriter(file)) {
+            writeDumpHeadTo(pid, printWriter);
 
             for (int i = 0; i < DUMP_TIME; i++) {
-                writeDataDumpTo(pid, fileOutputStream);
-                fileOutputStream.write(spritLine);
+                writeDumpBodyTo(pid, printWriter);
+                printWriter.write("====================\n");
 
                 if (i < DUMP_TIME - 1) {
                     Thread.sleep(3000);
                 }
             }
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
         }
     }
 
-    private static InputStream executeJCmd(VirtualMachine vm, String command) {
-        try {
-            return (InputStream) vm.getClass().getMethod("executeJCmd", String.class).invoke(vm, command);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void writeHeadDumpTo(long pid, OutputStream outputStream) throws IOException {
+    public static void writeDumpHeadTo(long lvmid, PrintWriter printWriter) {
         DumpHead dumpHead = new DumpHead();
         dumpHead.push("Tool Version", String.valueOf(TOOL_VERSION));
-        dumpHead.push("VM PID", String.valueOf(pid));
+        dumpHead.push("VM PID", String.valueOf(lvmid));
         {
             StringBuilder stringBuilder = new StringBuilder();
-            try {
-                VirtualMachine vm = VirtualMachine.attach(String.valueOf(pid));
-                safeReadVMInputstream(executeJCmd(vm, "VM.command_line"), stringBuilder::append);
-                vm.detach();
-            } catch (AttachNotSupportedException e) {
-                LOG.log(Level.WARNING, String.format("An Error happend while attaching vm %d", pid), e);
-            }
+            safeAttachVM(lvmid, "VM.command_line", stringBuilder::append, (value, throwable) -> {
+                stringBuilder.append('\n');
+                stringBuilder.append(String.format("An Error happend while attaching vm %d\n\n", lvmid));
+                throwable.printStackTrace(new PrintWriter(new StringBuilderWriter(stringBuilder)));
+                stringBuilder.append('\n');
+            });
             dumpHead.push("VM Command Line", ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"));
         }
         {
             StringBuilder stringBuilder = new StringBuilder();
-            try {
-                VirtualMachine vm = VirtualMachine.attach(String.valueOf(pid));
-                safeReadVMInputstream(executeJCmd(vm, "VM.version"), stringBuilder::append);
-                vm.detach();
-            } catch (AttachNotSupportedException e) {
-                LOG.log(Level.WARNING, String.format("An Error happend while attaching vm %d", pid), e);
-            }
+            safeAttachVM(lvmid, "VM.version", stringBuilder::append, (value, throwable) -> {
+                stringBuilder.append('\n');
+                stringBuilder.append(String.format("An Error happend while attaching vm %d\n\n", lvmid));
+                throwable.printStackTrace(new PrintWriter(new StringBuilderWriter(stringBuilder)));
+                stringBuilder.append('\n');
+            });
             dumpHead.push("VM Version", stringBuilder.toString());
         }
 
-        dumpHead.writeTo(outputStream);
+        dumpHead.writeTo(printWriter);
     }
 
-    private static void writeDataDumpTo(long pid, OutputStream outputStream) {
+    private static void writeDumpBodyTo(long lvmid, PrintWriter printWriter) {
+        safeAttachVM(lvmid, "Thread.print", printWriter::write, (value, throwable) -> {
+            printWriter.write(String.format("An Error happend while attaching vm %d\n\n", lvmid));
+            throwable.printStackTrace(printWriter);
+            printWriter.write('\n');
+        });
+    }
+
+    private static void safeAttachVM(long lvmid, String command, Consumer<char[]> vmInputStreamReader, BiConsumer<Long, Throwable> onException) {
         try {
-            VirtualMachine vm = VirtualMachine.attach(String.valueOf(pid));
-            safeReadVMInputstream(executeJCmd(vm, "threaddump"), (char[] data) -> {
-                try {
-                    outputStream.write(new String(data).getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            vm.detach();
-        } catch (Throwable e) {
-            LOG.log(Level.WARNING, String.format("An Error happend while attaching vm %d", pid), e);
-            try {
-                outputStream.write(String.format("An Error happend while attaching vm %d\n\n", pid).getBytes(StandardCharsets.UTF_8));
-                PrintWriter printWriter = new PrintWriter(outputStream);
-                e.printStackTrace(printWriter);
-                printWriter.flush();
-                outputStream.write('\n');
-            } catch (IOException e2) {
-                throw new RuntimeException(e2);
+            VirtualMachine vm = VirtualMachine.attach(String.valueOf(lvmid));
+
+            try (
+                    BufferedInputStream bufferedInputStream = new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command));
+                    InputStreamReader inputStreamReader = new InputStreamReader(bufferedInputStream, StandardCharsets.UTF_8)) {
+                char[] dataCache = new char[256];
+                int status;
+
+                do {
+                    status = inputStreamReader.read(dataCache);
+
+                    if (status > 0) {
+                        vmInputStreamReader.accept(status == dataCache.length ? dataCache : Arrays.copyOf(dataCache, status));
+                    }
+                } while (status > 0);
+            } finally {
+                vm.detach();
             }
-        }
-    }
-
-    private static void safeReadVMInputstream(InputStream vmInputStream, Consumer<char[]> consumer) throws IOException {
-        try (
-                BufferedInputStream bufferedInputStream = new BufferedInputStream(vmInputStream);
-                InputStreamReader inputStreamReader = new InputStreamReader(bufferedInputStream, StandardCharsets.UTF_8)) {
-            char[] dataCache = new char[256];
-            int status;
-
-            do {
-                status = inputStreamReader.read(dataCache);
-
-                if (status > 0) {
-                    consumer.accept(status == dataCache.length ? dataCache : Arrays.copyOf(dataCache, status));
-                }
-            } while (status > 0);
+        } catch (AttachNotSupportedException e) {
+            LOG.log(Level.WARNING, String.format("An AttachNotSupported Exception happened while attaching vm %d", lvmid), e);
+            onException.accept(lvmid, e);
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, String.format("An IO Exception happened while attaching vm %d", lvmid), e);
+            onException.accept(lvmid, e);
+        } catch (Throwable throwable) {
+            LOG.log(Level.WARNING, String.format("An unknown Exception happened while attaching vm %d", lvmid), throwable);
+            onException.accept(lvmid, throwable);
         }
     }
 }
