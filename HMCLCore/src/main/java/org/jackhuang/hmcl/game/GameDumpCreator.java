@@ -2,10 +2,10 @@ package org.jackhuang.hmcl.game;
 
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.CurrentJava;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -74,27 +74,6 @@ public final class GameDumpCreator {
         }
     }
 
-    private static final class StringBuilderWriter extends Writer {
-        private final StringBuilder stringBuilder;
-
-        public StringBuilderWriter(StringBuilder stringBuilder) {
-            this.stringBuilder = stringBuilder;
-        }
-
-        @Override
-        public void write(char @NotNull [] cbuf, int off, int len) {
-            stringBuilder.append(cbuf, off, len);
-        }
-
-        @Override
-        public void flush() {
-        }
-
-        @Override
-        public void close() {
-        }
-    }
-
     private static final int TOOL_VERSION = 8;
 
     private static final int DUMP_TIME = 3;
@@ -148,7 +127,7 @@ public final class GameDumpCreator {
             safeAttachVM(lvmid, "VM.command_line", stringBuilder::append, (value, throwable) -> {
                 stringBuilder.append('\n');
                 stringBuilder.append(String.format("An Error happend while attaching vm %d\n\n", lvmid));
-                throwable.printStackTrace(new PrintWriter(new StringBuilderWriter(stringBuilder)));
+                stringBuilder.append(StringUtils.getStackTrace(throwable));
                 stringBuilder.append('\n');
             });
             dumpHead.push("VM Command Line", ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"));
@@ -158,7 +137,7 @@ public final class GameDumpCreator {
             safeAttachVM(lvmid, "VM.version", stringBuilder::append, (value, throwable) -> {
                 stringBuilder.append('\n');
                 stringBuilder.append(String.format("An Error happend while attaching vm %d\n\n", lvmid));
-                throwable.printStackTrace(new PrintWriter(new StringBuilderWriter(stringBuilder)));
+                stringBuilder.append(StringUtils.getStackTrace(throwable));
                 stringBuilder.append('\n');
             });
             dumpHead.push("VM Version", stringBuilder.toString());

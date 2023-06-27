@@ -25,7 +25,7 @@ public final class CurrentJava {
             try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sun/tools/attach/VirtualMachine.class")) {
                 return inputStream != null;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return false;
             }
         }
 
@@ -46,7 +46,7 @@ public final class CurrentJava {
             try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/sun/tools/attach/VirtualMachine.class")) {
                 return inputStream != null;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                return false;
             }
         }
         return false;

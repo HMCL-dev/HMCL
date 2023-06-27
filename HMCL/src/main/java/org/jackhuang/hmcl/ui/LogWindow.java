@@ -390,7 +390,7 @@ public final class LogWindow extends Stage {
                 JFXButton exportDumpButton = new JFXButton();
                 if (GameDumpCreator.checkDependencies()) {
                     exportDumpButton.setText(i18n("logwindow.export_dump.dependency_ok.button"));
-                    exportDumpButton.setOnMouseClicked(e -> getSkinnable().onExportDump(exportDumpButton));
+                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpButton));
                 } else {
                     exportDumpButton.setText(i18n("logwindow.export_dump.no_dependency.button"));
                     exportDumpButton.setTooltip(new Tooltip(i18n("logwindow.export_dump.no_dependency.tooltip")));

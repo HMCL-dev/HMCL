@@ -97,7 +97,7 @@ public class ManagedProcess {
                 Method pidMethod = Process.class.getMethod("pid");
                 return (long) pidMethod.invoke(process);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                throw new RuntimeException(e);
+                throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 9.", e);
             }
         } else {
             // Method Process.pid() is not provided. (Java 8).
@@ -115,7 +115,7 @@ public class ManagedProcess {
                     pidField.setAccessible(true);
                     return pidField.getInt(process);
                 } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw new RuntimeException(e);
+                    throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on OSX / Linux.", e);
                 }
             } else {
                 // Unknown Operating System, no fallback available.
