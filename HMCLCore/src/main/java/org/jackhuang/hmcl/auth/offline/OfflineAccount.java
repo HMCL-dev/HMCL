@@ -114,7 +114,7 @@ public class OfflineAccount extends Account {
     @Override
     public AuthInfo logIn() throws AuthenticationException {
         // Using "legacy" user type here because "mojang" user type may cause "invalid session token" or "disconnected" when connecting to a game server.
-        AuthInfo authInfo = new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_LEGACY, "{}");
+        AuthInfo authInfo = new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
 
         if (loadAuthlibInjector(skin)) {
             CompletableFuture<AuthlibInjectorArtifactInfo> artifactTask = CompletableFuture.supplyAsync(() -> {
@@ -154,7 +154,7 @@ public class OfflineAccount extends Account {
         private YggdrasilServer server;
 
         public OfflineAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact) {
-            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), USER_TYPE_LEGACY, authInfo.getUserProperties());
+            super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), USER_TYPE_MSA, authInfo.getUserProperties());
 
             this.artifact = artifact;
         }
