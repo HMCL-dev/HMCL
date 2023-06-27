@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -104,7 +105,9 @@ public final class GameDumpCreator {
             throw new ClassNotFoundException("com.sun.tools.attach.VirtualMachine");
         }
 
-        try (PrintWriter printWriter = new PrintWriter(file)) {
+        try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+                Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8)), false
+        )) {
             writeDumpHeadTo(pid, printWriter);
 
             for (int i = 0; i < DUMP_TIME; i++) {
