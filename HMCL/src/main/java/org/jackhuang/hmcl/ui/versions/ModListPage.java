@@ -183,7 +183,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
                             if (gameVersion.isPresent()) {
-                                return new ModCheckUpdatesTask(gameVersion.get(), modManager.getMods(), modManager.getMods());
+                                return new ModCheckUpdatesTask(gameVersion.get(), modManager.getMods());
                             }
                             return null;
                         })
