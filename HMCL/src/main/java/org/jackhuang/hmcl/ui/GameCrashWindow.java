@@ -151,11 +151,18 @@ public class GameCrashWindow extends Stage {
                 Set<String> keywords = pair.getValue();
 
                 List<Node> segments = new ArrayList<>();
+                
+                boolean hasMultipleRules = results.stream().map(CrashReportAnalyzer.Result::getRule).distinct().count() > 1;
+                if (hasMultipleRules) {
+                    segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
+                }
+
                 for (CrashReportAnalyzer.Result result : results) {
                     switch (result.getRule()) {
                         case TOO_OLD_JAVA:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.too_old_java",
                                     CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))), Controllers::onHyperlinkAction));
+                            segments.add(new Text("\n"));
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
@@ -164,20 +171,24 @@ public class GameCrashWindow extends Stage {
                                     translateFabricModId(result.getMatcher().group("sourcemod")),
                                     parseFabricModId(result.getMatcher().group("destmod")),
                                     parseFabricModId(result.getMatcher().group("destmod"))), Controllers::onHyperlinkAction));
+                            segments.add(new Text("\n"));
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("mod")),
                                     result.getMatcher().group("version")), Controllers::onHyperlinkAction));
+                            segments.add(new Text("\n"));
                             break;
                         case TWILIGHT_FOREST_OPTIFINE:
                         case PERFORMANT_FOREST_OPTIFINE:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.mod", "OptiFine"), Controllers::onHyperlinkAction));
+                            segments.add(new Text("\n"));
                             break;
                         default:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
                                             .toArray()), Controllers::onHyperlinkAction));
+                            segments.add(new Text("\n"));
                             break;
                     }
                     segments.add(new Text("\n"));
@@ -349,11 +360,13 @@ public class GameCrashWindow extends Stage {
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
                 gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
+                runInFX(() -> FXUtils.installFastTooltip(gameDir, i18n("game.directory")));
 
                 TwoLineListItem javaDir = new TwoLineListItem();
                 javaDir.getStyleClass().setAll("two-line-item-second-large");
                 javaDir.setTitle(i18n("settings.game.java_directory"));
                 javaDir.setSubtitle(launchOptions.getJava().getBinary().toAbsolutePath().toString());
+                runInFX(() -> FXUtils.installFastTooltip(javaDir, i18n("settings.game.java_directory")));
 
                 Label reasonTitle = new Label(i18n("game.crash.reason"));
                 reasonTitle.getStyleClass().add("two-line-item-second-large-title");

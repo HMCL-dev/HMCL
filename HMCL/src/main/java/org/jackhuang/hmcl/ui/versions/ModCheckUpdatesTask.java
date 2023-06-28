@@ -18,28 +18,31 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
-
     private final String gameVersion;
     private final Collection<LocalModFile> mods;
-    private final Collection<Task<LocalModFile.ModUpdate>> dependents;
+    private final Collection<Collection<Task<LocalModFile.ModUpdate>>> dependents;
 
     public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
         this.gameVersion = gameVersion;
         this.mods = mods;
 
         dependents = mods.stream()
-                .map(mod -> Task.supplyAsync(() -> {
-                    return mod.checkUpdates(gameVersion, CurseForgeRemoteModRepository.MODS, ModrinthRemoteModRepository.MODS);
-                }).setSignificance(TaskSignificance.MAJOR).setName(mod.getFileName()).withCounter("mods.check_updates"))
+                .map(mod ->
+                        Arrays.stream(RemoteMod.Type.values())
+                                .map(type ->
+                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, type.getRemoteModRepository()))
+                                                .setSignificance(TaskSignificance.MAJOR)
+                                                .setName(String.format("%s (%s)", mod.getFileName(), type.name())).withCounter("mods.check_updates")
+                                )
+                                .collect(Collectors.toList())
+                )
                 .collect(Collectors.toList());
 
         setStage("mods.check_updates");
@@ -58,7 +61,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
 
     @Override
     public Collection<? extends Task<?>> getDependents() {
-        return dependents;
+        return dependents.stream().flatMap(Collection::stream).collect(Collectors.toList());
     }
 
     @Override
@@ -69,8 +72,14 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
     @Override
     public void execute() throws Exception {
         setResult(dependents.stream()
-                .filter(task -> task.getResult() != null)
-                .map(Task::getResult)
+                .map(tasks -> tasks.stream()
+                        .filter(task -> task.getResult() != null)
+                        .map(Task::getResult)
+                        .filter(modUpdate -> !modUpdate.getCandidates().isEmpty())
+                        .max(Comparator.comparing((LocalModFile.ModUpdate modUpdate) -> modUpdate.getCandidates().get(0).getDatePublished()))
+                        .orElse(null)
+                )
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
     }
 }

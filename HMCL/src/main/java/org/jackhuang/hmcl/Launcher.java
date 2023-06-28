@@ -25,6 +25,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
@@ -65,6 +66,31 @@ public final class Launcher extends Application {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
 
         CookieHandler.setDefault(COOKIE_MANAGER);
+
+        Skin.registerDefaultSkinLoader((type) -> {
+            switch (type) {
+                case ALEX:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
+                case ARI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
+                case EFE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
+                case KAI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
+                case MAKENA:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
+                case NOOR:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
+                case STEVE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
+                case SUNNY:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
+                case ZURI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
+                default:
+                    return null;
+            }
+        });
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
