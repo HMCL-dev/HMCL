@@ -162,8 +162,7 @@ public final class GameDumpCreator {
             VirtualMachine vm = VirtualMachine.attach(String.valueOf(lvmid));
 
             try (
-                    BufferedInputStream bufferedInputStream = new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command));
-                    InputStreamReader inputStreamReader = new InputStreamReader(bufferedInputStream, StandardCharsets.UTF_8)) {
+                    InputStreamReader inputStreamReader = new InputStreamReader(new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command)), StandardCharsets.UTF_8)) {
                 char[] dataCache = new char[256];
                 int status;
 
