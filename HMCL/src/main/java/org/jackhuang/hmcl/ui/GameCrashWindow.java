@@ -222,6 +222,7 @@ public class GameCrashWindow extends Stage {
                             }
                             break;
                     }
+                    segments.add(new Text("\n"));
                 }
                 if (results.isEmpty()) {
                     if (!keywords.isEmpty()) {
