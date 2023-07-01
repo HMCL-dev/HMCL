@@ -155,6 +155,7 @@ public class GameCrashWindow extends Stage {
                 boolean hasMultipleRules = results.stream().map(CrashReportAnalyzer.Result::getRule).distinct().count() > 1;
                 if (hasMultipleRules) {
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
+                    LOG.log(Level.INFO, "Multiple reasons detected");
                 }
 
                 for (CrashReportAnalyzer.Result result : results) {
@@ -191,12 +192,15 @@ public class GameCrashWindow extends Stage {
                             break;
                     }
                     segments.add(new Text("\n"));
+                    LOG.log(Level.INFO, "Crash cause: " + result.getRule());
                 }
                 if (results.isEmpty()) {
                     if (!keywords.isEmpty()) {
                         reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.stacktrace", String.join(", ", keywords))));
+                        LOG.log(Level.INFO, "Crash reason unknown, but some log keywords have been found: " + String.join(", ", keywords));
                     } else {
                         reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
+                        LOG.log(Level.INFO, "Crash reason unknown");
                     }
 
                     feedbackTextFlow.setVisible(true);
