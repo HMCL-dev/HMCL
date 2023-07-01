@@ -111,36 +111,43 @@ public final class Controllers {
 
     // FXThread
     public static VersionPage getVersionPage() {
+        System.gc();
         return versionPage.get();
     }
 
     // FXThread
     public static GameListPage getGameListPage() {
+        System.gc();
         return gameListPage.get();
     }
 
     // FXThread
     public static RootPage getRootPage() {
+        System.gc();
         return rootPage.get();
     }
 
     // FXThread
     public static LauncherSettingsPage getSettingsPage() {
+        System.gc();
         return settingsPage.get();
     }
 
     // FXThread
     public static AccountListPage getAccountListPage() {
+        System.gc();
         return accountListPage.get();
     }
 
     // FXThread
     public static DownloadPage getDownloadPage() {
+        System.gc();
         return downloadPage.get();
     }
 
     // FXThread
     public static DecoratorController getDecorator() {
+        System.gc();
         return decorator;
     }
 
@@ -240,6 +247,8 @@ public final class Controllers {
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
         }
+
+        System.gc();
     }
 
     public static void dialog(Region content) {
@@ -335,6 +344,7 @@ public final class Controllers {
         } else {
             FXUtils.openLink(href);
         }
+        System.gc();
     }
 
     public static boolean isStopped() {

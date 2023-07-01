@@ -256,10 +256,12 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         settings.remove(libraryId);
         if (executor != null)
             executor.cancel(true);
+        System.gc();
     }
 
     private void onRefresh() {
         refresh();
+        System.gc();
     }
 
     private void onBack() { navigation.onPrev(true); }

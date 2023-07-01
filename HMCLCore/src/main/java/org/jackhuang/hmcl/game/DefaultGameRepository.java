@@ -377,6 +377,7 @@ public class DefaultGameRepository implements GameRepository {
 
         this.gameVersions.clear();
         this.versions = versions;
+        System.gc();
     }
 
     @Override
@@ -386,6 +387,7 @@ public class DefaultGameRepository implements GameRepository {
 
         refreshVersionsImpl();
         EventBus.EVENT_BUS.fireEvent(new RefreshedVersionsEvent(this));
+        System.gc();
     }
 
     @Override

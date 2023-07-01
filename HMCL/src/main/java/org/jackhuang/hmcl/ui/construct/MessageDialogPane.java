@@ -155,6 +155,7 @@ public final class MessageDialogPane extends HBox {
         private final MessageDialogPane dialog;
 
         public Builder(String text, String title, MessageType type) {
+            System.gc();
             this.dialog = new MessageDialogPane(text, title, type);
         }
 

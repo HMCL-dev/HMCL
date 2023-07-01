@@ -255,6 +255,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             Controllers.dialog("", i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO, () -> {
                 config().setPromptedVersion(getLatestVersion().getVersion());
                 onUpgrade();
+                System.gc();
             });
         }
     }
@@ -280,10 +281,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         Versions.launch(Profiles.getSelectedProfile());
+        System.gc();
     }
 
     private void onMenu() {
         popup.show(menuButton, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -menuButton.getHeight());
+        System.gc();
     }
 
     private void onUpgrade() {
@@ -292,11 +295,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return;
         }
         UpdateHandler.updateFrom(target);
+        System.gc();
     }
 
     private void closeUpdateBubble() {
         showUpdate.unbind();
         showUpdate.set(false);
+        System.gc();
     }
 
     public void hideAnnouncementPane() {

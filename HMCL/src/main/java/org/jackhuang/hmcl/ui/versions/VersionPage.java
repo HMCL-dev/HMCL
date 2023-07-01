@@ -157,47 +157,58 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
     private void redownloadAssetIndex() {
         Versions.updateGameAssets(getProfile(), getVersion());
+        System.gc();
     }
 
     private void clearLibraries() {
         FileUtils.deleteDirectoryQuietly(new File(getProfile().getRepository().getBaseDirectory(), "libraries"));
+        System.gc();
     }
 
     private void clearAssets() {
         FileUtils.deleteDirectoryQuietly(new File(getProfile().getRepository().getBaseDirectory(), "assets"));
+        System.gc();
     }
 
     private void clearJunkFiles() {
         Versions.cleanVersion(getProfile(), getVersion());
+        System.gc();
     }
 
     private void testGame() {
         Versions.testGame(getProfile(), getVersion());
+        System.gc();
     }
 
     private void updateGame() {
         Versions.updateVersion(getProfile(), getVersion());
+        System.gc();
     }
 
     private void generateLaunchScript() {
         Versions.generateLaunchScript(getProfile(), getVersion());
+        System.gc();
     }
 
     private void export() {
         Versions.exportVersion(getProfile(), getVersion());
+        System.gc();
     }
 
     private void rename() {
         Versions.renameVersion(getProfile(), getVersion())
                 .thenApply(newVersionName -> this.preferredVersionName = newVersionName);
+        System.gc();
     }
 
     private void remove() {
         Versions.deleteVersion(getProfile(), getVersion());
+        System.gc();
     }
 
     private void duplicate() {
         Versions.duplicateVersion(getProfile(), getVersion());
+        System.gc();
     }
 
     public Profile getProfile() {
