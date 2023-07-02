@@ -216,6 +216,5 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 }
             }
         });
-        System.gc();
     }
 }

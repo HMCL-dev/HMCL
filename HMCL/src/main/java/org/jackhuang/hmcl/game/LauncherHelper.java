@@ -325,7 +325,6 @@ public final class LauncherHelper {
         });
 
         executor.start();
-        System.gc();
     }
 
     private static Task<JavaVersion> checkGameState(Profile profile, VersionSetting setting, Version version) {
@@ -680,7 +679,6 @@ public final class LauncherHelper {
                 Platform.runLater(() -> {
                     Optional.ofNullable(Controllers.getStage())
                             .ifPresent(Stage::show);
-                    System.gc();
                 });
                 break;
             case KEEP:
@@ -694,11 +692,9 @@ public final class LauncherHelper {
                     Platform.setImplicitExit(true);
                     // If we use Launcher.stop(), log window will be halt immediately.
                     Launcher.stopWithoutPlatform();
-                    System.gc();
                 });
                 break;
         }
-        System.gc();
     }
 
     /**
@@ -787,7 +783,6 @@ public final class LauncherHelper {
                     });
                     break;
             }
-            System.gc();
         }
 
         @Override
@@ -832,7 +827,6 @@ public final class LauncherHelper {
                     finishLaunch();
                 }
             }
-            System.gc();
         }
 
         @Override
@@ -866,6 +860,5 @@ public final class LauncherHelper {
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
             Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
-        System.gc();
     }
 }
