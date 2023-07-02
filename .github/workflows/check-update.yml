@@ -45,7 +45,7 @@ jobs:
         env:
           DEV_DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/artifact/HMCL/build/libs
       - name: Generate release note
-        if: ${{ devcontinue == 'true' }}
+        if: ${{ env.devcontinue == 'true' }}
         run: |
           echo "HMCL v$DEV_HMCL_VERSION" >> DEV_RELEASE_NOTE
           echo "" >> DEV_RELEASE_NOTE
