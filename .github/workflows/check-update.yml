@@ -90,7 +90,7 @@ jobs:
           echo "STABLE_HMCL_COMMIT_SHA=$STABLE_HMCL_COMMIT_SHA" >> $GITHUB_ENV
           echo "STABLE_HMCL_TAG_NAME=release-$STABLE_HMCL_VERSION" >> $GITHUB_ENV
       - name: Check for existing tags
-        run: if ! git tag -l | grep -q release-"$STABLE_HMCL_TAG_NAME"; then echo "stablecontinue=true" >> $GITHUB_ENV; fi 
+        run: if ! git tag -l | grep -q "$STABLE_HMCL_TAG_NAME"; then echo "stablecontinue=true" >> $GITHUB_ENV; fi 
       - name: Download artifacts
         if: ${{ env.stablecontinue == 'true' }}
         run: |
