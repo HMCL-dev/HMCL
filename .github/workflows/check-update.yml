@@ -67,7 +67,7 @@ jobs:
           name: ${{ env.DEV_HMCL_TAG_NAME }}
           tag_name: ${{ env.DEV_HMCL_TAG_NAME }}
   stable-check-update:
-    if: ${{ jobs.dev-check-update.env.devcontinue == 'false' }} #当 dev 版检查未执行的情况下再检查 stable 版，为了防止 dev 版发了会影响 stable 版的发布，可能吧，以防万一呢？
+    if: ${{ env.devcontinue == 'false' }} #当 dev 版检查未执行的情况下再检查 stable 版，为了防止 dev 版发了会影响 stable 版的发布，可能吧，以防万一呢？
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
