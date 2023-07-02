@@ -298,9 +298,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         .map(version -> version.getVersion() == null);
                 lblGameVersion.managedProperty().bind(hasVersion);
                 lblGameVersion.visibleProperty().bind(hasVersion);
-                runInFX(() -> FXUtils.installFastTooltip(lblGameVersion, i18n("search.enter")));
                 gameVersionField.managedProperty().bind(hasVersion);
                 gameVersionField.visibleProperty().bind(hasVersion);
+                runInFX(() -> FXUtils.installFastTooltip(gameVersionField, i18n("search.enter")));
 
                 FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
                     if (StringUtils.isNotBlank(version.getVersion())) {
