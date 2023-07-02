@@ -695,6 +695,7 @@ public final class LauncherHelper {
                 });
                 break;
         }
+        System.gc();
     }
 
     /**
