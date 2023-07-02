@@ -88,7 +88,6 @@ jobs:
 
           echo "STABLE_HMCL_VERSION=$STABLE_HMCL_VERSION" >> $GITHUB_ENV
           echo "STABLE_HMCL_COMMIT_SHA=$STABLE_HMCL_COMMIT_SHA" >> $GITHUB_ENV
-          echo "STABLE_HMCL_NAME=Stable-v$STABLE_HMCL_VERSION" >> $GITHUB_ENV
           echo "STABLE_HMCL_TAG_NAME=release-$STABLE_HMCL_VERSION" >> $GITHUB_ENV
       - name: Check for existing tags
         run: if ! git tag -l | grep -q release-"$STABLE_HMCL_TAG_NAME"; then echo "stablecontinue=true" >> $GITHUB_ENV; fi 
@@ -106,6 +105,7 @@ jobs:
       - name: Generate release note
         if: ${{ env.stablecontinue == 'true' }}
         run: |
+          echo " === **Stable Version** === " >> STABLE_RELEASE_NOTE
           echo "HMCL v$STABLE_HMCL_VERSION" >> STABLE_RELEASE_NOTE
           echo "" >> STABLE_RELEASE_NOTE
           echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/stable.html" >> STABLE_RELEASE_NOTE
@@ -123,5 +123,5 @@ jobs:
             HMCL-${{ env.STABLE_HMCL_VERSION }}.sh
             HMCL-${{ env.STABLE_HMCL_VERSION }}.sh.sha1
           target_commitish: ${{ env.STABLE_HMCL_COMMIT_SHA }}
-          name: ${{ env.STABLE_HMCL_NAME }}
+          name: ${{ env.STABLE_HMCL_TAG_NAME }}
           tag_name: ${{ env.STABLE_HMCL_TAG_NAME }}
