@@ -7,7 +7,7 @@ on:
 
 jobs:
   dev-check-update:
-    #if: ${{ github.repository_owner == 'huanghongxun' }}
+    if: ${{ github.repository_owner == 'huanghongxun' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
