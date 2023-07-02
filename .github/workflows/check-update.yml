@@ -18,11 +18,11 @@ jobs:
         run: |
           wget -O devci.json https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/api/json
           
-          export DEV_HMCL_EXE_FILE_NAME=`cat devci.json | jq -M -r '.artifacts[] | select(.fileName | endswith(".exe")) | .fileName'`
-          if [ -z `echo $DEV_HMCL_EXE_FILE_NAME | grep -E "^HMCL-[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?\.exe\$"` ]; then exit 1; fi
+          export DEV_HMCL_EXE_FILE_NAME=$(cat devci.json | jq -M -r '.artifacts[] | select(.fileName | endswith(".exe")) | .fileName')
+          if [ -z "$(echo $DEV_HMCL_EXE_FILE_NAME | grep -E '^HMCL-[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?\.exe$')" ]; then exit 1; fi
           
-          export DEV_HMCL_VERSION=`echo "${DEV_HMCL_EXE_FILE_NAME%.exe}" | tail -c +6`
-          export DEV_HMCL_COMMIT_SHA=`cat devci.json | jq -M -r '.actions[] | select(._class == "hudson.plugins.git.util.BuildData") | .lastBuiltRevision.SHA1'`
+          export DEV_HMCL_VERSION=$(echo "${DEV_HMCL_EXE_FILE_NAME%.exe}" | tail -c +6)
+          export DEV_HMCL_COMMIT_SHA=$(cat devci.json | jq -M -r '.actions[] | select(._class == "hudson.plugins.git.util.BuildData") | .lastBuiltRevision.SHA1')
 
           if [ "${#DEV_HMCL_COMMIT_SHA}" != 40 ]; then exit 1; fi
 
@@ -36,12 +36,12 @@ jobs:
       - name: Download artifacts
         if: ${{ env.devcontinue == 'true' }}
         run: |
-          wget "$DEV_DOWNLOAD_BASE_URL/DEV_HMCL-$HMCL_VERSION.exe"
-          wget "$DEV_DOWNLOAD_BASE_URL/DEV_HMCL-$HMCL_VERSION.exe.sha1"
-          wget "$DEV_DOWNLOAD_BASE_URL/DEV_HMCL-$HMCL_VERSION.jar"
-          wget "$DEV_DOWNLOAD_BASE_URL/DEV_HMCL-$HMCL_VERSION.jar.sha1"
-          wget "$DEV_DOWNLOAD_BASE_URL/DEV_HMCL-$HMCL_VERSION.sh"
-          wget "$DEV_DOWNLOAD_BASE_URL/DEV_HMCL-$HMCL_VERSION.sh.sha1"
+          wget "$DEV_DOWNLOAD_BASE_URL/HMCL-$DEV_HMCL_VERSION.exe"
+          wget "$DEV_DOWNLOAD_BASE_URL/HMCL-$DEV_HMCL_VERSION.exe.sha1"
+          wget "$DEV_DOWNLOAD_BASE_URL/HMCL-$DEV_HMCL_VERSION.jar"
+          wget "$DEV_DOWNLOAD_BASE_URL/HMCL-$DEV_HMCL_VERSION.jar.sha1"
+          wget "$DEV_DOWNLOAD_BASE_URL/HMCL-$DEV_HMCL_VERSION.sh"
+          wget "$DEV_DOWNLOAD_BASE_URL/HMCL-$DEV_HMCL_VERSION.sh.sha1"
         env:
           DEV_DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/artifact/HMCL/build/libs
       - name: Generate release note
@@ -55,7 +55,7 @@ jobs:
         if: ${{ env.devcontinue == 'true' }}
         uses: softprops/action-gh-release@v1
         with:
-          body_path: RELEASE_NOTE
+          body_path: DEV_RELEASE_NOTE
           files: |
             HMCL-${{ env.DEV_HMCL_VERSION }}.exe
             HMCL-${{ env.DEV_HMCL_VERSION }}.exe.sha1
@@ -79,11 +79,11 @@ jobs:
         run: |
           wget -O stableci.json https://ci.huangyuhui.net/job/HMCL-stable/lastSuccessfulBuild/api/json
           
-          export STABLE_HMCL_EXE_FILE_NAME=`cat stableci.json | jq -M -r '.artifacts[] | select(.fileName | endswith(".exe")) | .fileName'`
-          if [ -z `echo $STABLE_HMCL_EXE_FILE_NAME | grep -E "^HMCL-[0-9]+\.[0-9]+\.[0-9]\.exe\$"` ]; then exit 1; fi
+          export STABLE_HMCL_EXE_FILE_NAME=$(cat stableci.json | jq -M -r '.artifacts[] | select(.fileName | endswith(".exe")) | .fileName')
+          if [ -z "$(echo $STABLE_HMCL_EXE_FILE_NAME | grep -E '^HMCL-[0-9]+\.[0-9]+\.[0-9]+\.exe$')" ]; then exit 1; fi
           
-          export STABLE_HMCL_VERSION=`echo "${HMCL_EXE_FILE_NAME%.exe}" | tail -c +6`
-          export STABLE_HMCL_COMMIT_SHA=`cat stableci.json | jq -M -r '.actions[] | select(._class == "hudson.plugins.git.util.BuildData") | .lastBuiltRevision.SHA1'`
+          export STABLE_HMCL_VERSION=$(echo "${STABLE_HMCL_EXE_FILE_NAME%.exe}" | tail -c +6)
+          export STABLE_HMCL_COMMIT_SHA=$(cat stableci.json | jq -M -r '.actions[] | select(._class == "hudson.plugins.git.util.BuildData") | .lastBuiltRevision.SHA1')
 
           if [ "${#STABLE_HMCL_COMMIT_SHA}" != 40 ]; then exit 1; fi
 
