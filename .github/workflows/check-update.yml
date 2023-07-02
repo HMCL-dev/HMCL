@@ -31,10 +31,7 @@ jobs:
           echo "DEV_HMCL_COMMIT_SHA=$DEV_HMCL_COMMIT_SHA" >> $GITHUB_ENV
           echo "DEV_HMCL_TAG_NAME=v$DEV_HMCL_VERSION" >> $GITHUB_ENV
       - name: Check for existing tags
-        id: devcheck
-        run: |
-          echo "devcontinue=false" >> $GITHUB_ENV
-          if [ -z "$(git tag -l "$DEV_HMCL_TAG_NAME")" ]; then echo "devcontinue=true" >> $GITHUB_ENV; fi
+        run: if [ -z "$(git tag -l "$DEV_HMCL_TAG_NAME")" ]; then echo "devcontinue=true" >> $GITHUB_ENV; fi
       - name: Download artifacts
         if: ${{ env.devcontinue == 'true' }}
         run: |
@@ -69,7 +66,7 @@ jobs:
           name: ${{ env.DEV_HMCL_TAG_NAME }}
           tag_name: ${{ env.DEV_HMCL_TAG_NAME }}
   stable-check-update:
-    if: ${{ steps.devcheck.outputs.devcontinue == 'false' }} #| ${{ github.repository_owner == 'huanghongxun' }} #当 dev 版检查未执行的情况下再检查 stable 版，为了防止 dev 版发了会影响 stable 版的发布，可能吧，以防万一呢？
+    if: ${{ github.repository_owner == 'huanghongxun' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
