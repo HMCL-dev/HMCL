@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api("com.github.burningtnt.SimpleWEBP:jfx:f37fa363325003ec1e4b6bc5ee23e890f7db3ee6")
+    api("com.github.burningtnt.SimpleWEBP:jfx:7e40582c535b60f3bfd39674e633590366fc2899")
     api("org.glavo:simple-png-javafx:0.3.0")
     api("com.google.code.gson:gson:2.10.1")
     api("com.moandjiezana.toml:toml4j:0.7.2")
