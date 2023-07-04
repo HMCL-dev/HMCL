@@ -32,7 +32,7 @@ import java.util.UUID;
 public class AuthInfo implements AutoCloseable {
     public static final String USER_TYPE_MSA = "msa";
     public static final String USER_TYPE_MOJANG = "Mojang";
-    public static final String USER_TYPE_LEGACY = "legacy";
+    public static final String USER_TYPE_LEGACY = "Legacy";
 
 
     private final String username;
