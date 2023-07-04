@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -258,6 +259,7 @@ public final class Launcher extends Application {
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
+            LOG.info("Physical RAM: " + Optional.ofNullable(OperatingSystem.TOTAL_MEMORY).map(i -> i + " MB").orElse("-"));
             LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
                     .filter(bean -> bean.getName().equals("Metaspace"))
                     .findAny()
