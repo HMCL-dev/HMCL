@@ -61,15 +61,26 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         File optionsFile = new File(repository.getRunDirectory(version.getId()), "options.txt");
         File configFolder = new File(repository.getRunDirectory(version.getId()), "config");
 
-        if (optionsFile.exists())
+        if (optionsFile.exists()) {
             return;
-        if (configFolder.isDirectory())
-            if (findFiles(configFolder, "options.txt"))
+        }
+
+        if (configFolder.isDirectory()) {
+            if (findFiles(configFolder, "options.txt")) {
                 return;
+            }
+        }
+
+        if (I18n.getCurrentLocale().getLocale() != Locale.CHINA) {
+            return;
+        }
+
+        String lang;
+
+        if (this.version.compareTo(new Version("1.1")) < )
+
         try {
-            // TODO: Dirty implementation here
-            if (I18n.getCurrentLocale().getLocale() == Locale.CHINA)
-                FileUtils.writeText(optionsFile, "lang:zh_CN\nforceUnicodeFont:true\n");
+            FileUtils.writeText(optionsFile, "lang:zh_CN\nforceUnicodeFont:true\n");
         } catch (IOException e) {
             Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
         }
