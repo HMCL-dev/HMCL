@@ -255,10 +255,15 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            res.add("--server");
-            res.add(args[0]);
-            res.add("--port");
-            res.add(args.length > 1 ? args[1] : "25565");
+            if (version.compareTo(new Version("1.20")) < 0) {
+                res.add("--server");
+                res.add(args[0]);
+                res.add("--port");
+                res.add(args.length > 1 ? args[1] : "25565");
+            } else {
+                res.add("--quickPlayMultiplayer");
+                res.add(args[0] + ":" + (args.length > 1 ? args[1] : "25565"));
+            }
         }
 
         if (options.isFullscreen())
