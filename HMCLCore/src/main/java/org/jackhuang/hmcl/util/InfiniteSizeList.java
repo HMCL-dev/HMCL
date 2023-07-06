@@ -87,9 +87,7 @@ public final class InfiniteSizeList<T> extends ArrayList<T> {
     }
 
     private void allocate0(int index) {
-        for (int i = 0; i < index + 1 - super.size(); i++) {
-            super.add(null);
-        }
+        super.ensureCapacity(index + 1);
     }
 
     @Override
