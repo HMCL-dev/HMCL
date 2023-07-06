@@ -121,7 +121,7 @@ public final class GameDumpCreator {
         }
     }
 
-    public static void writeDumpHeadTo(long lvmid, PrintWriter printWriter) {
+    private static void writeDumpHeadTo(long lvmid, PrintWriter printWriter) {
         DumpHead dumpHead = new DumpHead();
         dumpHead.push("Tool Version", String.valueOf(TOOL_VERSION));
         dumpHead.push("VM PID", String.valueOf(lvmid));
