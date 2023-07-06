@@ -33,6 +33,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -144,6 +145,7 @@ public final class LogWindow extends Stage {
     private static class Log {
         private final String log;
         private final Log4jLevel level;
+        private boolean selected = false;
 
         public Log(String log, Log4jLevel level) {
             this.log = log;
@@ -237,6 +239,8 @@ public final class LogWindow extends Stage {
         private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
 
+        private final Set<ListCell<Log>> selected = new HashSet<>();
+
         private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
             ToggleButton button = new ToggleButton();
             button.setStyle("-fx-background-color: " + backgroundColor + ";");
@@ -306,6 +310,22 @@ public final class LogWindow extends Stage {
                         setPadding(new Insets(2));
                         setWrapText(true);
                         setGraphic(null);
+
+                        setStyle("-fx-background-color: #FFFFFF;");
+                        setOnMouseClicked(event -> {
+                            if (!event.isControlDown()) {
+                                for (ListCell<Log> logListCell: selected) {
+                                    logListCell.setStyle("-fx-background-color: #FFFFFF;");
+                                    logListCell.getItem().selected = false;
+                                }
+
+                                selected.clear();
+                            }
+
+                            selected.add(this);
+                            setStyle("-fx-background-color: #c4c4c4;");
+                            getItem().selected = true;
+                        });
                     }
 
                     @Override
@@ -326,9 +346,32 @@ public final class LogWindow extends Stage {
                         pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
                         if (empty) {
                             setText(null);
+                            setStyle("-fx-background-color: #FFFFFF;");
                         } else {
                             setText(item.log);
+                            if (item.selected) {
+                                setStyle("-fx-background-color: #c4c4c4;");
+                            } else {
+                                setStyle("-fx-background-color: #FFFFFF;");
+                            }
                         }
+                    }
+                });
+
+                listView.setOnKeyPressed(event -> {
+                    if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                        StringBuilder stringBuilder = new StringBuilder();
+
+                        for (Log item : listView.getItems()) {
+                            if (item != null && item.selected) {
+                                if (item.log != null) {
+                                    stringBuilder.append(item.log);
+                                }
+                                stringBuilder.append('\n');
+                            }
+                        }
+
+                        FXUtils.copyText(stringBuilder.toString());
                     }
                 });
 
