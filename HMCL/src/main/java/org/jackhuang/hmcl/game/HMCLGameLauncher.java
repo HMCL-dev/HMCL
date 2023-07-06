@@ -61,17 +61,42 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         File optionsFile = new File(repository.getRunDirectory(version.getId()), "options.txt");
         File configFolder = new File(repository.getRunDirectory(version.getId()), "config");
 
-        if (optionsFile.exists())
+        if (optionsFile.exists()) {
             return;
-        if (configFolder.isDirectory())
-            if (findFiles(configFolder, "options.txt"))
+        }
+
+        if (configFolder.isDirectory()) {
+            if (findFiles(configFolder, "options.txt")) {
                 return;
-        try {
-            // TODO: Dirty implementation here
-            if (I18n.getCurrentLocale().getLocale() == Locale.CHINA)
-                FileUtils.writeText(optionsFile, "lang:zh_CN\nforceUnicodeFont:true\n");
-        } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
+            }
+        }
+
+        if (I18n.getCurrentLocale().getLocale() != Locale.CHINA) {
+            return;
+        }
+
+        String lang;
+        /*
+            1.0-     ：没有语言选项，遇到这些版本时不设置
+            1.1 ~ 5  ：zh_CN 时正常，zh_cn 时崩溃（最后两位字母必须大写，否则将会 NPE 崩溃）
+            1.6 ~ 10 ：zh_CN 时正常，zh_cn 时自动切换为英文
+            1.11 ~ 12：zh_cn 时正常，zh_CN 时虽然显示了中文但语言设置会错误地显示选择英文
+            1.13+    ：zh_cn 时正常，zh_CN 时自动切换为英文
+         */
+        if (this.version.compareTo(new Version("1.1")) < 0) {
+            lang = null;
+        } else if (this.version.compareTo(new Version("1.10")) <= 0) {
+            lang = "zh_CN";
+        } else {
+            lang = "zh_cn";
+        }
+
+        if (lang != null) {
+            try {
+                FileUtils.writeText(optionsFile, String.format("lang:%s\nforceUnicodeFont:true\n", lang));
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
+            }
         }
     }
 
