@@ -232,11 +232,17 @@ public final class LogWindow extends Stage {
 
                         try {
                             if (gameProcess.isRunning()) {
-                                GameDumpCreator.writeDumpTo(gameProcess.getPID(), dumpFile.toFile());
+                                GameDumpCreator.writeDumpTo(gameProcess.getPID(), dumpFile);
                                 FXUtils.showFileInExplorer(dumpFile);
                             }
                         } catch (Throwable e) {
                             LOG.log(Level.WARNING, "Failed to create minecraft jstack dump", e);
+
+                            Platform.runLater(() -> {
+                                Alert alert = new Alert(Alert.AlertType.ERROR, i18n("logwindow.export_dump.dependency_ok.button"));
+                                alert.setTitle(i18n("message.error"));
+                                alert.showAndWait();
+                            });
                         }
 
                         Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.button")));

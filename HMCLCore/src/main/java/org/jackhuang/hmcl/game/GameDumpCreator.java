@@ -1,20 +1,22 @@
 package org.jackhuang.hmcl.game;
 
-import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.CurrentJava;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -100,14 +102,12 @@ public final class GameDumpCreator {
         return false;
     }
 
-    public static void writeDumpTo(long pid, File file) throws IOException, InterruptedException, ClassNotFoundException {
+    public static void writeDumpTo(long pid, Path path) throws IOException, InterruptedException, ClassNotFoundException {
         if (!checkDependencies()) {
             throw new ClassNotFoundException("com.sun.tools.attach.VirtualMachine");
         }
 
-        try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8)), false
-        )) {
+        try (PrintWriter printWriter = new PrintWriter(Files.newBufferedWriter(path), false)) {
             writeDumpHeadTo(pid, printWriter);
 
             for (int i = 0; i < DUMP_TIME; i++) {
@@ -127,22 +127,12 @@ public final class GameDumpCreator {
         dumpHead.push("VM PID", String.valueOf(lvmid));
         {
             StringBuilder stringBuilder = new StringBuilder();
-            safeAttachVM(lvmid, "VM.command_line", stringBuilder::append, (value, throwable) -> {
-                stringBuilder.append('\n');
-                stringBuilder.append(String.format("An Error happend while attaching vm %d\n\n", lvmid));
-                stringBuilder.append(StringUtils.getStackTrace(throwable));
-                stringBuilder.append('\n');
-            });
+            safeAttachVM(lvmid, "VM.command_line", stringBuilder);
             dumpHead.push("VM Command Line", ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"));
         }
         {
             StringBuilder stringBuilder = new StringBuilder();
-            safeAttachVM(lvmid, "VM.version", stringBuilder::append, (value, throwable) -> {
-                stringBuilder.append('\n');
-                stringBuilder.append(String.format("An Error happend while attaching vm %d\n\n", lvmid));
-                stringBuilder.append(StringUtils.getStackTrace(throwable));
-                stringBuilder.append('\n');
-            });
+            safeAttachVM(lvmid, "VM.version", stringBuilder);
             dumpHead.push("VM Version", stringBuilder.toString());
         }
 
@@ -150,14 +140,10 @@ public final class GameDumpCreator {
     }
 
     private static void writeDumpBodyTo(long lvmid, PrintWriter printWriter) {
-        safeAttachVM(lvmid, "Thread.print", printWriter::write, (value, throwable) -> {
-            printWriter.write(String.format("An Error happend while attaching vm %d\n\n", lvmid));
-            throwable.printStackTrace(printWriter);
-            printWriter.write('\n');
-        });
+        safeAttachVM(lvmid, "Thread.print", printWriter);
     }
 
-    private static void safeAttachVM(long lvmid, String command, Consumer<char[]> vmInputStreamReader, BiConsumer<Long, Throwable> onException) {
+    private static void safeAttachVM(long lvmid, String command, Appendable appendable) {
         try {
             VirtualMachine vm = VirtualMachine.attach(String.valueOf(lvmid));
 
@@ -170,21 +156,21 @@ public final class GameDumpCreator {
                     status = inputStreamReader.read(dataCache);
 
                     if (status > 0) {
-                        vmInputStreamReader.accept(status == dataCache.length ? dataCache : Arrays.copyOf(dataCache, status));
+                        appendable.append(CharBuffer.wrap(status == dataCache.length ? dataCache : Arrays.copyOf(dataCache, status)));
                     }
                 } while (status > 0);
             } finally {
                 vm.detach();
             }
-        } catch (AttachNotSupportedException e) {
-            LOG.log(Level.WARNING, String.format("An AttachNotSupported Exception happened while attaching vm %d", lvmid), e);
-            onException.accept(lvmid, e);
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, String.format("An IO Exception happened while attaching vm %d", lvmid), e);
-            onException.accept(lvmid, e);
         } catch (Throwable throwable) {
-            LOG.log(Level.WARNING, String.format("An unknown Exception happened while attaching vm %d", lvmid), throwable);
-            onException.accept(lvmid, throwable);
+            LOG.log(Level.WARNING, String.format("An Exception happened while attaching vm %d", lvmid), throwable);
+            try {
+                appendable.append('\n');
+                appendable.append(StringUtils.getStackTrace(throwable));
+                appendable.append('\n');
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, String.format("An IOException happened while writing exception which happened while attaching vm %d", lvmid), e);
+            }
         }
     }
 }
