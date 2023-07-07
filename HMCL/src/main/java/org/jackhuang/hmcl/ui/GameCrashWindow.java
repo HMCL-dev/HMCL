@@ -56,7 +56,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
@@ -157,6 +156,7 @@ public class GameCrashWindow extends Stage {
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
                     segments.add(new Text("\n"));
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
+                    LOG.log(Level.INFO, "Multiple reasons detected");
                 }
 
                 for (CrashReportAnalyzer.Result result : results) {
@@ -200,6 +200,8 @@ public class GameCrashWindow extends Stage {
                             }
                             break;
                         case TWILIGHT_FOREST_OPTIFINE:
+                        case PERFORMANT_FOREST_OPTIFINE:
+                        case JADE_FOREST_OPTIFINE:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.mod", "OptiFine"), Controllers::onHyperlinkAction));
                             if (hasMultipleRules) {
                                 segments.add(new Text("\n"));
@@ -223,12 +225,15 @@ public class GameCrashWindow extends Stage {
                             break;
                     }
                     segments.add(new Text("\n"));
+                    LOG.log(Level.INFO, "Crash cause: " + result.getRule());
                 }
                 if (results.isEmpty()) {
                     if (!keywords.isEmpty()) {
                         reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.stacktrace", String.join(", ", keywords))));
+                        LOG.log(Level.INFO, "Crash reason unknown, but some log keywords have been found: " + String.join(", ", keywords));
                     } else {
                         reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
+                        LOG.log(Level.INFO, "Crash reason unknown");
                     }
                 } else {
                     feedbackTextFlow.setVisible(false);

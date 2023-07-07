@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -280,6 +281,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 JFXTextField nameField = new JFXTextField();
                 nameField.setPromptText(getSkinnable().supportChinese.get() ? i18n("search.hint.chinese") : i18n("search.hint.english"));
+                if (getSkinnable().supportChinese.get()) {
+                    FXUtils.installFastTooltip(nameField, i18n("search.hint.chinese"));
+                } else {
+                    FXUtils.installFastTooltip(nameField, i18n("search.hint.english"));
+                }
 
                 JFXComboBox<String> gameVersionField = new JFXComboBox<>();
                 gameVersionField.setMaxWidth(Double.MAX_VALUE);
@@ -294,6 +300,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
                 gameVersionField.visibleProperty().bind(hasVersion);
+                runInFX(() -> FXUtils.installFastTooltip(gameVersionField, i18n("search.enter")));
 
                 FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
                     if (StringUtils.isNotBlank(version.getVersion())) {
