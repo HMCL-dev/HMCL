@@ -19,8 +19,6 @@ package org.jackhuang.hmcl;
 
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
-import javafx.scene.image.Image;
-import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.Logging;
@@ -33,7 +31,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,8 +78,7 @@ public final class Main {
     }
 
     private static void initIcon() {
-        java.awt.Image image = new ImageIcon(PNGJavaFXUtils.writeImageToArray(new Image("/assets/img/icon@8x.webp"))).getImage();
-        AwtUtils.setAppleIcon(image);
+        AwtUtils.setAppleIcon(AwtUtils.getImage("/assets/img/icon@8x.webp"));
     }
 
     private static void checkDirectoryPath() {

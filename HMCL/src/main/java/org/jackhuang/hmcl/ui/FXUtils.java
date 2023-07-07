@@ -46,7 +46,6 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
@@ -496,7 +495,7 @@ public final class FXUtils {
                 frame.setSize(width, height);
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.setLocationByPlatform(true);
-                frame.setIconImage(new ImageIcon(PNGJavaFXUtils.writeImageToArray(new Image("/assets/img/icon.webp"))).getImage());
+                frame.setIconImage(AwtUtils.getImage("/assets/img/icon.webp"));
                 frame.setLayout(new BorderLayout());
 
                 final JProgressBar progressBar = new JProgressBar();
