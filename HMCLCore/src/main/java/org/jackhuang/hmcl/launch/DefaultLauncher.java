@@ -660,21 +660,16 @@ public class DefaultLauncher extends Launcher {
         }, encoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
         managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
-            Throwable throwable = null;
+            processListener.onExit(exitCode, exitType);
+
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
                     ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
-                    throwable = e;
+                    LOG.log(Level.WARNING, "An Exception happened while running exit command.", e);
                 }
-            }
-
-            processListener.onExit(exitCode, exitType);
-
-            if (throwable != null) {
-                throw new RuntimeException(throwable);
             }
         }), "exit-waiter", isDaemon));
     }
