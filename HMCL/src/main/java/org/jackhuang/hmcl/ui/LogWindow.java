@@ -238,6 +238,7 @@ public final class LogWindow extends Stage {
         private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
         private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
+        private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
         private final Set<ListCell<Log>> selected = new HashSet<>();
 
@@ -311,20 +312,25 @@ public final class LogWindow extends Stage {
                         setWrapText(true);
                         setGraphic(null);
 
-                        setStyle("-fx-background-color: #FFFFFF;");
                         setOnMouseClicked(event -> {
                             if (!event.isControlDown()) {
                                 for (ListCell<Log> logListCell: selected) {
-                                    logListCell.setStyle("-fx-background-color: #FFFFFF;");
-                                    logListCell.getItem().selected = false;
+                                    if (logListCell != this) {
+                                        logListCell.pseudoClassStateChanged(SELECTED, false);
+                                        if (logListCell.getItem() != null) {
+                                            logListCell.getItem().selected = false;
+                                        }
+                                    }
                                 }
 
                                 selected.clear();
                             }
 
                             selected.add(this);
-                            setStyle("-fx-background-color: #c4c4c4;");
-                            getItem().selected = true;
+                            pseudoClassStateChanged(SELECTED, true);
+                            if (getItem() != null) {
+                                getItem().selected = true;
+                            }
                         });
                     }
 
@@ -344,16 +350,12 @@ public final class LogWindow extends Stage {
                         pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
                         pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
                         pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
+                        pseudoClassStateChanged(SELECTED, !empty && item.selected);
+
                         if (empty) {
                             setText(null);
-                            setStyle("-fx-background-color: #FFFFFF;");
                         } else {
                             setText(item.log);
-                            if (item.selected) {
-                                setStyle("-fx-background-color: #c4c4c4;");
-                            } else {
-                                setStyle("-fx-background-color: #FFFFFF;");
-                            }
                         }
                     }
                 });
