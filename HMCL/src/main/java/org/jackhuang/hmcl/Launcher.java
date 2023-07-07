@@ -258,6 +258,7 @@ public final class Launcher extends Application {
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
+            LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
             LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
                     .filter(bean -> bean.getName().equals("Metaspace"))
                     .findAny()
