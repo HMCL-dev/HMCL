@@ -1,10 +1,26 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.jackhuang.hmcl.game;
 
 import com.sun.tools.attach.VirtualMachine;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.CurrentJava;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -82,24 +98,8 @@ public final class GameDumpCreator {
     private static final int DUMP_TIME = 3;
 
     public static boolean checkDependencies() {
-        if (!CurrentJava.checkToolPackageDepdencies()) {
-            // Check whether tools.jar is available.
-            return false;
-        }
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9) {
-            // Method Process.pid() is provided on Java 9 or later.
-            // All the Operating System is accepted.
-            return true;
-        }
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            // On Windows, there is no ways to get the pid before Java 9 (We can only get the handle field of a Process).
-            return false;
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-            // On Linux or Mac, we can get field UnixProcess.pid field to get the pid even before Java 9.
-            return true;
-        }
-        // Unknown Operating System, no fallback available.
-        return false;
+        return JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9
+                && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
     }
 
     public static void writeDumpTo(long pid, Path path) throws IOException, InterruptedException, ClassNotFoundException {
@@ -147,8 +147,7 @@ public final class GameDumpCreator {
         try {
             VirtualMachine vm = VirtualMachine.attach(String.valueOf(lvmid));
 
-            try (
-                    InputStreamReader inputStreamReader = new InputStreamReader(new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command)), StandardCharsets.UTF_8)) {
+            try (InputStreamReader inputStreamReader = new InputStreamReader(new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command)), StandardCharsets.UTF_8)) {
                 char[] dataCache = new char[256];
                 int status;
 

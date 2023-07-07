@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CurrentJava;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -74,8 +73,6 @@ public final class Main {
 
         checkJavaFX();
         detectFractureiser();
-
-        CurrentJava.checkToolPackageDepdencies();
 
         Launcher.main(args);
     }
