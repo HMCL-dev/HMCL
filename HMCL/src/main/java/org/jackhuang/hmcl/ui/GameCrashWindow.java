@@ -285,6 +285,9 @@ public class GameCrashWindow extends Stage {
                     case APPLICATION_ERROR:
                         title.setText(i18n("launch.failed.exited_abnormally"));
                         break;
+                    case SIGKILL:
+                        title.setText(i18n("launch.failed.sigkill"));
+                        break;
                 }
 
                 titlePane.setAlignment(Pos.CENTER);
