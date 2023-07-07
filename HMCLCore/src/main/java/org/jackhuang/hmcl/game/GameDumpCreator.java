@@ -155,7 +155,7 @@ public final class GameDumpCreator {
                     status = inputStreamReader.read(dataCache);
 
                     if (status > 0) {
-                        appendable.append(CharBuffer.wrap(status == dataCache.length ? dataCache : Arrays.copyOf(dataCache, status)));
+                        appendable.append(CharBuffer.wrap(dataCache, 0, status));
                     }
                 } while (status > 0);
             } finally {
