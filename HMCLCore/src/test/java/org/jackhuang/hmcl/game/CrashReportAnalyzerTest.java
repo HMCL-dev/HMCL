@@ -78,12 +78,47 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void forgemodResolution() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forgemod_resolution.txt")),
+                CrashReportAnalyzer.Rule.FORGEMOD_RESOLUTION);
+        assertEquals(("\tMod ID: 'vampirism', Requested by: 'werewolves', Expected range: '[1.9.0-beta.1,)', Actual version: '[MISSING]'\n").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
     public void modResolutionCollection() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_COLLECTION);
         assertEquals("tabtps-fabric", result.getMatcher().group("sourcemod"));
         assertEquals("{fabricloader @ [>=0.11.1]}", result.getMatcher().group("destmod"));
+    }
+
+    @Test
+    public void forgeEroor() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/forge_error.txt")),
+                CrashReportAnalyzer.Rule.FORGE_ERROR);
+        assertEquals(("\nnet.minecraftforge.fml.common.MissingModsException: Mod pixelmon (Pixelmon) requires [forge@[14.23.5.2860,)]\n" +
+                        "\tat net.minecraftforge.fml.common.Loader.sortModList(Loader.java:264) ~[Loader.class:?]\n" +
+                        "\tat net.minecraftforge.fml.common.Loader.loadMods(Loader.java:570) ~[Loader.class:?]\n" +
+                        "\tat net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:232) [FMLClientHandler.class:?]\n" +
+                        "\tat net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:467) [bib.class:?]\n" +
+                        "\tat net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:378) [bib.class:?]\n" +
+                        "\tat net.minecraft.client.main.Main.main(SourceFile:123) [Main.class:?]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]\n" +
+                        "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
+                        "\tat net.minecraft.launchwrapper.Launch.launch(Launch.java:135) [launchwrapper-1.12.jar:?]\n" +
+                        "\tat net.minecraft.launchwrapper.Launch.main(Launch.java:28) [launchwrapper-1.12.jar:?]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]\n" +
+                        "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]\n" +
+                        "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
+                        "\tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]\n").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 
     @Test
@@ -339,6 +374,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void performantOptiFineIncompatible() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/performant_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.Rule.PERFORMANT_FOREST_OPTIFINE);
+    }
+
+    @Test
     public void fabricMissingMinecraft() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),
@@ -383,6 +425,20 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void needJDK11() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk11.txt")),
+                CrashReportAnalyzer.Rule.NEED_JDK11);
+    }
+
+    @Test
+    public void needJDK112() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk112.txt")),
+                CrashReportAnalyzer.Rule.NEED_JDK11);
+    }
+
+    @Test
     public void optifineIsNotCompatibleWithForge() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge.txt")),
@@ -394,6 +450,55 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge2.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
+    }
+
+    @Test
+    public void optifineIsNotCompatibleWithForge2() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge3.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
+    }
+
+    @Test
+    public void optifineIsNotCompatibleWithForge3() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge4.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
+    }
+
+    @Test
+    public void optifineIsNotCompatibleWithForge4() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge5.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
+    }
+
+    @Test
+    public void shadersMod() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/shaders_mod.txt")),
+                CrashReportAnalyzer.Rule.SHADERS_MOD);
+    }
+
+    @Test
+    public void cannotFindLaunchTargetFmlclient() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient.txt")),
+                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
+    }
+
+    @Test
+    public void cannotFindLaunchTargetFmlclient2() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient2.txt")),
+                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
+    }
+
+    @Test
+    public void nightconfigfixes() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/night_config_fixes.txt")),
+                CrashReportAnalyzer.Rule.NIGHT_CONFIG_FIXES);
     }
 
     @Test
