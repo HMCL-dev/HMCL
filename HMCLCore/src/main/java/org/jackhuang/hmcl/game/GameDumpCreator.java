@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -120,33 +119,33 @@ public final class GameDumpCreator {
         }
     }
 
-    private static void writeDumpHeadTo(long lvmid, PrintWriter printWriter) {
+    private static void writeDumpHeadTo(long lvmid, PrintWriter printWriter) throws IOException {
         DumpHead dumpHead = new DumpHead();
         dumpHead.push("Tool Version", String.valueOf(TOOL_VERSION));
         dumpHead.push("VM PID", String.valueOf(lvmid));
         {
             StringBuilder stringBuilder = new StringBuilder();
-            safeAttachVM(lvmid, "VM.command_line", stringBuilder);
+            attachVM(lvmid, "VM.command_line", stringBuilder);
             dumpHead.push("VM Command Line", ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"));
         }
         {
             StringBuilder stringBuilder = new StringBuilder();
-            safeAttachVM(lvmid, "VM.version", stringBuilder);
+            attachVM(lvmid, "VM.version", stringBuilder);
             dumpHead.push("VM Version", stringBuilder.toString());
         }
 
         dumpHead.writeTo(printWriter);
     }
 
-    private static void writeDumpBodyTo(long lvmid, PrintWriter printWriter) {
-        safeAttachVM(lvmid, "Thread.print", printWriter);
+    private static void writeDumpBodyTo(long lvmid, PrintWriter printWriter) throws IOException {
+        attachVM(lvmid, "Thread.print", printWriter);
     }
 
-    private static void safeAttachVM(long lvmid, String command, Appendable appendable) {
+    private static void attachVM(long lvmid, String command, Appendable appendable) throws IOException {
         try {
             VirtualMachine vm = VirtualMachine.attach(String.valueOf(lvmid));
 
-            try (InputStreamReader inputStreamReader = new InputStreamReader(new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command)), StandardCharsets.UTF_8)) {
+            try (InputStreamReader inputStreamReader = new InputStreamReader(new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command)))) {
                 char[] dataCache = new char[256];
                 int status;
 
@@ -162,13 +161,9 @@ public final class GameDumpCreator {
             }
         } catch (Throwable throwable) {
             LOG.log(Level.WARNING, String.format("An Exception happened while attaching vm %d", lvmid), throwable);
-            try {
-                appendable.append('\n');
-                appendable.append(StringUtils.getStackTrace(throwable));
-                appendable.append('\n');
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, String.format("An IOException happened while writing exception which happened while attaching vm %d", lvmid), e);
-            }
+            appendable.append('\n');
+            appendable.append(StringUtils.getStackTrace(throwable));
+            appendable.append('\n');
         }
     }
 }
