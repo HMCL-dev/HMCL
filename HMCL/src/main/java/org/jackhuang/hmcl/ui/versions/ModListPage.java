@@ -234,4 +234,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     public void setModded(boolean modded) {
         this.modded.set(modded);
     }
+
+    public Profile getProfile() {
+        return this.profile;
+    }
+
+    public String getVersionId() {
+        return this.versionId;
+    }
 }
