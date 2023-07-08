@@ -52,6 +52,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void jadeForestOptifine() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/jade_forest_optifine.txt")),
+                CrashReportAnalyzer.Rule.JADE_FOREST_OPTIFINE);
+    }
+
+    @Test
     public void jvm32() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit.txt")),
@@ -119,6 +126,13 @@ public class CrashReportAnalyzerTest {
                         "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
                         "\tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]\n").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
+    public void modResolution0() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod_resolution0.txt")),
+                CrashReportAnalyzer.Rule.MOD_RESOLUTION0);
     }
 
     @Test
