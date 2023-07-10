@@ -167,6 +167,15 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
+        JFXButton btnCopyUUID = new JFXButton();
+        SpinnerPane spinnerCopyUUID = new SpinnerPane();
+        spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
+        btnCopyUUID.setOnMouseClicked(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
+        btnCopyUUID.setGraphic(SVG.copy(Theme.blackFillBinding(), -1, -1));
+        runInFX(() -> FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid")));
+        spinnerCopyUUID.setContent(btnCopyUUID);
+        right.getChildren().add(spinnerCopyUUID);
+
         JFXButton btnRemove = new JFXButton();
         btnRemove.setOnMouseClicked(e -> skinnable.remove());
         btnRemove.getStyleClass().add("toggle-icon4");

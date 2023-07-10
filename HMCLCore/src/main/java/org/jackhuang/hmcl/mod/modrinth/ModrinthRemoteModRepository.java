@@ -42,6 +42,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
+    public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
 
     private static final String PREFIX = "https://api.modrinth.com";
 

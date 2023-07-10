@@ -42,8 +42,14 @@ import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.CSVTable;
 
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -100,6 +106,9 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         actions.setPadding(new Insets(8));
         actions.setAlignment(Pos.CENTER_RIGHT);
 
+        JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
+        exportListButton.setOnAction(e -> exportList());
+
         JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.update"));
         nextButton.setOnAction(e -> updateMods());
 
@@ -107,7 +116,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
-        actions.getChildren().setAll(nextButton, cancelButton);
+        actions.getChildren().setAll(exportListButton, nextButton, cancelButton);
         setBottom(actions);
     }
 
@@ -138,6 +147,36 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 }),
                 i18n("mods.check_updates.update"),
                 TaskCancellationAction.NORMAL);
+    }
+
+    private void exportList() {
+        Path path = Paths.get("hmcl-mod-update-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
+
+        Controllers.taskDialog(Task.runAsync(() -> {
+            CSVTable csvTable = CSVTable.createEmpty();
+
+            csvTable.set(0, 0, "Source File Name");
+            csvTable.set(1, 0, "Current Version");
+            csvTable.set(2, 0, "Target Version");
+            csvTable.set(3, 0, "Update Source");
+
+            for (int i = 0; i < objects.size(); i++) {
+                csvTable.set(0, i + 1, objects.get(i).fileName.get());
+                csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
+                csvTable.set(2, i + 1, objects.get(i).targetVersion.get());
+                csvTable.set(3, i + 1, objects.get(i).source.get());
+            }
+
+            csvTable.write(Files.newOutputStream(path));
+
+            FXUtils.showFileInExplorer(path);
+        }).whenComplete(exception -> {
+            if (exception == null) {
+                Controllers.dialog(path.toString(), i18n("message.success"));
+            } else {
+                Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }), i18n("button.export"), TaskCancellationAction.NORMAL);
     }
 
     @Override

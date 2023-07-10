@@ -1,0 +1,48 @@
+2023-06-15 15:54:15,412 main ERROR Error processing element Queue ([Appenders: null]): CLASS_NOT_FOUND
+[15:54:15] [main/INFO]: ModLauncher running: args [--username, MarkHairo, --version, XPlus OptiReady based on Minecraft 1.16.5 (Forge), --gameDir, C:\Users\********\Desktop\HMCL-3.5.4.exe\.minecraft\versions\XPlus OptiReady based on Minecraft 1.16.5 (Forge), --assetsDir, C:\Users\********\Desktop\HMCL-3.5.4.exe\.minecraft\assets, --assetIndex, 1.16, --uuid, 49077709e6763dd4bde7a33aaf06043e, --accessToken, 鉂勨潉鉂勨潉鉂勨潉鉂勨潉, --userType, legacy, --versionType, HMCL 3.5.4, --width, 854, --height, 480, --launchTarget, fmlclient, --fml.forgeVersion, 36.2.34, --fml.mcVersion, 1.16.5, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20210115.111550]
+[15:54:15] [main/INFO]: ModLauncher 8.1.3+8.1.3+main-8.1.x.c94d18ec starting: java version 17.0.7 by Microsoft
+[15:54:15] [main/INFO]: Added Lets Encrypt root certificates as additional trust
+[15:54:15] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.4 Source=file:/C:/Users/********/Desktop/HMCL-3.5.4.exe/.minecraft/libraries/org/spongepowered/mixin/0.8.4/mixin-0.8.4.jar Service=ModLauncher Env=CLIENT
+Init ItemPhysicLite coremods ...
+Init CreativeCore coremods ...
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: java.lang.ExceptionInInitializerError
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at org.openjdk.nashorn.internal.runtime.Context.compile(Context.java:1509)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at org.openjdk.nashorn.internal.runtime.Context.compileScript(Context.java:1449)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at org.openjdk.nashorn.internal.runtime.Context.compileScript(Context.java:759)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at org.openjdk.nashorn.api.scripting.NashornScriptEngine.compileImpl(NashornScriptEngine.java:528)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at org.openjdk.nashorn.api.scripting.NashornScriptEngine.compileImpl(NashornScriptEngine.java:517)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at org.openjdk.nashorn.api.scripting.NashornScriptEngine.evalImpl(NashornScriptEngine.java:395)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at org.openjdk.nashorn.api.scripting.NashornScriptEngine.eval(NashornScriptEngine.java:146)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at java.scripting/javax.script.AbstractScriptEngine.eval(AbstractScriptEngine.java:247)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at net.minecraftforge.coremod.CoreMod.initialize(CoreMod.java:40)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at net.minecraftforge.coremod.CoreModEngine.initialize(CoreModEngine.java:75)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at net.minecraftforge.coremod.CoreModEngine.initializeCoreMods(CoreModEngine.java:69)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at net.minecraftforge.coremod.CoreModProvider.getCoreModTransformers(CoreModProvider.java:17)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at net.minecraftforge.fml.loading.FMLServiceProvider.transformers(FMLServiceProvider.java:156)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at cpw.mods.modlauncher.TransformationServiceDecorator.gatherTransformers(TransformationServiceDecorator.java:74)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at cpw.mods.modlauncher.TransformationServicesHandler.lambda$initialiseServiceTransformers$6(TransformationServicesHandler.java:101)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at java.base/java.util.HashMap$Values.forEach(HashMap.java:1065)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at cpw.mods.modlauncher.TransformationServicesHandler.initialiseServiceTransformers(TransformationServicesHandler.java:101)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:64)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at cpw.mods.modlauncher.Launcher.run(Launcher.java:76)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1077]: 	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1086]: Caused by: java.lang.RuntimeException: java.lang.NoSuchMethodException: no such method: sun.misc.Unsafe.defineAnonymousClass(Class,byte[],Object[])Class/invokeVirtual
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1086]: 	at org.openjdk.nashorn.internal.runtime.Context$AnonymousContextCodeInstaller.lambda$getDefineAnonymousClass$0(Context.java:335)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1086]: 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:318)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1086]: 	at org.openjdk.nashorn.internal.runtime.Context$AnonymousContextCodeInstaller.getDefineAnonymousClass(Context.java:327)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1086]: 	at org.openjdk.nashorn.internal.runtime.Context$AnonymousContextCodeInstaller.<clinit>(Context.java:317)
+[15:54:18] [main/INFO]: [java.lang.ThreadGroup:uncaughtException:1086]: 	... 21 more
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:659]: Caused by: java.lang.NoSuchMethodException: no such method: sun.misc.Unsafe.defineAnonymousClass(Class,byte[],Object[])Class/invokeVirtual
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:659]: 	at java.base/java.lang.invoke.MemberName.makeAccessException(MemberName.java:976)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:659]: 	at java.base/java.lang.invoke.MemberName$Factory.resolveOrFail(MemberName.java:1117)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:659]: 	at java.base/java.lang.invoke.MethodHandles$Lookup.resolveOrFail(MethodHandles.java:3649)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:659]: 	at java.base/java.lang.invoke.MethodHandles$Lookup.findVirtual(MethodHandles.java:2680)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:659]: 	at org.openjdk.nashorn.internal.runtime.Context$AnonymousContextCodeInstaller.lambda$getDefineAnonymousClass$0(Context.java:329)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:659]: 	... 24 more
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:682]: Caused by: java.lang.NoSuchMethodError: 'java.lang.Class sun.misc.Unsafe.defineAnonymousClass(java.lang.Class, byte[], java.lang.Object[])'
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:682]: 	at java.base/java.lang.invoke.MethodHandleNatives.resolve(Native Method)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:682]: 	at java.base/java.lang.invoke.MemberName$Factory.resolve(MemberName.java:1085)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:682]: 	at java.base/java.lang.invoke.MemberName$Factory.resolveOrFail(MemberName.java:1114)
+[15:54:18] [main/INFO]: [java.lang.Throwable:printStackTrace:682]: 	... 27 more
+Exception in thread "main"
