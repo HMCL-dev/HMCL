@@ -164,13 +164,6 @@ public class GameCrashWindow extends Stage {
                         case TOO_OLD_JAVA:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.too_old_java",
                                     CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))), Controllers::onHyperlinkAction));
-                            if (hasMultipleRules) {
-                                segments.add(new Text("\n"));
-                            } else {
-                                segments.add(new Text("\n\n"));
-                                segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-                                segments.add(new Text("\n"));
-                            }
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
@@ -179,52 +172,31 @@ public class GameCrashWindow extends Stage {
                                     translateFabricModId(result.getMatcher().group("sourcemod")),
                                     parseFabricModId(result.getMatcher().group("destmod")),
                                     parseFabricModId(result.getMatcher().group("destmod"))), Controllers::onHyperlinkAction));
-                            if (hasMultipleRules) {
-                                segments.add(new Text("\n"));
-                            } else {
-                                segments.add(new Text("\n\n"));
-                                segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-                                segments.add(new Text("\n"));
-                            }
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("mod")),
                                     result.getMatcher().group("version")), Controllers::onHyperlinkAction));
-                            if (hasMultipleRules) {
-                                segments.add(new Text("\n"));
-                            } else {
-                                segments.add(new Text("\n\n"));
-                                segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-                                segments.add(new Text("\n"));
-                            }
                             break;
                         case TWILIGHT_FOREST_OPTIFINE:
                         case PERFORMANT_FOREST_OPTIFINE:
                         case JADE_FOREST_OPTIFINE:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.mod", "OptiFine"), Controllers::onHyperlinkAction));
-                            if (hasMultipleRules) {
-                                segments.add(new Text("\n"));
-                            } else {
-                                segments.add(new Text("\n\n"));
-                                segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-                                segments.add(new Text("\n"));
-                            }
                             break;
                         default:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
                                             .toArray()), Controllers::onHyperlinkAction));
-                            if (hasMultipleRules) {
-                                segments.add(new Text("\n"));
-                            } else {
-                                segments.add(new Text("\n\n"));
-                                segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-                                segments.add(new Text("\n"));
-                            }
                             break;
                     }
                     segments.add(new Text("\n"));
+                    if (hasMultipleRules) {
+                        segments.add(new Text("\n"));
+                    } else {
+                        segments.add(new Text("\n\n"));
+                        segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
+                        segments.add(new Text("\n"));
+                    }
                     LOG.log(Level.INFO, "Crash cause: " + result.getRule());
                 }
                 if (results.isEmpty()) {
