@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
+import org.jackhuang.hmcl.mod.exception.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.File;

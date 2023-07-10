@@ -1,6 +1,6 @@
 package org.jackhuang.hmcl.mod;
 
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.mod.impl.mcbbs.McbbsModpackManifest;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

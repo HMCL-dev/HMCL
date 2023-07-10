@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.mod.metadata.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;

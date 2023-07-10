@@ -21,15 +21,18 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.mod.*;
-import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackProvider;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackProvider;
-import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackProvider;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.mod.server.ServerModpackProvider;
-import org.jackhuang.hmcl.mod.server.ServerModpackRemoteInstallTask;
+import org.jackhuang.hmcl.mod.exception.MismatchedModpackTypeException;
+import org.jackhuang.hmcl.mod.exception.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.exception.UnsupportedModpackException;
+import org.jackhuang.hmcl.mod.impl.curse.CurseModPackProvider;
+import org.jackhuang.hmcl.mod.impl.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.mod.impl.mcbbs.McbbsModpackProvider;
+import org.jackhuang.hmcl.mod.impl.modrinth.ModrinthModpackProvider;
+import org.jackhuang.hmcl.mod.impl.multimc.MultiMCInstanceConfiguration;
+import org.jackhuang.hmcl.mod.impl.multimc.MultiMCModpackProvider;
+import org.jackhuang.hmcl.mod.impl.server.ServerModpackManifest;
+import org.jackhuang.hmcl.mod.impl.server.ServerModpackProvider;
+import org.jackhuang.hmcl.mod.impl.server.ServerModpackRemoteInstallTask;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -65,7 +68,7 @@ public final class ModpackHelper {
     private ModpackHelper() {}
 
     private static final Map<String, ModpackProvider> providers = mapOf(
-            pair(CurseModpackProvider.INSTANCE.getName(), CurseModpackProvider.INSTANCE),
+            pair(CurseModPackProvider.INSTANCE.getName(), CurseModPackProvider.INSTANCE),
             pair(McbbsModpackProvider.INSTANCE.getName(), McbbsModpackProvider.INSTANCE),
             pair(ModrinthModpackProvider.INSTANCE.getName(), ModrinthModpackProvider.INSTANCE),
             pair(MultiMCModpackProvider.INSTANCE.getName(), MultiMCModpackProvider.INSTANCE),
@@ -89,7 +92,7 @@ public final class ModpackHelper {
             // Do not change to iterating providers.
             for (ModpackProvider provider : new ModpackProvider[]{
                     McbbsModpackProvider.INSTANCE,
-                    CurseModpackProvider.INSTANCE,
+                    CurseModPackProvider.INSTANCE,
                     ModrinthModpackProvider.INSTANCE,
                     HMCLModpackProvider.INSTANCE,
                     MultiMCModpackProvider.INSTANCE,

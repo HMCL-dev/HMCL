@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.mod.impl.curse.CurseRemoteModRepository;
+import org.jackhuang.hmcl.mod.impl.modrinth.ModrinthRemoteModRepository;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -32,7 +32,7 @@ public class ModpackDownloadListPage extends DownloadListPage {
 
         supportChinese.set(true);
         downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
-        if (CurseForgeRemoteModRepository.isAvailable())
+        if (CurseRemoteModRepository.isAvailable())
             downloadSource.set("mods.curseforge");
         else
             downloadSource.set("mods.modrinth");
@@ -45,7 +45,7 @@ public class ModpackDownloadListPage extends DownloadListPage {
             if ("mods.modrinth".equals(downloadSource.get())) {
                 return ModrinthRemoteModRepository.MODPACKS;
             } else {
-                return CurseForgeRemoteModRepository.MODPACKS;
+                return CurseRemoteModRepository.MODPACKS;
             }
         }
 

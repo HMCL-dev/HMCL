@@ -199,7 +199,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             fileName.set(data.getLocalMod().getFileName());
             currentVersion.set(data.getCurrentVersion().getVersion());
             targetVersion.set(data.getCandidates().get(0).getVersion());
-            switch (data.getCurrentVersion().getSelf().getType()) {
+            switch (data.getCurrentVersion().getVersionImpl().getModType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));
                     break;

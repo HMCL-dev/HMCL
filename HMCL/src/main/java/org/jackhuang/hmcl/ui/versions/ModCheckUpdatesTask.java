@@ -35,11 +35,11 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
 
         dependents = mods.stream()
                 .map(mod ->
-                        Arrays.stream(RemoteMod.Type.values())
-                                .map(type ->
-                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, type.getRemoteModRepository()))
+                        Arrays.stream(RemoteMod.ModType.values())
+                                .map(modType ->
+                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, modType.getRemoteModRepository()))
                                                 .setSignificance(TaskSignificance.MAJOR)
-                                                .setName(String.format("%s (%s)", mod.getFileName(), type.name())).withCounter("mods.check_updates")
+                                                .setName(String.format("%s (%s)", mod.getFileName(), modType.name())).withCounter("mods.check_updates")
                                 )
                                 .collect(Collectors.toList())
                 )

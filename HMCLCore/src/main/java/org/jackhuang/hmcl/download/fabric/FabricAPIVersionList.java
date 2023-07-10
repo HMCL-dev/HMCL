@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.fabric;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.mod.impl.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Collections;

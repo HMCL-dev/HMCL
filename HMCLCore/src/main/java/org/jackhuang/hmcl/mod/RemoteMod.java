@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.mod;
 
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.mod.impl.curse.CurseRemoteModRepository;
+import org.jackhuang.hmcl.mod.impl.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 
 import java.io.IOException;
@@ -88,8 +88,8 @@ public class RemoteMod {
         Alpha
     }
 
-    public enum Type {
-        CURSEFORGE(CurseForgeRemoteModRepository.MODS),
+    public enum ModType {
+        CURSEFORGE(CurseRemoteModRepository.MODS),
         MODRINTH(ModrinthRemoteModRepository.MODS);
 
         private final RemoteModRepository remoteModRepository;
@@ -98,7 +98,7 @@ public class RemoteMod {
             return this.remoteModRepository;
         }
 
-        Type(RemoteModRepository remoteModRepository) {
+        ModType(RemoteModRepository remoteModRepository) {
             this.remoteModRepository = remoteModRepository;
         }
     }
@@ -110,11 +110,13 @@ public class RemoteMod {
     }
 
     public interface IVersion {
-        Type getType();
+        ModType getModType();
+
+        RemoteMod getRemoteMod() throws IOException;
     }
 
     public static class Version {
-        private final IVersion self;
+        private final IVersion versionImpl;
         private final String modid;
         private final String name;
         private final String version;
@@ -126,8 +128,8 @@ public class RemoteMod {
         private final List<String> gameVersions;
         private final List<ModLoaderType> loaders;
 
-        public Version(IVersion self, String modid, String name, String version, String changelog, Date datePublished, VersionType versionType, File file, List<String> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
-            this.self = self;
+        public Version(IVersion versionImpl, String modid, String name, String version, String changelog, Date datePublished, VersionType versionType, File file, List<String> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+            this.versionImpl = versionImpl;
             this.modid = modid;
             this.name = name;
             this.version = version;
@@ -140,8 +142,8 @@ public class RemoteMod {
             this.loaders = loaders;
         }
 
-        public IVersion getSelf() {
-            return self;
+        public IVersion getVersionImpl() {
+            return versionImpl;
         }
 
         public String getModid() {

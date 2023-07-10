@@ -36,9 +36,8 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseAddon;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.mod.impl.curse.CurseRemoteModRepository;
+import org.jackhuang.hmcl.mod.impl.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -63,7 +62,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -320,30 +318,20 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                Lang.<Pair<String, Pair<RemoteModRepository, Function<RemoteMod.Version, String>>>>immutableListOf(
-                        pair("mods.curseforge", pair(
-                                CurseForgeRemoteModRepository.MODS,
-                                (remoteVersion) -> Integer.toString(((CurseAddon.LatestFile) remoteVersion.getSelf()).getModId())
-                        )),
-                        pair("mods.modrinth", pair(
-                                ModrinthRemoteModRepository.MODS,
-                                (remoteVersion) -> ((ModrinthRemoteModRepository.ProjectVersion) remoteVersion.getSelf()).getProjectId()
-                        ))
+                Lang.<Pair<String, RemoteModRepository>>immutableListOf(
+                        pair("mods.curseforge", CurseRemoteModRepository.MODS),
+                        pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
                 ).forEach(item -> {
-                    String text = item.getKey();
-                    RemoteModRepository remoteModRepository = item.getValue().getKey();
-                    Function<RemoteMod.Version, String> projectIDProvider = item.getValue().getValue();
-
-                    JFXHyperlink button = new JFXHyperlink(i18n(text));
+                    JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = remoteModRepository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        Optional<RemoteMod.Version> versionOptional = item.getValue().getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = remoteModRepository.getModById(projectIDProvider.apply(versionOptional.get()));
+                            RemoteMod remoteMod = versionOptional.get().getVersionImpl().getRemoteMod();
                             FXUtils.runInFX(() -> {
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            new DownloadListPage(remoteModRepository),
+                                            new DownloadListPage(item.getValue()),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
                                             null
