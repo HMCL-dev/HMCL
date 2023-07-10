@@ -217,6 +217,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.bindString(txtEnvironmentVariables, versionSetting.environmentVariablesProperty());
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
+        FXUtils.bindString(txtPostExitCommand, versionSetting.postExitCommandProperty());
         FXUtils.bindEnum(cboRenderer, versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());

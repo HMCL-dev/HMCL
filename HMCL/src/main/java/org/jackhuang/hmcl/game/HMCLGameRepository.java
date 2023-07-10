@@ -164,7 +164,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         Files.move(fromJson, toJson);
 
         FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
-        
+
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
         oldVersionSetting.setUsesGlobal(false);
@@ -273,9 +273,21 @@ public class HMCLGameRepository extends DefaultGameRepository {
             File iconFile = getVersionIconFile(id);
             if (iconFile.exists())
                 return new Image("file:" + iconFile.getAbsolutePath());
-            else if (LibraryAnalyzer.isModded(this, version))
-                return newImage("/assets/img/furnace.png");
-            else
+            else if (LibraryAnalyzer.isModded(this, version)) {
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+                if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
+                    return newImage("/assets/img/fabric.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
+                    return newImage("/assets/img/forge.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                    return newImage("/assets/img/quilt.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                    return newImage("/assets/img/command.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
+                    return newImage("/assets/img/chicken.png");
+                else
+                    return newImage("/assets/img/furnace.png");
+            } else
                 return newImage("/assets/img/grass.png");
         } else {
             return newImage(iconType.getResourceUrl());

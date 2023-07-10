@@ -210,19 +210,58 @@ public final class StringUtils {
     public static List<String> tokenize(String str) {
         if (str == null)
             return new ArrayList<>();
-        else
-            return tokenize(str, " \t\n\r\f");
+        else {
+            // Split the string with ' or " and space cleverly.
+
+            final char groupSplit;
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                groupSplit = '"';
+            } else {
+                groupSplit = '\'';
+            }
+
+            ArrayList<String> parts = new ArrayList<>();
+
+            {
+                boolean inside = false;
+                StringBuilder current = new StringBuilder();
+
+                for (int i = 0; i < str.length(); i++) {
+                    char c = str.charAt(i);
+                    if (c == groupSplit) {
+                        inside = !inside;
+                    } else if (!inside && c == ' ') {
+                        parts.add(current.toString());
+                        current.setLength(0);
+                    } else {
+                        current.append(c);
+                    }
+                }
+
+                if (current.length() != 0) {
+                    parts.add(current.toString());
+                }
+            }
+
+            return parts;
+        }
     }
 
-    public static List<String> tokenize(String str, String delim) {
-        ArrayList<String> result = new ArrayList<>();
-        StringTokenizer tokenizer = new StringTokenizer(str, delim);
-        while (tokenizer.hasMoreTokens()) {
-            delim = tokenizer.nextToken();
-            result.add(delim);
-        }
+    public static List<String> parseCommand(String command, Map<String, String> env) {
+        StringBuilder stringBuilder = new StringBuilder(command);
+        env.forEach((key, value) -> {
+            key = "$" + key;
+            int i = 0;
+            while (true) {
+                i = stringBuilder.indexOf(key, i);
+                if (i == -1) {
+                    break;
+                }
+                stringBuilder.replace(i, i + key.length(), value);
+            }
+        });
 
-        return result;
+        return tokenize(stringBuilder.toString());
     }
 
     public static String parseColorEscapes(String original) {
