@@ -4,7 +4,7 @@ labels: feature request
 body:
 - type: markdown
   attributes:
-    value: "提交前请确保查看 issues 列表是否有重复的项目！"
+    value: "提交前确认：查看 issues 列表无重复的项目。"
 - type: textarea
   id: "yml-2"
   attributes:
