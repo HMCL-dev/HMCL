@@ -46,7 +46,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
                 .collect(Collectors.toList());
 
         setStage("mods.check_updates");
-        getProperties().put("total", dependents.size());
+        getProperties().put("total", dependents.size() * RemoteMod.Type.values().length);
     }
 
     @Override

@@ -34,6 +34,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseAddon;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -43,9 +49,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -58,6 +62,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -273,7 +279,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static class ModInfoDialog extends JFXDialogLayout {
+    class ModInfoDialog extends JFXDialogLayout {
 
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
@@ -312,6 +318,45 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
             setBody(description);
+
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
+                Lang.<Pair<String, Pair<RemoteModRepository, Function<RemoteMod.Version, String>>>>immutableListOf(
+                        pair("mods.curseforge", pair(
+                                CurseForgeRemoteModRepository.MODS,
+                                (remoteVersion) -> Integer.toString(((CurseAddon.LatestFile) remoteVersion.getSelf()).getModId())
+                        )),
+                        pair("mods.modrinth", pair(
+                                ModrinthRemoteModRepository.MODS,
+                                (remoteVersion) -> ((ModrinthRemoteModRepository.ProjectVersion) remoteVersion.getSelf()).getProjectId()
+                        ))
+                ).forEach(item -> {
+                    String text = item.getKey();
+                    RemoteModRepository remoteModRepository = item.getValue().getKey();
+                    Function<RemoteMod.Version, String> projectIDProvider = item.getValue().getValue();
+
+                    JFXHyperlink button = new JFXHyperlink(i18n(text));
+                    Task.runAsync(() -> {
+                        Optional<RemoteMod.Version> versionOptional = remoteModRepository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        if (versionOptional.isPresent()) {
+                            RemoteMod remoteMod = remoteModRepository.getModById(projectIDProvider.apply(versionOptional.get()));
+                            FXUtils.runInFX(() -> {
+                                button.setOnAction(e -> {
+                                    fireEvent(new DialogCloseEvent());
+                                    Controllers.navigate(new DownloadPage(
+                                            new DownloadListPage(remoteModRepository),
+                                            remoteMod,
+                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
+                                            null
+                                    ));
+                                });
+                                button.setDisable(false);
+                            });
+                        }
+                    }).start();
+                    button.setDisable(true);
+                    getActions().add(button);
+                });
+            }
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
                 JFXHyperlink officialPageButton = new JFXHyperlink(i18n("mods.url"));

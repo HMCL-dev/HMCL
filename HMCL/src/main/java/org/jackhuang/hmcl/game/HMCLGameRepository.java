@@ -164,7 +164,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         Files.move(fromJson, toJson);
 
         FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
-        
+
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
         oldVersionSetting.setUsesGlobal(false);
@@ -263,7 +263,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newImage("/assets/img/grass.webp");
+            return newImage("/assets/img/grass.png");
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
         VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
@@ -273,9 +273,21 @@ public class HMCLGameRepository extends DefaultGameRepository {
             File iconFile = getVersionIconFile(id);
             if (iconFile.exists())
                 return new Image("file:" + iconFile.getAbsolutePath());
-            else if (LibraryAnalyzer.isModded(this, version))
-                return newImage("/assets/img/furnace.webp");
-            else
+            else if (LibraryAnalyzer.isModded(this, version)) {
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+                if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
+                    return newImage("/assets/img/fabric.webp");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
+                    return newImage("/assets/img/forge.webp");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                    return newImage("/assets/img/quilt.webp");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                    return newImage("/assets/img/command.webp");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
+                    return newImage("/assets/img/chicken.webp");
+                else
+                    return newImage("/assets/img/furnace.webp");
+            } else
                 return newImage("/assets/img/grass.webp");
         } else {
             return newImage(iconType.getResourceUrl());
