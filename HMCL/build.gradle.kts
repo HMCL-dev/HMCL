@@ -11,9 +11,8 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
-//val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-//        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
-val isOfficial = true
+val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
+        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
