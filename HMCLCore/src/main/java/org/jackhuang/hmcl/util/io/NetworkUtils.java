@@ -35,7 +35,6 @@ import static org.jackhuang.hmcl.util.StringUtils.*;
 public final class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
-    public static final int TIME_OUT = 30000;
 
     private NetworkUtils() {
     }
@@ -89,8 +88,8 @@ public final class NetworkUtils {
     public static URLConnection createConnection(URL url) throws IOException {
         URLConnection connection = url.openConnection();
         connection.setUseCaches(false);
-        connection.setConnectTimeout(TIME_OUT);
-        connection.setReadTimeout(TIME_OUT);
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
         connection.setRequestProperty("Accept-Language", Locale.getDefault().toString());
         return connection;
     }
