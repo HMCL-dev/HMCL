@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,7 @@ public abstract class FetchTask<T> extends Task<T> {
     protected final int retry;
     protected boolean caching;
     protected CacheRepository repository = CacheRepository.getInstance();
+    protected Consumer<HttpURLConnection> tweaker;
 
     public FetchTask(List<URL> urls, int retry) {
         Objects.requireNonNull(urls);
@@ -103,6 +105,9 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (checkETag) repository.injectConnection(conn);
 
                     if (conn instanceof HttpURLConnection) {
+                        if (tweaker != null) {
+                            tweaker.accept((HttpURLConnection) conn);
+                        }
                         conn = NetworkUtils.resolveConnection((HttpURLConnection) conn);
                         int responseCode = ((HttpURLConnection) conn).getResponseCode();
 

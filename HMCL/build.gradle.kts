@@ -11,8 +11,9 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
-val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
+//val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
+//        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
+val isOfficial = true
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
@@ -25,11 +26,12 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     }
 }
 val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"
-val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
+val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "dev" else "unofficial"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
+val gitHubApiToken = System.getenv("HMCL_GITHUB_API_TOKEN") ?: ""
 
 version = "$versionRoot.$buildNumber"
 
@@ -122,6 +124,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
             "Microsoft-Auth-Id" to microsoftAuthId,
             "Microsoft-Auth-Secret" to microsoftAuthSecret,
             "CurseForge-Api-Key" to curseForgeApiKey,
+            "GitHub-Api-Token" to gitHubApiToken,
             "Build-Channel" to versionType,
             "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(

@@ -91,6 +91,7 @@ public class RemoteVersion {
 
     public enum Type {
         PACK_XZ,
-        JAR
+        JAR,
+        GitHub_ARTIFACT
     }
 }

@@ -110,10 +110,6 @@ public final class UpdateHandler {
 
                 if (success) {
                     try {
-                        if (!IntegrityChecker.isSelfVerified()) {
-                            throw new IOException("Current JAR is not verified");
-                        }
-
                         requestUpdate(downloaded, getCurrentLocation());
                         System.exit(0);
                     } catch (IOException e) {
@@ -138,7 +134,17 @@ public final class UpdateHandler {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
-        IntegrityChecker.requireVerifiedJar(self);
+
+        if (Metadata.isDev()) {
+            if (!GitHubSHAChecker.isSelfVerified()) {
+                throw new IOException("Current JAR is not verified");
+            }
+        } else {
+            if (!IntegrityChecker.isSelfVerified()) {
+                throw new IOException("Current JAR is not verified");
+            }
+        }
+
         ExecutableHeaderHelper.copyWithHeader(self, target);
 
         Optional<Path> newFilename = tryRename(target, Metadata.VERSION);
@@ -156,7 +162,16 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        IntegrityChecker.requireVerifiedJar(updateTo);
+        if (Metadata.isDev()) {
+            if (!GitHubSHAChecker.isSelfVerified()) {
+                throw new IOException("Current JAR is not verified");
+            }
+        } else {
+            if (!IntegrityChecker.isSelfVerified()) {
+                throw new IOException("Current JAR is not verified");
+            }
+        }
+
         startJava(updateTo, "--apply-to", self.toString());
     }
 

@@ -35,7 +35,8 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.versioning.VersionNumber.asVersion;
 
 public final class UpdateChecker {
-    private UpdateChecker() {}
+    private UpdateChecker() {
+    }
 
     private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
@@ -46,7 +47,11 @@ public final class UpdateChecker {
                 } else {
                     // We can update from development version to stable version,
                     // which can be downgrading.
-                    return asVersion(latest.getVersion()).compareTo(asVersion(Metadata.VERSION)) != 0;
+                    if (latest.getChannel() == UpdateChannel.DEVELOPMENT) {
+                        return !latest.getVersion().equals(Metadata.VERSION);
+                    } else {
+                        return asVersion(latest.getVersion()).compareTo(asVersion(Metadata.VERSION)) != 0;
+                    }
                 }
             },
             latestVersion);
@@ -81,15 +86,27 @@ public final class UpdateChecker {
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
-        if (!IntegrityChecker.isSelfVerified() && !"true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
-            throw new IOException("Self verification failed");
+        if ("true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
+            throw new IOException("Update system is disabled.");
         }
 
-        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
-                pair("version", Metadata.VERSION),
-                pair("channel", channel.channelName)));
+        if (channel == UpdateChannel.STABLE || channel == UpdateChannel.NIGHTLY) {
+            if (!IntegrityChecker.isSelfVerified()) {
+                throw new IOException("Self verification failed");
+            }
 
-        return RemoteVersion.fetch(channel, url);
+            String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+                    pair("version", Metadata.VERSION),
+                    pair("channel", channel.channelName)));
+
+            return RemoteVersion.fetch(channel, url);
+        } else {
+            if (!GitHubSHAChecker.isSelfVerified()) {
+                throw new IOException("GitHub-SHA doesn't belong to the official repository");
+            }
+
+            return GitHubSHAChecker.getLatestArtifact();
+        }
     }
 
     private static boolean isDevelopmentVersion(String version) {

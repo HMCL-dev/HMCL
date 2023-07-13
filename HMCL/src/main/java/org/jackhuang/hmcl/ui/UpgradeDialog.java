@@ -23,13 +23,13 @@ import javafx.concurrent.Worker;
 import javafx.scene.control.Label;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 
 import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
+import static org.jackhuang.hmcl.Metadata.*;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -41,10 +41,16 @@ public class UpgradeDialog extends JFXDialogLayout {
         }
 
         {
-            String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html#nowchange";
+            String url;
+            if (remoteVersion.getChannel() == UpdateChannel.DEVELOPMENT) {
+                url = String.format("https://github.com/%s/compare/%s...%s", OFFICIAL_REPOSITORY, GITHUB_SHA, OFFICIAL_BRANCH);
+            } else {
+                url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html#nowchange";
+            }
+
             try {
                 WebView webView = new WebView();
-                webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
+                webView.getEngine().setUserDataDirectory(HMCL_DIRECTORY.toFile());
                 WebEngine engine = webView.getEngine();
                 engine.load(url);
                 engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
