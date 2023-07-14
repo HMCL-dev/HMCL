@@ -263,7 +263,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newImage("/assets/img/grass.png");
+            return newImage("/assets/img/grass.webp");
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
         VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
