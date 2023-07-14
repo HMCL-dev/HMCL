@@ -5,29 +5,22 @@ import net.burningtnt.webp.jfx.WEBPImageLoaderFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
-import java.nio.file.Paths;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NormalizedSkinTest {
-    private static NormalizedSkin getSkin(String name) throws InvalidSkinException {
-        String path = Paths.get("../HMCL/src/main/resources/assets/img/skin/" + name + ".webp").normalize().toAbsolutePath().toUri().toString();
-        return new NormalizedSkin(new Image(path));
-    }
-
     @Test
     @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
     public void testIsSlim() throws Exception {
         WEBPImageLoaderFactory.setupListener();
 
-        assertFalse(getSkin("steve").isSlim());
-        assertTrue(getSkin("alex").isSlim());
-        assertTrue(getSkin("noor").isSlim());
-        assertFalse(getSkin("sunny").isSlim());
-        assertFalse(getSkin("ari").isSlim());
-        assertFalse(getSkin("zuri").isSlim());
-        assertTrue(getSkin("makena").isSlim());
-        assertFalse(getSkin("kai").isSlim());
-        assertTrue(getSkin("efe").isSlim());
+        assertFalse(new NormalizedSkin(new Image("/assets/img/skin/steve.webp")).isSlim());
+        assertTrue(new NormalizedSkin(new Image("/assets/img/skin/alex.webp")).isSlim());
+        assertTrue(new NormalizedSkin(new Image("/assets/img/skin/noor.webp")).isSlim());
+        assertFalse(new NormalizedSkin(new Image("/assets/img/skin/sunny.webp")).isSlim());
+        assertFalse(new NormalizedSkin(new Image("/assets/img/skin/ari.webp")).isSlim());
+        assertFalse(new NormalizedSkin(new Image("/assets/img/skin/zuri.webp")).isSlim());
+        assertTrue(new NormalizedSkin(new Image("/assets/img/skin/makena.webp")).isSlim());
+        assertFalse(new NormalizedSkin(new Image("/assets/img/skin/kai.webp")).isSlim());
+        assertTrue(new NormalizedSkin(new Image("/assets/img/skin/efe.webp")).isSlim());
     }
 }
