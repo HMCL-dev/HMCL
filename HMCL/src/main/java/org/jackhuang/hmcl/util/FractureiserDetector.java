@@ -43,7 +43,7 @@ public final class FractureiserDetector {
             }
 
             for (Path badPath : badPaths) {
-                if (Files.exists(badPath) && Files.isRegularFile(badPath)) {
+                if (Files.isRegularFile(badPath)) {
                     return true;
                 }
             }
