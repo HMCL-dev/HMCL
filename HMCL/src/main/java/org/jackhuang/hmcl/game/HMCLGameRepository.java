@@ -373,6 +373,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setRenderer(vs.getRenderer())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
+                .setNoDefaultLog4j2Args(vs.isNoDefaultLog4j2Args())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents);
         if (config().hasProxy()) {

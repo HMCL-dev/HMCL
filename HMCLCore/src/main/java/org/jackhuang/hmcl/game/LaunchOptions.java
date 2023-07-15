@@ -61,6 +61,7 @@ public class LaunchOptions implements Serializable {
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean noDefaultLog4j2Args;
     private boolean daemon;
 
     /**
@@ -267,6 +268,10 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    public boolean isNoDefaultLog4j2Args() {
+        return noDefaultLog4j2Args;
+    }
+
     /**
      * Will launcher keeps alive after game launched or not.
      */
@@ -459,6 +464,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setNoDefaultLog4j2Args(boolean noDefaultLog4j2Args) {
+            options.noDefaultLog4j2Args = noDefaultLog4j2Args;
             return this;
         }
 

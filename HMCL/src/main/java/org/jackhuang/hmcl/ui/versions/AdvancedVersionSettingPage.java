@@ -46,6 +46,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final OptionToggleButton noNativesPatchPane;
     private final OptionToggleButton useNativeGLFWPane;
     private final OptionToggleButton useNativeOpenALPane;
+    private final OptionToggleButton noDefaultLog4j2Args;
     private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
@@ -194,10 +195,15 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane = new OptionToggleButton();
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
+            noDefaultLog4j2Args = new OptionToggleButton();
+            noDefaultLog4j2Args.setTitle(i18n("settings.advanced.no_default_log4j2_args"));
+
             workaroundPane.getContent().setAll(
                     nativesDirSublist, rendererPane,
                     noJVMArgsPane, noGameCheckPane, noJVMCheckPane, noNativesPatchPane,
-                    useNativeGLFWPane, useNativeOpenALPane);
+                    useNativeGLFWPane, useNativeOpenALPane,
+                    noDefaultLog4j2Args
+            );
         }
 
         rootPane.getChildren().addAll(
@@ -225,6 +231,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noNativesPatchPane.selectedProperty().bindBidirectional(versionSetting.notPatchNativesProperty());
         useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
+        noDefaultLog4j2Args.selectedProperty().bindBidirectional(versionSetting.noDefaultLog4j2ArgsProperty());
 
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
         nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
@@ -247,6 +254,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noNativesPatchPane.selectedProperty().unbindBidirectional(versionSetting.notPatchNativesProperty());
         useNativeGLFWPane.selectedProperty().unbindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().unbindBidirectional(versionSetting.useNativeOpenALProperty());
+        noDefaultLog4j2Args.selectedProperty().unbindBidirectional(versionSetting.noDefaultLog4j2ArgsProperty());
 
         nativesDirItem.selectedDataProperty().unbindBidirectional(versionSetting.nativesDirTypeProperty());
         nativesDirSublist.subtitleProperty().unbind();

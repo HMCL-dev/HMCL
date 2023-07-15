@@ -609,6 +609,20 @@ public final class VersionSetting implements Cloneable {
         this.useNativeOpenAL.set(useNativeOpenAL);
     }
 
+    private final BooleanProperty noDefaultLog4j2Args = new SimpleBooleanProperty(this, "noDefaultLog4j2Args", false);
+
+    public boolean isNoDefaultLog4j2Args() {
+        return noDefaultLog4j2Args.get();
+    }
+
+    public BooleanProperty noDefaultLog4j2ArgsProperty() {
+        return noDefaultLog4j2Args;
+    }
+
+    public void setNoDefaultLog4j2Args(boolean noDefaultLog4j2Args) {
+        this.noDefaultLog4j2Args.set(noDefaultLog4j2Args);
+    }
+
     private final ObjectProperty<VersionIconType> versionIcon = new SimpleObjectProperty<>(this, "versionIcon", VersionIconType.DEFAULT);
 
     public VersionIconType getVersionIcon() {
@@ -722,6 +736,7 @@ public final class VersionSetting implements Cloneable {
         rendererProperty.addListener(listener);
         useNativeGLFW.addListener(listener);
         useNativeOpenAL.addListener(listener);
+        noDefaultLog4j2Args.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
         defaultJavaPathProperty.addListener(listener);
         nativesDirProperty.addListener(listener);
@@ -761,6 +776,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setRenderer(getRenderer());
         versionSetting.setUseNativeGLFW(isUseNativeGLFW());
         versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
+        versionSetting.setNoDefaultLog4j2Args(isNoDefaultLog4j2Args());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
         versionSetting.setNativesDir(getNativesDir());
         versionSetting.setVersionIcon(getVersionIcon());
@@ -800,6 +816,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
             obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
             obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
+            obj.addProperty("noDefaultLog4j2Args", src.isNoDefaultLog4j2Args());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
             obj.addProperty("defaultJavaPath", src.getDefaultJavaPath());
             obj.addProperty("nativesDir", src.getNativesDir());
@@ -860,6 +877,7 @@ public final class VersionSetting implements Cloneable {
             vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setNoDefaultLog4j2Args(Optional.ofNullable(obj.get("noDefaultLog4j2Args")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
             vs.setNativesDirType(getOrDefault(NativesDirectoryType.values(), obj.get("nativesDirType"), NativesDirectoryType.VERSION_FOLDER));
