@@ -37,6 +37,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class GameDumpCreator {
     private static final Pattern ACCESS_TOKEN_HIDER = Pattern.compile("--accessToken \\S+");
+    private static final Pattern LINE_SEPARATOR = Pattern.compile("\\R");
 
     private GameDumpCreator() {
     }
@@ -56,61 +57,78 @@ public final class GameDumpCreator {
         }
 
         try (Writer writer = Files.newBufferedWriter(path)) {
-            sun.tools.attach.HotSpotVirtualMachine vm = attachVM(pid, writer);
+            VirtualMachine vm = attachVM(pid, writer);
             if (vm == null)
                 return;
 
             try {
                 writeDumpHeadTo(vm, writer);
-                writer.write("====================\n");
-                writeDumpBodyTo(vm, writer);
+
+                for (int i = 0; i < DUMP_TIME; i++) {
+                    if (i > 0)
+                        Thread.sleep(3000);
+
+                    writer.write("====================\n");
+                    writeDumpBodyTo(vm, writer);
+                }
             } finally {
                 vm.detach();
             }
-
-            for (int i = 1; i < DUMP_TIME; i++) {
-                Thread.sleep(3000);
-                writer.write("====================\n");
-
-                vm = attachVM(pid, writer);
-                if (vm != null) {
-                    try {
-                        writeDumpBodyTo(vm, writer);
-                    } finally {
-                        vm.detach();
-                    }
-                }
-            }
         }
     }
 
-    private static void writeDumpHeadTo(sun.tools.attach.HotSpotVirtualMachine vm, Writer writer) throws IOException {
+    private static void writeDumpHeadTo(VirtualMachine vm, Writer writer) throws IOException {
         writer.write("===== Minecraft JStack Dump =====\n");
 
-        writer.write("Tool Version: " + TOOL_VERSION + "\n");
-        writer.write("VM PID: " + vm.id() + "\n");
+        writeDumpHeadKeyValueTo("Tool Version", String.valueOf(TOOL_VERSION), writer);
+        writeDumpHeadKeyValueTo("VM PID", vm.id(), writer);
 
-        StringBuilder builder = new StringBuilder(1024);
-        if (runJcmd(vm, "VM.command_line", builder)) {
-            writer.write(ACCESS_TOKEN_HIDER.matcher(builder).replaceAll("--accessToken <access token>"));
-        } else {
-            writer.write("VM Arguments:\n");
-            writer.append(builder);
+        StringBuilder stringBuilder = new StringBuilder();
+        {
+            runJcmd(vm, "VM.command_line", stringBuilder);
+            writeDumpHeadKeyValueTo("VM Command Line",
+                    ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"),
+                    writer);
         }
-        writer.write('\n');
+        {
+            stringBuilder.setLength(0);
+            runJcmd(vm, "VM.version", stringBuilder);
+            writeDumpHeadKeyValueTo("VM Version", stringBuilder.toString(), writer);
+        }
 
-        builder.setLength(0);
-        runJcmd(vm, "VM.version", builder);
-        writer.write("VM Version:\n");
-        writer.append(builder);
+        writer.write("\n\n");
+    }
+
+    public static void writeDumpHeadKeyValueTo(String key, String value, Writer writer) throws IOException {
+        writer.write(key);
+        writer.write(": ");
+
+        if (value.indexOf('\n') >= 0) {
+            // Multiple Line Value
+            writer.write('{');
+            writer.write('\n');
+
+            String[] lines = LINE_SEPARATOR.split(value);
+
+            for (String line : lines) {
+                writer.write("    ");
+                writer.write(line);
+                writer.write('\n');
+            }
+
+            writer.write('}');
+        } else {
+            // Single Line Value
+            writer.write(value);
+        }
         writer.write('\n');
     }
 
-    private static void writeDumpBodyTo(sun.tools.attach.HotSpotVirtualMachine vm, Writer writer) throws IOException {
+    private static void writeDumpBodyTo(VirtualMachine vm, Writer writer) throws IOException {
         runJcmd(vm, "Thread.print", writer);
     }
 
-    private static sun.tools.attach.HotSpotVirtualMachine attachVM(long pid, Writer writer) throws IOException {
+    private static VirtualMachine attachVM(long pid, Writer writer) throws IOException {
         for (int i = 0; i < 3; i++) {
             VirtualMachine vm;
             try {
@@ -123,7 +141,7 @@ public final class GameDumpCreator {
             }
 
             if (vm instanceof sun.tools.attach.HotSpotVirtualMachine) {
-                return (sun.tools.attach.HotSpotVirtualMachine) vm;
+                return vm;
             } else {
                 String message = "Unsupported VM type " + vm.getClass();
                 LOG.log(Level.WARNING, message);
@@ -136,8 +154,11 @@ public final class GameDumpCreator {
         return null;
     }
 
-    private static boolean runJcmd(sun.tools.attach.HotSpotVirtualMachine vm, String command, Appendable target) throws IOException {
-        try (Reader reader = new InputStreamReader(vm.executeJCmd(command), OperatingSystem.NATIVE_CHARSET)) {
+    private static boolean runJcmd(VirtualMachine vm, String command, Appendable target) throws IOException {
+        assert vm instanceof sun.tools.attach.HotSpotVirtualMachine;
+
+        try (Reader reader = new InputStreamReader(
+                ((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command), OperatingSystem.NATIVE_CHARSET)) {
             CharBuffer dataCache = CharBuffer.allocate(256);
             while (reader.read(dataCache) > 0) {
                 dataCache.flip();
