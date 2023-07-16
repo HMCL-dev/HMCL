@@ -65,6 +65,18 @@ public final class LogExporter {
 
         return CompletableFuture.runAsync(() -> {
             try (Zipper zipper = new Zipper(zipFile)) {
+
+                Path logsDir = runDirectory.resolve("logs");
+                if (Files.exists(logsDir.resolve("debug.log"))) {
+                    zipper.putFile(logsDir.resolve("debug.log"), "debug.log");
+                }
+                if (Files.exists(logsDir.resolve("latest.log"))) {
+                    zipper.putFile(logsDir.resolve("latest.log"), "latest.log");
+                }
+                if (Files.exists(logsDir.resolve("fml-client-latest.log"))) {
+                    zipper.putFile(logsDir.resolve("fml-client-latest.log"), "fml-client-latest.log");
+                }
+
                 processLogs(runDirectory.resolve("liteconfig"), "*.log", "liteconfig", zipper);
                 processLogs(runDirectory.resolve("logs"), "*.log", "logs", zipper);
                 processLogs(runDirectory, "*.log", "runDirectory", zipper);
