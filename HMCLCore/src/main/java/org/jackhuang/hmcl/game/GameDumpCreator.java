@@ -110,15 +110,30 @@ public final class GameDumpCreator {
         runJcmd(vm, "Thread.print", writer);
     }
 
-    private static sun.tools.attach.HotSpotVirtualMachine attachVM(long lvmid, Writer writer) throws IOException {
-        try {
-            return (sun.tools.attach.HotSpotVirtualMachine) VirtualMachine.attach(String.valueOf(lvmid));
-        } catch (Throwable e) {
-            LOG.log(Level.WARNING, "An exception encountered while attaching vm " + lvmid, e);
-            writer.write(StringUtils.getStackTrace(e));
-            writer.write('\n');
-            return null;
+    private static sun.tools.attach.HotSpotVirtualMachine attachVM(long pid, Writer writer) throws IOException {
+        for (int i = 0; i < 3; i++) {
+            VirtualMachine vm;
+            try {
+                vm = VirtualMachine.attach(String.valueOf(pid));
+            } catch (Throwable e) {
+                LOG.log(Level.WARNING, "An exception encountered while attaching vm " + pid, e);
+                writer.write(StringUtils.getStackTrace(e));
+                writer.write('\n');
+                continue;
+            }
+
+            if (vm instanceof sun.tools.attach.HotSpotVirtualMachine) {
+                return (sun.tools.attach.HotSpotVirtualMachine) vm;
+            } else {
+                String message = "Unsupported VM type " + vm.getClass();
+                LOG.log(Level.WARNING, message);
+                writer.write(message);
+                writer.write('\n');
+                return null;
+            }
         }
+
+        return null;
     }
 
     private static boolean runJcmd(sun.tools.attach.HotSpotVirtualMachine vm, String command, Appendable target) throws IOException {
