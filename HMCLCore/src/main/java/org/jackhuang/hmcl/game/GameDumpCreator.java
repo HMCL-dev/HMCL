@@ -50,7 +50,7 @@ public final class GameDumpCreator {
                 && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
     }
 
-    public static void writeDumpTo(long pid, Path path) throws IOException, InterruptedException, ClassNotFoundException, AttachNotSupportedException {
+    public static void writeDumpTo(long pid, Path path) throws IOException, InterruptedException, ClassNotFoundException {
         if (!checkDependencies()) {
             throw new ClassNotFoundException("com.sun.tools.attach.VirtualMachine");
         }
@@ -141,7 +141,7 @@ public final class GameDumpCreator {
         executeJCmd(vm, "Thread.print", writer);
     }
 
-    private static VirtualMachine attachVM(String lvmid, Writer writer) throws IOException, AttachNotSupportedException {
+    private static VirtualMachine attachVM(String lvmid, Writer writer) throws IOException {
         for (int i = 0; i < RETRY_TIME; i++) {
             try {
                 return VirtualMachine.attach(lvmid);
@@ -154,7 +154,7 @@ public final class GameDumpCreator {
 
         String message = "Cannot attach VM " + lvmid;
         writer.write(message);
-        throw new AttachNotSupportedException(message);
+        throw new IOException(message);
     }
 
     private static void executeJCmd(VirtualMachine vm, String command, Appendable target) throws IOException {
