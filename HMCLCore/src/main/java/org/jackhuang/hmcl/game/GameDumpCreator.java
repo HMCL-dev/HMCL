@@ -21,74 +21,24 @@ package org.jackhuang.hmcl.game;
 import com.sun.tools.attach.VirtualMachine;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class GameDumpCreator {
-    private static final Pattern ACCESS_TOKEN_HIDER = Pattern.compile("--accessToken [0-9a-f]*");
+    private static final Pattern ACCESS_TOKEN_HIDER = Pattern.compile("--accessToken \\S+");
 
     private GameDumpCreator() {
-    }
-
-    private static final class DumpHead {
-        private final Map<String, String> infos = new LinkedHashMap<>();
-
-        public void push(String key, String value) {
-            infos.put(key, value);
-        }
-
-        public void writeTo(PrintWriter printWriter) {
-            printWriter.write("===== Minecraft JStack Dump =====\n");
-            for (Map.Entry<String, String> entry : infos.entrySet()) {
-                printWriter.write(entry.getKey());
-                printWriter.write(": ");
-
-                if (entry.getValue().contains("\n")) {
-                    // Multiple Line Value
-                    printWriter.write('{');
-                    printWriter.write('\n');
-
-                    String[] lines = entry.getValue().split("\n");
-                    for (int i = 0; i < lines.length; i++) {
-                        if (i != lines.length - 1) {
-                            printWriter.write("    ");
-                            printWriter.write(lines[i]);
-                            printWriter.write('\n');
-                        } else {
-                            // Last line
-                            if (lines[i].length() == 0) {
-                                // An empty last Line
-                                printWriter.write('}');
-                            } else {
-                                // Not an empty last lien
-                                printWriter.write("    ");
-                                printWriter.write(lines[i]);
-                                printWriter.write('\n');
-                                printWriter.write('}');
-                            }
-                        }
-                    }
-                } else {
-                    // Single Line Value
-                    printWriter.write(entry.getValue());
-                }
-                printWriter.write('\n');
-            }
-            printWriter.write('\n');
-            printWriter.write('\n');
-        }
     }
 
     private static final int TOOL_VERSION = 8;
@@ -105,65 +55,86 @@ public final class GameDumpCreator {
             throw new ClassNotFoundException("com.sun.tools.attach.VirtualMachine");
         }
 
-        try (PrintWriter printWriter = new PrintWriter(Files.newBufferedWriter(path), false)) {
-            writeDumpHeadTo(pid, printWriter);
+        try (Writer writer = Files.newBufferedWriter(path)) {
+            sun.tools.attach.HotSpotVirtualMachine vm = attachVM(pid, writer);
+            if (vm == null)
+                return;
 
-            for (int i = 0; i < DUMP_TIME; i++) {
-                writeDumpBodyTo(pid, printWriter);
-                printWriter.write("====================\n");
+            try {
+                writeDumpHeadTo(vm, writer);
+                writer.write("====================\n");
+                writeDumpBodyTo(vm, writer);
+            } finally {
+                vm.detach();
+            }
 
-                if (i < DUMP_TIME - 1) {
-                    Thread.sleep(3000);
+            for (int i = 1; i < DUMP_TIME; i++) {
+                Thread.sleep(3000);
+                writer.write("====================\n");
+
+                vm = attachVM(pid, writer);
+                if (vm != null) {
+                    try {
+                        writeDumpBodyTo(vm, writer);
+                    } finally {
+                        vm.detach();
+                    }
                 }
             }
         }
     }
 
-    private static void writeDumpHeadTo(long lvmid, PrintWriter printWriter) throws IOException {
-        DumpHead dumpHead = new DumpHead();
-        dumpHead.push("Tool Version", String.valueOf(TOOL_VERSION));
-        dumpHead.push("VM PID", String.valueOf(lvmid));
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            attachVM(lvmid, "VM.command_line", stringBuilder);
-            dumpHead.push("VM Command Line", ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"));
-        }
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            attachVM(lvmid, "VM.version", stringBuilder);
-            dumpHead.push("VM Version", stringBuilder.toString());
-        }
+    private static void writeDumpHeadTo(sun.tools.attach.HotSpotVirtualMachine vm, Writer writer) throws IOException {
+        writer.write("===== Minecraft JStack Dump =====\n");
 
-        dumpHead.writeTo(printWriter);
+        writer.write("Tool Version: " + TOOL_VERSION + "\n");
+        writer.write("VM PID: " + vm.id() + "\n");
+
+        StringBuilder builder = new StringBuilder(1024);
+        if (runJcmd(vm, "VM.command_line", builder)) {
+            writer.write(ACCESS_TOKEN_HIDER.matcher(builder).replaceAll("--accessToken <access token>"));
+        } else {
+            writer.write("VM Arguments:\n");
+            writer.append(builder);
+        }
+        writer.write('\n');
+
+        builder.setLength(0);
+        runJcmd(vm, "VM.version", builder);
+        writer.write("VM Version:\n");
+        writer.append(builder);
+        writer.write('\n');
     }
 
-    private static void writeDumpBodyTo(long lvmid, PrintWriter printWriter) throws IOException {
-        attachVM(lvmid, "Thread.print", printWriter);
+    private static void writeDumpBodyTo(sun.tools.attach.HotSpotVirtualMachine vm, Writer writer) throws IOException {
+        runJcmd(vm, "Thread.print", writer);
     }
 
-    private static void attachVM(long lvmid, String command, Appendable appendable) throws IOException {
+    private static sun.tools.attach.HotSpotVirtualMachine attachVM(long lvmid, Writer writer) throws IOException {
         try {
-            VirtualMachine vm = VirtualMachine.attach(String.valueOf(lvmid));
-
-            try (InputStreamReader inputStreamReader = new InputStreamReader(new BufferedInputStream(((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command)))) {
-                char[] dataCache = new char[256];
-                int status;
-
-                do {
-                    status = inputStreamReader.read(dataCache);
-
-                    if (status > 0) {
-                        appendable.append(CharBuffer.wrap(dataCache, 0, status));
-                    }
-                } while (status > 0);
-            } finally {
-                vm.detach();
-            }
-        } catch (Throwable throwable) {
-            LOG.log(Level.WARNING, String.format("An Exception happened while attaching vm %d", lvmid), throwable);
-            appendable.append('\n');
-            appendable.append(StringUtils.getStackTrace(throwable));
-            appendable.append('\n');
+            return (sun.tools.attach.HotSpotVirtualMachine) VirtualMachine.attach(String.valueOf(lvmid));
+        } catch (Throwable e) {
+            LOG.log(Level.WARNING, "An exception encountered while attaching vm " + lvmid, e);
+            writer.write(StringUtils.getStackTrace(e));
+            writer.write('\n');
+            return null;
         }
+    }
+
+    private static boolean runJcmd(sun.tools.attach.HotSpotVirtualMachine vm, String command, Appendable target) throws IOException {
+        try (Reader reader = new InputStreamReader(vm.executeJCmd(command), OperatingSystem.NATIVE_CHARSET)) {
+            CharBuffer dataCache = CharBuffer.allocate(256);
+            while (reader.read(dataCache) > 0) {
+                dataCache.flip();
+                target.append(dataCache);
+                dataCache.clear();
+            }
+            return true;
+        } catch (Throwable throwable) {
+            LOG.log(Level.WARNING, "An exception encountered while running jcmd " + vm.id(), throwable);
+            target.append(StringUtils.getStackTrace(throwable));
+            target.append('\n');
+        }
+        return false;
     }
 }
