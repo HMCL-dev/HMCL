@@ -49,7 +49,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
