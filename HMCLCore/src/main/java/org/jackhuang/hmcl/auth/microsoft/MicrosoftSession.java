@@ -110,7 +110,7 @@ public class MicrosoftSession {
     public AuthInfo toAuthInfo() {
         requireNonNull(profile);
 
-        return new AuthInfo(profile.getName(), profile.getId(), accessToken, AuthInfo.USER_TYPE_MOJANG, "{}");
+        return new AuthInfo(profile.getName(), profile.getId(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
     }
 
     public static class User {

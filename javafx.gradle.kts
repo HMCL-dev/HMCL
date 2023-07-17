@@ -41,6 +41,7 @@ val jfxPlatforms = listOf(
     Platform("linux-arm32", "linux-arm32-monocle", unsupportedModules = listOf("media", "web")),
     Platform("linux-arm64", "linux-aarch64"),
     Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
+    Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
 )
 
 val jfxInClasspath =
@@ -76,7 +77,7 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
             val classifier = platform.classifier
             rootProject.subprojects {
                 for (module in jfxModules) {
-                    dependencies.add("implementation", "$groupId:javafx-$module:$version:$classifier")
+                    dependencies.add("compileOnly", "$groupId:javafx-$module:$version:$classifier")
                     dependencies.add("testImplementation", "$groupId:javafx-$module:$version:$classifier")
                 }
             }

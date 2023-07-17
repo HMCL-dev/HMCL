@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -182,7 +183,7 @@ public final class Accounts {
                 globalAccountStorages.setAll((List<Map<Object, Object>>)
                         Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
                         }.getType()));
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 LOG.log(Level.WARNING, "Failed to load global accounts", e);
             }
         }
@@ -325,7 +326,7 @@ public final class Accounts {
             Schedulers.io().execute(() -> {
                 try {
                     finalSelected.logIn();
-                } catch (AuthenticationException e) {
+                } catch (Throwable e) {
                     LOG.log(Level.WARNING, "Failed to log " + finalSelected + " in", e);
                 }
             });
@@ -427,7 +428,11 @@ public final class Accounts {
         if (exception instanceof NoCharacterException) {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
-            return i18n("account.failed.connect_authentication_server");
+            if (exception.getCause() instanceof SSLException) {
+                return i18n("account.failed.ssl");
+            } else {
+                return i18n("account.failed.connect_authentication_server");
+            }
         } else if (exception instanceof ServerResponseMalformedException) {
             return i18n("account.failed.server_response_malformed");
         } else if (exception instanceof RemoteAuthenticationException) {

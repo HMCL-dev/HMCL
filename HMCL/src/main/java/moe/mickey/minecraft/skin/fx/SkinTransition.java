@@ -19,6 +19,7 @@ public class SkinTransition extends Transition {
         return count;
     }
 
+    @SafeVarargs
     public SkinTransition(Duration duration, Function<Double, Double> expression, WritableValue<Number>... observables) {
         setCycleDuration(duration);
         this.expression = expression;

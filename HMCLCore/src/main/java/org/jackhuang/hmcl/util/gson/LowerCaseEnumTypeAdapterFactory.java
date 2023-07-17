@@ -63,12 +63,12 @@ public final class LowerCaseEnumTypeAdapterFactory implements TypeAdapterFactory
                     reader.nextNull();
                     return null;
                 }
-                return lowercaseToConstant.get(reader.nextString().toLowerCase());
+                return lowercaseToConstant.get(reader.nextString().toLowerCase(Locale.ROOT));
             }
         };
     }
 
     private static String toLowercase(Object o) {
-        return o.toString().toLowerCase(Locale.US);
+        return o.toString().toLowerCase(Locale.ROOT);
     }
 }

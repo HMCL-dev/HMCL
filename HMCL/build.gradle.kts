@@ -11,18 +11,21 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
+val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
+        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
+
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
     if (number != null) {
         (number - offset).toString()
     } else {
         val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
-        val prefix = if (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun") "dev" else "unofficial"
+        val prefix = if (isOfficial) "dev" else "unofficial"
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
 }
 val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"
-val versionType = System.getenv("VERSION_TYPE") ?: "nightly"
+val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
@@ -53,7 +56,12 @@ fun createChecksum(file: File) {
 }
 
 fun attachSignature(jar: File) {
-    val keyLocation = System.getenv("HMCL_SIGNATURE_KEY") ?: return
+    val keyLocation = System.getenv("HMCL_SIGNATURE_KEY")
+    if (keyLocation == null) {
+        logger.warn("Missing signature key")
+        return
+    }
+
     val privatekey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(File(keyLocation).readBytes()))
     val signer = Signature.getInstance("SHA512withRSA")
     signer.initSign(privatekey)
@@ -107,7 +115,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2021 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2023 huangyuhui.",
             "Main-Class" to "org.jackhuang.hmcl.Main",
             "Multi-Release" to "true",
             "Implementation-Version" to project.version,
@@ -131,6 +139,10 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.controls/javafx.scene.control.skin"
             ).joinToString(" ")
         )
+
+        System.getenv("GITHUB_SHA")?.also {
+            attributes("GitHub-SHA" to it)
+        }
     }
 
     doLast {

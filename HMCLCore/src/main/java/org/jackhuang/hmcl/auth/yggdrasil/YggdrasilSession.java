@@ -84,6 +84,7 @@ public class YggdrasilSession {
         String name = tryCast(storage.get("displayName"), String.class).orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
         String clientToken = tryCast(storage.get("clientToken"), String.class).orElseThrow(() -> new IllegalArgumentException("clientToken is missing"));
         String accessToken = tryCast(storage.get("accessToken"), String.class).orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
+        @SuppressWarnings("unchecked")
         Map<String, String> userProperties = tryCast(storage.get("userProperties"), Map.class).orElse(null);
         return new YggdrasilSession(clientToken, accessToken, new GameProfile(uuid, name), null, userProperties);
     }
@@ -104,7 +105,7 @@ public class YggdrasilSession {
         if (selectedProfile == null)
             throw new IllegalStateException("No character is selected");
 
-        return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken, AuthInfo.USER_TYPE_MOJANG,
+        return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken, AuthInfo.USER_TYPE_MSA,
                 Optional.ofNullable(userProperties)
                         .map(properties -> properties.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey,

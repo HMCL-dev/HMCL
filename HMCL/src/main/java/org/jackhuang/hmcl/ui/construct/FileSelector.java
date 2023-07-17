@@ -29,6 +29,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 import java.io.File;
@@ -36,7 +37,7 @@ import java.io.File;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class FileSelector extends HBox {
-    private StringProperty value = new SimpleStringProperty();
+    private final StringProperty value = new SimpleStringProperty();
     private String chooserTitle = i18n("selector.choose_file");
     private boolean directory = false;
     private final ObservableList<FileChooser.ExtensionFilter> extensionFilters = FXCollections.observableArrayList();
@@ -77,24 +78,30 @@ public class FileSelector extends HBox {
 
     public FileSelector() {
         JFXTextField customField = new JFXTextField();
-        customField.textProperty().bindBidirectional(valueProperty());
+        FXUtils.bindString(customField, valueProperty());
 
         JFXButton selectButton = new JFXButton();
         selectButton.setGraphic(SVG.folderOpen(Theme.blackFillBinding(), 15, 15));
-        selectButton.setOnMouseClicked(e -> {
+        selectButton.setOnAction(e -> {
             if (directory) {
                 DirectoryChooser chooser = new DirectoryChooser();
                 chooser.setTitle(chooserTitle);
                 File dir = chooser.showDialog(Controllers.getStage());
-                if (dir != null)
-                    customField.setText(dir.getAbsolutePath());
+                if (dir != null) {
+                    String path = dir.getAbsolutePath();
+                    customField.setText(path);
+                    value.setValue(path);
+                }
             } else {
                 FileChooser chooser = new FileChooser();
                 chooser.getExtensionFilters().addAll(getExtensionFilters());
                 chooser.setTitle(chooserTitle);
                 File file = chooser.showOpenDialog(Controllers.getStage());
-                if (file != null)
-                    customField.setText(file.getAbsolutePath());
+                if (file != null) {
+                    String path = file.getAbsolutePath();
+                    customField.setText(path);
+                    value.setValue(path);
+                }
             }
         });
 

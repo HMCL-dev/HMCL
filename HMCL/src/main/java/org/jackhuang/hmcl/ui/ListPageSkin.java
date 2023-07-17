@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXScrollPane;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -56,7 +55,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 Bindings.bindContent(list.getChildren(), skinnable.itemsProperty());
 
                 scrollPane.setContent(content);
-                JFXScrollPane.smoothScrolling(scrollPane);
+                FXUtils.smoothScrolling(scrollPane);
             }
             
             VBox vBox = new VBox();

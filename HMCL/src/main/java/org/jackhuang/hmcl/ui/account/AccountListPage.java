@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXScrollPane;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
@@ -187,7 +186,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                 Bindings.bindContent(list.getChildren(), skinnable.items);
 
                 scrollPane.setContent(list);
-                JFXScrollPane.smoothScrolling(scrollPane);
+                FXUtils.smoothScrolling(scrollPane);
 
                 setCenter(scrollPane);
             }

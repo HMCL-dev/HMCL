@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
+import java.util.Locale;
+
 public class HintPane extends VBox {
     private final Text label = new Text();
     private final StringProperty text = new SimpleStringProperty(this, "text");
@@ -42,7 +44,7 @@ public class HintPane extends VBox {
 
     public HintPane(MessageDialogPane.MessageType type) {
         setFillWidth(true);
-        getStyleClass().addAll("hint", type.name().toLowerCase());
+        getStyleClass().addAll("hint", type.name().toLowerCase(Locale.ROOT));
         HBox hbox = new HBox();
         hbox.setAlignment(Pos.CENTER_LEFT);
 

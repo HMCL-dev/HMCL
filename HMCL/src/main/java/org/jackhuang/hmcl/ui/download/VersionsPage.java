@@ -28,7 +28,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -53,6 +52,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.HMCLService;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.util.EnumMap;
@@ -179,7 +179,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         btnRefresh.setGraphic(wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
 
-        MutableObject<RemoteVersionListCell> lastCell = new MutableObject<>();
+        Holder<RemoteVersionListCell> lastCell = new Holder<>();
         EnumMap<VersionIconType, Image> icons = new EnumMap<>(VersionIconType.class);
         list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, icons));
 
@@ -273,10 +273,10 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         final RipplerContainer ripplerContainer = new RipplerContainer(content);
         final StackPane pane = new StackPane();
 
-        private final MutableObject<RemoteVersionListCell> lastCell;
+        private final Holder<RemoteVersionListCell> lastCell;
         private final EnumMap<VersionIconType, Image> icons;
 
-        RemoteVersionListCell(MutableObject<RemoteVersionListCell> lastCell, EnumMap<VersionIconType, Image> icons) {
+        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, EnumMap<VersionIconType, Image> icons) {
             this.lastCell = lastCell;
             this.icons = icons;
 
@@ -294,9 +294,9 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             super.updateItem(remoteVersion, empty);
 
             // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (this == lastCell.getValue() && !isVisible())
+            if (this == lastCell.value && !isVisible())
                 return;
-            lastCell.setValue(this);
+            lastCell.value = this;
 
             if (empty) {
                 setGraphic(null);

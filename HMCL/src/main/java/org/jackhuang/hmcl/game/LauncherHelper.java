@@ -150,8 +150,9 @@ public final class LauncherHelper {
                                 }
                             }),
                             Task.composeAsync(() -> {
-                                if (setting.isUseSoftwareRenderer() && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getSoftwareRendererLoader(javaVersion);
+                                Renderer renderer = setting.getRenderer();
+                                if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                                    Library lib = NativePatcher.getMesaLoader(javaVersion, renderer);
                                     if (lib == null)
                                         return null;
                                     File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
@@ -160,11 +161,13 @@ public final class LauncherHelper {
                                         return null;
                                     }
 
+                                    String agent = file.getAbsolutePath() + "=" + renderer.name().toLowerCase(Locale.ROOT);
+
                                     if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
                                         return new LibraryDownloadTask(dependencyManager, file, lib)
-                                                .thenRunAsync(() -> javaAgents.add(file.getAbsolutePath()));
+                                                .thenRunAsync(() -> javaAgents.add(agent));
                                     } else {
-                                        javaAgents.add(file.getAbsolutePath());
+                                        javaAgents.add(agent);
                                         return null;
                                     }
                                 } else {
@@ -817,9 +820,12 @@ public final class LauncherHelper {
                 Platform.runLater(() -> logWindow.logLine(filteredLog, level));
             }
 
-            if (!lwjgl && (!detectWindow || filteredLog.toLowerCase().contains("lwjgl version") || filteredLog.toLowerCase().contains("lwjgl openal"))) {
-                lwjgl = true;
-                finishLaunch();
+            if (!lwjgl) {
+                String lowerCaseLog = filteredLog.toLowerCase(Locale.ROOT);
+                if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal")) {
+                    lwjgl = true;
+                    finishLaunch();
+                }
             }
         }
 

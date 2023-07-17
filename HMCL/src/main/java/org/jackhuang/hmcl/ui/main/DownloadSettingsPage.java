@@ -48,7 +48,7 @@ public class DownloadSettingsPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        JFXScrollPane.smoothScrolling(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
@@ -90,7 +90,7 @@ public class DownloadSettingsPage extends StackPane {
 
                     JFXComboBox<String> cboDownloadSource = new JFXComboBox<>();
                     cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-                    downloadSourcePane.setCenter(cboDownloadSource);
+                    downloadSourcePane.setRight(cboDownloadSource);
                     FXUtils.setLimitWidth(cboDownloadSource, 420);
 
                     cboDownloadSource.getItems().setAll(DownloadProviders.rawProviders.keySet());

@@ -33,6 +33,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -45,6 +46,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
@@ -67,9 +69,12 @@ import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MainPage extends StackPane implements DecoratorPage {
+    private static final String ANNOUNCEMENT = "announcement";
+
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
     private final PopupMenu menu = new PopupMenu();
@@ -82,7 +87,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ObservableList<Node> versionNodes;
     private Profile profile;
 
-    private final VBox announcementPane;
+    private VBox announcementPane;
     private final StackPane updatePane;
     private final JFXButton menuButton;
 
@@ -111,7 +116,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
-        announcementPane = new VBox(16);
+        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
+            announcementPane = new VBox(16);
+            if (Metadata.isNightly()) {
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
+            } else if (Metadata.isDev()) {
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
+            }
+            getChildren().add(announcementPane);
+        }
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
@@ -215,12 +228,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
             graphic.setTranslateX(12);
+            runInFX(() -> FXUtils.installFastTooltip(menuButton, i18n("version.switch")));
             menuButton.setGraphic(graphic);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
 
-        getChildren().setAll(announcementPane, updatePane, launchPane);
+        getChildren().addAll(updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
@@ -232,14 +246,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
-    }
-
-    public MainPage() {
-        if (Metadata.isNightly()) {
-            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
-        } else if (Metadata.isDev()) {
-            announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
-        }
     }
 
     private void showUpdate(boolean show) {
@@ -254,18 +260,22 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void doAnimation(boolean show) {
-        Duration duration = Duration.millis(320);
-        Timeline nowAnimation = new Timeline();
-        nowAnimation.getKeyFrames().addAll(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(updatePane.translateXProperty(), show ? 260 : 0, SINE)),
-                new KeyFrame(duration,
-                        new KeyValue(updatePane.translateXProperty(), show ? 0 : 260, SINE)));
-        if (show) nowAnimation.getKeyFrames().add(
-                new KeyFrame(Duration.ZERO, e -> updatePane.setVisible(true)));
-        else nowAnimation.getKeyFrames().add(
-                new KeyFrame(duration, e -> updatePane.setVisible(false)));
-        nowAnimation.play();
+        if (AnimationUtils.isAnimationEnabled()) {
+            Duration duration = Duration.millis(320);
+            Timeline nowAnimation = new Timeline();
+            nowAnimation.getKeyFrames().addAll(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(updatePane.translateXProperty(), show ? 260 : 0, SINE)),
+                    new KeyFrame(duration,
+                            new KeyValue(updatePane.translateXProperty(), show ? 0 : 260, SINE)));
+            if (show) nowAnimation.getKeyFrames().add(
+                    new KeyFrame(Duration.ZERO, e -> updatePane.setVisible(true)));
+            else nowAnimation.getKeyFrames().add(
+                    new KeyFrame(duration, e -> updatePane.setVisible(false)));
+            nowAnimation.play();
+        } else {
+            updatePane.setVisible(show);
+        }
     }
 
     private void launch() {
@@ -287,6 +297,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void closeUpdateBubble() {
         showUpdate.unbind();
         showUpdate.set(false);
+    }
+
+    public void hideAnnouncementPane() {
+        if (announcementPane != null) {
+            config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
+            Pane parent = (Pane) announcementPane.getParent();
+            if (parent != null)
+                parent.getChildren().remove(announcementPane);
+            announcementPane = null;
+        }
     }
 
     @Override

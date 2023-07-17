@@ -211,6 +211,10 @@ public final class CommandBuilder {
         return raw.removeIf(i -> pred.test(i.arg));
     }
 
+    public boolean noneMatch(Predicate<String> predicate) {
+        return raw.stream().noneMatch(it -> predicate.test(it.arg));
+    }
+
     @Override
     public String toString() {
         return raw.stream().map(i -> i.parse ? parse(i.arg) : i.arg).collect(Collectors.joining(" "));
@@ -293,7 +297,7 @@ public final class CommandBuilder {
     }
 
     public static String toBatchStringLiteral(String s) {
-        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') : s;
+        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') + '"' : s;
     }
 
     public static String toShellStringLiteral(String s) {

@@ -39,6 +39,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
+@SuppressWarnings("deprecation")
 public class TabHeader extends Control implements TabControl, PageAware {
 
     public TabHeader(Tab<?>... tabs) {

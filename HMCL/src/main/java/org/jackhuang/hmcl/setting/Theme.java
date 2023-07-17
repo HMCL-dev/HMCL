@@ -189,7 +189,7 @@ public class Theme {
     }
 
     public static String getColorDisplayName(Color c) {
-        return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase() : null;
+        return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase(Locale.ROOT) : null;
     }
 
     private static final ObjectBinding<Color> BLACK_FILL = Bindings.createObjectBinding(() -> BLACK);
@@ -217,7 +217,7 @@ public class Theme {
     public static class TypeAdapter extends com.google.gson.TypeAdapter<Theme> {
         @Override
         public void write(JsonWriter out, Theme value) throws IOException {
-            out.value(value.getName().toLowerCase());
+            out.value(value.getName().toLowerCase(Locale.ROOT));
         }
 
         @Override

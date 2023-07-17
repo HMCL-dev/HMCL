@@ -20,6 +20,7 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
@@ -56,10 +57,8 @@ public final class Main {
 
     public static void main(String[] args) {
         System.setProperty("java.net.useSystemProxies", "true");
-        System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);
         System.setProperty("javafx.autoproxy.disable", "true");
-        // Fix title bar not displaying in GTK systems
-        System.setProperty("jdk.gtk.version", "2");
+        System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         checkDirectoryPath();
 
@@ -73,6 +72,7 @@ public final class Main {
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
         checkJavaFX();
+        detectFractureiser();
 
         Launcher.main(args);
     }
@@ -88,6 +88,13 @@ public final class Main {
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
             showErrorAndExit("Exclamation mark(!) is not allowed in the path where HMCL is in.\n"
                     + "The path is " + currentDirectory);
+        }
+    }
+
+    private static void detectFractureiser() {
+        if (FractureiserDetector.detect()) {
+            LOG.log(Level.SEVERE, "Detected that this computer is infected by fractureiser");
+            showErrorAndExit(i18n("fatal.fractureiser"));
         }
     }
 

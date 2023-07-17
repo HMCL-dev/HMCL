@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.scene.control.Hyperlink;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 public class JFXHyperlink extends Hyperlink {
@@ -33,6 +34,10 @@ public class JFXHyperlink extends Hyperlink {
         super(text);
 
         setGraphic(SVG.launchOutline(Theme.blackFillBinding(), 16, 16));
+    }
+
+    public void setExternalLink(String externalLink) {
+        this.setOnAction(e -> FXUtils.openLink(externalLink));
     }
 }
 
