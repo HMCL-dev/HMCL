@@ -7,7 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Callback;
-import org.apache.commons.lang3.mutable.MutableObject;
+import org.jackhuang.hmcl.util.Holder;
 
 import java.lang.reflect.Array;
 import java.util.EnumMap;
@@ -22,7 +22,7 @@ public class NBTTreeView extends TreeView<Tag> {
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
-        MutableObject<Object> lastCell = new MutableObject<>();
+        Holder<Object> lastCell = new Holder<>();
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
         return view -> new TreeCell<Tag>() {
@@ -47,9 +47,9 @@ public class NBTTreeView extends TreeView<Tag> {
                 super.updateItem(item, empty);
 
                 // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.getValue() && !isVisible())
+                if (this == lastCell.value && !isVisible())
                     return;
-                lastCell.setValue(this);
+                lastCell.value = this;
 
                 ImageView imageView = (ImageView) this.getGraphic();
                 if (imageView == null) {

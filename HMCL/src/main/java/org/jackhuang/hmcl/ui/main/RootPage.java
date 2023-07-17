@@ -102,7 +102,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 Controllers.navigate(new NBTEditorPage(file));
                             } catch (Throwable e) {
                                 LOG.log(Level.WARNING, "Fail to open nbt file", e);
-                                Controllers.dialog("", "", MessageDialogPane.MessageType.WARNING); // TODO
+                                Controllers.dialog("Fail to open nbt file", // TODO
+                                        i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         }
                     });
