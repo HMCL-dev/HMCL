@@ -11,7 +11,7 @@ dependencies {
         exclude(group = "org.jetbrains", module = "annotations")
     }
     api("org.jenkins-ci:constant-pool-scanner:1.2")
-    api("com.github.steveice10:opennbt:1.1")
+    api("com.github.steveice10:opennbt:1.4")
     api("com.nqzero:permit-reflect:0.3")
     api("org.nanohttpd:nanohttpd:2.3.1")
     api("org.apache.commons:commons-compress:1.21")
