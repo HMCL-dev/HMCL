@@ -1146,6 +1146,10 @@
     -fx-background-color: #EEE9E0;
 }
 
+.log-window-list-cell:selected {
+    -fx-background-color: #C4C4C4;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Spinner                                                                  *

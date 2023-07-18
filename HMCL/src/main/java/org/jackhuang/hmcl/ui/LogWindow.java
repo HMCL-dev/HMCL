@@ -33,6 +33,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpCreator;
@@ -149,6 +150,7 @@ public final class LogWindow extends Stage {
     private static class Log {
         private final String log;
         private final Log4jLevel level;
+        private boolean selected = false;
 
         public Log(String log, Log4jLevel level) {
             this.log = log;
@@ -270,6 +272,9 @@ public final class LogWindow extends Stage {
         private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
         private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
+        private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+
+        private final Set<ListCell<Log>> selected = new HashSet<>();
 
         private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
             ToggleButton button = new ToggleButton();
@@ -340,6 +345,27 @@ public final class LogWindow extends Stage {
                         setPadding(new Insets(2));
                         setWrapText(true);
                         setGraphic(null);
+
+                        setOnMouseClicked(event -> {
+                            if (!event.isControlDown()) {
+                                for (ListCell<Log> logListCell: selected) {
+                                    if (logListCell != this) {
+                                        logListCell.pseudoClassStateChanged(SELECTED, false);
+                                        if (logListCell.getItem() != null) {
+                                            logListCell.getItem().selected = false;
+                                        }
+                                    }
+                                }
+
+                                selected.clear();
+                            }
+
+                            selected.add(this);
+                            pseudoClassStateChanged(SELECTED, true);
+                            if (getItem() != null) {
+                                getItem().selected = true;
+                            }
+                        });
                     }
 
                     @Override
@@ -358,11 +384,30 @@ public final class LogWindow extends Stage {
                         pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
                         pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
                         pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
+                        pseudoClassStateChanged(SELECTED, !empty && item.selected);
+
                         if (empty) {
                             setText(null);
                         } else {
                             setText(item.log);
                         }
+                    }
+                });
+
+                listView.setOnKeyPressed(event -> {
+                    if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                        StringBuilder stringBuilder = new StringBuilder();
+
+                        for (Log item : listView.getItems()) {
+                            if (item != null && item.selected) {
+                                if (item.log != null) {
+                                    stringBuilder.append(item.log);
+                                }
+                                stringBuilder.append('\n');
+                            }
+                        }
+
+                        FXUtils.copyText(stringBuilder.toString());
                     }
                 });
 
