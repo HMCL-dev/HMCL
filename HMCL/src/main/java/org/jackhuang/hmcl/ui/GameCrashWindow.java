@@ -179,6 +179,7 @@ public class GameCrashWindow extends Stage {
                                     result.getMatcher().group("version")), Controllers::onHyperlinkAction));
                             segments.add(new Text("\n"));
                             break;
+                        case MOD_FOREST_OPTIFINE:
                         case TWILIGHT_FOREST_OPTIFINE:
                         case PERFORMANT_FOREST_OPTIFINE:
                         case JADE_FOREST_OPTIFINE:
