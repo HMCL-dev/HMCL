@@ -47,7 +47,7 @@ public final class UpdateChecker {
                 } else {
                     // We can update from development version to stable version,
                     // which can be downgrading.
-                    if (latest.getChannel() == UpdateChannel.DEVELOPMENT) {
+                    if (latest.getChannel() == UpdateChannel.NIGHTLY) {
                         return !latest.getVersion().equals(Metadata.VERSION);
                     } else {
                         return asVersion(latest.getVersion()).compareTo(asVersion(Metadata.VERSION)) != 0;
@@ -58,7 +58,7 @@ public final class UpdateChecker {
     private static ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
-        requestCheckUpdate(UpdateChannel.getChannel());
+        requestCheckUpdate(UpdateChannel.getCustomUpdateChannel());
     }
 
     public static RemoteVersion getLatestVersion() {
@@ -90,22 +90,38 @@ public final class UpdateChecker {
             throw new IOException("Update system is disabled.");
         }
 
-        if (channel == UpdateChannel.STABLE || channel == UpdateChannel.NIGHTLY) {
-            if (!IntegrityChecker.isSelfVerified()) {
-                throw new IOException("Self verification failed");
+        switch (channel) {
+            case STABLE:
+            case DEVELOPMENT: {
+                if (!IntegrityChecker.isSelfVerified()) {
+                    throw new IOException("Self verification failed");
+                }
+
+                String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+                        pair("version", Metadata.VERSION),
+                        pair("channel", channel.channelName)));
+
+                return RemoteVersion.fetch(channel, url);
             }
 
-            String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
-                    pair("version", Metadata.VERSION),
-                    pair("channel", channel.channelName)));
+            case NIGHTLY: {
+                if (!Metadata.isNightly()) {
+                    throw new IOException("Non nightly version cannot update to a nightly version.");
+                }
+                if (!GitHubSHAChecker.isSelfVerified()) {
+                    throw new IOException("GitHub-SHA doesn't belong to the official repository");
+                }
 
-            return RemoteVersion.fetch(channel, url);
-        } else {
-            if (!GitHubSHAChecker.isSelfVerified()) {
-                throw new IOException("GitHub-SHA doesn't belong to the official repository");
+                return GitHubSHAChecker.getLatestArtifact();
             }
 
-            return GitHubSHAChecker.getLatestArtifact();
+            case NONE: {
+                throw new IOException("No need to check update with update channel NONE.");
+            }
+
+            default: {
+                throw new IllegalArgumentException();
+            }
         }
     }
 

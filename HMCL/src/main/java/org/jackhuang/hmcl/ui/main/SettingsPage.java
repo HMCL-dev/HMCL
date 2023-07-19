@@ -23,6 +23,8 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.control.ToggleGroup;
+import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -100,13 +102,21 @@ public final class SettingsPage extends SettingsView {
         updateListener.invalidated(null);
 
         ToggleGroup updateChannelGroup = new ToggleGroup();
-        chkUpdateDev.setToggleGroup(updateChannelGroup);
-        chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
-        chkUpdateStable.setToggleGroup(updateChannelGroup);
-        chkUpdateStable.setUserData(UpdateChannel.STABLE);
+        if (Metadata.isStable() || Metadata.isDev()) {
+            chkUpdateDev.setToggleGroup(updateChannelGroup);
+            chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
+            chkUpdateStable.setToggleGroup(updateChannelGroup);
+            chkUpdateStable.setUserData(UpdateChannel.STABLE);
+        } else {
+            chkUpdateNightly.setToggleGroup(updateChannelGroup);
+            chkUpdateNightly.setUserData(UpdateChannel.NIGHTLY);
+            chkUpdateNone.setToggleGroup(updateChannelGroup);
+            chkUpdateNone.setUserData(UpdateChannel.NONE);
+        }
         ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
-        updateChannel.set(UpdateChannel.getChannel());
+        updateChannel.set(UpdateChannel.getCustomUpdateChannel());
         updateChannel.addListener((a, b, newValue) -> {
+            ConfigHolder.config().setUpdateChannel(newValue);
             UpdateChecker.requestCheckUpdate(newValue);
         });
         // ====

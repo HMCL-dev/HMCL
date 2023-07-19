@@ -120,6 +120,6 @@ public final class GitHubSHAChecker {
             throw new IOException("Invalid stable version number");
         }
 
-        return new RemoteVersion(UpdateChannel.DEVELOPMENT, stableVersionParts[0] + "." + stableVersionParts[1] + "." + "dev-" + workflowLookup.runs[0].sha.substring(0, 7), artifactsLookup.artifacts[0].url + "/zip", RemoteVersion.Type.GitHub_ARTIFACT, null);
+        return new RemoteVersion(UpdateChannel.NIGHTLY, stableVersionParts[0] + "." + stableVersionParts[1] + "." + "dev-" + workflowLookup.runs[0].sha.substring(0, 7), artifactsLookup.artifacts[0].url + "/zip", RemoteVersion.Type.GitHub_ARTIFACT, null);
     }
 }

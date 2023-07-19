@@ -30,6 +30,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -51,8 +52,17 @@ public abstract class SettingsView extends StackPane {
     protected final ComponentSublist fileCommonLocationSublist;
     protected final Label lblUpdate;
     protected final Label lblUpdateSub;
+
+    /**
+     * On an official stable or developing artifact, chkUpdateStable and chkUpdateDev will be not null, chkUpdateNightly and chkUpateNone will be null.
+     * On an official nightly artifact, chkUpdateStable and chkUpdateDev will be null, chkUpdateNightly and chkUpateNone will be not null.
+     * Otherwise, chkUpdateStable and chkUpdateDev will be not null, chkUpdateNightly and chkUpateNone will be null.
+     */
     protected final JFXRadioButton chkUpdateStable;
     protected final JFXRadioButton chkUpdateDev;
+    protected final JFXRadioButton chkUpdateNightly;
+    protected final JFXRadioButton chkUpdateNone;
+
     protected final JFXButton btnUpdate;
     protected final ScrollPane scroll;
 
@@ -130,13 +140,28 @@ public abstract class SettingsView extends StackPane {
                         VBox content = new VBox();
                         content.setSpacing(8);
 
-                        chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
-                        chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                        if (Metadata.isStable() || Metadata.isDev()) {
+                            chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
+                            chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+
+                            chkUpdateNightly = null;
+                            chkUpdateNone = null;
+
+                            content.getChildren().addAll(chkUpdateStable, chkUpdateDev);
+                        } else {
+                            chkUpdateStable = null;
+                            chkUpdateDev = null;
+
+                            chkUpdateNightly = new JFXRadioButton(i18n("update.channel.nightly"));
+                            chkUpdateNone = new JFXRadioButton(i18n("update.channel.none"));
+
+                            content.getChildren().addAll(chkUpdateNightly, chkUpdateNone);
+                        }
 
                         TextFlow noteWrapper = new TextFlow(new Text(i18n("update.note")));
                         VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
 
-                        content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
+                        content.getChildren().add(noteWrapper);
 
                         updatePane.getContent().add(content);
                     }

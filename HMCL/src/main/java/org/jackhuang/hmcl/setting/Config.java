@@ -34,6 +34,7 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
@@ -70,6 +71,24 @@ public final class Config implements Cloneable, Observable {
         }
         Config instance = new Config();
         PropertyUtils.copyProperties(loaded, instance);
+
+        switch (instance.updateChannel.get()) {
+            case STABLE:
+            case DEVELOPMENT: {
+                if (!Metadata.isStable() && !Metadata.isDev()) {
+                    instance.updateChannel.set(UpdateChannel.getDefaultUpdateChannel());
+                }
+                break;
+            }
+
+            case NIGHTLY: {
+                if (!Metadata.isNightly()) {
+                    instance.updateChannel.set(UpdateChannel.getDefaultUpdateChannel());
+                }
+                break;
+            }
+        }
+
         return instance;
     }
 
@@ -196,6 +215,9 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("shownTips")
     private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
+
+    @SerializedName("allowUpdateToSnapshotVersion")
+    private ObjectProperty<UpdateChannel> updateChannel = new SimpleObjectProperty<>(UpdateChannel.getDefaultUpdateChannel());
 
     private transient ObservableHelper helper = new ObservableHelper(this);
 
@@ -645,5 +667,17 @@ public final class Config implements Cloneable, Observable {
 
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
+    }
+
+    public UpdateChannel getUpdateChannel() {
+        return updateChannel.get();
+    }
+
+    public ObjectProperty<UpdateChannel> updateChannelProperty() {
+        return updateChannel;
+    }
+
+    public void setUpdateChannel(UpdateChannel updateChannel) {
+        this.updateChannel.set(updateChannel);
     }
 }

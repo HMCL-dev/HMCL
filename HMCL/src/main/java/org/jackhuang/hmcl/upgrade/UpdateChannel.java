@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 
 public enum UpdateChannel {
     STABLE("stable"),
     DEVELOPMENT("dev"),
-    NIGHTLY("nightly");
+    NIGHTLY("nightly"),
+    NONE("none");
 
     public final String channelName;
 
@@ -30,13 +32,17 @@ public enum UpdateChannel {
         this.channelName = channelName;
     }
 
-    public static UpdateChannel getChannel() {
+    public static UpdateChannel getDefaultUpdateChannel() {
         if (Metadata.isDev()) {
             return DEVELOPMENT;
         } else if (Metadata.isNightly()) {
-            return NIGHTLY;
+            return NONE;
         } else {
             return STABLE;
         }
+    }
+
+    public static UpdateChannel getCustomUpdateChannel() {
+        return ConfigHolder.config().getUpdateChannel();
     }
 }
