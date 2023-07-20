@@ -135,7 +135,7 @@ public final class UpdateHandler {
 
         Path self = getCurrentLocation();
 
-        if (Metadata.isDev()) {
+        if (Metadata.isNightly()) {
             if (!GitHubSHAChecker.isSelfVerified()) {
                 throw new IOException("Current JAR is not verified");
             }
@@ -162,7 +162,7 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        if (Metadata.isDev()) {
+        if (Metadata.isNightly()) {
             if (!GitHubSHAChecker.isSelfVerified()) {
                 throw new IOException("Current JAR is not verified");
             }

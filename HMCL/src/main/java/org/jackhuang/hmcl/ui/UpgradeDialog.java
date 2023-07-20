@@ -43,9 +43,9 @@ public class UpgradeDialog extends JFXDialogLayout {
         {
             String url;
             if (remoteVersion.getChannel() == UpdateChannel.NIGHTLY) {
-                url = String.format("https://github.com/%s/compare/%s...%s", OFFICIAL_REPOSITORY, GITHUB_SHA, OFFICIAL_BRANCH);
+                url = String.format(SNAPSHOT_CHANGELOG_URL, OFFICIAL_REPOSITORY, GITHUB_SHA, OFFICIAL_BRANCH);
             } else {
-                url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html#nowchange";
+                url = OFFICIAL_CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html#nowchange";
             }
 
             try {

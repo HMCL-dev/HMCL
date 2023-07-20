@@ -37,17 +37,20 @@ public final class Metadata {
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
 
-    public static final String UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://hmcl.huangyuhui.net/api/update_link");
+    public static final String OFFICIAL_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://hmcl.huangyuhui.net/api/update_link");
+    public static final String SNAPSHOT_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/snapshot.json");
+
     public static final String CONTACT_URL = "https://docs.hmcl.net/help.html";
     public static final String HELP_URL = "https://hmcl.huangyuhui.net/help";
-    public static final String CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
+    public static final String OFFICIAL_CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
+    public static final String SNAPSHOT_CHANGELOG_URL = "https://github.com/%s/compare/%s...%s";
     public static final String OFFICIAL_REPOSITORY = "huanghongxun/HMCL";
     public static final String OFFICIAL_BRANCH = "javafx";
     public static final String PUBLISH_URL = "https://www.mcbbs.net/thread-142335-1-1.html";
     public static final String EULA_URL = "https://docs.hmcl.net/eula/hmcl.html";
 
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
-    public static final String GITHUB_SHA = JarUtils.getManifestAttribute("GitHub-SHA", null);
+    public static final String GITHUB_SHA = JarUtils.getManifestAttribute("GitHub-SHA", "");
 
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_DIRECTORY;

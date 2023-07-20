@@ -21,11 +21,9 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 
-import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class GitHubSHAChecker {
@@ -89,37 +87,5 @@ public final class GitHubSHAChecker {
                 }
             }
         }
-    }
-
-    public static RemoteVersion getLatestArtifact() throws IOException {
-        GitHubWorkflowRunLookup workflowLookup = HttpRequest.GET(WORKFLOW_LOOKUP_URL, pair("branch", Metadata.OFFICIAL_BRANCH), pair("event", "push"), pair("per_page", "1"))
-                .header("Accept", "application/vnd.github+json")
-                .authorization(GITHUB_TOKEN)
-                .header("X-GitHub-Api-Version", "2022-11-28")
-                .getJson(GitHubWorkflowRunLookup.class);
-
-        if (workflowLookup.runs.length == 0) {
-            throw new IOException("Broken workflow.");
-        }
-
-        GitHubArtifactsLookup artifactsLookup = HttpRequest.GET(String.format(ARTIFACTS_LOOKUP_URL, workflowLookup.runs[0].id))
-                .header("Accept", "application/vnd.github+json")
-                .authorization(GITHUB_TOKEN)
-                .header("X-GitHub-Api-Version", "2022-11-28")
-                .getJson(GitHubArtifactsLookup.class);
-
-        if (artifactsLookup.artifacts.length != 1) {
-            throw new IOException("Broken artifact.");
-        }
-
-        String[] stableVersionParts = RemoteVersion.fetch(UpdateChannel.STABLE, NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
-                pair("version", Metadata.VERSION),
-                pair("channel", UpdateChannel.STABLE.channelName)))
-        ).getVersion().split("\\.");
-        if (stableVersionParts.length != 3) {
-            throw new IOException("Invalid stable version number");
-        }
-
-        return new RemoteVersion(UpdateChannel.NIGHTLY, stableVersionParts[0] + "." + stableVersionParts[1] + "." + "dev-" + workflowLookup.runs[0].sha.substring(0, 7), artifactsLookup.artifacts[0].url + "/zip", RemoteVersion.Type.GitHub_ARTIFACT, null);
     }
 }

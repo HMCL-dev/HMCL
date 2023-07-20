@@ -42,6 +42,9 @@ public final class UpdateChecker {
     private static BooleanBinding outdated = Bindings.createBooleanBinding(
             () -> {
                 RemoteVersion latest = latestVersion.get();
+                if (latest != null) {
+                    return true;
+                }
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
                     return false;
                 } else {
@@ -97,7 +100,7 @@ public final class UpdateChecker {
                     throw new IOException("Self verification failed");
                 }
 
-                String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+                String url = NetworkUtils.withQuery(Metadata.OFFICIAL_UPDATE_URL, mapOf(
                         pair("version", Metadata.VERSION),
                         pair("channel", channel.channelName)));
 
@@ -112,7 +115,7 @@ public final class UpdateChecker {
                     throw new IOException("GitHub-SHA doesn't belong to the official repository");
                 }
 
-                return GitHubSHAChecker.getLatestArtifact();
+                return RemoteVersion.fetch(channel, Metadata.SNAPSHOT_UPDATE_URL);
             }
 
             case NONE: {
