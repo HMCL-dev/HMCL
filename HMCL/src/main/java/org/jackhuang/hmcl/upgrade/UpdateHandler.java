@@ -138,7 +138,7 @@ public final class UpdateHandler {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
-        IntegrityChecker.requireVerifiedJar(self);
+        IntegrityChecker.verifyJar(self);
         ExecutableHeaderHelper.copyWithHeader(self, target);
 
         Optional<Path> newFilename = tryRename(target, Metadata.VERSION);
@@ -156,7 +156,7 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        IntegrityChecker.requireVerifiedJar(updateTo);
+        IntegrityChecker.verifyJar(updateTo);
         startJava(updateTo, "--apply-to", self.toString());
     }
 

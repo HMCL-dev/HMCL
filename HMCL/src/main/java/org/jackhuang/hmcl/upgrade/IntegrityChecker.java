@@ -62,7 +62,7 @@ public final class IntegrityChecker {
         }
     }
 
-    private static boolean verifyJar(Path jarPath) throws IOException {
+    static void verifyJar(Path jarPath) throws IOException {
         PublicKey publickey = getPublicKey();
         MessageDigest md = DigestUtils.getDigest("SHA-512");
 
@@ -98,15 +98,11 @@ public final class IntegrityChecker {
                 verifier.update(md.digest(entry.getKey().getBytes(UTF_8)));
                 verifier.update(entry.getValue());
             }
-            return verifier.verify(signature);
+            if (!verifier.verify(signature)) {
+                throw new IOException("Invalid signature: " + jarPath);
+            }
         } catch (GeneralSecurityException e) {
             throw new IOException("Failed to verify signature", e);
-        }
-    }
-
-    static void requireVerifiedJar(Path jar) throws IOException {
-        if (!verifyJar(jar)) {
-            throw new IOException("Invalid signature: " + jar);
         }
     }
 
@@ -127,7 +123,8 @@ public final class IntegrityChecker {
             }
 
             try {
-                verifySelf();
+                verifyJar(JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location")));
+
                 LOG.info("Successfully verified current JAR");
                 selfVerified = true;
             } catch (IOException e) {
@@ -141,10 +138,5 @@ public final class IntegrityChecker {
 
     public static boolean isOfficial() {
         return isSelfVerified() || (Metadata.GITHUB_SHA != null && Metadata.BUILD_CHANNEL.equals("nightly"));
-    }
-
-    private static void verifySelf() throws IOException {
-        Path self = JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
-        requireVerifiedJar(self);
     }
 }
