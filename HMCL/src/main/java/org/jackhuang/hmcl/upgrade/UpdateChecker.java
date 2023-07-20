@@ -81,7 +81,7 @@ public final class UpdateChecker {
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
-        if (!IntegrityChecker.isSelfVerified() && !"true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
+        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
             throw new IOException("Self verification failed");
         }
 

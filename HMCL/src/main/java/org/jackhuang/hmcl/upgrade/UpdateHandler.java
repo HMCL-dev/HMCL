@@ -110,7 +110,7 @@ public final class UpdateHandler {
 
                 if (success) {
                     try {
-                        if (!IntegrityChecker.isSelfVerified()) {
+                        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
                         }
 
