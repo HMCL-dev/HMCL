@@ -41,7 +41,7 @@ public final class Metadata {
     public static final String SNAPSHOT_UPDATE_URL = System.getProperty("hmcl.update_source.override", "https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/snapshot.json");
 
     public static final String CONTACT_URL = "https://docs.hmcl.net/help.html";
-    public static final String HELP_URL = "https://hmcl.huangyuhui.net/help";
+    public static final String HELP_URL = "https://docs.hmcl.net";
     public static final String OFFICIAL_CHANGELOG_URL = "https://docs.hmcl.net/changelog/";
     public static final String SNAPSHOT_CHANGELOG_URL = "https://github.com/%s/compare/%s...%s";
     public static final String OFFICIAL_REPOSITORY = "huanghongxun/HMCL";
