@@ -58,8 +58,6 @@ public final class GitHubSHAChecker {
     private static final String JAVA_CI_WORKFLOW = "gradle.yml";
 
     private static final String WORKFLOW_LOOKUP_URL = String.format("https://api.github.com/repos/%s/actions/workflows/%s/runs", Metadata.OFFICIAL_REPOSITORY, JAVA_CI_WORKFLOW);
-
-    private static final String ARTIFACTS_LOOKUP_URL = String.format("https://api.github.com/repos/%s/actions/runs/%%d/artifacts", Metadata.OFFICIAL_REPOSITORY);
     
     private static Boolean isSelfVerified = null;
 
