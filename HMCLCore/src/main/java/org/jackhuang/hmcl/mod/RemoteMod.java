@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
@@ -135,11 +136,11 @@ public class RemoteMod {
         private final Date datePublished;
         private final VersionType versionType;
         private final File file;
-        private final List<String> dependencies;
+        private final List<@Nullable String> dependencies;
         private final List<String> gameVersions;
         private final List<ModLoaderType> loaders;
 
-        public Version(IVersion self, String modid, String name, String version, String changelog, Date datePublished, VersionType versionType, File file, List<String> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+        public Version(IVersion self, String modid, String name, String version, String changelog, Date datePublished, VersionType versionType, File file, List<@Nullable String> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
             this.self = self;
             this.modid = modid;
             this.name = name;
@@ -185,7 +186,7 @@ public class RemoteMod {
             return file;
         }
 
-        public List<String> getDependencies() {
+        public List<@Nullable String> getDependencies() {
             return dependencies;
         }
 
