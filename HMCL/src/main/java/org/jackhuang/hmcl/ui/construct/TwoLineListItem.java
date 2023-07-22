@@ -62,6 +62,7 @@ public class TwoLineListItem extends VBox {
             Label tagLabel = new Label();
             tagLabel.getStyleClass().add("tag");
             tagLabel.setText(tag);
+            FXUtils.installFastTooltip(tagLabel, tag);
             HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
             return tagLabel;
         });

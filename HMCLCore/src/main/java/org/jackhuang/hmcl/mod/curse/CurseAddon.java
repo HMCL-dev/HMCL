@@ -566,7 +566,7 @@ public class CurseAddon implements RemoteMod.IMod {
                     getFileDate(),
                     versionType,
                     new RemoteMod.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
-                    Collections.emptyList(),
+                    dependencies.stream().map(dependency -> Integer.toString(dependency.modId)).collect(Collectors.toList()),
                     gameVersions.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
                     gameVersions.stream().flatMap(version -> {
                         if ("fabric".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FABRIC);
