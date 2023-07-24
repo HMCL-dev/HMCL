@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2023  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ public class AboutPage extends StackPane {
             launcher.setImage(new Image("/assets/img/craft_table.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
-            launcher.setExternalLink("https://hmcl.huangyuhui.net");
+            launcher.setExternalLink("https://hmcl.huangyuhui.net/");
 
             IconedTwoLineListItem author = new IconedTwoLineListItem();
             author.setImage(new Image("/assets/img/yellow_fish.png"));
@@ -116,7 +116,7 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem jfoenix = new IconedTwoLineListItem();
             jfoenix.setTitle("JFoenix");
-            jfoenix.setSubtitle("Copyright © 2023 JFoenix.\nLicensed under the MIT License.");
+            jfoenix.setSubtitle("Copyright © 2016 JFoenix.\nLicensed under the MIT License.");
             jfoenix.setExternalLink("http://www.jfoenix.com/");
 
             IconedTwoLineListItem gson = new IconedTwoLineListItem();
