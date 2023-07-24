@@ -116,7 +116,7 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem jfoenix = new IconedTwoLineListItem();
             jfoenix.setTitle("JFoenix");
-            jfoenix.setSubtitle("Copyright © 2016 JFoenix.\nLicensed under the MIT License.");
+            jfoenix.setSubtitle("Copyright © 2023 JFoenix.\nLicensed under the MIT License.");
             jfoenix.setExternalLink("http://www.jfoenix.com/");
 
             IconedTwoLineListItem gson = new IconedTwoLineListItem();
@@ -131,7 +131,7 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem fxgson = new IconedTwoLineListItem();
             fxgson.setTitle("fx-gson");
-            fxgson.setSubtitle("Copyright © 2016 Joffrey Bion.\nLicensed under the MIT License.");
+            fxgson.setSubtitle("Copyright © 2016-2022 Joffrey Bion.\nLicensed under the MIT License.");
             fxgson.setExternalLink("https://github.com/joffrey-bion/fx-gson");
 
             IconedTwoLineListItem constantPoolScanner = new IconedTwoLineListItem();
@@ -142,7 +142,7 @@ public class AboutPage extends StackPane {
             IconedTwoLineListItem openNBT = new IconedTwoLineListItem();
             openNBT.setTitle("OpenNBT");
             openNBT.setSubtitle("Copyright © 2013-2021 Steveice10.\nLicensed under the MIT License.");
-            openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
+            openNBT.setExternalLink("https://github.com/GeyserMC/OpenNBT");
 
             IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
             minecraftJFXSkin.setTitle("minecraft-jfx-skin");
