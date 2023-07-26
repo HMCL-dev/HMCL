@@ -28,6 +28,6 @@ public final class Constants {
     }
 
     public static final String DEFAULT_LIBRARY_URL = "https://libraries.minecraft.net/";
-    public static final String DEFAULT_VERSION_DOWNLOAD_URL = "https://bmclapi2.bangbang93.com/versions/";
-    public static final String DEFAULT_INDEX_URL = "https://launchermeta.mojang.com/mc-staging/assets/legacy/c0fd82e8ce9fbc93119e40d96d5a4e62cfa3f729/";
+    public static final String DEFAULT_VERSION_DOWNLOAD_URL = "https://bmclapi2.bangbang93.com/versions/"; //https://bmclapidoc.bangbang93.com/#api-Version-Version
+    public static final String DEFAULT_INDEX_URL = "https://rgp2.zkitefly.eu.org/https:/raw.githubusercontent.com/zkitefly/Minecraft.Download-data/main/indexes/"; //https://github.com/zkitefly/Minecraft.Download-data
 }
