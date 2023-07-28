@@ -275,10 +275,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .map(remoteMod -> new DependencyModItem(getSkinnable().page, remoteMod, control.version, control.callback))
                         .collect(Collectors.toList())
                 ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    dependencyPane.getContent().clear();
                     if (exception == null) {
-                        dependencyPane.getContent().setAll(result);
+                        for (DependencyModItem element : result) {
+                            VBox box = new VBox();
+                            box.setPadding(new Insets(8,0,8,0));
+                            box.getChildren().setAll(element);
+                            dependencyPane.getContent().add(box);
+                        }
                     } else {
-                        dependencyPane.getContent().setAll(new Label(i18n("download.failed.refresh")));
+                        Label msg = new Label(i18n("download.failed.refresh"));
+                        msg.setPadding(new Insets(8));
+                        dependencyPane.getContent().setAll(msg);
                     }
                 }).start();
                 dependencyPane.getStyleClass().add("no-padding");
@@ -339,7 +347,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
             HBox pane = new HBox(8);
-            pane.setPadding(new Insets(8));
+            pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -367,19 +375,11 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         ModItem(RemoteMod.Version dataItem, DownloadPage selfPage) {
             VBox pane = new VBox(8);
+            pane.setPadding(new Insets(8, 0, 8, 0));
 
             {
-                Pane placeholder = new Pane();
-                pane.getChildren().add(placeholder);
-            }
-
-            {
-                HBox descPane = new HBox(8);
-                descPane.setPadding(new Insets(8));
-                descPane.setAlignment(Pos.CENTER_LEFT);
-
                 if (selfPage.repository.getType() == RemoteModRepository.Type.MOD) {
-                    VBox dependenciesBox = new VBox();
+                    List<Node> elements = new ArrayList<>();
                     EnumMap<RemoteMod.DependencyType, List<DependencyModItem>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
                     try {
                         for (RemoteMod.Dependency dependency : dataItem.getDependencies()) {
@@ -394,16 +394,24 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }
                     } catch (IOException exception) {
                         dependencies.clear();
-                        dependenciesBox.getChildren().setAll(new Label(i18n("download.failed.refresh")));
+                        Label msg = new Label(i18n("download.failed.refresh"));
+                        msg.setPadding(new Insets(8));
+                        elements.add(msg);
                         LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", dataItem.getModid()));
                     }
 
                     for (Map.Entry<RemoteMod.DependencyType, List<DependencyModItem>> entry : dependencies.entrySet()) {
-                        dependenciesBox.getChildren().add(new Label(i18n(DependencyModItem.I18N_KEY.get(entry.getKey()))));
-                        dependenciesBox.getChildren().addAll(entry.getValue());
+                        Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(entry.getKey())));
+                        title.setPadding(new Insets(0, 8, 0, 8));
+                        elements.add(title);
+                        elements.addAll(entry.getValue());
                     }
-                    pane.getChildren().add(dependenciesBox);
+                    pane.getChildren().addAll(elements);
                 }
+
+                HBox descPane = new HBox(8);
+                descPane.setPadding(new Insets(0, 8, 0, 8));
+                descPane.setAlignment(Pos.CENTER_LEFT);
 
                 {
                     StackPane graphicPane = new StackPane();
