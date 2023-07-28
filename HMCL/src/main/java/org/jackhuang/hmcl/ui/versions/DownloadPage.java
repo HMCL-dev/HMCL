@@ -273,16 +273,16 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ComponentList dependencyPane = new ComponentList(Lang::immutableListOf);
                 Task.supplyAsync(() -> control.addon.getData().loadDependencies(control.repository).stream()
                         .map(remoteMod -> new DependencyModItem(getSkinnable().page, remoteMod, control.version, control.callback))
-                        .collect(Collectors.toList())
-                ).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    dependencyPane.getContent().clear();
-                    if (exception == null) {
-                        for (DependencyModItem element : result) {
+                        .map(dependencyModItem -> {
                             VBox box = new VBox();
                             box.setPadding(new Insets(8,0,8,0));
-                            box.getChildren().setAll(element);
-                            dependencyPane.getContent().add(box);
-                        }
+                            box.getChildren().setAll(dependencyModItem);
+                            return box;
+                        })
+                        .collect(Collectors.toList())
+                ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        dependencyPane.getContent().setAll(result);
                     } else {
                         Label msg = new Label(i18n("download.failed.refresh"));
                         msg.setPadding(new Insets(8));
