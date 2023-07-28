@@ -45,10 +45,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.SimpleMultimap;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -64,6 +61,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.mod.RemoteMod.DependencyType.*;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -271,7 +269,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             if (control.repository.getType() != RemoteModRepository.Type.MOD) {
-                Node title = ComponentList.createComponentListTitle(i18n("mods.dependencies.embedded"));
+                Node title = ComponentList.createComponentListTitle(i18n("mods.dependency.embedded"));
                 ComponentList dependencyPane = new ComponentList(Lang::immutableListOf);
                 Task.supplyAsync(() -> control.addon.getData().loadDependencies(control.repository).stream()
                         .map(remoteMod -> new DependencyModItem(getSkinnable().page, remoteMod, control.version, control.callback))
@@ -329,6 +327,15 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class DependencyModItem extends StackPane {
+        public static final EnumMap<RemoteMod.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
+                Pair.pair(EMBEDDED, "mods.dependency.embedded"),
+                Pair.pair(OPTIONAL, "mods.dependency.optional"),
+                Pair.pair(REQUIRED, "mods.dependency.required"),
+                Pair.pair(TOOL, "mods.dependency.tool"),
+                Pair.pair(INCLUDE, "mods.dependency.include"),
+                Pair.pair(INCOMPATIBLE, "mods.dependency.incompatible"),
+                Pair.pair(BROKEN, "mods.dependency.broken")
+        ));
 
         DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
             HBox pane = new HBox(8);
@@ -362,6 +369,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox pane = new VBox(8);
 
             {
+                Pane placeholder = new Pane();
+                pane.getChildren().add(placeholder);
+            }
+
+            {
                 HBox descPane = new HBox(8);
                 descPane.setPadding(new Insets(8));
                 descPane.setAlignment(Pos.CENTER_LEFT);
@@ -371,7 +383,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     EnumMap<RemoteMod.DependencyType, List<DependencyModItem>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
                     try {
                         for (RemoteMod.Dependency dependency : dataItem.getDependencies()) {
-                            if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
+                            if (dependency.getType() == INCOMPATIBLE || dependency.getType() == BROKEN) {
                                 continue;
                             }
 
@@ -387,7 +399,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     for (Map.Entry<RemoteMod.DependencyType, List<DependencyModItem>> entry : dependencies.entrySet()) {
-                        dependenciesBox.getChildren().add(new Label(i18n("mods.dependency." + entry.getKey().name().toLowerCase()))); // TODO
+                        dependenciesBox.getChildren().add(new Label(i18n(DependencyModItem.I18N_KEY.get(entry.getKey()))));
                         dependenciesBox.getChildren().addAll(entry.getValue());
                     }
                     pane.getChildren().add(dependenciesBox);

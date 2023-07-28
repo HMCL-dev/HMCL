@@ -71,42 +71,7 @@ public final class Launcher extends Application {
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
-        Skin.registerDefaultSkinLoader((type) -> {
-            switch (type) {
-                case ALEX:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
-                case ARI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
-                case EFE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
-                case KAI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
-                case MAKENA:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
-                case NOOR:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
-                case STEVE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
-                case SUNNY:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
-                case ZURI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
-                default:
-                    return null;
-            }
-        });
-
-        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon@8x.png", new RemoteMod.IMod() {
-            @Override
-            public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-                throw new IOException();
-            }
-
-            @Override
-            public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-                throw new IOException();
-            }
-        }));
+        register();
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
@@ -161,6 +126,45 @@ public final class Launcher extends Application {
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
+    }
+
+    private static void register() {
+        Skin.registerDefaultSkinLoader((type) -> {
+            switch (type) {
+                case ALEX:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
+                case ARI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
+                case EFE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
+                case KAI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
+                case MAKENA:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
+                case NOOR:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
+                case STEVE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
+                case SUNNY:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
+                case ZURI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
+                default:
+                    return null;
+            }
+        });
+
+        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon@8x.png", new RemoteMod.IMod() {
+            @Override
+            public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+
+            @Override
+            public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+        }));
     }
 
     private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
