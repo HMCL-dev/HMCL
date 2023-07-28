@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -54,13 +55,16 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 
@@ -266,6 +270,24 @@ public class DownloadPage extends Control implements DecoratorPage {
                 runInFX(() -> FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage()));
             }
 
+            if (control.repository.getType() != RemoteModRepository.Type.MOD) {
+                Node title = ComponentList.createComponentListTitle(i18n("mods.dependencies.embedded"));
+                ComponentList dependencyPane = new ComponentList(Lang::immutableListOf);
+                Task.supplyAsync(() -> control.addon.getData().loadDependencies(control.repository).stream()
+                        .map(remoteMod -> new DependencyModItem(getSkinnable().page, remoteMod, control.version, control.callback))
+                        .collect(Collectors.toList())
+                ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        dependencyPane.getContent().setAll(result);
+                    } else {
+                        dependencyPane.getContent().setAll(new Label(i18n("download.failed.refresh")));
+                    }
+                }).start();
+                dependencyPane.getStyleClass().add("no-padding");
+
+                pane.getChildren().addAll(title, dependencyPane);
+            }
+
             SpinnerPane spinnerPane = new SpinnerPane();
             VBox.setVgrow(spinnerPane, Priority.ALWAYS);
             pane.getChildren().add(spinnerPane);
@@ -344,32 +366,31 @@ public class DownloadPage extends Control implements DecoratorPage {
                 descPane.setPadding(new Insets(8));
                 descPane.setAlignment(Pos.CENTER_LEFT);
 
-                {
-                    Node title = ComponentList.createComponentListTitle(i18n("mods.dependencies"));
-                    pane.getChildren().add(title);
-                }
+                if (selfPage.repository.getType() == RemoteModRepository.Type.MOD) {
+                    VBox dependenciesBox = new VBox();
+                    EnumMap<RemoteMod.DependencyType, List<DependencyModItem>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                    try {
+                        for (RemoteMod.Dependency dependency : dataItem.getDependencies()) {
+                            if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
+                                continue;
+                            }
 
-                {
-                    VBox dependencies = new VBox();
-                    Task.supplyAsync(() -> {
-                        List<DependencyModItem> dependencyModItems = new ArrayList<>();
-                        for (String dependencyID : dataItem.getDependencies()) {
-                            dependencyModItems.add(new DependencyModItem(
-                                    selfPage.page,
-                                    StringUtils.isNotBlank(dependencyID) ? dataItem.getSelf().getType().getRemoteModRepository().getModById(dependencyID) : RemoteMod.getEmptyRemoteMod(),
-                                    selfPage.version,
-                                    selfPage.callback
-                            ));
+                            if (!dependencies.containsKey(dependency.getType())) {
+                                dependencies.put(dependency.getType(), new ArrayList<>());
+                            }
+                            dependencies.get(dependency.getType()).add(new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback));
                         }
-                        return dependencyModItems;
-                    }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception == null) {
-                            dependencies.getChildren().addAll(result);
-                        } else {
-                            dependencies.getChildren().add(new Label(i18n("download.failed.refresh")));
-                        }
-                    }).start();
-                    pane.getChildren().add(dependencies);
+                    } catch (IOException exception) {
+                        dependencies.clear();
+                        dependenciesBox.getChildren().setAll(new Label(i18n("download.failed.refresh")));
+                        LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", dataItem.getModid()));
+                    }
+
+                    for (Map.Entry<RemoteMod.DependencyType, List<DependencyModItem>> entry : dependencies.entrySet()) {
+                        dependenciesBox.getChildren().add(new Label(i18n("mods.dependency." + entry.getKey().name().toLowerCase()))); // TODO
+                        dependenciesBox.getChildren().addAll(entry.getValue());
+                    }
+                    pane.getChildren().add(dependenciesBox);
                 }
 
                 {
@@ -414,13 +435,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                     saveAsButton.setOnAction(e -> selfPage.saveAs(dataItem));
 
                     descPane.getChildren().setAll(graphicPane, content, saveAsButton);
+                    descPane.setOnMouseClicked(e -> selfPage.download(dataItem));
                 }
 
                 pane.getChildren().add(descPane);
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> selfPage.download(dataItem));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129

@@ -36,6 +36,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -146,12 +147,8 @@ final class ComponentListCell extends StackPane {
 
                 boolean expanded = !isExpanded();
                 setExpanded(expanded);
-                if (expanded) {
-                    list.doLazyInit();
-                    list.layout();
-                }
 
-                Platform.runLater(() -> {
+                Runnable callback = () -> {
                     double newAnimatedHeight = (list.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
                     double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(-1);
                     double contentHeight = expanded ? newAnimatedHeight : 0;
@@ -179,7 +176,16 @@ final class ComponentListCell extends StackPane {
                             updateClip(newHeight);
                         }
                     }
-                });
+                };
+
+                if (expanded) {
+                    list.doLazyInit(() -> {
+                        list.layout();
+                        callback.run();
+                    });
+                } else {
+                    Platform.runLater(callback);
+                }
             };
 
             headerRippler.setOnMouseClicked(onExpand);

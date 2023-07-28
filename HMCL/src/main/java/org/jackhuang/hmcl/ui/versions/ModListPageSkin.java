@@ -320,25 +320,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                Lang.<Pair<String, Pair<RemoteModRepository, Function<RemoteMod.Version, String>>>>immutableListOf(
-                        pair("mods.curseforge", pair(
-                                CurseForgeRemoteModRepository.MODS,
-                                (remoteVersion) -> Integer.toString(((CurseAddon.LatestFile) remoteVersion.getSelf()).getModId())
-                        )),
-                        pair("mods.modrinth", pair(
-                                ModrinthRemoteModRepository.MODS,
-                                (remoteVersion) -> ((ModrinthRemoteModRepository.ProjectVersion) remoteVersion.getSelf()).getProjectId()
-                        ))
+                Lang.<Pair<String,RemoteModRepository>>immutableListOf(
+                        pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
+                        pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
                 ).forEach(item -> {
                     String text = item.getKey();
-                    RemoteModRepository remoteModRepository = item.getValue().getKey();
-                    Function<RemoteMod.Version, String> projectIDProvider = item.getValue().getValue();
+                    RemoteModRepository remoteModRepository = item.getValue();
 
                     JFXHyperlink button = new JFXHyperlink(i18n(text));
                     Task.runAsync(() -> {
                         Optional<RemoteMod.Version> versionOptional = remoteModRepository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = remoteModRepository.getModById(projectIDProvider.apply(versionOptional.get()));
+                            RemoteMod remoteMod = remoteModRepository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());

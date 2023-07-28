@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -36,10 +37,14 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.List;
 import java.util.function.Supplier;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 @DefaultProperty("content")
 public class ComponentList extends Control {
@@ -49,6 +54,7 @@ public class ComponentList extends Control {
     private boolean hasSubtitle = false;
     public final ObservableList<Node> content = FXCollections.observableArrayList();
     private Supplier<List<? extends Node>> lazyInitializer;
+    private SpinnerPane spinner;
 
     public ComponentList() {
         getStyleClass().add("options-list");
@@ -57,6 +63,10 @@ public class ComponentList extends Control {
     public ComponentList(Supplier<List<? extends Node>> lazyInitializer) {
         this();
         this.lazyInitializer = lazyInitializer;
+        spinner = new SpinnerPane();
+        spinner.getStyleClass().add("small-spinner-pane");
+        spinner.showSpinner();
+        this.getContent().setAll(spinner);
     }
 
     public String getTitle() {
@@ -107,12 +117,24 @@ public class ComponentList extends Control {
         return content;
     }
 
-    void doLazyInit() {
+    void doLazyInit(Runnable callback) {
         if (lazyInitializer != null) {
-            this.getContent().setAll(lazyInitializer.get());
             setNeedsLayout(true);
-            lazyInitializer = null;
+
+            Task.supplyAsync(lazyInitializer::get)
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null) {
+                            spinner.hideSpinner();
+                            this.getContent().setAll(result);
+                            setNeedsLayout(true);
+                            lazyInitializer = null;
+                        } else {
+                            spinner.setLoading(false);
+                        }
+                        Platform.runLater(callback);
+                    }).start();
         }
+        callback.run();
     }
 
     @Override
