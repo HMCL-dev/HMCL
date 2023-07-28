@@ -41,17 +41,19 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -119,11 +121,13 @@ public class GameCrashWindow extends Stage {
         analyzeCrashReport();
     }
 
+    @SuppressWarnings("unchecked")
     private void analyzeCrashReport() {
         loading.set(true);
-        CompletableFuture.supplyAsync(() -> {
+        Task.allOf(Task.supplyAsync(() -> {
             String rawLog = logs.stream().map(Pair::getKey).collect(Collectors.joining("\n"));
-            Set<String> keywords = Collections.emptySet();
+
+            // Get the crash-report from the crash-reports/xxx, or the output of console.
             String crashReport = null;
             try {
                 crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
@@ -133,24 +137,39 @@ public class GameCrashWindow extends Stage {
             if (crashReport == null) {
                 crashReport = CrashReportAnalyzer.extractCrashReport(rawLog);
             }
-            if (crashReport != null) {
-                keywords = CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport);
+
+            return pair(CrashReportAnalyzer.anaylze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
+        }), Task.supplyAsync(() -> {
+            Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
+            if (!Files.isReadable(latestLog)) {
+                return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
-            return pair(
-                    CrashReportAnalyzer.anaylze(rawLog),
-                    keywords);
-        }).whenCompleteAsync((pair, exception) -> {
+
+            String log;
+            try {
+                log = FileUtils.readText(latestLog);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to read logs/latest.log", e);
+                return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
+            }
+
+            return pair(CrashReportAnalyzer.anaylze(log), CrashReportAnalyzer.findKeywordsFromCrashReport(log));
+        })).whenComplete(Schedulers.javafx(), (taskResult, exception) -> {
             loading.set(false);
 
             if (exception != null) {
                 LOG.log(Level.WARNING, "Failed to analyze crash report", exception);
                 reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
             } else {
-                List<CrashReportAnalyzer.Result> results = pair.getKey();
-                Set<String> keywords = pair.getValue();
+                Set<CrashReportAnalyzer.Result> results = new HashSet<>();
+                Set<String> keywords = new HashSet<>();
+                for (Pair<Set<CrashReportAnalyzer.Result>, Set<String>> pair : (List<Pair<Set<CrashReportAnalyzer.Result>, Set<String>>>) (List<?>) taskResult) {
+                    results.addAll(pair.getKey());
+                    keywords.addAll(pair.getValue());
+                }
 
                 List<Node> segments = new ArrayList<>();
-                
+
                 boolean hasMultipleRules = results.stream().map(CrashReportAnalyzer.Result::getRule).distinct().count() > 1;
                 if (hasMultipleRules) {
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
@@ -211,7 +230,7 @@ public class GameCrashWindow extends Stage {
                     reasonTextFlow.getChildren().setAll(segments);
                 }
             }
-        }, Schedulers.javafx()).exceptionally(Lang::handleUncaughtException);
+        });
     }
 
     private static final Pattern FABRIC_MOD_ID = Pattern.compile("\\{(?<modid>.*?) @ (?<version>.*?)}");
@@ -247,7 +266,8 @@ public class GameCrashWindow extends Stage {
         LogWindow logWindow = new LogWindow();
 
         logWindow.logLine(Logging.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO);
-        if (managedProcess.getClasspath() != null) logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
+        if (managedProcess.getClasspath() != null)
+            logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
         for (Map.Entry<String, Log4jLevel> entry : logs)
             logWindow.logLine(entry.getKey(), entry.getValue());
 
@@ -406,7 +426,7 @@ public class GameCrashWindow extends Stage {
                 JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
                 runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
-                
+
 
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
