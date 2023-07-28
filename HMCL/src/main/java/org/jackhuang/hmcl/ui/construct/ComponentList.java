@@ -44,8 +44,6 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-
 @DefaultProperty("content")
 public class ComponentList extends Control {
     private final StringProperty title = new SimpleStringProperty(this, "title", "Group");

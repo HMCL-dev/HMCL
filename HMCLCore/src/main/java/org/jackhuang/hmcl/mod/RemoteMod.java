@@ -111,7 +111,7 @@ public class RemoteMod {
         BROKEN
     }
 
-    public static class Dependency {
+    public static final class Dependency {
         private static Dependency BROKEN_DEPENDENCY = null;
 
         private final DependencyType type;
