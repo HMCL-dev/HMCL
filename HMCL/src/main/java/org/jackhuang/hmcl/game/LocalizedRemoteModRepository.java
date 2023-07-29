@@ -35,7 +35,7 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     protected abstract RemoteModRepository getBackedRemoteModRepository();
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public SearchResult search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         String newSearchFilter;
         if (StringUtils.containsChinese(searchFilter)) {
             ModTranslations modTranslations = ModTranslations.getTranslationsByRepositoryType(getType());
