@@ -275,7 +275,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .map(remoteMod -> new DependencyModItem(getSkinnable().page, remoteMod, control.version, control.callback))
                         .map(dependencyModItem -> {
                             VBox box = new VBox();
-                            box.setPadding(new Insets(8,0,8,0));
+                            box.setPadding(new Insets(8, 0, 8, 0));
                             box.getChildren().setAll(dependencyModItem);
                             return box;
                         })
