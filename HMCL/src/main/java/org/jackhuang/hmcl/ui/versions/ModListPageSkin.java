@@ -32,10 +32,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
@@ -318,7 +315,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                Lang.<Pair<String,RemoteModRepository>>immutableListOf(
+                Lang.<Pair<String, RemoteModRepository>>immutableListOf(
                         pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
                         pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
                 ).forEach(item -> {
@@ -331,6 +328,19 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         if (versionOptional.isPresent()) {
                             RemoteMod remoteMod = remoteModRepository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
+                                for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
+                                    switch (modLoaderType) {
+                                        case FABRIC:
+                                        case FORGE:
+                                        case LITE_LOADER:
+                                        case QUILT: {
+                                            if (!title.getTags().contains(modLoaderType.name())) {
+                                                title.getTags().add(modLoaderType.name());
+                                            }
+                                        }
+                                    }
+                                }
+
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
