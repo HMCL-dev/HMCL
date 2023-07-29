@@ -51,7 +51,26 @@ public interface RemoteModRepository {
         DESC
     }
 
-    Stream<RemoteMod> search(String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
+    class SearchResult {
+        private final Stream<RemoteMod> results;
+
+        private final int totalPages;
+
+        public SearchResult(Stream<RemoteMod> results, int pages) {
+            this.results = results;
+            this.totalPages = pages;
+        }
+
+        public Stream<RemoteMod> getResults() {
+            return this.results;
+        }
+
+        public int getTotalPages() {
+            return this.totalPages;
+        }
+    }
+
+    SearchResult search(String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
             throws IOException;
 
     Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;

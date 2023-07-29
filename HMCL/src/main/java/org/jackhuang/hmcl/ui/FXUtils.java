@@ -678,6 +678,13 @@ public final class FXUtils {
         return button;
     }
 
+    public static JFXButton newBorderButton(String text) {
+        JFXButton button = new JFXButton(text);
+        button.getStyleClass().add("jfx-button-border");
+        button.setButtonType(JFXButton.ButtonType.RAISED);
+        return button;
+    }
+
     public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
         applyDragListener(node, filter, callback, null);
     }

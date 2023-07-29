@@ -92,7 +92,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+    public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
         if (category != null) categoryId = ((CurseAddon.Category) category.getSelf()).getId();
         Response<List<CurseAddon>> response = HttpRequest.GET(PREFIX + "/v1/mods/search",
@@ -110,11 +110,11 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 }.getType());
         Stream<RemoteMod> res = response.getData().stream().map(CurseAddon::toMod);
         if (sortType != SortType.NAME) {
-            return res;
+            return new SearchResult(res, response.pagination.totalCount);
         }
 
         // https://github.com/huanghongxun/HMCL/issues/1549
-        return res.map(remoteMod -> {
+        return new SearchResult(res.map(remoteMod -> {
             if (searchFilter.length() == 0 || remoteMod.getTitle().length() == 0) {
                 return pair(remoteMod, Math.max(searchFilter.length(), remoteMod.getTitle().length()));
             }
@@ -134,7 +134,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 }
             }
             return pair(remoteMod, lev[searchFilter.length()][remoteMod.getTitle().length()]);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.pagination.totalCount);
     }
 
     @Override
