@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.MurmurHash2;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +108,33 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 .header("X-API-KEY", apiKey)
                 .getJson(new TypeToken<Response<List<CurseAddon>>>() {
                 }.getType());
-        return response.getData().stream().map(CurseAddon::toMod);
+        Stream<RemoteMod> res = response.getData().stream().map(CurseAddon::toMod);
+        if (sortType != SortType.NAME) {
+            return res;
+        }
+
+        // https://github.com/huanghongxun/HMCL/issues/1549
+        return res.map(remoteMod -> {
+            if (searchFilter.length() == 0 || remoteMod.getTitle().length() == 0) {
+                return pair(remoteMod, Math.max(searchFilter.length(), remoteMod.getTitle().length()));
+            }
+            int[][] lev = new int[searchFilter.length() + 1][remoteMod.getTitle().length() + 1];
+            for (int i = 0; i < remoteMod.getTitle().length() + 1; i++) {
+                lev[0][i] = i;
+            }
+            for (int i = 0; i < searchFilter.length() + 1; i++) {
+                lev[i][0] = i;
+            }
+            for (int i = 1; i < searchFilter.length() + 1; i++) {
+                for (int j = 1; j < remoteMod.getTitle().length() + 1; j++) {
+                    int countByInsert = lev[i][j - 1] + 1;
+                    int countByDel = lev[i - 1][j] + 1;
+                    int countByReplace = searchFilter.charAt(i - 1) == remoteMod.getTitle().charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1;
+                    lev[i][j] = Math.min(countByInsert, Math.min(countByDel, countByReplace));
+                }
+            }
+            return pair(remoteMod, lev[searchFilter.length()][remoteMod.getTitle().length()]);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey);
     }
 
     @Override
