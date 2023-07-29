@@ -395,6 +395,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     control.pageOffset.addListener((observable, oldValue, newValue) -> nextPageButton.setDisable(
                             control.pageCount.get() == -1 || control.pageOffset.get() == control.pageCount.get() - 1
                     ));
+                    control.pageCount.addListener((observable, oldValue, newValue) -> nextPageButton.setDisable(
+                            control.pageCount.get() == -1 || control.pageOffset.get() == control.pageCount.get() - 1
+                    ));
 
                     JFXButton lastPageButton = FXUtils.newBorderButton(i18n("search.last_page"));
                     lastPageButton.setOnAction(event -> {
