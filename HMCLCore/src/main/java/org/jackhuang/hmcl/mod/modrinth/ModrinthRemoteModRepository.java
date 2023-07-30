@@ -308,9 +308,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     title,
                     description,
                     categories,
-                    null,
+                    String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    (RemoteMod.IMod) this
+                    this
             );
         }
     }
