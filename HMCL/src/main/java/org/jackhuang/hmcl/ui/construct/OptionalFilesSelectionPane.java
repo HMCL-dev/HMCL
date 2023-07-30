@@ -1,5 +1,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.EventHandler;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -7,6 +8,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import org.jackhuang.hmcl.mod.ModpackFile;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,14 +24,17 @@ public class OptionalFilesSelectionPane extends GridPane {
     Set<ModpackFile> selected = new HashSet<>();
 
     public OptionalFilesSelectionPane() {
+        addRow(0, new Label(i18n("modpack.pending_optional_files")));
     }
 
     public void updateOptionalFileList(List<? extends ModpackFile> files) {
+        getChildren().clear();
         int i = 0;
         for(ModpackFile file : files) {
             selected.add(file);
             if(file.isOptional()) {
                 BorderPane entryPane = new BorderPane();
+                entryPane.getStyleClass().add("optional-file");
 
                 CheckBox checkBox = new CheckBox(file.getFileName());
                 checkBox.setSelected(true);

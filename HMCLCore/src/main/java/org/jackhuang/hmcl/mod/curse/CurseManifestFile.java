@@ -79,6 +79,11 @@ public final class CurseManifestFile implements Validation, ModpackFile {
         return !isRequired();
     }
 
+    @Override
+    public String getPath() {
+        return "mods/" + getFileName();
+    }
+
     public boolean isRequired() {
         return required;
     }

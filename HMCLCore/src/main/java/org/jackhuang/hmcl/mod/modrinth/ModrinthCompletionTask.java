@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod.modrinth;
 
+import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
@@ -31,20 +32,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public class ModrinthCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
     private final String version;
-    private final Set<? extends ModpackFile> selectedFiles;
+    private Set<? extends ModpackFile> selectedFiles;
     private ModrinthManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
@@ -81,6 +80,11 @@ public class ModrinthCompletionTask extends Task<Void> {
                 File manifestFile = new File(repository.getVersionRoot(version), "modrinth.index.json");
                 if (manifestFile.exists())
                     this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModrinthManifest.class);
+                File filesFile = new File(repository.getVersionRoot(version), "files.json");
+                if (filesFile.exists()) {
+                    Set<String> files = JsonUtils.GSON.fromJson(FileUtils.readText(filesFile), new TypeToken<HashSet<String>>() {});
+                    this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
+                }
             } catch (Exception e) {
                 Logging.LOG.log(Level.WARNING, "Unable to read Modrinth modpack manifest.json", e);
             }
@@ -104,6 +108,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             return;
 
         Path runDirectory = repository.getRunDirectory(version).toPath();
+        FileUtils.writeText(new File(repository.getVersionRoot(version), "files.json"), JsonUtils.GSON.toJson(selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList())));
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))

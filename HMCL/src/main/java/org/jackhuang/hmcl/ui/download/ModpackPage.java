@@ -2,13 +2,17 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.OptionalFilesSelectionPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -16,20 +20,27 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public abstract class ModpackPage extends SpinnerPane implements WizardPage {
+public abstract class ModpackPage extends ScrollPane implements WizardPage {
     protected final WizardController controller;
 
+    protected final SpinnerPane spinner;
     protected final Label lblName;
     protected final Label lblVersion;
     protected final Label lblAuthor;
     protected final Label lblModpackLocation;
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
+    protected final OptionalFilesSelectionPane optionalFiles;
+    protected final BooleanProperty waitingForOptionalFiles = new SimpleBooleanProperty(false);
 
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
 
         this.getStyleClass().add("large-spinner-pane");
+
+        setFitToHeight(true);
+        setFitToWidth(true);
+        spinner = new SpinnerPane();
 
         VBox borderPane = new VBox();
         borderPane.setAlignment(Pos.CENTER);
@@ -85,6 +96,8 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 authorPane.setCenter(lblAuthor);
             }
 
+            optionalFiles = new OptionalFilesSelectionPane();
+
             BorderPane descriptionPane = new BorderPane();
             {
                 JFXButton btnDescription = new JFXButton(i18n("modpack.description"));
@@ -94,16 +107,25 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
                 btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
                 btnInstall.setOnAction(e -> onInstall());
-                btnInstall.disableProperty().bind(createBooleanBinding(() -> !txtModpackName.validate(), txtModpackName.textProperty()));
+                btnInstall.disableProperty().bind(createBooleanBinding(() -> !txtModpackName.validate() || waitingForOptionalFiles.get(),
+                                txtModpackName.textProperty(), waitingForOptionalFiles));
                 descriptionPane.setRight(btnInstall);
             }
 
             componentList.getContent().setAll(
-                    locationPane, archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
+                    locationPane, archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane, optionalFiles);
         }
-
         borderPane.getChildren().setAll(componentList);
-        this.setContent(borderPane);
+        spinner.setContent(borderPane);
+        this.setContent(spinner);
+    }
+
+    protected void showSpinner() {
+        spinner.showSpinner();
+    }
+
+    protected void hideSpinner() {
+        spinner.hideSpinner();
     }
 
     protected abstract void onInstall();

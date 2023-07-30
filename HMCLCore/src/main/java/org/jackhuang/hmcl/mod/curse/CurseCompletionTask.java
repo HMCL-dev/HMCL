@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -52,8 +53,8 @@ public final class CurseCompletionTask extends Task<Void> {
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest;
+    private Set<? extends ModpackFile> selectedFiles;
     private final List<Task<?>> dependencies = new ArrayList<>();
-    private final Set<? extends ModpackFile> selectedFiles;
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);
@@ -89,6 +90,11 @@ public final class CurseCompletionTask extends Task<Void> {
                 File manifestFile = new File(repository.getVersionRoot(version), "manifest.json");
                 if (manifestFile.exists())
                     this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), CurseManifest.class);
+                File filesFile = new File(repository.getVersionRoot(version), "files.json");
+                if (filesFile.exists()) {
+                    Set<String> files = JsonUtils.GSON.fromJson(FileUtils.readText(filesFile), new TypeToken<HashSet<String>>() {});
+                    this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
+                }
             } catch (Exception e) {
                 Logging.LOG.log(Level.WARNING, "Unable to read CurseForge modpack manifest.json", e);
             }
@@ -113,9 +119,35 @@ public final class CurseCompletionTask extends Task<Void> {
 
         File root = repository.getVersionRoot(version);
 
-        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
+        // Because in China, Curse is too difficult to visit,
+        // if failed, ignore it and retry next time.
+        CurseManifest newManifest = manifest.setFiles(
+                manifest.getFiles().parallelStream()
+                        .map(file -> {
+                            updateProgress(finished.incrementAndGet(), manifest.getFiles().size());
+                            if (StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) {
+                                try {
+                                    RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
+                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
+                                } catch (FileNotFoundException fof) {
+                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
+                                    notFound.set(true);
+                                    return file;
+                                } catch (IOException | JsonParseException e) {
+                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
+                                    allNameKnown.set(false);
+                                    return file;
+                                }
+                            } else {
+                                return file;
+                            }
+                        })
+                        .collect(Collectors.toList()));
 
-        for (CurseManifestFile file : manifest.getFiles())
+        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
+        FileUtils.writeText(new File(root, "files.json"), JsonUtils.GSON.toJson(selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList())));
+
+        for (CurseManifestFile file : newManifest.getFiles())
             if ((selectedFiles == null || selectedFiles.contains(file)) && StringUtils.isNotBlank(file.getFileName())) {
                 if (!modManager.hasSimpleMod(file.getFileName())) {
                     FileDownloadTask task = new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile());

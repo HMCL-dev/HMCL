@@ -9,7 +9,11 @@ public interface ModpackFile {
      */
     String getFileName();
     /**
-     * return if the file optional on the client side
+     * Return if the file optional on the client side
      */
     boolean isOptional();
+    /**
+     * Return the path of the file
+     */
+    String getPath();
 }
