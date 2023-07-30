@@ -27,8 +27,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import jdk.internal.loader.BuiltinClassLoader;
-
 /**
  * Utility for Adding JavaFX to module path.
  *
@@ -38,26 +36,6 @@ public final class JavaFXPatcher {
     private JavaFXPatcher() {
     }
 
-    private static final String[] addOpens = {
-            "javafx.base/com.sun.javafx.runtime",
-            "javafx.base/com.sun.javafx.binding",
-            "javafx.base/com.sun.javafx.event",
-            "javafx.graphics/javafx.css",
-            "javafx.graphics/com.sun.javafx.stage",
-            "javafx.controls/com.sun.javafx.scene.control.behavior",
-            "javafx.controls/javafx.scene.control.skin",
-            "javafx.controls/com.sun.javafx.scene.control"
-    };
-
-    private static final String[] addExports = {
-            "javafx.base/com.sun.javafx.binding",
-            "javafx.base/com.sun.javafx.event",
-            "javafx.graphics/com.sun.javafx.stage",
-            "javafx.controls/com.sun.javafx.scene.control.behavior",
-            "javafx.controls/javafx.scene.control.skin",
-            "javafx.controls/com.sun.javafx.scene.control"
-    };
-
     /**
      * Add JavaFX to module path at runtime.
      *
@@ -65,13 +43,13 @@ public final class JavaFXPatcher {
      * @param jarPaths All jar paths
      * @throws ReflectiveOperationException When the call to add these jars to the system module path failed.
      */
-    public static void patch(Set<String> modules, Path... jarPaths) throws ReflectiveOperationException {
+    public static void patch(Set<String> modules, Path[] jarPaths, String[] addOpens) throws ReflectiveOperationException {
         // Find all modules
         ModuleFinder finder = ModuleFinder.of(jarPaths);
 
         // Load all modules as unnamed module
         for (ModuleReference mref : finder.findAll()) {
-            ((BuiltinClassLoader) ClassLoader.getSystemClassLoader()).loadModule(mref);
+            ((jdk.internal.loader.BuiltinClassLoader) ClassLoader.getSystemClassLoader()).loadModule(mref);
         }
 
         // Define all modules
@@ -82,23 +60,19 @@ public final class JavaFXPatcher {
         try {
             // Some hacks
             MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup());
-            addExportsOrOpens(addExports, layer, lookup.findVirtual(Module.class, "implAddExportsToAllUnnamed", MethodType.methodType(void.class, String.class)));
-            addExportsOrOpens(addOpens, layer, lookup.findVirtual(Module.class, "implAddOpensToAllUnnamed", MethodType.methodType(void.class, String.class)));
+            MethodHandle handle = lookup.findVirtual(Module.class, "implAddOpensToAllUnnamed", MethodType.methodType(void.class, String.class));
+            for (String target : addOpens) {
+                String[] name = target.split("/", 2); // <module>/<package>
+                layer.findModule(name[0]).ifPresent(m -> {
+                    try {
+                        handle.invokeWithArguments(m, name[1]);
+                    } catch (Throwable throwable) {
+                        throw new RuntimeException(throwable);
+                    }
+                });
+            }
         } catch (Throwable t) {
             throw new ReflectiveOperationException(t);
-        }
-    }
-
-    private static void addExportsOrOpens(String[] targets, ModuleLayer layer, MethodHandle handle) {
-        for (String target : targets) {
-            String[] name = target.split("/", 2); // <module>/<package>
-            layer.findModule(name[0]).ifPresent(m -> {
-                try {
-                    handle.invokeWithArguments(m, name[1]);
-                } catch (Throwable throwable) {
-                    throw new RuntimeException(throwable);
-                }
-            });
         }
     }
 }

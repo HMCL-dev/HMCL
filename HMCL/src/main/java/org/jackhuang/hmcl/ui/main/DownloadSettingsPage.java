@@ -48,7 +48,7 @@ public class DownloadSettingsPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        JFXScrollPane.smoothScrolling(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
@@ -90,7 +90,7 @@ public class DownloadSettingsPage extends StackPane {
 
                     JFXComboBox<String> cboDownloadSource = new JFXComboBox<>();
                     cboDownloadSource.setConverter(stringConverter(key -> i18n("download.provider." + key)));
-                    downloadSourcePane.setCenter(cboDownloadSource);
+                    downloadSourcePane.setRight(cboDownloadSource);
                     FXUtils.setLimitWidth(cboDownloadSource, 420);
 
                     cboDownloadSource.getItems().setAll(DownloadProviders.rawProviders.keySet());
@@ -132,7 +132,7 @@ public class DownloadSettingsPage extends StackPane {
 
                     JFXTextField threadsField = new JFXTextField();
                     FXUtils.setLimitWidth(threadsField, 60);
-                    threadsField.textProperty().bindBidirectional(config().downloadThreadsProperty(), SafeStringConverter.fromInteger());
+                    FXUtils.bindInt(threadsField, config().downloadThreadsProperty());
 
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
                     FXUtils.onChangeAndOperate(config().downloadThreadsProperty(), value -> {
@@ -213,8 +213,7 @@ public class DownloadSettingsPage extends StackPane {
                         GridPane.setRowIndex(txtProxyHost, 1);
                         GridPane.setColumnIndex(txtProxyHost, 1);
                         gridPane.getChildren().add(txtProxyHost);
-                        txtProxyHost.textProperty().bindBidirectional(config().proxyHostProperty());
-                        txtProxyHost.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
+                        FXUtils.bindString(txtProxyHost, config().proxyHostProperty());
                     }
 
                     {
@@ -232,11 +231,10 @@ public class DownloadSettingsPage extends StackPane {
                         FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
                         gridPane.getChildren().add(txtProxyPort);
 
-                        txtProxyPort.textProperty().bindBidirectional(config().proxyPortProperty(),
-                                SafeStringConverter.fromInteger()
-                                        .restrict(it -> it >= 0 && it <= 0xFFFF)
-                                        .fallbackTo(0)
-                                        .asPredicate(Validator.addTo(txtProxyPort)));
+                        FXUtils.bind(txtProxyPort, config().proxyPortProperty(), SafeStringConverter.fromInteger()
+                                .restrict(it -> it >= 0 && it <= 0xFFFF)
+                                .fallbackTo(0)
+                                .asPredicate(Validator.addTo(txtProxyPort)));
                     }
                     proxyPane.getChildren().add(gridPane);
                 }
@@ -273,7 +271,7 @@ public class DownloadSettingsPage extends StackPane {
                         GridPane.setRowIndex(txtProxyUsername, 0);
                         GridPane.setColumnIndex(txtProxyUsername, 1);
                         authPane.getChildren().add(txtProxyUsername);
-                        txtProxyUsername.textProperty().bindBidirectional(config().proxyUserProperty());
+                        FXUtils.bindString(txtProxyUsername, config().proxyUserProperty());
                     }
 
                     {

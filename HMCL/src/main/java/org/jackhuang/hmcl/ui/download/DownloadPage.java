@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.TabControl;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -81,16 +82,14 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
             ModpackDownloadListPage page = new ModpackDownloadListPage(Versions::downloadModpackImpl, false);
 
-            JFXButton installLocalModpackButton = new JFXButton(i18n("install.modpack"));
-            installLocalModpackButton.setButtonType(JFXButton.ButtonType.RAISED);
-            installLocalModpackButton.getStyleClass().add("jfx-button-raised");
+            JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Versions.importModpack());
 
             page.getActions().add(installLocalModpackButton);
             return page;
         }));
         modTab.setNodeSupplier(loadVersionFor(() -> new ModDownloadListPage((profile, version, file) -> download(profile, version, file, "mods"), true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.RESOURCE_PACKS, (profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> new ResourcePackDownloadListPage((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         customizationTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.CUSTOMIZATIONS)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
@@ -134,13 +133,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 //                        item.setTitle(i18n("download.curseforge.customization"));
 //                        item.setLeftGraphic(wrap(SVG::script));
 //                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(customizationTab));
-//                        item.setOnAction(e -> tab.select(customizationTab));
+//                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(customizationTab));
 //                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("world"));
                         item.setLeftGraphic(wrap(SVG::earth));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
-                        item.setOnAction(e -> tab.select(worldTab));
+                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(worldTab));
                     });
             FXUtils.setLimitWidth(sideBar, 200);
             setLeft(sideBar);
@@ -149,7 +148,14 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         setCenter(transitionPane);
     }
 
-    private <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
+    private void selectTabIfCurseForgeAvailable(TabControl.Tab<?> newTab) {
+        if (CurseForgeRemoteModRepository.isAvailable())
+            tab.select(newTab);
+        else
+            Controllers.dialog(i18n("download.curseforge.unavailable"));
+    }
+
+    private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
             if (node instanceof VersionPage.VersionLoadable) {
@@ -159,7 +165,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    private void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
+    private static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
@@ -234,7 +240,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(worldTab);
     }
 
-    private class DownloadNavigator implements Navigation {
+    private static final class DownloadNavigator implements Navigation {
         private final Map<String, Object> settings = new HashMap<>();
 
         @Override

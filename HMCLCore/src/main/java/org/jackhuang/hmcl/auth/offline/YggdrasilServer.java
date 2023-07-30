@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth.offline;
 
 import com.google.gson.reflect.TypeToken;
+import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
@@ -25,8 +26,8 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.HttpServer;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.*;
 import java.util.*;
@@ -80,8 +81,7 @@ public class YggdrasilServer extends HttpServer {
     }
 
     private Response profiles(Request request) throws IOException {
-        String body = IOUtils.readFullyAsString(request.getSession().getInputStream(), UTF_8);
-        List<String> names = JsonUtils.fromNonNullJson(body, new TypeToken<List<String>>() {
+        List<String> names = JsonUtils.fromNonNullJsonFully(request.getSession().getInputStream(), new TypeToken<List<String>>() {
         }.getType());
         return ok(names.stream().distinct()
                 .map(this::findCharacterByName)
@@ -129,7 +129,8 @@ public class YggdrasilServer extends HttpServer {
 
         if (Texture.hasTexture(hash)) {
             Texture texture = Texture.getTexture(hash);
-            Response response = newFixedLengthResponse(Response.Status.OK, "image/png", texture.getInputStream(), texture.getLength());
+            byte[] data = PNGJavaFXUtils.writeImageToArray(texture.getImage());
+            Response response = newFixedLengthResponse(Response.Status.OK, "image/png", new ByteArrayInputStream(data), data.length);
             response.addHeader("Etag", String.format("\"%s\"", hash));
             response.addHeader("Cache-Control", "max-age=2592000, public");
             return response;

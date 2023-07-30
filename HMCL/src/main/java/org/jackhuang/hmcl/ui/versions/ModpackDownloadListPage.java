@@ -32,7 +32,10 @@ public class ModpackDownloadListPage extends DownloadListPage {
 
         supportChinese.set(true);
         downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
-        downloadSource.set("mods.curseforge");
+        if (CurseForgeRemoteModRepository.isAvailable())
+            downloadSource.set("mods.curseforge");
+        else
+            downloadSource.set("mods.modrinth");
     }
 
     private class Repository extends LocalizedRemoteModRepository {

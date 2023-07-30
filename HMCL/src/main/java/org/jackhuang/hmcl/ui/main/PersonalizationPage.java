@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXScrollPane;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
@@ -41,6 +40,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.Arrays;
@@ -55,7 +55,7 @@ public class PersonalizationPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        JFXScrollPane.smoothScrolling(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
@@ -72,7 +72,7 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.setMinHeight(30);
             themePane.setRight(themeColorPickerContainer);
 
-            ColorPicker picker = new ColorPicker(Color.web(config().getTheme().getColor()));
+            ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
             picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
             picker.setOnAction(e -> {
                 Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
@@ -87,6 +87,12 @@ public class PersonalizationPage extends StackPane {
             themeList.getContent().add(titleTransparentButton);
             titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+        }
+        {
+            OptionToggleButton animationButton = new OptionToggleButton();
+            themeList.getContent().add(animationButton);
+            animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
+            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
         }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
@@ -141,17 +147,15 @@ public class PersonalizationPage extends StackPane {
                         HBox hBox = new HBox();
                         hBox.setSpacing(3);
 
-                        FontComboBox cboLogFont = new FontComboBox(12);
+                        FontComboBox cboLogFont = new FontComboBox();
                         cboLogFont.valueProperty().bindBidirectional(config().fontFamilyProperty());
 
                         JFXTextField txtLogFontSize = new JFXTextField();
                         FXUtils.setLimitWidth(txtLogFontSize, 50);
-                        txtLogFontSize.textProperty().bindBidirectional(config().fontSizeProperty(),
-                                SafeStringConverter.fromFiniteDouble()
-                                        .restrict(it -> it > 0)
-                                        .fallbackTo(12.0)
-                                        .asPredicate(Validator.addTo(txtLogFontSize)));
-
+                        FXUtils.bind(txtLogFontSize, config().fontSizeProperty(), SafeStringConverter.fromFiniteDouble()
+                                .restrict(it -> it > 0)
+                                .fallbackTo(12.0)
+                                .asPredicate(Validator.addTo(txtLogFontSize)));
 
                         hBox.getChildren().setAll(cboLogFont, txtLogFontSize);
 
@@ -161,7 +165,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
                 lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(config().getFontFamily(), config().getFontSize()),
+                        () -> Font.font(Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT), config().getFontSize()),
                         config().fontFamilyProperty(), config().fontSizeProperty()));
 
                 fontPane.getChildren().add(lblLogFontDisplay);
@@ -193,7 +197,7 @@ public class PersonalizationPage extends StackPane {
                         HBox hBox = new HBox();
                         hBox.setSpacing(8);
 
-                        FontComboBox cboFont = new FontComboBox(12);
+                        FontComboBox cboFont = new FontComboBox();
                         cboFont.valueProperty().bindBidirectional(config().launcherFontFamilyProperty());
 
                         JFXButton clearButton = new JFXButton();
@@ -212,7 +216,7 @@ public class PersonalizationPage extends StackPane {
                         () -> Font.font(config().getLauncherFontFamily(), 12),
                         config().launcherFontFamilyProperty()));
                 config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
-                    Controllers.getScene().getStylesheets().setAll(config().getTheme().getStylesheets(newValue));
+                    Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue));
                 });
 
                 vbox.getChildren().add(lblFontDisplay);

@@ -141,9 +141,9 @@ public class OfflineAccountSkinPane extends StackPane {
                                 return;
                             }
                             canvas.updateSkin(
-                                    result.getSkin() != null ? new Image(result.getSkin().getInputStream()) : getDefaultTexture(),
+                                    result.getSkin() != null ? result.getSkin().getImage() : getDefaultTexture(),
                                     result.getModel() == TextureModel.ALEX,
-                                    result.getCape() != null ? new Image(result.getCape().getInputStream()) : null);
+                                    result.getCape() != null ? result.getCape().getImage() : null);
                         }
                     }).start();
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());

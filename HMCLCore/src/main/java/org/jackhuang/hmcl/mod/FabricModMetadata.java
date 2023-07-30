@@ -21,7 +21,6 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -58,16 +57,14 @@ public final class FabricModMetadata {
         this.contact = contact;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            Path mcmod = fs.getPath("fabric.mod.json");
-            if (Files.notExists(mcmod))
-                throw new IOException("File " + modFile + " is not a Fabric mod.");
-            FabricModMetadata metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), FabricModMetadata.class);
-            String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
-            return new LocalModFile(modManager, modManager.getLocalMod(metadata.id, ModLoaderType.FABRIC), modFile, metadata.name, new LocalModFile.Description(metadata.description),
-                    authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon);
-        }
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+        Path mcmod = fs.getPath("fabric.mod.json");
+        if (Files.notExists(mcmod))
+            throw new IOException("File " + modFile + " is not a Fabric mod.");
+        FabricModMetadata metadata = JsonUtils.fromNonNullJson(FileUtils.readText(mcmod), FabricModMetadata.class);
+        String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
+        return new LocalModFile(modManager, modManager.getLocalMod(metadata.id, ModLoaderType.FABRIC), modFile, metadata.name, new LocalModFile.Description(metadata.description),
+                authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon);
     }
 
     @JsonAdapter(FabricModAuthorSerializer.class)

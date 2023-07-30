@@ -68,8 +68,7 @@ public class ForgeOldInstallTask extends Task<Version> {
             InputStream stream = zipFile.getInputStream(zipFile.getEntry("install_profile.json"));
             if (stream == null)
                 throw new ArtifactMalformedException("Malformed forge installer file, install_profile.json does not exist.");
-            String json = IOUtils.readFullyAsString(stream);
-            ForgeInstallProfile installProfile = JsonUtils.fromNonNullJson(json, ForgeInstallProfile.class);
+            ForgeInstallProfile installProfile = JsonUtils.fromNonNullJsonFully(stream, ForgeInstallProfile.class);
 
             // unpack the universal jar in the installer file.
             Library forgeLibrary = new Library(installProfile.getInstall().getPath());

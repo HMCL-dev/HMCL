@@ -54,6 +54,8 @@ public final class SVG {
         return svg;
     }
 
+    public static final String ARROW_RIGHT = "M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z";
+
     // default fill: white, width: 24, height 24
 
     public static Node gear(ObjectBinding<? extends Paint> fill, double width, double height) {
@@ -273,7 +275,7 @@ public final class SVG {
     }
 
     public static Node arrowRight(ObjectBinding<? extends Paint> fill, double width, double height) {
-        return createSVGPath("M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z", fill, width,
+        return createSVGPath(ARROW_RIGHT, fill, width,
                 height);
     }
 

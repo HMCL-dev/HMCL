@@ -44,7 +44,6 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
     private static final class Hole {
         @SuppressWarnings("unchecked")
         static final Pair<String, String>[] SOURCE = (Pair<String, String>[]) new Pair<?, ?>[]{
-                pair("javafx.fxml.LoadException", i18n("crash.NoClassDefFound")),
                 pair("Location is not set", i18n("crash.NoClassDefFound")),
                 pair("UnsatisfiedLinkError", i18n("crash.user_fault")),
                 pair("java.time.zone.ZoneRulesException: Unable to load TZDB time-zone rules", i18n("crash.user_fault")),

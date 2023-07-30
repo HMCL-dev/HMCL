@@ -47,22 +47,22 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         return of(Bindings.createObjectBinding(() -> mapper.apply(watched), watched));
     }
 
-    protected final ObservableValue<T> predecessor;
+    protected final ObservableValue<? extends T> predecessor;
 
-    public BindingMapping(ObservableValue<T> predecessor) {
+    public BindingMapping(ObservableValue<? extends T> predecessor) {
         this.predecessor = requireNonNull(predecessor);
         bind(predecessor);
     }
 
-    public <V> BindingMapping<?, V> map(Function<U, V> mapper) {
+    public <V> BindingMapping<?, V> map(Function<? super U, ? extends V> mapper) {
         return new MappedBinding<>(this, mapper);
     }
 
-    public <V> BindingMapping<?, V> flatMap(Function<U, ? extends ObservableValue<V>> mapper) {
+    public <V> BindingMapping<?, V> flatMap(Function<? super U, ? extends ObservableValue<? extends V>> mapper) {
         return flatMap(mapper, null);
     }
 
-    public <V> BindingMapping<?, V> flatMap(Function<U, ? extends ObservableValue<V>> mapper, Supplier<V> nullAlternative) {
+    public <V> BindingMapping<?, V> flatMap(Function<? super U, ? extends ObservableValue<? extends V>> mapper, Supplier<? extends V> nullAlternative) {
         return new FlatMappedBinding<>(map(mapper), nullAlternative);
     }
 
@@ -82,7 +82,7 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         }
 
         @Override
-        public <V> BindingMapping<?, V> map(Function<T, V> mapper) {
+        public <V> BindingMapping<?, V> map(Function<? super T, ? extends V> mapper) {
             return new MappedBinding<>(predecessor, mapper);
         }
 
@@ -94,9 +94,9 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
 
     private static class MappedBinding<T, U> extends BindingMapping<T, U> {
 
-        private final Function<T, U> mapper;
+        private final Function<? super T, ? extends U> mapper;
 
-        public MappedBinding(ObservableValue<T> predecessor, Function<T, U> mapper) {
+        public MappedBinding(ObservableValue<? extends T> predecessor, Function<? super T, ? extends U> mapper) {
             super(predecessor);
             this.mapper = mapper;
         }
@@ -107,12 +107,12 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         }
     }
 
-    private static class FlatMappedBinding<T extends ObservableValue<U>, U> extends BindingMapping<T, U> {
+    private static class FlatMappedBinding<T extends ObservableValue<? extends U>, U> extends BindingMapping<T, U> {
 
-        private final Supplier<U> nullAlternative;
+        private final Supplier<? extends U> nullAlternative;
         private T lastObservable = null;
 
-        public FlatMappedBinding(ObservableValue<T> predecessor, Supplier<U> nullAlternative) {
+        public FlatMappedBinding(ObservableValue<? extends T> predecessor, Supplier<? extends U> nullAlternative) {
             super(predecessor);
             this.nullAlternative = nullAlternative;
         }
@@ -148,11 +148,11 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         private T prev;
         private U value;
 
-        private final Function<T, CompletableFuture<U>> mapper;
+        private final Function<? super T, ? extends CompletableFuture<? extends U>> mapper;
         private T computingPrev;
         private boolean computing = false;
 
-        public AsyncMappedBinding(ObservableValue<T> predecessor, Function<T, CompletableFuture<U>> mapper, U initial) {
+        public AsyncMappedBinding(ObservableValue<? extends T> predecessor, Function<? super T, ? extends CompletableFuture<? extends U>> mapper, U initial) {
             super(predecessor);
             this.value = initial;
             this.mapper = mapper;
@@ -168,7 +168,7 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
                 computingPrev = currentPrev;
             }
 
-            CompletableFuture<U> task;
+            CompletableFuture<? extends U> task;
             try {
                 task = requireNonNull(mapper.apply(currentPrev));
             } catch (Throwable e) {

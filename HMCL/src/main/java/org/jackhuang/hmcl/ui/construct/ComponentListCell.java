@@ -25,6 +25,9 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -35,11 +38,12 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 /**
  * @author huangyuhui
  */
-class ComponentListCell extends StackPane {
+final class ComponentListCell extends StackPane {
     private final Node content;
     private Animation expandAnimation;
     private Rectangle clipRect;
@@ -70,6 +74,7 @@ class ComponentListCell extends StackPane {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void updateLayout() {
         if (content instanceof ComponentList) {
             ComponentList list = (ComponentList) content;
@@ -134,45 +139,53 @@ class ComponentListCell extends StackPane {
             container.getChildren().setAll(content);
             groupNode.getChildren().add(container);
 
-            Runnable onExpand = () -> {
+            EventHandler<Event> onExpand = e -> {
                 if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
                     expandAnimation.stop();
                 }
 
-                setExpanded(!isExpanded());
-
-                if (isExpanded()) {
-                    list.onExpand();
+                boolean expanded = !isExpanded();
+                setExpanded(expanded);
+                if (expanded) {
+                    list.doLazyInit();
                     list.layout();
                 }
 
                 Platform.runLater(() -> {
-                    double newAnimatedHeight = (content.prefHeight(-1) + 8 + 10) * (isExpanded() ? 1 : -1);
-                    double newHeight = isExpanded() ? getHeight() + newAnimatedHeight : prefHeight(-1);
-                    double contentHeight = isExpanded() ? newAnimatedHeight : 0;
+                    double newAnimatedHeight = (list.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
+                    double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(-1);
+                    double contentHeight = expanded ? newAnimatedHeight : 0;
 
-                    if (isExpanded()) {
+                    if (expanded) {
                         updateClip(newHeight);
                     }
 
-                    expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
-                            new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
-                            new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
-                    ));
+                    if (AnimationUtils.isAnimationEnabled()) {
+                        expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
+                                new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
+                                new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
+                        ));
 
-                    if (!isExpanded()) {
-                        expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
+                        if (!expanded) {
+                            expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
+                        }
+
+                        expandAnimation.play();
+                    } else {
+                        container.setMinHeight(contentHeight);
+                        container.setMaxHeight(contentHeight);
+
+                        if (!expanded) {
+                            updateClip(newHeight);
+                        }
                     }
-
-                    expandAnimation.play();
                 });
             };
 
-            headerRippler.setOnMouseClicked(e -> onExpand.run());
-            expandButton.setOnMouseClicked(e -> onExpand.run());
+            headerRippler.setOnMouseClicked(onExpand);
+            expandButton.setOnAction((EventHandler<ActionEvent>) (Object) onExpand);
 
-            expandedProperty().addListener((a, b, newValue) ->
-                    expandIcon.setRotate(newValue ? 180 : 0));
+            expandedProperty().addListener((a, b, newValue) -> expandIcon.setRotate(newValue ? 180 : 0));
 
             getChildren().setAll(groupNode);
         } else {

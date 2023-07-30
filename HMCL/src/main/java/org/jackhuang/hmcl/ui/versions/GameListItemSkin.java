@@ -92,6 +92,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
             btnLaunch.setGraphic(FXUtils.limitingSize(SVG.rocketLaunchOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+            runInFX(() -> FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test")));
             right.getChildren().add(btnLaunch);
         }
 
@@ -104,6 +105,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
             btnManage.setGraphic(FXUtils.limitingSize(SVG.dotsVertical(Theme.blackFillBinding(), 24, 24), 24, 24));
+            runInFX(() -> FXUtils.installFastTooltip(btnManage, i18n("settings.game.management")));
             right.getChildren().add(btnManage);
         }
 

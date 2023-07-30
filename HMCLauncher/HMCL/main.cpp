@@ -3,6 +3,7 @@
 #include "os.h"
 #include "java.h"
 #include "lang.h"
+#include <windows.h>
 
 Version J8(TEXT("8"));
 
@@ -47,6 +48,10 @@ void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &
     } while (FindNextFile(hFind, &data));
     FindClose(hFind);
   }
+}
+
+void OpenHelpPage() {
+    ShellExecute(0, 0, L"https://docs.hmcl.net/help.html", 0, 0, SW_SHOW);
 }
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -156,14 +161,14 @@ error:
 
   if (isWin7OrLater) {
     if (isARM64) {
-      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-aarch64.msi";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
     } if (isX64) {
-      downloadLink = L"https://aka.ms/download-jdk/microsoft-jdk-17-windows-x64.msi";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
     } else {
-      downloadLink = L"https://download.bell-sw.com/java/17.0.4.1+1/bellsoft-jre17.0.4.1+1-windows-i586-full.msi";
+      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
     }
   } else {
-    downloadLink = L"https://www.java.com";
+    downloadLink = L"https://docs.hmcl.net/downloads/java.html";
   }
 
   if (IDOK == MessageBox(NULL, useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT, useChinese ? ERROR_TITLE_ZH : ERROR_TITLE, MB_ICONWARNING | MB_OKCANCEL)) {

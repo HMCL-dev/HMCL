@@ -38,10 +38,10 @@ public interface RemoteModRepository {
     Type getType();
 
     enum SortType {
-        DATE_CREATED,
         POPULARITY,
-        LAST_UPDATED,
         NAME,
+        DATE_CREATED,
+        LAST_UPDATED,
         AUTHOR,
         TOTAL_DOWNLOADS
     }
@@ -89,6 +89,8 @@ public interface RemoteModRepository {
     }
 
     String[] DEFAULT_GAME_VERSIONS = new String[]{
+            "1.20.1", "1.20",
+            "1.19.4", "1.19.3", "1.19.2", "1.19.1", "1.19",
             "1.18.2", "1.18.1", "1.18",
             "1.17.1", "1.17",
             "1.16.5", "1.16.4", "1.16.3", "1.16.2", "1.16.1", "1.16",

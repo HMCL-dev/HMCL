@@ -31,8 +31,7 @@ public final class EventBus {
 
     @SuppressWarnings("unchecked")
     public <T extends Event> EventManager<T> channel(Class<T> clazz) {
-        events.putIfAbsent(clazz, new EventManager<>());
-        return (EventManager<T>) events.get(clazz);
+        return (EventManager<T>) events.computeIfAbsent(clazz, ignored -> new EventManager<>());
     }
 
     @SuppressWarnings("unchecked")

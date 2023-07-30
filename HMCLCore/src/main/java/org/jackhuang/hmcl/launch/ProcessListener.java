@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 /**
@@ -40,7 +39,7 @@ public interface ProcessListener {
      *
      * @param log the log
      */
-    void onLog(String log, Log4jLevel level);
+    void onLog(String log, boolean isErrorStream);
 
     /**
      * Called when the game process stops.
@@ -52,6 +51,7 @@ public interface ProcessListener {
     enum ExitType {
         JVM_ERROR,
         APPLICATION_ERROR,
+        SIGKILL,
         NORMAL,
         INTERRUPTED
     }

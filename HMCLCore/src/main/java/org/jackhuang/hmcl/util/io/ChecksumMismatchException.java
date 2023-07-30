@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -50,7 +49,7 @@ public class ChecksumMismatchException extends ArtifactMalformedException {
     }
 
     public static void verifyChecksum(Path file, String algorithm, String expectedChecksum) throws IOException {
-        String checksum = Hex.encodeHex(DigestUtils.digest(algorithm, file));
+        String checksum = DigestUtils.digestToString(algorithm, file);
         if (!checksum.equalsIgnoreCase(expectedChecksum)) {
             throw new ChecksumMismatchException(algorithm, expectedChecksum, checksum);
         }

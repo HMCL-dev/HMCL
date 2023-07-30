@@ -137,6 +137,10 @@ public final class ExportWizardProvider implements WizardProvider {
                     if (background_jpg.isFile())
                         zip.putFile(background_jpg, "background.jpg");
 
+                    File background_gif = new File("background.gif").getAbsoluteFile();
+                    if (background_gif.isFile())
+                        zip.putFile(background_gif, "background.gif");
+
                     zip.putFile(launcherJar.get(), launcherJar.get().getFileName().toString());
                 }
             }

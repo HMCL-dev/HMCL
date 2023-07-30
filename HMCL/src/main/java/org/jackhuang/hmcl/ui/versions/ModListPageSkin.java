@@ -23,6 +23,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
@@ -33,6 +34,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseAddon;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -42,8 +49,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -56,16 +62,33 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
+
+    private final TransitionPane toolbarPane;
+    private final HBox searchBar;
+    private final HBox toolbarNormal;
+    private final HBox toolbarSelecting;
+
+    private final JFXListView<ModInfoObject> listView;
+    private final JFXTextField searchField;
+
+    // FXThread
+    private boolean isSearching = false;
 
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
@@ -76,21 +99,45 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
-        JFXListView<ModInfoObject> listView = new JFXListView<>();
+        listView = new JFXListView<>();
 
         {
-            TransitionPane toolBarPane = new TransitionPane();
-            HBox toolbarNormal = new HBox();
+            toolbarPane = new TransitionPane();
+
+            searchBar = new HBox();
+            toolbarNormal = new HBox();
+            toolbarSelecting = new HBox();
+
+            // Search Bar
+            searchBar.setAlignment(Pos.CENTER);
+            searchBar.setPadding(new Insets(0, 5, 0, 5));
+            searchField = new JFXTextField();
+            searchField.setPromptText(i18n("search"));
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+            searchField.setOnAction(e -> search());
+
+            JFXButton closeSearchBar = createToolbarButton2(null, SVG::close,
+                    () -> {
+                        changeToolbar(toolbarNormal);
+
+                        isSearching = false;
+                        searchField.clear();
+                        Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
+                    });
+
+            searchBar.getChildren().setAll(searchField, closeSearchBar);
+
+            // Toolbar Normal
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
-                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, () ->
-                            skinnable.openModFolder()),
-                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, () ->
-                            skinnable.checkUpdates()),
-                    createToolbarButton2(i18n("download"), SVG::downloadOutline, () ->
-                            skinnable.download()));
-            HBox toolbarSelecting = new HBox();
+                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, skinnable::openModFolder),
+                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, skinnable::checkUpdates),
+                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download),
+                    createToolbarButton2(i18n("search"), SVG::magnify, () -> changeToolbar(searchBar))
+            );
+
+            // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
                     createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
@@ -104,15 +151,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.select_all"), SVG::selectAll, () ->
                             listView.getSelectionModel().selectAll()),
                     createToolbarButton2(i18n("button.cancel"), SVG::cancel, () ->
-                            listView.getSelectionModel().clearSelection()));
-            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
-                if (selectedItem == null) {
-                    toolBarPane.setContent(toolbarNormal, ContainerAnimations.FADE.getAnimationProducer());
-                } else {
-                    toolBarPane.setContent(toolbarSelecting, ContainerAnimations.FADE.getAnimationProducer());
-                }
-            });
-            root.getContent().add(toolBarPane);
+                            listView.getSelectionModel().clearSelection())
+            );
+
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(isSearching ? searchBar : toolbarNormal);
+                        else
+                            changeToolbar(toolbarSelecting);
+                    });
+            root.getContent().add(toolbarPane);
         }
 
         {
@@ -121,7 +170,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new ModInfoListCell(listView));
+            Holder<Object> lastCell = new Holder<>();
+            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
@@ -133,7 +183,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         label.prefWidthProperty().bind(pane.widthProperty().add(-100));
 
         FXUtils.onChangeAndOperate(skinnable.moddedProperty(), modded -> {
-
             if (modded) pane.getChildren().setAll(root);
             else pane.getChildren().setAll(label);
         });
@@ -141,28 +190,75 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         getChildren().setAll(pane);
     }
 
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE.getAnimationProducer());
+        }
+    }
+
+    private void search() {
+        isSearching = true;
+
+        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
+
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            listView.getItems().setAll(getSkinnable().getItems());
+        } else {
+            listView.getItems().clear();
+
+            Predicate<String> predicate;
+            if (queryString.startsWith("regex:")) {
+                try {
+                    Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
+                    predicate = s -> pattern.matcher(s).find();
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "Illegal regular expression", e);
+                    return;
+                }
+            } else {
+                String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
+                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+            }
+
+            // Do we need to search in the background thread?
+            for (ModInfoObject item : getSkinnable().getItems()) {
+                if (predicate.test(item.getModInfo().getFileName())) {
+                    listView.getItems().add(item);
+                }
+            }
+        }
+    }
+
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
+        private final String title;
         private final String message;
         private final ModTranslations.Mod mod;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
-            StringBuilder message = new StringBuilder(localModFile.getName());
+
+            StringBuilder title = new StringBuilder(localModFile.getName());
             if (isNotBlank(localModFile.getVersion()))
-                message.append(", ").append(i18n("archive.version")).append(": ").append(localModFile.getVersion());
+                title.append(" ").append(localModFile.getVersion());
+            this.title = title.toString();
+
+            StringBuilder message = new StringBuilder(localModFile.getFileName());
             if (isNotBlank(localModFile.getGameVersion()))
                 message.append(", ").append(i18n("archive.game_version")).append(": ").append(localModFile.getGameVersion());
             if (isNotBlank(localModFile.getAuthors()))
                 message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
             this.message = message.toString();
+
             this.mod = ModTranslations.MOD.getModById(localModFile.getId());
         }
 
         String getTitle() {
-            return localModFile.getFileName();
+            return title;
         }
 
         String getSubtitle() {
@@ -183,7 +279,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static class ModInfoDialog extends JFXDialogLayout {
+    class ModInfoDialog extends JFXDialogLayout {
 
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
@@ -223,9 +319,47 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
             setBody(description);
 
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
+                Lang.<Pair<String, Pair<RemoteModRepository, Function<RemoteMod.Version, String>>>>immutableListOf(
+                        pair("mods.curseforge", pair(
+                                CurseForgeRemoteModRepository.MODS,
+                                (remoteVersion) -> Integer.toString(((CurseAddon.LatestFile) remoteVersion.getSelf()).getModId())
+                        )),
+                        pair("mods.modrinth", pair(
+                                ModrinthRemoteModRepository.MODS,
+                                (remoteVersion) -> ((ModrinthRemoteModRepository.ProjectVersion) remoteVersion.getSelf()).getProjectId()
+                        ))
+                ).forEach(item -> {
+                    String text = item.getKey();
+                    RemoteModRepository remoteModRepository = item.getValue().getKey();
+                    Function<RemoteMod.Version, String> projectIDProvider = item.getValue().getValue();
+
+                    JFXHyperlink button = new JFXHyperlink(i18n(text));
+                    Task.runAsync(() -> {
+                        Optional<RemoteMod.Version> versionOptional = remoteModRepository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        if (versionOptional.isPresent()) {
+                            RemoteMod remoteMod = remoteModRepository.getModById(projectIDProvider.apply(versionOptional.get()));
+                            FXUtils.runInFX(() -> {
+                                button.setOnAction(e -> {
+                                    fireEvent(new DialogCloseEvent());
+                                    Controllers.navigate(new DownloadPage(
+                                            new DownloadListPage(remoteModRepository),
+                                            remoteMod,
+                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
+                                            null
+                                    ));
+                                });
+                                button.setDisable(false);
+                            });
+                        }
+                    }).start();
+                    button.setDisable(true);
+                    getActions().add(button);
+                });
+            }
+
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
-                JFXHyperlink officialPageButton = new JFXHyperlink();
-                officialPageButton.setText(i18n("mods.url"));
+                JFXHyperlink officialPageButton = new JFXHyperlink(i18n("mods.url"));
                 officialPageButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(modInfo.getModInfo().getUrl());
@@ -235,8 +369,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
-                JFXHyperlink mcbbsButton = new JFXHyperlink();
-                mcbbsButton.setText(i18n("mods.mcbbs"));
+                JFXHyperlink mcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
                 mcbbsButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
@@ -245,8 +378,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
-                JFXHyperlink searchButton = new JFXHyperlink();
-                searchButton.setText(i18n("mods.mcmod.search"));
+                JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
@@ -257,8 +389,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 });
                 getActions().add(searchButton);
             } else {
-                JFXHyperlink mcmodButton = new JFXHyperlink();
-                mcmodButton.setText(i18n("mods.mcmod.page"));
+                JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
                 mcmodButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
                     FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modInfo.getMod()));
@@ -276,10 +407,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    private static Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
-    private static Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
+    private static final Lazy<PopupMenu> menu = new Lazy<>(PopupMenu::new);
+    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
-    class ModInfoListCell extends MDListCell<ModInfoObject> {
+    final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
@@ -287,8 +418,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView) {
-            super(listView);
+        ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
+            super(listView, lastCell);
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -332,6 +463,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             restoreButton.setOnMouseClicked(e -> {
                 menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(), () -> {
+                            popup.get().hide();
                             getSkinnable().rollback(dataItem.getModInfo(), localModFile);
                         }))
                         .collect(Collectors.toList())

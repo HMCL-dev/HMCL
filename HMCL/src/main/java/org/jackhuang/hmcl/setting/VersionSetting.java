@@ -24,6 +24,7 @@ import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -37,11 +38,10 @@ import java.lang.reflect.Type;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
-
-import static com.jfoenix.concurrency.JFXUtilities.runInFX;
 
 /**
  *
@@ -341,6 +341,20 @@ public final class VersionSetting implements Cloneable {
         minecraftArgsProperty.set(minecraftArgs);
     }
 
+    private final StringProperty environmentVariablesProperty = new SimpleStringProperty(this, "environmentVariables", "");
+
+    public StringProperty environmentVariablesProperty() {
+        return environmentVariablesProperty;
+    }
+
+    public String getEnvironmentVariables() {
+        return environmentVariablesProperty.get();
+    }
+
+    public void setEnvironmentVariables(String env) {
+        environmentVariablesProperty.set(env);
+    }
+
     private final BooleanProperty noJVMArgsProperty = new SimpleBooleanProperty(this, "noJVMArgs", false);
 
     public BooleanProperty noJVMArgsProperty() {
@@ -483,7 +497,6 @@ public final class VersionSetting implements Cloneable {
         widthProperty.set(width);
     }
 
-
     private final IntegerProperty heightProperty = new SimpleIntegerProperty(this, "height", 480);
 
     public IntegerProperty heightProperty() {
@@ -554,18 +567,18 @@ public final class VersionSetting implements Cloneable {
         processPriorityProperty.set(processPriority);
     }
 
-    private final BooleanProperty useSoftwareRenderer = new SimpleBooleanProperty(this, "softwareRenderer", false);
+    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
 
-    public boolean isUseSoftwareRenderer() {
-        return useSoftwareRenderer.get();
+    public Renderer getRenderer() {
+        return rendererProperty.get();
     }
 
-    public BooleanProperty useSoftwareRendererProperty() {
-        return useSoftwareRenderer;
+    public ObjectProperty<Renderer> rendererProperty() {
+        return rendererProperty;
     }
 
-    public void setUseSoftwareRenderer(boolean useSoftwareRenderer) {
-        this.useSoftwareRenderer.set(useSoftwareRenderer);
+    public void setRenderer(Renderer renderer) {
+        this.rendererProperty.set(renderer);
     }
 
     private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
@@ -660,9 +673,7 @@ public final class VersionSetting implements Cloneable {
                             .filter(java -> java.getVersion().equals(getJava()))
                             .collect(Collectors.toList());
                     if (matchedJava.isEmpty()) {
-                        runInFX(() -> {
-                            setJava("Auto");
-                        });
+                        FXUtils.runInFX(() -> setJava("Auto"));
                         return JavaVersion.fromCurrentEnvironment();
                     } else {
                         return matchedJava.stream()
@@ -695,6 +706,7 @@ public final class VersionSetting implements Cloneable {
         postExitCommand.addListener(listener);
         javaArgsProperty.addListener(listener);
         minecraftArgsProperty.addListener(listener);
+        environmentVariablesProperty.addListener(listener);
         noJVMArgsProperty.addListener(listener);
         notCheckGameProperty.addListener(listener);
         notCheckJVMProperty.addListener(listener);
@@ -707,7 +719,7 @@ public final class VersionSetting implements Cloneable {
         gameDirTypeProperty.addListener(listener);
         gameDirProperty.addListener(listener);
         processPriorityProperty.addListener(listener);
-        useSoftwareRenderer.addListener(listener);
+        rendererProperty.addListener(listener);
         useNativeGLFW.addListener(listener);
         useNativeOpenAL.addListener(listener);
         launcherVisibilityProperty.addListener(listener);
@@ -733,6 +745,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setPostExitCommand(getPostExitCommand());
         versionSetting.setJavaArgs(getJavaArgs());
         versionSetting.setMinecraftArgs(getMinecraftArgs());
+        versionSetting.setEnvironmentVariables(getEnvironmentVariables());
         versionSetting.setNoJVMArgs(isNoJVMArgs());
         versionSetting.setNotCheckGame(isNotCheckGame());
         versionSetting.setNotCheckJVM(isNotCheckJVM());
@@ -745,7 +758,7 @@ public final class VersionSetting implements Cloneable {
         versionSetting.setGameDirType(getGameDirType());
         versionSetting.setGameDir(getGameDir());
         versionSetting.setProcessPriority(getProcessPriority());
-        versionSetting.setUseSoftwareRenderer(isUseSoftwareRenderer());
+        versionSetting.setRenderer(getRenderer());
         versionSetting.setUseNativeGLFW(isUseNativeGLFW());
         versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
         versionSetting.setLauncherVisibility(getLauncherVisibility());
@@ -763,6 +776,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("usesGlobal", src.isUsesGlobal());
             obj.addProperty("javaArgs", src.getJavaArgs());
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
+            obj.addProperty("environmentVariables", src.getEnvironmentVariables());
             obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? OperatingSystem.SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
             obj.addProperty("autoMemory", src.isAutoMemory());
@@ -784,7 +798,6 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
-            obj.addProperty("useSoftwareRenderer", src.isUseSoftwareRenderer());
             obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
             obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
@@ -793,12 +806,24 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
             obj.addProperty("versionIcon", src.getVersionIcon().ordinal());
 
+            obj.addProperty("renderer", src.getRenderer().name());
+            if (src.getRenderer() == Renderer.LLVMPIPE)
+                obj.addProperty("useSoftwareRenderer", true);
+
             return obj;
+        }
+
+        private static <T> T getOrDefault(T[] values, JsonElement index, T defaultValue) {
+            if (index == null)
+                return defaultValue;
+
+            int idx = index.getAsInt();
+            return idx >= 0 && idx < values.length ? values[idx] : defaultValue;
         }
 
         @Override
         public VersionSetting deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == JsonNull.INSTANCE || !(json instanceof JsonObject))
+            if (!(json instanceof JsonObject))
                 return null;
             JsonObject obj = (JsonObject) json;
 
@@ -810,6 +835,7 @@ public final class VersionSetting implements Cloneable {
             vs.setUsesGlobal(Optional.ofNullable(obj.get("usesGlobal")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setJavaArgs(Optional.ofNullable(obj.get("javaArgs")).map(JsonElement::getAsString).orElse(""));
             vs.setMinecraftArgs(Optional.ofNullable(obj.get("minecraftArgs")).map(JsonElement::getAsString).orElse(""));
+            vs.setEnvironmentVariables(Optional.ofNullable(obj.get("environmentVariables")).map(JsonElement::getAsString).orElse(""));
             vs.setMaxMemory(maxMemoryN);
             vs.setMinMemory(Optional.ofNullable(obj.get("minMemory")).map(JsonElement::getAsInt).orElse(null));
             vs.setAutoMemory(Optional.ofNullable(obj.get("autoMemory")).map(JsonElement::getAsBoolean).orElse(true));
@@ -818,6 +844,7 @@ public final class VersionSetting implements Cloneable {
             vs.setHeight(Optional.ofNullable(obj.get("height")).map(JsonElement::getAsJsonPrimitive).map(this::parseJsonPrimitive).orElse(0));
             vs.setJavaDir(Optional.ofNullable(obj.get("javaDir")).map(JsonElement::getAsString).orElse(""));
             vs.setPreLaunchCommand(Optional.ofNullable(obj.get("precalledCommand")).map(JsonElement::getAsString).orElse(""));
+            vs.setPostExitCommand(Optional.ofNullable(obj.get("postExitCommand")).map(JsonElement::getAsString).orElse(""));
             vs.setServerIp(Optional.ofNullable(obj.get("serverIp")).map(JsonElement::getAsString).orElse(""));
             vs.setJava(Optional.ofNullable(obj.get("java")).map(JsonElement::getAsString).orElse(""));
             vs.setWrapper(Optional.ofNullable(obj.get("wrapper")).map(JsonElement::getAsString).orElse(""));
@@ -829,15 +856,26 @@ public final class VersionSetting implements Cloneable {
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setLauncherVisibility(LauncherVisibility.values()[Optional.ofNullable(obj.get("launcherVisibility")).map(JsonElement::getAsInt).orElse(LauncherVisibility.HIDE.ordinal())]);
-            vs.setProcessPriority(ProcessPriority.values()[Optional.ofNullable(obj.get("processPriority")).map(JsonElement::getAsInt).orElse(ProcessPriority.NORMAL.ordinal())]);
-            vs.setUseSoftwareRenderer(Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
+            vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setGameDirType(GameDirectoryType.values()[Optional.ofNullable(obj.get("gameDirType")).map(JsonElement::getAsInt).orElse(GameDirectoryType.ROOT_FOLDER.ordinal())]);
+            vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
-            vs.setNativesDirType(NativesDirectoryType.values()[Optional.ofNullable(obj.get("nativesDirType")).map(JsonElement::getAsInt).orElse(0)]);
-            vs.setVersionIcon(VersionIconType.values()[Optional.ofNullable(obj.get("versionIcon")).map(JsonElement::getAsInt).orElse(0)]);
+            vs.setNativesDirType(getOrDefault(NativesDirectoryType.values(), obj.get("nativesDirType"), NativesDirectoryType.VERSION_FOLDER));
+            vs.setVersionIcon(getOrDefault(VersionIconType.values(), obj.get("versionIcon"), VersionIconType.DEFAULT));
+
+            vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
+                    .flatMap(name -> {
+                        try {
+                            return Optional.of(Renderer.valueOf(name.toUpperCase(Locale.ROOT)));
+                        } catch (IllegalArgumentException ignored) {
+                            return Optional.empty();
+                        }
+                    }).orElseGet(() -> {
+                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
+                        return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
+                    }));
 
             return vs;
         }

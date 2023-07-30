@@ -19,7 +19,10 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -35,6 +38,7 @@ import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
@@ -45,7 +49,6 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
-import org.jackhuang.hmcl.ui.multiplayer.MultiplayerPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.FutureCallback;
@@ -61,12 +64,12 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.ConfigHolder.*;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageWidth = new SimpleDoubleProperty();
     private static DoubleProperty stageHeight = new SimpleDoubleProperty();
 
@@ -89,11 +92,10 @@ public final class Controllers {
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
-        accountListPage.accountsProperty().bindContent(Accounts.accountsProperty());
+        accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
-    private static Lazy<MultiplayerPage> multiplayerPage = new Lazy<>(MultiplayerPage::new);
     private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
 
     private Controllers() {
@@ -123,11 +125,6 @@ public final class Controllers {
     }
 
     // FXThread
-    public static MultiplayerPage getMultiplayerPage() {
-        return multiplayerPage.get();
-    }
-
-    // FXThread
     public static LauncherSettingsPage getSettingsPage() {
         return settingsPage.get();
     }
@@ -148,10 +145,15 @@ public final class Controllers {
     }
 
     public static void onApplicationStop() {
-        config().setHeight(stageHeight.get());
-        config().setWidth(stageWidth.get());
-        stageHeight = null;
-        stageWidth = null;
+        stageSizeChangeListener = null;
+        if (stageHeight != null) {
+            config().setHeight(stageHeight.get());
+            stageHeight = null;
+        }
+        if (stageWidth != null) {
+            config().setWidth(stageWidth.get());
+            stageWidth = null;
+        }
     }
 
     public static void initialize(Stage stage) {
@@ -159,10 +161,28 @@ public final class Controllers {
 
         Controllers.stage = stage;
 
-        stage.setHeight(config().getHeight());
-        stageHeight.bind(stage.heightProperty());
-        stage.setWidth(config().getWidth());
-        stageWidth.bind(stage.widthProperty());
+        stageSizeChangeListener = o -> {
+            ReadOnlyDoubleProperty sourceProperty = (ReadOnlyDoubleProperty) o;
+            DoubleProperty targetProperty = "width".equals(sourceProperty.getName()) ? stageWidth : stageHeight;
+
+            if (targetProperty != null
+                    && Controllers.stage != null
+                    && !Controllers.stage.isIconified()) {
+                targetProperty.set(sourceProperty.get());
+            }
+        };
+
+        WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
+
+        double initHeight = config().getHeight();
+        double initWidth = config().getWidth();
+
+        stage.setHeight(initHeight);
+        stage.setWidth(initWidth);
+        stageHeight.set(initHeight);
+        stageWidth.set(initWidth);
+        stage.heightProperty().addListener(weakListener);
+        stage.widthProperty().addListener(weakListener);
 
         stage.setOnCloseRequest(e -> Launcher.stopApplication());
 
@@ -182,7 +202,7 @@ public final class Controllers {
         stage.setMinWidth(800 + 2 + 16); // bg width + border width*2 + shadow width*2
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
-        scene.getStylesheets().setAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
+        scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
 
         stage.getIcons().add(newImage("/assets/img/icon.png"));
         stage.setTitle(Metadata.FULL_TITLE);
@@ -207,7 +227,7 @@ public final class Controllers {
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
             agreementPane.setBody(new Label(i18n("launcher.agreement.hint")));
             JFXHyperlink agreementLink = new JFXHyperlink(i18n("launcher.agreement"));
-            agreementLink.setOnAction(e -> FXUtils.openLink(Metadata.EULA_URL));
+            agreementLink.setExternalLink(Metadata.EULA_URL);
             JFXButton yesButton = new JFXButton(i18n("launcher.agreement.accept"));
             yesButton.getStyleClass().add("dialog-accept");
             yesButton.setOnAction(e -> {
@@ -216,9 +236,7 @@ public final class Controllers {
             });
             JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
             noButton.getStyleClass().add("dialog-cancel");
-            noButton.setOnAction(e -> {
-                System.exit(1);
-            });
+            noButton.setOnAction(e -> System.exit(1));
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
         }
@@ -305,9 +323,14 @@ public final class Controllers {
 
     public static void onHyperlinkAction(String href) {
         if (href.startsWith("hmcl://")) {
-            if ("hmcl://settings/feedback".equals(href)) {
-                Controllers.getSettingsPage().showFeedback();
-                Controllers.navigate(Controllers.getSettingsPage());
+            switch (href) {
+                case "hmcl://settings/feedback":
+                    Controllers.getSettingsPage().showFeedback();
+                    Controllers.navigate(Controllers.getSettingsPage());
+                    break;
+                case "hmcl://hide-announcement":
+                    Controllers.getRootPage().getMainPage().hideAnnouncementPane();
+                    break;
             }
         } else {
             FXUtils.openLink(href);
@@ -322,9 +345,12 @@ public final class Controllers {
         rootPage = null;
         versionPage = null;
         gameListPage = null;
+        downloadPage = null;
+        accountListPage = null;
         settingsPage = null;
         decorator = null;
         stage = null;
         scene = null;
+        onApplicationStop();
     }
 }

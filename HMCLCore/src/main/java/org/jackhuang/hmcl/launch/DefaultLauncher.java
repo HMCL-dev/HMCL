@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -106,107 +105,7 @@ public class DefaultLauncher extends Launcher {
 
         res.add(options.getJava().getBinary().toString());
 
-        res.addAllWithoutParsing(options.getJavaArguments());
-
-        Charset encoding = StandardCharsets.UTF_8;
-        if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8) {
-            try {
-                String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
-                if (fileEncoding != null)
-                    encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
-            } catch (Throwable ex) {
-                encoding = OperatingSystem.NATIVE_CHARSET;
-                LOG.log(Level.WARNING, "Bad file encoding", ex);
-            }
-        } else {
-            res.addDefault("-Dfile.encoding=", "UTF-8");
-            try {
-                String stdoutEncoding = res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-                if (stdoutEncoding != null)
-                    encoding = Charset.forName(stdoutEncoding.substring("-Dsun.stdout.encoding=".length()));
-            } catch (Throwable ex) {
-                encoding = OperatingSystem.NATIVE_CHARSET;
-                LOG.log(Level.WARNING, "Bad stdout encoding", ex);
-            }
-
-            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
-        }
-
-        // JVM Args
-        if (!options.isNoGeneratedJVMArgs()) {
-            appendJvmArgs(res);
-
-            res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toString());
-
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-                res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
-                repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
-                        .ifPresent(minecraftIcns -> {
-                            res.addDefault("-Xdock:icon=", minecraftIcns.toAbsolutePath().toString());
-                        });
-            }
-
-            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
-                res.addDefault("-Duser.home=", options.getGameDir().getParent());
-
-            // Using G1GC with its settings by default
-            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8) {
-                boolean addG1Args = true;
-                for (String javaArg : options.getJavaArguments()) {
-                    if ("-XX:-UseG1GC".equals(javaArg) || (javaArg.startsWith("-XX:+Use") && javaArg.endsWith("GC"))) {
-                        addG1Args = false;
-                        break;
-                    }
-                }
-                if (addG1Args) {
-                    res.addUnstableDefault("UnlockExperimentalVMOptions", true);
-                    res.addUnstableDefault("UseG1GC", true);
-                    res.addUnstableDefault("G1NewSizePercent", "20");
-                    res.addUnstableDefault("G1ReservePercent", "20");
-                    res.addUnstableDefault("MaxGCPauseMillis", "50");
-                    res.addUnstableDefault("G1HeapRegionSize", "16m");
-                }
-            }
-
-            if (options.getMetaspace() != null && options.getMetaspace() > 0)
-                if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
-                    res.addDefault("-XX:PermSize=", options.getMetaspace() + "m");
-                else
-                    res.addDefault("-XX:MetaspaceSize=", options.getMetaspace() + "m");
-
-            res.addUnstableDefault("UseAdaptiveSizePolicy", false);
-            res.addUnstableDefault("OmitStackTraceInFastThrow", false);
-            res.addUnstableDefault("DontCompileHugeMethods", false);
-            res.addDefault("-Xmn", "128m");
-
-            // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
-            // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
-            if (options.getJava().getBits() == Bits.BIT_32) {
-                res.addDefault("-Xss", "1m");
-            }
-
-            if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
-                res.addDefault("-Xmx", options.getMaxMemory() + "m");
-
-            if (options.getMinMemory() != null && options.getMinMemory() > 0)
-                res.addDefault("-Xms", options.getMinMemory() + "m");
-
-            if (options.getJava().getParsedVersion() == JavaVersion.JAVA_16)
-                res.addDefault("--illegal-access=", "permit");
-
-            res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
-            res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
-        }
-
-        // Fix RCE vulnerability of log4j2
-        res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
-        res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
-        res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
-
-        String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
-            res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
-        }
+        res.addAllWithoutParsing(options.getOverrideJavaArguments());
 
         Proxy proxy = options.getProxy();
         if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
@@ -226,7 +125,89 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        List<String> classpath = repository.getClasspath(version);
+        if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
+            res.addDefault("-Xmx", options.getMaxMemory() + "m");
+
+        if (options.getMinMemory() != null && options.getMinMemory() > 0
+                && (options.getMaxMemory() == null || options.getMinMemory() <= options.getMaxMemory()))
+            res.addDefault("-Xms", options.getMinMemory() + "m");
+
+        if (options.getMetaspace() != null && options.getMetaspace() > 0)
+            if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
+                res.addDefault("-XX:PermSize=", options.getMetaspace() + "m");
+            else
+                res.addDefault("-XX:MetaspaceSize=", options.getMetaspace() + "m");
+
+        res.addAllDefaultWithoutParsing(options.getJavaArguments());
+
+        Charset encoding = OperatingSystem.NATIVE_CHARSET;
+        String fileEncoding = res.addDefault("-Dfile.encoding=", encoding.name());
+        if (fileEncoding != null && !"-Dfile.encoding=COMPAT".equals(fileEncoding)) {
+            try {
+                encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
+            } catch (Throwable ex) {
+                LOG.log(Level.WARNING, "Bad file encoding", ex);
+            }
+        }
+        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+
+        // Fix RCE vulnerability of log4j2
+        res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
+        res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
+        res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
+
+        String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
+        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
+            res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
+        }
+
+        // Default JVM Args
+        if (!options.isNoGeneratedJVMArgs()) {
+            appendJvmArgs(res);
+
+            res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toString());
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
+                repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
+                        .ifPresent(minecraftIcns -> {
+                            res.addDefault("-Xdock:icon=", minecraftIcns.toAbsolutePath().toString());
+                        });
+            }
+
+            if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+                res.addDefault("-Duser.home=", options.getGameDir().getParent());
+
+            // Using G1GC with its settings by default
+            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8
+                    && res.noneMatch(arg -> "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")))) {
+                res.addUnstableDefault("UnlockExperimentalVMOptions", true);
+                res.addUnstableDefault("UseG1GC", true);
+                res.addUnstableDefault("G1NewSizePercent", "20");
+                res.addUnstableDefault("G1ReservePercent", "20");
+                res.addUnstableDefault("MaxGCPauseMillis", "50");
+                res.addUnstableDefault("G1HeapRegionSize", "32m");
+            }
+
+            res.addUnstableDefault("UseAdaptiveSizePolicy", false);
+            res.addUnstableDefault("OmitStackTraceInFastThrow", false);
+            res.addUnstableDefault("DontCompileHugeMethods", false);
+
+            // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
+            // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
+            if (options.getJava().getBits() == Bits.BIT_32) {
+                res.addDefault("-Xss", "1m");
+            }
+
+            if (options.getJava().getParsedVersion() == JavaVersion.JAVA_16)
+                res.addDefault("--illegal-access=", "permit");
+
+            res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
+            res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
+        }
+
+        Set<String> classpath = repository.getClasspath(version);
 
         File jar = repository.getVersionJar(version);
         if (!jar.exists() || !jar.isFile())
@@ -274,10 +255,15 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            res.add("--server");
-            res.add(args[0]);
-            res.add("--port");
-            res.add(args.length > 1 ? args[1] : "25565");
+            if (version.compareTo(new Version("1.20")) < 0) {
+                res.add("--server");
+                res.add(args[0]);
+                res.add("--port");
+                res.add(args.length > 1 ? args[1] : "25565");
+            } else {
+                res.add("--quickPlayMultiplayer");
+                res.add(args[0] + ":" + (args.length > 1 ? args[1] : "25565"));
+            }
         }
 
         if (options.isFullscreen())
@@ -351,10 +337,10 @@ public class DefaultLauncher extends Launcher {
                                 if (ext.equals("sha1") || ext.equals("git"))
                                     return false;
 
-                                if (options.isUseNativeGLFW() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("glfw")) {
+                                if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) && options.isUseNativeGLFW() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("glfw")) {
                                     return false;
                                 }
-                                if (options.isUseNativeOpenAL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("openal")) {
+                                if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) && options.isUseNativeOpenAL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("openal")) {
                                     return false;
                                 }
 
@@ -399,7 +385,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
                 pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(version.getType().getId())),
                 pair("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
-                pair("${user_type}", "mojang"),
+                pair("${user_type}", authInfo.getUserType()),
                 pair("${assets_index_name}", version.getAssetIndex().getId()),
                 pair("${user_properties}", authInfo.getUserProperties()),
                 pair("${resolution_width}", options.getWidth().toString()),
@@ -433,6 +419,9 @@ public class DefaultLauncher extends Launcher {
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
+        if (StringUtils.isNotBlank(options.getWrapper())) {
+            rawCommandLine.addAll(0, StringUtils.parseCommand(options.getWrapper(), getEnvVars()));
+        }
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
@@ -453,7 +442,7 @@ public class DefaultLauncher extends Launcher {
         File runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand())).directory(runDirectory);
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
             builder.environment().putAll(getEnvVars());
             SystemUtils.callExternalProcess(builder);
         }
@@ -481,16 +470,29 @@ public class DefaultLauncher extends Launcher {
 
     private Map<String, String> getEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
-        Map<String, String> env = new HashMap<>();
+        Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
         env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
         env.put("INST_MC_DIR", repository.getRunDirectory(version.getId()).getAbsolutePath());
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
-        if (options.isUseSoftwareRenderer() && OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-            env.put("LIBGL_ALWAYS_SOFTWARE", "1");
-            env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
+        Renderer renderer = options.getRenderer();
+        if (renderer != Renderer.DEFAULT) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (renderer != Renderer.LLVMPIPE)
+                    env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
+                switch (renderer) {
+                    case LLVMPIPE:
+                        env.put("LIBGL_ALWAYS_SOFTWARE", "1");
+                        break;
+                    case ZINK:
+                        env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
+                        break;
+                }
+            }
         }
 
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
@@ -506,6 +508,12 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
         }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
+            env.put("INST_QUILT", "1");
+        }
+
+        env.putAll(options.getEnvironmentVariables());
+
         return env;
     }
 
@@ -647,16 +655,28 @@ public class DefaultLauncher extends Launcher {
     private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
-            processListener.onLog(it, Optional.ofNullable(Log4jLevel.guessLevel(it)).orElse(Log4jLevel.INFO));
+            processListener.onLog(it, false);
             managedProcess.addLine(it);
         }, encoding), "stdout-pump", isDaemon);
         managedProcess.addRelatedThread(stdout);
         Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
-            processListener.onLog(it, Log4jLevel.ERROR);
+            processListener.onLog(it, true);
             managedProcess.addLine(it);
         }, encoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
-        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), processListener::onExit), "exit-waiter", isDaemon));
+        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
+            processListener.onExit(exitCode, exitType);
+
+            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                try {
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
+                    builder.environment().putAll(getEnvVars());
+                    SystemUtils.callExternalProcess(builder);
+                } catch (Throwable e) {
+                    LOG.log(Level.WARNING, "An Exception happened while running exit command.", e);
+                }
+            }
+        }), "exit-waiter", isDaemon));
     }
 
     private static final class Command {

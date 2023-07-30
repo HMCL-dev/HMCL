@@ -50,15 +50,16 @@ Simply execute the following command in project root directory:
 Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or later is recommended.
 
 ## JVM Options (for debugging)
-| Parameter                                    | Description                                                  |
-| -------------------------------------------- | ------------------------------------------------------------ |
-| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for update.    |
+| Parameter                                    | Description                                                                                                                       |
+|----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `-Dhmcl.home=<path>`                         | Override HMCL directory.                                                                                                          |
+| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for update.                                                                         |
 | `-Dhmcl.bmclapi.override=<version>`          | Override API Root of BMCLAPI download provider, defaults to `https://bmclapi2.bangbang93.com`. e.g. `https://download.mcbbs.net`. |
-| `-Dhmcl.font.override=<font family>`         | Override font family.                                        |
-| `-Dhmcl.version.override=<version>`          | Override the version number.                                 |
-| `-Dhmcl.update_source.override=<url>`        | Override the update source.                                  |
-| `-Dhmcl.authlibinjector.location=<path>`     | Use specified authlib-injector (instead of downloading one). |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for download OpenJFX.            |
-| `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding.                                |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID.                             |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App secret.                         |
+| `-Dhmcl.font.override=<font family>`         | Override font family.                                                                                                             |
+| `-Dhmcl.version.override=<version>`          | Override the version number.                                                                                                      |
+| `-Dhmcl.update_source.override=<url>`        | Override the update source.                                                                                                       |
+| `-Dhmcl.authlibinjector.location=<path>`     | Use specified authlib-injector (instead of downloading one).                                                                      |
+| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for download OpenJFX.                                                                                 |
+| `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding.                                                                                                     |
+| `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID.                                                                                                  |
+| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App secret.                                                                                              |

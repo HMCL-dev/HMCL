@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
@@ -72,6 +73,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         settingsItem.setTitle(i18n("settings.type.global.manage"));
                         settingsItem.setLeftGraphic(wrap(SVG::gamepad));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
+                        runInFX(() -> FXUtils.installFastTooltip(settingsItem, i18n("settings.type.global.manage")));
                         settingsItem.setOnAction(e -> tab.select(gameTab));
                     })
                     .startCategory(i18n("launcher"))

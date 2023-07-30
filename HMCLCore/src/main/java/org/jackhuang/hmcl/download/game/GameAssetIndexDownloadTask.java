@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -79,7 +78,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
             // verify correctness of file content
             if (verifyHashCode) {
                 try {
-                    String actualSum = Hex.encodeHex(DigestUtils.digest("SHA-1", assetIndexFile));
+                    String actualSum = DigestUtils.digestToString("SHA-1", assetIndexFile);
                     if (actualSum.equalsIgnoreCase(assetIndexInfo.getSha1()))
                         return;
                 } catch (IOException e) {

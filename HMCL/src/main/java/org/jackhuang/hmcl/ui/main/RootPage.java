@@ -34,6 +34,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -48,6 +50,7 @@ import java.io.File;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -79,7 +82,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         return new Skin(this);
     }
 
-    private MainPage getMainPage() {
+    public MainPage getMainPage() {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
@@ -147,13 +150,20 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+            runInFX(() -> FXUtils.installFastTooltip(downloadItem, i18n("download.hint")));
 
             // fifth item in left sidebar
             AdvancedListItem multiplayerItem = new AdvancedListItem();
             multiplayerItem.setLeftGraphic(wrap(SVG::lan));
             multiplayerItem.setActionButtonVisible(false);
             multiplayerItem.setTitle(i18n("multiplayer"));
-            multiplayerItem.setOnAction(e -> Controllers.navigate(Controllers.getMultiplayerPage()));
+            JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
+            link.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/multiplayer-migrate");
+            multiplayerItem.setOnAction(e -> Controllers.dialog(
+                    new MessageDialogPane.Builder(i18n("multiplayer.hint"), null, MessageDialogPane.MessageType.INFO)
+                            .addAction(link)
+                            .ok(null)
+                            .build()));
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
@@ -164,13 +174,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("account").toUpperCase())
+                    .startCategory(i18n("account").toUpperCase(Locale.ROOT))
                     .add(accountListItem)
-                    .startCategory(i18n("version").toUpperCase())
+                    .startCategory(i18n("version").toUpperCase(Locale.ROOT))
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
-                    .startCategory(i18n("settings.launcher.general").toUpperCase())
+                    .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(multiplayerItem)
                     .add(launcherSettingsItem);
 

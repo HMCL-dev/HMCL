@@ -1,0 +1,9 @@
+2023-03-16 22:19:06,155 main ERROR Error processing element Queue ([Appenders: null]): CLASS_NOT_FOUND
+[22:19:06] [main/INFO]: ModLauncher running: args [--username, 111, --version, RAD2-1.16.5, --gameDir, C:\Users\Administrator\Desktop\HMCL\.minecraft\versions\RAD2-1.16.5, --assetsDir, C:\Users\Administrator\Desktop\HMCL\.minecraft\assets, --assetIndex, 1.16, --uuid, 2a386545f1ff370eab061a766a28340a, --accessToken, ❄❄❄❄❄❄❄❄, --userType, legacy, --versionType, HMCL 3.5.3.228, --width, 854, --height, 480, --launchTarget, fmlclient, --fml.forgeVersion, 36.2.39, --fml.mcVersion, 1.16.5, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20210115.111550]
+[22:19:06] [main/INFO]: ModLauncher 8.1.3+8.1.3+main-8.1.x.c94d18ec starting: java version 1.8.0_362 by BellSoft
+[22:19:06] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.4 Source=file:/C:/Users/Administrator/Desktop/HMCL/.minecraft/libraries/org/spongepowered/mixin/0.8.4/mixin-0.8.4.jar Service=ModLauncher Env=CLIENT
+[22:19:06] [main/ERROR]: Cannot find launch target fmlclient, unable to launch
+Exception in thread "main" java.lang.RuntimeException: Cannot find launch target
+	at cpw.mods.modlauncher.LaunchServiceHandler.validateLaunchTarget(LaunchServiceHandler.java:87)
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:78)
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66)

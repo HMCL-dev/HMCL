@@ -19,12 +19,15 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -41,7 +44,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class MessageDialogPane extends StackPane {
+public final class MessageDialogPane extends HBox {
 
     public enum MessageType {
         ERROR,
@@ -55,25 +58,19 @@ public final class MessageDialogPane extends StackPane {
         }
     }
 
-    @FXML
-    private StackPane content;
-    @FXML
-    private Label graphic;
-    @FXML
-    private Label title;
-    @FXML
-    private HBox actions;
+    private final HBox actions;
 
     private @Nullable ButtonBase cancelButton;
 
     public MessageDialogPane(@NotNull String text, @Nullable String title, @NotNull MessageType type) {
-        FXUtils.loadFXML(this, "/assets/fxml/message-dialog.fxml");
+        this.setSpacing(8);
+        this.getStyleClass().add("jfx-dialog-layout");
 
-        content.getChildren().setAll(FXUtils.segmentToTextFlow(text, Controllers::onHyperlinkAction));
-
-        if (title != null)
-            this.title.setText(title);
-
+        Label graphic = new Label();
+        graphic.setTranslateX(10);
+        graphic.setTranslateY(10);
+        graphic.setMinSize(40, 40);
+        graphic.setMaxSize(40, 40);
         switch (type) {
             case INFO:
                 graphic.setGraphic(SVG.infoCircle(Theme.blackFillBinding(), 40, 40));
@@ -94,6 +91,35 @@ public final class MessageDialogPane extends StackPane {
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
 
+        VBox vbox = new VBox();
+        HBox.setHgrow(vbox, Priority.ALWAYS);
+        {
+            StackPane titlePane = new StackPane();
+            titlePane.getStyleClass().addAll("jfx-layout-heading", "title");
+            titlePane.getChildren().setAll(new Label(title != null ? title : i18n("message.info")));
+
+            StackPane content = new StackPane();
+            content.getStyleClass().add("jfx-layout-body");
+            EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
+            textFlow.setStyle("-fx-font-size: 14px;");
+            if (textFlow.computePrefHeight(400.0) <= 350.0)
+                content.getChildren().setAll(textFlow);
+            else {
+                ScrollPane scrollPane = new ScrollPane(textFlow);
+                scrollPane.setPrefHeight(350);
+                VBox.setVgrow(scrollPane, Priority.ALWAYS);
+                scrollPane.setFitToWidth(true);
+                content.getChildren().setAll(scrollPane);
+            }
+
+            actions = new HBox();
+            actions.getStyleClass().add("jfx-layout-actions");
+
+            vbox.getChildren().setAll(titlePane, content, actions);
+        }
+
+        this.getChildren().setAll(graphic, vbox);
+
         onEscPressed(this, () -> {
             if (cancelButton != null) {
                 cancelButton.fire();
@@ -112,6 +138,17 @@ public final class MessageDialogPane extends StackPane {
 
     public ButtonBase getCancelButton() {
         return cancelButton;
+    }
+
+    private static final class EnhancedTextFlow extends TextFlow {
+        EnhancedTextFlow(String text) {
+            this.getChildren().setAll(FXUtils.parseSegment(text, Controllers::onHyperlinkAction));
+        }
+
+        @Override
+        public double computePrefHeight(double width) {
+            return super.computePrefHeight(width);
+        }
     }
 
     public static class Builder {

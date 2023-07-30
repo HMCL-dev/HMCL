@@ -40,12 +40,10 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
+    private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
-    private static String apiKey;
-
-    static {
-        apiKey = System.getProperty("hmcl.curseforge.apikey",
-                JarUtils.thisJar().flatMap(JarUtils::getManifest).map(manifest -> manifest.getMainAttributes().getValue("CurseForge-Api-Key")).orElse(""));
+    public static boolean isAvailable() {
+        return !apiKey.isEmpty();
     }
 
     private final Type type;

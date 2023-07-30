@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 
@@ -64,6 +63,6 @@ public final class AssetObject implements Validation {
 
     public boolean validateChecksum(Path file, boolean defaultValue) throws IOException {
         if (hash == null) return defaultValue;
-        return Hex.encodeHex(DigestUtils.digest("SHA-1", file)).equalsIgnoreCase(hash);
+        return DigestUtils.digestToString("SHA-1", file).equalsIgnoreCase(hash);
     }
 }

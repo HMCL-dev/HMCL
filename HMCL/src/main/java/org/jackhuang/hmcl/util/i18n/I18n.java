@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
+import java.util.Arrays;
+import java.util.IllegalFormatException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -28,7 +30,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public final class I18n {
 
-    private I18n() {}
+    private I18n() {
+    }
 
     public static SupportedLocale getCurrentLocale() {
         try {
@@ -45,7 +48,15 @@ public final class I18n {
     }
 
     public static String i18n(String key, Object... formatArgs) {
-        return String.format(i18n(key), formatArgs);
+        try {
+            return String.format(getResourceBundle().getString(key), formatArgs);
+        } catch (MissingResourceException e) {
+            LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
+        } catch (IllegalFormatException e) {
+            LOG.log(Level.SEVERE, "Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
+        }
+
+        return key + Arrays.toString(formatArgs);
     }
 
     public static String i18n(String key) {
@@ -58,11 +69,6 @@ public final class I18n {
     }
 
     public static boolean hasKey(String key) {
-        try {
-            getResourceBundle().getString(key);
-            return true;
-        } catch (MissingResourceException e) {
-            return false;
-        }
+        return getResourceBundle().containsKey(key);
     }
 }

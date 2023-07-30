@@ -17,32 +17,31 @@
  */
 package org.jackhuang.hmcl.game;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -64,15 +63,15 @@ public final class TexturesLoader {
 
     // ==== Texture Loading ====
     public static class LoadedTexture {
-        private final BufferedImage image;
+        private final Image image;
         private final Map<String, String> metadata;
 
-        public LoadedTexture(BufferedImage image, Map<String, String> metadata) {
+        public LoadedTexture(Image image, Map<String, String> metadata) {
             this.image = requireNonNull(image);
             this.metadata = requireNonNull(metadata);
         }
 
-        public BufferedImage getImage() {
+        public Image getImage() {
             return image;
         }
 
@@ -96,7 +95,7 @@ public final class TexturesLoader {
         return TEXTURES_DIR.resolve(prefix).resolve(hash);
     }
 
-    public static LoadedTexture loadTexture(Texture texture) throws IOException {
+    public static LoadedTexture loadTexture(Texture texture) throws Throwable {
         if (StringUtils.isBlank(texture.getUrl())) {
             throw new IOException("Texture url is empty");
         }
@@ -117,12 +116,13 @@ public final class TexturesLoader {
             }
         }
 
-        BufferedImage img;
+        Image img;
         try (InputStream in = Files.newInputStream(file)) {
-            img = ImageIO.read(in);
+            img = new Image(in);
         }
-        if (img == null)
-            throw new IOException("Texture is malformed");
+
+        if (img.isError())
+            throw img.getException();
 
         Map<String, String> metadata = texture.getMetadata();
         if (metadata == null) {
@@ -136,16 +136,21 @@ public final class TexturesLoader {
     private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
 
     static {
-        loadDefaultSkin("/assets/img/steve.png", TextureModel.STEVE);
-        loadDefaultSkin("/assets/img/alex.png", TextureModel.ALEX);
+        loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.STEVE);
+        loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.ALEX);
     }
 
     private static void loadDefaultSkin(String path, TextureModel model) {
-        try (InputStream in = ResourceNotFoundError.getResourceAsStream(path)) {
-            DEFAULT_SKINS.put(model, new LoadedTexture(ImageIO.read(in), singletonMap("model", model.modelName)));
+        Image skin;
+        try {
+            skin = new Image(path);
+            if (skin.isError())
+                throw skin.getException();
         } catch (Throwable e) {
-            throw new ResourceNotFoundError("Cannoot load default skin from " + path, e);
+            throw new ResourceNotFoundError("Cannot load default skin from " + path, e);
         }
+
+        DEFAULT_SKINS.put(model, new LoadedTexture(skin, singletonMap("model", model.modelName)));
     }
 
     public static LoadedTexture getDefaultSkin(TextureModel model) {
@@ -172,7 +177,7 @@ public final class TexturesLoader {
                         return CompletableFuture.supplyAsync(() -> {
                             try {
                                 return loadTexture(texture);
-                            } catch (IOException e) {
+                            } catch (Throwable e) {
                                 LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
                                 return uuidFallback;
                             }
@@ -195,7 +200,7 @@ public final class TexturesLoader {
                         return CompletableFuture.supplyAsync(() -> {
                             try {
                                 return loadTexture(texture);
-                            } catch (IOException e) {
+                            } catch (Throwable e) {
                                 LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
                                 return uuidFallback;
                             }
@@ -209,38 +214,117 @@ public final class TexturesLoader {
     // ====
 
     // ==== Avatar ====
-    public static BufferedImage toAvatar(BufferedImage skin, int size) {
-        BufferedImage avatar = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = avatar.createGraphics();
+    public static void drawAvatar(Canvas canvas, Image skin) {
+        GraphicsContext g = canvas.getGraphicsContext2D();
+        g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        int scale = skin.getWidth() / 64;
+        int size = (int) canvas.getWidth();
+        int scale = (int) skin.getWidth() / 64;
         int faceOffset = (int) Math.round(size / 18.0);
-        g.drawImage(skin,
-                faceOffset, faceOffset, size - faceOffset, size - faceOffset,
-                8 * scale, 8 * scale, 16 * scale, 16 * scale,
-                null);
-        g.drawImage(skin,
-                0, 0, size, size,
-                40 * scale, 8 * scale, 48 * scale, 16 * scale, null);
 
-        g.dispose();
-        return avatar;
+        try {
+            g.setImageSmoothing(false);
+            drawAvatar(g, skin, size, scale, faceOffset);
+        } catch (NoSuchMethodError ignored) {
+            // Earlier JavaFX did not support GraphicsContext::setImageSmoothing
+            // In order to prevent the blurring caused by bilinear interpolation,
+            // we use the self-implemented nearest neighbor interpolation to scale
+            drawAvatarSlow(g, skin, size, scale, faceOffset);
+        }
     }
 
-    public static ObjectBinding<Image> fxAvatarBinding(YggdrasilService service, UUID uuid, int size) {
-        return BindingMapping.of(skinBinding(service, uuid))
-                .map(it -> toAvatar(it.image, size))
-                .map(FXUtils::toFXImage);
+    private static void drawAvatar(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
+        g.drawImage(skin,
+                8 * scale, 8 * scale, 8 * scale, 8 * scale,
+                faceOffset, faceOffset, size - 2 * faceOffset, size - 2 * faceOffset);
+        g.drawImage(skin,
+                40 * scale, 8 * scale, 8 * scale, 8 * scale,
+                0, 0, size, size);
     }
 
-    public static ObjectBinding<Image> fxAvatarBinding(Account account, int size) {
-        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
-            return BindingMapping.of(skinBinding(account))
-                    .map(it -> toAvatar(it.image, size))
-                    .map(FXUtils::toFXImage);
-        } else {
-            return Bindings.createObjectBinding(
-                    () -> FXUtils.toFXImage(toAvatar(getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image, size)));
+    private static void drawAvatarSlow(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
+        PixelReader reader = skin.getPixelReader();
+        PixelWriter writer = g.getPixelWriter();
+        drawImage(writer, reader,
+                8 * scale, 8 * scale, 8 * scale, 8 * scale,
+                faceOffset, faceOffset, size - 2 * faceOffset, size - 2 * faceOffset);
+        drawImage(writer, reader,
+                40 * scale, 8 * scale, 8 * scale, 8 * scale,
+                0, 0, size, size);
+    }
+
+    /*
+     * Scale and draw image using nearest-neighbor interpolation
+     */
+    private static void drawImage(PixelWriter writer, PixelReader reader,
+                                  int sx, int sy, int sw, int sh,
+                                  int dx, int dy, int dw, int dh) {
+        double xScale = ((double) sw) / dw;
+        double yScale = ((double) sh) / dh;
+
+        for (int xOffset = 0; xOffset < dw; xOffset++) {
+            for (int yOffset = 0; yOffset < dh; yOffset++) {
+                int color = reader.getArgb(sx + (int) (xOffset * xScale), sy + (int) (yOffset * yScale));
+
+                // Draw only non-transparent pixels
+                if ((color >>> 24) != 0)
+                    writer.setArgb(dx + xOffset, dy + yOffset, color);
+            }
+        }
+    }
+
+    private static final class SkinBindingChangeListener implements ChangeListener<LoadedTexture> {
+        static final WeakHashMap<Canvas, SkinBindingChangeListener> hole = new WeakHashMap<>();
+
+        final WeakReference<Canvas> canvasRef;
+        final ObjectBinding<LoadedTexture> binding;
+
+        SkinBindingChangeListener(Canvas canvas, ObjectBinding<LoadedTexture> binding) {
+            this.canvasRef = new WeakReference<>(canvas);
+            this.binding = binding;
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends LoadedTexture> observable,
+                            LoadedTexture oldValue, LoadedTexture loadedTexture) {
+            Canvas canvas = canvasRef.get();
+            if (canvas != null)
+                drawAvatar(canvas, loadedTexture.image);
+        }
+    }
+
+    public static void fxAvatarBinding(Canvas canvas, ObjectBinding<LoadedTexture> skinBinding) {
+        synchronized (SkinBindingChangeListener.hole) {
+            SkinBindingChangeListener oldListener = SkinBindingChangeListener.hole.remove(canvas);
+            if (oldListener != null)
+                oldListener.binding.removeListener(oldListener);
+
+            SkinBindingChangeListener listener = new SkinBindingChangeListener(canvas, skinBinding);
+            listener.changed(skinBinding, null, skinBinding.get());
+            skinBinding.addListener(listener);
+
+            SkinBindingChangeListener.hole.put(canvas, listener);
+        }
+    }
+
+    public static void bindAvatar(Canvas canvas, YggdrasilService service, UUID uuid) {
+        fxAvatarBinding(canvas, skinBinding(service, uuid));
+    }
+
+    public static void bindAvatar(Canvas canvas, Account account) {
+        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount)
+            fxAvatarBinding(canvas, skinBinding(account));
+        else {
+            unbindAvatar(canvas);
+            drawAvatar(canvas, getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image);
+        }
+    }
+
+    public static void unbindAvatar(Canvas canvas) {
+        synchronized (SkinBindingChangeListener.hole) {
+            SkinBindingChangeListener oldListener = SkinBindingChangeListener.hole.remove(canvas);
+            if (oldListener != null)
+                oldListener.binding.removeListener(oldListener);
         }
     }
     // ====

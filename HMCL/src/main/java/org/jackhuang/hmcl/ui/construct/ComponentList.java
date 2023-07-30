@@ -38,7 +38,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import java.util.function.Consumer;
+import java.util.List;
+import java.util.function.Supplier;
 
 @DefaultProperty("content")
 public class ComponentList extends Control {
@@ -47,11 +48,15 @@ public class ComponentList extends Control {
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
     private boolean hasSubtitle = false;
     public final ObservableList<Node> content = FXCollections.observableArrayList();
-    private boolean expanded = false;
-    private Consumer<ComponentList> lazyInitializer;
+    private Supplier<List<? extends Node>> lazyInitializer;
 
     public ComponentList() {
         getStyleClass().add("options-list");
+    }
+
+    public ComponentList(Supplier<List<? extends Node>> lazyInitializer) {
+        this();
+        this.lazyInitializer = lazyInitializer;
     }
 
     public String getTitle() {
@@ -102,17 +107,12 @@ public class ComponentList extends Control {
         return content;
     }
 
-    public void setLazyInitializer(Consumer<ComponentList> lazyInitializer) {
-        this.lazyInitializer = lazyInitializer;
-    }
-
-    public void onExpand() {
-        if (!expanded && lazyInitializer != null) {
-            lazyInitializer.accept(this);
+    void doLazyInit() {
+        if (lazyInitializer != null) {
+            this.getContent().setAll(lazyInitializer.get());
             setNeedsLayout(true);
+            lazyInitializer = null;
         }
-
-        expanded = true;
     }
 
     @Override
@@ -125,7 +125,7 @@ public class ComponentList extends Control {
         return new Skin(this);
     }
 
-    protected static class Skin extends ControlSkinBase<ComponentList> {
+    private static final class Skin extends ControlSkinBase<ComponentList> {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
@@ -133,7 +133,7 @@ public class ComponentList extends Control {
         private final ObjectBinding<Node> firstItem;
         private final ObjectBinding<Node> lastItem;
 
-        protected Skin(ComponentList control) {
+        Skin(ComponentList control) {
             super(control);
 
             list = MappedObservableList.create(control.getContent(), node -> {

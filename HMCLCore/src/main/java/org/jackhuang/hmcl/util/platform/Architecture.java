@@ -46,7 +46,8 @@ public enum Architecture {
     PPC64LE(BIT_64, "PowerPC-64 (Little-Endian)"),
     S390(BIT_32),
     S390X(BIT_64, "S390x"),
-    RISCV(BIT_64, "RISC-V"),
+    RISCV32(BIT_32, "RISC-V 32"),
+    RISCV64(BIT_64, "RISC-V 64"),
     LOONGARCH32(BIT_32, "LoongArch32"),
     LOONGARCH64_OW(BIT_64, "LoongArch64 (old world)"),
     LOONGARCH64(BIT_64, "LoongArch64"),
@@ -64,12 +65,6 @@ public enum Architecture {
 
     Architecture(Bits bits, String displayName) {
         this.checkedName = this.toString().toLowerCase(Locale.ROOT);
-        this.displayName = displayName;
-        this.bits = bits;
-    }
-
-    Architecture(Bits bits, String displayName, String identifier) {
-        this.checkedName = identifier;
         this.displayName = displayName;
         this.bits = bits;
     }
@@ -140,7 +135,8 @@ public enum Architecture {
                 return MIPSEL;
             case "riscv":
             case "risc-v":
-                return RISCV;
+            case "riscv64":
+                return RISCV64;
             case "ia64":
             case "ia64w":
             case "itanium64":

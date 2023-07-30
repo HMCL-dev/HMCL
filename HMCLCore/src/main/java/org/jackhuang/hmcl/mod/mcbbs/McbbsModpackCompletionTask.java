@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.curse.CurseMetaMod;
 import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -49,8 +50,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Lang.wrapConsumer;
 
@@ -138,7 +137,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                         } else if (getFileHash(file) != null) {
                             // If user modified this entry file, we will not replace this file since this modified file is what user expects.
                             // Or we have downloaded latest file in previous completion task, this time we have no need to download it again.
-                            String fileHash = encodeHex(digest("SHA-1", actualPath));
+                            String fileHash = DigestUtils.digestToString("SHA-1", actualPath);
                             String oldHash = getFileHash(oldFile);
                             String newHash = getFileHash(file);
                             if (oldHash == null) {

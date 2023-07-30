@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -37,8 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
-import static org.jackhuang.hmcl.util.DigestUtils.digest;
-import static org.jackhuang.hmcl.util.Hex.encodeHex;
 
 public class ServerModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
@@ -71,7 +70,7 @@ public class ServerModpackExportTask extends Task<Void> {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
                         String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                        files.add(new ModpackConfiguration.FileInformation(relativePath, encodeHex(digest("SHA-1", file))));
+                        files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
                     }
                     return true;
                 } else {
@@ -92,6 +91,8 @@ public class ServerModpackExportTask extends Task<Void> {
                     addons.add(new ServerModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     addons.add(new ServerModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
+            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
+                    addons.add(new ServerModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
             ServerModpackManifest manifest = new ServerModpackManifest(exportInfo.getName(), exportInfo.getAuthor(), exportInfo.getVersion(), exportInfo.getDescription(), StringUtils.removeSuffix(exportInfo.getFileApi(), "/"), files, addons);
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }

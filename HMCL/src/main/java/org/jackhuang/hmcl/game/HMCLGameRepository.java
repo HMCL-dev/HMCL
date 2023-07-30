@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
@@ -47,11 +48,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -161,7 +164,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         Files.move(fromJson, toJson);
 
         FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
-        
+
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
         oldVersionSetting.setUsesGlobal(false);
@@ -172,17 +175,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         File srcGameDir = getRunDirectory(srcId);
         File dstGameDir = getRunDirectory(dstId);
 
-        List<String> blackList = new ArrayList<>(Arrays.asList(
-                "regex:(.*?)\\.log",
-                "usernamecache.json", "usercache.json", // Minecraft
-                "launcher_profiles.json", "launcher.pack.lzma", // Minecraft Launcher
-                "backup", "pack.json", "launcher.jar", "cache", // HMCL
-                ".curseclient", // Curse
-                ".fabric", ".mixin.out", // Fabric
-                "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
-                "downloads", // Curse
-                "asm", "backups", "TCNodeTracker", "CustomDISkins", "data", "CustomSkinLoader/caches" // Mods
-        ));
+        List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(srcId + ".jar");
         blackList.add(srcId + ".json");
         if (!copySaves)
@@ -280,9 +273,21 @@ public class HMCLGameRepository extends DefaultGameRepository {
             File iconFile = getVersionIconFile(id);
             if (iconFile.exists())
                 return new Image("file:" + iconFile.getAbsolutePath());
-            else if (LibraryAnalyzer.isModded(this, version))
-                return newImage("/assets/img/furnace.png");
-            else
+            else if (LibraryAnalyzer.isModded(this, version)) {
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+                if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
+                    return newImage("/assets/img/fabric.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
+                    return newImage("/assets/img/forge.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                    return newImage("/assets/img/quilt.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                    return newImage("/assets/img/command.png");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
+                    return newImage("/assets/img/chicken.png");
+                else
+                    return newImage("/assets/img/furnace.png");
+            } else
                 return newImage("/assets/img/grass.png");
         } else {
             return newImage(iconType.getResourceUrl());
@@ -336,14 +341,24 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setVersionName(version)
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
-                .setJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory((int)(getAllocatedMemory(
+                .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
+                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
                         vs.isAutoMemory()
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())
                 .setMetaspace(Lang.toIntOrNull(vs.getPermSize()))
+                .setEnvironmentVariables(
+                        Lang.mapOf(StringUtils.tokenize(vs.getEnvironmentVariables())
+                                .stream()
+                                .map(it -> {
+                                    int idx = it.indexOf('=');
+                                    return idx >= 0 ? pair(it.substring(0, idx), it.substring(idx + 1)) : pair(it, "");
+                                })
+                                .collect(Collectors.toList())
+                        )
+                )
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
@@ -355,7 +370,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
-                .setUseSoftwareRenderer(vs.isUseSoftwareRenderer())
+                .setRenderer(vs.getRenderer())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
@@ -379,6 +394,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 e.printStackTrace();
             }
         }
+
+        if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
+            builder.setMaxMemory(null);
 
         return builder.create();
     }
@@ -426,7 +444,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return false;
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
-                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase()))
+                FORBIDDEN_VERSION_IDS.contains(id.toLowerCase(Locale.ROOT)))
             return false;
 
         return OperatingSystem.isNameValid(id);
@@ -451,7 +469,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public static long getAllocatedMemory(long minimum, long available, boolean auto) {
         if (auto) {
-            available -= 256 * 1024 * 1024; // Reserve 256MB memory for off-heap memory and HMCL itself
+            available -= 384 * 1024 * 1024; // Reserve 384MiB memory for off-heap memory and HMCL itself
             if (available <= 0) {
                 return minimum;
             }
@@ -460,7 +478,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             final long suggested = Math.min(available <= threshold
                             ? (long) (available * 0.8)
                             : (long) (threshold * 0.8 + (available - threshold) * 0.2),
-                    32736L * 1024 * 1024); // Limit the maximum suggested memory to ensure that compressed oops are available
+                    16384L * 1024 * 1024);
             return Math.max(minimum, suggested);
         } else {
             return minimum;
