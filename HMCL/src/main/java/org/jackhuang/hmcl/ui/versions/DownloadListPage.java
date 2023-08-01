@@ -462,6 +462,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         pane.getChildren().add(container);
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+                        HBox.setHgrow(content, Priority.ALWAYS);
                     }
 
                     @Override
