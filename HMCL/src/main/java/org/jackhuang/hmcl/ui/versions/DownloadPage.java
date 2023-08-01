@@ -264,12 +264,14 @@ public class DownloadPage extends Control implements DecoratorPage {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
+                    openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
                     runInFX(() -> FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod")));
 
                     if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
                         JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
                         openMcbbsButton.setExternalLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs()));
                         descriptionPane.getChildren().add(openMcbbsButton);
+                        openMcbbsButton.setMinWidth(Region.USE_PREF_SIZE);
                         runInFX(() -> FXUtils.installFastTooltip(openMcbbsButton, i18n("mods.mcbbs")));
                     }
                 }
@@ -277,6 +279,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
+                openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
                 runInFX(() -> FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage()));
             }
 
