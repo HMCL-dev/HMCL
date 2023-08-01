@@ -450,10 +450,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
             content.setTitle(dataItem.getTitle());
-            if (dataItem.getMod() != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
-                content.getTags().setAll(dataItem.getMod().getDisplayName());
-            } else {
-                content.getTags().clear();
+            content.getTags().clear();
+            if (dataItem.getMod() != null) {
+                content.getTags().add(dataItem.getModInfo().getModLoaderType().getLoaderName());
+                if (I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
+                    content.getTags().add(dataItem.getMod().getDisplayName());
+                }
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {
