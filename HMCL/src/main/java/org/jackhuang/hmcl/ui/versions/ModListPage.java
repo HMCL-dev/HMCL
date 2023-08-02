@@ -210,7 +210,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void download() {
-        Controllers.getDownloadPage().showModDownloads();
+        Controllers.getDownloadPage().showModDownloads().selectVersion(versionId);
         Controllers.navigate(Controllers.getDownloadPage());
     }
 

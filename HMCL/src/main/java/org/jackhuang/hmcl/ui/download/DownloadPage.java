@@ -236,8 +236,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(modpackTab);
     }
 
-    public void showModDownloads() {
+    public DownloadListPage showModDownloads() {
         tab.select(modTab);
+        return modTab.getNode();
     }
 
     public void showWorldDownloads() {

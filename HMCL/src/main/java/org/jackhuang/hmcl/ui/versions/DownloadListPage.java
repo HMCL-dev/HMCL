@@ -156,6 +156,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.loading.set(loading);
     }
 
+    public void selectVersion(String versionID) {
+        FXUtils.runInFX(() -> selectedVersion.set(versionID));
+    }
+
     public void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
         retrySearch = null;
         setLoading(true);
