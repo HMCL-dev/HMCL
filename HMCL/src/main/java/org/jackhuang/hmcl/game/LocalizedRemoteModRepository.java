@@ -21,44 +21,76 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.ui.versions.ModTranslations;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class LocalizedRemoteModRepository implements RemoteModRepository {
+    private static final int CONTAIN_CHINESE_WEIGHT = 10;
 
     protected abstract RemoteModRepository getBackedRemoteModRepository();
 
     @Override
     public SearchResult search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
-        String newSearchFilter;
-        if (StringUtils.containsChinese(searchFilter)) {
-            ModTranslations modTranslations = ModTranslations.getTranslationsByRepositoryType(getType());
-            List<ModTranslations.Mod> mods = modTranslations.searchMod(searchFilter);
-            List<String> searchFilters = new ArrayList<>();
-            int count = 0;
-            for (ModTranslations.Mod mod : mods) {
-                String englishName = mod.getName();
-                if (StringUtils.isNotBlank(mod.getSubname())) {
-                    englishName = mod.getSubname();
-                }
-
-                searchFilters.add(englishName);
-
-                count++;
-                if (count >= 3) break;
-            }
-            newSearchFilter = String.join(" ", searchFilters);
-        } else {
-            newSearchFilter = searchFilter;
+        if (!StringUtils.containsChinese(searchFilter)) {
+            return getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
-        return getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, newSearchFilter, sort, sortOrder);
+        Set<String> englishSearchFiltersSet = new LinkedHashSet<>();
+
+        int count = 0;
+        for (ModTranslations.Mod mod : ModTranslations.getTranslationsByRepositoryType(getType()).searchMod(searchFilter)) {
+            for (String englishWord : StringUtils.tokenize(StringUtils.isNotBlank(mod.getSubname()) ? mod.getSubname() : mod.getName())) {
+                if (englishSearchFiltersSet.contains(englishWord)) {
+                    continue;
+                }
+
+                englishSearchFiltersSet.add(englishWord);
+            }
+
+            count++;
+            if (count >= 3) break;
+        }
+
+        SearchResult searchResult = getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), sort, sortOrder);
+        Set<CharSequence> searchFilterLetters = new HashSet<>();
+        for (int i = 0; i < searchFilter.length(); i++) {
+            searchFilterLetters.add(searchFilter.subSequence(i, i + 1));
+        }
+        return new SearchResult(searchResult.getResults().map(remoteMod -> {
+            ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
+            if (chineseRemoteMod == null || StringUtils.isBlank(chineseRemoteMod.getName()) || !StringUtils.containsChinese(chineseRemoteMod.getName())) {
+                return Pair.pair(remoteMod, Integer.MAX_VALUE);
+            }
+            String chineseRemoteModName = chineseRemoteMod.getName();
+            if (searchFilter.length() == 0 || chineseRemoteModName.length() == 0) {
+                return Pair.pair(remoteMod, Math.max(searchFilter.length(), chineseRemoteModName.length()));
+            }
+            int[][] lev = new int[searchFilter.length() + 1][chineseRemoteModName.length() + 1];
+            for (int i = 0; i < chineseRemoteModName.length() + 1; i++) {
+                lev[0][i] = i;
+            }
+            for (int i = 0; i < searchFilter.length() + 1; i++) {
+                lev[i][0] = i;
+            }
+            for (int i = 1; i < searchFilter.length() + 1; i++) {
+                for (int j = 1; j < chineseRemoteModName.length() + 1; j++) {
+                    int countByInsert = lev[i][j - 1] + 1;
+                    int countByDel = lev[i - 1][j] + 1;
+                    int countByReplace = searchFilter.charAt(i - 1) == chineseRemoteModName.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1;
+                    lev[i][j] = Math.min(countByInsert, Math.min(countByDel, countByReplace));
+                }
+            }
+
+            return Pair.pair(
+                    remoteMod,
+                    lev[searchFilter.length()][chineseRemoteModName.length()] - (searchFilterLetters.stream().anyMatch(chineseRemoteModName::contains) ? CONTAIN_CHINESE_WEIGHT : 0)
+            );
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), searchResult.getTotalPages());
     }
 
     @Override

@@ -197,7 +197,7 @@ public class TwoLineListItem extends VBox {
         double tagWidth = Math.min(tagBox.getWidth() / 2, tagMaxWidth);
 
         FXUtils.setLimitWidth((Pane) titleLabel.getParent(), titleWidth);
-        Rectangle titleClip = new Rectangle(0, 0, titleWidth - 10, titleLabel.getHeight());
+        Rectangle titleClip = new Rectangle(0, 0, titleWidth - 6, titleLabel.getHeight());
         titleLabel.getParent().setClip(titleClip);
 
         titleTranslatePlaying.set(titleLabel.getWidth() / 2 > titleMaxWidth);
