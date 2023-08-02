@@ -35,6 +35,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -169,6 +170,7 @@ public class TwoLineListItem extends VBox {
         this.setClip(mainClip);
 
         this.minWidthProperty().set(0);
+        HBox.setHgrow(this, Priority.SOMETIMES);
     }
 
     private static ChangeListener<Boolean> generateTranslateListener(TranslateTransition translateTransition) {
