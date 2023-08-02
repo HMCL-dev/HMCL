@@ -188,7 +188,7 @@ public class TwoLineListItem extends VBox {
         }
     }
 
-    public void reLayout() {
+    private void reLayout() {
         this.layout();
 
         double titleMaxWidth = tags.size() == 0 ? this.getWidth() : this.getWidth() * TITLE_PART;

@@ -400,7 +400,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         Label msg = new Label(i18n("download.failed.refresh"));
                         msg.setPadding(new Insets(8));
                         elements.add(msg);
-                        LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", dataItem.getModid()));
+                        LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", dataItem.getModid()), exception);
                     }
 
                     for (Map.Entry<RemoteMod.DependencyType, List<DependencyModItem>> entry : dependencies.entrySet()) {
