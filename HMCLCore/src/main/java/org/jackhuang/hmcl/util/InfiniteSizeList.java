@@ -91,11 +91,10 @@ public final class InfiniteSizeList<T> extends ArrayList<T> {
             }
 
             T previous = super.get(index);
+            super.set(index, element);
             if (previous != null) { // !null -> !null
-                super.set(index, element);
                 return previous;
             } else { // null -> !null
-                super.set(index, element);
                 if (index >= this.actualSize) {
                     this.actualSize = index + 1;
                 }
@@ -104,8 +103,9 @@ public final class InfiniteSizeList<T> extends ArrayList<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void allocate0(int index) {
-        super.ensureCapacity(index + 1);
+        this.addAll(Lang.immutableListOf((T[])new Object[index + 1 - super.size()]));
     }
 
     @Override
