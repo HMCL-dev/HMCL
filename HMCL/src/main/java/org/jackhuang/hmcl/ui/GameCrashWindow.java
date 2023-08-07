@@ -161,22 +161,24 @@ public class GameCrashWindow extends Stage {
                 LOG.log(Level.WARNING, "Failed to analyze crash report", exception);
                 reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
             } else {
-                Set<CrashReportAnalyzer.Result> results = new HashSet<>();
+                EnumMap<CrashReportAnalyzer.Rule, CrashReportAnalyzer.Result> results = new EnumMap<>(CrashReportAnalyzer.Rule.class);
                 Set<String> keywords = new HashSet<>();
                 for (Pair<Set<CrashReportAnalyzer.Result>, Set<String>> pair : (List<Pair<Set<CrashReportAnalyzer.Result>, Set<String>>>) (List<?>) taskResult) {
-                    results.addAll(pair.getKey());
+                    for (CrashReportAnalyzer.Result result : pair.getKey()) {
+                        results.put(result.getRule(), result);
+                    }
                     keywords.addAll(pair.getValue());
                 }
 
                 List<Node> segments = new ArrayList<>();
 
-                boolean hasMultipleRules = results.stream().map(CrashReportAnalyzer.Result::getRule).distinct().count() > 1;
+                boolean hasMultipleRules = results.keySet().stream().distinct().count() > 1;
                 if (hasMultipleRules) {
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
                     LOG.log(Level.INFO, "Multiple reasons detected");
                 }
 
-                for (CrashReportAnalyzer.Result result : results) {
+                for (CrashReportAnalyzer.Result result : results.values()) {
                     switch (result.getRule()) {
                         case TOO_OLD_JAVA:
                             segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.too_old_java",
@@ -230,7 +232,7 @@ public class GameCrashWindow extends Stage {
                     reasonTextFlow.getChildren().setAll(segments);
                 }
             }
-        });
+        }).start();
     }
 
     private static final Pattern FABRIC_MOD_ID = Pattern.compile("\\{(?<modid>.*?) @ (?<version>.*?)}");
