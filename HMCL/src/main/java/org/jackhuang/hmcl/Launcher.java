@@ -33,8 +33,9 @@ import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.resource.RemoteResourceManager;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -120,6 +121,10 @@ public final class Launcher extends Application {
                 Controllers.initialize(primaryStage);
 
                 UpdateChecker.init();
+
+                RemoteResourceManager.init();
+
+                RemoteResourceManager.register();
 
                 primaryStage.show();
             });

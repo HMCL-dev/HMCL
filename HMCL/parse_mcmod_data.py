@@ -89,7 +89,7 @@ skip = [
 
 
 if __name__ == '__main__':
-    json_name = sys.argv[1] or 'data.json'
+    json_name = sys.argv[1] or 'dynamic-remote-resources.json'
 
     with codecs.open(json_name, mode='r', encoding='utf-8-sig') as jsonfile, codecs.open('data.csv', mode='w', encoding='utf-8') as outfile:
         data = json.load(jsonfile)
