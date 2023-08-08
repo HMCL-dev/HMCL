@@ -384,7 +384,7 @@ public final class LauncherHelper {
                                 })
                                 .exceptionally(throwable -> {
                                     LOG.log(Level.WARNING, "Failed to download java", throwable);
-                                    Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continonExitueAction, () -> {
+                                    Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction, () -> {
                                         future.completeExceptionally(new CancellationException("No accepted java"));
                                     });
                                     return null;
