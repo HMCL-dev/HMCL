@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableBooleanValue;
@@ -39,7 +37,6 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -51,9 +48,8 @@ import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
@@ -70,7 +66,6 @@ public class AccountListItem extends RadioButton {
     private final Account account;
     private final StringProperty title = new SimpleStringProperty();
     private final StringProperty subtitle = new SimpleStringProperty();
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
 
     public AccountListItem(Account account) {
         this.account = account;
@@ -78,13 +73,14 @@ public class AccountListItem extends RadioButton {
         setUserData(account);
 
         String loginTypeName = Accounts.getLocalizedLoginTypeName(Accounts.getAccountFactory(account));
+        String portableSuffix = account.isPortable() ? ", " + i18n("account.portable") : "";
         if (account instanceof AuthlibInjectorAccount) {
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
             subtitle.bind(Bindings.concat(
                     loginTypeName, ", ", i18n("account.injector.server"), ": ",
-                    Bindings.createStringBinding(server::getName, server)));
+                    Bindings.createStringBinding(server::getName, server), portableSuffix));
         } else {
-            subtitle.set(loginTypeName);
+            subtitle.set(loginTypeName + portableSuffix);
         }
 
         StringBinding characterName = Bindings.createStringBinding(account::getCharacter, account);
@@ -95,8 +91,6 @@ public class AccountListItem extends RadioButton {
                     account.getUsername().isEmpty() ? characterName :
                             Bindings.concat(account.getUsername(), " - ", characterName));
         }
-
-        image.bind(TexturesLoader.fxAvatarBinding(account, 32));
     }
 
     @Override
@@ -173,14 +167,14 @@ public class AccountListItem extends RadioButton {
 
         return refreshAsync()
                 .thenRunAsync(() -> {
-                    BufferedImage skinImg;
-                    try {
-                        skinImg = ImageIO.read(selectedFile);
+                    Image skinImg;
+                    try (FileInputStream input = new FileInputStream(selectedFile)) {
+                        skinImg = new Image(input);
                     } catch (IOException e) {
                         throw new InvalidSkinException("Failed to read skin image", e);
                     }
-                    if (skinImg == null) {
-                        throw new InvalidSkinException("Failed to read skin image");
+                    if (skinImg.isError()) {
+                        throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
                     }
                     NormalizedSkin skin = new NormalizedSkin(skinImg);
                     String model = skin.isSlim() ? "slim" : "";
@@ -225,17 +219,5 @@ public class AccountListItem extends RadioButton {
 
     public StringProperty subtitleProperty() {
         return subtitle;
-    }
-
-    public Image getImage() {
-        return image.get();
-    }
-
-    public void setImage(Image image) {
-        this.image.set(image);
-    }
-
-    public ObjectProperty<Image> imageProperty() {
-        return image;
     }
 }

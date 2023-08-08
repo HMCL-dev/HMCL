@@ -26,30 +26,31 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.CircularArrayList;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayDeque;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -91,15 +92,15 @@ public final class LogWindow extends Stage {
 
     public LogWindow() {
         setScene(new Scene(impl, 800, 480));
-        getScene().getStylesheets().addAll(config().getTheme().getStylesheets(config().getLauncherFontFamily()));
+        getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
         getIcons().add(newImage("/assets/img/icon.png"));
 
         levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
     }
 
-    public void logLine(String line, Log4jLevel level) {
-        Log log = new Log(parseEscapeSequence(line), level);
+    public void logLine(String filteredLine, Log4jLevel level) {
+        Log log = new Log(parseEscapeSequence(filteredLine), level);
         logs.add(log);
         if (levelShownMap.get(level).get())
             impl.listView.getItems().add(log);
@@ -136,7 +137,6 @@ public final class LogWindow extends Stage {
         while (logs.size() > config().getLogLines()) {
             Log removedLog = logs.removeFirst();
             if (!impl.listView.getItems().isEmpty() && impl.listView.getItems().get(0) == removedLog) {
-                // TODO: fix O(n)
                 impl.listView.getItems().remove(0);
             }
         }
@@ -145,6 +145,7 @@ public final class LogWindow extends Stage {
     private static class Log {
         private final String log;
         private final Log4jLevel level;
+        private boolean selected = false;
 
         public Log(String log, Log4jLevel level) {
             this.log = log;
@@ -154,30 +155,32 @@ public final class LogWindow extends Stage {
 
     public class LogWindowImpl extends Control {
 
-        private ListView<Log> listView = new JFXListView<>();
-        private BooleanProperty autoScroll = new SimpleBooleanProperty();
-        private List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
-        private List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
-        private JFXComboBox<String> cboLines = new JFXComboBox<>();
-        private BooleanProperty showCrashReport = new SimpleBooleanProperty();
+        private final ListView<Log> listView = new JFXListView<>();
+        private final BooleanProperty autoScroll = new SimpleBooleanProperty();
+        private final List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
+        private final List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
+        private final JFXComboBox<String> cboLines = new JFXComboBox<>();
+        private final BooleanProperty showCrashReport = new SimpleBooleanProperty();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
+            listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
+
             boolean flag = false;
-            cboLines.getItems().setAll("500", "2000", "5000");
+            cboLines.getItems().setAll("500", "2000", "5000", "10000");
             for (String i : cboLines.getItems())
                 if (Integer.toString(config().getLogLines()).equals(i)) {
                     cboLines.getSelectionModel().select(i);
                     flag = true;
                 }
 
-            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-                config().setLogLines(newValue == null ? 100 : Integer.parseInt(newValue));
-            });
-
             if (!flag)
-                cboLines.getSelectionModel().select(0);
+                cboLines.getSelectionModel().select(2);
+
+            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
+                config().setLogLines(newValue == null ? 1000 : Integer.parseInt(newValue));
+            });
 
             Log4jLevel[] levels = new Log4jLevel[]{Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
             String[] suffix = new String[]{"fatals", "errors", "warns", "infos", "debugs"};
@@ -206,13 +209,13 @@ public final class LogWindow extends Stage {
                     return;
                 }
 
-                JOptionPane.showMessageDialog(null, i18n("settings.launcher.launcher_log.export.success", logFile), i18n("settings.launcher.launcher_log.export"), JOptionPane.INFORMATION_MESSAGE);
-                if (Desktop.isDesktopSupported()) {
-                    try {
-                        Desktop.getDesktop().open(logFile.toFile());
-                    } catch (IOException | IllegalArgumentException ignored) {
-                    }
-                }
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
+                    alert.showAndWait();
+                });
+
+                FXUtils.showFileInExplorer(logFile);
             });
         }
 
@@ -228,13 +231,16 @@ public final class LogWindow extends Stage {
     }
 
     private static class LogWindowSkin extends SkinBase<LogWindowImpl> {
-        private static PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
-        private static PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
-        private static PseudoClass ERROR = PseudoClass.getPseudoClass("error");
-        private static PseudoClass WARN = PseudoClass.getPseudoClass("warn");
-        private static PseudoClass INFO = PseudoClass.getPseudoClass("info");
-        private static PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
-        private static PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
+        private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
+        private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
+        private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
+        private static final PseudoClass WARN = PseudoClass.getPseudoClass("warn");
+        private static final PseudoClass INFO = PseudoClass.getPseudoClass("info");
+        private static final PseudoClass DEBUG = PseudoClass.getPseudoClass("debug");
+        private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
+        private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+
+        private final Set<ListCell<Log>> selected = new HashSet<>();
 
         private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
             ToggleButton button = new ToggleButton();
@@ -290,7 +296,10 @@ public final class LogWindow extends Stage {
                     if (!listView.getItems().isEmpty() && control.autoScroll.get())
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
-                listView.setStyle("-fx-font-family: " + config().getFontFamily() + "; -fx-font-size: " + config().getFontSize() + "px;");
+
+                listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                        + "; -fx-font-size: " + config().getFontSize() + "px;");
+                Holder<Object> lastCell = new Holder<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
                         getStyleClass().add("log-window-list-cell");
@@ -302,11 +311,38 @@ public final class LogWindow extends Stage {
                         setPadding(new Insets(2));
                         setWrapText(true);
                         setGraphic(null);
+
+                        setOnMouseClicked(event -> {
+                            if (!event.isControlDown()) {
+                                for (ListCell<Log> logListCell: selected) {
+                                    if (logListCell != this) {
+                                        logListCell.pseudoClassStateChanged(SELECTED, false);
+                                        if (logListCell.getItem() != null) {
+                                            logListCell.getItem().selected = false;
+                                        }
+                                    }
+                                }
+
+                                selected.clear();
+                            }
+
+                            selected.add(this);
+                            pseudoClassStateChanged(SELECTED, true);
+                            if (getItem() != null) {
+                                getItem().selected = true;
+                            }
+                        });
                     }
 
                     @Override
                     protected void updateItem(Log item, boolean empty) {
                         super.updateItem(item, empty);
+
+                        // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+                        if (this == lastCell.value && !isVisible())
+                            return;
+                        lastCell.value = this;
+
                         pseudoClassStateChanged(EMPTY, empty);
                         pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
                         pseudoClassStateChanged(ERROR, !empty && item.level == Log4jLevel.ERROR);
@@ -314,11 +350,30 @@ public final class LogWindow extends Stage {
                         pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
                         pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
                         pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
+                        pseudoClassStateChanged(SELECTED, !empty && item.selected);
+
                         if (empty) {
                             setText(null);
                         } else {
                             setText(item.log);
                         }
+                    }
+                });
+
+                listView.setOnKeyPressed(event -> {
+                    if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                        StringBuilder stringBuilder = new StringBuilder();
+
+                        for (Log item : listView.getItems()) {
+                            if (item != null && item.selected) {
+                                if (item.log != null) {
+                                    stringBuilder.append(item.log);
+                                }
+                                stringBuilder.append('\n');
+                            }
+                        }
+
+                        FXUtils.copyText(stringBuilder.toString());
                     }
                 });
 

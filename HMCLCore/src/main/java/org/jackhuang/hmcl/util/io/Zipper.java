@@ -24,8 +24,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Non thread-safe
@@ -34,30 +38,45 @@ import java.nio.file.attribute.BasicFileAttributes;
  */
 public final class Zipper implements Closeable {
 
-    private final FileSystem fs;
+    private final ZipOutputStream zos;
+    private final byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
 
     public Zipper(Path zipFile) throws IOException {
-        this(zipFile, null);
+        this(zipFile, StandardCharsets.UTF_8);
     }
 
     public Zipper(Path zipFile, Charset encoding) throws IOException {
-        Files.deleteIfExists(zipFile);
-        fs = CompressingUtils.createWritableZipFileSystem(zipFile, encoding);
+        this.zos = new ZipOutputStream(Files.newOutputStream(zipFile), encoding);
+    }
+
+    private static String normalize(String path) {
+        path = path.replace('\\', '/');
+        if (path.startsWith("/"))
+            path = path.substring(1);
+        if (path.endsWith("/"))
+            path = path.substring(0, path.length() - 1);
+        return path;
+    }
+
+    private static String resolve(String dir, String file) {
+        if (dir.isEmpty()) return file;
+        if (file.isEmpty()) return dir;
+        return dir + "/" + file;
     }
 
     @Override
     public void close() throws IOException {
-        fs.close();
+        zos.close();
     }
 
     /**
      * Compress all the files in sourceDir
      *
      * @param source  the file in basePath to be compressed
-     * @param rootDir the path of the directory in this zip file.
+     * @param targetDir the path of the directory in this zip file.
      */
-    public void putDirectory(Path source, String rootDir) throws IOException {
-        putDirectory(source, rootDir, null);
+    public void putDirectory(Path source, String targetDir) throws IOException {
+        putDirectory(source, targetDir, null);
     }
 
     /**
@@ -68,31 +87,32 @@ public final class Zipper implements Closeable {
      * @param filter  returns false if you do not want that file or directory
      */
     public void putDirectory(Path source, String targetDir, ExceptionalPredicate<String, IOException> filter) throws IOException {
-        Path root = fs.getPath(targetDir);
-        Files.createDirectories(root);
+        String root = normalize(targetDir);
         Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (".DS_Store".equals(file.getFileName().toString())) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                String relativePath = source.relativize(file).normalize().toString();
-                if (filter != null && !filter.test(relativePath.replace('\\', '/'))) {
+                String relativePath = normalize(source.relativize(file).normalize().toString());
+                if (filter != null && !filter.test(relativePath)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                Files.copy(file, root.resolve(relativePath), StandardCopyOption.COPY_ATTRIBUTES);
+                putFile(file, resolve(root, relativePath));
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                String relativePath = source.relativize(dir).normalize().toString();
-                if (filter != null && !filter.test(relativePath.replace('\\', '/'))) {
+                String relativePath = normalize(source.relativize(dir).normalize().toString());
+                if (filter != null && !filter.test(relativePath)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                Path path = root.resolve(relativePath);
-                if (Files.notExists(path)) {
-                    Files.createDirectory(path);
+                try {
+                    zos.putNextEntry(new ZipEntry(resolve(root, relativePath) + "/"));
+                    zos.closeEntry();
+                } catch (ZipException ignored) {
+                    // Directory already exists
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -104,19 +124,44 @@ public final class Zipper implements Closeable {
     }
 
     public void putFile(Path file, String path) throws IOException {
-        Files.copy(file, fs.getPath(path), StandardCopyOption.COPY_ATTRIBUTES);
+        path = normalize(path);
+
+        BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
+
+        ZipEntry entry = new ZipEntry(attrs.isDirectory() ? path + "/" : path);
+        entry.setCreationTime(attrs.creationTime());
+        entry.setLastAccessTime(attrs.lastAccessTime());
+        entry.setLastModifiedTime(attrs.lastModifiedTime());
+
+        if (attrs.isDirectory()) {
+            try {
+                zos.putNextEntry(entry);
+                zos.closeEntry();
+            } catch (ZipException ignored) {
+                // Directory already exists
+            }
+        } else {
+            try (InputStream input = Files.newInputStream(file)) {
+                zos.putNextEntry(entry);
+                IOUtils.copyTo(input, zos, buffer);
+                zos.closeEntry();
+            }
+        }
     }
 
     public void putStream(InputStream in, String path) throws IOException {
-        Files.copy(in, fs.getPath(path), StandardCopyOption.COPY_ATTRIBUTES);
+        zos.putNextEntry(new ZipEntry(normalize(path)));
+        IOUtils.copyTo(in, zos, buffer);
+        zos.closeEntry();
     }
 
     public void putTextFile(String text, String path) throws IOException {
-        putTextFile(text, "UTF-8", path);
+        putTextFile(text, StandardCharsets.UTF_8, path);
     }
 
-    public void putTextFile(String text, String encoding, String pathName) throws IOException {
-        Files.write(fs.getPath(pathName), text.getBytes(encoding));
+    public void putTextFile(String text, Charset encoding, String path) throws IOException {
+        zos.putNextEntry(new ZipEntry(normalize(path)));
+        zos.write(text.getBytes(encoding));
+        zos.closeEntry();
     }
-
 }

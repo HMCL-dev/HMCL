@@ -66,7 +66,8 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.CRAFT_TABLE),
                 createIcon(VersionIconType.FABRIC),
                 createIcon(VersionIconType.FORGE),
-                createIcon(VersionIconType.FURNACE)
+                createIcon(VersionIconType.FURNACE),
+                createIcon(VersionIconType.QUILT)
         );
     }
 
@@ -103,7 +104,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createIcon(VersionIconType type) {
-        ImageView imageView = new ImageView(new Image(type.getResourceUrl(), 32, 32, true, true));
+        ImageView imageView = new ImageView(new Image(type.getResourceUrl()));
         imageView.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(imageView);
         FXUtils.setLimitWidth(container, 36);

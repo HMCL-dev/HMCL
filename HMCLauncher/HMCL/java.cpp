@@ -78,6 +78,7 @@ bool FindJavaInRegistry(std::wstring& path) {
 }
 
 bool FindJava(std::wstring& path) {
-  return FindJavaInRegistry(path) ||
-         ERROR_SUCCESS == MyGetEnvironmentVariable(L"JAVA_HOME", path);
+  return ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_HOME", path) ||
+         ERROR_SUCCESS == MyGetEnvironmentVariable(L"JAVA_HOME", path) ||
+         FindJavaInRegistry(path);
 }

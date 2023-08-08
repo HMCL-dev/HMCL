@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.mod;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -38,7 +37,7 @@ public final class LiteModMetadata {
     private final String mcversion;
     private final String revision;
     private final String author;
-    private final String classTransformerClasses;
+    private final String[] classTransformerClasses;
     private final String description;
     private final String modpackName;
     private final String modpackVersion;
@@ -46,10 +45,10 @@ public final class LiteModMetadata {
     private final String updateURI;
 
     public LiteModMetadata() {
-        this("", "", "", "", "", "", "", "", "", "", "");
+        this("", "", "", "", "", new String[]{""}, "", "", "", "", "");
     }
 
-    public LiteModMetadata(String name, String version, String mcversion, String revision, String author, String classTransformerClasses, String description, String modpackName, String modpackVersion, String checkUpdateUrl, String updateURI) {
+    public LiteModMetadata(String name, String version, String mcversion, String revision, String author, String[] classTransformerClasses, String description, String modpackName, String modpackVersion, String checkUpdateUrl, String updateURI) {
         this.name = name;
         this.version = version;
         this.mcversion = mcversion;
@@ -83,7 +82,7 @@ public final class LiteModMetadata {
         return author;
     }
 
-    public String getClassTransformerClasses() {
+    public String[] getClassTransformerClasses() {
         return classTransformerClasses;
     }
 
@@ -112,7 +111,7 @@ public final class LiteModMetadata {
             ZipEntry entry = zipFile.getEntry("litemod.json");
             if (entry == null)
                 throw new IOException("File " + modFile + "is not a LiteLoader mod.");
-            LiteModMetadata metadata = JsonUtils.GSON.fromJson(IOUtils.readFullyAsString(zipFile.getInputStream(entry)), LiteModMetadata.class);
+            LiteModMetadata metadata = JsonUtils.fromJsonFully(zipFile.getInputStream(entry), LiteModMetadata.class);
             if (metadata == null)
                 throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
             return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()), metadata.getAuthor(),

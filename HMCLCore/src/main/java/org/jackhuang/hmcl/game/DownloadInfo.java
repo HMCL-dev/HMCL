@@ -83,6 +83,6 @@ public class DownloadInfo implements Validation {
 
     public boolean validateChecksum(Path file, boolean defaultValue) throws IOException {
         if (getSha1() == null) return defaultValue;
-        return Hex.encodeHex(DigestUtils.digest("SHA-1", file)).equalsIgnoreCase(getSha1());
+        return DigestUtils.digestToString("SHA-1", file).equalsIgnoreCase(getSha1());
     }
 }

@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.apache.commons.lang3.Range;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
-import org.junit.Assert;
-import org.junit.Test;
+import org.jackhuang.hmcl.util.versioning.VersionRange;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JavaVersionConstraintTest {
 
@@ -31,8 +32,6 @@ public class JavaVersionConstraintTest {
                 null
         );
 
-        Assert.assertEquals(
-                Range.between(VersionNumber.asVersion("16"), VersionNumber.asVersion(JavaVersionConstraint.MAX)),
-                range.getMandatory());
+        assertEquals(VersionRange.atLeast("16"), range.getMandatory());
     }
 }

@@ -31,7 +31,11 @@ public final class SystemUtils {
     }
 
     public static int callExternalProcess(List<String> command) throws IOException, InterruptedException {
-        ManagedProcess managedProcess = new ManagedProcess(new ProcessBuilder(command));
+        return callExternalProcess(new ProcessBuilder(command));
+    }
+
+    public static int callExternalProcess(ProcessBuilder processBuilder) throws IOException, InterruptedException {
+        ManagedProcess managedProcess = new ManagedProcess(processBuilder);
         managedProcess.pumpInputStream(SystemUtils::onLogLine);
         managedProcess.pumpErrorStream(SystemUtils::onLogLine);
         return managedProcess.getProcess().waitFor();

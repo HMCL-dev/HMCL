@@ -17,13 +17,20 @@
  */
 package org.jackhuang.hmcl;
 
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
+import org.jackhuang.hmcl.ui.SwingUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,34 +57,29 @@ public final class Main {
 
     public static void main(String[] args) {
         System.setProperty("java.net.useSystemProxies", "true");
-        System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);
         System.setProperty("javafx.autoproxy.disable", "true");
-        // Fix title bar not displaying in GTK systems
-        System.setProperty("jdk.gtk.version", "2");
-
-        // Use System look and feel
-        initLookAndFeel();
+        System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         checkDirectoryPath();
 
-        // This environment check will take ~300ms
-        thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
+        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9)
+            // This environment check will take ~300ms
+            thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            initIcon();
 
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
         checkJavaFX();
-
+        detectFractureiser();
 
         Launcher.main(args);
     }
 
-    private static void initLookAndFeel() {
-        if (System.getProperty("swing.defaultlaf") == null) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Throwable ignored) {
-            }
-        }
+    private static void initIcon() {
+        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/img/icon@8x.png"));
+        AwtUtils.setAppleIcon(image);
     }
 
     private static void checkDirectoryPath() {
@@ -89,6 +91,13 @@ public final class Main {
         }
     }
 
+    private static void detectFractureiser() {
+        if (FractureiserDetector.detect()) {
+            LOG.log(Level.SEVERE, "Detected that this computer is infected by fractureiser");
+            showErrorAndExit(i18n("fatal.fractureiser"));
+        }
+    }
+
     private static void checkJavaFX() {
         try {
             SelfDependencyPatcher.patch();
@@ -97,7 +106,12 @@ public final class Main {
             showErrorAndExit(i18n("fatal.javafx.missing"));
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
             LOG.log(Level.SEVERE, "unable to patch JVM", e);
-            showErrorAndExit(i18n("fatal.javafx.incompatible"));
+            if (Architecture.CURRENT_ARCH == Architecture.MIPS64EL
+                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64
+                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64_OW)
+                showErrorAndExit(i18n("fatal.javafx.incompatible.loongson"));
+            else
+                showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
             LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
             System.exit(0);
@@ -110,7 +124,16 @@ public final class Main {
     static void showErrorAndExit(String message) {
         System.err.println(message);
         System.err.println("A fatal error has occurred, forcibly exiting.");
-        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+
+        try {
+            if (Platform.isFxApplicationThread()) {
+                new Alert(Alert.AlertType.ERROR, message).showAndWait();
+                System.exit(1);
+            }
+        } catch (Throwable ignored) {
+        }
+
+        SwingUtils.showErrorDialog(message);
         System.exit(1);
     }
 
@@ -120,7 +143,16 @@ public final class Main {
     static void showWarningAndContinue(String message) {
         System.err.println(message);
         System.err.println("Potential issues have been detected.");
-        JOptionPane.showMessageDialog(null, message, "Warning", JOptionPane.WARNING_MESSAGE);
+
+        try {
+            if (Platform.isFxApplicationThread()) {
+                new Alert(Alert.AlertType.WARNING, message).showAndWait();
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
+
+        SwingUtils.showWarningDialog(message);
     }
 
     static void fixLetsEncrypt() {
@@ -150,7 +182,8 @@ public final class Main {
             tls.init(null, instance.getTrustManagers(), null);
             HttpsURLConnection.setDefaultSSLSocketFactory(tls.getSocketFactory());
             LOG.info("Added Lets Encrypt root certificates as additional trust");
-        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException | KeyManagementException e) {
+        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException |
+                 KeyManagementException e) {
             LOG.log(Level.SEVERE, "Failed to load lets encrypt certificate. Expect problems", e);
         }
     }

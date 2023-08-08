@@ -22,7 +22,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -60,8 +59,7 @@ public final class MultiMCManifest {
         ZipArchiveEntry mmcPack = zipFile.getEntry(rootEntryName + "mmc-pack.json");
         if (mmcPack == null)
             return null;
-        String json = IOUtils.readFullyAsString(zipFile.getInputStream(mmcPack));
-        MultiMCManifest manifest = JsonUtils.fromNonNullJson(json, MultiMCManifest.class);
+        MultiMCManifest manifest = JsonUtils.fromNonNullJsonFully(zipFile.getInputStream(mmcPack), MultiMCManifest.class);
         if (manifest.getComponents() == null)
             throw new IOException("mmc-pack.json malformed.");
 

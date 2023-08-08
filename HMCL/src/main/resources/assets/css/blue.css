@@ -16,9 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 .root {
-    -fx-base-color: #5c6bc0;
+    -fx-base-color: #5C6BC0;
     -fx-base-darker-color: derive(-fx-base-color, -10%);
     -fx-base-check-color: derive(-fx-base-color, 30%);
-    -fx-base-rippler-color: rgba(92, 107, 192, 0.3);
+    -fx-rippler-color: rgba(92, 107, 192, 0.3);
+    -fx-base-rippler-color: derive(rgba(92, 107, 192, 0.3), 100%);
+    -fx-base-disabled-text-fill: rgba(256, 256, 256, 0.7);
     -fx-base-text-fill: white;
+
+    -theme-thumb: rgba(92, 107, 192, 0.7);
 }

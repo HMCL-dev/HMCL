@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.upgrade;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -43,7 +44,9 @@ final class ExecutableHeaderHelper {
     private ExecutableHeaderHelper() {}
 
     private static Map<String, String> suffix2header = mapOf(
-            pair("exe", "assets/HMCLauncher.exe"));
+            pair("exe", "assets/HMCLauncher.exe"),
+            pair("sh", "assets/HMCLauncher.sh")
+    );
 
     private static Optional<String> getSuffix(Path file) {
         String filename = file.getFileName().toString();
@@ -73,7 +76,7 @@ final class ExecutableHeaderHelper {
         suffixLoop: for (String suffix : suffix2header.keySet()) {
             Optional<byte[]> header = readHeader(zip, suffix);
             if (header.isPresent()) {
-                buf.rewind();
+                ((Buffer) buf).rewind();
                 for (byte b : header.get()) {
                     if (!buf.hasRemaining() || b != buf.get()) {
                         continue suffixLoop;

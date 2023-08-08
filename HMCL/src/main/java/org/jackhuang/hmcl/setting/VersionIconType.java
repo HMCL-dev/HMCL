@@ -27,7 +27,8 @@ public enum VersionIconType {
     CRAFT_TABLE("/assets/img/craft_table.png"),
     FABRIC("/assets/img/fabric.png"),
     FORGE("/assets/img/forge.png"),
-    FURNACE("/assets/img/furnace.png");
+    FURNACE("/assets/img/furnace.png"),
+    QUILT("/assets/img/quilt.png");
 
     // Please append new items at last
 

@@ -1,0 +1,38 @@
+[authlib-injector] [INFO] Logging file: D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\authlib-injector.log
+[authlib-injector] [INFO] Version: 1.2.2
+[authlib-injector] [INFO] Authentication server: http://localhost:59486
+[authlib-injector] [WARNING] You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.
+[11:25:59] [main/INFO]: ModLauncher running: args [--username, 666, --version, 1.19.2, --gameDir, D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft, --assetsDir, D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\assets, --assetIndex, 1.19, --uuid, 1ee797995aa33433bd3790203ecd5ce7, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, legacy, --versionType, HMCL 3.5.3.230, --width, 854, --height, 480, --launchTarget, forgeclient, --fml.forgeVersion, 43.1.47, --fml.mcVersion, 1.19.2, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20220805.130853]
+[11:26:00] [main/INFO]: ModLauncher 10.0.8+10.0.8+main.0ef7e830 starting: java version 17.0.1 by Microsoft; OS Windows 10 arch amd64 version 10.0
+[11:26:00] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/D:/❄❄❄❄❄❄❄❄/FileRecv/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%2391!/ Service=ModLauncher Env=CLIENT
+[11:26:00] [main/INFO]: Found mod file CTM-1.19.2-1.1.6+8.jar of type MOD with provider {mods folder locator at D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\mods}
+[11:26:00] [main/INFO]: Found mod file Patchouli-1.19.2-77.jar of type MOD with provider {mods folder locator at D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\mods}
+[11:26:00] [main/INFO]: Found mod file twilightforest-fabric-1.19.2-4.2.301.jar of type MOD with provider {mods folder locator at D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\mods}
+Exception in thread "main" java.io.UncheckedIOException: java.io.IOException: Invalid paths argument, contained no existing paths: [D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\libraries\net\minecraft\client\1.19.2-20220805.130853\client-1.19.2-20220805.130853-srg.jar, D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\libraries\net\minecraft\client\1.19.2-20220805.130853\client-1.19.2-20220805.130853-extra.jar, D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\libraries\net\minecraftforge\forge\1.19.2-43.1.47\forge-1.19.2-43.1.47-client.jar]
+	at cpw.mods.securejarhandler/cpw.mods.jarhandling.impl.Jar.<init>(Jar.java:82)
+	at cpw.mods.securejarhandler/cpw.mods.jarhandling.SecureJar.from(SecureJar.java:70)
+	at MC-BOOTSTRAP/fmlloader@1.19.2-43.1.47/net.minecraftforge.fml.loading.moddiscovery.ModJarMetadata.buildFile(ModJarMetadata.java:41)
+	at MC-BOOTSTRAP/fmlloader@1.19.2-43.1.47/net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator.scanMods(MinecraftLocator.java:37)
+	at MC-BOOTSTRAP/fmlloader@1.19.2-43.1.47/net.minecraftforge.fml.loading.moddiscovery.ModDiscoverer.discoverMods(ModDiscoverer.java:74)
+	at MC-BOOTSTRAP/fmlloader@1.19.2-43.1.47/net.minecraftforge.fml.loading.FMLLoader.beginModScan(FMLLoader.java:166)
+	at MC-BOOTSTRAP/fmlloader@1.19.2-43.1.47/net.minecraftforge.fml.loading.FMLServiceProvider.beginScanning(FMLServiceProvider.java:86)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.TransformationServiceDecorator.runScan(TransformationServiceDecorator.java:112)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.TransformationServicesHandler.lambda$runScanningTransformationServices$8(TransformationServicesHandler.java:100)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.HashMap$ValueSpliterator.forEachRemaining(HashMap.java:1779)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:575)
+	at java.base/java.util.stream.AbstractPipeline.evaluateToArrayNode(AbstractPipeline.java:260)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:616)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:622)
+	at java.base/java.util.stream.ReferencePipeline.toList(ReferencePipeline.java:627)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.TransformationServicesHandler.runScanningTransformationServices(TransformationServicesHandler.java:102)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:55)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.Launcher.run(Launcher.java:87)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.Launcher.main(Launcher.java:77)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.8/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.1.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141)
+Caused by: java.io.IOException: Invalid paths argument, contained no existing paths: [D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\libraries\net\minecraft\client\1.19.2-20220805.130853\client-1.19.2-20220805.130853-srg.jar, D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\libraries\net\minecraft\client\1.19.2-20220805.130853\client-1.19.2-20220805.130853-extra.jar, D:\❄❄❄❄❄❄❄❄\FileRecv\.minecraft\libraries\net\minecraftforge\forge\1.19.2-43.1.47\forge-1.19.2-43.1.47-client.jar]
+	... 25 more

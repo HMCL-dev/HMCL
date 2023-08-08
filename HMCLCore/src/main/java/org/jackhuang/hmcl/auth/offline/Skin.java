@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -48,8 +49,15 @@ public class Skin {
 
     public enum Type {
         DEFAULT,
-        STEVE,
         ALEX,
+        ARI,
+        EFE,
+        KAI,
+        MAKENA,
+        NOOR,
+        STEVE,
+        SUNNY,
+        ZURI,
         LOCAL_FILE,
         LITTLE_SKIN,
         CUSTOM_SKIN_LOADER_API,
@@ -59,10 +67,24 @@ public class Skin {
             switch (type) {
                 case "default":
                     return DEFAULT;
-                case "steve":
-                    return STEVE;
                 case "alex":
                     return ALEX;
+                case "ari":
+                    return ARI;
+                case "efe":
+                    return EFE;
+                case "kai":
+                    return KAI;
+                case "makena":
+                    return MAKENA;
+                case "noor":
+                    return NOOR;
+                case "steve":
+                    return STEVE;
+                case "sunny":
+                    return SUNNY;
+                case "zuri":
+                    return ZURI;
                 case "local_file":
                     return LOCAL_FILE;
                 case "little_skin":
@@ -75,6 +97,12 @@ public class Skin {
                     return null;
             }
         }
+    }
+
+    private static Function<Type, InputStream> defaultSkinLoader = null;
+
+    public static void registerDefaultSkinLoader(Function<Type, InputStream> defaultSkinLoader0) {
+        defaultSkinLoader = defaultSkinLoader0;
     }
 
     private final Type type;
@@ -115,10 +143,19 @@ public class Skin {
         switch (type) {
             case DEFAULT:
                 return Task.supplyAsync(() -> null);
-            case STEVE:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/steve.png")), null));
             case ALEX:
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.ALEX, Texture.loadTexture(Skin.class.getResourceAsStream("/assets/img/alex.png")), null));
+            case ARI:
+            case EFE:
+            case KAI:
+            case MAKENA:
+            case NOOR:
+            case STEVE:
+            case SUNNY:
+            case ZURI:
+                if (defaultSkinLoader == null) {
+                    return Task.supplyAsync(() -> null);
+                }
+                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(defaultSkinLoader.apply(type)), null));
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
                     Texture skin = null, cape = null;

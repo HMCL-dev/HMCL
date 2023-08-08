@@ -78,6 +78,11 @@ public class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
+    public String getIdentifier() {
+        return "microsoft:" + getUUID();
+    }
+
+    @Override
     public AuthInfo logIn() throws AuthenticationException {
         if (!authenticated) {
             if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
@@ -117,8 +122,8 @@ public class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public Optional<AuthInfo> playOffline() {
-        return Optional.of(session.toAuthInfo());
+    public AuthInfo playOffline() {
+        return session.toAuthInfo();
     }
 
     @Override
@@ -163,6 +168,6 @@ public class MicrosoftAccount extends OAuthAccount {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MicrosoftAccount that = (MicrosoftAccount) o;
-        return characterUUID.equals(that.characterUUID);
+        return this.isPortable() == that.isPortable() && characterUUID.equals(that.characterUUID);
     }
 }

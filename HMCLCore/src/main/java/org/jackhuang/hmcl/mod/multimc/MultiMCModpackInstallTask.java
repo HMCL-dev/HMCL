@@ -89,6 +89,12 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 if (c.getVersion() != null)
                     builder.version("fabric", c.getVersion());
             });
+
+            Optional<MultiMCManifest.MultiMCManifestComponent> quilt = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("org.quiltmc.quilt-loader")).findAny();
+            quilt.ifPresent(c -> {
+                if (c.getVersion() != null)
+                    builder.version("quilt", c.getVersion());
+            });
         }
 
         dependents.add(builder.buildAsync());
@@ -128,12 +134,20 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         String subDirectory;
 
         try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(modpack.getEncoding()).build()) {
-            if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
+            // /.minecraft
+            if (Files.exists(fs.getPath("/.minecraft"))) {
+                subDirectory = "/.minecraft";
+            // /minecraft
+            } else if (Files.exists(fs.getPath("/minecraft"))) {
+                subDirectory = "/minecraft";
+            // /[name]/.minecraft
+            } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/.minecraft";
+            // /[name]/minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/minecraft";
             } else {
-                subDirectory = "/" + manifest.getName() + "/minecraft";
+                subDirectory = "/" + manifest.getName() + "/.minecraft";
             }
         }
 

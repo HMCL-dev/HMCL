@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * The managed process.
@@ -38,7 +38,7 @@ public class ManagedProcess {
     private final List<String> commands;
     private final String classpath;
     private final Map<String, Object> properties = new HashMap<>();
-    private final Queue<String> lines = new ConcurrentLinkedQueue<>();
+    private final List<String> lines = new ArrayList<>();
     private final List<Thread> relatedThreads = new ArrayList<>();
 
     public ManagedProcess(ProcessBuilder processBuilder) throws IOException {
@@ -112,11 +112,19 @@ public class ManagedProcess {
      *
      * @see #addLine
      */
-    public Collection<String> getLines() {
-        return Collections.unmodifiableCollection(lines);
+    public synchronized List<String> getLines(Predicate<String> lineFilter) {
+        if (lineFilter == null)
+            return Collections.unmodifiableList(Arrays.asList(lines.toArray(new String[0])));
+
+        ArrayList<String> res = new ArrayList<>();
+        for (String line : this.lines) {
+            if (lineFilter.test(line))
+                res.add(line);
+        }
+        return Collections.unmodifiableList(res);
     }
 
-    public void addLine(String line) {
+    public synchronized void addLine(String line) {
         lines.add(line);
     }
 
@@ -131,11 +139,11 @@ public class ManagedProcess {
     }
 
     public synchronized void pumpInputStream(Consumer<String> onLogLine) {
-        addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine), "ProcessInputStreamPump", true));
+        addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessInputStreamPump", true));
     }
 
     public synchronized void pumpErrorStream(Consumer<String> onLogLine) {
-        addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine), "ProcessErrorStreamPump", true));
+        addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessErrorStreamPump", true));
     }
 
     /**

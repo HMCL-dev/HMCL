@@ -23,14 +23,18 @@ import javafx.scene.control.ListCell;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Holder;
 
 public abstract class MDListCell<T> extends ListCell<T> {
     private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     private final StackPane container = new StackPane();
     private final StackPane root = new StackPane();
+    private final Holder<Object> lastCell;
 
-    public MDListCell(JFXListView<T> listView) {
+    public MDListCell(JFXListView<T> listView, Holder<Object> lastCell) {
+        this.lastCell = lastCell;
+
         setText(null);
         setGraphic(null);
 
@@ -50,6 +54,14 @@ public abstract class MDListCell<T> extends ListCell<T> {
     @Override
     protected void updateItem(T item, boolean empty) {
         super.updateItem(item, empty);
+
+        // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+        if (lastCell != null) {
+            if (this == lastCell.value && !isVisible())
+                return;
+            lastCell.value = this;
+        }
+
         updateControl(item, empty);
         if (empty) {
             setGraphic(null);

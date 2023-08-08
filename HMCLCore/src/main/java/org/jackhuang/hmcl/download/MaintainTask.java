@@ -110,8 +110,10 @@ public class MaintainTask extends Task<Version> {
         }
 
         if (libraryAnalyzer.has(OPTIFINE)) {
-            if (!libraryAnalyzer.has(LITELOADER) && !libraryAnalyzer.has(FORGE) && builder.hasTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[1])) {
-                builder.replaceTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[1], LibraryAnalyzer.OPTIFINE_TWEAKERS[0], !reorderTweakClass, reorderTweakClass);
+            if (!libraryAnalyzer.has(LITELOADER) && !libraryAnalyzer.has(FORGE)) {
+                if (builder.hasTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[1])) {
+                    builder.replaceTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[1], LibraryAnalyzer.OPTIFINE_TWEAKERS[0], !reorderTweakClass, reorderTweakClass);
+                }
             } else {
                 if (libraryAnalyzer.hasModLauncher()) {
                     // If ModLauncher installed, we use ModLauncher in place of LaunchWrapper.
@@ -119,7 +121,7 @@ public class MaintainTask extends Task<Version> {
                     for (String optiFineTweaker : LibraryAnalyzer.OPTIFINE_TWEAKERS) {
                         builder.removeTweakClass(optiFineTweaker);
                     }
-                } else {
+                } else if (builder.hasTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[0])) {
                     // If forge or LiteLoader installed, OptiFine Forge Tweaker is needed.
                     builder.replaceTweakClass(LibraryAnalyzer.OPTIFINE_TWEAKERS[0], LibraryAnalyzer.OPTIFINE_TWEAKERS[1], !reorderTweakClass, reorderTweakClass);
                 }

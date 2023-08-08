@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 
 import java.io.IOException;
@@ -25,7 +27,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
+
 public class RemoteMod {
+    private static RemoteMod EMPTY = null;
+
+    public static void registerEmptyRemoteMod(RemoteMod empty) {
+        EMPTY = empty;
+    }
+
+    public static RemoteMod getEmptyRemoteMod() {
+        if (EMPTY == null) {
+            throw new NullPointerException();
+        }
+        return EMPTY;
+    }
+
     private final String slug;
     private final String author;
     private final String title;
@@ -85,8 +102,18 @@ public class RemoteMod {
     }
 
     public enum Type {
-        CURSEFORGE,
-        MODRINTH
+        CURSEFORGE(CurseForgeRemoteModRepository.MODS),
+        MODRINTH(ModrinthRemoteModRepository.MODS);
+
+        private final RemoteModRepository remoteModRepository;
+
+        public RemoteModRepository getRemoteModRepository() {
+            return this.remoteModRepository;
+        }
+
+        Type(RemoteModRepository remoteModRepository) {
+            this.remoteModRepository = remoteModRepository;
+        }
     }
 
     public interface IMod {
@@ -199,7 +226,7 @@ public class RemoteMod {
         }
 
         public String getUrl() {
-            return url;
+            return encodeLocation(url);
         }
 
         public String getFilename() {

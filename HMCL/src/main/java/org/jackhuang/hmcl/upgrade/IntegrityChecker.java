@@ -17,17 +17,16 @@
  */
 package org.jackhuang.hmcl.upgrade;
 
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.Signature;
+import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,11 +62,12 @@ public final class IntegrityChecker {
 
     private static boolean verifyJar(Path jarPath) throws IOException {
         PublicKey publickey = getPublicKey();
+        MessageDigest md = DigestUtils.getDigest("SHA-512");
 
         byte[] signature = null;
         Map<String, byte[]> fileFingerprints = new TreeMap<>();
         try (ZipFile zip = new ZipFile(jarPath.toFile())) {
-            for (ZipEntry entry : zip.stream().toArray(ZipEntry[]::new)) {
+            for (ZipEntry entry : Lang.toIterable(zip.entries())) {
                 String filename = entry.getName();
                 try (InputStream in = zip.getInputStream(entry)) {
                     if (in == null) {
@@ -77,7 +77,8 @@ public final class IntegrityChecker {
                     if (SIGNATURE_FILE.equals(filename)) {
                         signature = IOUtils.readFullyAsByteArray(in);
                     } else {
-                        fileFingerprints.put(filename, DigestUtils.digest("SHA-512", in));
+                        md.reset();
+                        fileFingerprints.put(filename, DigestUtils.digest(md, in));
                     }
                 }
             }
@@ -91,7 +92,8 @@ public final class IntegrityChecker {
             Signature verifier = Signature.getInstance("SHA512withRSA");
             verifier.initVerify(publickey);
             for (Entry<String, byte[]> entry : fileFingerprints.entrySet()) {
-                verifier.update(DigestUtils.digest("SHA-512", entry.getKey().getBytes(UTF_8)));
+                md.reset();
+                verifier.update(md.digest(entry.getKey().getBytes(UTF_8)));
                 verifier.update(entry.getValue());
             }
             return verifier.verify(signature);
@@ -106,25 +108,37 @@ public final class IntegrityChecker {
         }
     }
 
-    private static Boolean selfVerified = null;
+    private static volatile Boolean selfVerified = null;
 
     /**
      * Checks whether the current application is verified.
      * This method is blocking.
      */
-    public static synchronized boolean isSelfVerified() {
+    public static boolean isSelfVerified() {
         if (selfVerified != null) {
             return selfVerified;
         }
-        try {
-            verifySelf();
-            LOG.info("Successfully verified current JAR");
-            selfVerified = true;
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to verify myself, is the JAR corrupt?", e);
-            selfVerified = false;
+
+        synchronized (IntegrityChecker.class) {
+            if (selfVerified != null) {
+                return selfVerified;
+            }
+
+            try {
+                verifySelf();
+                LOG.info("Successfully verified current JAR");
+                selfVerified = true;
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to verify myself, is the JAR corrupt?", e);
+                selfVerified = false;
+            }
+
+            return selfVerified;
         }
-        return selfVerified;
+    }
+
+    public static boolean isOfficial() {
+        return isSelfVerified() || (Metadata.GITHUB_SHA != null && Metadata.BUILD_CHANNEL.equals("nightly"));
     }
 
     private static void verifySelf() throws IOException {

@@ -30,6 +30,7 @@ import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.math.BigDecimal;
@@ -84,10 +85,17 @@ public class SponsorPage extends StackPane {
             StackPane pane = new StackPane();
             pane.getStyleClass().add("card");
             listView = new JFXListView<>();
+            Holder<Object> lastCell = new Holder<>();
             listView.setCellFactory((listView) -> new JFXListCell<Sponsor>() {
                 @Override
                 public void updateItem(Sponsor item, boolean empty) {
                     super.updateItem(item, empty);
+
+                    // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+                    if (this == lastCell.value && !isVisible())
+                        return;
+                    lastCell.value = this;
+
                     if (!empty) {
                         setText(item.getName());
                         setGraphic(null);

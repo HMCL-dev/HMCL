@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListCell;
 
-import javafx.beans.NamedArg;
 import javafx.beans.binding.Bindings;
 import javafx.scene.text.Font;
 
@@ -34,7 +33,7 @@ public class FontComboBox extends JFXComboBox<String> {
 
     private boolean loaded = false;
 
-    public FontComboBox(@NamedArg(value = "fontSize", defaultValue = "12.0") double fontSize) {
+    public FontComboBox() {
         styleProperty().bind(Bindings.concat("-fx-font-family: \"", valueProperty(), "\""));
 
         setCellFactory(listView -> new JFXListCell<String>() {

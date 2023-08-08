@@ -121,7 +121,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 continue;
                             }
                         } else if (responseCode / 100 == 4) {
-                            throw new FileNotFoundException();
+                            throw new FileNotFoundException(url.toString());
                         } else if (responseCode / 100 != 2) {
                             throw new ResponseCodeException(url, responseCode);
                         }
@@ -239,7 +239,7 @@ public abstract class FetchTask<T> extends Task<T> {
         CACHED
     }
     
-    protected class DownloadState {
+    protected static final class DownloadState {
         private final int startPosition;
         private final int endPosition;
         private final int currentPosition;
@@ -272,9 +272,7 @@ public abstract class FetchTask<T> extends Task<T> {
         }
     }
 
-    protected class DownloadMission {
-
-
+    protected static final class DownloadMission {
 
     }
 

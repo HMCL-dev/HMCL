@@ -99,6 +99,11 @@ public class YggdrasilAccount extends ClassicAccount {
     }
 
     @Override
+    public String getIdentifier() {
+        return getUsername() + ":" + getUUID();
+    }
+
+    @Override
     public synchronized AuthInfo logIn() throws AuthenticationException {
         if (!authenticated) {
             if (service.validate(session.getAccessToken(), session.getClientToken())) {
@@ -161,8 +166,8 @@ public class YggdrasilAccount extends ClassicAccount {
     }
 
     @Override
-    public Optional<AuthInfo> playOffline() {
-        return Optional.of(session.toAuthInfo());
+    public AuthInfo playOffline() throws AuthenticationException {
+        return session.toAuthInfo();
     }
 
     @Override
@@ -223,6 +228,6 @@ public class YggdrasilAccount extends ClassicAccount {
         if (obj == null || obj.getClass() != YggdrasilAccount.class)
             return false;
         YggdrasilAccount another = (YggdrasilAccount) obj;
-        return characterUUID.equals(another.characterUUID);
+        return isPortable() == another.isPortable() && characterUUID.equals(another.characterUUID);
     }
 }

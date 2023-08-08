@@ -28,17 +28,18 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
-import javafx.scene.control.SkinBase;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import java.util.function.Consumer;
+import java.util.List;
+import java.util.function.Supplier;
 
 @DefaultProperty("content")
 public class ComponentList extends Control {
@@ -47,11 +48,15 @@ public class ComponentList extends Control {
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
     private boolean hasSubtitle = false;
     public final ObservableList<Node> content = FXCollections.observableArrayList();
-    private boolean expanded = false;
-    private Consumer<ComponentList> lazyInitializer;
+    private Supplier<List<? extends Node>> lazyInitializer;
 
     public ComponentList() {
         getStyleClass().add("options-list");
+    }
+
+    public ComponentList(Supplier<List<? extends Node>> lazyInitializer) {
+        this();
+        this.lazyInitializer = lazyInitializer;
     }
 
     public String getTitle() {
@@ -102,17 +107,17 @@ public class ComponentList extends Control {
         return content;
     }
 
-    public void setLazyInitializer(Consumer<ComponentList> lazyInitializer) {
-        this.lazyInitializer = lazyInitializer;
+    void doLazyInit() {
+        if (lazyInitializer != null) {
+            this.getContent().setAll(lazyInitializer.get());
+            setNeedsLayout(true);
+            lazyInitializer = null;
+        }
     }
 
-    public void onExpand() {
-        if (!expanded && lazyInitializer != null) {
-            lazyInitializer.accept(this);
-            setNeedsLayout(true);
-        }
-
-        expanded = true;
+    @Override
+    public Orientation getContentBias() {
+        return Orientation.HORIZONTAL;
     }
 
     @Override
@@ -120,7 +125,7 @@ public class ComponentList extends Control {
         return new Skin(this);
     }
 
-    protected static class Skin extends SkinBase<ComponentList> {
+    private static final class Skin extends ControlSkinBase<ComponentList> {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
@@ -128,7 +133,7 @@ public class ComponentList extends Control {
         private final ObjectBinding<Node> firstItem;
         private final ObjectBinding<Node> lastItem;
 
-        protected Skin(ComponentList control) {
+        Skin(ComponentList control) {
             super(control);
 
             list = MappedObservableList.create(control.getContent(), node -> {
@@ -166,7 +171,7 @@ public class ComponentList extends Control {
             VBox vbox = new VBox();
             vbox.setFillWidth(true);
             Bindings.bindContent(vbox.getChildren(), list);
-            getChildren().setAll(vbox);
+            node = vbox;
         }
     }
 

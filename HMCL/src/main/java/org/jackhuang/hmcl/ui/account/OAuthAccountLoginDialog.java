@@ -48,9 +48,15 @@ public class OAuthAccountLoginDialog extends DialogPane {
         FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
             if (deviceCode != null) {
                 FXUtils.copyText(deviceCode.getUserCode());
-                hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
+                hintPane.setSegment(
+                        "<b>" + i18n("account.login.refresh.microsoft.hint") + "</b>\n"
+                                + i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri())
+                );
             } else {
-                hintPane.setSegment(i18n("account.methods.microsoft.hint"));
+                hintPane.setSegment(
+                        "<b>" + i18n("account.login.refresh.microsoft.hint") + "</b>\n"
+                                + i18n("account.methods.microsoft.hint")
+                );
             }
         });
         hintPane.setOnMouseClicked(e -> {
@@ -61,7 +67,7 @@ public class OAuthAccountLoginDialog extends DialogPane {
 
         HBox box = new HBox(8);
         JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-        birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/zh-cn/account-billing/如何更改-microsoft-帐户上的出生日期-837badbc-999e-54d2-2617-d19206b9540a"));
+        birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/how-to-change-a-birth-date-on-a-microsoft-account-837badbc-999e-54d2-2617-d19206b9540a"));
         JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
         profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
         JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.yggdrasil.purchase"));

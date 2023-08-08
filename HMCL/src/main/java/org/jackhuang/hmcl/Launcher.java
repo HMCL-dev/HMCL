@@ -19,28 +19,44 @@ package org.jackhuang.hmcl;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.auth.offline.Skin;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
-import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.*;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -55,6 +71,51 @@ public final class Launcher extends Application {
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
+        Skin.registerDefaultSkinLoader((type) -> {
+            switch (type) {
+                case ALEX:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
+                case ARI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
+                case EFE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
+                case KAI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
+                case MAKENA:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
+                case NOOR:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
+                case STEVE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
+                case SUNNY:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
+                case ZURI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
+                default:
+                    return null;
+            }
+        });
+
+        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon.png", new RemoteMod.IMod() {
+            @Override
+            public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+
+            @Override
+            public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+        }));
+
+        LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
+        try {
+            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
+            LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
+        } catch (Throwable e) {
+            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
+        }
+
         try {
             try {
                 ConfigHolder.init();
@@ -62,10 +123,27 @@ public final class Launcher extends Application {
                 Main.showWarningAndContinue(i18n("fatal.samba"));
             } catch (IOException e) {
                 LOG.log(Level.SEVERE, "Failed to load config", e);
-                Main.showErrorAndExit(i18n("fatal.config_loading_failure", Paths.get("").toAbsolutePath().normalize()));
+                checkConfigInTempDir();
+                checkConfigOwner();
+                Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
             }
 
-            if (Metadata.HMCL_DIRECTORY.toAbsolutePath().toString().indexOf('=') >= 0) {
+            // https://lapcatsoftware.com/articles/app-translocation.html
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+                    && ConfigHolder.isNewlyCreated()
+                    && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
+                if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                    return;
+            } else {
+                checkConfigInTempDir();
+            }
+
+            if (ConfigHolder.isOwnerChanged()) {
+                if (showAlert(AlertType.WARNING, i18n("fatal.config_change_owner_root"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
+                    return;
+            }
+
+            if (Metadata.HMCL_DIRECTORY.toString().indexOf('=') >= 0) {
                 Main.showWarningAndContinue(i18n("fatal.illegal_char"));
             }
 
@@ -76,8 +154,6 @@ public final class Launcher extends Application {
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
 
-                initIcon();
-
                 UpdateChecker.init();
 
                 primaryStage.show();
@@ -87,16 +163,95 @@ public final class Launcher extends Application {
         }
     }
 
+    private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
+        return new Alert(alertType, contentText, buttons).showAndWait().orElse(null);
+    }
+
+    private static boolean isConfigInTempDir() {
+        String configPath = ConfigHolder.configLocation().toString();
+
+        String tmpdir = System.getProperty("java.io.tmpdir");
+        if (StringUtils.isNotBlank(tmpdir) && configPath.startsWith(tmpdir))
+            return true;
+
+        String[] tempFolderNames = {"Temp", "Cache", "Caches"};
+        for (String name : tempFolderNames) {
+            if (configPath.contains(File.separator + name + File.separator))
+                return true;
+        }
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            return configPath.contains("\\Temporary Internet Files\\")
+                    || configPath.contains("\\INetCache\\")
+                    || configPath.contains("\\$Recycle.Bin\\")
+                    || configPath.contains("\\recycler\\");
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            return configPath.startsWith("/tmp/")
+                    || configPath.startsWith("/var/tmp/")
+                    || configPath.startsWith("/var/cache/")
+                    || configPath.startsWith("/dev/shm/")
+                    || configPath.contains("/Trash/");
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            return configPath.startsWith("/var/folders/")
+                    || configPath.startsWith("/private/var/folders/")
+                    || configPath.startsWith("/tmp/")
+                    || configPath.startsWith("/private/tmp/")
+                    || configPath.startsWith("/var/tmp/")
+                    || configPath.startsWith("/private/var/tmp/")
+                    || configPath.contains("/.Trash/");
+        } else {
+            return false;
+        }
+    }
+
+    private static void checkConfigInTempDir() {
+        if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
+                && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
+            System.exit(0);
+        }
+    }
+
+    private static void checkConfigOwner() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            return;
+
+        String userName = System.getProperty("user.name");
+        String owner;
+        try {
+            owner = Files.getOwner(ConfigHolder.configLocation()).getName();
+        } catch (IOException ioe) {
+            LOG.log(Level.WARNING, "Failed to get file owner", ioe);
+            return;
+        }
+
+        if (Files.isWritable(ConfigHolder.configLocation()) || userName.equals("root") || userName.equals(owner))
+            return;
+
+        ArrayList<String> files = new ArrayList<>();
+        files.add(ConfigHolder.configLocation().toString());
+        if (Files.exists(Metadata.HMCL_DIRECTORY))
+            files.add(Metadata.HMCL_DIRECTORY.toString());
+
+        Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
+        if (Files.exists(mcDir))
+            files.add(mcDir.toString());
+
+        String command = new CommandBuilder().add("sudo", "chown", "-R", userName).addAll(files).toString();
+        ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
+
+        if (showAlert(AlertType.ERROR,
+                i18n("fatal.config_loading_failure.unix", owner, command),
+                copyAndExit, ButtonType.CLOSE) == copyAndExit) {
+            Clipboard.getSystemClipboard()
+                    .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
+        }
+        System.exit(1);
+    }
+
     @Override
     public void stop() throws Exception {
         super.stop();
         Controllers.onApplicationStop();
-    }
-
-    private void initIcon() {
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Image image = toolkit.getImage(Launcher.class.getResource("/assets/img/icon.png"));
-        AwtUtils.setAppleIcon(image);
     }
 
     public static void main(String[] args) {
@@ -115,11 +270,18 @@ public final class Launcher extends Application {
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
-            LOG.info("Current Directory: " + Paths.get("").toAbsolutePath());
+            LOG.info("Current Directory: " + System.getProperty("user.dir"));
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
+            LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
-            ManagementFactory.getMemoryPoolMXBeans().stream().filter(bean -> bean.getName().equals("Metaspace")).findAny()
-                    .ifPresent(bean -> LOG.info("Metaspace: " + bean.getUsage().getUsed() / 1024 / 1024 + "MB"));
+            LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
+            LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
+                    .filter(bean -> bean.getName().equals("Metaspace"))
+                    .findAny()
+                    .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
+                    .orElse("Unknown"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+                LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.

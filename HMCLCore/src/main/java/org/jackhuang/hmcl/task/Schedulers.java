@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.task;
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Logging;
 
-import javax.swing.*;
 import java.util.concurrent.*;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
@@ -59,10 +58,6 @@ public final class Schedulers {
 
     public static Executor javafx() {
         return Platform::runLater;
-    }
-
-    public static Executor swing() {
-        return SwingUtilities::invokeLater;
     }
 
     public static Executor defaultScheduler() {

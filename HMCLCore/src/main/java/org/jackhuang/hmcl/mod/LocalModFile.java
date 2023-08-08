@@ -170,6 +170,10 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         }
     }
 
+    public void disable() throws IOException {
+        file = modManager.disableMod(file);
+    }
+
     public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(this, file);
         if (!currentVersion.isPresent()) return null;

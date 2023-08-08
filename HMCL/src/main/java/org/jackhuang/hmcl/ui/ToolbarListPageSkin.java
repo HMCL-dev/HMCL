@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXScrollPane;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -69,7 +68,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
             Bindings.bindContent(content.getChildren(), skinnable.itemsProperty());
 
             scrollPane.setContent(content);
-            JFXScrollPane.smoothScrolling(scrollPane);
+            FXUtils.smoothScrolling(scrollPane);
 
             root.getContent().add(scrollPane);
         }

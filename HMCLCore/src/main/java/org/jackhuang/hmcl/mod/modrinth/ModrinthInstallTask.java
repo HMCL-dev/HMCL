@@ -72,7 +72,8 @@ public class ModrinthInstallTask extends Task<Void> {
                     builder.version("fabric", modLoader.getValue());
                     break;
                 case "quilt-loader":
-                    throw new IllegalStateException("Quilt Modloader is not supported");
+                    builder.version("quilt", modLoader.getValue());
+                    break;
                 default:
                     throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
             }

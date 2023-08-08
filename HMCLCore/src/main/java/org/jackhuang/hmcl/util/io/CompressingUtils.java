@@ -19,10 +19,12 @@ package org.jackhuang.hmcl.util.io;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -42,7 +44,7 @@ public final class CompressingUtils {
     private static final FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
             .filter(it -> "jar".equalsIgnoreCase(it.getScheme()))
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("Zipfs not supported"));
+            .orElse(null);
 
     private CompressingUtils() {
     }
@@ -72,7 +74,7 @@ public final class CompressingUtils {
             int clen = (int)(ba.length * cd.maxCharsPerByte());
             if (clen == 0) continue;
             if (clen <= cb.capacity())
-                cb.clear();
+                ((Buffer) cb).clear(); // cast to prevent "java.lang.NoSuchMethodError: java.nio.CharBuffer.clear()Ljava/nio/CharBuffer;" when compiling with Java 9+
             else
                 cb = CharBuffer.allocate(clen);
 
@@ -86,7 +88,7 @@ public final class CompressingUtils {
     }
 
     public static Charset findSuitableEncoding(Path zipFile) throws IOException {
-        return findSuitableEncoding(zipFile, Charset.availableCharsets().values());
+        return findSuitableEncoding(zipFile, null);
     }
 
     public static Charset findSuitableEncoding(Path zipFile, Collection<Charset> candidates) throws IOException {
@@ -96,13 +98,16 @@ public final class CompressingUtils {
     }
 
     public static Charset findSuitableEncoding(ZipFile zipFile) throws IOException {
-        return findSuitableEncoding(zipFile, Charset.availableCharsets().values());
+        return findSuitableEncoding(zipFile, null);
     }
 
     public static Charset findSuitableEncoding(ZipFile zipFile, Collection<Charset> candidates) throws IOException {
         if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
         if (OperatingSystem.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, OperatingSystem.NATIVE_CHARSET))
             return OperatingSystem.NATIVE_CHARSET;
+
+        if (candidates == null)
+            candidates = Charset.availableCharsets().values();
 
         for (Charset charset : candidates)
             if (charset != null && testEncoding(zipFile, charset))
@@ -154,8 +159,6 @@ public final class CompressingUtils {
         public FileSystem build() throws IOException {
             if (autoDetectEncoding) {
                 if (!testEncoding(zip, encoding)) {
-                    if (charsetCandidates == null)
-                        charsetCandidates = Charset.availableCharsets().values();
                     encoding = findSuitableEncoding(zip, charsetCandidates);
                 }
             }
@@ -196,6 +199,9 @@ public final class CompressingUtils {
         if (useTempFile)
             env.put("useTempFile", true);
         try {
+            if (ZIPFS_PROVIDER == null)
+                throw new FileSystemNotFoundException("Module jdk.zipfs does not exist");
+
             return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
         } catch (ZipError error) {
             // Since Java 8 throws ZipError stupidly
@@ -203,7 +209,7 @@ public final class CompressingUtils {
         } catch (UnsupportedOperationException ex) {
             throw new ZipException("Not a zip file");
         } catch (FileSystemNotFoundException ex) {
-            throw new ZipException("Java Environment is broken");
+            throw Lang.apply(new ZipException("Java Environment is broken"), it -> it.initCause(ex));
         }
     }
 
@@ -230,7 +236,7 @@ public final class CompressingUtils {
      * @return the plain text content of given file.
      */
     public static String readTextZipEntry(ZipFile zipFile, String name) throws IOException {
-        return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)), StandardCharsets.UTF_8);
+        return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
     }
 
     /**
@@ -243,7 +249,7 @@ public final class CompressingUtils {
      */
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
         try (ZipFile s = openZipFile(zipFile, encoding)) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)), StandardCharsets.UTF_8);
+            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
         }
     }
 

@@ -34,7 +34,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DialogPane extends JFXDialogLayout {
     private final StringProperty title = new SimpleStringProperty();
-    private final BooleanProperty valid = new SimpleBooleanProperty();
+    private final BooleanProperty valid = new SimpleBooleanProperty(true);
     protected final SpinnerPane acceptPane = new SpinnerPane();
     protected final JFXButton cancelButton = new JFXButton();
     protected final Label warningLabel = new Label();

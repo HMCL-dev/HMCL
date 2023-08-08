@@ -2,9 +2,9 @@ package org.jackhuang.hmcl.util;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Testing the AggregatedObservableList
