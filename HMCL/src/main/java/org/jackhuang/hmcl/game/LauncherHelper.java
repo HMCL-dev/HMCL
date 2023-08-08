@@ -384,7 +384,7 @@ public final class LauncherHelper {
                                 })
                                 .exceptionally(throwable -> {
                                     LOG.log(Level.WARNING, "Failed to download java", throwable);
-                                    Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction, () -> {
+                                    Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continonExitueAction, () -> {
                                         future.completeExceptionally(new CancellationException("No accepted java"));
                                     });
                                     return null;
@@ -831,6 +831,10 @@ public final class LauncherHelper {
 
         @Override
         public void onExit(int exitCode, ExitType exitType) {
+            if (showLogs) {
+                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d.", exitCode), Log4jLevel.INFO));
+            }
+
             launchingLatch.countDown();
 
             if (exitType == ExitType.INTERRUPTED)
