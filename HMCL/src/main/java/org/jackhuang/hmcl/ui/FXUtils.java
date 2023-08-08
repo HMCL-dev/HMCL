@@ -685,6 +685,22 @@ public final class FXUtils {
         return newBuiltinImage(url, 0, 0, false, false);
     }
 
+    /**
+     * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
+     *
+     * @param url             the url of image. The image resource should be a file within the jar.
+     * @param requestedWidth  the image's bounding box width
+     * @param requestedHeight the image's bounding box height
+     * @param preserveRatio   indicates whether to preserve the aspect ratio of
+     *                        the original image when scaling to fit the image within the
+     *                        specified bounding box
+     * @param smooth          indicates whether to use a better quality filtering
+     *                        algorithm or a faster one when scaling this image to fit within
+     *                        the specified bounding box
+     * @return the image resource within the jar.
+     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see ResourceNotFoundError
+     */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
         try {
             return new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth);
@@ -693,10 +709,36 @@ public final class FXUtils {
         }
     }
 
+    /**
+     * Load image from the internet. It will cache the data of images for the further usage.
+     * The cached data will be deleted when HMCL is closed or hidden.
+     *
+     * @param url the url of image. The image resource should be a file on the internet.
+     * @return the image resource within the jar.
+     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see ResourceNotFoundError
+     */
     public static Image newRemoteImage(String url) {
         return newRemoteImage(url, 0, 0, false, false, false);
     }
 
+    /**
+     * Load image from the internet. It will cache the data of images for the further usage.
+     * The cached data will be deleted when HMCL is closed or hidden.
+     *
+     * @param url             the url of image. The image resource should be a file on the internet.
+     * @param requestedWidth  the image's bounding box width
+     * @param requestedHeight the image's bounding box height
+     * @param preserveRatio   indicates whether to preserve the aspect ratio of
+     *                        the original image when scaling to fit the image within the
+     *                        specified bounding box
+     * @param smooth          indicates whether to use a better quality filtering
+     *                        algorithm or a faster one when scaling this image to fit within
+     *                        the specified bounding box
+     * @return the image resource within the jar.
+     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see ResourceNotFoundError
+     */
     public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
         if (imageCache.containsKey(url)) {
             Path path = imageCache.get(url);
