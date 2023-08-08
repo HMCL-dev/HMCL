@@ -8,6 +8,7 @@ import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
+import java.util.Locale
 import java.util.zip.ZipFile
 
 buildscript {
@@ -33,7 +34,7 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     if (number != null) {
         (number - offset).toString()
     } else {
-        val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
+        val shortCommit = System.getenv("GITHUB_SHA")?.lowercase(Locale.ENGLISH)?.substring(0, 7)
         val prefix = if (isOfficial) "dev" else "unofficial"
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
@@ -105,7 +106,7 @@ tasks.getByName<JavaCompile>("compileJava") {
                     ) as JsonObject).asMap().forEach { (namespace, namespaceData) ->
                         (namespaceData as JsonObject).asMap().forEach { (name, nameData) ->
                             (nameData as JsonObject).asMap().forEach { (version, versionData) ->
-                                val url = ((versionData as JsonObject).get("url") as com.google.gson.JsonPrimitive).asString
+                                require(versionData is JsonObject)
                                 val localPath = (versionData.get("local_path") as com.google.gson.JsonPrimitive).asString
                                 val sha1 = (versionData.get("sha1") as com.google.gson.JsonPrimitive).asString
 
@@ -115,7 +116,7 @@ tasks.getByName<JavaCompile>("compileJava") {
                                 ).joinToString(separator = "") { "%02x".format(it) }
 
                                 if (!sha1.equals(currentSha1, ignoreCase = true)) {
-                                    throw IllegalStateException("Mismatched SHA-1 in $.${namespace}.${name}.${version} of dynamic remote resources detected. Require ${currentSha1}, but found ${sha1}")
+                                    throw IllegalStateException("Mismatched SHA-1 in $.${namespace}.${name}.${version} of dynamic remote resources detected. Require ${currentSha1}, but found $sha1")
                                 }
                             }
                         }
