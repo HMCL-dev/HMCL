@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.util.Pair;
 
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
@@ -72,7 +72,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             Tooltip.uninstall(this,tooltip);
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
-            imageView.setImage(newImage("/assets/img/grass.png"));
+            imageView.setImage(newBuiltinImage("/assets/img/grass.png"));
             tooltip.setText("");
         }
     }

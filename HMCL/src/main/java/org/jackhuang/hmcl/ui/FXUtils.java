@@ -46,13 +46,16 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -74,11 +77,11 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -94,7 +97,21 @@ public final class FXUtils {
     private FXUtils() {
     }
 
-    public static String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+    public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+
+    private static final Map<String, Path> imageCache = new ConcurrentHashMap<>();
+
+    public static synchronized void shutdown() {
+        for (Path path : imageCache.values()) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", path), e);
+            }
+        }
+
+        imageCache.clear();
+    }
 
     public static void runInFX(Runnable runnable) {
         if (Platform.isFxApplicationThread()) {
@@ -449,7 +466,8 @@ public final class FXUtils {
                 } catch (Throwable e) {
                     LOG.log(Level.WARNING, "An exception occurred while calling rundll32", e);
                 }
-            } if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            }
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 for (String browser : linuxBrowsers) {
                     try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
                         if (is.read() != -1) {
@@ -663,12 +681,53 @@ public final class FXUtils {
      * @see org.jackhuang.hmcl.util.CrashReporter
      * @see ResourceNotFoundError
      */
-    public static Image newImage(String url) {
+    public static Image newBuiltinImage(String url) {
+        return newBuiltinImage(url, 0, 0, false, false);
+    }
+
+    public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
         try {
-            return new Image(url);
+            return new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth);
         } catch (IllegalArgumentException e) {
             throw new ResourceNotFoundError("Cannot access image: " + url, e);
         }
+    }
+
+    public static Image newRemoteImage(String url) {
+        return newRemoteImage(url, 0, 0, false, false, false);
+    }
+
+    public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
+        if (imageCache.containsKey(url)) {
+            Path path = imageCache.get(url);
+            if (Files.isReadable(path)) {
+                try {
+                    return new Image(Files.newInputStream(path), requestedWidth, requestedHeight, preserveRatio, smooth);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "An exception encountered while reading data from cached image file.", e);
+                }
+            }
+
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "An exception encountered while deleting broken cached image file.", e);
+            }
+
+            imageCache.remove(url);
+        }
+
+        Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
+        image.progressProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.doubleValue() == 1D && image.getWidth() != 0D && image.getHeight() != 0D) {
+                Task.runAsync(() -> {
+                    Path path = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
+                    PNGJavaFXUtils.writeImage(image, path);
+                    imageCache.put(url, path);
+                }).start();
+            }
+        });
+        return image;
     }
 
     public static JFXButton newRaisedButton(String text) {

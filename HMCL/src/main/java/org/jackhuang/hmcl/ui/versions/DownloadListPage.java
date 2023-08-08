@@ -35,7 +35,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.GameVersion;
@@ -480,7 +479,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .collect(Collectors.toList()));
 
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.setImage(new Image(dataItem.getIconUrl(), 40, 40, true, true, true));
+                            imageView.setImage(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true, true));
                         }
                     }
                 });

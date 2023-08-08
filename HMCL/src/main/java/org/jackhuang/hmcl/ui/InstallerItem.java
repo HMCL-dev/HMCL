@@ -207,7 +207,7 @@ public class InstallerItem extends Control {
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.imageUrl != null) {
-                ImageView view = new ImageView(new Image(control.imageUrl));
+                ImageView view = new ImageView(FXUtils.newRemoteImage(control.imageUrl));
                 Node node = FXUtils.limitingSize(view, 32, 32);
                 node.setMouseTransparent(true);
                 node.getStyleClass().add("installer-item-image");
