@@ -61,36 +61,56 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
         for (int i = 0; i < searchFilter.length(); i++) {
             searchFilterLetters.add(searchFilter.subSequence(i, i + 1));
         }
-        return new SearchResult(searchResult.getResults().map(remoteMod -> {
-            ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
-            if (chineseRemoteMod == null || StringUtils.isBlank(chineseRemoteMod.getName()) || !StringUtils.containsChinese(chineseRemoteMod.getName())) {
-                return Pair.pair(remoteMod, Integer.MAX_VALUE);
-            }
-            String chineseRemoteModName = chineseRemoteMod.getName();
-            if (searchFilter.length() == 0 || chineseRemoteModName.length() == 0) {
-                return Pair.pair(remoteMod, Math.max(searchFilter.length(), chineseRemoteModName.length()));
-            }
-            int[][] lev = new int[searchFilter.length() + 1][chineseRemoteModName.length() + 1];
-            for (int i = 0; i < chineseRemoteModName.length() + 1; i++) {
-                lev[0][i] = i;
-            }
-            for (int i = 0; i < searchFilter.length() + 1; i++) {
-                lev[i][0] = i;
-            }
-            for (int i = 1; i < searchFilter.length() + 1; i++) {
-                for (int j = 1; j < chineseRemoteModName.length() + 1; j++) {
-                    int countByInsert = lev[i][j - 1] + 1;
-                    int countByDel = lev[i - 1][j] + 1;
-                    int countByReplace = searchFilter.charAt(i - 1) == chineseRemoteModName.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1;
-                    lev[i][j] = Math.min(countByInsert, Math.min(countByDel, countByReplace));
-                }
-            }
 
-            return Pair.pair(
-                    remoteMod,
-                    lev[searchFilter.length()][chineseRemoteModName.length()] - (searchFilterLetters.stream().anyMatch(chineseRemoteModName::contains) ? CONTAIN_CHINESE_WEIGHT : 0)
-            );
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), searchResult.getTotalPages());
+        List<RemoteMod> chineseSearchResult = new ArrayList<>();
+        List<RemoteMod> englishSearchResult = new ArrayList<>();
+        searchResult.getResults().forEachOrdered(remoteMod -> {
+            ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
+            if (chineseTranslation != null && !StringUtils.isBlank(chineseTranslation.getName()) && StringUtils.containsChinese(chineseTranslation.getName())) {
+                chineseSearchResult.add(remoteMod);
+            } else {
+                englishSearchResult.add(remoteMod);
+            }
+        });
+        int totalPages = searchResult.getTotalPages();
+        searchResult = null; // Release memory
+
+        return new SearchResult(Stream.of(chineseSearchResult, englishSearchResult).flatMap(remoteMods -> {
+            if (remoteMods == chineseSearchResult) {
+                return chineseSearchResult.stream().map(remoteMod -> {
+                    ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
+                    if (chineseRemoteMod == null || StringUtils.isBlank(chineseRemoteMod.getName()) || !StringUtils.containsChinese(chineseRemoteMod.getName())) {
+                        return Pair.pair(remoteMod, Integer.MAX_VALUE);
+                    }
+                    String chineseRemoteModName = chineseRemoteMod.getName();
+                    if (searchFilter.length() == 0 || chineseRemoteModName.length() == 0) {
+                        return Pair.pair(remoteMod, Math.max(searchFilter.length(), chineseRemoteModName.length()));
+                    }
+                    int[][] lev = new int[searchFilter.length() + 1][chineseRemoteModName.length() + 1];
+                    for (int i = 0; i < chineseRemoteModName.length() + 1; i++) {
+                        lev[0][i] = i;
+                    }
+                    for (int i = 0; i < searchFilter.length() + 1; i++) {
+                        lev[i][0] = i;
+                    }
+                    for (int i = 1; i < searchFilter.length() + 1; i++) {
+                        for (int j = 1; j < chineseRemoteModName.length() + 1; j++) {
+                            int countByInsert = lev[i][j - 1] + 1;
+                            int countByDel = lev[i - 1][j] + 1;
+                            int countByReplace = searchFilter.charAt(i - 1) == chineseRemoteModName.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1;
+                            lev[i][j] = Math.min(countByInsert, Math.min(countByDel, countByReplace));
+                        }
+                    }
+
+                    return Pair.pair(
+                            remoteMod,
+                            lev[searchFilter.length()][chineseRemoteModName.length()] - (searchFilterLetters.stream().anyMatch(chineseRemoteModName::contains) ? CONTAIN_CHINESE_WEIGHT : 0)
+                    );
+                }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey);
+            } else {
+                return englishSearchResult.stream();
+            }
+        }), totalPages);
     }
 
     @Override
