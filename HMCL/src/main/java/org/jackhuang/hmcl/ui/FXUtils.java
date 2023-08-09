@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
@@ -735,7 +736,7 @@ public final class FXUtils {
      *                        algorithm or a faster one when scaling this image to fit within
      *                        the specified bounding box
      * @return the image resource within the jar.
-     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
@@ -760,7 +761,7 @@ public final class FXUtils {
 
         Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
         image.progressProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.doubleValue() == 1D && image.getWidth() != 0D && image.getHeight() != 0D) {
+            if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
                 Task.runAsync(() -> {
                     Path path = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
                     PNGJavaFXUtils.writeImage(image, path);
