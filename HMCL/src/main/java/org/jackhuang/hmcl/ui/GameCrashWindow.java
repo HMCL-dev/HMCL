@@ -404,7 +404,7 @@ public class GameCrashWindow extends Stage {
                 logButton.setOnMouseClicked(e -> showLogWindow());
 
                 JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
-                helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
+                helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help"));
                 runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
                 
 

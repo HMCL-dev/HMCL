@@ -197,7 +197,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setGraphic(SVG.helpCircleOutline(Theme.foregroundFillBinding(), -1, -1));
                 btnHelp.getStyleClass().add("jfx-decorator-button");
-                btnHelp.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
+                btnHelp.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help"));
 
                 JFXButton btnMin = new JFXButton();
                 StackPane pane = new StackPane(minus);
