@@ -141,7 +141,7 @@ public class TwoLineListItem extends VBox {
                 return tagLabel;
             }, this::reLayout));
 
-            // TODO Stable method, but it's quite slow.
+            // Stable method, but it's quite slow.
 //            tags.addListener((ListChangeListener<? super String>) observable -> {
 //                ArrayList<Node> list = new ArrayList<>(tags.size() * 2);
 //                for (int i = 0; i < 2; i++) {
