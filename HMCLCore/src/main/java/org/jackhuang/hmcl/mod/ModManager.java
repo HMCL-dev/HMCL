@@ -19,8 +19,6 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.mod.modinfo.*;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -29,36 +27,20 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class ModManager {
-    private static final class MetadataReaderStorage {
-        private final List<IModMetadataReader> readers;
-
-        private final String defaultDesc;
-
-        public MetadataReaderStorage(List<IModMetadataReader> readers, String defaultDesc) {
-            this.readers = readers;
-            this.defaultDesc = defaultDesc;
-        }
-
-        public static MetadataReaderStorage of(List<IModMetadataReader> readers, String defaultDesc) {
-            return new MetadataReaderStorage(readers, defaultDesc);
-        }
-    }
-
-    private final Map<String, MetadataReaderStorage> readers = Lang.mapOf(Lang.immutableListOf(
-            Pair.pair(Lang.immutableListOf("zip", "jar"), MetadataReaderStorage.of(Lang.immutableListOf(
+    private final Map<String, IModMetadataReader.MetadataReaderStorage> readers = IModMetadataReader.ofStorage(
+            IModMetadataReader.MetadataReaderStorage.ofExtensions("zip", "jar").ofReaders(
                     new ForgeOldModMetadata(),
                     new ForgeNewModMetadata(),
                     new FabricModMetadata(),
                     new QuiltModMetadata(),
                     new PackMcMeta()
-            ), "")),
-            Pair.pair(Lang.immutableListOf("litemod"), MetadataReaderStorage.of(Lang.immutableListOf(
+            ).ofDesc(""),
+            IModMetadataReader.MetadataReaderStorage.ofExtensions("litemod").ofReaders(
                     new LiteModMetadata()
-            ), ""))
-    ).stream().flatMap(pair -> pair.getKey().stream().map(extension -> Pair.pair(extension, pair.getValue()))).collect(Collectors.toList()));
+            ).ofDesc("LiteLoader Mod")
+    );
 
     private final GameRepository repository;
     private final String id;
@@ -106,7 +88,7 @@ public final class ModManager {
         }
 
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            for (IModMetadataReader reader : readers.get(extension).readers) {
+            for (IModMetadataReader reader : readers.get(extension).getReaders()) {
                 try {
                     return reader.fromFile(this, modFile, fs);
                 } catch (Exception ignore) {
@@ -119,7 +101,8 @@ public final class ModManager {
                 getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.UNKNOWN),
                 modFile,
                 FileUtils.getNameWithoutExtension(modFile),
-                new LocalModFile.Description(readers.get(extension).defaultDesc));
+                new LocalModFile.Description(readers.get(extension).getDefaultDesc())
+        );
     }
 
     public void refreshMods() throws IOException {
