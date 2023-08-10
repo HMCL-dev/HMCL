@@ -48,7 +48,7 @@ public final class ModManager {
     }
 
     private final Map<String, MetadataReaderStorage> readers = Lang.mapOf(Lang.immutableListOf(
-            Pair.pair(Lang.immutableListOf("zip", "jar"),  MetadataReaderStorage.of(Lang.immutableListOf(
+            Pair.pair(Lang.immutableListOf("zip", "jar"), MetadataReaderStorage.of(Lang.immutableListOf(
                     new ForgeOldModMetadata(),
                     new ForgeNewModMetadata(),
                     new FabricModMetadata(),
