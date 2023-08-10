@@ -1,7 +1,10 @@
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonParseException;
 import com.moandjiezana.toml.Toml;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.io.FileUtils;
 

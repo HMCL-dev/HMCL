@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.mod.modinfo.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -86,6 +87,11 @@ public final class ModManager {
 
                 try {
                     return FabricModMetadata.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
+
+                try {
+                    return QuiltModMetadata.fromFile(this, modFile, fs);
                 } catch (Exception ignore) {
                 }
 
