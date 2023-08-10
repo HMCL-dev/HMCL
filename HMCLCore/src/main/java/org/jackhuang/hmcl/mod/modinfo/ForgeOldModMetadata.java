@@ -39,8 +39,7 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
-public final class ForgeOldModMetadata {
-
+public final class ForgeOldModMetadata implements IModMetadataReader {
     @SerializedName("modid")
     private final String modId;
     private final String name;
@@ -122,7 +121,7 @@ public final class ForgeOldModMetadata {
         return authors;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    public LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path mcmod = fs.getPath("mcmod.info");
         if (Files.notExists(mcmod))
             throw new IOException("File " + modFile + " is not a Forge mod.");

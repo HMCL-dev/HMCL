@@ -22,8 +22,7 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
 @Immutable
-public final class ForgeNewModMetadata {
-
+public final class ForgeNewModMetadata implements IModMetadataReader {
     private final String modLoader;
 
     private final String loaderVersion;
@@ -118,7 +117,7 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    public LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path modstoml = fs.getPath("META-INF/mods.toml");
         if (Files.notExists(modstoml))
             throw new IOException("File " + modFile + " is not a Forge 1.13+ mod.");

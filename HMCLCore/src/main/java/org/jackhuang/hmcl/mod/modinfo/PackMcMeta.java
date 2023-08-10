@@ -38,8 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Immutable
-public class PackMcMeta implements Validation {
-
+public class PackMcMeta implements Validation, IModMetadataReader {
     @SerializedName("pack")
     private final PackInfo pack;
 
@@ -145,7 +144,7 @@ public class PackMcMeta implements Validation {
         }
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    public LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path mcmod = fs.getPath("pack.mcmeta");
         if (Files.notExists(mcmod))
             throw new IOException("File " + modFile + " is not a resource pack.");

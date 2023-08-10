@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.mod.modinfo.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -26,12 +28,38 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public final class ModManager {
+    private static final class MetadataReaderStorage {
+        private final List<IModMetadataReader> readers;
+
+        private final String defaultDesc;
+
+        public MetadataReaderStorage(List<IModMetadataReader> readers, String defaultDesc) {
+            this.readers = readers;
+            this.defaultDesc = defaultDesc;
+        }
+
+        public static MetadataReaderStorage of(List<IModMetadataReader> readers, String defaultDesc) {
+            return new MetadataReaderStorage(readers, defaultDesc);
+        }
+    }
+
+    private final Map<String, MetadataReaderStorage> readers = Lang.mapOf(Lang.immutableListOf(
+            Pair.pair(Lang.immutableListOf("zip", "jar"),  MetadataReaderStorage.of(Lang.immutableListOf(
+                    new ForgeOldModMetadata(),
+                    new ForgeNewModMetadata(),
+                    new FabricModMetadata(),
+                    new QuiltModMetadata(),
+                    new PackMcMeta()
+            ), "")),
+            Pair.pair(Lang.immutableListOf("litemod"), MetadataReaderStorage.of(Lang.immutableListOf(
+                    new LiteModMetadata()
+            ), ""))
+    ).stream().flatMap(pair -> pair.getKey().stream().map(extension -> Pair.pair(extension, pair.getValue()))).collect(Collectors.toList()));
+
     private final GameRepository repository;
     private final String id;
     private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
@@ -72,51 +100,26 @@ public final class ModManager {
 
     public LocalModFile getModInfo(Path modFile) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(modFile), DISABLED_EXTENSION, OLD_EXTENSION);
-        String description;
-        if (fileName.endsWith(".zip") || fileName.endsWith(".jar")) {
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-                try {
-                    return ForgeOldModMetadata.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return ForgeNewModMetadata.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return FabricModMetadata.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return QuiltModMetadata.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-
-                try {
-                    return PackMcMeta.fromFile(this, modFile, fs);
-                } catch (Exception ignore) {
-                }
-            } catch (Exception ignored) {
-            }
-
-            description = "";
-        } else if (fileName.endsWith(".litemod")) {
-            try {
-                return LiteModMetadata.fromFile(this, modFile);
-            } catch (Exception ignore) {
-                description = "LiteLoader Mod";
-            }
-        } else {
+        String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+        if (!readers.containsKey(extension)) {
             throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
         }
+
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+            for (IModMetadataReader reader : readers.get(extension).readers) {
+                try {
+                    return reader.fromFile(this, modFile, fs);
+                } catch (Exception ignore) {
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
         return new LocalModFile(this,
                 getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.UNKNOWN),
                 modFile,
                 FileUtils.getNameWithoutExtension(modFile),
-                new LocalModFile.Description(description));
+                new LocalModFile.Description(readers.get(extension).defaultDesc));
     }
 
     public void refreshMods() throws IOException {

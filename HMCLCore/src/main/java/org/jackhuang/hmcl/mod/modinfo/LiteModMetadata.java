@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -34,7 +35,7 @@ import java.util.zip.ZipFile;
  * @author huangyuhui
  */
 @Immutable
-public final class LiteModMetadata {
+public final class LiteModMetadata implements IModMetadataReader {
     private final String name;
     private final String version;
     private final String mcversion;
@@ -109,7 +110,7 @@ public final class LiteModMetadata {
         return updateURI;
     }
     
-    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
+    public LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         try (ZipFile zipFile = new ZipFile(modFile.toFile())) {
             ZipEntry entry = zipFile.getEntry("litemod.json");
             if (entry == null)

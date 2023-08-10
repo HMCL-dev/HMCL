@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Immutable
-public final class FabricModMetadata {
+public final class FabricModMetadata implements IModMetadataReader {
     private final String id;
     private final String name;
     private final String version;
@@ -60,7 +60,7 @@ public final class FabricModMetadata {
         this.contact = contact;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    public LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path mcmod = fs.getPath("fabric.mod.json");
         if (Files.notExists(mcmod))
             throw new IOException("File " + modFile + " is not a Fabric mod.");
