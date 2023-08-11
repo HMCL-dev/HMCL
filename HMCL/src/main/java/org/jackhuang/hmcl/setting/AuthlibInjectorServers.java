@@ -24,13 +24,13 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -42,12 +42,23 @@ public class AuthlibInjectorServers implements Validation {
 
     private final List<String> urls;
 
-    public AuthlibInjectorServers(List<String> urls) {
+    private transient Set<AuthlibInjectorServer> servers;
+
+    public AuthlibInjectorServers() {
+        this(Collections.emptyList(), new LinkedHashSet<>());
+    }
+
+    public AuthlibInjectorServers(List<String> urls, Set<AuthlibInjectorServer> servers) {
         this.urls = urls;
+        this.servers = servers;
     }
 
     public List<String> getUrls() {
         return urls;
+    }
+
+    public Set<AuthlibInjectorServer> getServers() {
+        return servers;
     }
 
     @Override
@@ -56,7 +67,17 @@ public class AuthlibInjectorServers implements Validation {
             throw new JsonParseException("authlib-injectors.json -> urls cannot be null");
     }
 
-    private static final Path configLocation = Paths.get(CONFIG_FILENAME);
+    private static final Path configLocation;
+
+    static {
+        Path jarPath = JarUtils.thisJar().orElse(null);
+        if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
+            configLocation = jarPath.getParent().resolve(CONFIG_FILENAME);
+        } else {
+            configLocation = Paths.get(CONFIG_FILENAME);
+        }
+    }
+
     private static AuthlibInjectorServers configInstance;
 
     public synchronized static void init() {
@@ -64,7 +85,7 @@ public class AuthlibInjectorServers implements Validation {
             throw new IllegalStateException("AuthlibInjectorServers is already loaded");
         }
 
-        configInstance = new AuthlibInjectorServers(Collections.emptyList());
+        configInstance = new AuthlibInjectorServers(Collections.emptyList(), Collections.emptySet());
 
         if (Files.exists(configLocation)) {
             try {
@@ -79,7 +100,10 @@ public class AuthlibInjectorServers implements Validation {
             config().setPreferredLoginType(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
             for (String url : AuthlibInjectorServers.getConfigInstance().getUrls()) {
                 Task.supplyAsync(Schedulers.io(), () -> AuthlibInjectorServer.locateServer(url))
-                        .thenAcceptAsync(Schedulers.javafx(), server -> config().getAuthlibInjectorServers().add(server))
+                        .thenAcceptAsync(Schedulers.javafx(), server -> {
+                            config().getAuthlibInjectorServers().add(server);
+                            configInstance.servers.add(server);
+                        })
                         .start();
             }
         }
