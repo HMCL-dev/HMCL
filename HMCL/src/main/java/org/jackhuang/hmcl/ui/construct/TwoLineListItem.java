@@ -44,6 +44,9 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -241,7 +244,11 @@ public class TwoLineListItem extends VBox {
     }
 
     private void reLayout() {
-        this.layout();
+        try {
+            this.layout();
+        } catch (NullPointerException npe) {
+            LOG.log(Level.WARNING, "For some unknown reasons, invoking this::layout too fast may produce NullPointerException.", npe);
+        }
 
         double titleMaxWidth = tags.size() == 0 ? this.getWidth() : this.getWidth() * TITLE_PART;
         double titleWidth = Math.min(titleLabel.getWidth() / 2, titleMaxWidth);
