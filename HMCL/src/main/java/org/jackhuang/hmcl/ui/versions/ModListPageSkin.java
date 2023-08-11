@@ -334,8 +334,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                         case FORGE:
                                         case LITE_LOADER:
                                         case QUILT: {
-                                            if (!title.getTags().contains(modLoaderType.name())) {
-                                                title.getTags().add(modLoaderType.name());
+                                            if (!title.getTags().contains(modLoaderType.getLoaderName())) {
+                                                title.getTags().add(modLoaderType.getLoaderName());
                                             }
                                         }
                                     }
