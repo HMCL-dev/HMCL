@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -40,12 +41,14 @@ import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -246,6 +249,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
+
+        if (ConfigHolder.isNewlyCreated() && config().getAuthlibInjectorServers().size() > 0) {
+            Platform.runLater(() -> Controllers.dialog(new CreateAccountPane(config().getAuthlibInjectorServers().get(0))));
+        }
     }
 
     private void showUpdate(boolean show) {
