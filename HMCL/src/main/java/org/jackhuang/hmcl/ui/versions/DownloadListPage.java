@@ -346,14 +346,21 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortComboBox.getSelectionModel().select(0);
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
-                EventHandler<ActionEvent> searchAction = e -> getSkinnable()
-                        .search(gameVersionField.getSelectionModel().getSelectedItem(),
-                                Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
-                                        .map(CategoryIndented::getCategory)
-                                        .orElse(null),
-                                control.pageOffset.get(),
-                                nameField.getText(),
-                                sortComboBox.getSelectionModel().getSelectedItem());
+                StringProperty previousSearchFilter = new SimpleStringProperty(this, "Previous Seach Filter", "");
+                EventHandler<ActionEvent> searchAction = e -> {
+                    if (!previousSearchFilter.get().equals(nameField.getText())) {
+                        control.pageOffset.set(0);
+                    }
+
+                    previousSearchFilter.set(nameField.getText());
+                    getSkinnable().search(gameVersionField.getSelectionModel().getSelectedItem(),
+                            Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
+                                    .map(CategoryIndented::getCategory)
+                                    .orElse(null),
+                            control.pageOffset.get(),
+                            nameField.getText(),
+                            sortComboBox.getSelectionModel().getSelectedItem());
+                };
 
                 HBox actionsBox = new HBox(8);
                 GridPane.setColumnSpan(actionsBox, 4);
@@ -396,10 +403,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     });
                     nextPageButton.setDisable(true);
                     control.pageOffset.addListener((observable, oldValue, newValue) -> nextPageButton.setDisable(
-                            control.pageCount.get() == -1 || control.pageOffset.get() == control.pageCount.get() - 1
+                            control.pageCount.get() == -1 || control.pageOffset.get() >= control.pageCount.get() - 1
                     ));
                     control.pageCount.addListener((observable, oldValue, newValue) -> nextPageButton.setDisable(
-                            control.pageCount.get() == -1 || control.pageOffset.get() == control.pageCount.get() - 1
+                            control.pageCount.get() == -1 || control.pageOffset.get() >= control.pageCount.get() - 1
                     ));
 
                     JFXButton lastPageButton = FXUtils.newBorderButton(i18n("search.last_page"));
