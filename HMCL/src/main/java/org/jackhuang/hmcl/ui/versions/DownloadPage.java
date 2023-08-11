@@ -320,10 +320,50 @@ public class DownloadPage extends Control implements DecoratorPage {
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
                             .collect(Collectors.toList())) {
-                        ComponentList sublist = new ComponentList(() ->
-                                control.versions.get(gameVersion).stream()
-                                        .map(version -> new ModItem(version, control))
-                                        .collect(Collectors.toList()));
+                        ComponentList sublist = new ComponentList(() -> {
+                            Collection<RemoteMod.Version> versions = control.versions.get(gameVersion);
+                            List<Node> res = new ArrayList<>(versions.size() + 1);
+
+                            VBox dependenciesBox = new VBox(8);
+                            versions.stream().findFirst().ifPresent(dataItem -> {
+                                if (control.repository.getType() == RemoteModRepository.Type.MOD) {
+                                    EnumMap<RemoteMod.DependencyType, List<DependencyModItem>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                                    try {
+                                        for (RemoteMod.Dependency dependency : dataItem.getDependencies()) {
+                                            if (dependency.getType() == INCOMPATIBLE || dependency.getType() == BROKEN) {
+                                                continue;
+                                            }
+
+                                            if (!dependencies.containsKey(dependency.getType())) {
+                                                dependencies.put(dependency.getType(), new ArrayList<>());
+                                            }
+                                            dependencies.get(dependency.getType()).add(new DependencyModItem(control.page, dependency.load(), control.version, control.callback));
+                                        }
+                                    } catch (IOException exception) {
+                                        dependencies.clear();
+                                        Label msg = new Label(i18n("download.failed.refresh"));
+                                        msg.setPadding(new Insets(8));
+                                        dependenciesBox.getChildren().setAll(msg);
+                                        LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", dataItem.getModid()), exception);
+                                    }
+
+                                    for (Map.Entry<RemoteMod.DependencyType, List<DependencyModItem>> entry : dependencies.entrySet()) {
+                                        Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(entry.getKey())));
+                                        title.setPadding(new Insets(0, 8, 0, 8));
+                                        dependenciesBox.getChildren().setAll(title);
+                                        dependenciesBox.getChildren().addAll(entry.getValue());
+                                    }
+                                }
+                            });
+                            dependenciesBox.setPadding(new Insets(0, 0, 8, 0));
+                            res.add(dependenciesBox);
+
+                            for (RemoteMod.Version version : versions) {
+                                res.add(new ModItem(version, control));
+                            }
+
+                            return res;
+                        });
                         sublist.getStyleClass().add("no-padding");
                         sublist.setTitle(gameVersion);
 
@@ -380,37 +420,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setPadding(new Insets(8, 0, 8, 0));
 
             {
-                if (selfPage.repository.getType() == RemoteModRepository.Type.MOD) {
-                    List<Node> elements = new ArrayList<>();
-                    EnumMap<RemoteMod.DependencyType, List<DependencyModItem>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
-                    try {
-                        for (RemoteMod.Dependency dependency : dataItem.getDependencies()) {
-                            if (dependency.getType() == INCOMPATIBLE || dependency.getType() == BROKEN) {
-                                continue;
-                            }
-
-                            if (!dependencies.containsKey(dependency.getType())) {
-                                dependencies.put(dependency.getType(), new ArrayList<>());
-                            }
-                            dependencies.get(dependency.getType()).add(new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback));
-                        }
-                    } catch (IOException exception) {
-                        dependencies.clear();
-                        Label msg = new Label(i18n("download.failed.refresh"));
-                        msg.setPadding(new Insets(8));
-                        elements.add(msg);
-                        LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", dataItem.getModid()), exception);
-                    }
-
-                    for (Map.Entry<RemoteMod.DependencyType, List<DependencyModItem>> entry : dependencies.entrySet()) {
-                        Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(entry.getKey())));
-                        title.setPadding(new Insets(0, 8, 0, 8));
-                        elements.add(title);
-                        elements.addAll(entry.getValue());
-                    }
-                    pane.getChildren().addAll(elements);
-                }
-
                 HBox descPane = new HBox(8);
                 descPane.setPadding(new Insets(0, 8, 0, 8));
                 descPane.setAlignment(Pos.CENTER_LEFT);
