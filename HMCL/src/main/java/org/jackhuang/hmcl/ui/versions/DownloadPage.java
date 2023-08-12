@@ -319,7 +319,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
-                    if (control.version != null) {
+                    if (control.version != null && control.version.getProfile() != null && control.version.getVersion() != null) {
                         String currentGameVersion = null;
                         for (Version patches : control.version.getProfile().getRepository().getVersion(control.version.getVersion()).getPatches()) {
                             if (patches.getId().equals("game")) {
