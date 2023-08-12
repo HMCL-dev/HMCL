@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -37,8 +36,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.List;
@@ -52,7 +49,6 @@ public class ComponentList extends Control {
     private boolean hasSubtitle = false;
     public final ObservableList<Node> content = FXCollections.observableArrayList();
     private Supplier<List<? extends Node>> lazyInitializer;
-    private SpinnerPane spinner;
 
     public ComponentList() {
         getStyleClass().add("options-list");
@@ -61,10 +57,6 @@ public class ComponentList extends Control {
     public ComponentList(Supplier<List<? extends Node>> lazyInitializer) {
         this();
         this.lazyInitializer = lazyInitializer;
-        spinner = new SpinnerPane();
-        spinner.getStyleClass().add("small-spinner-pane");
-        spinner.showSpinner();
-        this.getContent().setAll(spinner);
     }
 
     public String getTitle() {
@@ -115,24 +107,12 @@ public class ComponentList extends Control {
         return content;
     }
 
-    void doLazyInit(Runnable callback) {
+    void doLazyInit() {
         if (lazyInitializer != null) {
+            this.getContent().setAll(lazyInitializer.get());
             setNeedsLayout(true);
-
-            Task.supplyAsync(lazyInitializer::get)
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception == null) {
-                            spinner.hideSpinner();
-                            this.getContent().setAll(result);
-                            setNeedsLayout(true);
-                            lazyInitializer = null;
-                        } else {
-                            spinner.setLoading(false);
-                        }
-                        Platform.runLater(callback);
-                    }).start();
+            lazyInitializer = null;
         }
-        callback.run();
     }
 
     @Override
