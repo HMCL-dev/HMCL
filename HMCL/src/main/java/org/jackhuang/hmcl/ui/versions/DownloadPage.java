@@ -31,6 +31,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -318,6 +319,38 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
+                    if (control.version != null) {
+                        String currentGameVersion = null;
+                        for (Version patches : control.version.getProfile().getRepository().getVersion(control.version.getVersion()).getPatches()) {
+                            if (patches.getId().equals("game")) {
+                                currentGameVersion = patches.getVersion();
+                                break;
+                            }
+                        }
+
+                        if (currentGameVersion != null && control.versions.containsKey(currentGameVersion) && control.versions.get(currentGameVersion).stream().findFirst().isPresent()) {
+                            list.getContent().addAll(
+                                    ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
+                                    new ModItem(control.versions.get(currentGameVersion).stream().findFirst().get(), control)
+                            );
+
+                            for (String gameVersion : control.versions.keys().stream()
+                                    .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
+                                    .collect(Collectors.toList())) {
+                                ComponentList sublist = new ComponentList(() ->
+                                        control.versions.get(gameVersion).stream()
+                                                .map(version -> new ModItem(version, control))
+                                                .collect(Collectors.toList()));
+                                sublist.getStyleClass().add("no-padding");
+                                sublist.setTitle(gameVersion);
+
+                                list.getContent().add(sublist);
+                            }
+
+                            return;
+                        }
+                    }
+
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
                             .collect(Collectors.toList())) {
@@ -444,6 +477,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.setPadding(new Insets(8));
             box.getChildren().setAll(new ModItem(version, selfPage));
             if (selfPage.repository.getType() == RemoteModRepository.Type.MOD) {
+                SpinnerPane spinnerPane = new SpinnerPane();
                 ScrollPane scrollPane = new ScrollPane();
                 ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
                 Task.supplyAsync(() -> {
@@ -460,25 +494,33 @@ public class DownloadPage extends Control implements DecoratorPage {
                             list.add(title);
                             dependencies.put(dependency.getType(), list);
                         }
-                        dependencies.get(dependency.getType()).add(new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback));
+                        DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
+                        dependencyModItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+                        dependencies.get(dependency.getType()).add(dependencyModItem);
                     }
 
                     return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
+                        spinnerPane.setLoading(false);
                         dependenciesList.getContent().setAll(result);
                     } else {
+                        spinnerPane.setLoading(false);
+                        spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                         Label msg = new Label(i18n("download.failed.refresh"));
                         msg.setPadding(new Insets(8));
                         LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", version.getModid()), exception);
                         dependenciesList.getContent().setAll(msg);
                     }
                 }).start();
+                spinnerPane.setLoading(true);
 
                 scrollPane.setContent(dependenciesList);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
-                box.getChildren().add(scrollPane);
+                spinnerPane.setContent(scrollPane);
+                box.getChildren().add(spinnerPane);
+                VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
                 this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
                 this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
