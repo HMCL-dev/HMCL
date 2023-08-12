@@ -53,7 +53,7 @@ public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
     private static final double TITLE_PART = 0.7D;
 
-    private final class TagChangeListener implements ListChangeListener<String> {
+    private static final class TagChangeListener implements ListChangeListener<String> {
         private final List<Node> list;
         private final Function<String, Node> mapper;
 
