@@ -58,13 +58,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.mod.RemoteMod.DependencyType.*;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
@@ -272,32 +269,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                 runInFX(() -> FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage()));
             }
 
-            if (control.repository.getType() != RemoteModRepository.Type.MOD) {
-                ComponentList dependencyPane = new ComponentList(Lang::immutableListOf);
-                dependencyPane.setTitle(i18n("mods.dependency.embedded"));
-                Task.supplyAsync(() -> control.addon.getData().loadDependencies(control.repository).stream()
-                        .map(remoteMod -> new DependencyModItem(getSkinnable().page, remoteMod, control.version, control.callback))
-                        .map(dependencyModItem -> {
-                            VBox box = new VBox();
-                            box.setPadding(new Insets(8, 0, 8, 0));
-                            box.getChildren().setAll(dependencyModItem);
-                            return box;
-                        })
-                        .collect(Collectors.toList())
-                ).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception == null) {
-                        dependencyPane.getContent().setAll(result);
-                    } else {
-                        Label msg = new Label(i18n("download.failed.refresh"));
-                        msg.setPadding(new Insets(8));
-                        dependencyPane.getContent().setAll(msg);
-                    }
-                }).start();
-                dependencyPane.getStyleClass().add("no-padding");
-
-                pane.getChildren().addAll(dependencyPane);
-            }
-
             SpinnerPane spinnerPane = new SpinnerPane();
             VBox.setVgrow(spinnerPane, Priority.ALWAYS);
             pane.getChildren().add(spinnerPane);
@@ -372,13 +343,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class DependencyModItem extends StackPane {
         public static final EnumMap<RemoteMod.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
-                Pair.pair(EMBEDDED, "mods.dependency.embedded"),
-                Pair.pair(OPTIONAL, "mods.dependency.optional"),
-                Pair.pair(REQUIRED, "mods.dependency.required"),
-                Pair.pair(TOOL, "mods.dependency.tool"),
-                Pair.pair(INCLUDE, "mods.dependency.include"),
-                Pair.pair(INCOMPATIBLE, "mods.dependency.incompatible"),
-                Pair.pair(BROKEN, "mods.dependency.broken")
+                Pair.pair(RemoteMod.DependencyType.EMBEDDED, "mods.dependency.embedded"),
+                Pair.pair(RemoteMod.DependencyType.OPTIONAL, "mods.dependency.optional"),
+                Pair.pair(RemoteMod.DependencyType.REQUIRED, "mods.dependency.required"),
+                Pair.pair(RemoteMod.DependencyType.TOOL, "mods.dependency.tool"),
+                Pair.pair(RemoteMod.DependencyType.INCLUDE, "mods.dependency.include"),
+                Pair.pair(RemoteMod.DependencyType.INCOMPATIBLE, "mods.dependency.incompatible"),
+                Pair.pair(RemoteMod.DependencyType.BROKEN, "mods.dependency.broken")
         ));
 
         DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
@@ -455,13 +426,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     descPane.getChildren().setAll(graphicPane, content);
-                    descPane.setOnMouseClicked(e -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
                 }
 
                 pane.getChildren().add(descPane);
             }
 
             RipplerContainer container = new RipplerContainer(pane);
+            container.setOnMouseClicked(e -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
@@ -475,56 +446,22 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            box.getChildren().setAll(new ModItem(version, selfPage));
-            if (selfPage.repository.getType() == RemoteModRepository.Type.MOD) {
-                SpinnerPane spinnerPane = new SpinnerPane();
-                ScrollPane scrollPane = new ScrollPane();
-                ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
-                Task.supplyAsync(() -> {
-                    EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
-                    for (RemoteMod.Dependency dependency : version.getDependencies()) {
-                        if (dependency.getType() == INCOMPATIBLE || dependency.getType() == BROKEN) {
-                            continue;
-                        }
+            ModItem modItem = new ModItem(version, selfPage);
+            modItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+            box.getChildren().setAll(modItem);
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
+            loadDependencies(version, selfPage, spinnerPane, dependenciesList);
+            spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
-                        if (!dependencies.containsKey(dependency.getType())) {
-                            List<Node> list = new ArrayList<>();
-                            Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
-                            title.setPadding(new Insets(0, 8, 0, 8));
-                            list.add(title);
-                            dependencies.put(dependency.getType(), list);
-                        }
-                        DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
-                        dependencyModItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
-                        dependencies.get(dependency.getType()).add(dependencyModItem);
-                    }
+            scrollPane.setContent(dependenciesList);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
-                    return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
-                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception == null) {
-                        spinnerPane.setLoading(false);
-                        dependenciesList.getContent().setAll(result);
-                    } else {
-                        spinnerPane.setLoading(false);
-                        spinnerPane.setFailedReason(i18n("download.failed.refresh"));
-                        Label msg = new Label(i18n("download.failed.refresh"));
-                        msg.setPadding(new Insets(8));
-                        LOG.log(Level.WARNING, String.format("Fail to load dependencies of mod %s.", version.getModid()), exception);
-                        dependenciesList.getContent().setAll(msg);
-                    }
-                }).start();
-                spinnerPane.setLoading(true);
-
-                scrollPane.setContent(dependenciesList);
-                scrollPane.setFitToWidth(true);
-                scrollPane.setFitToHeight(true);
-                spinnerPane.setContent(scrollPane);
-                box.getChildren().add(spinnerPane);
-                VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
-
-                this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
-                this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
-            }
             this.setBody(box);
 
             JFXButton downloadButton = new JFXButton(i18n("download"));
@@ -540,6 +477,43 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             this.setActions(downloadButton, saveAsButton, cancelButton);
+
+            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+        }
+
+        private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+            spinnerPane.setLoading(true);
+            Task.supplyAsync(() -> {
+                EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                for (RemoteMod.Dependency dependency : version.getDependencies()) {
+                    if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
+                        continue;
+                    }
+
+                    if (!dependencies.containsKey(dependency.getType())) {
+                        List<Node> list = new ArrayList<>();
+                        Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
+                        title.setPadding(new Insets(0, 8, 0, 8));
+                        list.add(title);
+                        dependencies.put(dependency.getType(), list);
+                    }
+                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
+                    dependencyModItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+                    dependencies.get(dependency.getType()).add(dependencyModItem);
+                }
+
+                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                spinnerPane.setLoading(false);
+                if (exception == null) {
+                    dependenciesList.getContent().setAll(result);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    dependenciesList.getContent().setAll();
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+            }).start();
         }
     }
 
