@@ -53,7 +53,7 @@ public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
     private static final double TITLE_PART = 0.7D;
 
-    private static final class TagChangeListener implements ListChangeListener<String> {
+    private final class TagChangeListener implements ListChangeListener<String> {
         private final List<Node> list;
         private final Function<String, Node> mapper;
 
@@ -85,6 +85,8 @@ public class TwoLineListItem extends VBox {
                     }
                 }
             }
+
+            Platform.runLater(TwoLineListItem.this::layout);
         }
     }
 
@@ -202,7 +204,7 @@ public class TwoLineListItem extends VBox {
         this.minWidthProperty().set(0);
         HBox.setHgrow(this, Priority.SOMETIMES);
 
-        Lang.immutableListOf(title, tags, subtitle, this.widthProperty()).forEach(o -> o.addListener(observable -> Platform.runLater(this::reLayout)));
+        Lang.immutableListOf(title, subtitle, this.widthProperty()).forEach(o -> o.addListener(observable -> Platform.runLater(this::reLayout)));
     }
 
     private static ChangeListener<Boolean> generateTranslateListener(TranslateTransition translateTransition) {
