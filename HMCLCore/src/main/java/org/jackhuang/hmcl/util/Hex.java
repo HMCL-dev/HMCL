@@ -21,47 +21,54 @@ import java.io.IOException;
 
 public final class Hex {
 
-    private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+    private static final byte[] DIGITS_LOWER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+    private static int toDigit(char ch) throws IOException {
+        if (ch >= '0' && ch <= '9') {
+            return ch - '0';
+        }
+        if (ch >= 'a' && ch <= 'f') {
+            return ch - 'a' + 10;
+        }
+        if (ch >= 'A' && ch <= 'F') {
+            return ch - 'A' + 10;
+        }
+
+        throw new IOException("Illegal hexadecimal character " + ch);
+    }
 
     public static byte[] decodeHex(String str) throws IOException {
-        char[] data = str.toCharArray();
-        int len = data.length;
-
-        if ((len & 0x1) != 0)
+        if ((str.length() & 0x1) != 0)
             throw new IOException("Odd number of characters.");
 
-        byte[] out = new byte[len >> 1];
+        int len = str.length() >> 1;
+        byte[] out = new byte[len];
 
-        int i = 0;
-        for (int j = 0; j < len; i++) {
-            int f = toDigit(data[j], j) << 4;
-            j++;
-            f |= toDigit(data[j], j);
-            j++;
-            out[i] = (byte) (f & 0xFF);
+        for (int i = 0; i < len; i++) {
+            int j = i << 1;
+            int f = (toDigit(str.charAt(j)) << 4) | toDigit(str.charAt(j + 1));
+
+            out[i] = (byte) f;
         }
 
         return out;
     }
 
+    @SuppressWarnings("deprecation")
     public static String encodeHex(byte[] data) {
         int l = data.length;
-        char[] out = new char[l << 1];
+        byte[] out = new byte[l << 1];
 
-        int i = 0;
-        for (int j = 0; i < l; i++) {
-            out[(j++)] = DIGITS_LOWER[((0xF0 & data[i]) >>> 4)];
-            out[(j++)] = DIGITS_LOWER[(0xF & data[i])];
+        for (int i = 0; i < l; i++) {
+            byte b = data[i];
+
+            int j = i << 1;
+            out[j] = DIGITS_LOWER[((0xF0 & b) >>> 4)];
+            out[j + 1] = DIGITS_LOWER[(0xF & b)];
         }
-        return new String(out);
+        return new String(out, 0, 0, out.length);
     }
 
-    private static int toDigit(char ch, int index) throws IOException {
-        int digit = Character.digit(ch, 16);
-        if (digit == -1)
-            throw new IOException("Illegal hexadecimal character " + ch + " at index " + index);
-        return digit;
+    private Hex() {
     }
-
-    private Hex() {}
 }
