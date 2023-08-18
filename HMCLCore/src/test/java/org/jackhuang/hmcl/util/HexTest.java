@@ -41,7 +41,6 @@ public class HexTest {
         assertThrows(IOException.class, () -> Hex.decodeHex("1g"));
     }
 
-
     @Test
     public void testEncodeHex() {
         assertEquals("", Hex.encodeHex(new byte[0]));
