@@ -99,7 +99,7 @@ public final class Launcher extends Application {
             }
         });
 
-        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon.png", new RemoteMod.IMod() {
+        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon.webp", new RemoteMod.IMod() {
             @Override
             public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
                 throw new IOException();
