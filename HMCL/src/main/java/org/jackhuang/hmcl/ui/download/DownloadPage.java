@@ -127,7 +127,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         item.setTitle(i18n("resourcepack"));
                         item.setLeftGraphic(wrap(SVG::textureBox));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
-                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(resourcePackTab));
+                        item.setOnAction(e -> tab.select(resourcePackTab));
                     })
 //                    .addNavigationDrawerItem(item -> {
 //                        item.setTitle(i18n("download.curseforge.customization"));

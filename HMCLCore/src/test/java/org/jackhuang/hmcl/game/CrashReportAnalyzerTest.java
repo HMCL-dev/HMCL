@@ -38,7 +38,7 @@ public class CrashReportAnalyzerTest {
         return IOUtils.readFullyAsString(is);
     }
 
-    private CrashReportAnalyzer.Result findResultByRule(List<CrashReportAnalyzer.Result> results, CrashReportAnalyzer.Rule rule) {
+    private CrashReportAnalyzer.Result findResultByRule(Set<CrashReportAnalyzer.Result> results, CrashReportAnalyzer.Rule rule) {
         CrashReportAnalyzer.Result r = results.stream().filter(result -> result.getRule() == rule).findFirst().orElse(null);
         assertNotNull(r);
         return r;
@@ -484,6 +484,13 @@ public class CrashReportAnalyzerTest {
     public void optifineIsNotCompatibleWithForge4() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge5.txt")),
+                CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
+    }
+
+    @Test
+    public void optifineIsNotCompatibleWithForge5() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge6.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
