@@ -106,9 +106,7 @@ public final class Main {
             showErrorAndExit(i18n("fatal.javafx.missing"));
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
             LOG.log(Level.SEVERE, "unable to patch JVM", e);
-            if (Architecture.CURRENT_ARCH == Architecture.MIPS64EL
-                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64
-                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64_OW)
+            if (Architecture.CURRENT_ARCH == Architecture.MIPS64EL)
                 showErrorAndExit(i18n("fatal.javafx.incompatible.loongson"));
             else
                 showErrorAndExit(i18n("fatal.javafx.incompatible"));
