@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -106,12 +105,7 @@ public final class Main {
             showErrorAndExit(i18n("fatal.javafx.missing"));
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
             LOG.log(Level.SEVERE, "unable to patch JVM", e);
-            if (Architecture.CURRENT_ARCH == Architecture.MIPS64EL
-                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64
-                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64_OW)
-                showErrorAndExit(i18n("fatal.javafx.incompatible.loongson"));
-            else
-                showErrorAndExit(i18n("fatal.javafx.incompatible"));
+            showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
             LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
             System.exit(0);
