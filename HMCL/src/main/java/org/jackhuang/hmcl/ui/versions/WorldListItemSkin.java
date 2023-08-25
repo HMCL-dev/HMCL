@@ -81,7 +81,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         });
         btnManage.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnManage, Pos.CENTER);
-        btnManage.setGraphic(SVG.DOTS_VERTICAL.createIcon(Theme.blackFillBinding(), -1, -1));
+        btnManage.setGraphic(SVG.DOTS_VERTICAL.createIcon(Theme.blackFill(), -1, -1));
         right.getChildren().add(btnManage);
         root.setRight(right);
 

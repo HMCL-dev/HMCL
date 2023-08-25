@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
+import org.jackhuang.hmcl.setting.Theme;
 
 public enum SVG {
     // default fill: white, width: 24, height 24
@@ -123,25 +124,39 @@ public enum SVG {
         return path;
     }
 
-    public Node createIcon(ObjectBinding<? extends Paint> fill, double width, double height) {
+    private static Node createIcon(SVGPath path, double width, double height) {
+        if (width < 0 || height < 0) {
+            StackPane pane = new StackPane(path);
+            pane.setAlignment(Pos.CENTER);
+            return pane;
+        }
+
+        Group svg = new Group(path);
+        double scale = Math.min(width / 24, height / 24);
+        svg.setScaleX(scale);
+        svg.setScaleY(scale);
+
+        return svg;
+    }
+
+    public Node createIcon(ObservableValue<? extends Paint> fill, double width, double height) {
         SVGPath p = new SVGPath();
         p.getStyleClass().add("svg");
         p.setContent(path);
         if (fill != null)
             p.fillProperty().bind(fill);
 
-        if (width < 0 || height < 0) {
-            StackPane pane = new StackPane(p);
-            pane.setAlignment(Pos.CENTER);
-            return pane;
-        }
+        return createIcon(p, width, height);
+    }
 
-        Group svg = new Group(p);
-        double scale = Math.min(width / 24, height / 24);
-        svg.setScaleX(scale);
-        svg.setScaleY(scale);
+    public Node createIcon(Paint fill, double width, double height) {
+        SVGPath p = new SVGPath();
+        p.getStyleClass().add("svg");
+        p.setContent(path);
+        if (fill != null)
+            p.fillProperty().set(fill);
 
-        return svg;
+        return createIcon(p, width, height);
     }
 
 }

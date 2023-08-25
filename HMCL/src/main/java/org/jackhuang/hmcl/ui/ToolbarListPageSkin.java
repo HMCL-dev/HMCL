@@ -98,7 +98,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
     public static JFXButton createToolbarButton2(String text, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(svg.createIcon(Theme.blackFillBinding(), -1, -1)));
+        ret.setGraphic(wrap(svg.createIcon(Theme.blackFill(), -1, -1)));
         ret.setText(text);
         ret.setOnMouseClicked(e -> onClick.run());
         return ret;

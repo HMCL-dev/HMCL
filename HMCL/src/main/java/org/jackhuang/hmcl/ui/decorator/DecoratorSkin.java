@@ -236,7 +236,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 JFXButton backNavButton = new JFXButton();
                 backNavButton.setGraphic(SVG.BACK.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 backNavButton.getStyleClass().add("jfx-decorator-button");
-                backNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
+                backNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
                 backNavButton.visibleProperty().set(canBack);
 
@@ -247,7 +247,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 JFXButton closeNavButton = new JFXButton();
                 closeNavButton.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 closeNavButton.getStyleClass().add("jfx-decorator-button");
-                closeNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
+                closeNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
                 if (showCloseAsHome)
                     closeNavButton.setGraphic(SVG.HOME.createIcon(Theme.foregroundFillBinding(), -1, -1));
@@ -293,7 +293,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 JFXButton refreshNavButton = new JFXButton();
                 refreshNavButton.setGraphic(SVG.REFRESH.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 refreshNavButton.getStyleClass().add("jfx-decorator-button");
-                refreshNavButton.ripplerFillProperty().bind(Theme.whiteFillBinding());
+                refreshNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
 
                 Rectangle separator = new Rectangle();
