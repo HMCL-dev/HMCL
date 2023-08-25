@@ -106,26 +106,26 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     .startCategory(i18n("download.game"))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("game"));
-                        item.setLeftGraphic(wrap(SVG::gamepad));
+                        item.setLeftGraphic(wrap(SVG.GAMEPAD));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
                         item.setOnAction(e -> tab.select(newGameTab));
                     })
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("modpack"));
-                        settingsItem.setLeftGraphic(wrap(SVG::pack));
+                        settingsItem.setLeftGraphic(wrap(SVG.PACK));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
                         settingsItem.setOnAction(e -> tab.select(modpackTab));
                     })
                     .startCategory(i18n("download.content"))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
-                        item.setLeftGraphic(wrap(SVG::puzzle));
+                        item.setLeftGraphic(wrap(SVG.PUZZLE));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modTab));
                         item.setOnAction(e -> tab.select(modTab));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("resourcepack"));
-                        item.setLeftGraphic(wrap(SVG::textureBox));
+                        item.setLeftGraphic(wrap(SVG.TEXTURE_BOX));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
                         item.setOnAction(e -> tab.select(resourcePackTab));
                     })
@@ -137,7 +137,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 //                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("world"));
-                        item.setLeftGraphic(wrap(SVG::earth));
+                        item.setLeftGraphic(wrap(SVG.EARTH));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
                         item.setOnAction(e -> selectTabIfCurseForgeAvailable(worldTab));
                     });

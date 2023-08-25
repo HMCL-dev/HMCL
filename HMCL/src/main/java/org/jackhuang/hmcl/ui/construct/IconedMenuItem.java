@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.scene.Node;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 
 public class IconedMenuItem extends IconedItem {
 
-    public IconedMenuItem(Node node, String text, Runnable action) {
-        super(node, text);
+    public IconedMenuItem(SVG icon, String text, Runnable action) {
+        super(icon != null ? FXUtils.limitingSize(icon.createIcon(Theme.blackFillBinding(), 14, 14), 14, 14) : null, text);
 
         getStyleClass().setAll("iconed-menu-item");
         setOnMouseClicked(e -> action.run());
