@@ -24,7 +24,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
-import org.jackhuang.hmcl.setting.Theme;
 
 public enum SVG {
     // default fill: white, width: 24, height 24
