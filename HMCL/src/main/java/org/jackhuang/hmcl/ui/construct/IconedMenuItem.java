@@ -17,17 +17,26 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXPopup;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 public class IconedMenuItem extends IconedItem {
 
-    public IconedMenuItem(SVG icon, String text, Runnable action) {
+    public IconedMenuItem(SVG icon, String text, Runnable action, JFXPopup popup) {
         super(icon != null ? FXUtils.limitingSize(icon.createIcon(Theme.blackFillBinding(), 14, 14), 14, 14) : null, text);
 
         getStyleClass().setAll("iconed-menu-item");
-        setOnMouseClicked(e -> action.run());
+
+        if (popup == null) {
+            setOnMouseClicked(e -> action.run());
+        } else {
+            setOnMouseClicked(e -> {
+                action.run();
+                popup.hide();
+            });
+        }
     }
 
     public IconedMenuItem addTooltip(String tooltip) {

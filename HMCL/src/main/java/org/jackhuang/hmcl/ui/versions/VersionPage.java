@@ -279,31 +279,31 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 PopupMenu browseList = new PopupMenu();
                 JFXPopup browsePopup = new JFXPopup(browseList);
                 browseList.getContent().setAll(
-                        new IconedMenuItem(SVG.GAMEPAD,  i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> control.onBrowse(""), browsePopup)),
-                        new IconedMenuItem(SVG.PUZZLE,  i18n("folder.mod"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("mods"), browsePopup)),
-                        new IconedMenuItem(SVG.GEAR_OUTLINE,  i18n("folder.config"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("config"), browsePopup)),
-                        new IconedMenuItem(SVG.TEXTURE,  i18n("folder.resourcepacks"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("resourcepacks"), browsePopup)),
-                        new IconedMenuItem(SVG.APPLICATION_OUTLINE,  i18n("folder.shaderpacks"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("shaderpacks"), browsePopup)),
-                        new IconedMenuItem(SVG.MONITOR_SCREENSHOT,  i18n("folder.screenshots"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("screenshots"), browsePopup)),
-                        new IconedMenuItem(SVG.EARTH,  i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("saves"), browsePopup)),
-                        new IconedMenuItem(SVG.SCRIPT,  i18n("folder.logs"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("logs"), browsePopup))
+                        new IconedMenuItem(SVG.GAMEPAD, i18n("folder.game"), () -> control.onBrowse(""), browsePopup),
+                        new IconedMenuItem(SVG.PUZZLE, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
+                        new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
+                        new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
+                        new IconedMenuItem(SVG.APPLICATION_OUTLINE, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
+                        new IconedMenuItem(SVG.MONITOR_SCREENSHOT, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
+                        new IconedMenuItem(SVG.EARTH, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
+                        new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup)
                 );
 
                 PopupMenu managementList = new PopupMenu();
                 JFXPopup managementPopup = new JFXPopup(managementList);
                 managementList.getContent().setAll(
-                        new IconedMenuItem(SVG.ROCKET_LAUNCH_OUTLINE,  i18n("version.launch.test"), FXUtils.withJFXPopupClosing(control::testGame, managementPopup)),
-                        new IconedMenuItem(SVG.SCRIPT,  i18n("version.launch_script"), FXUtils.withJFXPopupClosing(control::generateLaunchScript, managementPopup)),
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH_OUTLINE, i18n("version.launch.test"), control::testGame, managementPopup),
+                        new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), control::generateLaunchScript, managementPopup),
                         new MenuSeparator(),
-                        new IconedMenuItem(SVG.PENCIL,  i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(control::rename, managementPopup)),
-                        new IconedMenuItem(SVG.COPY,  i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(control::duplicate, managementPopup)),
-                        new IconedMenuItem(SVG.DELETE_OUTLINE,  i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(control::remove, managementPopup)),
-                        new IconedMenuItem(SVG.EXPORT,  i18n("modpack.export"), FXUtils.withJFXPopupClosing(control::export, managementPopup)),
+                        new IconedMenuItem(SVG.PENCIL, i18n("version.manage.rename"), control::rename, managementPopup),
+                        new IconedMenuItem(SVG.COPY, i18n("version.manage.duplicate"), control::duplicate, managementPopup),
+                        new IconedMenuItem(SVG.DELETE_OUTLINE, i18n("version.manage.remove"), control::remove, managementPopup),
+                        new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), control::export, managementPopup),
                         new MenuSeparator(),
-                        new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), FXUtils.withJFXPopupClosing(control::redownloadAssetIndex, managementPopup)),
-                        new IconedMenuItem(null, i18n("version.manage.remove_assets"), FXUtils.withJFXPopupClosing(control::clearAssets, managementPopup)),
-                        new IconedMenuItem(null, i18n("version.manage.remove_libraries"), FXUtils.withJFXPopupClosing(control::clearLibraries, managementPopup)),
-                        new IconedMenuItem(null, i18n("version.manage.clean"), FXUtils.withJFXPopupClosing(control::clearJunkFiles, managementPopup)).addTooltip(i18n("version.manage.clean.tooltip"))
+                        new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
+                        new IconedMenuItem(null, i18n("version.manage.remove_assets"), control::clearAssets, managementPopup),
+                        new IconedMenuItem(null, i18n("version.manage.remove_libraries"), control::clearLibraries, managementPopup),
+                        new IconedMenuItem(null, i18n("version.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("version.manage.clean.tooltip"))
                 );
 
                 AdvancedListBox toolbar = new AdvancedListBox()

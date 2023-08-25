@@ -462,10 +462,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             restoreButton.setVisible(!dataItem.getModInfo().getMod().getOldFiles().isEmpty());
             restoreButton.setOnMouseClicked(e -> {
                 menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
-                        .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(), () -> {
-                            popup.get().hide();
-                            getSkinnable().rollback(dataItem.getModInfo(), localModFile);
-                        }))
+                        .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
+                                () -> getSkinnable().rollback(dataItem.getModInfo(), localModFile),
+                                popup.get()))
                         .collect(Collectors.toList())
                 );
 

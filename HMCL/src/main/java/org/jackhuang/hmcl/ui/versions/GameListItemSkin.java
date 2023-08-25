@@ -45,17 +45,17 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
-                new IconedMenuItem(SVG.ROCKET_LAUNCH_OUTLINE, i18n("version.launch.test"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.launch(), popup)),
-                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.generateLaunchScript(), popup)),
+                new IconedMenuItem(SVG.ROCKET_LAUNCH_OUTLINE, i18n("version.launch.test"), () -> currentSkinnable.launch(), popup),
+                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> currentSkinnable.generateLaunchScript(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("version.manage.manage"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.modifyGameSettings(), popup)),
+                new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("version.manage.manage"), () -> currentSkinnable.modifyGameSettings(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.PENCIL_OUTLINE, i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.rename(), popup)),
-                new IconedMenuItem(SVG.COPY, i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.duplicate(), popup)),
-                new IconedMenuItem(SVG.DELETE_OUTLINE, i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.remove(), popup)),
-                new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.export(), popup)),
+                new IconedMenuItem(SVG.PENCIL_OUTLINE, i18n("version.manage.rename"), () -> currentSkinnable.rename(), popup),
+                new IconedMenuItem(SVG.COPY, i18n("version.manage.duplicate"), () -> currentSkinnable.duplicate(), popup),
+                new IconedMenuItem(SVG.DELETE_OUTLINE, i18n("version.manage.remove"), () -> currentSkinnable.remove(), popup),
+                new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), () -> currentSkinnable.export(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.FOLDER_OUTLINE, i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> currentSkinnable.browse(), popup)));
+                new IconedMenuItem(SVG.FOLDER_OUTLINE, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
         return popup;
     });
 
