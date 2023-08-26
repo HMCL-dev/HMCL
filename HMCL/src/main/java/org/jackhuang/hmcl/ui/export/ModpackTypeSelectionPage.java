@@ -72,7 +72,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         graphic.setLeft(new TwoLineListItem(i18n("modpack.type." + type), i18n("modpack.type." + type + ".export")));
 
         SVGPath arrow = new SVGPath();
-        arrow.setContent(SVG.ARROW_RIGHT);
+        arrow.setContent(SVG.ARROW_RIGHT.getPath());
         BorderPane.setAlignment(arrow, Pos.CENTER);
         graphic.setRight(arrow);
 

@@ -202,7 +202,7 @@ public class PersonalizationPage extends StackPane {
 
                         JFXButton clearButton = new JFXButton();
                         clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.restore(Theme.blackFillBinding(), -1, -1));
+                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1, -1));
                         clearButton.setOnAction(e -> config().setLauncherFontFamily(null));
 
                         hBox.getChildren().setAll(cboFont, clearButton);
