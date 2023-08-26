@@ -31,6 +31,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -292,33 +293,26 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     if (control.version != null && control.version.getProfile() != null && control.version.getVersion() != null) {
                         String currentGameVersion = null;
-                        for (Version patches : control.version.getProfile().getRepository().getVersion(control.version.getVersion()).getPatches()) {
+                        Version game = control.version.getProfile().getRepository().getVersion(control.version.getVersion());
+                        for (Version patches : game.getPatches()) {
                             if (patches.getId().equals("game")) {
                                 currentGameVersion = patches.getVersion();
                                 break;
                             }
                         }
 
-                        if (currentGameVersion != null && control.versions.containsKey(currentGameVersion) && control.versions.get(currentGameVersion).stream().findFirst().isPresent()) {
-                            list.getContent().addAll(
-                                    ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
-                                    new ModItem(control.versions.get(currentGameVersion).stream().findFirst().get(), control)
-                            );
 
-                            for (String gameVersion : control.versions.keys().stream()
-                                    .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
-                                    .collect(Collectors.toList())) {
-                                ComponentList sublist = new ComponentList(() ->
-                                        control.versions.get(gameVersion).stream()
-                                                .map(version -> new ModItem(version, control))
-                                                .collect(Collectors.toList()));
-                                sublist.getStyleClass().add("no-padding");
-                                sublist.setTitle(gameVersion);
-
-                                list.getContent().add(sublist);
+                        if (currentGameVersion != null) {
+                            Set<ModLoaderType> currentGameModLoaders = LibraryAnalyzer.analyze(game).getModLoaders();
+                            Optional<RemoteMod.Version> recommendVersion = control.versions.get(currentGameVersion).stream()
+                                    .filter(version -> version.getLoaders().isEmpty() || version.getLoaders().stream().anyMatch(currentGameModLoaders::contains))
+                                    .findFirst();
+                            if (recommendVersion.isPresent()) {
+                                list.getContent().addAll(
+                                        ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
+                                        new ModItem(recommendVersion.get(), control)
+                                );
                             }
-
-                            return;
                         }
                     }
 
