@@ -63,6 +63,7 @@ public final class Logging {
             return true;
         });
 
+        DefaultFormatter formatter = new DefaultFormatter();
         try {
             if (Files.isRegularFile(logFolder))
                 Files.delete(logFolder);
@@ -70,7 +71,7 @@ public final class Logging {
             Files.createDirectories(logFolder);
             FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
             fileHandler.setLevel(Level.FINEST);
-            fileHandler.setFormatter(DefaultFormatter.INSTANCE);
+            fileHandler.setFormatter(formatter);
             fileHandler.setEncoding("UTF-8");
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
@@ -78,11 +79,11 @@ public final class Logging {
         }
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
+        consoleHandler.setFormatter(formatter);
         consoleHandler.setLevel(Level.FINER);
         LOG.addHandler(consoleHandler);
 
-        StreamHandler streamHandler = new StreamHandler(storedLogs, DefaultFormatter.INSTANCE) {
+        StreamHandler streamHandler = new StreamHandler(storedLogs, formatter) {
             @Override
             public synchronized void publish(LogRecord record) {
                 super.publish(record);
@@ -103,7 +104,7 @@ public final class Logging {
         LOG.setUseParentHandlers(false);
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
+        consoleHandler.setFormatter(new DefaultFormatter());
         consoleHandler.setLevel(Level.FINER);
         LOG.addHandler(consoleHandler);
     }
@@ -152,9 +153,6 @@ public final class Logging {
     }
 
     private static final class DefaultFormatter extends Formatter {
-
-        static final DefaultFormatter INSTANCE = new DefaultFormatter();
-
         @Override
         public String format(LogRecord record) {
             return record.getMessage();
