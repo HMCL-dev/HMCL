@@ -85,7 +85,7 @@ final class ComponentListCell extends StackPane {
 
             VBox groupNode = new VBox();
 
-            Node expandIcon = SVG.expand(Theme.blackFillBinding(), 20, 20);
+            Node expandIcon = SVG.EXPAND.createIcon(Theme.blackFill(), 20, 20);
             JFXButton expandButton = new JFXButton();
             expandButton.setGraphic(expandIcon);
             expandButton.getStyleClass().add("options-list-item-expand-button");

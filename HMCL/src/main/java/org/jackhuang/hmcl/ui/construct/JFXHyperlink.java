@@ -27,13 +27,13 @@ public class JFXHyperlink extends Hyperlink {
     public JFXHyperlink() {
         super();
 
-        setGraphic(SVG.launchOutline(Theme.blackFillBinding(), 16, 16));
+        setGraphic(SVG.LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 16, 16));
     }
 
     public JFXHyperlink(String text) {
         super(text);
 
-        setGraphic(SVG.launchOutline(Theme.blackFillBinding(), 16, 16));
+        setGraphic(SVG.LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 16, 16));
     }
 
     public void setExternalLink(String externalLink) {

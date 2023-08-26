@@ -32,7 +32,7 @@ public class IconedTwoLineListItem extends HBox {
     private final Lazy<JFXButton> externalLinkButton = new Lazy<>(() -> {
         JFXButton button = new JFXButton();
         button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(SVG.openInNew(Theme.blackFillBinding(), -1, -1));
+        button.setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), -1, -1));
         button.setOnAction(e -> FXUtils.openLink(externalLink.get()));
         return button;
     });
