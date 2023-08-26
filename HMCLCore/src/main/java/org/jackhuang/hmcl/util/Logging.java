@@ -131,7 +131,7 @@ public final class Logging {
         StringBuffer buffer;
         if (thrown == null) {
             writer = null;
-            buffer = new StringBuffer(192);
+            buffer = new StringBuffer(256);
         } else {
             writer = new StringWriter(1024);
             buffer = writer.getBuffer();
