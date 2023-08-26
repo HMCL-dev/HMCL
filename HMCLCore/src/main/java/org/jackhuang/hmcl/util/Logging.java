@@ -58,8 +58,7 @@ public final class Logging {
         LOG.setLevel(Level.ALL);
         LOG.setUseParentHandlers(false);
         LOG.setFilter(record -> {
-            String message = format(record);
-            record.setMessage(message);
+            record.setMessage(format(record));
             return true;
         });
 
