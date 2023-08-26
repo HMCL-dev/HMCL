@@ -120,7 +120,7 @@ public final class Main {
         try {
             Class.forName("javafx.beans.binding.Binding"); // javafx.base
             Class.forName("javafx.stage.Stage");           // javafx.graphics
-            Class.forName("javafx.scene.control.Control"); // javafx.controls
+            Class.forName("javafx.scene.control.Skin");    // javafx.controls
         } catch (Exception e) {
             showErrorAndExit("fatal.javafx.incomplete");
         }
