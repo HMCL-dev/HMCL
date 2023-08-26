@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -60,7 +58,8 @@ public final class Logging {
         LOG.setLevel(Level.ALL);
         LOG.setUseParentHandlers(false);
         LOG.setFilter(record -> {
-            record.setMessage(filterForbiddenToken(record.getMessage()));
+            String message = format(record);
+            record.setMessage(message);
             return true;
         });
 
@@ -121,23 +120,44 @@ public final class Logging {
         }
     }
 
+    private static final MessageFormat FORMAT = new MessageFormat("[{0,date,HH:mm:ss}] [{1}.{2}/{3}] {4}\n");
+
+    private static String format(LogRecord record) {
+        String message = filterForbiddenToken(record.getMessage());
+
+        Throwable thrown = record.getThrown();
+
+        StringWriter writer;
+        StringBuffer buffer;
+        if (thrown == null) {
+            writer = null;
+            buffer = new StringBuffer(192);
+        } else {
+            writer = new StringWriter(1024);
+            buffer = writer.getBuffer();
+        }
+
+        FORMAT.format(new Object[]{
+                new Date(record.getMillis()),
+                record.getSourceClassName(), record.getSourceMethodName(), record.getLevel().getName(),
+                message
+        }, buffer, null);
+
+        if (thrown != null) {
+            try (PrintWriter printWriter = new PrintWriter(writer)) {
+                thrown.printStackTrace(printWriter);
+            }
+        }
+        return buffer.toString();
+    }
+
     private static final class DefaultFormatter extends Formatter {
 
         static final DefaultFormatter INSTANCE = new DefaultFormatter();
-        private static final MessageFormat format = new MessageFormat("[{0,date,HH:mm:ss}] [{1}.{2}/{3}] {4}\n");
 
         @Override
         public String format(LogRecord record) {
-            String log = format.format(new Object[]{
-                    new Date(record.getMillis()),
-                    record.getSourceClassName(), record.getSourceMethodName(), record.getLevel().getName(),
-                    record.getMessage()
-            }, new StringBuffer(128), null).toString();
-            if (record.getThrown() != null)
-                log += StringUtils.getStackTrace(record.getThrown());
-
-            return log;
+            return record.getMessage();
         }
-
     }
 }
