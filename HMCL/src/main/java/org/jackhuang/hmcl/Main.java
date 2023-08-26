@@ -71,6 +71,7 @@ public final class Main {
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
         checkJavaFX();
+        verifyJavaFX();
         detectFractureiser();
 
         Launcher.main(args);
@@ -109,6 +110,19 @@ public final class Main {
         } catch (CancellationException e) {
             LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
             System.exit(0);
+        }
+    }
+
+    /**
+     * Check if JavaFX exists but is incomplete
+     */
+    private static void verifyJavaFX() {
+        try {
+            Class.forName("javafx.beans.binding.Binding"); // javafx.base
+            Class.forName("javafx.stage.Stage");           // javafx.graphics
+            Class.forName("javafx.scene.control.Skin");    // javafx.controls
+        } catch (Exception e) {
+            showErrorAndExit(i18n("fatal.javafx.incomplete"));
         }
     }
 
