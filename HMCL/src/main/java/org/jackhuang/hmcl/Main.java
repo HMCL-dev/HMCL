@@ -122,7 +122,7 @@ public final class Main {
             Class.forName("javafx.stage.Stage");           // javafx.graphics
             Class.forName("javafx.scene.control.Skin");    // javafx.controls
         } catch (Exception e) {
-            showErrorAndExit("fatal.javafx.incomplete");
+            showErrorAndExit(i18n("fatal.javafx.incomplete"));
         }
     }
 
