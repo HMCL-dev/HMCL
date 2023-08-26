@@ -155,12 +155,12 @@
     -fx-padding: 0 0 0 10;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > .first-line > .title-pane > .title {
+.advanced-list-item > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > Pane > .subtitle {
+.advanced-list-item > .rippler-container > .container > .two-line-list-item > HBox > .subtitle {
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
@@ -169,7 +169,7 @@
     -fx-background-color: -fx-base-rippler-color;
 }
 
-.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title-pane > .title {
+.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-text-fill: -fx-base-color;
     -fx-font-weight: bold;
 }
@@ -182,11 +182,11 @@
     -fx-padding: 0 0 0 0;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title-pane > .title {
+.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
 }
 
-.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > Pane > .subtitle {
+.profile-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
     -fx-font-size: 10;
 }
 
@@ -198,7 +198,7 @@
     -fx-background-color: -fx-base-rippler-color;
 }
 
-.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title-pane > .title {
+.profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
     -fx-text-fill: -fx-base-color;
     -fx-font-weight: bold;
 }
@@ -261,26 +261,22 @@
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item > .first-line > .title-pane {
-    -fx-overflow: hidden;
-}
-
-.two-line-list-item > .first-line > .title-pane > .title {
+.two-line-list-item > .first-line > .title {
 	-fx-text-fill: #292929;
 	-fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
 }
 
-.two-line-list-item > .first-line > .tag-pane > HBox > .tag {
-    -fx-text-fill: -fx-base-color;
-    -fx-background-color: -fx-base-rippler-color;
-    -fx-padding: 2;
+.two-line-list-item > HBox > .subtitle {
+	-fx-text-fill: rgba(0, 0, 0, 0.5);
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > Pane > .subtitle {
-	-fx-text-fill: rgba(0, 0, 0, 0.5);
+.two-line-list-item > .first-line > .tag {
+    -fx-text-fill: -fx-base-color;
+    -fx-background-color: -fx-base-rippler-color;
+    -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
@@ -289,13 +285,13 @@
 
 }
 
-.two-line-item-second-large > .first-line > .title-pane > .title, .two-line-item-second-large-title {
+.two-line-item-second-large > .first-line > .title, .two-line-item-second-large-title {
     -fx-text-fill: rgba(0, 0, 0, 0.5);
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-item-second-large > Pane > .subtitle {
+.two-line-item-second-large > HBox > .subtitle {
     -fx-text-fill: #292929;
     -fx-font-size: 15px;
 }
@@ -310,8 +306,8 @@
     -fx-text-fill: white;
 }
 
-.bubble > HBox > .two-line-list-item > .first-line > .title-pane > .title,
-.bubble > HBox > .two-line-list-item > Pane > .subtitle {
+.bubble > HBox > .two-line-list-item > .first-line > .title,
+.bubble > HBox > .two-line-list-item > HBox > .subtitle {
 	-fx-text-fill: white;
 }
 
