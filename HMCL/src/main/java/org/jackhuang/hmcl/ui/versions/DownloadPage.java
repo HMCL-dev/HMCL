@@ -292,28 +292,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                     if (control.versions == null) return;
 
                     if (control.version.getProfile() != null && control.version.getVersion() != null) {
-                        String currentGameVersion = null;
                         Version game = control.version.getProfile().getRepository().getVersion(control.version.getVersion());
-                        for (Version patches : game.getPatches()) {
-                            if (patches.getId().equals("game")) {
-                                currentGameVersion = patches.getVersion();
-                                break;
-                            }
-                        }
-
-
-                        if (currentGameVersion != null) {
-                            Set<ModLoaderType> currentGameModLoaders = LibraryAnalyzer.analyze(game).getModLoaders();
-                            Optional<RemoteMod.Version> recommendVersion = control.versions.get(currentGameVersion).stream()
-                                    .filter(version -> version.getLoaders().isEmpty() || version.getLoaders().stream().anyMatch(currentGameModLoaders::contains))
-                                    .findFirst();
-                            if (recommendVersion.isPresent()) {
-                                list.getContent().addAll(
-                                        ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
-                                        new ModItem(recommendVersion.get(), control)
-                                );
-                            }
-                        }
+                        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(game);
+                        libraryAnalyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT).ifPresent(currentGameVersion -> {
+                            Set<ModLoaderType> currentGameModLoaders = libraryAnalyzer.getModLoaders();
+                            control.versions.get(currentGameVersion).stream()
+                                    .filter(version1 -> version1.getLoaders().isEmpty() || version1.getLoaders().stream().anyMatch(currentGameModLoaders::contains))
+                                    .findFirst()
+                                    .ifPresent(value -> list.getContent().addAll(
+                                            ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
+                                            new ModItem(value, control)
+                                    ));
+                        });
                     }
 
                     for (String gameVersion : control.versions.keys().stream()
