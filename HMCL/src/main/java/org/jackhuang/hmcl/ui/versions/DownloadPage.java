@@ -291,7 +291,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
-                    if (control.version != null && control.version.getProfile() != null && control.version.getVersion() != null) {
+                    if (control.version.getProfile() != null && control.version.getVersion() != null) {
                         String currentGameVersion = null;
                         Version game = control.version.getProfile().getRepository().getVersion(control.version.getVersion());
                         for (Version patches : game.getPatches()) {
@@ -385,7 +385,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 {
                     StackPane graphicPane = new StackPane();
-                    graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
+                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
 
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
