@@ -292,17 +292,19 @@ public class DownloadPage extends Control implements DecoratorPage {
                     if (control.versions == null) return;
 
                     if (control.version.getProfile() != null && control.version.getVersion() != null) {
-                        Version game = control.version.getProfile().getRepository().getVersion(control.version.getVersion());
+                        Version game = control.version.getProfile().getRepository().getResolvedPreservingPatchesVersion(control.version.getVersion());
                         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(game);
                         libraryAnalyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT).ifPresent(currentGameVersion -> {
                             Set<ModLoaderType> currentGameModLoaders = libraryAnalyzer.getModLoaders();
-                            control.versions.get(currentGameVersion).stream()
-                                    .filter(version1 -> version1.getLoaders().isEmpty() || version1.getLoaders().stream().anyMatch(currentGameModLoaders::contains))
-                                    .findFirst()
-                                    .ifPresent(value -> list.getContent().addAll(
-                                            ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
-                                            new ModItem(value, control)
-                                    ));
+                            if (control.versions.containsKey(currentGameVersion)) {
+                                control.versions.get(currentGameVersion).stream()
+                                        .filter(version1 -> version1.getLoaders().isEmpty() || version1.getLoaders().stream().anyMatch(currentGameModLoaders::contains))
+                                        .findFirst()
+                                        .ifPresent(value -> list.getContent().addAll(
+                                                ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
+                                                new ModItem(value, control)
+                                        ));
+                            }
                         });
                     }
 
