@@ -111,7 +111,7 @@ public final class CrashReportAnalyzer {
         MODMIXIN_FAILURE(Pattern.compile("(MixinApplyError|Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt\\.(?<reason>(.*)[\\n\\r]*((.*)[\\n\\r]*)+)at "), "reason"),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(\tMod File:|-- MOD |\tFailure message:)")),
-        FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
+        FORGE_REPEAT_INSTALLATION(Pattern.compile("MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
 
@@ -122,7 +122,7 @@ public final class CrashReportAnalyzer {
         MOD_NAME(Pattern.compile("Invalid module name: '' is not a Java identifier")),
 
         //Forge 安装不完整
-        INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(.*?)\\\\forge-(.*?)-client\\.jar\\]|Failed to find Minecraft resource version (.*?) at (.*?)\\\\libraries\\\\net\\\\minecraftforge\\\\forge\\\\(.*?)\\\\forge-(.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch)")),
+        INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(.*?)forge-(.*?)-client\\.jar\\]|Failed to find Minecraft resource version (.*?) at (.*?)forge-(.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch)")),
 
         NIGHT_CONFIG_FIXES(Pattern.compile("com\\.electronwill\\.nightconfig\\.core\\.io\\.ParsingException: Not enough data available")),//https://github.com/Fuzss/nightconfigfixes
         //Shaders Mod detected. Please remove it, OptiFine has built-in support for shaders.
