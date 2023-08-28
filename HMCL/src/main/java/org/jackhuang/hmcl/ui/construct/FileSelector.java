@@ -81,7 +81,7 @@ public class FileSelector extends HBox {
         FXUtils.bindString(customField, valueProperty());
 
         JFXButton selectButton = new JFXButton();
-        selectButton.setGraphic(SVG.folderOpen(Theme.blackFillBinding(), 15, 15));
+        selectButton.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 15, 15));
         selectButton.setOnAction(e -> {
             if (directory) {
                 DirectoryChooser chooser = new DirectoryChooser();

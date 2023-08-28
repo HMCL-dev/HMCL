@@ -192,8 +192,6 @@ public class Theme {
         return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase(Locale.ROOT) : null;
     }
 
-    private static final ObjectBinding<Color> BLACK_FILL = Bindings.createObjectBinding(() -> BLACK);
-    private static final ObjectBinding<Color> WHITE_FILL = Bindings.createObjectBinding(() -> Color.WHITE);
     private static ObjectBinding<Color> FOREGROUND_FILL;
 
     public static ObjectBinding<Color> foregroundFillBinding() {
@@ -206,12 +204,12 @@ public class Theme {
         return FOREGROUND_FILL;
     }
 
-    public static ObjectBinding<Color> blackFillBinding() {
-        return BLACK_FILL;
+    public static Color blackFill() {
+        return BLACK;
     }
 
-    public static ObjectBinding<Color> whiteFillBinding() {
-        return WHITE_FILL;
+    public static Color whiteFill() {
+        return Color.WHITE;
     }
 
     public static class TypeAdapter extends com.google.gson.TypeAdapter<Theme> {

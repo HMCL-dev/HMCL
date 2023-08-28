@@ -121,7 +121,7 @@ public abstract class SettingsView extends StackPane {
                         btnUpdate = new JFXButton();
                         btnUpdate.setOnMouseClicked(e -> onUpdate());
                         btnUpdate.getStyleClass().add("toggle-icon4");
-                        btnUpdate.setGraphic(SVG.update(Theme.blackFillBinding(), 20, 20));
+                        btnUpdate.setGraphic(SVG.UPDATE.createIcon(Theme.blackFill(), 20, 20));
 
                         updatePane.setHeaderRight(btnUpdate);
                     }

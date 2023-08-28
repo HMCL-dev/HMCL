@@ -766,13 +766,6 @@ public final class FXUtils {
         }
     };
 
-    public static Runnable withJFXPopupClosing(Runnable runnable, JFXPopup popup) {
-        return () -> {
-            runnable.run();
-            popup.hide();
-        };
-    }
-
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
