@@ -13,7 +13,7 @@ import java.util.Map;
 public interface IModMetadataReader {
     LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException;
 
-    static Map<String, MetadataReaderStorage> ofStorage(MetadataReaderStorage... storages) {
+    static Map<String, MetadataReaderStorage> ofStorages(MetadataReaderStorage... storages) {
         Map<String, MetadataReaderStorage> storageMap = new HashMap<>();
         for (MetadataReaderStorage storage : storages) {
             if (storage.extensions == null || storage.defaultDesc == null) {
@@ -27,6 +27,10 @@ public interface IModMetadataReader {
         return storageMap;
     }
 
+    static MetadataReaderStorage ofExtensions(String... extensions) {
+        return new MetadataReaderStorage(extensions);
+    }
+
     final class MetadataReaderStorage {
         private String[] extensions;
 
@@ -38,16 +42,12 @@ public interface IModMetadataReader {
             this.extensions = extensions;
         }
 
-        public static MetadataReaderStorage ofExtensions(String... extensions) {
-            return new MetadataReaderStorage(extensions);
-        }
-
         public MetadataReaderStorage ofReaders(IModMetadataReader... readers) {
             this.readers = readers;
             return this;
         }
 
-        public MetadataReaderStorage ofDesc(String defaultDesc) {
+        public MetadataReaderStorage ofDefaultDesc(String defaultDesc) {
             this.defaultDesc = defaultDesc;
             return this;
         }

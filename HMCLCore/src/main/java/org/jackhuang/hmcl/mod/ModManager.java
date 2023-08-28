@@ -29,17 +29,17 @@ import java.nio.file.*;
 import java.util.*;
 
 public final class ModManager {
-    private final Map<String, IModMetadataReader.MetadataReaderStorage> readers = IModMetadataReader.ofStorage(
-            IModMetadataReader.MetadataReaderStorage.ofExtensions("zip", "jar").ofReaders(
+    private final Map<String, IModMetadataReader.MetadataReaderStorage> readers = IModMetadataReader.ofStorages(
+            IModMetadataReader.ofExtensions("zip", "jar").ofReaders(
                     new ForgeOldModMetadata(),
                     new ForgeNewModMetadata(),
                     new FabricModMetadata(),
                     new QuiltModMetadata(),
                     new PackMcMeta()
-            ).ofDesc(""),
-            IModMetadataReader.MetadataReaderStorage.ofExtensions("litemod").ofReaders(
+            ).ofDefaultDesc(""),
+            IModMetadataReader.ofExtensions("litemod").ofReaders(
                     new LiteModMetadata()
-            ).ofDesc("LiteLoader Mod")
+            ).ofDefaultDesc("LiteLoader Mod")
     );
 
     private final GameRepository repository;
