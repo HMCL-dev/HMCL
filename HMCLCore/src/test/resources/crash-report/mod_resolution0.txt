@@ -1,0 +1,96 @@
+---- Minecraft Crash Report ----
+// Surprise! Haha. Well, this is awkward.
+
+Time: 2022/6/7 下午8:17
+Description: Mod loading error has occurred
+
+java.lang.Exception: Mod Loading has failed
+        at net.minecraftforge.fml.CrashReportExtender.dumpModLoadingCrashReport(CrashReportExtender.java:86) ~[forge:?] {re:classloading}
+        at net.minecraftforge.fml.server.ServerModLoader.load(ServerModLoader.java:51) ~[forge:?] {re:classloading}
+        at net.minecraft.server.Main.main(Main.java:145) ~[?:?] {re:classloading}
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+        at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+        at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+        at net.minecraftforge.fml.loading.FMLServerLaunchProvider.lambda$launchService$0(FMLServerLaunchProvider.java:51) ~[mohist-1.16.5-1021-server.jar:36.2] {}
+        at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) ~[modlauncher-8.1.3.jar:?] {}
+        at net.minecraftforge.server.ServerMain$Runner.runLauncher(ServerMain.java:119) ~[mohist-1.16.5-1021-server.jar:?] {}
+        at net.minecraftforge.server.ServerMain$Runner.access$100(ServerMain.java:116) ~[mohist-1.16.5-1021-server.jar:?] {}
+        at net.minecraftforge.server.ServerMain.main(ServerMain.java:100) ~[mohist-1.16.5-1021-server.jar:?] {re:classloading,re:classloading}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: main
+Stacktrace:
+        at net.minecraftforge.fml.CrashReportExtender.lambda$dumpModLoadingCrashReport$7(CrashReportExtender.java:89) ~[forge:?] {re:classloading}
+-- MOD iceandfire --
+Details:
+        Mod File: iceandfire-2.1.9-1.16.5.jar
+        Failure message: Mod iceandfire requires citadel 1.8.1 or above
+                Currently, citadel is not installed
+        Mod Version: 2.1.9-1.16.5
+        Mod Issue URL: https://github.com/Alex-the-666/ice-and-fire/issues
+        Exception message: MISSING EXCEPTION MESSAGE
+Stacktrace:
+        at net.minecraftforge.fml.CrashReportExtender.lambda$dumpModLoadingCrashReport$7(CrashReportExtender.java:89) ~[forge:?] {re:classloading}
+        at java.util.ArrayList.forEach(ArrayList.java:1511) ~[?:?] {}
+        at net.minecraftforge.fml.CrashReportExtender.dumpModLoadingCrashReport(CrashReportExtender.java:87) ~[forge:?] {re:classloading}
+        at net.minecraftforge.fml.server.ServerModLoader.load(ServerModLoader.java:51) ~[forge:?] {re:classloading}
+        at net.minecraft.server.Main.main(Main.java:145) ~[?:?] {re:classloading}
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+        at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+        at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+        at net.minecraftforge.fml.loading.FMLServerLaunchProvider.lambda$launchService$0(FMLServerLaunchProvider.java:51) ~[mohist-1.16.5-1021-server.jar:36.2] {}
+        at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) ~[modlauncher-8.1.3.jar:?] {}
+        at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) ~[modlauncher-8.1.3.jar:?] {}
+        at net.minecraftforge.server.ServerMain$Runner.runLauncher(ServerMain.java:119) ~[mohist-1.16.5-1021-server.jar:?] {}
+        at net.minecraftforge.server.ServerMain$Runner.access$100(ServerMain.java:116) ~[mohist-1.16.5-1021-server.jar:?] {}
+        at net.minecraftforge.server.ServerMain.main(ServerMain.java:100) ~[mohist-1.16.5-1021-server.jar:?] {re:classloading,re:classloading,re:classloading}
+
+
+-- System Details --
+Details:
+        Minecraft Version: 1.16.5
+        Minecraft Version ID: 1.16.5
+        Mohist Version: 1.16.5-1021
+        Operating System: Windows 10 (amd64) version 10.0
+        Java Version: 17.0.1, Oracle Corporation
+        Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode, sharing), Oracle Corporation
+        Memory: 596423192 bytes (568 MB) / 1233125376 bytes (1176 MB) up to 8589934592 bytes (8192 MB)
+        CPUs: 8
+        JVM Flags: 1 total; -Xmx8192M
+        ModLauncher: 8.1.3+8.1.3+main-8.1.x.c94d18ec
+        ModLauncher启动目标: fmlserver
+        ModLauncher命名: srg
+        ModLauncher服务:
+                /mixin-0.8.4.jar mixin PLUGINSERVICE
+                /eventbus-4.0.0.jar eventbus PLUGINSERVICE
+                /mohist-1.16.5-1021-server.jar object_holder_definalize PLUGINSERVICE
+                /mohist-1.16.5-1021-server.jar runtime_enum_extender PLUGINSERVICE
+                /mohist-1.16.5-1021-server.jar capability_inject_definalize PLUGINSERVICE
+                /accesstransformers-3.0.1.jar accesstransformer PLUGINSERVICE
+                /mohist-1.16.5-1021-server.jar runtimedistcleaner PLUGINSERVICE
+                /mixin-0.8.4.jar mixin TRANSFORMATIONSERVICE
+                /mohist-1.16.5-1021-server.jar fml TRANSFORMATIONSERVICE
+        FML: 36.2
+        Forge: com.mohistmc:36.2.39
+        FML语言提供:
+                javafml@36.2
+                minecraft@1
+        Mod List:
+                mohist-1.16.5-1021-server.jar                     |Minecraft                     |minecraft                     |1.16.5              |NONE      |Manifest: NOSIGNATURE
+                mohist-1.16.5-1021-universal.jar                  |Forge                         |forge                         |36.2.39             |NONE      |Manifest: NOSIGNATURE
+        CraftBukkit Information:
+   Running:
+   Failed to handle CraftCrashReport: craftbukkit not runs

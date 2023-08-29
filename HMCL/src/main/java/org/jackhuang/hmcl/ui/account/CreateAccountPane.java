@@ -224,49 +224,51 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             additionalData = null;
         }
 
-        if (factory instanceof OfflineAccountFactory && username != null) {
-            if (!USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
-                Controllers.confirm(
-                        i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
-                        MessageDialogPane.MessageType.WARNING,
-                        () -> {
-                            logging.set(true);
-                            deviceCode.set(null);
+        Runnable doCreate = () -> {
+            logging.set(true);
+            deviceCode.set(null);
 
-                            loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
-                                    .whenComplete(Schedulers.javafx(), account -> {
-                                        int oldIndex = Accounts.getAccounts().indexOf(account);
-                                        if (oldIndex == -1) {
-                                            Accounts.getAccounts().add(account);
-                                        } else {
-                                            // adding an already-added account
-                                            // instead of discarding the new account, we first remove the existing one then add the new one
-                                            Accounts.getAccounts().remove(oldIndex);
-                                            Accounts.getAccounts().add(oldIndex, account);
-                                        }
-
-                                        // select the new account
-                                        Accounts.setSelectedAccount(account);
-
-                                        spinner.hideSpinner();
-                                        fireEvent(new DialogCloseEvent());
-                                    }, exception -> {
-                                        if (exception instanceof NoSelectedCharacterException) {
-                                            fireEvent(new DialogCloseEvent());
-                                        } else {
-                                            lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
-                                        }
-                                        body.setDisable(false);
-                                        spinner.hideSpinner();
-                                    }).executor(true);
-                        },
-                        () -> {
-                            lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
-                            body.setDisable(false);
-                            spinner.hideSpinner();
+            loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
+                    .whenComplete(Schedulers.javafx(), account -> {
+                        int oldIndex = Accounts.getAccounts().indexOf(account);
+                        if (oldIndex == -1) {
+                            Accounts.getAccounts().add(account);
+                        } else {
+                            // adding an already-added account
+                            // instead of discarding the new account, we first remove the existing one then add the new one
+                            Accounts.getAccounts().remove(oldIndex);
+                            Accounts.getAccounts().add(oldIndex, account);
                         }
-                );
-            }
+
+                        // select the new account
+                        Accounts.setSelectedAccount(account);
+
+                        spinner.hideSpinner();
+                        fireEvent(new DialogCloseEvent());
+                    }, exception -> {
+                        if (exception instanceof NoSelectedCharacterException) {
+                            fireEvent(new DialogCloseEvent());
+                        } else {
+                            lblErrorMessage.setText(Accounts.localizeErrorMessage(exception));
+                        }
+                        body.setDisable(false);
+                        spinner.hideSpinner();
+                    }).executor(true);
+        };
+
+        if (factory instanceof OfflineAccountFactory && username != null && !USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
+            Controllers.confirm(
+                    i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
+                    MessageDialogPane.MessageType.WARNING,
+                    doCreate,
+                    () -> {
+                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                        body.setDisable(false);
+                        spinner.hideSpinner();
+                    }
+            );
+        } else {
+            doCreate.run();
         }
     }
 
@@ -370,7 +372,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static class AccountDetailsInputPane extends GridPane {
 
         // ==== authlib-injector hyperlinks ====
-        private static final String[] ALLOWED_LINKS = { "homepage", "register" };
+        private static final String[] ALLOWED_LINKS = {"homepage", "register"};
 
         private static List<Hyperlink> createHyperlinks(AuthlibInjectorServer server) {
             if (server == null) {
@@ -476,7 +478,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.plus(Theme.blackFillBinding(), 20, 20));
+                btnAddServer.setGraphic(SVG.PLUS.createIcon(Theme.blackFill(), 20, 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
