@@ -193,7 +193,7 @@ public class GameCrashWindow extends Stage {
                     if (hasMultipleRules) {
                         segments.add(new Text("\n"));
                     } else {
-                        segments.add(new Text("\n\n"));
+                        segments.add(new Text("\n"));
                         segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
                         segments.add(new Text("\n"));
                     }
