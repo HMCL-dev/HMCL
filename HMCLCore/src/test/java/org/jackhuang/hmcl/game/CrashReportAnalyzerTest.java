@@ -439,6 +439,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void forgeRepeatInstallation1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation2.txt")),
+                CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
+    }
+
+    @Test
     public void needJDK11() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk11.txt")),
