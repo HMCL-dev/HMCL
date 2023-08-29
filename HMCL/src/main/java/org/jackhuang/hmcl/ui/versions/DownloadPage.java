@@ -316,7 +316,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                         .map(version -> new ModItem(version, control))
                                         .collect(Collectors.toList()));
                         sublist.getStyleClass().add("no-padding");
-                        sublist.setTitle(gameVersion);
+                        sublist.setTitle("Minecraft " + gameVersion);
 
                         list.getContent().add(sublist);
                     }
