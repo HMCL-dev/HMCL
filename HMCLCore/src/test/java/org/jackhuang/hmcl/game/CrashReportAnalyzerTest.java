@@ -439,6 +439,20 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void incompleteForgeInstallation4() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation4.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation5() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation5.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
     public void forgeRepeatInstallation() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation.txt")),
@@ -513,20 +527,6 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/shaders_mod.txt")),
                 CrashReportAnalyzer.Rule.SHADERS_MOD);
-    }
-
-    @Test
-    public void cannotFindLaunchTargetFmlclient() throws IOException {
-        CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient.txt")),
-                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
-    }
-
-    @Test
-    public void cannotFindLaunchTargetFmlclient2() throws IOException {
-        CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient2.txt")),
-                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
     }
 
     @Test

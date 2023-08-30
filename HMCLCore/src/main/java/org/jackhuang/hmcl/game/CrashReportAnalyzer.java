@@ -129,8 +129,6 @@ public final class CrashReportAnalyzer {
         NIGHT_CONFIG_FIXES(Pattern.compile("com\\.electronwill\\.nightconfig\\.core\\.io\\.ParsingException: Not enough data available")),//https://github.com/Fuzss/nightconfigfixes
         //Shaders Mod detected. Please remove it, OptiFine has built-in support for shaders.
         SHADERS_MOD(Pattern.compile("java\\.lang\\.RuntimeException: Shaders Mod detected\\. Please remove it, OptiFine has built-in support for shaders\\.")),
-        //Cannot find launch target fmlclient, unable to launch
-        CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT(Pattern.compile("Cannot find launch target fmlclient, unable to launch")),
 
         // 一些模组与 Optifine 不兼容
         MOD_FOREST_OPTIFINE(Pattern.compile("Error occurred applying transform of coremod META-INF/asm/multipart\\.js function render")),
