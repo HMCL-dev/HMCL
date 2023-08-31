@@ -116,6 +116,7 @@ public final class CrashReportAnalyzer {
         FORGE_REPEAT_INSTALLATION(Pattern.compile("MultipleArgumentsForOptionException: Found multiple arguments for option (.*?), but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
+        INSTALL_MIXINBOOTSTRAP(Pattern.compile("java\\.lang\\.ClassNotFoundException: org\\.spongepowered\\.asm\\.launch\\.MixinTweaker")),
 
         //Forge 默认会把每一个 mod jar 都当做一个 JPMS 的模块（Module）加载。在这个 jar 没有给出 module-info 声明的情况下，JPMS 会采用这样的顺序决定 module 名字：
         //1. META-INF/MANIFEST.MF 里的 Automatic-Module-Name

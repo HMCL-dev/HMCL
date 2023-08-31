@@ -537,6 +537,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void installMixinbootstrap() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/install_mixinbootstrap.txt")),
+                CrashReportAnalyzer.Rule.INSTALL_MIXINBOOTSTRAP);
+    }
+
+    @Test
     public void nightconfigfixes() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/night_config_fixes.txt")),
