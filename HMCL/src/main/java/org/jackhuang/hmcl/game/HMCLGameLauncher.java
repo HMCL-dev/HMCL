@@ -90,14 +90,15 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         } else {
             lang = "zh_cn";
         }
-
+        
+        /*
         if (lang != null) {
             try {
                 FileUtils.writeText(optionsFile, String.format("lang:%s\nforceUnicodeFont:true\n", lang));
             } catch (IOException e) {
                 Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
             }
-        }
+        }*/
     }
 
     private boolean findFiles(File folder, String fileName) {
