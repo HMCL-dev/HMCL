@@ -28,12 +28,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -236,7 +236,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 AdvancedListItem versionSettingsItem = new AdvancedListItem();
                 versionSettingsItem.getStyleClass().add("navigation-drawer-item");
                 versionSettingsItem.setTitle(i18n("settings.game"));
-                versionSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
+                versionSettingsItem.setLeftGraphic(wrap(SVG.GEAR_OUTLINE));
                 versionSettingsItem.setActionButtonVisible(false);
                 versionSettingsItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.versionSettingsTab));
                 runInFX(() -> FXUtils.installFastTooltip(versionSettingsItem, i18n("settings.game")));
@@ -245,7 +245,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 AdvancedListItem modListItem = new AdvancedListItem();
                 modListItem.getStyleClass().add("navigation-drawer-item");
                 modListItem.setTitle(i18n("mods.manage"));
-                modListItem.setLeftGraphic(wrap(SVG::puzzle));
+                modListItem.setLeftGraphic(wrap(SVG.PUZZLE));
                 modListItem.setActionButtonVisible(false);
                 modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
                 runInFX(() -> FXUtils.installFastTooltip(modListItem, i18n("mods.manage")));
@@ -254,7 +254,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 AdvancedListItem installerListItem = new AdvancedListItem();
                 installerListItem.getStyleClass().add("navigation-drawer-item");
                 installerListItem.setTitle(i18n("settings.tabs.installers"));
-                installerListItem.setLeftGraphic(wrap(SVG::cube));
+                installerListItem.setLeftGraphic(wrap(SVG.CUBE));
                 installerListItem.setActionButtonVisible(false);
                 installerListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.installerListTab));
                 runInFX(() -> FXUtils.installFastTooltip(installerListItem, i18n("settings.tabs.installers")));
@@ -263,7 +263,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 AdvancedListItem worldListItem = new AdvancedListItem();
                 worldListItem.getStyleClass().add("navigation-drawer-item");
                 worldListItem.setTitle(i18n("world.manage"));
-                worldListItem.setLeftGraphic(wrap(SVG::earth));
+                worldListItem.setLeftGraphic(wrap(SVG.EARTH));
                 worldListItem.setActionButtonVisible(false);
                 worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
                 runInFX(() -> FXUtils.installFastTooltip(worldListItem, i18n("world.manage")));
@@ -279,53 +279,53 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 PopupMenu browseList = new PopupMenu();
                 JFXPopup browsePopup = new JFXPopup(browseList);
                 browseList.getContent().setAll(
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.gamepad(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.game"), FXUtils.withJFXPopupClosing(() -> control.onBrowse(""), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.puzzle(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.mod"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("mods"), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.gearOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.config"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("config"), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.texture(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.resourcepacks"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("resourcepacks"), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.applicationOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.shaderpacks"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("shaderpacks"), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.monitorScreenshot(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.screenshots"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("screenshots"), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.earth(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.saves"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("saves"), browsePopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("folder.logs"), FXUtils.withJFXPopupClosing(() -> control.onBrowse("logs"), browsePopup))
+                        new IconedMenuItem(SVG.GAMEPAD, i18n("folder.game"), () -> control.onBrowse(""), browsePopup),
+                        new IconedMenuItem(SVG.PUZZLE, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
+                        new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
+                        new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
+                        new IconedMenuItem(SVG.APPLICATION_OUTLINE, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
+                        new IconedMenuItem(SVG.MONITOR_SCREENSHOT, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
+                        new IconedMenuItem(SVG.EARTH, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
+                        new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup)
                 );
 
                 PopupMenu managementList = new PopupMenu();
                 JFXPopup managementPopup = new JFXPopup(managementList);
                 managementList.getContent().setAll(
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.rocketLaunchOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch.test"), FXUtils.withJFXPopupClosing(control::testGame, managementPopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.script(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.launch_script"), FXUtils.withJFXPopupClosing(control::generateLaunchScript, managementPopup)),
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH_OUTLINE, i18n("version.launch.test"), control::testGame, managementPopup),
+                        new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), control::generateLaunchScript, managementPopup),
                         new MenuSeparator(),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.pencil(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.rename"), FXUtils.withJFXPopupClosing(control::rename, managementPopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.copy(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.duplicate"), FXUtils.withJFXPopupClosing(control::duplicate, managementPopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.deleteOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("version.manage.remove"), FXUtils.withJFXPopupClosing(control::remove, managementPopup)),
-                        new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("modpack.export"), FXUtils.withJFXPopupClosing(control::export, managementPopup)),
+                        new IconedMenuItem(SVG.PENCIL, i18n("version.manage.rename"), control::rename, managementPopup),
+                        new IconedMenuItem(SVG.COPY, i18n("version.manage.duplicate"), control::duplicate, managementPopup),
+                        new IconedMenuItem(SVG.DELETE_OUTLINE, i18n("version.manage.remove"), control::remove, managementPopup),
+                        new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), control::export, managementPopup),
                         new MenuSeparator(),
-                        new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), FXUtils.withJFXPopupClosing(control::redownloadAssetIndex, managementPopup)),
-                        new IconedMenuItem(null, i18n("version.manage.remove_assets"), FXUtils.withJFXPopupClosing(control::clearAssets, managementPopup)),
-                        new IconedMenuItem(null, i18n("version.manage.remove_libraries"), FXUtils.withJFXPopupClosing(control::clearLibraries, managementPopup)),
-                        new IconedMenuItem(null, i18n("version.manage.clean"), FXUtils.withJFXPopupClosing(control::clearJunkFiles, managementPopup)).addTooltip(i18n("version.manage.clean.tooltip"))
+                        new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
+                        new IconedMenuItem(null, i18n("version.manage.remove_assets"), control::clearAssets, managementPopup),
+                        new IconedMenuItem(null, i18n("version.manage.remove_libraries"), control::clearLibraries, managementPopup),
+                        new IconedMenuItem(null, i18n("version.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("version.manage.clean.tooltip"))
                 );
 
                 AdvancedListBox toolbar = new AdvancedListBox()
                         .addNavigationDrawerItem(upgradeItem -> {
                             upgradeItem.setTitle(i18n("version.update"));
-                            upgradeItem.setLeftGraphic(wrap(SVG::update));
+                            upgradeItem.setLeftGraphic(wrap(SVG.UPDATE));
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
                             upgradeItem.setOnAction(e -> control.updateGame());
                         })
                         .addNavigationDrawerItem(testGameItem -> {
                             testGameItem.setTitle(i18n("version.launch.test"));
-                            testGameItem.setLeftGraphic(wrap(SVG::rocketLaunchOutline));
+                            testGameItem.setLeftGraphic(wrap(SVG.ROCKET_LAUNCH_OUTLINE));
                             testGameItem.setOnAction(e -> control.testGame());
                         })
                         .addNavigationDrawerItem(browseMenuItem -> {
                             browseMenuItem.setTitle(i18n("settings.game.exploration"));
-                            browseMenuItem.setLeftGraphic(wrap(SVG::folderOutline));
+                            browseMenuItem.setLeftGraphic(wrap(SVG.FOLDER_OUTLINE));
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
                         })
                         .addNavigationDrawerItem(managementItem -> {
                             managementItem.setTitle(i18n("settings.game.management"));
-                            managementItem.setLeftGraphic(wrap(SVG::wrenchOutline));
+                            managementItem.setLeftGraphic(wrap(SVG.WRENCH_OUTLINE));
                             managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
                         });
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");
@@ -354,8 +354,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         return stackPane;
     }
 
-    public static Node wrap(SVG.SVGIcon svg) {
-        return wrap(svg.createIcon(null, 20, 20));
+    public static Node wrap(SVG svg) {
+        return wrap(svg.createIcon((Paint) null, 20, 20));
     }
 
     public interface VersionLoadable {

@@ -139,14 +139,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG::viewList));
+            gameItem.setLeftGraphic(wrap(SVG.VIEW_LIST));
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG::downloadOutline));
+            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD_OUTLINE));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
@@ -154,7 +154,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // fifth item in left sidebar
             AdvancedListItem multiplayerItem = new AdvancedListItem();
-            multiplayerItem.setLeftGraphic(wrap(SVG::lan));
+            multiplayerItem.setLeftGraphic(wrap(SVG.LAN));
             multiplayerItem.setActionButtonVisible(false);
             multiplayerItem.setTitle(i18n("multiplayer"));
             JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
@@ -167,7 +167,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
+            launcherSettingsItem.setLeftGraphic(wrap(SVG.GEAR_OUTLINE));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));

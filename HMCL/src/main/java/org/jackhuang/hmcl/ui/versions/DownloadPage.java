@@ -386,7 +386,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             getChildren().setAll(container);
 
             saveAsButton.getStyleClass().add("toggle-icon4");
-            saveAsButton.setGraphic(SVG.contentSaveMoveOutline(Theme.blackFillBinding(), -1, -1));
+            saveAsButton.setGraphic(SVG.CONTENT_SAVE_MOVE_OUTLINE.createIcon(Theme.blackFill(), -1, -1));
 
             HBox.setHgrow(content, Priority.ALWAYS);
             pane.getChildren().setAll(graphicPane, content, saveAsButton);
@@ -397,15 +397,15 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             switch (dataItem.getVersionType()) {
                 case Release:
-                    graphicPane.getChildren().setAll(SVG.releaseCircleOutline(Theme.blackFillBinding(), 24, 24));
+                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                     content.getTags().add(i18n("version.game.release"));
                     break;
                 case Beta:
-                    graphicPane.getChildren().setAll(SVG.betaCircleOutline(Theme.blackFillBinding(), 24, 24));
+                    graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                     content.getTags().add(i18n("version.game.snapshot"));
                     break;
                 case Alpha:
-                    graphicPane.getChildren().setAll(SVG.alphaCircleOutline(Theme.blackFillBinding(), 24, 24));
+                    graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                     content.getTags().add(i18n("version.game.snapshot"));
                     break;
             }

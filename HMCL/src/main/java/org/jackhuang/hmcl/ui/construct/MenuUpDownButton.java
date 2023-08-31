@@ -81,8 +81,8 @@ public class MenuUpDownButton extends Control {
             label.setStyle("-fx-text-fill: black;");
             label.textProperty().bind(control.text);
 
-            Node up = SVG.menuUp(Theme.blackFillBinding(), 16, 16);
-            Node down = SVG.menuDown(Theme.blackFillBinding(), 16, 16);
+            Node up = SVG.MENU_UP.createIcon(Theme.blackFill(), 16, 16);
+            Node down = SVG.MENU_DOWN.createIcon(Theme.blackFill(), 16, 16);
 
             JFXButton button = new JFXButton();
             button.setGraphic(content);
