@@ -36,7 +36,7 @@ public final class CrashReportAnalyzer {
         // We manually write "Pattern.compile" here for IDEA syntax highlighting.
 
         OPENJ9(Pattern.compile("(Open J9 is not supported|OpenJ9 is incompatible|\\.J9VMInternals\\.)")),
-        NEED_JDK11(Pattern.compile("(no such method: sun\\.misc\\.Unsafe\\.defineAnonymousClass\\(Class,byte\\[\\],Object\\[\\]\\)Class/invokeVirtual|java\\.lang\\.UnsupportedClassVersionError: icyllis/modernui/forge/MixinConnector has been compiled by a more recent version of the Java Runtime \\(class file version 55\\.0\\), this version of the Java Runtime only recognizes class file versions up to 52\\.0)")),
+        NEED_JDK11(Pattern.compile("(no such method: sun\\.misc\\.Unsafe\\.defineAnonymousClass\\(Class,byte\\[\\],Object\\[\\]\\)Class/invokeVirtual|java\\.lang\\.UnsupportedClassVersionError: icyllis/modernui/forge/MixinConnector has been compiled by a more recent version of the Java Runtime \\(class file version 55\\.0\\), this version of the Java Runtime only recognizes class file versions up to 52\\.0|java\\.lang\\.IllegalArgumentException: The requested compatibility level JAVA_11 could not be set\\. Level is not supported by the active JRE or ASM version)")),
         TOO_OLD_JAVA(Pattern.compile("java\\.lang\\.UnsupportedClassVersionError: (.*?) version (?<expected>\\d+)\\.0"), "expected"),
         JVM_32BIT(Pattern.compile("(Could not reserve enough space for (.*?)KB object heap|The specified size exceeds the maximum representable size|Invalid maximum heap size)")),
 
