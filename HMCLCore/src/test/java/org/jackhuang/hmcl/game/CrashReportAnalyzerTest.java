@@ -296,13 +296,6 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
-    public void failedToLoadALibrary() throws IOException {
-        CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/failed_to_load_a_library.txt")),
-                CrashReportAnalyzer.Rule.FAILED_TO_LOAD_A_LIBRARY);
-    }
-
-    @Test
     public void outOfMemoryMC() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/out_of_memory.txt")),

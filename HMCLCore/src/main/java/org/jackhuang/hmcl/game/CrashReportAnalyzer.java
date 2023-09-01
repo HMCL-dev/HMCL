@@ -62,8 +62,6 @@ public final class CrashReportAnalyzer {
         FILE_CHANGED(Pattern.compile("java\\.lang\\.SecurityException: SHA1 digest error for (?<file>.*)|signer information does not match signer information of other classes in the same package"), "file"),
         // mod loader/coremod injection fault, prompt user to reinstall game.
         NO_SUCH_METHOD_ERROR(Pattern.compile("java\\.lang\\.NoSuchMethodError: (?<class>.*?)"), "class"),
-        // Failed to load a library
-        FAILED_TO_LOAD_A_LIBRARY(Pattern.compile("\\[LWJGL\\] Failed to load a library\\. Possible solutions:")),
         // mod loader/coremod injection fault, prompt user to reinstall game.
         NO_CLASS_DEF_FOUND_ERROR(Pattern.compile("java\\.lang\\.NoClassDefFoundError: (?<class>.*)"), "class"),
         // coremod wants to access class without "setAccessible"
