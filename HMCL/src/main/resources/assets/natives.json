@@ -1821,6 +1821,72 @@
     "org.lwjgl:lwjgl-glfw:3.3.1:natives-linux": null,
     "org.lwjgl:lwjgl-stb:3.3.1:natives-linux": null,
     "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux": null,
+    "net.java.dev.jna:jna:5.8.0": {
+      "name": "org.glavo.hmcl:jna:5.13.0-rc1-linux-loongarch64_ow",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/hmcl/jna/5.13.0-rc1-linux-loongarch64_ow/jna-5.13.0-rc1-linux-loongarch64_ow.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/jna/5.13.0-rc1-linux-loongarch64_ow/jna-5.13.0-rc1-linux-loongarch64_ow.jar",
+          "sha1": "42894c00949063f26752264288f2f2ab5179e21d",
+          "size": 1886827
+        }
+      }
+    },
+    "net.java.dev.jna:jna-platform:5.8.0": {
+      "name": "net.java.dev.jna:jna-platform:5.13.0",
+      "downloads": {
+        "artifact": {
+          "path": "net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar",
+          "url": "https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar",
+          "sha1": "88e9a306715e9379f3122415ef4ae759a352640d",
+          "size": 1363209
+        }
+      }
+    },
+    "net.java.dev.jna:jna:5.10.0": {
+      "name": "org.glavo.hmcl:jna:5.13.0-rc1-linux-loongarch64_ow",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/hmcl/jna/5.13.0-rc1-linux-loongarch64_ow/jna-5.13.0-rc1-linux-loongarch64_ow.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/jna/5.13.0-rc1-linux-loongarch64_ow/jna-5.13.0-rc1-linux-loongarch64_ow.jar",
+          "sha1": "42894c00949063f26752264288f2f2ab5179e21d",
+          "size": 1886827
+        }
+      }
+    },
+    "net.java.dev.jna:jna-platform:5.10.0": {
+      "name": "net.java.dev.jna:jna-platform:5.13.0",
+      "downloads": {
+        "artifact": {
+          "path": "net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar",
+          "url": "https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar",
+          "sha1": "88e9a306715e9379f3122415ef4ae759a352640d",
+          "size": 1363209
+        }
+      }
+    },
+    "net.java.dev.jna:jna:5.12.1": {
+      "name": "org.glavo.hmcl:jna:5.13.0-rc1-linux-loongarch64_ow",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/hmcl/jna/5.13.0-rc1-linux-loongarch64_ow/jna-5.13.0-rc1-linux-loongarch64_ow.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/jna/5.13.0-rc1-linux-loongarch64_ow/jna-5.13.0-rc1-linux-loongarch64_ow.jar",
+          "sha1": "42894c00949063f26752264288f2f2ab5179e21d",
+          "size": 1886827
+        }
+      }
+    },
+    "net.java.dev.jna:jna-platform:5.12.1": {
+      "name": "net.java.dev.jna:jna-platform:5.13.0",
+      "downloads": {
+        "artifact": {
+          "path": "net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar",
+          "url": "https://repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar",
+          "sha1": "88e9a306715e9379f3122415ef4ae759a352640d",
+          "size": 1363209
+        }
+      }
+    },
     "net.java.jinput:jinput-platform:2.0.5:natives": null,
     "com.mojang:text2speech:1.10.3:natives": null,
     "com.mojang:text2speech:1.11.3:natives": null,
