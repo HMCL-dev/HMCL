@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -78,5 +79,9 @@ public final class IOUtils {
                 break;
             dest.write(buf, 0, len);
         }
+    }
+
+    public static InputStream wrapFromGZip(InputStream inputStream) throws IOException {
+        return new GZIPInputStream(inputStream);
     }
 }
