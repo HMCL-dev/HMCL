@@ -42,6 +42,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
+    public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
 
     private static final String PREFIX = "https://api.modrinth.com";
 
@@ -290,6 +291,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
             for (String dependencyId : dependencies) {
+                if (dependencyId == null) {
+                    mods.add(RemoteMod.getEmptyRemoteMod());
+                }
                 if (StringUtils.isNotBlank(dependencyId)) {
                     mods.add(modRepository.getModById(dependencyId));
                 }
@@ -492,11 +496,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     datePublished,
                     type,
                     files.get(0).toFile(),
-                    dependencies.stream().map(Dependency::getProjectId).filter(Objects::nonNull).collect(Collectors.toList()),
+                    dependencies.stream().map(dependency -> dependency.getVersionId() == null ? null : dependency.getProjectId()).collect(Collectors.toList()),
                     gameVersions,
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
+                        else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             ));
@@ -651,6 +656,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
             for (String dependencyId : dependencies) {
+                if (dependencyId == null) {
+                    mods.add(RemoteMod.getEmptyRemoteMod());
+                }
                 if (StringUtils.isNotBlank(dependencyId)) {
                     mods.add(modRepository.getModById(dependencyId));
                 }

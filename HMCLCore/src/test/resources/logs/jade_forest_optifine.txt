@@ -1,0 +1,85 @@
+Picked up _JAVA_OPTIONS: 
+2023-06-22 20:59:01,471 main WARN Advanced terminal features are not available in this environment
+[20:59:01] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--username, TranMC, --version, 1.20.1-forge-47.0.16, --gameDir, C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game, --assetsDir, C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game\assets, --assetIndex, 5, --uuid, 631afb7abe234bd391272fe56beb8b39, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, , --xuid, , --userType, mojang, --versionType, release, --width, 925, --height, 530, --launchTarget, forgeclient, --fml.forgeVersion, 47.0.16, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412]
+[20:59:01] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.3 by Microsoft; OS Windows 10 arch amd64 version 10.0
+[20:59:02] [main/INFO] [ne.mi.fm.lo.ImmediateWindowHandler/]: Loading ImmediateWindowProvider fmlearlywindow
+[20:59:02] [main/INFO] [EARLYDISPLAY/]: Trying GL version 4.6
+[20:59:02] [main/INFO] [EARLYDISPLAY/]: Requested GL version 4.6 got version 4.6
+[20:59:02] [main/INFO] [op.OptiFineTransformationService/]: OptiFineTransformationService.onLoad
+[20:59:02] [main/INFO] [op.OptiFineTransformationService/]: OptiFine ZIP file URL: union:/C:/Users/TranMC/AppData/Roaming/.tlauncher/legacy/Minecraft/game/mods/preview_OptiFine_1.20.1_HD_U_I5_pre4.jar%23164!/
+[20:59:02] [main/INFO] [op.OptiFineTransformationService/]: OptiFine ZIP file: C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game\mods\preview_OptiFine_1.20.1_HD_U_I5_pre4.jar
+[20:59:02] [main/INFO] [op.OptiFineTransformer/]: Target.PRE_CLASS is available
+[20:59:03] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/TranMC/AppData/Roaming/.tlauncher/legacy/Minecraft/game/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%23100!/ Service=ModLauncher Env=CLIENT
+[20:59:03] [main/INFO] [op.OptiFineTransformationService/]: OptiFineTransformationService.initialize
+[20:59:04] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game\libraries\net\minecraftforge\fmlcore\1.20.1-47.0.16\fmlcore-1.20.1-47.0.16.jar is missing mods.toml file
+[20:59:04] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game\libraries\net\minecraftforge\javafmllanguage\1.20.1-47.0.16\javafmllanguage-1.20.1-47.0.16.jar is missing mods.toml file
+[20:59:04] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game\libraries\net\minecraftforge\lowcodelanguage\1.20.1-47.0.16\lowcodelanguage-1.20.1-47.0.16.jar is missing mods.toml file
+[20:59:04] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game\libraries\net\minecraftforge\mclanguage\1.20.1-47.0.16\mclanguage-1.20.1-47.0.16.jar is missing mods.toml file
+[20:59:04] [main/INFO] [ne.mi.fm.lo.mo.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
+[20:59:05] [main/INFO] [op.OptiFineTransformationService/]: OptiFineTransformationService.transformers
+[20:59:05] [main/INFO] [op.OptiFineTransformer/]: Targets: 410
+[20:59:07] [main/INFO] [op.OptiFineTransformationService/]: additionalClassesLocator: [optifine., net.optifine.]
+[20:59:07] [main/INFO] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeclient' with arguments [--version, 1.20.1-forge-47.0.16, --gameDir, C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game, --assetsDir, C:\Users\TranMC\AppData\Roaming\.tlauncher\legacy\Minecraft\game\assets, --uuid, 631afb7abe234bd391272fe56beb8b39, --username, TranMC, --assetIndex, 5, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, , --xuid, , --userType, mojang, --versionType, release, --width, 925, --height, 530]
+[20:59:12] [main/ERROR] [mixin/]: Critical injection failure: LVT in net/minecraft/client/renderer/GameRenderer::m_109093_(FJZ)V has incompatible changes at opcode 760 in callback jade.mixins.json:GameRendererMixin->@Inject::jade$runTick(FJZLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;IILcom/mojang/blaze3d/platform/Window;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/GuiGraphics;)V.
+ Expected: [I, I, Lcom/mojang/blaze3d/platform/Window;, Lorg/joml/Matrix4f;, Lcom/mojang/blaze3d/vertex/PoseStack;, Lnet/minecraft/client/gui/GuiGraphics;]
+    Found: [I, I, Lcom/mojang/blaze3d/platform/Window;, F, Lorg/joml/Matrix4f;, Lcom/mojang/blaze3d/vertex/PoseStack;]
+Available: [I, I, Lcom/mojang/blaze3d/platform/Window;, F, Lorg/joml/Matrix4f;, Lcom/mojang/blaze3d/vertex/PoseStack;, F, Lnet/minecraft/client/gui/GuiGraphics;, Ljava/lang/Throwable;, Lnet/minecraft/CrashReport;, Lnet/minecraft/CrashReportCategory;]
+Exception in thread "main" java.lang.RuntimeException: java.lang.reflect.InvocationTargetException
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:32)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.run(Launcher.java:108)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.main(Launcher.java:78)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.1.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.0.16/net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.0.16/net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.0.16/net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$makeService$0(CommonClientLaunchHandler.java:25)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30)
+	... 7 more
+Caused by: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClass(MixinTransformer.java:250)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.service.modlauncher.MixinTransformationHandler.processClass(MixinTransformationHandler.java:131)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.launch.MixinLaunchPluginLegacy.processClass(MixinLaunchPluginLegacy.java:131)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.serviceapi.ILaunchPluginService.processClassWithFlags(ILaunchPluginService.java:156)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchPluginHandler.offerClassNodeToPlugins(LaunchPluginHandler.java:88)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.ClassTransformer.transform(ClassTransformer.java:120)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.TransformingClassLoader.maybeTransformClassBytes(TransformingClassLoader.java:50)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.readerToClass(ModuleClassLoader.java:113)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.lambda$findClass$15(ModuleClassLoader.java:219)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadFromModule(ModuleClassLoader.java:229)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.findClass(ModuleClassLoader.java:219)
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:135)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:520)
+	at java.base/java.lang.Class.getDeclaredFields0(Native Method)
+	at java.base/java.lang.Class.privateGetDeclaredFields(Class.java:3297)
+	at java.base/java.lang.Class.getDeclaredFields(Class.java:2371)
+	at TRANSFORMER/net.optifine/net.optifine.reflect.FieldLocatorTypes.<init>(FieldLocatorTypes.java:25)
+	at TRANSFORMER/net.optifine/net.optifine.reflect.Reflector.<clinit>(Reflector.java:524)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.CrashReport.m_127526_(CrashReport.java:175)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.CrashReport.m_127529_(CrashReport.java:345)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.client.main.Main.main(Main.java:149)
+	... 15 more
+Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: LVT in net/minecraft/client/renderer/GameRenderer::m_109093_(FJZ)V has incompatible changes at opcode 760 in callback jade.mixins.json:GameRendererMixin->@Inject::jade$runTick(FJZLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;IILcom/mojang/blaze3d/platform/Window;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/GuiGraphics;)V.
+ Expected: [I, I, Lcom/mojang/blaze3d/platform/Window;, Lorg/joml/Matrix4f;, Lcom/mojang/blaze3d/vertex/PoseStack;, Lnet/minecraft/client/gui/GuiGraphics;]
+    Found: [I, I, Lcom/mojang/blaze3d/platform/Window;, F, Lorg/joml/Matrix4f;, Lcom/mojang/blaze3d/vertex/PoseStack;]
+Available: [I, I, Lcom/mojang/blaze3d/platform/Window;, F, Lorg/joml/Matrix4f;, Lcom/mojang/blaze3d/vertex/PoseStack;, F, Lnet/minecraft/client/gui/GuiGraphics;, Ljava/lang/Throwable;, Lnet/minecraft/CrashReport;, Lnet/minecraft/CrashReportCategory;]
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.injection.callback.CallbackInjector.inject(CallbackInjector.java:497)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.injection.callback.CallbackInjector.inject(CallbackInjector.java:447)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.injection.code.Injector.inject(Injector.java:276)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.injection.struct.InjectionInfo.inject(InjectionInfo.java:445)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinTargetContext.applyInjections(MixinTargetContext.java:1355)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyInjections(MixinApplicatorStandard.java:1051)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMixin(MixinApplicatorStandard.java:400)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:325)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:383)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:365)
+	at MC-BOOTSTRAP/org.spongepowered.mixin/org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:363)
+	... 36 more

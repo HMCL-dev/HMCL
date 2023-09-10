@@ -37,6 +37,8 @@ import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.java.JavaDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
+import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
@@ -129,6 +131,10 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
                 } else if (task instanceof FabricAPIInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric-api")));
+                } else if (task instanceof QuiltInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.quilt")));
+                } else if (task instanceof QuiltAPIInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.quilt-api")));
                 } else if (task instanceof CurseCompletionTask || task instanceof ModrinthCompletionTask || task instanceof ServerModpackCompletionTask || task instanceof McbbsModpackCompletionTask) {
                     task.setName(i18n("modpack.completion"));
                 } else if (task instanceof ModpackInstallTask) {
@@ -256,21 +262,21 @@ public final class TaskListPane extends StackPane {
             BorderPane.setMargin(title, new Insets(0, 0, 0, 8));
             setPadding(new Insets(0, 0, 8, 4));
             setCenter(title);
-            setLeft(FXUtils.limitingSize(SVG.dotsHorizontal(Theme.blackFillBinding(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.DOTS_HORIZONTAL.createIcon(Theme.blackFill(), 14, 14), 14, 14));
         }
 
         public void begin() {
             if (started) return;
             started = true;
-            setLeft(FXUtils.limitingSize(SVG.arrowRight(Theme.blackFillBinding(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), 14, 14), 14, 14));
         }
 
         public void fail() {
-            setLeft(FXUtils.limitingSize(SVG.close(Theme.blackFillBinding(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14), 14, 14));
         }
 
         public void succeed() {
-            setLeft(FXUtils.limitingSize(SVG.check(Theme.blackFillBinding(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.CHECK.createIcon(Theme.blackFill(), 14, 14), 14, 14));
         }
 
         public void count() {

@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util.skin;
 
-import java.awt.image.BufferedImage;
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 
 /**
  * Describes a Minecraft 1.8+ skin (64x64).
@@ -27,26 +30,29 @@ import java.awt.image.BufferedImage;
  */
 public class NormalizedSkin {
 
-    private static void copyImage(BufferedImage src, BufferedImage dst, int sx, int sy, int dx, int dy, int w, int h, boolean flipHorizontal) {
+    private static void copyImage(Image src, WritableImage dst, int sx, int sy, int dx, int dy, int w, int h, boolean flipHorizontal) {
+        PixelReader reader = src.getPixelReader();
+        PixelWriter writer = dst.getPixelWriter();
+
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int pixel = src.getRGB(sx + x, sy + y);
-                dst.setRGB(dx + (flipHorizontal ? w - x - 1 : x), dy + y, pixel);
+                int pixel = reader.getArgb(sx + x, sy + y);
+                writer.setArgb(dx + (flipHorizontal ? w - x - 1 : x), dy + y, pixel);
             }
         }
     }
 
-    private final BufferedImage texture;
-    private final BufferedImage normalizedTexture;
+    private final Image texture;
+    private final WritableImage normalizedTexture;
     private final int scale;
     private final boolean oldFormat;
 
-    public NormalizedSkin(BufferedImage texture) throws InvalidSkinException {
+    public NormalizedSkin(Image texture) throws InvalidSkinException {
         this.texture = texture;
 
         // check format
-        int w = texture.getWidth();
-        int h = texture.getHeight();
+        int w = (int) texture.getWidth();
+        int h = (int) texture.getHeight();
         if (w % 64 != 0) {
             throw new InvalidSkinException("Invalid size " + w + "x" + h);
         }
@@ -61,7 +67,7 @@ public class NormalizedSkin {
         // compute scale
         scale = w / 64;
 
-        normalizedTexture = new BufferedImage(w, w, BufferedImage.TYPE_INT_ARGB);
+        normalizedTexture = new WritableImage(w, w);
         copyImage(texture, normalizedTexture, 0, 0, 0, 0, w, h, false);
         if (oldFormat) {
             convertOldSkin();
@@ -87,11 +93,11 @@ public class NormalizedSkin {
         copyImage(normalizedTexture, normalizedTexture, sx * scale, sy * scale, dx * scale, dy * scale, w * scale, h * scale, flipHorizontal);
     }
 
-    public BufferedImage getOriginalTexture() {
+    public Image getOriginalTexture() {
         return texture;
     }
 
-    public BufferedImage getNormalizedTexture() {
+    public Image getNormalizedTexture() {
         return normalizedTexture;
     }
 
@@ -103,10 +109,6 @@ public class NormalizedSkin {
         return oldFormat;
     }
 
-    /**
-     * Tests whether the skin is slim.
-     * Note that this method doesn't guarantee the result is correct.
-     */
     public boolean isSlim() {
         return (hasTransparencyRelative(50, 16, 2, 4) ||
                 hasTransparencyRelative(54, 20, 2, 12) ||
@@ -119,13 +121,14 @@ public class NormalizedSkin {
     }
 
     private boolean hasTransparencyRelative(int x0, int y0, int w, int h) {
+        PixelReader reader = normalizedTexture.getPixelReader();
         x0 *= scale;
         y0 *= scale;
         w *= scale;
         h *= scale;
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int pixel = normalizedTexture.getRGB(x0 + x, y0 + y);
+                int pixel = reader.getArgb(x0 + x, y0 + y);
                 if (pixel >>> 24 != 0xff) {
                     return true;
                 }
@@ -135,13 +138,14 @@ public class NormalizedSkin {
     }
 
     private boolean isAreaBlackRelative(int x0, int y0, int w, int h) {
+        PixelReader reader = normalizedTexture.getPixelReader();
         x0 *= scale;
         y0 *= scale;
         w *= scale;
         h *= scale;
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int pixel = normalizedTexture.getRGB(x0 + x, y0 + y);
+                int pixel = reader.getArgb(x0 + x, y0 + y);
                 if (pixel != 0xff000000) {
                     return false;
                 }

@@ -207,7 +207,7 @@ public class InstallerItem extends Control {
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.imageUrl != null) {
-                ImageView view = new ImageView(new Image(control.imageUrl, 32, 32, true, true));
+                ImageView view = new ImageView(new Image(control.imageUrl));
                 Node node = FXUtils.limitingSize(view, 32, 32);
                 node.setMouseTransparent(true);
                 node.getStyleClass().add("installer-item-image");
@@ -252,7 +252,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton closeButton = new JFXButton();
-            closeButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
+            closeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1));
             closeButton.getStyleClass().add("toggle-icon4");
             closeButton.visibleProperty().bind(control.removable);
             closeButton.managedProperty().bind(closeButton.visibleProperty());
@@ -261,8 +261,8 @@ public class InstallerItem extends Control {
 
             JFXButton arrowButton = new JFXButton();
             arrowButton.graphicProperty().bind(Bindings.createObjectBinding(() -> control.upgradable.get()
-                            ? SVG.update(Theme.blackFillBinding(), -1, -1)
-                            : SVG.arrowRight(Theme.blackFillBinding(), -1, -1),
+                            ? SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1)
+                            : SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1),
                     control.upgradable));
             arrowButton.getStyleClass().add("toggle-icon4");
             arrowButton.visibleProperty().bind(Bindings.createBooleanBinding(

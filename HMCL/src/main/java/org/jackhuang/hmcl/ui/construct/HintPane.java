@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
+import java.util.Locale;
+
 public class HintPane extends VBox {
     private final Text label = new Text();
     private final StringProperty text = new SimpleStringProperty(this, "text");
@@ -42,32 +44,31 @@ public class HintPane extends VBox {
 
     public HintPane(MessageDialogPane.MessageType type) {
         setFillWidth(true);
-        getStyleClass().addAll("hint", type.name().toLowerCase());
-        HBox hbox = new HBox();
-        hbox.setAlignment(Pos.CENTER_LEFT);
+        getStyleClass().addAll("hint", type.name().toLowerCase(Locale.ROOT));
 
+        SVG svg;
         switch (type) {
             case INFO:
-                hbox.getChildren().add(SVG.informationOutline(Theme.blackFillBinding(), 16, 16));
+                svg = SVG.INFORMATION_OUTLINE;
                 break;
             case ERROR:
-                hbox.getChildren().add(SVG.closeCircleOutline(Theme.blackFillBinding(), 16, 16));
+                svg = SVG.CLOSE_CIRCLE_OUTLINE;
                 break;
             case SUCCESS:
-                hbox.getChildren().add(SVG.checkCircleOutline(Theme.blackFillBinding(), 16, 16));
+                svg = SVG.CHECK_CIRCLE_OUTLINE;
                 break;
             case WARNING:
-                hbox.getChildren().add(SVG.alertOutline(Theme.blackFillBinding(), 16, 16));
+                svg = SVG.ALERT_OUTLINE;
                 break;
             case QUESTION:
-                hbox.getChildren().add(SVG.helpCircleOutline(Theme.blackFillBinding(), 16, 16));
+                svg = SVG.HELP_CIRCLE_OUTLINE;
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
 
-
-        hbox.getChildren().add(new Text(type.getDisplayName()));
+        HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16, 16), new Text(type.getDisplayName()));
+        hbox.setAlignment(Pos.CENTER_LEFT);
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);
         label.textProperty().bind(text);

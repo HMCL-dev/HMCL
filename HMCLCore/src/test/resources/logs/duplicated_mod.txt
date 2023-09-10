@@ -1,0 +1,135 @@
+﻿[14:54:54] [main/INFO]: Loading tweak class name net.minecraftforge.fml.common.launcher.FMLTweaker
+[14:54:54] [main/INFO]: Using primary tweak class name net.minecraftforge.fml.common.launcher.FMLTweaker
+[14:54:54] [main/INFO]: Loading tweak class name optifine.OptiFineForgeTweaker
+[14:54:54] [main/INFO]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLTweaker
+[14:54:54] [main/INFO]: Forge Mod Loader version 14.23.5.2860 for Minecraft 1.12.2 loading
+[14:54:54] [main/INFO]: Java is Java HotSpot(TM) 64-Bit Server VM, version 1.8.0_51, running on Windows 8.1:amd64:6.3, installed at C:\Users\FIREBAT\AppData\Roaming\.minecraft\cache\java\jre-legacy\windows-x64\jre-legacy
+[14:54:54] [main/INFO]: Searching A:\MC启动器\..\MC\versions\1.12.2\mods for mods
+[14:54:54] [main/WARN]: Found FMLCorePluginContainsFMLMod marker in 4633763120329575466@3@16.jar. This is not recommended, @Mods should be in a separate jar from the coremod.
+[14:54:54] [main/WARN]: The coremod atomicstryker.dynamiclights.common.DLFMLCorePlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[14:54:54] [main/WARN]: The coremod DLFMLCorePlugin (atomicstryker.dynamiclights.common.DLFMLCorePlugin) is not signed!
+[14:54:54] [main/WARN]: Found FMLCorePluginContainsFMLMod marker in Bloodmoon-MC1.12.2-1.5.3.jar. This is not recommended, @Mods should be in a separate jar from the coremod.
+[14:54:54] [main/WARN]: The coremod lumien.bloodmoon.asm.LoadingPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[14:54:54] [main/WARN]: Found FMLCorePluginContainsFMLMod marker in ftb-ultimine-1202.3.5.jar. This is not recommended, @Mods should be in a separate jar from the coremod.
+[14:54:54] [main/WARN]: The coremod FTBUltimineASM (com.feed_the_beast.mods.ftbultimine.FTBUltimineLoadingPlugin) is not signed!
+[14:54:54] [main/WARN]: Found FMLCorePluginContainsFMLMod marker in InventoryTweaks-1.64+dev.146.jar. This is not recommended, @Mods should be in a separate jar from the coremod.
+[14:54:54] [main/WARN]: The coremod invtweaks.forge.asm.FMLPlugin does not have a MCVersion annotation, it may cause issues with this version of Minecraft
+[14:54:54] [main/INFO]: Calling tweak class optifine.OptiFineForgeTweaker
+[14:54:54] [main/INFO]: [optifine.OptiFineForgeTweaker:dbg:56]: OptiFineForgeTweaker: acceptOptions
+[14:54:54] [main/INFO]: [optifine.OptiFineForgeTweaker:dbg:56]: OptiFineForgeTweaker: injectIntoClassLoader
+[14:54:54] [main/INFO]: [optifine.OptiFineClassTransformer:dbg:242]: OptiFine ClassTransformer
+[14:54:54] [main/INFO]: [optifine.OptiFineClassTransformer:dbg:242]: OptiFine ZIP file: A:\MC\libraries\optifine\OptiFine\1.12.2_HD_U_G6_pre1\OptiFine-1.12.2_HD_U_G6_pre1-installer.jar
+[14:54:54] [main/INFO]: Loading tweak class name net.minecraftforge.fml.common.launcher.FMLInjectionAndSortingTweaker
+[14:54:54] [main/INFO]: Loading tweak class name net.minecraftforge.fml.common.launcher.FMLDeobfTweaker
+[14:54:54] [main/INFO]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLInjectionAndSortingTweaker
+[14:54:54] [main/INFO]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLInjectionAndSortingTweaker
+[14:54:54] [main/INFO]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[14:54:55] [main/INFO]: Found valid fingerprint for Minecraft Forge. Certificate fingerprint e3c3d50c7c986df74c645c0ac54639741c90a557
+[14:54:55] [main/INFO]: Found valid fingerprint for Minecraft. Certificate fingerprint cd99959656f753dc28d863b46769f7f8fbaefcfc
+[14:54:55] [main/INFO]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[14:54:55] [main/INFO]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[14:54:55] [main/INFO]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[14:54:55] [main/INFO]: Calling tweak class net.minecraftforge.fml.common.launcher.FMLDeobfTweaker
+[14:54:56] [main/INFO]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[14:54:56] [main/INFO]: Calling tweak class net.minecraftforge.fml.relauncher.CoreModManager$FMLPluginWrapper
+[14:54:56] [main/INFO]: Loading tweak class name net.minecraftforge.fml.common.launcher.TerminalTweaker
+[14:54:56] [main/INFO]: Calling tweak class net.minecraftforge.fml.common.launcher.TerminalTweaker
+[14:54:56] [main/INFO]: [optifine.OptiFineForgeTweaker:dbg:56]: OptiFineForgeTweaker: getLaunchArguments
+[14:54:56] [main/INFO]: Launching wrapped minecraft {net.minecraft.client.main.Main}
+[14:54:56] [main/INFO]: [atomicstryker.dynamiclights.common.DLTransformer:handleWorldTransform:80]: **************** Dynamic Lights transform running on World, obf: true *********************** 
+[14:54:56] [main/INFO]: [atomicstryker.dynamiclights.common.DLTransformer:handleWorldTransform:91]: In target method a:(Let;Lana;)I, Patching!
+[14:54:56] [main/INFO]: [atomicstryker.dynamiclights.common.DLTransformer:handleWorldTransform:148]: Found ASTORE Node at index 19, is writing variable number: 3
+[14:54:56] [Client thread/INFO]: Setting user: liangg
+[14:54:58] [Client thread/INFO]: [OptiFine] *** Reflector Forge ***
+[14:54:58] [Client thread/INFO]: [OptiFine] *** Reflector Vanilla ***
+[14:54:58] [Client thread/WARN]: Skipping bad option: lastServer:
+[14:54:58] [Client thread/INFO]: LWJGL Version: 2.9.4
+[14:54:59] [Client thread/INFO]: [OptiFine] 
+[14:54:59] [Client thread/INFO]: [OptiFine] OptiFine_1.12.2_HD_U_G6_pre1
+[14:54:59] [Client thread/INFO]: [OptiFine] Build: 20210323-161358
+[14:54:59] [Client thread/INFO]: [OptiFine] OS: Windows 8.1 (amd64) version 6.3
+[14:54:59] [Client thread/INFO]: [OptiFine] Java: 1.8.0_51, Oracle Corporation
+[14:54:59] [Client thread/INFO]: [OptiFine] VM: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+[14:54:59] [Client thread/INFO]: [OptiFine] LWJGL: 2.9.4
+[14:54:59] [Client thread/INFO]: [OptiFine] OpenGL: NVIDIA GeForce RTX 3060 Laptop GPU/PCIe/SSE2, version 4.6.0 NVIDIA 522.25, NVIDIA Corporation
+[14:54:59] [Client thread/INFO]: [OptiFine] OpenGL Version: 4.6.0
+[14:54:59] [Client thread/INFO]: [OptiFine] Maximum texture size: 32768x32768
+[14:54:59] [VersionCheck/INFO]: [OptiFine] Checking for new version
+[14:54:59] [Client thread/INFO]: [Shaders] OpenGL Version: 4.6.0 NVIDIA 522.25
+[14:54:59] [Client thread/INFO]: [Shaders] Vendor:  NVIDIA Corporation
+[14:54:59] [Client thread/INFO]: [Shaders] Renderer: NVIDIA GeForce RTX 3060 Laptop GPU/PCIe/SSE2
+[14:54:59] [Client thread/INFO]: [Shaders] Capabilities:  2.0  2.1  3.0  3.2  4.0 
+[14:54:59] [Client thread/INFO]: [Shaders] GL_MAX_DRAW_BUFFERS: 8
+[14:54:59] [Client thread/INFO]: [Shaders] GL_MAX_COLOR_ATTACHMENTS_EXT: 8
+[14:54:59] [Client thread/INFO]: [Shaders] GL_MAX_TEXTURE_IMAGE_UNITS: 32
+[14:54:59] [Client thread/INFO]: [Shaders] Load shaders configuration.
+[14:54:59] [Client thread/INFO]: [Shaders] Loaded shaderpack: Dramatic+Skys+Demo+1.5.3.3.zip
+[14:54:59] [Client thread/INFO]: [OptiFine] [Shaders] Delayed loading of block mappings after resources are loaded
+[14:54:59] [Client thread/INFO]: [OptiFine] [Shaders] Delayed loading of item mappings after resources are loaded
+[14:54:59] [Client thread/INFO]: [OptiFine] [Shaders] Delayed loading of entity mappings after resources are loaded
+[14:54:59] [Client thread/INFO]: Forge Mod Loader has detected optifine OptiFine_1.12.2_HD_U_G6_pre1, enabling compatibility features
+[14:54:59] [Client thread/INFO]: -- System Details --
+Details:
+	Minecraft Version: 1.12.2
+	Operating System: Windows 8.1 (amd64) version 6.3
+	Java Version: 1.8.0_51, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 723938528 bytes (690 MB) / 1073741824 bytes (1024 MB) up to 8489271296 bytes (8096 MB)
+	JVM Flags: 11 total; -Xmx8096m -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32m -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:-DontCompileHugeMethods -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	IntCache: cache: 0, tcache: 0, allocated: 0, tallocated: 0
+	FML: 
+	Loaded coremods (and transformers): 
+FTBUltimineASM (ftb-ultimine-1202.3.5.jar)
+  
+DLFMLCorePlugin (4633763120329575466@3@16.jar)
+  atomicstryker.dynamiclights.common.DLTransformer
+Inventory Tweaks Coremod (InventoryTweaks-1.64+dev.146.jar)
+  invtweaks.forge.asm.ContainerTransformer
+LoadingPlugin (Bloodmoon-MC1.12.2-1.5.3.jar)
+  lumien.bloodmoon.asm.ClassTransformer
+	GL info: ' Vendor: 'NVIDIA Corporation' Version: '4.6.0 NVIDIA 522.25' Renderer: 'NVIDIA GeForce RTX 3060 Laptop GPU/PCIe/SSE2'
+[14:54:59] [Client thread/INFO]: MinecraftForge v14.23.5.2860 Initialized
+[14:54:59] [Client thread/INFO]: Starts to replace vanilla recipe ingredients with ore ingredients.
+[14:54:59] [Client thread/INFO]: Invalid recipe found with multiple oredict ingredients in the same ingredient...
+[14:54:59] [Client thread/INFO]: Replaced 1227 ore ingredients
+[14:54:59] [Client thread/INFO]: Searching A:\MC启动器\..\MC\versions\1.12.2\mods for mods
+[14:55:00] [Client thread/WARN]: Mod betterbuilderswands is missing the required element 'version' and a version.properties file could not be found. Falling back to metadata version 0.11.1
+[14:55:00] [VersionCheck/INFO]: [OptiFine] Version found: G5
+[14:55:00] [Client thread/WARN]: Mod codechickenlib is missing the required element 'version' and a version.properties file could not be found. Falling back to metadata version 3.2.3.358
+[14:55:00] [Client thread/WARN]: Mod ironchest is missing the required element 'version' and a version.properties file could not be found. Falling back to metadata version 1.12.2-7.0.67.844
+[14:55:01] [Client thread/FATAL]: Found a duplicate mod durabilityviewer at [A:\MC启动器\..\MC\versions\1.12.2\mods\DurabilityViewer-1.12-forge14.21.1.2387-1.6.jar, A:\MC启动器\..\MC\versions\1.12.2\mods\4659524562224055466@3@38.jar]
+[14:55:01] [Client thread/ERROR]: An exception was thrown, the game will display an error screen and halt.
+net.minecraftforge.fml.common.DuplicateModsFoundException: 
+Duplicate Mods:
+	durabilityviewer : A:\MC启动器\..\MC\versions\1.12.2\mods\DurabilityViewer-1.12-forge14.21.1.2387-1.6.jar
+	durabilityviewer : A:\MC启动器\..\MC\versions\1.12.2\mods\4659524562224055466@3@38.jar
+
+
+	at net.minecraftforge.fml.common.Loader.identifyDuplicates(Loader.java:466) ~[Loader.class:?]
+	at net.minecraftforge.fml.common.Loader.identifyMods(Loader.java:428) ~[Loader.class:?]
+	at net.minecraftforge.fml.common.Loader.loadMods(Loader.java:568) ~[Loader.class:?]
+	at net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:232) [FMLClientHandler.class:?]
+	at net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:467) [bib.class:?]
+	at net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:378) [bib.class:?]
+	at net.minecraft.client.main.Main.main(SourceFile:123) [Main.class:?]
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_51]
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_51]
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_51]
+	at java.lang.reflect.Method.invoke(Method.java:497) ~[?:1.8.0_51]
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:135) [launchwrapper-1.12.jar:?]
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:28) [launchwrapper-1.12.jar:?]
+[14:55:01] [Client thread/WARN]: EventBus 0 shutting down - future events will not be posted.
+[14:55:01] [Client thread/INFO]: Reloading ResourceManager: Default, 4621521193099187385@4@19.zip, 4638669915187065296@4@19.zip
+[14:55:01] [Client thread/WARN]: There were errors previously. Not beginning mod initialization phase
+[14:55:01] [Client thread/INFO]: [OptiFine] *** Reloading textures ***
+[14:55:01] [Client thread/INFO]: [OptiFine] Resource packs: 4621521193099187385@4@19.zip, 4638669915187065296@4@19.zip
+[14:55:01] [Thread-4/INFO]: Using sync timing. 200 frames of Display.update took 20405300 nanos
+[14:55:02] [Sound Library Loader/INFO]: Starting up SoundSystem...
+[14:55:02] [Thread-6/INFO]: Initializing LWJGL OpenAL
+[14:55:02] [Thread-6/INFO]: (The LWJGL binding of OpenAL.  For more information, see http://www.lwjgl.org)
+[14:55:02] [Thread-6/INFO]: OpenAL initialized.
+[14:55:02] [Client thread/INFO]: Narrator library for x64 successfully loaded
+[14:55:02] [Sound Library Loader/INFO]: Sound engine started
+[14:55:03] [Client thread/INFO]: [OptiFine] (Reflector) Class not present: mods.betterfoliage.client.BetterFoliageClient
+[14:55:03] [Client thread/INFO]: [OptiFine] *** Reloading custom textures ***
+[14:55:04] [Realms Notification Availability checker #1/INFO]: Could not authorize you against Realms server: Invalid session id

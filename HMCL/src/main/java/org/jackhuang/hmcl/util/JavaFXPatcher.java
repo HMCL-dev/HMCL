@@ -31,7 +31,7 @@ public final class JavaFXPatcher {
     private JavaFXPatcher() {
     }
 
-    public static void patch(Set<String> modules, Path... jarPaths) {
+    public static void patch(Set<String> modules, Path[] jarPaths, String[] addOpens) {
         LOG.info("No need to patch JavaFX with Java 8");
     }
 }

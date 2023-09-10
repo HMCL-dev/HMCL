@@ -26,8 +26,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -40,7 +40,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 public class GameCrashWindowTest {
 
     @Test
-    @Ignore
+    @Disabled
     public void test() throws Exception {
         JavaFXLauncher.start();
 

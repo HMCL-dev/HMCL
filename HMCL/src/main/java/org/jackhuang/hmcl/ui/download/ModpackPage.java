@@ -92,9 +92,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 
-                btnInstall = new JFXButton(i18n("button.install"));
-                btnInstall.getStyleClass().add("jfx-button-raised");
-                btnInstall.setButtonType(JFXButton.ButtonType.RAISED);
+                btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
                 btnInstall.setOnAction(e -> onInstall());
                 btnInstall.disableProperty().bind(createBooleanBinding(() -> !txtModpackName.validate(), txtModpackName.textProperty()));
                 descriptionPane.setRight(btnInstall);

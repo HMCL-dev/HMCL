@@ -23,6 +23,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
@@ -30,13 +31,10 @@ import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
@@ -217,23 +215,25 @@ public final class TexturesLoader {
 
     // ==== Avatar ====
     public static void drawAvatar(Canvas canvas, Image skin) {
-        canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        GraphicsContext g = canvas.getGraphicsContext2D();
+        g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
         int size = (int) canvas.getWidth();
         int scale = (int) skin.getWidth() / 64;
         int faceOffset = (int) Math.round(size / 18.0);
 
-        GraphicsContext g = canvas.getGraphicsContext2D();
         try {
             g.setImageSmoothing(false);
-            drawAvatarFX(g, skin, size, scale, faceOffset);
+            drawAvatar(g, skin, size, scale, faceOffset);
         } catch (NoSuchMethodError ignored) {
-            // Earlier JavaFX did not support GraphicsContext::setImageSmoothing, fallback to Java 2D
-            drawAvatarJ2D(g, skin, size, scale, faceOffset);
+            // Earlier JavaFX did not support GraphicsContext::setImageSmoothing
+            // In order to prevent the blurring caused by bilinear interpolation,
+            // we use the self-implemented nearest neighbor interpolation to scale
+            drawAvatarSlow(g, skin, size, scale, faceOffset);
         }
     }
 
-    private static void drawAvatarFX(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
+    private static void drawAvatar(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
         g.drawImage(skin,
                 8 * scale, 8 * scale, 8 * scale, 8 * scale,
                 faceOffset, faceOffset, size - 2 * faceOffset, size - 2 * faceOffset);
@@ -242,27 +242,33 @@ public final class TexturesLoader {
                 0, 0, size, size);
     }
 
-    private static void drawAvatarJ2D(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
-        BufferedImage bi = FXUtils.fromFXImage(skin);
+    private static void drawAvatarSlow(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
+        PixelReader reader = skin.getPixelReader();
+        PixelWriter writer = g.getPixelWriter();
+        drawImage(writer, reader,
+                8 * scale, 8 * scale, 8 * scale, 8 * scale,
+                faceOffset, faceOffset, size - 2 * faceOffset, size - 2 * faceOffset);
+        drawImage(writer, reader,
+                40 * scale, 8 * scale, 8 * scale, 8 * scale,
+                0, 0, size, size);
+    }
 
-        BufferedImage avatar = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = avatar.createGraphics();
+    /*
+     * Scale and draw image using nearest-neighbor interpolation
+     */
+    private static void drawImage(PixelWriter writer, PixelReader reader,
+                                  int sx, int sy, int sw, int sh,
+                                  int dx, int dy, int dw, int dh) {
+        double xScale = ((double) sw) / dw;
+        double yScale = ((double) sh) / dh;
 
-        g2d.drawImage(bi,
-                faceOffset, faceOffset, size - faceOffset, size - faceOffset,
-                8 * scale, 8 * scale, 16 * scale, 16 * scale,
-                null);
-        g2d.drawImage(bi,
-                0, 0, size, size,
-                40 * scale, 8 * scale, 48 * scale, 16 * scale, null);
+        for (int xOffset = 0; xOffset < dw; xOffset++) {
+            for (int yOffset = 0; yOffset < dh; yOffset++) {
+                int color = reader.getArgb(sx + (int) (xOffset * xScale), sy + (int) (yOffset * yScale));
 
-        g2d.dispose();
-
-        PixelWriter pw = g.getPixelWriter();
-
-        for (int x = 0; x < size; x++) {
-            for (int y = 0; y < size; y++) {
-                pw.setArgb(x, y, avatar.getRGB(x, y));
+                // Draw only non-transparent pixels
+                if ((color >>> 24) != 0)
+                    writer.setArgb(dx + xOffset, dy + yOffset, color);
             }
         }
     }

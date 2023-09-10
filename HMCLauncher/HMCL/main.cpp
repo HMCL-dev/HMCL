@@ -3,6 +3,7 @@
 #include "os.h"
 #include "java.h"
 #include "lang.h"
+#include <windows.h>
 
 Version J8(TEXT("8"));
 
@@ -47,6 +48,10 @@ void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &
     } while (FindNextFile(hFind, &data));
     FindClose(hFind);
   }
+}
+
+void OpenHelpPage() {
+    ShellExecute(0, 0, L"https://docs.hmcl.net/help.html", 0, 0, SW_SHOW);
 }
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,

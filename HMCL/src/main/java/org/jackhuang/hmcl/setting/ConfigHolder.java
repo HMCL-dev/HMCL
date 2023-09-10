@@ -22,8 +22,8 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -121,9 +121,8 @@ public final class ConfigHolder {
     private static Path locateConfig() {
         Path exePath = Paths.get("").toAbsolutePath();
         try {
-            Path jarPath = Paths.get(ConfigHolder.class.getProtectionDomain().getCodeSource().getLocation()
-                    .toURI()).toAbsolutePath();
-            if (Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
+            Path jarPath = JarUtils.thisJar().orElse(null);
+            if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
                 jarPath = jarPath.getParent();
                 exePath = jarPath;
 
@@ -208,28 +207,6 @@ public final class ConfigHolder {
     // Global Config
 
     private static GlobalConfig loadGlobalConfig() throws IOException {
-        // Migrate from old directory
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Files.notExists(GLOBAL_CONFIG_PATH)) {
-            Path oldHome;
-            String xdgCache = System.getenv("XDG_CACHE_HOME");
-            if (StringUtils.isNotBlank(xdgCache)) {
-                oldHome = Paths.get(xdgCache, "hmcl");
-            } else {
-                oldHome = Paths.get(System.getProperty("user.home", "."), ".cache", "hmcl");
-            }
-
-            if (Files.exists(oldHome)) {
-                Path oldConfigPath = oldHome.resolve("config.json");
-                if (Files.isRegularFile(oldConfigPath)) {
-                    try {
-                        Files.copy(oldConfigPath, GLOBAL_CONFIG_PATH);
-                    } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Failed to migrate global config", e);
-                    }
-                }
-            }
-        }
-
         if (Files.exists(GLOBAL_CONFIG_PATH)) {
             try {
                 String content = FileUtils.readText(GLOBAL_CONFIG_PATH);

@@ -1,0 +1,2 @@
+﻿Error occurred during initialization of VM
+Could not reserve enough space for 3571712KB object heap

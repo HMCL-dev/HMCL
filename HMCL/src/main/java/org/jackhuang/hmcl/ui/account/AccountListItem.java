@@ -25,6 +25,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
+import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -47,9 +48,8 @@ import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
@@ -167,14 +167,14 @@ public class AccountListItem extends RadioButton {
 
         return refreshAsync()
                 .thenRunAsync(() -> {
-                    BufferedImage skinImg;
-                    try {
-                        skinImg = ImageIO.read(selectedFile);
+                    Image skinImg;
+                    try (FileInputStream input = new FileInputStream(selectedFile)) {
+                        skinImg = new Image(input);
                     } catch (IOException e) {
                         throw new InvalidSkinException("Failed to read skin image", e);
                     }
-                    if (skinImg == null) {
-                        throw new InvalidSkinException("Failed to read skin image");
+                    if (skinImg.isError()) {
+                        throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
                     }
                     NormalizedSkin skin = new NormalizedSkin(skinImg);
                     String model = skin.isSlim() ? "slim" : "";

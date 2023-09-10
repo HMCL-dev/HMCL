@@ -91,6 +91,8 @@ public class ServerModpackExportTask extends Task<Void> {
                     addons.add(new ServerModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
                     addons.add(new ServerModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
+            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
+                    addons.add(new ServerModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
             ServerModpackManifest manifest = new ServerModpackManifest(exportInfo.getName(), exportInfo.getAuthor(), exportInfo.getVersion(), exportInfo.getDescription(), StringUtils.removeSuffix(exportInfo.getFileApi(), "/"), files, addons);
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }

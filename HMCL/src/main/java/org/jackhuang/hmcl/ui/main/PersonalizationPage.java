@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXScrollPane;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
@@ -56,7 +55,7 @@ public class PersonalizationPage extends StackPane {
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(content);
-        JFXScrollPane.smoothScrolling(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
         scrollPane.setFitToWidth(true);
         getChildren().setAll(scrollPane);
 
@@ -88,6 +87,12 @@ public class PersonalizationPage extends StackPane {
             themeList.getContent().add(titleTransparentButton);
             titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+        }
+        {
+            OptionToggleButton animationButton = new OptionToggleButton();
+            themeList.getContent().add(animationButton);
+            animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
+            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
         }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
@@ -197,7 +202,7 @@ public class PersonalizationPage extends StackPane {
 
                         JFXButton clearButton = new JFXButton();
                         clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.restore(Theme.blackFillBinding(), -1, -1));
+                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1, -1));
                         clearButton.setOnAction(e -> config().setLauncherFontFamily(null));
 
                         hBox.getChildren().setAll(cboFont, clearButton);

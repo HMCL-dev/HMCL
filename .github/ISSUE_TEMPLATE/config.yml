@@ -10,5 +10,5 @@ contact_links:
     url: https://afdian.net/@huanghongxun
     about: 前往爱发电赞助 HMCL。赞助后可以申请加入官方 QQ 群反馈问题。
   - name: 其他反馈
-    url: https://github.com/huanghongxun/HMCL/issues/new
-    about: 通过 Issue 反馈其他问题。
+    url: https://github.com/huanghongxun/HMCL/discussions/new/choose
+    about: 通过 Discussions 反馈其他问题。

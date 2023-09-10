@@ -63,7 +63,7 @@ public final class Artifact {
         String fileName = this.name + "-" + this.version;
         if (classifier != null) fileName += "-" + this.classifier;
         this.fileName = fileName + "." + this.extension;
-        this.path = String.format("%s/%s/%s/%s", this.group.replace(".", "/"), this.name, this.version, this.fileName);
+        this.path = String.format("%s/%s/%s/%s", this.group.replace('.', '/'), this.name, this.version, this.fileName);
 
         // group:name:version:classifier@extension
         String descriptor = String.format("%s:%s:%s", group, name, version);
@@ -87,7 +87,7 @@ public final class Artifact {
             throw new IllegalArgumentException("Artifact name is malformed");
         }
 
-        return new Artifact(arr[0].replace("\\", "/"), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, ext);
+        return new Artifact(arr[0].replace('\\', '/'), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, ext);
     }
 
     public String getGroup() {

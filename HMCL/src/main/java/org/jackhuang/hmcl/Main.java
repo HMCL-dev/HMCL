@@ -20,10 +20,10 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -56,10 +56,8 @@ public final class Main {
 
     public static void main(String[] args) {
         System.setProperty("java.net.useSystemProxies", "true");
-        System.setProperty("http.agent", "HMCL/" + Metadata.VERSION);
         System.setProperty("javafx.autoproxy.disable", "true");
-        // Fix title bar not displaying in GTK systems
-        System.setProperty("jdk.gtk.version", "2");
+        System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         checkDirectoryPath();
 
@@ -73,6 +71,8 @@ public final class Main {
         Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
         checkJavaFX();
+        verifyJavaFX();
+        detectFractureiser();
 
         Launcher.main(args);
     }
@@ -91,6 +91,13 @@ public final class Main {
         }
     }
 
+    private static void detectFractureiser() {
+        if (FractureiserDetector.detect()) {
+            LOG.log(Level.SEVERE, "Detected that this computer is infected by fractureiser");
+            showErrorAndExit(i18n("fatal.fractureiser"));
+        }
+    }
+
     private static void checkJavaFX() {
         try {
             SelfDependencyPatcher.patch();
@@ -99,15 +106,23 @@ public final class Main {
             showErrorAndExit(i18n("fatal.javafx.missing"));
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
             LOG.log(Level.SEVERE, "unable to patch JVM", e);
-            if (Architecture.CURRENT_ARCH == Architecture.MIPS64EL
-                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64
-                    || Architecture.CURRENT_ARCH == Architecture.LOONGARCH64_OW)
-                showErrorAndExit(i18n("fatal.javafx.incompatible.loongson"));
-            else
-                showErrorAndExit(i18n("fatal.javafx.incompatible"));
+            showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
             LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
             System.exit(0);
+        }
+    }
+
+    /**
+     * Check if JavaFX exists but is incomplete
+     */
+    private static void verifyJavaFX() {
+        try {
+            Class.forName("javafx.beans.binding.Binding"); // javafx.base
+            Class.forName("javafx.stage.Stage");           // javafx.graphics
+            Class.forName("javafx.scene.control.Skin");    // javafx.controls
+        } catch (Exception e) {
+            showErrorAndExit(i18n("fatal.javafx.incomplete"));
         }
     }
 

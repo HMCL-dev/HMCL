@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -85,7 +86,6 @@ public final class Accounts {
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final BoundAuthlibInjectorAccountFactory FACTORY_LITTLE_SKIN = getAccountFactoryByAuthlibInjectorServer(new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/"));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
@@ -183,7 +183,7 @@ public final class Accounts {
                 globalAccountStorages.setAll((List<Map<Object, Object>>)
                         Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
                         }.getType()));
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 LOG.log(Level.WARNING, "Failed to load global accounts", e);
             }
         }
@@ -226,6 +226,16 @@ public final class Accounts {
     static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
+
+        if (!config().isAddedLittleSkin()) {
+            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
+
+            if (config().getAuthlibInjectorServers().stream().noneMatch(it -> littleSkin.getUrl().equals(it.getUrl()))) {
+                config().getAuthlibInjectorServers().add(0, littleSkin);
+            }
+
+            config().setAddedLittleSkin(true);
+        }
 
         loadGlobalAccountStorages();
 
@@ -316,23 +326,13 @@ public final class Accounts {
             Schedulers.io().execute(() -> {
                 try {
                     finalSelected.logIn();
-                } catch (AuthenticationException e) {
+                } catch (Throwable e) {
                     LOG.log(Level.WARNING, "Failed to log " + finalSelected + " in", e);
                 }
             });
         }
 
-        if (!config().getAuthlibInjectorServers().isEmpty()) {
-            triggerAuthlibInjectorUpdateCheck();
-        }
-
-        Schedulers.io().execute(() -> {
-            try {
-                FACTORY_LITTLE_SKIN.getServer().fetchMetadataResponse();
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to fetch authlib-injector server metdata: " + FACTORY_LITTLE_SKIN.getServer(), e);
-            }
-        });
+        triggerAuthlibInjectorUpdateCheck();
 
         for (AuthlibInjectorServer server : config().getAuthlibInjectorServers()) {
             if (selected instanceof AuthlibInjectorAccount && ((AuthlibInjectorAccount) selected).getServer() == server)
@@ -428,7 +428,11 @@ public final class Accounts {
         if (exception instanceof NoCharacterException) {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
-            return i18n("account.failed.connect_authentication_server");
+            if (exception.getCause() instanceof SSLException) {
+                return i18n("account.failed.ssl");
+            } else {
+                return i18n("account.failed.connect_authentication_server");
+            }
         } else if (exception instanceof ServerResponseMalformedException) {
             return i18n("account.failed.server_response_malformed");
         } else if (exception instanceof RemoteAuthenticationException) {

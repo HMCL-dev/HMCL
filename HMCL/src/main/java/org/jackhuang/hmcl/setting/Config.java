@@ -158,13 +158,16 @@ public final class Config implements Cloneable, Observable {
     private StringProperty launcherFontFamily = new SimpleStringProperty();
 
     @SerializedName("logLines")
-    private IntegerProperty logLines = new SimpleIntegerProperty(100);
+    private IntegerProperty logLines = new SimpleIntegerProperty(1000);
 
     @SerializedName("titleTransparent")
     private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
 
     @SerializedName("authlibInjectorServers")
     private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
+
+    @SerializedName("addedLittleSkin")
+    private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
 
     @SerializedName("promptedVersion")
     private StringProperty promptedVersion = new SimpleStringProperty();
@@ -187,6 +190,12 @@ public final class Config implements Cloneable, Observable {
      */
     @SerializedName("preferredLoginType")
     private StringProperty preferredLoginType = new SimpleStringProperty();
+
+    @SerializedName("animationDisabled")
+    private BooleanProperty animationDisabled = new SimpleBooleanProperty();
+
+    @SerializedName("shownTips")
+    private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
     private transient ObservableHelper helper = new ObservableHelper(this);
 
@@ -550,6 +559,18 @@ public final class Config implements Cloneable, Observable {
         return authlibInjectorServers;
     }
 
+    public boolean isAddedLittleSkin() {
+        return addedLittleSkin.get();
+    }
+
+    public BooleanProperty addedLittleSkinProperty() {
+        return addedLittleSkin;
+    }
+
+    public void setAddedLittleSkin(boolean addedLittleSkin) {
+        this.addedLittleSkin.set(addedLittleSkin);
+    }
+
     public int getConfigVersion() {
         return configVersion.get();
     }
@@ -586,6 +607,18 @@ public final class Config implements Cloneable, Observable {
         return preferredLoginType;
     }
 
+    public boolean isAnimationDisabled() {
+        return animationDisabled.get();
+    }
+
+    public BooleanProperty animationDisabledProperty() {
+        return animationDisabled;
+    }
+
+    public void setAnimationDisabled(boolean animationDisabled) {
+        this.animationDisabled.set(animationDisabled);
+    }
+
     public boolean isTitleTransparent() {
         return titleTransparent.get();
     }
@@ -608,5 +641,9 @@ public final class Config implements Cloneable, Observable {
 
     public void setPromptedVersion(String promptedVersion) {
         this.promptedVersion.set(promptedVersion);
+    }
+
+    public ObservableMap<String, Object> getShownTips() {
+        return shownTips;
     }
 }

@@ -23,10 +23,10 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Supports operations on versioning.
@@ -250,8 +250,8 @@ public interface GameRepository extends VersionProvider {
      */
     Path getLoggingObject(String version, String assetId, LoggingInfo loggingInfo);
 
-    default List<String> getClasspath(Version version) {
-        List<String> classpath = new ArrayList<>();
+    default Set<String> getClasspath(Version version) {
+        Set<String> classpath = new LinkedHashSet<>();
         for (Library library : version.getLibraries())
             if (library.appliesToCurrentEnvironment() && !library.isNative()) {
                 File f = getLibraryFile(version, library);

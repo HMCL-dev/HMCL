@@ -35,6 +35,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.FileItem;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
@@ -133,12 +134,10 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
         savePane.setStyle("-fx-padding: 20;");
         StackPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
         {
-            JFXButton saveButton = new JFXButton(i18n("button.save"));
+            JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
             savePane.setRight(saveButton);
             BorderPane.setAlignment(savePane, Pos.BOTTOM_RIGHT);
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
-            saveButton.getStyleClass().add("jfx-button-raised");
-            saveButton.setButtonType(JFXButton.ButtonType.RAISED);
             saveButton.setPrefSize(100, 40);
             saveButton.setOnAction(e -> onSave());
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(

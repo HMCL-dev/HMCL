@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXScrollPane;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -56,7 +55,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 Bindings.bindContent(list.getChildren(), skinnable.itemsProperty());
 
                 scrollPane.setContent(content);
-                JFXScrollPane.smoothScrolling(scrollPane);
+                FXUtils.smoothScrolling(scrollPane);
             }
             
             VBox vBox = new VBox();
@@ -70,7 +69,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 FXUtils.setLimitHeight(btnAdd, 40);
                 btnAdd.getStyleClass().add("jfx-button-raised-round");
                 btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
-                btnAdd.setGraphic(SVG.plus(Theme.whiteFillBinding(), -1, -1));
+                btnAdd.setGraphic(SVG.PLUS.createIcon(Theme.whiteFill(), -1, -1));
                 btnAdd.setOnMouseClicked(e -> skinnable.add());
 
                 JFXButton btnRefresh = new JFXButton();
@@ -78,7 +77,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 FXUtils.setLimitHeight(btnRefresh, 40);
                 btnRefresh.getStyleClass().add("jfx-button-raised-round");
                 btnRefresh.setButtonType(JFXButton.ButtonType.RAISED);
-                btnRefresh.setGraphic(SVG.refresh(Theme.whiteFillBinding(), -1, -1));
+                btnRefresh.setGraphic(SVG.REFRESH.createIcon(Theme.whiteFill(), -1, -1));
                 btnRefresh.setOnMouseClicked(e -> skinnable.refresh());
 
                 vBox.getChildren().setAll(btnAdd);
