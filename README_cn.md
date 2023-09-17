@@ -47,6 +47,13 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS �
 
 请确保您至少安装了含有 JavaFX 8 的 Java. 建议使用 Liberica Full JDK 8 或更高版本.
 
+### 翻译文本
+为了让一些不能高效使用 Git 或 GitHub 的贡献者能够更改翻译文本，我们编写了一个机器人来在 GitHub 和 [Crowdin](https://crowdin.com/project/hello-minecraft-launcher) 间同步翻译。
+因此，如果你想要更改翻译文本，你需要遵守以下规则，否则你的更改可能会被忽略。
+* 添加新的翻译文本：在你的 Pull Request 中添加翻译文本和代码。
+* 修改已有的翻译文本：在 [Crowdin Editor](https://crowdin.com/project/hello-minecraft-launcher/) 中更改
+* 删除已有的翻译文本：在你的 Pull Request 中删除翻译文本和代码。
+
 ## JVM 选项 (用于调试)
 | 参数                                           | 简介                                                                                              |
 |----------------------------------------------|-------------------------------------------------------------------------------------------------|

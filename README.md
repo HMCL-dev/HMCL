@@ -49,6 +49,13 @@ Simply execute the following command in project root directory:
 
 Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or later is recommended.
 
+### I18N Translations
+In order to enable the contributors who cannot use Git or GitHub efficiently to modify I18N translations, we create a bot to synchronize all the translations between GitHub and [Crowdin](https://crowdin.com/project/hello-minecraft-launcher).
+Therefore, if you want to update the I18N files, you should follow these rules, or your modifications would be ignored.
+* Add new translations: Modify I18N files with your codes in your Pull Request.
+* Modify existed translations: Modify I18N in [Crowdin Editor](https://crowdin.com/project/hello-minecraft-launcher/).
+* Remove existed translations: Modify I18N files with your codes in your Pull Request.
+
 ## JVM Options (for debugging)
 | Parameter                                    | Description                                                                                                                       |
 |----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
