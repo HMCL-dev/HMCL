@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Immutable
-public final class QuiltModMetadata implements IModMetadataReader {
+public final class QuiltModMetadata {
     private static final class QuiltLoader {
         private static final class Metadata {
             private final String name;
@@ -49,12 +49,12 @@ public final class QuiltModMetadata implements IModMetadataReader {
     private final int schema_version;
     private final QuiltLoader quilt_loader;
 
-    public QuiltModMetadata() {
-        this.schema_version = -1;
-        this.quilt_loader = null;
+    public QuiltModMetadata(int schemaVersion, QuiltLoader quiltLoader) {
+        this.schema_version = schemaVersion;
+        this.quilt_loader = quiltLoader;
     }
 
-    public LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path path = fs.getPath("quilt.mod.json");
         if (Files.notExists(path)) {
             throw new IOException("File " + modFile + " is not a Quilt mod.");

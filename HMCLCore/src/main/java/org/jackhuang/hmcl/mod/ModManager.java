@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.mod.modinfo.*;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -29,18 +31,28 @@ import java.nio.file.*;
 import java.util.*;
 
 public final class ModManager {
-    private final Map<String, IModMetadataReader.MetadataReaderStorage> readers = IModMetadataReader.ofStorages(
-            IModMetadataReader.ofExtensions("zip", "jar").ofReaders(
-                    new ForgeOldModMetadata(),
-                    new ForgeNewModMetadata(),
-                    new FabricModMetadata(),
-                    new QuiltModMetadata(),
-                    new PackMcMeta()
-            ).ofDefaultDesc(""),
-            IModMetadataReader.ofExtensions("litemod").ofReaders(
-                    new LiteModMetadata()
-            ).ofDefaultDesc("LiteLoader Mod")
-    );
+    @FunctionalInterface
+    private interface ModMetadataReader {
+        LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException;
+    }
+
+    private static final Map<String, Pair<ModMetadataReader[], String>> READERS;
+
+    static {
+        TreeMap<String, Pair<ModMetadataReader[], String>> readers = new TreeMap<>();
+        readers.put("zip", Pair.pair(new ModMetadataReader[]{
+                ForgeOldModMetadata::fromFile,
+                ForgeNewModMetadata::fromFile,
+                FabricModMetadata::fromFile,
+                QuiltModMetadata::fromFile,
+                PackMcMeta::fromFile,
+        }, ""));
+        readers.put("jar", readers.get("zip"));
+        readers.put("litemod", Pair.pair(new ModMetadataReader[]{
+                LiteModMetadata::fromFile
+        }, "LiteLoader Mod"));
+        READERS = Collections.unmodifiableMap(readers);
+    }
 
     private final GameRepository repository;
     private final String id;
@@ -83,12 +95,13 @@ public final class ModManager {
     public LocalModFile getModInfo(Path modFile) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(modFile), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
-        if (!readers.containsKey(extension)) {
+        Pair<ModMetadataReader[], String> currentReader = READERS.get(extension);
+        if (currentReader == null) {
             throw new IllegalArgumentException("File " + modFile + " is not a mod file.");
         }
 
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            for (IModMetadataReader reader : readers.get(extension).getReaders()) {
+            for (ModMetadataReader reader : currentReader.getKey()) {
                 try {
                     return reader.fromFile(this, modFile, fs);
                 } catch (Exception ignore) {
@@ -101,7 +114,7 @@ public final class ModManager {
                 getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.UNKNOWN),
                 modFile,
                 FileUtils.getNameWithoutExtension(modFile),
-                new LocalModFile.Description(readers.get(extension).getDefaultDesc())
+                new LocalModFile.Description(currentReader.getValue())
         );
     }
 
@@ -270,6 +283,11 @@ public final class ModManager {
 
             if (Files.exists(fs.getPath("fabric.mod.json"))) {
                 // Fabric mod
+                return true;
+            }
+
+            if (Files.exists(fs.getPath("quilt.mod.json"))) {
+                // Quilt mod
                 return true;
             }
 
