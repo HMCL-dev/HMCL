@@ -1,6 +1,6 @@
 name: Bug Feedback
 description: 
-  反馈一个 HMCL 错误。 Bug Feedback.
+  反馈一个 HMCL 错误。| Bug Feedback.
 title: "[Bug] "
 labels: bug
 body:
@@ -8,22 +8,22 @@ body:
     attributes:
       value: |
         提交前请确认：
-        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U)中获取帮助。
+        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
         * 你的启动器版本是**最新的快照版本**，可以点击 [此处](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) 下载最新快照版本。
     
-        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U)中获取帮助。
-        如果你希望在 QQ 群中反馈问题，请[赞助 HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
+        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
+        如果你希望在 QQ 群中反馈问题，请 [赞助 HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
         
         Before submitting, please confirm:
         * The issue is indeed **an error of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
         * Your launcher version is **the latest snapshot version**. You can click [here](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) to download the latest snapshot version.
         
         If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
-        If you want to report a problem in the QQ group, please sponsor HMCL and apply to join the group chat. Please also fill in the information form below and send it directly in the group to speed up our communication.
+        If you want to report a problem in the QQ group, please [sponsor HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) and apply to join the group chat. Please also fill in the information form below and send it directly in the group to speed up our communication.
   - type: input
     id: platform
     attributes:
-      label: 平台 Platform 
+      label: 平台 | Platform
       description: 请输入您遇到 BUG 的平台。 Please enter the platform on which you encountered the bug. 
       placeholder: e.g. Windows 11
     validations:
@@ -31,19 +31,25 @@ body:
   - type: textarea
     id: bug-report
     attributes:
-      label: 问题描述 Problem Description
+      label: 问题描述 | Problem Description
       description: 请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。 Please describe the problem you met in as much detail as possible. Besides, please describe how to trigger this problem again.
+      placeholder: |
+        1. 点击 HMCL 上的某个按钮
+        2. 向下翻页
+        3. ...
     validations:
       required: true
   - type: textarea
     id: hmcl-crash-report-or-logs
     attributes:
-      label: 启动器崩溃报告 Launcher Crash Report / 启动器日志文件 Launcher Log File
+      label: 启动器崩溃报告 / 启动器日志文件 | Launcher Crash Report / Launcher Log File
       description: |
         如果您的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
         如果您的启动器没有崩溃，请在遇到问题后不要退出启动器，在启动器的【设置】>【通用】>【调试】一栏中点击“导出启动器日志”，并将导出的日志拖到下方的输入栏中。 
+        **请注意：启动器崩溃报告或日志文件是诊断问题的重要依据，请务必上传！**
         
         If your launcher crashes, please fill it in (or drag the file in) below.
         If your launcher doesn't crash, please DO NOT EXIT your launcher, click "Export Launcher Log" in the [Settings] > [General] > [Debug] column of the launcher, and drag the exported log to the input field below.
+        **Attention: The crash report or the log file is the key to solve the problem. Please update it!**
     validations:
       required: true
