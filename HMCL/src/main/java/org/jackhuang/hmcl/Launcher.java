@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
 import org.jackhuang.hmcl.upgrade.resource.RemoteResourceManager;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -291,6 +292,10 @@ public final class Launcher extends Application {
                     .orElse("Unknown"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
+
+            if (System.getProperty("hmcl.update_source.override") != null) {
+                Logging.LOG.log(Level.WARNING, "'hmcl.update_source.override' is deprecated! Please use 'hmcl.hmcl_update_source.override' instead");
+            }
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
