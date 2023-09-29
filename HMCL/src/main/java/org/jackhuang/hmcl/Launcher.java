@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Booting;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -46,6 +47,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Files;
@@ -66,6 +68,7 @@ public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
 
     @Override
+    @Booting
     public void start(Stage primaryStage) {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
 
@@ -254,6 +257,7 @@ public final class Launcher extends Application {
         Controllers.onApplicationStop();
     }
 
+    @Booting
     public static void main(String[] args) {
         if (UpdateHandler.processArguments(args)) {
             return;
@@ -272,14 +276,27 @@ public final class Launcher extends Application {
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + System.getProperty("user.dir"));
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
-            LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
+            Path thisJar = JarUtils.thisJarPath();
+            if (thisJar != null) {
+                LOG.info("HMCL Jar Path: " + thisJar);
+            } else {
+                LOG.info("HMCL Jar Path: Not Found");
+            }
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
             LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
-            LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
-                    .filter(bean -> bean.getName().equals("Metaspace"))
-                    .findAny()
-                    .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
-                    .orElse("Unknown"));
+            {
+                boolean foundMetaspace = false;
+                for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+                    if (bean.getName().equals("Metaspace")) {
+                        LOG.info("Metaspace: " + bean.getUsage().getUsed() / 1024 / 1024 + "MB");
+                        foundMetaspace = true;
+                        break;
+                    }
+                }
+                if (!foundMetaspace) {
+                    LOG.info("Metaspace: Unknown");
+                }
+            }
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
 

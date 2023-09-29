@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.Booting;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +40,8 @@ import java.util.regex.Pattern;
  *
  * @author huangyuhui
  */
+@SuppressWarnings("OptionalIsPresent")
+@Booting
 public enum OperatingSystem {
     /**
      * Microsoft Windows.
@@ -175,10 +179,12 @@ public enum OperatingSystem {
             SYSTEM_BUILD_NUMBER = -1;
         }
 
-        TOTAL_MEMORY = getPhysicalMemoryStatus()
-                .map(PhysicalMemoryStatus::getTotal)
-                .map(bytes -> (int) (bytes / 1024 / 1024))
-                .orElse(1024);
+        Optional<PhysicalMemoryStatus> memoryStatus = getPhysicalMemoryStatus();
+        if (memoryStatus.isPresent()) {
+            TOTAL_MEMORY = (int) (memoryStatus.get().getTotal() / 1024 / 1024);
+        } else {
+            TOTAL_MEMORY = 1024;
+        }
 
         SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
@@ -218,7 +224,6 @@ public enum OperatingSystem {
             return UNKNOWN;
     }
 
-    @SuppressWarnings("deprecation")
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
             try {
@@ -260,7 +265,6 @@ public enum OperatingSystem {
         return Optional.empty();
     }
 
-    @SuppressWarnings("removal")
     public static void forceGC() {
         System.gc();
         try {

@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.Booting;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -56,6 +57,7 @@ public final class UpdateHandler {
     /**
      * @return whether to exit
      */
+    @Booting
     public static boolean processArguments(String[] args) {
         breakForceUpdateFeature();
 
@@ -186,7 +188,11 @@ public final class UpdateHandler {
     }
 
     private static Path getCurrentLocation() throws IOException {
-        return JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
+        Path path = JarUtils.thisJarPath();
+        if (path == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
+        return path;
     }
 
     // ==== support for old versions ===
@@ -226,16 +232,17 @@ public final class UpdateHandler {
     }
 
     private static boolean isFirstLaunchAfterUpgrade() {
-        Optional<Path> currentPath = JarUtils.thisJar();
-        if (currentPath.isPresent()) {
+        Path currentPath = JarUtils.thisJarPath();
+        if (currentPath != null) {
             Path updated = Metadata.HMCL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
-            if (currentPath.get().toAbsolutePath().equals(updated.toAbsolutePath())) {
+            if (currentPath.equals(updated.toAbsolutePath())) {
                 return true;
             }
         }
         return false;
     }
 
+    @Booting
     private static void breakForceUpdateFeature() {
         Path hmclVersionJson = Metadata.HMCL_DIRECTORY.resolve("hmclver.json");
         if (Files.isRegularFile(hmclVersionJson)) {
@@ -253,5 +260,4 @@ public final class UpdateHandler {
             }
         }
     }
-    // ====
 }
