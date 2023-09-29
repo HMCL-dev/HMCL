@@ -40,7 +40,7 @@ public class CrashWindow extends Stage {
 
     public CrashWindow(CrashReport report) {
         Label lblCrash = new Label();
-        if (report.getThrowable() instanceof VirtualMachineError)
+        if (report.getThrowable() instanceof InternalError)
             lblCrash.setText(i18n("launcher.crash.java_internal_error"));
         else if (UpdateChecker.isOutdated())
             lblCrash.setText(i18n("launcher.crash.hmcl_out_dated"));
