@@ -14,7 +14,7 @@ public final class FractureiserDetector {
     private FractureiserDetector() {
     }
 
-    public static final class FractureiserException extends Exception {
+    private static final class FractureiserException extends Exception {
     }
 
     public static boolean detect() {
@@ -51,7 +51,7 @@ public final class FractureiserDetector {
 
     private static void check(Path path) throws FractureiserException {
         if (Files.isRegularFile(path)) {
-            throw new FractureiserException(); // No cache for this exception in order not to slow down the booting.
+            throw new FractureiserException();
         }
     }
 }
