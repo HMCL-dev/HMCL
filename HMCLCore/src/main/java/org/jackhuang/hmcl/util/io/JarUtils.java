@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import org.jackhuang.hmcl.util.Booting;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -30,7 +29,6 @@ import java.security.CodeSource;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-@Booting
 public final class JarUtils {
     private JarUtils() {
     }

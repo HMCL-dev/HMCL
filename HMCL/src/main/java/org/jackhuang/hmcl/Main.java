@@ -20,7 +20,6 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
-import org.jackhuang.hmcl.util.Booting;
 import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
@@ -50,7 +49,6 @@ import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-@Booting
 public final class Main {
 
     private Main() {

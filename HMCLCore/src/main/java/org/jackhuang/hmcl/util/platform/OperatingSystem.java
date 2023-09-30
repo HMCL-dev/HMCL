@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.Booting;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +39,6 @@ import java.util.regex.Pattern;
  * @author huangyuhui
  */
 @SuppressWarnings("OptionalIsPresent")
-@Booting
 public enum OperatingSystem {
     /**
      * Microsoft Windows.

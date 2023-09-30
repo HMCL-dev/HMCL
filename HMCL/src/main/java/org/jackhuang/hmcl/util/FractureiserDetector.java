@@ -10,7 +10,6 @@ import java.nio.file.Paths;
  * @see <a href="https://github.com/fractureiser-investigation/fractureiser">fractureiser-investigation/fractureiser</a>
  * @see <a href="https://prismlauncher.org/news/cf-compromised-alert/#automated-script">[MALWARE WARNING] "fractureiser" malware in many popular Minecraft mods and modpacks</a>
  */
-@Booting
 public final class FractureiserDetector {
     private FractureiserDetector() {
     }

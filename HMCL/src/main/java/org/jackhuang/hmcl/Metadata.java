@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl;
 
-import org.jackhuang.hmcl.util.Booting;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -28,7 +27,6 @@ import java.nio.file.Paths;
 /**
  * Stores metadata about this application.
  */
-@Booting
 public final class Metadata {
     private Metadata() {}
 

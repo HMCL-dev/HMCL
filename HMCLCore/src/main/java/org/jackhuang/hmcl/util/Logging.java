@@ -40,7 +40,6 @@ public final class Logging {
 
     private static final List<String> accessTokens = new ArrayList<>(16); // Allocate enough spaces in order not to trigger resize action.
 
-    @Booting
     public static synchronized void registerAccessToken(String token) {
         accessTokens.add(token);
     }
@@ -51,7 +50,6 @@ public final class Logging {
         return message;
     }
 
-    @Booting
     public static void start(Path logFolder) {
         LOG.setLevel(Level.ALL);
         LOG.setUseParentHandlers(false);

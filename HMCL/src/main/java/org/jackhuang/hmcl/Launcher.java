@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.Booting;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -68,7 +67,6 @@ public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
 
     @Override
-    @Booting
     public void start(Stage primaryStage) {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
 
@@ -257,7 +255,6 @@ public final class Launcher extends Application {
         Controllers.onApplicationStop();
     }
 
-    @Booting
     public static void main(String[] args) {
         if (UpdateHandler.processArguments(args)) {
             return;

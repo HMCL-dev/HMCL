@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.util.Booting;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -57,7 +56,6 @@ public final class UpdateHandler {
     /**
      * @return whether to exit
      */
-    @Booting
     public static boolean processArguments(String[] args) {
         breakForceUpdateFeature();
 
@@ -242,7 +240,6 @@ public final class UpdateHandler {
         return false;
     }
 
-    @Booting
     private static void breakForceUpdateFeature() {
         Path hmclVersionJson = Metadata.HMCL_DIRECTORY.resolve("hmclver.json");
         if (Files.isRegularFile(hmclVersionJson)) {
