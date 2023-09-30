@@ -29,7 +29,7 @@ data class Platform(
 }
 
 val jfxModules = listOf("base", "graphics", "controls", "media", "web")
-val jfxMirrorRepos = listOf("https://maven.aliyun.com/repository/central")
+val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
 val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
 val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86"),
