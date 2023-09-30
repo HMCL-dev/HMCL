@@ -21,13 +21,16 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * @author huangyuhui
@@ -87,15 +90,14 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         } else {
             lang = "zh_cn";
         }
-        
-        /*
+
         if (lang != null) {
             try {
-                FileUtils.writeText(optionsFile, String.format("lang:%s\nforceUnicodeFont:true\n", lang));
+                FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
             } catch (IOException e) {
                 Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
             }
-        }*/
+        }
     }
 
     private boolean findFiles(File folder, String fileName) {
