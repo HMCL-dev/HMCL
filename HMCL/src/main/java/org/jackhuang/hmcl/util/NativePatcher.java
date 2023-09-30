@@ -87,16 +87,19 @@ public final class NativePatcher {
 
         // Try patch natives
 
+        OperatingSystem os = javaVersion.getPlatform().getOperatingSystem();
+        Architecture arch = javaVersion.getArchitecture();
+        VersionNumber gameVersionNumber = gameVersion != null ? VersionNumber.asVersion(gameVersion) : null;
+
         if (settings.isNotPatchNatives())
             return version;
 
-        if (javaVersion.getArchitecture().isX86())
+        if (arch.isX86())
             return version;
 
-        if (javaVersion.getPlatform().getOperatingSystem() == OperatingSystem.OSX
-                && javaVersion.getArchitecture() == Architecture.ARM64
-                && gameVersion != null
-                && VersionNumber.VERSION_COMPARATOR.compare(gameVersion, "1.19") >= 0)
+        if ((os == OperatingSystem.OSX || os == OperatingSystem.WINDOWS) && arch == Architecture.ARM64
+                && gameVersionNumber != null
+                && gameVersionNumber.compareTo("1.19") >= 0)
             return version;
 
         Map<String, Library> replacements = getNatives(javaVersion.getPlatform());
