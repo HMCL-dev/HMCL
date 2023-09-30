@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Files;
@@ -273,27 +272,14 @@ public final class Launcher extends Application {
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + System.getProperty("user.dir"));
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
-            Path thisJar = JarUtils.thisJarPath();
-            if (thisJar != null) {
-                LOG.info("HMCL Jar Path: " + thisJar);
-            } else {
-                LOG.info("HMCL Jar Path: Not Found");
-            }
+            LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
             LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
-            {
-                boolean foundMetaspace = false;
-                for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-                    if (bean.getName().equals("Metaspace")) {
-                        LOG.info("Metaspace: " + bean.getUsage().getUsed() / 1024 / 1024 + "MB");
-                        foundMetaspace = true;
-                        break;
-                    }
-                }
-                if (!foundMetaspace) {
-                    LOG.info("Metaspace: Unknown");
-                }
-            }
+            LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
+                    .filter(bean -> bean.getName().equals("Metaspace"))
+                    .findAny()
+                    .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
+                    .orElse("Unknown"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
 

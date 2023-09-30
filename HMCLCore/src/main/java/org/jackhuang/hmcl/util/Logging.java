@@ -23,9 +23,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.*;
 
 /**
@@ -38,10 +37,15 @@ public final class Logging {
     public static final Logger LOG = Logger.getLogger("HMCL");
     private static final ByteArrayOutputStream storedLogs = new ByteArrayOutputStream(IOUtils.DEFAULT_BUFFER_SIZE);
 
-    private static final List<String> accessTokens = new ArrayList<>(16); // Allocate enough spaces in order not to trigger resize action.
+    private static volatile String[] accessTokens = new String[0];
 
     public static synchronized void registerAccessToken(String token) {
-        accessTokens.add(token);
+        final String[] oldAccessTokens = accessTokens;
+        final String[] newAccessTokens = Arrays.copyOf(oldAccessTokens, oldAccessTokens.length + 1);
+
+        newAccessTokens[oldAccessTokens.length] = token;
+
+        accessTokens = newAccessTokens;
     }
 
     public static String filterForbiddenToken(String message) {
