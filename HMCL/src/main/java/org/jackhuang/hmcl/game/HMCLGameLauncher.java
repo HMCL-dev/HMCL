@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
-import org.jackhuang.hmcl.launch.ProcessListener; org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.io.File;
 import java.io.IOException;
