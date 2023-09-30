@@ -23,7 +23,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.logging.*;
 
@@ -37,21 +36,63 @@ public final class Logging {
     public static final Logger LOG = Logger.getLogger("HMCL");
     private static final ByteArrayOutputStream storedLogs = new ByteArrayOutputStream(IOUtils.DEFAULT_BUFFER_SIZE);
 
-    private static volatile String[] accessTokens = new String[0];
+    private static volatile String[] accessTokens = new String[16];
+    private static volatile int accessTokenSize = 0;
 
     public static synchronized void registerAccessToken(String token) {
-        final String[] oldAccessTokens = accessTokens;
-        final String[] newAccessTokens = Arrays.copyOf(oldAccessTokens, oldAccessTokens.length + 1);
+        if (token == null) {
+            throw new NullPointerException("Cannot add a null access token");
+        }
+        for (int i = 0; i < accessTokenSize; i++) {
+            if (accessTokens[i].equals(token)) {
+                return;
+            }
+        }
+        if (accessTokens.length == accessTokenSize) {
+            final String[] oldAccessTokens = accessTokens;
+            final String[] newAccessTokens = new String[accessTokenSize + 1];
+            System.arraycopy(oldAccessTokens, 0, newAccessTokens, 0, accessTokenSize);
+            newAccessTokens[accessTokenSize] = token;
 
-        newAccessTokens[oldAccessTokens.length] = token;
-
-        accessTokens = newAccessTokens;
+            accessTokens = newAccessTokens;
+        } else {
+            accessTokens[accessTokenSize] = token;
+        }
+        accessTokenSize++;
     }
 
     public static String filterForbiddenToken(String message) {
-        for (String token : accessTokens)
-            message = message.replace(token, "<access token>");
-        return message;
+        // In registerAccessToken, we always modify accessTokenSize after accessTokens is already modified.
+        // Which means, if accessTokenSize is greater than 0, accessTokens always contain enough data,
+        //   which won't cause any useless copy action between StringBuilder and String.
+        if (accessTokenSize == 0) {
+            return message;
+        }
+
+        // Usually, the access token is longer than "<access token>", therefore, we're able to allocate enough space in advance.
+        StringBuilder first = new StringBuilder(message);
+        StringBuilder second = new StringBuilder(message.length());
+        for (String token : accessTokens) {
+            if (token == null) {
+                break;
+            }
+            int lastIndex = 0;
+            while (true) {
+                int index = first.indexOf(token, lastIndex);
+                if (index == -1) {
+                    second.append(first, lastIndex, first.length());
+                    break;
+                } else {
+                    second.append(first, lastIndex, index);
+                    second.append("<access token>");
+                    lastIndex = index + token.length();
+                }
+            }
+            StringBuilder tmp = first;
+            first = second;
+            second = tmp;
+        }
+        return first.toString();
     }
 
     public static void start(Path logFolder) {
