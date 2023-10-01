@@ -68,8 +68,8 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, File modpackFile) {
-        Optional<Path> launcherJar = JarUtils.thisJar();
-        boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar.isPresent();
+        Path launcherJar = JarUtils.thisJarPath();
+        boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
         return new Task<Object>() {
             File tempModpack;
             Task<?> exportTask;
@@ -141,7 +141,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     if (background_gif.isFile())
                         zip.putFile(background_gif, "background.gif");
 
-                    zip.putFile(launcherJar.get(), launcherJar.get().getFileName().toString());
+                    zip.putFile(launcherJar, launcherJar.getFileName().toString());
                 }
             }
         };
