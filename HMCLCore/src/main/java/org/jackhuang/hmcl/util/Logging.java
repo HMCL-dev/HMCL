@@ -70,7 +70,7 @@ public final class Logging {
         }
 
         // Usually, the access token is longer than "<access token>", therefore, we're able to allocate enough space in advance.
-        StringBuilder first = new StringBuilder(message);
+        StringBuilder first = new StringBuilder(message.length()).append(message);
         StringBuilder second = new StringBuilder(message.length());
         for (String token : accessTokens) {
             if (token == null) {
