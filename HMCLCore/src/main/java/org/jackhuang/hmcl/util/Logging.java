@@ -76,8 +76,8 @@ public final class Logging {
             if (token == null) {
                 break;
             }
-            int lastIndex = 0;
-            while (true) {
+
+            for (int lastIndex = 0;;) {
                 int index = first.indexOf(token, lastIndex);
                 if (index == -1) {
                     second.append(first, lastIndex, first.length());
@@ -104,6 +104,7 @@ public final class Logging {
         });
 
         DefaultFormatter formatter = new DefaultFormatter();
+
         try {
             if (Files.isRegularFile(logFolder))
                 Files.delete(logFolder);
