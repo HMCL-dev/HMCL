@@ -88,14 +88,14 @@ public final class SelfDependencyPatcher {
         final String customUrl = System.getProperty("hmcl.openjfx.repo");
         if (customUrl == null) {
             if (System.getProperty("user.country", "").equalsIgnoreCase("CN")) {
-                defaultRepository = Repository.ALIYUN_MIRROR;
+                defaultRepository = Repository.TENCENT_MIRROR;
             } else {
                 defaultRepository = Repository.MAVEN_CENTRAL;
             }
-            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.ALIYUN_MIRROR));
+            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.TENCENT_MIRROR));
         } else {
             defaultRepository = new Repository(String.format(i18n("repositories.custom"), customUrl), customUrl);
-            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.ALIYUN_MIRROR, defaultRepository));
+            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.TENCENT_MIRROR, defaultRepository));
         }
     }
 
@@ -150,7 +150,7 @@ public final class SelfDependencyPatcher {
 
     private static final class Repository {
         public static final Repository MAVEN_CENTRAL = new Repository(i18n("repositories.maven_central"), "https://repo1.maven.org/maven2");
-        public static final Repository ALIYUN_MIRROR = new Repository(i18n("repositories.aliyun_mirror"), "https://maven.aliyun.com/repository/central");
+        public static final Repository TENCENT_MIRROR = new Repository(i18n("repositories.tencent_mirror"), "https://mirrors.cloud.tencent.com/nexus/repository/maven-public");
 
         private final String name;
         private final String url;

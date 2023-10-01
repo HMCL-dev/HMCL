@@ -74,7 +74,7 @@ public final class ConfigHolder {
         return ownerChanged;
     }
 
-    public synchronized static void init() throws IOException {
+    public static void init() throws IOException {
         if (configInstance != null) {
             throw new IllegalStateException("Configuration is already loaded");
         }
@@ -121,7 +121,7 @@ public final class ConfigHolder {
     private static Path locateConfig() {
         Path exePath = Paths.get("").toAbsolutePath();
         try {
-            Path jarPath = JarUtils.thisJar().orElse(null);
+            Path jarPath = JarUtils.thisJarPath();
             if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
                 jarPath = jarPath.getParent();
                 exePath = jarPath;
