@@ -77,22 +77,30 @@ public final class Logging {
                 break;
             }
 
-            for (int lastIndex = 0;;) {
-                int index = first.indexOf(token, lastIndex);
-                if (index == -1) {
-                    second.append(first, lastIndex, first.length());
-                    break;
-                } else {
-                    second.append(first, lastIndex, index);
-                    second.append("<access token>");
-                    lastIndex = index + token.length();
-                }
-            }
+            filterForbiddenTokenInternal(first, second, token);
+
             StringBuilder tmp = first;
             first = second;
             second = tmp;
+
+            second.setLength(0);
         }
         return first.toString();
+    }
+
+    private static void filterForbiddenTokenInternal(StringBuilder source, StringBuilder target, String token) {
+        int lastIndex = 0;
+        while (true) {
+            int index = source.indexOf(token, lastIndex);
+            if (index == -1) {
+                target.append(source, lastIndex, source.length());
+                break;
+            } else {
+                target.append(source, lastIndex, index);
+                target.append("<access token>");
+                lastIndex = index + token.length();
+            }
+        }
     }
 
     public static void start(Path logFolder) {
