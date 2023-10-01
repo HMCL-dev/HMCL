@@ -163,7 +163,7 @@ public final class Main {
         SwingUtils.showWarningDialog(message);
     }
 
-    static void fixLetsEncrypt() {
+    private static void fixLetsEncrypt() {
         try {
             KeyStore defaultKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");

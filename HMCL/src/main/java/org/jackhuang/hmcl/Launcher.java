@@ -272,7 +272,7 @@ public final class Launcher extends Application {
             LOG.info("Java Home: " + System.getProperty("java.home"));
             LOG.info("Current Directory: " + System.getProperty("user.dir"));
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
-            LOG.info("HMCL Jar Path: " + JarUtils.thisJar().map(it -> it.toAbsolutePath().toString()).orElse("Not Found"));
+            LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
             LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
             LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
