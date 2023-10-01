@@ -27,7 +27,7 @@ import java.util.Date;
 import java.util.logging.*;
 
 /**
- * @author huangyuhui
+ * @author huangyuhui, Buring_TNT
  */
 public final class Logging {
     private Logging() {
