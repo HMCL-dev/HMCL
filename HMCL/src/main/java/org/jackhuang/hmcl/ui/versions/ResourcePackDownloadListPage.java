@@ -50,6 +50,15 @@ public class ResourcePackDownloadListPage extends DownloadListPage {
         }
 
         @Override
+        protected SortType getBackedRemoteModRepositorySortOrder() {
+            if ("mods.modrinth".equals(downloadSource.get())) {
+                return SortType.NAME;
+            } else {
+                return SortType.POPULARITY;
+            }
+        }
+
+        @Override
         public Type getType() {
             return Type.MOD;
         }
