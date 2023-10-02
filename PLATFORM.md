@@ -1,4 +1,5 @@
 # Platform Support Status
+English | [简体中文](PLATFORM_cn.md)
 
 |                            | Windows                             | Linux                     | Mac OS                                              | FreeBSD |
 |----------------------------|:------------------------------------|:--------------------------|:----------------------------------------------------|:--------|
@@ -28,7 +29,7 @@ Legend:
 
   HMCL can run on this platform and has some basic support.
   However, launching the game directly is not yet available.
-  If you want to start the game, 
+  If you want to start the game,
   you'll need to get the native libraries needed by Minecraft in other way and specify the native path in the instance settings.
 
 * /: Not applicable.

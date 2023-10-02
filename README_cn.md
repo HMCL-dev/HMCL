@@ -10,15 +10,15 @@
 ## 简介
 HMCL 是一款跨平台 Minecraft 启动器, 支持 Mod 管理, 游戏自定义, 游戏自动安装 (Forge, Fabric, Quilt, LiteLoader 与 OptiFine), 模组包创建, 界面自定义等功能.
 
-HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS 等常见的操作系统，同时也支持 x86、ARM、MIPS 和 LoongArch 等不同的 CPU 架构。
-您可以使用 HMCL 在不同平台上轻松的游玩 Minecraft。
+HMCL 有着强大的跨平台能力. 它不仅支持 Windows、Linux、macOS 等常见的操作系统，同时也支持 x86、ARM、MIPS 和 LoongArch 等不同的 CPU 架构.
+您可以使用 HMCL 在不同平台上轻松的游玩 Minecraft.
 
-如果您想要了解 HMCL 对不同平台的支持程度，请参见[此表格](PLATFORM.md)。
+如果您想要了解 HMCL 对不同平台的支持程度，请参见[此表格](PLATFORM_cn.md).
 
 ## 下载
-请从 [HMCL 官网](https://hmcl.huangyuhui.net/download)下载最新版本的 HMCL.
+请从 [HMCL 官网](https://hmcl.huangyuhui.net/download) 下载最新版本的 HMCL.
 
-注: 在 GitHub 发布的最新版 HMCL 为测试版, 与官网上发布的正式版相比, 它们包含额外的测试功能. 但是, 它们相较于正式版更不稳定, 您更有可能在使用测试版的过程中遇到 Bug 或意外问题.
+你也可以在 [GitHub Releases](https://github.com/huanghongxun/HMCL/releases) 中下载最新版本的 HMCL.
 
 虽然并不强制, 但仍建议通过 HMCL 官网下载启动器.
 
