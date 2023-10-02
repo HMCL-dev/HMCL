@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 public abstract class LocalizedRemoteModRepository implements RemoteModRepository {
     private static final int CONTAIN_CHINESE_WEIGHT = 10;
 
+    private static final int INITIAL_CAPACITY = 16;
+
     protected abstract RemoteModRepository getBackedRemoteModRepository();
 
     protected abstract SortType getBackedRemoteModRepositorySortOrder();
@@ -42,7 +44,7 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
             return getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
-        Set<String> englishSearchFiltersSet = new LinkedHashSet<>();
+        Set<String> englishSearchFiltersSet = new HashSet<>(INITIAL_CAPACITY);
 
         int count = 0;
         for (ModTranslations.Mod mod : ModTranslations.getTranslationsByRepositoryType(getType()).searchMod(searchFilter)) {
@@ -64,20 +66,25 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
             searchFilterLetters.add(searchFilter.charAt(i));
         }
 
-        List<RemoteMod> chineseSearchResult = new LinkedList<>();
-        List<RemoteMod> englishSearchResult = new LinkedList<>();
-        searchResult.getUnsortedResults().forEach(remoteMod -> {
+        RemoteMod[] searchResultArray = new RemoteMod[pageSize];
+        int chineseIndex = 0, englishIndex = searchResultArray.length - 1;
+        for (Iterator<RemoteMod> iterator = searchResult.getUnsortedResults().iterator(); iterator.hasNext(); ) {
+            if (chineseIndex > englishIndex) {
+                throw new IOException("There are too many search results!");
+            }
+
+            RemoteMod remoteMod = iterator.next();
             ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
             if (chineseTranslation != null && !StringUtils.isBlank(chineseTranslation.getName()) && StringUtils.containsChinese(chineseTranslation.getName())) {
-                chineseSearchResult.add(remoteMod);
+                searchResultArray[chineseIndex++] = remoteMod;
             } else {
-                englishSearchResult.add(remoteMod);
+                searchResultArray[englishIndex--] = remoteMod;
             }
-        });
+        }
         int totalPages = searchResult.getTotalPages();
         searchResult = null; // Release memory
 
-        return new SearchResult(Stream.concat(chineseSearchResult.stream().map(remoteMod -> {
+        return new SearchResult(Stream.concat(Arrays.stream(searchResultArray, 0, chineseIndex).map(remoteMod -> {
             ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
             if (chineseRemoteMod == null || StringUtils.isBlank(chineseRemoteMod.getName()) || !StringUtils.containsChinese(chineseRemoteMod.getName())) {
                 return Pair.pair(remoteMod, Integer.MAX_VALUE);
@@ -106,7 +113,7 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
                     remoteMod,
                     lev[searchFilter.length()][chineseRemoteModName.length()] - (searchFilterLetters.stream().anyMatch(c -> chineseRemoteModName.indexOf(c) >= 0) ? CONTAIN_CHINESE_WEIGHT : 0)
             );
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), englishSearchResult.stream()), totalPages);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), Arrays.stream(searchResultArray, englishIndex + 1, searchResultArray.length)), totalPages);
     }
 
     @Override
