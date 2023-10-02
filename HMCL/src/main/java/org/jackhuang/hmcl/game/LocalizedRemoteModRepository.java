@@ -64,9 +64,9 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
             searchFilterLetters.add(searchFilter.charAt(i));
         }
 
-        List<RemoteMod> chineseSearchResult = new ArrayList<>();
-        List<RemoteMod> englishSearchResult = new ArrayList<>();
-        searchResult.getResults().forEachOrdered(remoteMod -> {
+        List<RemoteMod> chineseSearchResult = new LinkedList<>();
+        List<RemoteMod> englishSearchResult = new LinkedList<>();
+        searchResult.getUnsortedResults().forEach(remoteMod -> {
             ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
             if (chineseTranslation != null && !StringUtils.isBlank(chineseTranslation.getName()) && StringUtils.containsChinese(chineseTranslation.getName())) {
                 chineseSearchResult.add(remoteMod);

@@ -150,7 +150,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
 
             return pair(remoteMod, diff);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.pagination.totalCount);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), res, response.pagination.totalCount);
     }
 
     @Override

@@ -52,17 +52,30 @@ public interface RemoteModRepository {
     }
 
     class SearchResult {
-        private final Stream<RemoteMod> results;
+        private final Stream<RemoteMod> sortedResults;
+
+        private final Stream<RemoteMod> unsortedResults;
 
         private final int totalPages;
 
-        public SearchResult(Stream<RemoteMod> results, int pages) {
-            this.results = results;
+        public SearchResult(Stream<RemoteMod> sortedResults, Stream<RemoteMod> unsortedResults, int totalPages) {
+            this.sortedResults = sortedResults;
+            this.unsortedResults = unsortedResults;
+            this.totalPages = totalPages;
+        }
+
+        public SearchResult(Stream<RemoteMod> sortedResults, int pages) {
+            this.sortedResults = sortedResults;
+            this.unsortedResults = sortedResults;
             this.totalPages = pages;
         }
 
         public Stream<RemoteMod> getResults() {
-            return this.results;
+            return this.sortedResults;
+        }
+
+        public Stream<RemoteMod> getUnsortedResults() {
+            return this.unsortedResults;
         }
 
         public int getTotalPages() {
