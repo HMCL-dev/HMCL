@@ -211,15 +211,7 @@ public final class StringUtils {
         if (str == null)
             return new ArrayList<>();
         else {
-            // Split the string with ' or " and space cleverly.
-
-            final char groupSplit;
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                groupSplit = '"';
-            } else {
-                groupSplit = '\'';
-            }
-
+            // Split the string with ' and space cleverly.
             ArrayList<String> parts = new ArrayList<>();
 
             {
@@ -228,7 +220,7 @@ public final class StringUtils {
 
                 for (int i = 0; i < str.length(); i++) {
                     char c = str.charAt(i);
-                    if (c == groupSplit) {
+                    if (c == '\'') {
                         inside = !inside;
                     } else if (!inside && c == ' ') {
                         parts.add(current.toString());
