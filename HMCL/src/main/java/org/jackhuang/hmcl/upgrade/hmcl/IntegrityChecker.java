@@ -142,7 +142,10 @@ public final class IntegrityChecker {
     }
 
     private static void verifySelf() throws IOException {
-        Path self = JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
+        Path self = JarUtils.thisJarPath();
+        if (self == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
         requireVerifiedJar(self);
     }
 }

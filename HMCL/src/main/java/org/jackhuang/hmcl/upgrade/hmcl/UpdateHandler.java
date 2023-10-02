@@ -186,7 +186,11 @@ public final class UpdateHandler {
     }
 
     private static Path getCurrentLocation() throws IOException {
-        return JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
+        Path path = JarUtils.thisJarPath();
+        if (path == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
+        return path;
     }
 
     // ==== support for old versions ===
@@ -226,10 +230,10 @@ public final class UpdateHandler {
     }
 
     private static boolean isFirstLaunchAfterUpgrade() {
-        Optional<Path> currentPath = JarUtils.thisJar();
-        if (currentPath.isPresent()) {
+        Path currentPath = JarUtils.thisJarPath();
+        if (currentPath != null) {
             Path updated = Metadata.HMCL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
-            if (currentPath.get().toAbsolutePath().equals(updated.toAbsolutePath())) {
+            if (currentPath.equals(updated.toAbsolutePath())) {
                 return true;
             }
         }
@@ -253,5 +257,4 @@ public final class UpdateHandler {
             }
         }
     }
-    // ====
 }
