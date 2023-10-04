@@ -455,11 +455,21 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             JFXButton downloadButton = new JFXButton(i18n("download"));
             downloadButton.getStyleClass().add("dialog-accept");
-            downloadButton.setOnAction(e -> selfPage.download(version));
+            downloadButton.setOnAction(e -> {
+                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                    fireEvent(new DialogCloseEvent());
+                }
+                selfPage.download(version);
+            });
 
             JFXButton saveAsButton = new JFXButton(i18n("button.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
-            saveAsButton.setOnAction(e -> selfPage.saveAs(version));
+            saveAsButton.setOnAction(e -> {
+                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                    fireEvent(new DialogCloseEvent());
+                }
+                selfPage.saveAs(version);
+            });
 
             JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
             cancelButton.getStyleClass().add("dialog-cancel");
