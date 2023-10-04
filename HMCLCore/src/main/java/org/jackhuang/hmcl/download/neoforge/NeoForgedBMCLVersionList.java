@@ -27,8 +27,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -73,7 +71,6 @@ public final class NeoForgedBMCLVersionList extends VersionList<NeoForgedRemoteV
                             versions.put(gameVersion, new NeoForgedRemoteVersion(
                                     neoForgedVersion.mcVersion,
                                     neoForgedVersion.version,
-                                    Date.from(Instant.now()),
                                     Lang.immutableListOf(
                                             apiRoot + "/neoforge/version/" + neoForgedVersion.version + "/download/installer.jar"
                                     )
