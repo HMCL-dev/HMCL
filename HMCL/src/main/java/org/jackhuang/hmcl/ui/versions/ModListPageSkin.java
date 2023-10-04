@@ -335,7 +335,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                             loaderName = i18n("install.installer.forge");
                                             break;
                                         case NEO_FORGED:
-                                            loaderName = i18n("install.installer.neo_forge");
+                                            loaderName = i18n("install.installer.neoforged");
                                             break;
                                         case FABRIC:
                                             loaderName = i18n("install.installer.fabric");
@@ -470,7 +470,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         content.getTags().add(i18n("install.installer.forge"));
                         break;
                     case NEO_FORGED:
-                        content.getTags().add(i18n("install.installer.neo_forge"));
+                        content.getTags().add(i18n("install.installer.neoforged"));
                         break;
                     case FABRIC:
                         content.getTags().add(i18n("install.installer.fabric"));

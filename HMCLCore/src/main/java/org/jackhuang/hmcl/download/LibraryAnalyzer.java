@@ -113,7 +113,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
     /**
      * Remove library by library id
-     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"
+     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforged"
      * @return this
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
@@ -183,6 +183,18 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
                 if (matcher.find()) {
                     return matcher.group("forge");
+                }
+                return super.patchVersion(libraryVersion);
+            }
+        },
+        NEO_FORGED(true, "neoforged", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.NEO_FORGED) {
+            private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<neoforged>[0-9.]+)(-([0-9.]+))?$");
+
+            @Override
+            public String patchVersion(String libraryVersion) {
+                Matcher matcher = NEO_FORGE_VERSION_MATCHER.matcher(libraryVersion);
+                if (matcher.find()) {
+                    return matcher.group("neoforged");
                 }
                 return super.patchVersion(libraryVersion);
             }
