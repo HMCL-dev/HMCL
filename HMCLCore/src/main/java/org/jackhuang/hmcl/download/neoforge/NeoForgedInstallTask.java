@@ -17,7 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-public class NeoForgedInstallTask {
+public final class NeoForgedInstallTask {
     private NeoForgedInstallTask() {
     }
 
