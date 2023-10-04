@@ -18,20 +18,11 @@
 package org.jackhuang.hmcl.mod;
 
 public enum ModLoaderType {
-    UNKNOWN("Unknown"),
-    FORGE("Forge"),
-    FABRIC("Fabric"),
-    QUILT("Quilt"),
-    LITE_LOADER("LiteLoader"),
-    PACK("Pack");
-
-    private final String loaderName;
-
-    ModLoaderType(String loaderName) {
-        this.loaderName = loaderName;
-    }
-
-    public final String getLoaderName() {
-        return loaderName;
-    }
+    UNKNOWN,
+    FORGE,
+    NEO_FORGED,
+    FABRIC,
+    QUILT,
+    LITE_LOADER,
+    PACK;
 }

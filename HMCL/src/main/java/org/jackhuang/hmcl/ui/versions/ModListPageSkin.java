@@ -329,15 +329,28 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             RemoteMod remoteMod = remoteModRepository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
+                                    String loaderName;
                                     switch (modLoaderType) {
-                                        case FABRIC:
                                         case FORGE:
+                                            loaderName = i18n("install.installer.forge");
+                                            break;
+                                        case NEO_FORGED:
+                                            loaderName = i18n("install.installer.neo_forge");
+                                            break;
+                                        case FABRIC:
+                                            loaderName = i18n("install.installer.fabric");
+                                            break;
                                         case LITE_LOADER:
-                                        case QUILT: {
-                                            if (!title.getTags().contains(modLoaderType.getLoaderName())) {
-                                                title.getTags().add(modLoaderType.getLoaderName());
-                                            }
-                                        }
+                                            loaderName = i18n("install.installer.liteloader");
+                                            break;
+                                        case QUILT:
+                                            loaderName = i18n("install.installer.quilt");
+                                            break;
+                                        default:
+                                            continue;
+                                    }
+                                    if (!title.getTags().contains(loaderName)) {
+                                        title.getTags().add(loaderName);
                                     }
                                 }
 
@@ -452,7 +465,23 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
             if (dataItem.getMod() != null) {
-                content.getTags().add(dataItem.getModInfo().getModLoaderType().getLoaderName());
+                switch (dataItem.getModInfo().getModLoaderType()) {
+                    case FORGE:
+                        content.getTags().add(i18n("install.installer.forge"));
+                        break;
+                    case NEO_FORGED:
+                        content.getTags().add(i18n("install.installer.neo_forge"));
+                        break;
+                    case FABRIC:
+                        content.getTags().add(i18n("install.installer.fabric"));
+                        break;
+                    case LITE_LOADER:
+                        content.getTags().add(i18n("install.installer.liteloader"));
+                        break;
+                    case QUILT:
+                        content.getTags().add(i18n("install.installer.quilt"));
+                        break;
+                }
                 if (I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
                     content.getTags().add(dataItem.getMod().getDisplayName());
                 }
