@@ -84,23 +84,19 @@ public final class NeoForgedInstallTask extends Task<Version> {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            String installProfileText = FileUtils.readText(fs.getPath("install_profile.json"));
-            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
-            if (!installProfileText.toLowerCase(Locale.ROOT).contains("neoforge")) {
-                throw new IOException();
-            }
+            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath("install_profile.json")), Map.class);
             Object p = installProfile.get("profile");
-            if (!(p instanceof String)) {
+            if (!LibraryAnalyzer.LibraryType.FORGE.getPatchId().equals(p)) {
                 throw new IOException();
             }
-            if (!p.equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId())) {
+            if (!Files.exists(fs.getPath("META-INF/NEOFORGE.RSA"))) {
                 throw new IOException();
             }
         }
 
         return ForgeInstallTask.install(dependencyManager, version, installer).thenApplyAsync(neoForgeVersion -> {
             if (!neoForgeVersion.getId().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.getVersion() == null) {
-                throw new IOException("Invalid neoforged version null.");
+                throw new IOException("Invalid neoforged version.");
             }
             return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()).setVersion(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()));
         });
