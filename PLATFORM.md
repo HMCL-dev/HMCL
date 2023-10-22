@@ -1,4 +1,5 @@
 # Platform Support Status
+
 English | [简体中文](PLATFORM_cn.md)
 
 |                            | Windows                             | Linux                     | Mac OS                                              | FreeBSD |

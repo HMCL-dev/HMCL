@@ -1,4 +1,5 @@
 # ⛏ Hello Minecraft! Launcher 💎
+
 [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
 ![Downloads](https://img.shields.io/github/downloads/huanghongxun/HMCL/total)
 ![Stars](https://img.shields.io/github/stars/huanghongxun/HMCL)
@@ -8,6 +9,7 @@
 English | [中文](README_cn.md)
 
 ## Introduction
+
 HMCL is a cross-platform Minecraft launcher which supports Mod Management, Game Customizing, Auto Installing (Forge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
 
 HMCL has amazing cross-platform capabilities.
@@ -18,6 +20,7 @@ You can easily play Minecraft on different platforms through HMCL.
 For systems and CPU architectures supported by HMCL, see [this table](PLATFORM.md).
 
 ## Download
+
 Download the latest version from [the official website](https://hmcl.huangyuhui.net/download).
 
 You can also download the latest version of HMCL in [GitHub Releases](https://github.com/huanghongxun/HMCL/releases).
@@ -25,9 +28,11 @@ You can also download the latest version of HMCL in [GitHub Releases](https://gi
 Although not necessary, it is recommended to download the ones from the official website.
 
 ## License
+
 The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) with additional terms.
 
 ### Additional terms under GPLv3 Section 7
+
 1. When you distribute a modified version of the software, you must change the software name or the version number in a reasonable way in order to distinguish it from the original version. (Under [GPLv3, 7(c)](https://github.com/huanghongxun/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
 
    The software name and the version number can be edited [here](https://github.com/huanghongxun/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35).
@@ -35,12 +40,15 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 2. You must not remove the copyright declaration displayed in the software. (Under [GPLv3, 7(b)](https://github.com/huanghongxun/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
 
 ## Contribution
+
 If you want to submit a pull request, there are some requirements:
+
 * IDE: Intellij IDEA
 * Compiler: Java 1.8
 * Do NOT modify `gradle` files
 
 ### Compilation
+
 Simply execute the following command in project root directory:
 
 ```bash
@@ -50,6 +58,7 @@ Simply execute the following command in project root directory:
 Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or later is recommended.
 
 ## JVM Options (for debugging)
+
 | Parameter                                    | Description                                                                                                                       |
 |----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
 | `-Dhmcl.home=<path>`                         | Override HMCL directory.                                                                                                          |
