@@ -228,7 +228,7 @@ public class DefaultLauncher extends Launcher {
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
                 && !StringUtils.isASCII(nativeFolderPath)) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
-            nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
+            nativeFolderPath = tempNativeFolder.toString();
         }
         configuration.put("${natives_directory}", nativeFolderPath);
 
