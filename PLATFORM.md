@@ -5,10 +5,10 @@ English | [简体中文](PLATFORM_cn.md)
 |----------------------------|:------------------------------------|:--------------------------|:----------------------------------------------------|:--------|
 | x86-64                     | ✅️                                  | ✅️                        | ✅️                                                  | ❔       |
 | x86                        | ✅️                                  | ✅️                        | /                                                   | /       |
-| ARM64                      | 👌 (1.8+)<br/>✅ (use x86 emulation) | 👌                        | 👌 (1.6~1.18.2)<br/>✅ (1.19+)<br/>✅ (use Rosetta 2) | ❔       |
+| ARM64                      | 👌 (Minecraft 1.8+)<br/>✅ (use x86 emulation) | 👌                        | 👌 (Minecraft 1.6~1.18.2)<br/>✅ (Minecraft 1.19+)<br/>✅ (use Rosetta 2) | ❔       |
 | ARM32                      | /️                                  | 👌                        | /                                                   | /       |
 | MIPS64el                   | /                                   | 👌                        | /                                                   | /       |
-| RISC-V 64                  | /                                   | 👌 (1.13+)                | /                                                   | /       |
+| RISC-V 64                  | /                                   | 👌 (Minecraft 1.13+)                | /                                                   | /       |
 | LoongArch64                | /                                   | 👌 (both old and new ABI) | /                                                   | /       |
 | PowerPC-64 (Little-Endian) | /                                   | ❔                         | /                                                   | /       |
 | S390x                      | /                                   | ❔                         | /                                                   | /       |
@@ -22,7 +22,7 @@ Legend:
 * 👌: Supported platforms.
 
   Support is provided by HMCL, tested to work, but may have more issues than a fully supported platform.
-  Support for versions below 1.6 is not guaranteed.
+  Support for versions below Minecraft 1.6 is not guaranteed.
   If you encounter a problem that does not exist on fully supported platforms, you can report it to HMCL.
 
 * ❔: Low level supported platforms.
