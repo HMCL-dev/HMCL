@@ -99,18 +99,22 @@ public final class FXUtils {
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
-    private static final Map<String, Path> imageCache = new ConcurrentHashMap<>();
+    private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
 
-    public static synchronized void shutdown() {
-        for (Path path : imageCache.values()) {
+    private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
+
+    public static void shutdown() {
+        for (String url : remoteImageCache.keySet()) {
+            Path path = remoteImageCache.get(url);
             try {
                 Files.deleteIfExists(path);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", path), e);
             }
+            remoteImageCache.remove(url);
         }
 
-        imageCache.clear();
+        builtinImageCache.clear();
     }
 
     public static void runInFX(Runnable runnable) {
@@ -702,11 +706,13 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
-        try {
-            return new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth);
-        } catch (IllegalArgumentException e) {
-            throw new ResourceNotFoundError("Cannot access image: " + url, e);
-        }
+        return builtinImageCache.computeIfAbsent(url, s -> {
+            try {
+                return new Image(s, requestedWidth, requestedHeight, preserveRatio, smooth);
+            } catch (IllegalArgumentException e) {
+                throw new ResourceNotFoundError("Cannot access image: " + s, e);
+            }
+        });
     }
 
     /**
@@ -740,32 +746,33 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
-        if (imageCache.containsKey(url)) {
-            Path path = imageCache.get(url);
-            if (Files.isReadable(path)) {
+        Path currentPath = remoteImageCache.get(url);
+        if (currentPath != null) {
+            if (Files.isReadable(currentPath)) {
                 try {
-                    return new Image(Files.newInputStream(path), requestedWidth, requestedHeight, preserveRatio, smooth);
+                    return new Image(Files.newInputStream(currentPath), requestedWidth, requestedHeight, preserveRatio, smooth);
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "An exception encountered while reading data from cached image file.", e);
                 }
             }
 
+            // The file is unavailable or unreadable
+            remoteImageCache.remove(url);
+
             try {
-                Files.deleteIfExists(path);
+                Files.deleteIfExists(currentPath);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "An exception encountered while deleting broken cached image file.", e);
             }
-
-            imageCache.remove(url);
         }
 
         Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
         image.progressProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
                 Task.runAsync(() -> {
-                    Path path = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    PNGJavaFXUtils.writeImage(image, path);
-                    imageCache.put(url, path);
+                    Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
+                    PNGJavaFXUtils.writeImage(image, newPath);
+                    remoteImageCache.put(url, newPath);
                 }).start();
             }
         });
