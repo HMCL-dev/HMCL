@@ -40,20 +40,19 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -96,7 +95,20 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
 
-        TableView<ModUpdateObject> table = new TableView<>(objects);
+        TableView<ModUpdateObject> table;
+        try {
+            Set<LocalModFile> files = updates.stream().map(LocalModFile.ModUpdate::getLocalMod).collect(Collectors.toSet());
+            table = new TableView<>(new AggregatedObservableList<>(
+                    objects,
+                    FXCollections.observableList(modManager.getMods().stream()
+                            .filter(localModFile -> !files.contains(localModFile))
+                            .map(ModUpdateObject::new)
+                            .collect(Collectors.toList()))
+            ).getAggregatedList());
+        } catch (IOException e) {
+            Logging.LOG.log(Level.WARNING, "Cannot get the local mod list. HMCL would not display the mods which has no higher version.", e);
+            table = new TableView<>(objects);
+        }
         table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
 
@@ -155,10 +167,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         Controllers.taskDialog(Task.runAsync(() -> {
             CSVTable csvTable = CSVTable.createEmpty();
 
-            csvTable.set(0, 0, "Source File Name");
-            csvTable.set(1, 0, "Current Version");
-            csvTable.set(2, 0, "Target Version");
-            csvTable.set(3, 0, "Update Source");
+            csvTable.set(0, 0, i18n("mods.check_updates.file"));
+            csvTable.set(1, 0, i18n("mods.check_updates.current_version"));
+            csvTable.set(2, 0, i18n("mods.check_updates.target_version"));
+            csvTable.set(3, 0, i18n("mods.check_updates.source"));
 
             for (int i = 0; i < objects.size(); i++) {
                 csvTable.set(0, i + 1, objects.get(i).fileName.get());
@@ -167,10 +179,28 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 csvTable.set(3, i + 1, objects.get(i).source.get());
             }
 
+            Set<LocalModFile> files = objects.stream()
+                    .map(ModUpdateObject::getData)
+                    .filter(Objects::nonNull)
+                    .map(LocalModFile.ModUpdate::getLocalMod)
+                    .collect(Collectors.toSet());
+            try {
+                int offset = objects.size() + 1;
+                for (LocalModFile localModFile : Lang.toIterable(modManager.getMods().stream().filter(localModFile -> !files.contains(localModFile)))) {
+                    Logging.LOG.log(Level.INFO, "ModName: " + localModFile.getFileName());
+                    csvTable.set(0, offset, localModFile.getFileName());
+                    csvTable.set(1, offset, localModFile.getVersion());
+                    csvTable.set(2, offset, i18n("mods.check_updates.not_found"));
+                    offset ++;
+                }
+            } catch (IOException e) {
+                Logging.LOG.log(Level.WARNING, "Cannot get the local mod list. HMCL would not display the mods which has no higher version.", e);
+            }
+
             csvTable.write(Files.newOutputStream(path));
 
             FXUtils.showFileInExplorer(path);
-        }).whenComplete(Schedulers.javafx() ,exception -> {
+        }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
@@ -192,6 +222,15 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         final StringProperty targetVersion = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
 
+        public ModUpdateObject(LocalModFile localModFile) {
+            data = null;
+            enabled.set(false);
+            fileName.set(localModFile.getFileName());
+            currentVersion.set(localModFile.getVersion());
+            targetVersion.set(i18n("mods.check_updates.not_found"));
+            source.set("/");
+        }
+
         public ModUpdateObject(LocalModFile.ModUpdate data) {
             this.data = data;
 
@@ -206,6 +245,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 case MODRINTH:
                     source.set(i18n("mods.modrinth"));
             }
+        }
+
+        public LocalModFile.ModUpdate getData() {
+            return data;
         }
 
         public boolean isEnabled() {

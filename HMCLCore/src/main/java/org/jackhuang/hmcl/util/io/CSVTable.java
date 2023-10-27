@@ -52,24 +52,22 @@ public final class CSVTable {
     }
 
     public void write(OutputStream outputStream) throws IOException {
-        try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                outputStream, StandardCharsets.UTF_8)), false
-        )) {
+        try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
             for (List<String> row : this.table) {
                 if (row != null) {
                     for (int j = 0; j < row.size(); j++) {
                         String txt = row.get(j);
                         if (txt != null) {
-                            printWriter.write(this.escape(txt));
+                            writer.write(this.escape(txt));
                         }
 
                         if (j != row.size() - 1) {
-                            printWriter.write(',');
+                            writer.write(',');
                         }
                     }
                 }
 
-                printWriter.write('\n');
+                writer.write('\n');
             }
         }
     }

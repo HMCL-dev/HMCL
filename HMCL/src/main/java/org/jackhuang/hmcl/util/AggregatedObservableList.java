@@ -34,7 +34,13 @@ public class AggregatedObservableList<T> {
     final protected ObservableList<T> aggregatedList = FXCollections.observableArrayList();
 
     public AggregatedObservableList() {
+    }
 
+    @SafeVarargs
+    public AggregatedObservableList(ObservableList<T>... lists) {
+        for (ObservableList<T> list : lists) {
+            this.appendList(list);
+        }
     }
 
     /**
