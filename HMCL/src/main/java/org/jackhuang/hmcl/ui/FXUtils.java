@@ -46,6 +46,8 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.png.PNGType;
+import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -746,7 +748,17 @@ public final class FXUtils {
             if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
                 Task.runAsync(() -> {
                     Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    PNGJavaFXUtils.writeImage(image, newPath);
+                    try (OutputStream outputStream = Files.newOutputStream(newPath)) {
+                        new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL).write(PNGJavaFXUtils.asArgbImage(image));
+                    } catch (IOException e) {
+                        try {
+                            Files.delete(newPath);
+                        } catch (IOException e2) {
+                            e2.addSuppressed(e);
+                            throw e2;
+                        }
+                        throw e;
+                    }
                     if (remoteImageCache.putIfAbsent(url, newPath) != null) {
                         Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
                     }
