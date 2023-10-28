@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.InfiniteSizeList;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.List;
 
 public final class CSVTable {
@@ -51,24 +51,22 @@ public final class CSVTable {
         row.set(x, txt);
     }
 
-    public void write(OutputStream outputStream) throws IOException {
-        try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-            for (List<String> row : this.table) {
-                if (row != null) {
-                    for (int j = 0; j < row.size(); j++) {
-                        String txt = row.get(j);
-                        if (txt != null) {
-                            writer.write(this.escape(txt));
-                        }
+    public void write(Writer writer) throws IOException {
+        for (List<String> row : this.table) {
+            if (row != null) {
+                for (int j = 0; j < row.size(); j++) {
+                    String txt = row.get(j);
+                    if (txt != null) {
+                        writer.write(this.escape(txt));
+                    }
 
-                        if (j != row.size() - 1) {
-                            writer.write(',');
-                        }
+                    if (j != row.size() - 1) {
+                        writer.write(',');
                     }
                 }
-
-                writer.write('\n');
             }
+
+            writer.write('\n');
         }
     }
 

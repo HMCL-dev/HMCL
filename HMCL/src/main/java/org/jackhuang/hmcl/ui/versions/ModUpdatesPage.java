@@ -44,7 +44,9 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -197,7 +199,9 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 Logging.LOG.log(Level.WARNING, "Cannot get the local mod list. HMCL would not display the mods which has no higher version.", e);
             }
 
-            csvTable.write(Files.newOutputStream(path));
+            try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+                csvTable.write(writer);
+            }
 
             FXUtils.showFileInExplorer(path);
         }).whenComplete(Schedulers.javafx(), exception -> {
