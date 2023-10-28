@@ -731,7 +731,7 @@ public final class FXUtils {
                 }
             }
 
-            // The file is unavailable or unreadable
+            // The file is unavailable or unreadable.
             remoteImageCache.remove(url);
 
             try {
@@ -747,7 +747,9 @@ public final class FXUtils {
                 Task.runAsync(() -> {
                     Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
                     PNGJavaFXUtils.writeImage(image, newPath);
-                    remoteImageCache.put(url, newPath);
+                    if (remoteImageCache.putIfAbsent(url, newPath) != null) {
+                        Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
+                    }
                 }).start();
             }
         });
