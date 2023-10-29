@@ -451,8 +451,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (empty) return;
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
+            content.getTags().add(dataItem.getModInfo().getModLoaderType().getLoaderName());
             if (dataItem.getMod() != null) {
-                content.getTags().add(dataItem.getModInfo().getModLoaderType().getLoaderName());
                 if (I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
                     content.getTags().add(dataItem.getMod().getDisplayName());
                 }
