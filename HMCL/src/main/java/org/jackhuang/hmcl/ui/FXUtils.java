@@ -31,10 +31,10 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.*;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -79,8 +79,8 @@ import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -726,8 +726,8 @@ public final class FXUtils {
         Path currentPath = remoteImageCache.get(url);
         if (currentPath != null) {
             if (Files.isReadable(currentPath)) {
-                try {
-                    return new Image(Files.newInputStream(currentPath), requestedWidth, requestedHeight, preserveRatio, smooth);
+                try (InputStream inputStream = Files.newInputStream(currentPath)) {
+                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "An exception encountered while reading data from cached image file.", e);
                 }
@@ -748,8 +748,11 @@ public final class FXUtils {
             if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
                 Task.runAsync(() -> {
                     Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    try (OutputStream outputStream = Files.newOutputStream(newPath)) {
-                        new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL).write(PNGJavaFXUtils.asArgbImage(image));
+                    try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
+                            OutputStream outputStream = Files.newOutputStream(newPath);
+                            PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
+                    ) {
+                        writer.write(PNGJavaFXUtils.asArgbImage(image));
                     } catch (IOException e) {
                         try {
                             Files.delete(newPath);
