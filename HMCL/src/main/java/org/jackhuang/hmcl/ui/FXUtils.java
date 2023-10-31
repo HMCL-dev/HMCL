@@ -698,8 +698,6 @@ public final class FXUtils {
      *
      * @param url the url of image. The image resource should be a file on the internet.
      * @return the image resource within the jar.
-     * @see org.jackhuang.hmcl.util.CrashReporter
-     * @see ResourceNotFoundError
      */
     public static Image newRemoteImage(String url) {
         return newRemoteImage(url, 0, 0, false, false, false);
@@ -719,8 +717,6 @@ public final class FXUtils {
      *                        algorithm or a faster one when scaling this image to fit within
      *                        the specified bounding box
      * @return the image resource within the jar.
-     * @see CrashReporter
-     * @see ResourceNotFoundError
      */
     public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
         Path currentPath = remoteImageCache.get(url);
