@@ -78,7 +78,7 @@ public final class Main {
     }
 
     private static void initIcon() {
-        AwtUtils.setAppleIcon(AwtUtils.getImage("/assets/img/icon@8x.webp"));
+        AwtUtils.setAppleIcon(AwtUtils.loadBuiltinWebpImage("/assets/img/icon@8x.webp"));
     }
 
     private static void checkDirectoryPath() {

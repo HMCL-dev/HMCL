@@ -1,10 +1,14 @@
 package org.jackhuang.hmcl.ui;
 
-import javafx.scene.image.PixelReader;
+import net.burningtnt.webp.SimpleWEBPLoader;
+import net.burningtnt.webp.utils.RGBABuffer;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 
 public final class AwtUtils {
@@ -22,25 +26,33 @@ public final class AwtUtils {
         }
     }
 
-    public static Image getImage(String url) {
-        javafx.scene.image.Image javafxImage = new javafx.scene.image.Image(url);
+    public static Image loadBuiltinWebpImage(String url) {
+        RGBABuffer rgbaBuffer;
+        try (InputStream inputStream = ResourceNotFoundError.getResourceAsStream(url)) {
+            rgbaBuffer = SimpleWEBPLoader.decodeStreamByImageLoaders(inputStream);
+        } catch (IOException e) {
+            throw new ResourceNotFoundError("Cannot load builtin resource '" + url + "'.", e);
+        }
 
-        BufferedImage awtImage = new BufferedImage((int) javafxImage.getWidth(), (int) javafxImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
-
-        PixelReader pixelReader = javafxImage.getPixelReader();
+        int width = rgbaBuffer.getWidth(), height = rgbaBuffer.getHeight();
+        BufferedImage awtImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         WritableRaster writableRaster = awtImage.getRaster();
+        byte[] rgbaData = rgbaBuffer.getRGBAData(), argbCache = new byte[4];
+        for (int y = 0; y < height; y++) {
+            int lineIndex = y * width * 4;
+            for (int x = 0; x < width; x++) {
+                // Transfer RGBA storage to ARGB storage
+                int index = lineIndex + x * 4;
+                System.arraycopy(
+                        rgbaData,
+                        index,
+                        argbCache,
+                        1,
+                        3
+                ); // Copy RGB data first with arraycopy to enhance performance
+                argbCache[0] = rgbaData[index + 3]; // Manually copy A data
 
-        byte[] rgba = new byte[4];
-        for (int y = 0; y < (int) javafxImage.getHeight(); y++) {
-            for (int x = 0; x < (int) javafxImage.getWidth(); x++) {
-                int argb = pixelReader.getArgb(x, y);
-
-                rgba[0] = (byte) (argb >> 16); // R
-                rgba[1] = (byte) (argb >> 8); // G
-                rgba[2] = (byte) argb; // B
-                rgba[3] = (byte) (argb >> 24); // A
-
-                writableRaster.setDataElements(x, y, rgba);
+                writableRaster.setDataElements(x, y, argbCache);
             }
         }
 

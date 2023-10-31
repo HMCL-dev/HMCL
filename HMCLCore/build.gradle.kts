@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     api("com.github.burningtnt.SimpleWEBP:jfx:6e7178324c344bd1ef196110e201959e3f8d97ab")
+    api("com.github.burningtnt:SimpleWEBP:6e7178324c344bd1ef196110e201959e3f8d97ab")
     api("org.glavo:simple-png-javafx:0.3.0")
     api("com.google.code.gson:gson:2.10.1")
     api("com.moandjiezana.toml:toml4j:0.7.2")
