@@ -27,7 +27,7 @@ public final class AwtUtils {
     }
 
     public static Image loadBuiltinWebpImage(String url) {
-        RGBABuffer rgbaBuffer;
+        RGBABuffer.AbsoluteRGBABuffer rgbaBuffer;
         try (InputStream inputStream = ResourceNotFoundError.getResourceAsStream(url)) {
             rgbaBuffer = SimpleWEBPLoader.decodeStreamByImageLoaders(inputStream);
         } catch (IOException e) {
