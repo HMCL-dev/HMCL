@@ -189,7 +189,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             JFXButton launchButton = new JFXButton();
             launchButton.setPrefWidth(230);
             launchButton.setPrefHeight(55);
-            //launchButton.setButtonType(JFXButton.ButtonType.RAISED);
             launchButton.setOnAction(e -> launch());
             launchButton.setDefaultButton(true);
             launchButton.setClip(new Rectangle(-100, -100, 310, 200));

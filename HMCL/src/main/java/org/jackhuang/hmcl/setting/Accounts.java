@@ -86,7 +86,8 @@ public final class Accounts {
     public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+//    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
@@ -413,10 +414,11 @@ public final class Accounts {
 
     // ==== Login type name i18n ===
     private static final Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
-            pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
+//            pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
             pair(Accounts.FACTORY_MOJANG, "account.methods.yggdrasil"),
-            pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"),
-            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"));
+            pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"));
+
+//            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"))
 
     public static String getLocalizedLoginTypeName(AccountFactory<?> factory) {
         return i18n(Optional.ofNullable(unlocalizedLoginTypeNames.get(factory))

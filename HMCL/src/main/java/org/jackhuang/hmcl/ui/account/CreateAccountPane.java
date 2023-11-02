@@ -484,7 +484,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
                 });
 
-                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer);
+                HBox boxServers = new HBox(cboServers, linksContainer);
                 add(boxServers, 1, rowIndex);
 
                 rowIndex++;
