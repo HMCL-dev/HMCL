@@ -116,15 +116,19 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
-        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
-            announcementPane = new VBox(16);
-            if (Metadata.isNightly()) {
-                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
-            } else if (Metadata.isDev()) {
-                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
-            }
-            getChildren().add(announcementPane);
-        }
+//        if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
+//            announcementPane = new VBox(16);
+//            if (Metadata.isNightly()) {
+//                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
+//            } else if (Metadata.isDev()) {
+//                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
+//            }
+//            getChildren().add(announcementPane);
+//        }
+        // 服务器公告
+//        announcementPane = new VBox(16);
+//        announcementPane.getChildren().add(new AnnouncementCard("这是一个标题", "这是很多很多的内容"));
+//        getChildren().add(announcementPane);
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
@@ -251,12 +255,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void showUpdate(boolean show) {
         doAnimation(show);
 
-        if (show && getLatestVersion() != null && !Objects.equals(config().getPromptedVersion(), getLatestVersion().getVersion())) {
-            Controllers.dialog("", i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO, () -> {
-                config().setPromptedVersion(getLatestVersion().getVersion());
-                onUpgrade();
-            });
-        }
+//        if (show && getLatestVersion() != null && !Objects.equals(config().getPromptedVersion(), getLatestVersion().getVersion())) {
+//            Controllers.dialog("", i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO, () -> {
+//                config().setPromptedVersion(getLatestVersion().getVersion());
+//                onUpgrade();
+//            });
+//        }
     }
 
     private void doAnimation(boolean show) {

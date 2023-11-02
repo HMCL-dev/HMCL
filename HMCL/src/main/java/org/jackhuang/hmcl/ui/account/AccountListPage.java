@@ -99,29 +99,29 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     boxMethods.getChildren().add(new ClassTitle(i18n("account.create")));
                     FXUtils.setLimitWidth(boxMethods, 200);
 
-                    AdvancedListItem offlineItem = new AdvancedListItem();
-                    offlineItem.getStyleClass().add("navigation-drawer-item");
-                    offlineItem.setActionButtonVisible(false);
-                    offlineItem.setTitle(i18n("account.methods.offline"));
-                    offlineItem.setLeftGraphic(wrap(SVG.ACCOUNT));
-                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
-                    boxMethods.getChildren().add(offlineItem);
-
-                    AdvancedListItem mojangItem = new AdvancedListItem();
-                    mojangItem.getStyleClass().add("navigation-drawer-item");
-                    mojangItem.setActionButtonVisible(false);
-                    mojangItem.setTitle(i18n("account.methods.yggdrasil"));
-                    mojangItem.setLeftGraphic(wrap(SVG.MOJANG));
-                    mojangItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MOJANG)));
-                    boxMethods.getChildren().add(mojangItem);
-
-                    AdvancedListItem microsoftItem = new AdvancedListItem();
-                    microsoftItem.getStyleClass().add("navigation-drawer-item");
-                    microsoftItem.setActionButtonVisible(false);
-                    microsoftItem.setTitle(i18n("account.methods.microsoft"));
-                    microsoftItem.setLeftGraphic(wrap(SVG.MICROSOFT));
-                    microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
-                    boxMethods.getChildren().add(microsoftItem);
+//                    AdvancedListItem offlineItem = new AdvancedListItem();
+//                    offlineItem.getStyleClass().add("navigation-drawer-item");
+//                    offlineItem.setActionButtonVisible(false);
+//                    offlineItem.setTitle(i18n("account.methods.offline"));
+//                    offlineItem.setLeftGraphic(wrap(SVG.ACCOUNT));
+//                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+//                    boxMethods.getChildren().add(offlineItem);
+//
+//                    AdvancedListItem mojangItem = new AdvancedListItem();
+//                    mojangItem.getStyleClass().add("navigation-drawer-item");
+//                    mojangItem.setActionButtonVisible(false);
+//                    mojangItem.setTitle(i18n("account.methods.yggdrasil"));
+//                    mojangItem.setLeftGraphic(wrap(SVG.MOJANG));
+//                    mojangItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MOJANG)));
+//                    boxMethods.getChildren().add(mojangItem);
+//
+//                    AdvancedListItem microsoftItem = new AdvancedListItem();
+//                    microsoftItem.getStyleClass().add("navigation-drawer-item");
+//                    microsoftItem.setActionButtonVisible(false);
+//                    microsoftItem.setTitle(i18n("account.methods.microsoft"));
+//                    microsoftItem.setLeftGraphic(wrap(SVG.MICROSOFT));
+//                    microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
+//                    boxMethods.getChildren().add(microsoftItem);
 
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
@@ -130,14 +130,14 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         item.setLeftGraphic(wrap(SVG.SERVER));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
 
-                        JFXButton btnRemove = new JFXButton();
-                        btnRemove.setOnAction(e -> {
-                            skinnable.authServersProperty().remove(server);
-                            e.consume();
-                        });
-                        btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14));
-                        item.setRightGraphic(btnRemove);
+//                        JFXButton btnRemove = new JFXButton();
+//                        btnRemove.setOnAction(e -> {
+//                            skinnable.authServersProperty().remove(server);
+//                            e.consume();
+//                        });
+//                        btnRemove.getStyleClass().add("toggle-icon4");
+//                        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14));
+//                        item.setRightGraphic(btnRemove);
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
                         item.titleProperty().bind(title);
@@ -158,20 +158,20 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     boxMethods.getChildren().add(boxAuthServers);
                 }
 
-                AdvancedListItem addAuthServerItem = new AdvancedListItem();
-                {
-                    addAuthServerItem.getStyleClass().add("navigation-drawer-item");
-                    addAuthServerItem.setTitle(i18n("account.injector.add"));
-                    addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
-                    addAuthServerItem.setActionButtonVisible(false);
-                    addAuthServerItem.setLeftGraphic(wrap(SVG.PLUS_CIRCLE_OUTLINE));
-                    addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
-                    VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
-                }
+//                AdvancedListItem addAuthServerItem = new AdvancedListItem();
+//                {
+//                    addAuthServerItem.getStyleClass().add("navigation-drawer-item");
+//                    addAuthServerItem.setTitle(i18n("account.injector.add"));
+//                    addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
+//                    addAuthServerItem.setActionButtonVisible(false);
+//                    addAuthServerItem.setLeftGraphic(wrap(SVG.PLUS_CIRCLE_OUTLINE));
+//                    addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
+//                    VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
+//                }
 
                 ScrollPane scrollPane = new ScrollPane(boxMethods);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);
-                setLeft(scrollPane, addAuthServerItem);
+                setLeft(scrollPane);// addAuthServerItem
             }
 
             ScrollPane scrollPane = new ScrollPane();

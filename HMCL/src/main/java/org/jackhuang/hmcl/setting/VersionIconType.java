@@ -28,6 +28,7 @@ public enum VersionIconType {
     FABRIC("/assets/img/fabric.png"),
     FORGE("/assets/img/forge.png"),
     FURNACE("/assets/img/furnace.png"),
+    LOGO("/assets/img/logo.png"),
     QUILT("/assets/img/quilt.png");
 
     // Please append new items at last
