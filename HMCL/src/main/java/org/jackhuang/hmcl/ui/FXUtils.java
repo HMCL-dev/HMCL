@@ -53,7 +53,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
-import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
