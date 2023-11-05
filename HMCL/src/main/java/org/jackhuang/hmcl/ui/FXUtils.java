@@ -103,14 +103,13 @@ public final class FXUtils {
     private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
 
     public static void shutdown() {
-        for (String url : remoteImageCache.keySet()) {
-            Path path = remoteImageCache.get(url);
+        for (Map.Entry<String, Path> entry: remoteImageCache.entrySet()) {
             try {
-                Files.deleteIfExists(path);
+                Files.deleteIfExists(entry.getValue());
             } catch (IOException e) {
-                LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", path), e);
+                LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", entry.getValue()), e);
             }
-            remoteImageCache.remove(url);
+            remoteImageCache.remove(entry.getKey());
         }
 
         builtinImageCache.clear();
