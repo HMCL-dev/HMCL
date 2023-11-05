@@ -77,7 +77,7 @@ public class MojangDownloadProvider implements DownloadProvider {
                 return fabricApi;
             case "forge":
                 return forge;
-            case "neoforged":
+            case "neoforge":
                 return neoforged;
             case "liteloader":
                 return liteLoader;

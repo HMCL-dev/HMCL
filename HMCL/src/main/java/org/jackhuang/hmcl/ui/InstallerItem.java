@@ -92,8 +92,8 @@ public class InstallerItem extends Control {
             case "quilt-api":
                 imageUrl = "/assets/img/quilt.png";
                 break;
-            case "neoforged":
-                imageUrl = "/assets/img/neoforged.png";
+            case "neoforge":
+                imageUrl = "/assets/img/neoforge.png";
                 break;
             default:
                 imageUrl = null;

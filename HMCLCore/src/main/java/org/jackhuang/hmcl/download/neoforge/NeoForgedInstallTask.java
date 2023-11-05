@@ -3,7 +3,7 @@ package org.jackhuang.hmcl.download.neoforge;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.VersionMismatchException;
-import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
+import org.jackhuang.hmcl.download.forge.*;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -16,6 +16,9 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
+import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
+import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
 public final class NeoForgedInstallTask extends Task<Version> {
     private final DefaultDependencyManager dependencyManager;
@@ -84,21 +87,34 @@ public final class NeoForgedInstallTask extends Task<Version> {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
         if (!gameVersion.isPresent()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath("install_profile.json")), Map.class);
-            Object p = installProfile.get("profile");
-            if (!LibraryAnalyzer.LibraryType.FORGE.getPatchId().equals(p)) {
-                throw new IOException();
-            }
-            if (!Files.exists(fs.getPath("META-INF/NEOFORGE.RSA"))) {
+            String installProfileText = FileUtils.readText(fs.getPath("install_profile.json"));
+            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
+            if (LibraryAnalyzer.LibraryType.FORGE.getPatchId().equals(installProfile.get("profile")) && Files.exists(fs.getPath("META-INF/NEOFORGE.RSA"))) {
+                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
+                if (!gameVersion.get().equals(profile.getMinecraft()))
+                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
+                return new ForgeNewInstallTask(dependencyManager, version, modifyNeoForgedOldVersion(gameVersion.get(), profile.getVersion()), installer).thenApplyAsync(neoForgeVersion -> {
+                    if (!neoForgeVersion.getId().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.getVersion() == null) {
+                        throw new IOException("Invalid neoforged version.");
+                    }
+                    return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()).setVersion(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()));
+                });
+            } else if (LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId().equals(installProfile.get("profile"))) {
+                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
+                if (!gameVersion.get().equals(profile.getMinecraft()))
+                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
+                return new NeoForgedOldInstallTask(dependencyManager, version, modifyNeoForgedNewVersion(profile.getVersion()), installer);
+            } else {
                 throw new IOException();
             }
         }
+    }
 
-        return ForgeInstallTask.install(dependencyManager, version, installer).thenApplyAsync(neoForgeVersion -> {
-            if (!neoForgeVersion.getId().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.getVersion() == null) {
-                throw new IOException("Invalid neoforged version.");
-            }
-            return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()).setVersion(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()));
-        });
+    private static String modifyNeoForgedOldVersion(String gameVersion, String version) {
+        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
+    }
+
+    private static String modifyNeoForgedNewVersion(String version) {
+        return removePrefix(version.replace("neoforge", ""), "-");
     }
 }
