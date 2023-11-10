@@ -23,7 +23,6 @@ import java.io.*;
 import java.util.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class StringUtils {
@@ -208,31 +207,35 @@ public final class StringUtils {
     }
 
     public static List<String> tokenize(String str) {
-        if (str == null)
+        if (isBlank(str)) {
             return new ArrayList<>();
-        else {
+        } else {
             // Split the string with ' and space cleverly.
             ArrayList<String> parts = new ArrayList<>();
 
-            {
-                boolean inside = false;
-                StringBuilder current = new StringBuilder();
-
-                for (int i = 0; i < str.length(); i++) {
-                    char c = str.charAt(i);
-                    if (c == '\'') {
+            boolean inside = false;
+            StringBuilder current = new StringBuilder(str.length());
+            for (int i = 0; i < str.length(); i++) {
+                char c = str.charAt(i);
+                switch (c) {
+                    case '\'':
+                    case '"': {
                         inside = !inside;
-                    } else if (!inside && c == ' ') {
-                        parts.add(current.toString());
-                        current.setLength(0);
-                    } else {
-                        current.append(c);
+                        break;
                     }
+                    case ' ':
+                        if (!inside) {
+                            parts.add(current.toString());
+                            current.setLength(0);
+                            break;
+                        }
+                        // fallthrough
+                    default:
+                        current.append(c);
                 }
-
-                if (current.length() != 0) {
-                    parts.add(current.toString());
-                }
+            }
+            if (current.length() != 0) {
+                parts.add(current.toString());
             }
 
             return parts;
