@@ -143,7 +143,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
             {
                 Label lblIcon = new Label();
-                lblIcon.setGraphic(SVG.update(Theme.whiteFillBinding(), 20, 20));
+                lblIcon.setGraphic(SVG.UPDATE.createIcon(Theme.whiteFill(), 20, 20));
 
                 TwoLineListItem prompt = new TwoLineListItem();
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
@@ -155,7 +155,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }
 
             JFXButton closeUpdateButton = new JFXButton();
-            closeUpdateButton.setGraphic(SVG.close(Theme.whiteFillBinding(), 10, 10));
+            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(Theme.whiteFill(), 10, 10));
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
             StackPane.setMargin(closeUpdateButton, new Insets(5));
@@ -224,7 +224,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setOnMouseClicked(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));
             StackPane graphic = new StackPane();
-            Node svg = SVG.triangle(Theme.foregroundFillBinding(), 10, 10);
+            Node svg = SVG.TRIANGLE.createIcon(Theme.foregroundFillBinding(), 10, 10);
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
             graphic.setTranslateX(12);

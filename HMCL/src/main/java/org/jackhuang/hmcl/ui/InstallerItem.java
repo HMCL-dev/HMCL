@@ -252,7 +252,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton closeButton = new JFXButton();
-            closeButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
+            closeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1));
             closeButton.getStyleClass().add("toggle-icon4");
             closeButton.visibleProperty().bind(control.removable);
             closeButton.managedProperty().bind(closeButton.visibleProperty());
@@ -261,8 +261,8 @@ public class InstallerItem extends Control {
 
             JFXButton arrowButton = new JFXButton();
             arrowButton.graphicProperty().bind(Bindings.createObjectBinding(() -> control.upgradable.get()
-                            ? SVG.update(Theme.blackFillBinding(), -1, -1)
-                            : SVG.arrowRight(Theme.blackFillBinding(), -1, -1),
+                            ? SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1)
+                            : SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1),
                     control.upgradable));
             arrowButton.getStyleClass().add("toggle-icon4");
             arrowButton.visibleProperty().bind(Bindings.createBooleanBinding(

@@ -216,6 +216,11 @@ public final class Controllers {
                 Controllers.dialog(i18n("fatal.unsupported_platform.osx_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&
+                    (Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64
+                            || Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW
+                            || Architecture.SYSTEM_ARCH == Architecture.MIPS64EL)) {
+                Controllers.dialog(i18n("fatal.unsupported_platform.loongarch"), null, MessageType.INFO, continueAction);
             } else {
                 Controllers.dialog(i18n("fatal.unsupported_platform"), null, MessageType.WARNING, continueAction);
             }

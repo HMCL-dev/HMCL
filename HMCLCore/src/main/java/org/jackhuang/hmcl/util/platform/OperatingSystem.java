@@ -176,8 +176,7 @@ public enum OperatingSystem {
         }
 
         TOTAL_MEMORY = getPhysicalMemoryStatus()
-                .map(PhysicalMemoryStatus::getTotal)
-                .map(bytes -> (int) (bytes / 1024 / 1024))
+                .map(physicalMemoryStatus -> (int) (physicalMemoryStatus.getTotal() / 1024 / 1024))
                 .orElse(1024);
 
         SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);

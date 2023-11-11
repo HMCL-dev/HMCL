@@ -29,7 +29,7 @@ data class Platform(
 }
 
 val jfxModules = listOf("base", "graphics", "controls", "media", "web")
-val jfxMirrorRepos = listOf("https://maven.aliyun.com/repository/central")
+val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
 val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
 val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86"),
@@ -40,6 +40,7 @@ val jfxPlatforms = listOf(
     Platform("linux-x86_64", "linux"),
     Platform("linux-arm32", "linux-arm32-monocle", unsupportedModules = listOf("media", "web")),
     Platform("linux-arm64", "linux-aarch64"),
+    Platform("linux-loongarch64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "17.0.8-loongarch64"),
     Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
     Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
 )
