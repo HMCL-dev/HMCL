@@ -2,8 +2,11 @@ plugins {
     `java-library`
 }
 
+val simpleWEBPSha1 = "f7458a767476dc7ed53fe90f56956d236dded325"
+
 dependencies {
-    api("com.github.burningtnt.SimpleWEBP:jfx:4a5ddcf9901f6f78a958b78885eec5816de82bf4")
+    api("com.github.burningtnt.SimpleWEBP:jfx:$simpleWEBPSha1")
+    api("com.github.burningtnt.SimpleWEBP:awt:$simpleWEBPSha1")
     api("org.glavo:simple-png-javafx:0.3.0")
     api("com.google.code.gson:gson:2.10.1")
     api("com.moandjiezana.toml:toml4j:0.7.2")

@@ -1,12 +1,9 @@
 package org.jackhuang.hmcl.ui;
 
-import net.burningtnt.webp.SimpleWEBPLoader;
-import net.burningtnt.webp.utils.RGBABuffer;
+import net.burningtnt.webp.awt.AWTImageLoader;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -27,35 +24,10 @@ public final class AwtUtils {
     }
 
     public static Image loadBuiltinWebpImage(String url) {
-        RGBABuffer.AbsoluteRGBABuffer rgbaBuffer;
         try (InputStream inputStream = ResourceNotFoundError.getResourceAsStream(url)) {
-            rgbaBuffer = SimpleWEBPLoader.decodeStreamByImageLoaders(inputStream);
+            return AWTImageLoader.decode(inputStream);
         } catch (IOException e) {
             throw new ResourceNotFoundError("Cannot load builtin resource '" + url + "'.", e);
         }
-
-        int width = rgbaBuffer.getWidth(), height = rgbaBuffer.getHeight();
-        BufferedImage awtImage = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
-        WritableRaster writableRaster = awtImage.getRaster();
-        byte[] rgbaData = rgbaBuffer.getRGBAData(), argbCache = new byte[4];
-        for (int y = 0; y < height; y++) {
-            int lineIndex = y * width * 4;
-            for (int x = 0; x < width; x++) {
-                // Transfer RGBA storage to ARGB storage
-                int index = lineIndex + x * 4;
-                argbCache[0] = rgbaData[index + 3];
-                System.arraycopy(
-                        rgbaData,
-                        index,
-                        argbCache,
-                        1,
-                        3
-                );
-
-                writableRaster.setDataElements(x, y, argbCache);
-            }
-        }
-
-        return awtImage;
     }
 }
