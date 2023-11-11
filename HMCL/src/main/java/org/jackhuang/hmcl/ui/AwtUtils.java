@@ -35,19 +35,22 @@ public final class AwtUtils {
         }
 
         int width = rgbaBuffer.getWidth(), height = rgbaBuffer.getHeight();
-        BufferedImage awtImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage awtImage = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
         WritableRaster writableRaster = awtImage.getRaster();
-        byte[] rgbaData = rgbaBuffer.getRGBAData();
-        int[] argbCache = new int[4];
+        byte[] rgbaData = rgbaBuffer.getRGBAData(), argbCache = new byte[4];
         for (int y = 0; y < height; y++) {
             int lineIndex = y * width * 4;
             for (int x = 0; x < width; x++) {
                 // Transfer RGBA storage to ARGB storage
                 int index = lineIndex + x * 4;
                 argbCache[0] = rgbaData[index + 3];
-                argbCache[1] = rgbaData[index];
-                argbCache[2] = rgbaData[index + 1];
-                argbCache[3] = rgbaData[index + 2];
+                System.arraycopy(
+                        rgbaData,
+                        index,
+                        argbCache,
+                        1,
+                        3
+                );
 
                 writableRaster.setDataElements(x, y, argbCache);
             }
