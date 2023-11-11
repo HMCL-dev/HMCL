@@ -4,14 +4,14 @@
       "1": {
         "url": "https://github.com/huanghongxun/HMCL/raw/javafx/HMCL/src/main/resources/assets/mod_data.txt",
         "local_path": "HMCL/src/main/resources/assets/mod_data.txt",
-        "sha1": "2ffa59fc1b3736257c4dc38e67e4a3b5509be481"
+        "sha1": "0ae36a65a00b00176358bd6b0d3c8787b3668c23"
       }
     },
     "modpack_data": {
       "1": {
         "url": "https://github.com/huanghongxun/HMCL/blob/javafx/HMCL/src/main/resources/assets/modpack_data.txt",
         "local_path": "HMCL/src/main/resources/assets/modpack_data.txt",
-        "sha1": "483ad6aa675a0f2ac01c5522c7e0cdc55ef53121"
+        "sha1": "b0e771db170835e1154da4c21b7417a688836162"
       }
     }
   }
