@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -106,6 +107,8 @@ public enum OperatingSystem {
      */
     public static final String SYSTEM_VERSION;
 
+    public static final boolean ADMIN_PERMISSION;
+
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
@@ -169,10 +172,22 @@ public enum OperatingSystem {
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = versionNumber;
             SYSTEM_BUILD_NUMBER = buildNumber;
+
+            boolean adminPermission = false;
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"reg", "query", "HKU\\S-1-5-19"});
+                if (process.waitFor(3, TimeUnit.SECONDS)) {
+                    adminPermission = process.exitValue() == 0;
+                }
+            } catch (Throwable ignored) {
+            }
+            ADMIN_PERMISSION = adminPermission;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
+
+            ADMIN_PERMISSION = false;
         }
 
         TOTAL_MEMORY = getPhysicalMemoryStatus()

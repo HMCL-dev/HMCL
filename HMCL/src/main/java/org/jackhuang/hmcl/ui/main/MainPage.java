@@ -60,6 +60,7 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -116,6 +117,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         setPadding(new Insets(20));
 
+        VBox panes = new VBox(16);
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
             announcementPane = new VBox(16);
             if (Metadata.isNightly()) {
@@ -123,8 +125,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
             } else if (Metadata.isDev()) {
                 announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
             }
-            getChildren().add(announcementPane);
+            panes.getChildren().add(announcementPane);
         }
+
+        if (OperatingSystem.ADMIN_PERMISSION) {
+            VBox adminPermissionPane = new VBox(16);
+            adminPermissionPane.getChildren().add(new AnnouncementCard(i18n("settings.admin_mode.title"), i18n("settings.admin_mode.msg")));
+            panes.getChildren().add(adminPermissionPane);
+        }
+        getChildren().add(panes);
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
