@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -169,6 +170,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
+            skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
+                if (isSearching) {
+                    search();
+                }
+            });
 
             center.setContent(listView);
             root.getContent().add(center);
@@ -214,7 +220,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                predicate = s -> s.contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
@@ -464,24 +470,24 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (empty) return;
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
+            switch (dataItem.getModInfo().getModLoaderType()) {
+                case FORGE:
+                    content.getTags().add(i18n("install.installer.forge"));
+                    break;
+                case NEO_FORGED:
+                    content.getTags().add(i18n("install.installer.neoforge"));
+                    break;
+                case FABRIC:
+                    content.getTags().add(i18n("install.installer.fabric"));
+                    break;
+                case LITE_LOADER:
+                    content.getTags().add(i18n("install.installer.liteloader"));
+                    break;
+                case QUILT:
+                    content.getTags().add(i18n("install.installer.quilt"));
+                    break;
+            }
             if (dataItem.getMod() != null) {
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE:
-                        content.getTags().add(i18n("install.installer.forge"));
-                        break;
-                    case NEO_FORGED:
-                        content.getTags().add(i18n("install.installer.neoforge"));
-                        break;
-                    case FABRIC:
-                        content.getTags().add(i18n("install.installer.fabric"));
-                        break;
-                    case LITE_LOADER:
-                        content.getTags().add(i18n("install.installer.liteloader"));
-                        break;
-                    case QUILT:
-                        content.getTags().add(i18n("install.installer.quilt"));
-                        break;
-                }
                 if (I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
                     content.getTags().add(dataItem.getMod().getDisplayName());
                 }

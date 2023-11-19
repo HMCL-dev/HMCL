@@ -35,7 +35,7 @@ public class ResourceNotFoundError extends Error {
     public static InputStream getResourceAsStream(String url) {
         InputStream stream = ResourceNotFoundError.class.getResourceAsStream(url);
         if (stream == null)
-            throw new ResourceNotFoundError("RemoteResource not found: " + url);
+            throw new ResourceNotFoundError("Resource not found: " + url);
         return stream;
     }
 }

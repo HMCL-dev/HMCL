@@ -31,10 +31,10 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.*;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -46,12 +46,13 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.png.PNGType;
+import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
-import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
@@ -74,13 +75,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.io.*;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -99,18 +98,21 @@ public final class FXUtils {
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
-    private static final Map<String, Path> imageCache = new ConcurrentHashMap<>();
+    private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
 
-    public static synchronized void shutdown() {
-        for (Path path : imageCache.values()) {
+    private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
+
+    public static void shutdown() {
+        for (Map.Entry<String, Path> entry: remoteImageCache.entrySet()) {
             try {
-                Files.deleteIfExists(path);
+                Files.deleteIfExists(entry.getValue());
             } catch (IOException e) {
-                LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", path), e);
+                LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", entry.getValue()), e);
             }
+            remoteImageCache.remove(entry.getKey());
         }
 
-        imageCache.clear();
+        builtinImageCache.clear();
     }
 
     public static void runInFX(Runnable runnable) {
@@ -226,23 +228,22 @@ public final class FXUtils {
         return new StackPane(node);
     }
 
-    public static void setValidateWhileTextChanged(Node field, boolean validate) {
-        if (field instanceof JFXTextField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXTextField) field).textProperty(), o -> ((JFXTextField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXTextField) field).validate();
-        } else if (field instanceof JFXPasswordField) {
-            if (validate) {
-                addListener(field, "FXUtils.validation", ((JFXPasswordField) field).textProperty(), o -> ((JFXPasswordField) field).validate());
-            } else {
-                removeListener(field, "FXUtils.validation");
-            }
-            ((JFXPasswordField) field).validate();
-        } else
-            throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
+    public static void setValidateWhileTextChanged(JFXTextField field, boolean validate) {
+        if (validate) {
+            addListener(field, "FXUtils.validation", field.textProperty(), o -> field.validate());
+        } else {
+            removeListener(field, "FXUtils.validation");
+        }
+        field.validate();
+    }
+
+    public static void setValidateWhileTextChanged(JFXPasswordField field, boolean validate) {
+        if (validate) {
+            addListener(field, "FXUtils.validation", field.textProperty(), o -> field.validate());
+        } else {
+            removeListener(field, "FXUtils.validation");
+        }
+        field.validate();
     }
 
     public static boolean getValidateWhileTextChanged(Node field) {
@@ -314,29 +315,7 @@ public final class FXUtils {
     }
 
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
-        runInFX(() -> {
-            try {
-                // Java 8
-                Class<?> behaviorClass = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior");
-                Constructor<?> behaviorConstructor = behaviorClass.getDeclaredConstructor(Duration.class, Duration.class, Duration.class, boolean.class);
-                behaviorConstructor.setAccessible(true);
-                Object behavior = behaviorConstructor.newInstance(new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false);
-                Method installMethod = behaviorClass.getDeclaredMethod("install", Node.class, Tooltip.class);
-                installMethod.setAccessible(true);
-                installMethod.invoke(behavior, node, tooltip);
-            } catch (ReflectiveOperationException e) {
-                try {
-                    // Java 9
-                    Tooltip.class.getMethod("setShowDelay", Duration.class).invoke(tooltip, new Duration(openDelay));
-                    Tooltip.class.getMethod("setShowDuration", Duration.class).invoke(tooltip, new Duration(visibleDelay));
-                    Tooltip.class.getMethod("setHideDelay", Duration.class).invoke(tooltip, new Duration(closeDelay));
-                } catch (ReflectiveOperationException e2) {
-                    e.addSuppressed(e2);
-                    Logging.LOG.log(Level.SEVERE, "Cannot install tooltip", e);
-                }
-                Tooltip.install(node, tooltip);
-            }
-        });
+        runInFX(() -> TooltipInstaller.install(node, openDelay, visibleDelay, closeDelay, tooltip));
     }
 
     public static void playAnimation(Node node, String animationKey, Timeline timeline) {
@@ -702,11 +681,13 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
-        try {
-            return new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth);
-        } catch (IllegalArgumentException e) {
-            throw new ResourceNotFoundError("Cannot access image: " + url, e);
-        }
+        return builtinImageCache.computeIfAbsent(url, s -> {
+            try {
+                return new Image(s, requestedWidth, requestedHeight, preserveRatio, smooth);
+            } catch (IllegalArgumentException e) {
+                throw new ResourceNotFoundError("Cannot access image: " + s, e);
+            }
+        });
     }
 
     /**
@@ -715,8 +696,6 @@ public final class FXUtils {
      *
      * @param url the url of image. The image resource should be a file on the internet.
      * @return the image resource within the jar.
-     * @see org.jackhuang.hmcl.util.CrashReporter
-     * @see ResourceNotFoundError
      */
     public static Image newRemoteImage(String url) {
         return newRemoteImage(url, 0, 0, false, false, false);
@@ -736,36 +715,50 @@ public final class FXUtils {
      *                        algorithm or a faster one when scaling this image to fit within
      *                        the specified bounding box
      * @return the image resource within the jar.
-     * @see CrashReporter
-     * @see ResourceNotFoundError
      */
     public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
-        if (imageCache.containsKey(url)) {
-            Path path = imageCache.get(url);
-            if (Files.isReadable(path)) {
-                try {
-                    return new Image(Files.newInputStream(path), requestedWidth, requestedHeight, preserveRatio, smooth);
+        Path currentPath = remoteImageCache.get(url);
+        if (currentPath != null) {
+            if (Files.isReadable(currentPath)) {
+                try (InputStream inputStream = Files.newInputStream(currentPath)) {
+                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "An exception encountered while reading data from cached image file.", e);
                 }
             }
 
+            // The file is unavailable or unreadable.
+            remoteImageCache.remove(url);
+
             try {
-                Files.deleteIfExists(path);
+                Files.deleteIfExists(currentPath);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "An exception encountered while deleting broken cached image file.", e);
             }
-
-            imageCache.remove(url);
         }
 
         Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
         image.progressProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
                 Task.runAsync(() -> {
-                    Path path = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    PNGJavaFXUtils.writeImage(image, path);
-                    imageCache.put(url, path);
+                    Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
+                    try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
+                            OutputStream outputStream = Files.newOutputStream(newPath);
+                            PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
+                    ) {
+                        writer.write(PNGJavaFXUtils.asArgbImage(image));
+                    } catch (IOException e) {
+                        try {
+                            Files.delete(newPath);
+                        } catch (IOException e2) {
+                            e2.addSuppressed(e);
+                            throw e2;
+                        }
+                        throw e;
+                    }
+                    if (remoteImageCache.putIfAbsent(url, newPath) != null) {
+                        Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
+                    }
                 }).start();
             }
         });

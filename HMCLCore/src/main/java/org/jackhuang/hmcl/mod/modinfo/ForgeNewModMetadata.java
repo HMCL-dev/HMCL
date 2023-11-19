@@ -136,7 +136,7 @@ public final class ForgeNewModMetadata {
             }
         }
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), ModLoaderType.FORGE), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
-                mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
+                mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());
     }
