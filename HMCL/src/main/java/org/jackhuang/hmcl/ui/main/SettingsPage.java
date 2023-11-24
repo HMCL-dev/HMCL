@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
@@ -100,15 +101,14 @@ public final class SettingsPage extends SettingsView {
         updateListener.invalidated(null);
 
         ToggleGroup updateChannelGroup = new ToggleGroup();
-        chkUpdateDev.setToggleGroup(updateChannelGroup);
-        chkUpdateDev.setUserData(UpdateChannel.DEVELOPMENT);
-        chkUpdateStable.setToggleGroup(updateChannelGroup);
-        chkUpdateStable.setUserData(UpdateChannel.STABLE);
+        for (UpdateChannel channel : checkUpdateButtons.keySet()) {
+            JFXRadioButton button = checkUpdateButtons.get(channel);
+            button.setToggleGroup(updateChannelGroup);
+            button.setUserData(channel);
+        }
         ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
         updateChannel.set(UpdateChannel.getChannel());
-        updateChannel.addListener((a, b, newValue) -> {
-            UpdateChecker.requestCheckUpdate(newValue);
-        });
+        updateChannel.addListener((a, b, newValue) -> UpdateChecker.requestCheckUpdate(newValue));
         // ====
     }
 
