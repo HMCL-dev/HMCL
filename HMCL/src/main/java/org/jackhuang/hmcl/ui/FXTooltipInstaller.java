@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.util.Logging;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.util.logging.Level;
 
 public enum FXTooltipInstaller {
@@ -19,13 +20,11 @@ public enum FXTooltipInstaller {
             MethodHandle behaviorConstructor0, installMethod0;
             try {
                 MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-                behaviorConstructor0 = LOOKUP.findConstructor(
-                        Class.forName("javafx.scene.control.Tooltip$TooltipBehavior"),
-                        MethodType.methodType(
-                                Class.forName("javafx.scene.control.Tooltip$TooltipBehavior"),
-                                Duration.class, Duration.class, Duration.class, boolean.class
-                        )
+                Constructor<?> constructor = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior").getDeclaredConstructor(
+                        Duration.class, Duration.class, Duration.class, boolean.class
                 );
+                constructor.setAccessible(true);
+                behaviorConstructor0 = LOOKUP.unreflectConstructor(constructor);
 
                 installMethod0 = LOOKUP.findVirtual(
                         Class.forName("javafx.scene.control.Tooltip$TooltipBehavior"),
