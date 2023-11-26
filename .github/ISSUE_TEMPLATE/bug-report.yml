@@ -34,8 +34,8 @@ body:
       label: 问题描述 | Problem Description
       description: 请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。 Please describe the problem you met in as much detail as possible. Besides, please describe how to trigger this problem again.
       placeholder: |
-        1. 点击 HMCL 上的某个按钮
-        2. 向下翻页
+        1. 点击 HMCL 上的某个按钮 | Click a button named ...
+        2. 向下翻页 | Scroll down
         3. ...
     validations:
       required: true

@@ -1,7 +1,7 @@
 name: 新功能 | Feature Request
 description: 为 HMCL 提出新功能 | A new feature for HMCL
 title: "[Feature] "
-labels: feature request
+labels: enhancement
 body:
 - type: markdown
   attributes:
