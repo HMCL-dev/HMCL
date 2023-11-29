@@ -29,18 +29,20 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public final class RemoteResourceManager {
     private RemoteResourceManager() {
@@ -50,34 +52,34 @@ public final class RemoteResourceManager {
         @SerializedName("sha1")
         private final String sha1;
 
-        @SerializedName("url")
-        private final String url;
+        @SerializedName("urls")
+        private final String[] urls;
 
         private transient byte[] data = null;
 
-        private RemoteResource(String sha1, String url) {
+        private RemoteResource(String sha1, String[] urls) {
             this.sha1 = sha1;
-            this.url = url;
+            this.urls = urls;
         }
 
         public String getSha1() {
             return this.sha1;
         }
 
-        public String getUrl() {
-            return this.url;
+        public String[] getUrls() {
+            return this.urls;
         }
 
         public byte @Nullable [] getData() {
             return this.data;
         }
 
-        public void download(Path path, Runnable callback) throws IOException {
+        public void download(Path path, Runnable callback) {
             if (data != null) {
                 return;
             }
 
-            new FileDownloadTask(new URL(url), path.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", sha1))
+            new FileDownloadTask(Arrays.stream(urls).map(NetworkUtils::toURL).collect(Collectors.toList()), path.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", sha1))
                     .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
                         if (exception != null) {
                             data = Files.readAllBytes(path);
