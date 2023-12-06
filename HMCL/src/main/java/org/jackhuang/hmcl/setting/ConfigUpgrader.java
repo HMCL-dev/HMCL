@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -56,9 +56,10 @@ final class ConfigUpgrader {
 
         LOG.log(Level.INFO, String.format("Updating configuration from %d to %d.", configVersion, CURRENT_VERSION));
         Map<?, ?> unmodifiableRawJson = Collections.unmodifiableMap(rawJson);
-        for (Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>> dfu : collectDFU()) {
+        for (Map.Entry<Integer, BiConsumer<Config, Map<?, ?>>> dfu : collectDFU()) {
             if (configVersion < dfu.getKey()) {
-                configVersion = dfu.getValue().apply(deserialized, unmodifiableRawJson);
+                dfu.getValue().accept(deserialized, unmodifiableRawJson);
+                configVersion = dfu.getKey();
             }
         }
 
@@ -75,8 +76,8 @@ final class ConfigUpgrader {
      *
      * <p>The last item must return CURRENT_VERSION, as the config file should always being updated to the latest version.</p>
      */
-    private static List<Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>>> collectDFU() {
-        List<Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>>> dfu = Lang.immutableListOf(
+    private static List<Map.Entry<Integer, BiConsumer<Config, Map<?, ?>>>> collectDFU() {
+        List<Map.Entry<Integer, BiConsumer<Config, Map<?, ?>>>> dfu = Lang.immutableListOf(
                 Pair.pair(1, (deserialized, rawJson) -> {
                     // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
                     tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
@@ -120,7 +121,6 @@ final class ConfigUpgrader {
                                     }
                                 });
                     }
-                    return 1;
                 })
         );
 
