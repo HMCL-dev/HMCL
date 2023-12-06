@@ -17,10 +17,14 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.logging.Level;
 
@@ -72,53 +76,53 @@ final class ConfigUpgrader {
      * <p>The last item must return CURRENT_VERSION, as the config file should always being updated to the latest version.</p>
      */
     private static List<Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>>> collectDFU() {
-        List<Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>>> dfu = new ArrayList<>();
+        List<Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>>> dfu = Lang.immutableListOf(
+                Pair.pair(0, (deserialized, rawJson) -> {
+                    // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
+                    tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
+                        tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
+                            String selected = rawJson.containsKey("selectedAccount") ? null
+                                    : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
 
-        dfu.add(Pair.pair(0, (deserialized, rawJson) -> {
-            // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
-            tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
-                tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
-                    String selected = rawJson.containsKey("selectedAccount") ? null
-                            : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
-
-                    tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> {
-                        ((Map<?, ?>) uuidMap).forEach((key, value) -> {
-                            Map<Object, Object> storage = new HashMap<>();
-                            storage.put("type", "offline");
-                            storage.put("username", key);
-                            storage.put("uuid", value);
-                            if (key.equals(selected)) {
-                                storage.put("selected", true);
-                            }
-                            deserialized.getAccountStorages().add(storage);
+                            tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> {
+                                ((Map<?, ?>) uuidMap).forEach((key, value) -> {
+                                    Map<Object, Object> storage = new HashMap<>();
+                                    storage.put("type", "offline");
+                                    storage.put("username", key);
+                                    storage.put("uuid", value);
+                                    if (key.equals(selected)) {
+                                        storage.put("selected", true);
+                                    }
+                                    deserialized.getAccountStorages().add(storage);
+                                });
+                            });
                         });
                     });
-                });
-            });
 
-            // Upgrade configuration of HMCL earlier than 3.1.70
-            if (!rawJson.containsKey("commonDirType"))
-                deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
-            if (!rawJson.containsKey("backgroundType"))
-                deserialized.setBackgroundImageType(StringUtils.isNotBlank(deserialized.getBackgroundImage()) ? EnumBackgroundImage.CUSTOM : EnumBackgroundImage.DEFAULT);
-            if (!rawJson.containsKey("hasProxy"))
-                deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
-            if (!rawJson.containsKey("hasProxyAuth"))
-                deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
+                    // Upgrade configuration of HMCL earlier than 3.1.70
+                    if (!rawJson.containsKey("commonDirType"))
+                        deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
+                    if (!rawJson.containsKey("backgroundType"))
+                        deserialized.setBackgroundImageType(StringUtils.isNotBlank(deserialized.getBackgroundImage()) ? EnumBackgroundImage.CUSTOM : EnumBackgroundImage.DEFAULT);
+                    if (!rawJson.containsKey("hasProxy"))
+                        deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
+                    if (!rawJson.containsKey("hasProxyAuth"))
+                        deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
 
-            if (!rawJson.containsKey("downloadType")) {
-                tryCast(rawJson.get("downloadtype"), Number.class)
-                        .map(Number::intValue)
-                        .ifPresent(id -> {
-                            if (id == 0) {
-                                deserialized.setDownloadType("mojang");
-                            } else if (id == 1) {
-                                deserialized.setDownloadType("bmclapi");
-                            }
-                        });
-            }
-            return 1;
-        }));
+                    if (!rawJson.containsKey("downloadType")) {
+                        tryCast(rawJson.get("downloadtype"), Number.class)
+                                .map(Number::intValue)
+                                .ifPresent(id -> {
+                                    if (id == 0) {
+                                        deserialized.setDownloadType("mojang");
+                                    } else if (id == 1) {
+                                        deserialized.setDownloadType("bmclapi");
+                                    }
+                                });
+                    }
+                    return 1;
+                })
+        );
 
         if (dfu.get(dfu.size() - 1).getKey() != CURRENT_VERSION) {
             throw new IllegalStateException("The last dfu have to adapt all the config version below CURRENT_VERSION");
