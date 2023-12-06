@@ -77,7 +77,7 @@ final class ConfigUpgrader {
      */
     private static List<Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>>> collectDFU() {
         List<Map.Entry<Integer, BiFunction<Config, Map<?, ?>, Integer>>> dfu = Lang.immutableListOf(
-                Pair.pair(0, (deserialized, rawJson) -> {
+                Pair.pair(1, (deserialized, rawJson) -> {
                     // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
                     tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
                         tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
