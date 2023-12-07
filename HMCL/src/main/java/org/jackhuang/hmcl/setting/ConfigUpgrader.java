@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -35,7 +36,7 @@ final class ConfigUpgrader {
     private ConfigUpgrader() {
     }
 
-    private static final int CURRENT_VERSION = 1;
+    private static final int CURRENT_VERSION = 2;
 
     /**
      * This method is for the compatibility with old HMCL versions.
@@ -121,6 +122,10 @@ final class ConfigUpgrader {
                                     }
                                 });
                     }
+                }),
+                Pair.pair(2, (deserialized, rawJson) -> {
+                    deserialized.setX(0.5D - deserialized.getWidth() / Controllers.SCREEN.getBounds().getWidth() / 2);
+                    deserialized.setY(0.5D - deserialized.getHeight() / Controllers.SCREEN.getBounds().getHeight() / 2);
                 })
         );
 
