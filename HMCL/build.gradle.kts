@@ -139,9 +139,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.graphics/com.sun.prism",
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin",
-                "javafx.controls/com.sun.javafx.image",
-                "java.destop/sun.awt.image"
+                "javafx.controls/javafx.scene.control.skin"
             ).joinToString(" ")
         )
 
