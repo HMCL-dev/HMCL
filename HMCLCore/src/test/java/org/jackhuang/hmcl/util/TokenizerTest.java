@@ -29,8 +29,12 @@ public class TokenizerTest {
                 "Text", "with", "multiple", "spaces"
         );
         test(
-                "Text with empty ''",
-                "Text", "with", "empty", ""
+                "Text with empty part ''",
+                "Text", "with", "empty", "part", ""
+        );
+        test(
+                "head\"abc\\n\\\\\\\"\"end",
+                "headabc\n\\\"end"
         );
     }
 }

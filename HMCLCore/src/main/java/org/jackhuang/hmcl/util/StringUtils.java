@@ -217,14 +217,46 @@ public final class StringUtils {
             StringBuilder current = new StringBuilder(str.length());
             for (int i = 0; i < str.length(); ) {
                 char c = str.charAt(i);
-                if (c == '\'' || c == '"') {
+                if (c == '\'') {
+                    hasValue = true;
                     int end = str.indexOf(c, i + 1);
                     if (end < 0) {
                         end = str.length();
                     }
                     current.append(str, i + 1, end);
                     i = end + 1;
+
+                } else if (c == '"') {
                     hasValue = true;
+                    i++;
+                    while (i < str.length()) {
+                        c = str.charAt(i++);
+                        if (c == '"') {
+                            break;
+                        } else if (c == '\\' && i < str.length()) {
+                            c = str.charAt(i++);
+                            switch (c) {
+                                case 'n':
+                                    c = '\n';
+                                    break;
+                                case 'r':
+                                    c = '\r';
+                                    break;
+                                case 't':
+                                    c = '\t';
+                                    break;
+                                case 'v':
+                                    c = '\u000b';
+                                    break;
+                                case 'a':
+                                    c = '\u0007';
+                                    break;
+                            }
+                            current.append(c);
+                        } else {
+                            current.append(c);
+                        }
+                    }
                 } else if (c == ' ') {
                     if (hasValue) {
                         parts.add(current.toString());
@@ -233,8 +265,8 @@ public final class StringUtils {
                     }
                     i++;
                 } else {
-                    current.append(c);
                     hasValue = true;
+                    current.append(c);
                     i++;
                 }
             }
