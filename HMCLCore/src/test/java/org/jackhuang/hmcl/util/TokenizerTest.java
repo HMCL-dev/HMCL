@@ -24,5 +24,9 @@ public class TokenizerTest {
                 "Text without quote",
                 "Text", "without", "quote"
         );
+        test(
+                "Text  with  multiple  spaces",
+                "Text", "with", "multiple", "spaces"
+        );
     }
 }

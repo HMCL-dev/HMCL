@@ -213,28 +213,28 @@ public final class StringUtils {
             // Split the string with ' and space cleverly.
             ArrayList<String> parts = new ArrayList<>();
 
-            boolean inside = false;
             StringBuilder current = new StringBuilder(str.length());
-            for (int i = 0; i < str.length(); i++) {
+            for (int i = 0; i < str.length(); ) {
                 char c = str.charAt(i);
-                switch (c) {
-                    case '\'':
-                    case '"': {
-                        inside = !inside;
-                        break;
+                if (c == '\'' || c == '"') {
+                    int end = str.indexOf(c, i + 1);
+                    if (end < 0) {
+                        end = str.length();
                     }
-                    case ' ':
-                        if (!inside) {
-                            parts.add(current.toString());
-                            current.setLength(0);
-                            break;
-                        }
-                        // fallthrough
-                    default:
-                        current.append(c);
+                    current.append(str, i + 1, end);
+                    i = end + 1;
+                } else if (c == ' ') {
+                    if (current.length() > 0) {
+                        parts.add(current.toString());
+                        current.setLength(0);
+                    }
+                    i++;
+                } else {
+                    current.append(c);
+                    i++;
                 }
             }
-            if (current.length() != 0) {
+            if (current.length() > 0) {
                 parts.add(current.toString());
             }
 
