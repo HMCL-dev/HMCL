@@ -28,5 +28,9 @@ public class TokenizerTest {
                 "Text  with  multiple  spaces",
                 "Text", "with", "multiple", "spaces"
         );
+        test(
+                "Text with empty ''",
+                "Text", "with", "empty", ""
+        );
     }
 }

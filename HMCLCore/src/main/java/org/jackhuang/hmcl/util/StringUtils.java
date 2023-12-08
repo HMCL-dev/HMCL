@@ -213,6 +213,7 @@ public final class StringUtils {
             // Split the string with ' and space cleverly.
             ArrayList<String> parts = new ArrayList<>();
 
+            boolean hasValue = false;
             StringBuilder current = new StringBuilder(str.length());
             for (int i = 0; i < str.length(); ) {
                 char c = str.charAt(i);
@@ -223,18 +224,21 @@ public final class StringUtils {
                     }
                     current.append(str, i + 1, end);
                     i = end + 1;
+                    hasValue = true;
                 } else if (c == ' ') {
-                    if (current.length() > 0) {
+                    if (hasValue) {
                         parts.add(current.toString());
                         current.setLength(0);
+                        hasValue = false;
                     }
                     i++;
                 } else {
                     current.append(c);
+                    hasValue = true;
                     i++;
                 }
             }
-            if (current.length() > 0) {
+            if (hasValue) {
                 parts.add(current.toString());
             }
 
