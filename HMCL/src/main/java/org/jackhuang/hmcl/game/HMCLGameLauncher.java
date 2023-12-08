@@ -93,7 +93,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
         if (lang != null) {
             try {
-                FileUtils.writeText(optionsFile, String.format("lang:%s\nforceUnicodeFont:true\n", lang));
+                FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
             } catch (IOException e) {
                 Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
             }
