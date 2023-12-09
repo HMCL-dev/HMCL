@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import net.burningtnt.bcigenerator.api.BytecodeImpl;
+import net.burningtnt.bcigenerator.api.BytecodeImplError;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -92,13 +92,7 @@ public class ManagedProcess {
     public long getPID() throws UnsupportedOperationException {
         if (JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9) {
             // Method Process.pid() is provided (Java 9 or later). Invoke it to get the pid.
-            try {
-                // Current Java Compilation Environment is Java 8, directly invoking process.pid() will cause an error.
-                Method pidMethod = Process.class.getMethod("pid");
-                return (long) pidMethod.invoke(process);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 9.", e);
-            }
+            return getPID0(process);
         } else {
             // Method Process.pid() is not provided. (Java 8).
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -122,6 +116,23 @@ public class ManagedProcess {
                 throw new UnsupportedOperationException(String.format("Cannot get the pid of a Process on Java 8 on Unknown Operating System (%s).", System.getProperty("os.name")));
             }
         }
+    }
+
+    /**
+     * Get the PID of a process with BytecodeImplGenerator
+     */
+    @BytecodeImpl({
+            "LABEL METHOD_HEAD",
+            "ALOAD 0",
+            "INVOKEVIRTUAL Ljava/lang/Process;pid()J",
+            "LABEL RELEASE_PARAMETER",
+            "LRETURN",
+            "LOCALVARIABLE process [Ljava/lang/Process; METHOD_HEAD RELEASE_PARAMETER 0",
+            "MAXS 2 1"
+    })
+    @SuppressWarnings("unused")
+    private static long getPID0(Process process) {
+        throw new BytecodeImplError();
     }
 
     /**
