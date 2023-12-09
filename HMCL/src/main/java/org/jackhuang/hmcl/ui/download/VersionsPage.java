@@ -177,7 +177,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
 
-        btnRefresh.setGraphic(wrap(SVG.refresh(Theme.blackFillBinding(), -1, -1)));
+        btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1)));
 
         Holder<RemoteVersionListCell> lastCell = new Holder<>();
         EnumMap<VersionIconType, Image> icons = new EnumMap<>(VersionIconType.class);

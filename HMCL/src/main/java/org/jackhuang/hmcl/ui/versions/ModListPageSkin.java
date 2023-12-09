@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -116,7 +117,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             HBox.setHgrow(searchField, Priority.ALWAYS);
             searchField.setOnAction(e -> search());
 
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG::close,
+            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
                         changeToolbar(toolbarNormal);
 
@@ -129,28 +130,28 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             // Toolbar Normal
             toolbarNormal.getChildren().setAll(
-                    createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
-                    createToolbarButton2(i18n("mods.add"), SVG::plus, skinnable::add),
-                    createToolbarButton2(i18n("folder.mod"), SVG::folderOpen, skinnable::openModFolder),
-                    createToolbarButton2(i18n("mods.check_updates"), SVG::update, skinnable::checkUpdates),
-                    createToolbarButton2(i18n("download"), SVG::downloadOutline, skinnable::download),
-                    createToolbarButton2(i18n("search"), SVG::magnify, () -> changeToolbar(searchBar))
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("mods.add"), SVG.PLUS, skinnable::add),
+                    createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
+                    createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
+                    createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
+                    createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar))
             );
 
             // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
-                    createToolbarButton2(i18n("button.remove"), SVG::delete, () -> {
+                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                             skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                         }, null);
                     }),
-                    createToolbarButton2(i18n("mods.enable"), SVG::check, () ->
+                    createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.disable"), SVG::close, () ->
+                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("button.select_all"), SVG::selectAll, () ->
+                    createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             listView.getSelectionModel().selectAll()),
-                    createToolbarButton2(i18n("button.cancel"), SVG::cancel, () ->
+                    createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
             );
 
@@ -174,6 +175,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
+            skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
+                if (isSearching) {
+                    search();
+                }
+            });
 
             center.setContent(listView);
             root.getContent().add(center);
@@ -219,7 +225,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                predicate = s -> s.contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
@@ -429,15 +435,15 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setSelectable();
 
             restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(FXUtils.limitingSize(SVG.restore(Theme.blackFillBinding(), 24, 24), 24, 24));
+            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.informationOutline(Theme.blackFillBinding(), 24, 24), 24, 24));
+            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFORMATION_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
 
             container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
 
@@ -462,10 +468,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             restoreButton.setVisible(!dataItem.getModInfo().getMod().getOldFiles().isEmpty());
             restoreButton.setOnMouseClicked(e -> {
                 menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
-                        .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(), () -> {
-                            popup.get().hide();
-                            getSkinnable().rollback(dataItem.getModInfo(), localModFile);
-                        }))
+                        .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
+                                () -> getSkinnable().rollback(dataItem.getModInfo(), localModFile),
+                                popup.get()))
                         .collect(Collectors.toList())
                 );
 

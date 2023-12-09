@@ -175,7 +175,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         @Override
         protected List<Node> initializeToolbar(InstallerListPage skinnable) {
             return Collections.singletonList(
-                    createToolbarButton2(i18n("install.installer.install_offline"), SVG::plus, skinnable::installOffline));
+                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.PLUS, skinnable::installOffline));
         }
     }
 }
