@@ -1,3 +1,5 @@
+import kotlin.streams.toList
+
 plugins {
     `java-library`
 }
@@ -13,4 +15,18 @@ dependencies {
     api("org.nanohttpd:nanohttpd:2.3.1")
     api("org.apache.commons:commons-compress:1.23.0")
     compileOnlyApi("org.jetbrains:annotations:24.0.1")
+    compileOnlyApi("com.github.burningtnt:BytecodeImplGenerator:975a0fcfde5abfa407787fa816376de9e3e23fec")
+}
+
+tasks.compileJava {
+    val bytecodeClasses = emptyList<String>()
+
+    doLast {
+        javaexec {
+            classpath(project.sourceSets["main"].compileClasspath)
+            mainClass.set("net.burningtnt.bcigenerator.BytecodeImplGenerator")
+            System.getProperty("bci.debug.address")?.let { address -> jvmArgs("-agentlib:jdwp=transport=dt_socket,server=n,address=$address,suspend=y") }
+            args(bytecodeClasses.stream().map { s -> project.layout.buildDirectory.file("classes/java/main/$s.class").get().asFile.path }.toList())
+        }
+    }
 }

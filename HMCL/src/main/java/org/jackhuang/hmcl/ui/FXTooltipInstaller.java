@@ -3,6 +3,8 @@ package org.jackhuang.hmcl.ui;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.util.Duration;
+import net.burningtnt.bcigenerator.api.BytecodeImpl;
+import net.burningtnt.bcigenerator.api.BytecodeImplError;
 import org.jackhuang.hmcl.util.Logging;
 
 import java.lang.invoke.MethodHandle;
@@ -55,44 +57,68 @@ public enum FXTooltipInstaller {
         }
     },
     JAVA_9 {
-        private final MethodHandle setShowDelay;
-        private final MethodHandle setShowDuration;
-        private final MethodHandle setHideDelay;
-
         {
-            MethodHandle setShowDelay1, setShowDuration1, setHideDelay1;
-            try {
-                MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-
-                setShowDelay1 = LOOKUP.findVirtual(Tooltip.class, "setShowDelay", MethodType.methodType(void.class, Duration.class));
-                setShowDuration1 = LOOKUP.findVirtual(Tooltip.class, "setShowDuration", MethodType.methodType(void.class, Duration.class));
-                setHideDelay1 = LOOKUP.findVirtual(Tooltip.class, "setHideDelay", MethodType.methodType(void.class, Duration.class));
-
-                ready = true;
-            } catch (ReflectiveOperationException e) {
-                Logging.LOG.log(Level.WARNING, "Cannot initialize JAVA_9 tooltip installer.", e);
-                setShowDelay1 = null;
-                setShowDuration1 = null;
-                setHideDelay1 = null;
-
-                ready = false;
-            }
-            setShowDelay = setShowDelay1;
-            setShowDuration = setShowDuration1;
-            setHideDelay = setHideDelay1;
+            ready = true;
         }
 
         @Override
-        protected void install0(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) throws Throwable {
-            if (setShowDelay == null || setShowDuration == null || setHideDelay == null) {
-                throw new IllegalStateException("JAVA_9 tooltip installer is not initialized.");
-            }
-
-            setShowDelay.invoke(tooltip, new Duration(openDelay));
-            setShowDuration.invoke(tooltip, new Duration(visibleDelay));
-            setHideDelay.invoke(tooltip, new Duration(closeDelay));
+        protected void install0(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) throws NoSuchMethodError {
+            this.setShowDelay(tooltip, new Duration(openDelay));
+            this.setShowDuration(tooltip, new Duration(visibleDelay));
+            this.setHideDelay(tooltip, new Duration(closeDelay));
 
             Tooltip.install(node, tooltip);
+        }
+
+        @BytecodeImpl({
+                "LABEL METHOD_HEAD",
+                "ALOAD 1",
+                "ALOAD 2",
+                "INVOKEVIRTUAL Ljavafx/scene/control/Tooltip;setShowDelay(Ljavafx/util/Duration;)V",
+                "LABEL RELEASE_PARAMETER",
+                "RETURN",
+                "LOCALVARIABLE this Lorg/jackhuang/hmcl/ui/FXTooltipInstaller$2; METHOD_HEAD RELEASE_PARAMETER 2",
+                "LOCALVARIABLE tooltip Ljavafx/scene/control/Tooltip; METHOD_HEAD RELEASE_PARAMETER 0",
+                "LOCALVARIABLE duration Ljavafx/util/Duration; METHOD_HEAD RELEASE_PARAMETER 1",
+                "MAXS 2 3"
+        })
+        @SuppressWarnings("unused")
+        private void setShowDelay(Tooltip tooltip, Duration duration) {
+            throw new BytecodeImplError();
+        }
+
+        @BytecodeImpl({
+                "LABEL METHOD_HEAD",
+                "ALOAD 1",
+                "ALOAD 2",
+                "INVOKEVIRTUAL Ljavafx/scene/control/Tooltip;setShowDuration(Ljavafx/util/Duration;)V",
+                "LABEL RELEASE_PARAMETER",
+                "RETURN",
+                "LOCALVARIABLE this Lorg/jackhuang/hmcl/ui/FXTooltipInstaller$2; METHOD_HEAD RELEASE_PARAMETER 2",
+                "LOCALVARIABLE tooltip Ljavafx/scene/control/Tooltip; METHOD_HEAD RELEASE_PARAMETER 0",
+                "LOCALVARIABLE duration Ljavafx/util/Duration; METHOD_HEAD RELEASE_PARAMETER 1",
+                "MAXS 2 3"
+        })
+        @SuppressWarnings("unused")
+        private void setShowDuration(Tooltip tooltip, Duration duration) {
+            throw new BytecodeImplError();
+        }
+
+        @BytecodeImpl({
+                "LABEL METHOD_HEAD",
+                "ALOAD 1",
+                "ALOAD 2",
+                "INVOKEVIRTUAL Ljavafx/scene/control/Tooltip;setHideDelay(Ljavafx/util/Duration;)V",
+                "LABEL RELEASE_PARAMETER",
+                "RETURN",
+                "LOCALVARIABLE this Lorg/jackhuang/hmcl/ui/FXTooltipInstaller$2; METHOD_HEAD RELEASE_PARAMETER 2",
+                "LOCALVARIABLE tooltip Ljavafx/scene/control/Tooltip; METHOD_HEAD RELEASE_PARAMETER 0",
+                "LOCALVARIABLE duration Ljavafx/util/Duration; METHOD_HEAD RELEASE_PARAMETER 1",
+                "MAXS 2 3"
+        })
+        @SuppressWarnings("unused")
+        private void setHideDelay(Tooltip tooltip, Duration duration) {
+            throw new BytecodeImplError();
         }
     },
     NO_DURATION {
