@@ -19,7 +19,8 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -280,17 +281,17 @@ public final class StringUtils {
 
     public static List<String> parseCommand(String command, Map<String, String> env) {
         StringBuilder stringBuilder = new StringBuilder(command);
-        env.forEach((key, value) -> {
-            key = "$" + key;
+        for (Map.Entry<String, String> entry : env.entrySet()) {
+            String key = "$" + entry.getKey();
             int i = 0;
             while (true) {
                 i = stringBuilder.indexOf(key, i);
                 if (i == -1) {
                     break;
                 }
-                stringBuilder.replace(i, i + key.length(), value);
+                stringBuilder.replace(i, i + key.length(), entry.getValue());
             }
-        });
+        }
 
         return tokenize(stringBuilder.toString());
     }
