@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.ui.versions.ModTranslations;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -30,6 +31,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public abstract class LocalizedRemoteModRepository implements RemoteModRepository {
+    // Yes, I'm not kidding you. The similarity check is based on these two magic number. :)
     private static final int CONTAIN_CHINESE_WEIGHT = 10;
 
     private static final int INITIAL_CAPACITY = 16;
@@ -61,19 +63,14 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
         }
 
         SearchResult searchResult = getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), getBackedRemoteModRepositorySortOrder(), sortOrder);
-        Set<Character> searchFilterLetters = new HashSet<>();
-        for (int i = 0; i < searchFilter.length(); i++) {
-            searchFilterLetters.add(searchFilter.charAt(i));
-        }
 
         RemoteMod[] searchResultArray = new RemoteMod[pageSize];
         int chineseIndex = 0, englishIndex = searchResultArray.length - 1;
-        for (Iterator<RemoteMod> iterator = searchResult.getUnsortedResults().iterator(); iterator.hasNext(); ) {
+        for (RemoteMod remoteMod : Lang.toIterable(searchResult.getUnsortedResults())) {
             if (chineseIndex > englishIndex) {
                 throw new IOException("There are too many search results!");
             }
 
-            RemoteMod remoteMod = iterator.next();
             ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
             if (chineseTranslation != null && !StringUtils.isBlank(chineseTranslation.getName()) && StringUtils.containsChinese(chineseTranslation.getName())) {
                 searchResultArray[chineseIndex++] = remoteMod;
@@ -84,36 +81,26 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
         int totalPages = searchResult.getTotalPages();
         searchResult = null; // Release memory
 
+        StringUtils.DynamicCommonSubsequence calc = new StringUtils.DynamicCommonSubsequence(16, 16);
         return new SearchResult(Stream.concat(Arrays.stream(searchResultArray, 0, chineseIndex).map(remoteMod -> {
             ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByRepositoryType(getType()).getModByCurseForgeId(remoteMod.getSlug());
             if (chineseRemoteMod == null || StringUtils.isBlank(chineseRemoteMod.getName()) || !StringUtils.containsChinese(chineseRemoteMod.getName())) {
                 return Pair.pair(remoteMod, Integer.MAX_VALUE);
             }
+
             String chineseRemoteModName = chineseRemoteMod.getName();
-            if (searchFilter.length() == 0 || chineseRemoteModName.length() == 0) {
+            if (searchFilter.isEmpty() || chineseRemoteModName.isEmpty()) {
                 return Pair.pair(remoteMod, Math.max(searchFilter.length(), chineseRemoteModName.length()));
             }
-            int[][] lev = new int[searchFilter.length() + 1][chineseRemoteModName.length() + 1];
-            for (int i = 0; i < chineseRemoteModName.length() + 1; i++) {
-                lev[0][i] = i;
-            }
-            for (int i = 0; i < searchFilter.length() + 1; i++) {
-                lev[i][0] = i;
-            }
-            for (int i = 1; i < searchFilter.length() + 1; i++) {
-                for (int j = 1; j < chineseRemoteModName.length() + 1; j++) {
-                    int countByInsert = lev[i][j - 1] + 1;
-                    int countByDel = lev[i - 1][j] + 1;
-                    int countByReplace = searchFilter.charAt(i - 1) == chineseRemoteModName.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1;
-                    lev[i][j] = Math.min(countByInsert, Math.min(countByDel, countByReplace));
+
+            int weight = calc.calc(searchFilter, chineseRemoteModName);
+            for (int i = 0;i < searchFilter.length(); i ++) {
+                if (chineseRemoteModName.indexOf(searchFilter.charAt(i)) >= 0) {
+                    return Pair.pair(remoteMod, weight + CONTAIN_CHINESE_WEIGHT);
                 }
             }
-
-            return Pair.pair(
-                    remoteMod,
-                    lev[searchFilter.length()][chineseRemoteModName.length()] - (searchFilterLetters.stream().anyMatch(c -> chineseRemoteModName.indexOf(c) >= 0) ? CONTAIN_CHINESE_WEIGHT : 0)
-            );
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), Arrays.stream(searchResultArray, englishIndex + 1, searchResultArray.length)), totalPages);
+            return Pair.pair(remoteMod, weight);
+        }).sorted(Comparator.<Pair<RemoteMod, Integer>>comparingInt(Pair::getValue).reversed()).map(Pair::getKey), Arrays.stream(searchResultArray, englishIndex + 1, searchResultArray.length)), totalPages);
     }
 
     @Override
