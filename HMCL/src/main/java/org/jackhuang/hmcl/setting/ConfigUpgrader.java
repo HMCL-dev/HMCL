@@ -57,7 +57,7 @@ final class ConfigUpgrader {
         }
 
         LOG.log(Level.INFO, String.format("Updating configuration from %d to %d.", configVersion, CURRENT_VERSION));
-        Map<?, ?> unmodifiableRawJson = Collections.unmodifiableMap(new Gson().fromJson(rawContent, Map.class));
+        Map<?, ?> unmodifiableRawJson = Collections.unmodifiableMap(new Gson().<Map<?, ?>>fromJson(rawContent, Map.class));
         for (Map.Entry<Integer, BiConsumer<Config, Map<?, ?>>> dfu : collectDFU()) {
             if (configVersion < dfu.getKey()) {
                 dfu.getValue().accept(deserialized, unmodifiableRawJson);
