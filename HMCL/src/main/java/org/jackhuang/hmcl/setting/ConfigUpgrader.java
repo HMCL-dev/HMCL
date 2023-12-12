@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.Gson;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
@@ -42,9 +43,9 @@ final class ConfigUpgrader {
      * This method is for the compatibility with old HMCL versions.
      *
      * @param deserialized deserialized config settings
-     * @param rawJson      raw json structure of the config settings without modification
+     * @param rawContent   raw json content of the config settings without modification
      */
-    static void upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
+    static void upgradeConfig(Config deserialized, String rawContent) {
         if (deserialized.getConfigVersion() == CURRENT_VERSION) {
             return;
         }
@@ -56,7 +57,7 @@ final class ConfigUpgrader {
         }
 
         LOG.log(Level.INFO, String.format("Updating configuration from %d to %d.", configVersion, CURRENT_VERSION));
-        Map<?, ?> unmodifiableRawJson = Collections.unmodifiableMap(rawJson);
+        Map<?, ?> unmodifiableRawJson = Collections.unmodifiableMap(new Gson().fromJson(rawContent, Map.class));
         for (Map.Entry<Integer, BiConsumer<Config, Map<?, ?>>> dfu : collectDFU()) {
             if (configVersion < dfu.getKey()) {
                 dfu.getValue().accept(deserialized, unmodifiableRawJson);
@@ -130,7 +131,7 @@ final class ConfigUpgrader {
         );
 
         if (dfu.get(dfu.size() - 1).getKey() != CURRENT_VERSION) {
-            throw new IllegalStateException("The last dfu have to adapt all the config version below CURRENT_VERSION");
+            throw new IllegalStateException("The last dfu must adapt all the config version below CURRENT_VERSION");
         }
 
         return dfu;
