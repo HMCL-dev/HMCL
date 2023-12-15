@@ -8,7 +8,6 @@ import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.Locale
 import java.util.zip.ZipFile
 
 buildscript {
@@ -96,18 +95,24 @@ fun attachSignature(jar: File) {
 }
 
 tasks.getByName<JavaCompile>("compileJava") {
-    dependsOn(tasks.create("checkDynamicRemoteResourcesHash") {
+    dependsOn(tasks.create("computeDynamicResources") {
+        this@create.inputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"))
+        this@create.outputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json"))
+
         doLast {
-            Files.newInputStream(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json"))
-                .use { fis ->
-                    (Gson().fromJson(
-                        String(fis.readAllBytes(), Charsets.UTF_8),
-                        JsonElement::class.java
-                    ) as JsonObject).asMap().forEach { (namespace, namespaceData) ->
+            Gson().also { gsonInstance ->
+                Files.newBufferedReader(
+                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"),
+                    Charsets.UTF_8
+                ).use { br ->
+                    (gsonInstance.fromJson(br, JsonElement::class.java) as JsonObject)
+                }.also { data ->
+                    data.asMap().forEach { (namespace, namespaceData) ->
                         (namespaceData as JsonObject).asMap().forEach { (name, nameData) ->
                             (nameData as JsonObject).asMap().forEach { (version, versionData) ->
                                 require(versionData is JsonObject)
-                                val localPath = (versionData.get("local_path") as com.google.gson.JsonPrimitive).asString
+                                val localPath =
+                                    (versionData.get("local_path") as com.google.gson.JsonPrimitive).asString
                                 val sha1 = (versionData.get("sha1") as com.google.gson.JsonPrimitive).asString
 
                                 val currentSha1 = digest(
@@ -121,7 +126,26 @@ tasks.getByName<JavaCompile>("compileJava") {
                             }
                         }
                     }
+
+                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json").also { zippedPath ->
+                        gsonInstance.toJson(data).also { expectedData ->
+                            if (Files.exists(zippedPath)) {
+                                Files.readString(zippedPath, Charsets.UTF_8).also { rawData ->
+                                    if (!rawData.equals(expectedData)) {
+                                        if (System.getenv("GITHUB_SHA") == null) {
+                                            Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
+                                        } else {
+                                            throw IllegalStateException("Mismatched zipped dynamic-remote-resources json file!")
+                                        }
+                                    }
+                                }
+                            } else {
+                                Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
+                            }
+                        }
+                    }
                 }
+            }
         }
     })
 }
