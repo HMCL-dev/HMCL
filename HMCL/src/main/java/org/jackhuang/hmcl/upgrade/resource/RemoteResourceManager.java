@@ -62,18 +62,6 @@ public final class RemoteResourceManager {
             this.urls = urls;
         }
 
-        public String getSha1() {
-            return this.sha1;
-        }
-
-        public String[] getUrls() {
-            return this.urls;
-        }
-
-        public byte @Nullable [] getData() {
-            return this.data;
-        }
-
         public void download(Path path, Runnable callback) {
             if (data != null) {
                 return;
@@ -134,15 +122,15 @@ public final class RemoteResourceManager {
                 return getLocalResource();
             }
 
-            if (remoteResource.getSha1().equals(getLocalResourceSha1())) {
+            if (remoteResource.sha1.equals(getLocalResourceSha1())) {
                 return getLocalResource();
             }
 
-            if (remoteResource.getData() == null) {
+            if (remoteResource.data == null) {
                 return null;
             }
 
-            return new ByteArrayInputStream(remoteResource.getData());
+            return new ByteArrayInputStream(remoteResource.data);
         }
 
         public void downloadRemoteResourceIfNecessary() throws IOException {
@@ -152,7 +140,7 @@ public final class RemoteResourceManager {
                 return;
             }
 
-            if (remoteResource.getSha1().equals(getLocalResourceSha1())) {
+            if (remoteResource.sha1.equals(getLocalResourceSha1())) {
                 return;
             }
 
