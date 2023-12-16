@@ -97,13 +97,11 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             if (!report.shouldBeReport())
                 return;
 
-            String text = report.getDisplayText();
-
-            LOG.log(Level.SEVERE, text);
+            LOG.log(Level.SEVERE, report.getDisplayText());
             Platform.runLater(() -> {
                 if (checkThrowable(e)) {
                     if (showCrashWindow) {
-                        new CrashWindow(text).show();
+                        new CrashWindow(report).show();
                     }
                     if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
                         reportToServer(report);

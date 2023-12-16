@@ -19,7 +19,7 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     if (number != null) {
         (number - offset).toString()
     } else {
-        val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
+        val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
         val prefix = if (isOfficial) "dev" else "unofficial"
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
@@ -38,7 +38,7 @@ dependencies {
     implementation("libs:JFoenix")
 }
 
-fun digest(algorithm: String, bytes: ByteArray) = MessageDigest.getInstance(algorithm).digest(bytes)
+fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
@@ -187,7 +187,7 @@ tasks.processResources {
     dependsOn(tasks["java11Classes"])
 
     into("assets") {
-        from(project.buildDir.resolve("openjfx-dependencies.json"))
+        from(project.layout.buildDirectory.file("openjfx-dependencies.json"))
     }
     dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }
