@@ -187,7 +187,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.patchVersion(libraryVersion);
             }
         },
-        NEO_FORGED(true, "neoforge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.NEO_FORGED) {
+        NEO_FORGED(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED) {
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<neoforged>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
