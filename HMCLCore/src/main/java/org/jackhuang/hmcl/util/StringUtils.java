@@ -325,6 +325,32 @@ public final class StringUtils {
         return true;
     }
 
+    public static class DynamicCommonSubsequence {
+        private LongestCommonSubsequence calculator;
+
+        public DynamicCommonSubsequence(int intLengthA, int intLengthB) {
+            if (intLengthA > intLengthB) {
+                calculator = new LongestCommonSubsequence(intLengthA, intLengthB);
+            } else {
+                calculator = new LongestCommonSubsequence(intLengthB, intLengthA);
+            }
+        }
+
+        public int calc(CharSequence a, CharSequence b) {
+            if (a.length() < b.length()) {
+                CharSequence t = a;
+                a = b;
+                b = t;
+            }
+
+            if (calculator.maxLengthA < a.length() || calculator.maxLengthB < b.length()) {
+                calculator = new LongestCommonSubsequence(a.length(), b.length());
+            }
+
+            return calculator.calc(a, b);
+        }
+    }
+
     /**
      * Class for computing the longest common subsequence between strings.
      */

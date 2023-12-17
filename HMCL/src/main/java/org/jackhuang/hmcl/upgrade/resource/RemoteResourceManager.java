@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.upgrade.resource;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import javafx.collections.FXCollections;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.versions.ModTranslations;
+import org.jackhuang.hmcl.upgrade.hmcl.IntegrityChecker;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -39,9 +39,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public final class RemoteResourceManager {
@@ -60,18 +60,6 @@ public final class RemoteResourceManager {
         private RemoteResource(String sha1, String[] urls) {
             this.sha1 = sha1;
             this.urls = urls;
-        }
-
-        public String getSha1() {
-            return this.sha1;
-        }
-
-        public String[] getUrls() {
-            return this.urls;
-        }
-
-        public byte @Nullable [] getData() {
-            return this.data;
         }
 
         public void download(Path path, Runnable callback) {
@@ -134,15 +122,15 @@ public final class RemoteResourceManager {
                 return getLocalResource();
             }
 
-            if (remoteResource.getSha1().equals(getLocalResourceSha1())) {
+            if (remoteResource.sha1.equals(getLocalResourceSha1())) {
                 return getLocalResource();
             }
 
-            if (remoteResource.getData() == null) {
+            if (remoteResource.data == null) {
                 return null;
             }
 
-            return new ByteArrayInputStream(remoteResource.getData());
+            return new ByteArrayInputStream(remoteResource.data);
         }
 
         public void downloadRemoteResourceIfNecessary() throws IOException {
@@ -152,7 +140,7 @@ public final class RemoteResourceManager {
                 return;
             }
 
-            if (remoteResource.getSha1().equals(getLocalResourceSha1())) {
+            if (remoteResource.sha1.equals(getLocalResourceSha1())) {
                 return;
             }
 
@@ -180,38 +168,26 @@ public final class RemoteResourceManager {
         }
     }
 
-    private static final Map<String, Map<String, Map<String, RemoteResource>>> remoteResources = FXCollections.observableMap(new HashMap<>());
-    private static boolean fetching = false;
+    private static final Map<String, Map<String, Map<String, RemoteResource>>> remoteResources = new ConcurrentHashMap<>();
 
-    private static final Map<String, RemoteResourceKey> keys = new HashMap<>();
+    private static final Map<String, RemoteResourceKey> keys = new ConcurrentHashMap<>();
 
     public static void init() {
-        if (remoteResources.size() != 0) {
-            return;
-        }
+        Task.<Map<String, Map<String, Map<String, RemoteResource>>>>supplyAsync(() ->
+                IntegrityChecker.isSelfVerified() ? HttpRequest.GET(Metadata.RESOURCE_UPDATE_URL).getJson(
+                        new TypeToken<Map<String, Map<String, Map<String, RemoteResource>>>>() {
+                        }.getType()
+                ) : null
+        ).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
+            if (exception == null && result != null) {
+                remoteResources.clear();
+                remoteResources.putAll(result);
 
-        synchronized (RemoteResourceManager.class) {
-            if (fetching) {
-                return;
-            }
-            fetching = true;
-
-            Task.<Map<String, Map<String, Map<String, RemoteResource>>>>supplyAsync(() -> HttpRequest.GET(Metadata.RESOURCE_UPDATE_URL).getJson(
-                    new TypeToken<Map<String, Map<String, Map<String, RemoteResource>>>>() {
-                    }.getType())
-            ).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
-                if (exception == null) {
-                    remoteResources.clear();
-                    remoteResources.putAll(result);
-
-                    for (RemoteResourceKey key : keys.values()) {
-                        key.downloadRemoteResourceIfNecessary();
-                    }
+                for (RemoteResourceKey key : keys.values()) {
+                    key.downloadRemoteResourceIfNecessary();
                 }
-
-                fetching = false;
-            }).start();
-        }
+            }
+        }).start();
     }
 
     public static void register() {
