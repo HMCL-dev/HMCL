@@ -109,7 +109,6 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
-        exclude(dependency("com.github.steveice10:.*:.*"))
         exclude(dependency("libs:JFoenix:.*"))
     }
 
