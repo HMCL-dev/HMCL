@@ -143,12 +143,45 @@ public enum OperatingSystem {
             try {
                 Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                    Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
-                            .matcher(reader.readLine().trim());
-
-                    if (matcher.find()) {
-                        versionNumber = matcher.group("version");
-                        buildNumber = Integer.parseInt(matcher.group("build"));
+                    final String input = reader.readLine();
+                    parseLoop:
+                    for (int i = input.length() - 1; i >= 0; i--) {
+                        char c = input.charAt(i);
+                        if (c > ' ') {
+                            if (c != ']') {
+                                break;
+                            }
+                            final int end = i;
+                            for (i --; i >= 0; i--) {
+                                c = input.charAt(i);
+                                if (c < '0' || c > '9') {
+                                    if (c != '.') {
+                                        break parseLoop;
+                                    }
+                                    int calcBN = 0, times = 1;
+                                    for (i --; i >= 0; i--) {
+                                        c = input.charAt(i);
+                                        if (c >= '0' && c <= '9') {
+                                            calcBN += (c - '0') * times;
+                                            times *= 10;
+                                        } else if (c == '.') {
+                                            for (i --;i >= 0;i --) {
+                                                c = input.charAt(i);
+                                                if ((c < '0' || c > '9') && c != '.') {
+                                                    versionNumber = input.substring(i + 1, end);
+                                                    buildNumber = calcBN;
+                                                    break parseLoop;
+                                                }
+                                            }
+                                        } else {
+                                            break parseLoop;
+                                        }
+                                    }
+                                    break parseLoop;
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
                 process.destroy();
