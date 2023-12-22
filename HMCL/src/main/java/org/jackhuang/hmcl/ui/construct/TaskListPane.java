@@ -301,7 +301,7 @@ public final class TaskListPane extends StackPane {
         private final Label title = new Label();
         private final Label state = new Label();
         private final DoubleBinding binding = Bindings.createDoubleBinding(() ->
-                        getWidth() - getPadding().getLeft() - getPadding().getRight(),
+                        getWidth() - getPadding().getLeft() - getPadding().getRight() - getInsets().getLeft() - getInsets().getRight(),
                 paddingProperty(), widthProperty());
 
         public ProgressListNode(Task<?> task) {
