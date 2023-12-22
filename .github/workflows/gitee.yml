@@ -8,7 +8,7 @@ jobs:
     if: ${{ github.repository_owner == 'huanghongxun' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Mirror Github to Gitee
+      - name: Mirror GitHub to Gitee
         uses: Yikun/hub-mirror-action@v1.3
         with:
           src: github/huanghongxun
