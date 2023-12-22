@@ -31,10 +31,10 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.*;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -71,8 +71,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.io.*;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -297,29 +295,7 @@ public final class FXUtils {
     }
 
     public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
-        runInFX(() -> {
-            try {
-                // Java 8
-                Class<?> behaviorClass = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior");
-                Constructor<?> behaviorConstructor = behaviorClass.getDeclaredConstructor(Duration.class, Duration.class, Duration.class, boolean.class);
-                behaviorConstructor.setAccessible(true);
-                Object behavior = behaviorConstructor.newInstance(new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false);
-                Method installMethod = behaviorClass.getDeclaredMethod("install", Node.class, Tooltip.class);
-                installMethod.setAccessible(true);
-                installMethod.invoke(behavior, node, tooltip);
-            } catch (ReflectiveOperationException e) {
-                try {
-                    // Java 9
-                    Tooltip.class.getMethod("setShowDelay", Duration.class).invoke(tooltip, new Duration(openDelay));
-                    Tooltip.class.getMethod("setShowDuration", Duration.class).invoke(tooltip, new Duration(visibleDelay));
-                    Tooltip.class.getMethod("setHideDelay", Duration.class).invoke(tooltip, new Duration(closeDelay));
-                } catch (ReflectiveOperationException e2) {
-                    e.addSuppressed(e2);
-                    Logging.LOG.log(Level.SEVERE, "Cannot install tooltip", e);
-                }
-                Tooltip.install(node, tooltip);
-            }
-        });
+        runInFX(() -> FXTooltipInstaller.installTooltip(node, openDelay, visibleDelay, closeDelay, tooltip));
     }
 
     public static void playAnimation(Node node, String animationKey, Timeline timeline) {

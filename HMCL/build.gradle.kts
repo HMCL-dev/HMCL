@@ -6,6 +6,7 @@ import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
+import kotlin.streams.toList
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -36,6 +37,21 @@ version = "$versionRoot.$buildNumber"
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
+}
+
+tasks.compileJava {
+    val bytecodeClasses = listOf(
+        "org/jackhuang/hmcl/ui/FXTooltipInstaller$2"
+    )
+
+    doLast {
+        javaexec {
+            classpath(project.sourceSets["main"].compileClasspath)
+            mainClass.set("net.burningtnt.bcigenerator.BytecodeImplGenerator")
+            System.getProperty("bci.debug.address")?.let { address -> jvmArgs("-agentlib:jdwp=transport=dt_socket,server=n,address=$address,suspend=y") }
+            args(bytecodeClasses.stream().map { s -> project.layout.buildDirectory.file("classes/java/main/$s.class").get().asFile.path }.toList())
+        }
+    }
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
