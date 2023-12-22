@@ -13,7 +13,8 @@ plugins {
 }
 
 val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
+        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF")
+    .isNullOrEmpty())
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
@@ -27,6 +28,11 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
 }
 val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
+val signaturePublicKeyLocation = if (isOfficial) when (versionType) {
+    "stable", "dev" -> "signature/hmcl_signature_publickey_jenkin_ci.der";
+    "nightly" -> "signature/hmcl_signature_publickey_github_ci.der";
+    else -> null
+} else null
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
@@ -78,7 +84,7 @@ fun attachSignature(jar: File) {
         return
     }
 
-    val privatekey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(File(keyLocation).readBytes()))
+    val privatekey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(if (keyLocation.startsWith("-----BEGIN OPENSSH PRIVATE KEY-----")) keyLocation.toByteArray() else File(keyLocation).readBytes()))
     val signer = Signature.getInstance("SHA512withRSA")
     signer.initSign(privatekey)
     ZipFile(jar).use { zip ->
@@ -203,6 +209,11 @@ tasks.processResources {
 
     into("assets") {
         from(project.layout.buildDirectory.file("openjfx-dependencies.json"))
+
+        if (signaturePublicKeyLocation != null) {
+            from(rootProject.rootDir.resolve(signaturePublicKeyLocation))
+            rename { "hmcl_signature_publickey.der" }
+        }
     }
     dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }

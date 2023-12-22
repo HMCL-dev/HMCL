@@ -27,19 +27,23 @@ import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
@@ -51,8 +55,7 @@ public abstract class SettingsView extends StackPane {
     protected final ComponentSublist fileCommonLocationSublist;
     protected final Label lblUpdate;
     protected final Label lblUpdateSub;
-    protected final JFXRadioButton chkUpdateStable;
-    protected final JFXRadioButton chkUpdateDev;
+    protected final Map<UpdateChannel, JFXRadioButton> checkUpdateButtons = new EnumMap<>(UpdateChannel.class);
     protected final JFXButton btnUpdate;
     protected final ScrollPane scroll;
 
@@ -130,13 +133,30 @@ public abstract class SettingsView extends StackPane {
                         VBox content = new VBox();
                         content.setSpacing(8);
 
-                        chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
-                        chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                        TextFlow noteWrapper;
+                        {
+                            JFXRadioButton stableButton = new JFXRadioButton(i18n("update.channel.stable"));
+                            JFXRadioButton devButton = new JFXRadioButton(i18n("update.channel.dev"));
+                            JFXRadioButton nightlyButton = new JFXRadioButton(i18n("update.channel.nightly"));
 
-                        TextFlow noteWrapper = new TextFlow(new Text(i18n("update.note")));
+                            if (Metadata.isNightly()) {
+                                stableButton.setDisable(true);
+                                devButton.setDisable(true);
+                                noteWrapper = FXUtils.segmentToTextFlow(i18n("update.note") + "\n" + i18n("update.note.nightly2stabledev"), Controllers::onHyperlinkAction);
+                            } else {
+                                nightlyButton.setDisable(true);
+                                noteWrapper = FXUtils.segmentToTextFlow(i18n("update.note") + "\n" + i18n("update.note.stabledev2nightly"), Controllers::onHyperlinkAction);
+                            }
+
+                            checkUpdateButtons.put(UpdateChannel.STABLE, stableButton);
+                            checkUpdateButtons.put(UpdateChannel.DEVELOPMENT, devButton);
+                            checkUpdateButtons.put(UpdateChannel.NIGHTLY, nightlyButton);
+                        }
+
                         VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
 
-                        content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
+                        content.getChildren().setAll(checkUpdateButtons.values());
+                        content.getChildren().add(noteWrapper);
 
                         updatePane.getContent().add(content);
                     }
