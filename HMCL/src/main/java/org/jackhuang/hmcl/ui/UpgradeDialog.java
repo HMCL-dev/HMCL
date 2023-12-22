@@ -25,7 +25,7 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.hmcl.RemoteVersion;
 
 import java.util.logging.Level;
 

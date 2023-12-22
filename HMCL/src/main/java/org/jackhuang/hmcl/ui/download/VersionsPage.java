@@ -36,11 +36,13 @@ import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
+import org.jackhuang.hmcl.download.neoforge.NeoForgedRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -286,7 +288,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         }
 
         private Image getIcon(VersionIconType type) {
-            return icons.computeIfAbsent(type, iconType -> new Image(iconType.getResourceUrl()));
+            return icons.computeIfAbsent(type, iconType -> FXUtils.newBuiltinImage(iconType.getResourceUrl()));
         }
 
         @Override
@@ -334,6 +336,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     iconType = VersionIconType.COMMAND;
                 else if (remoteVersion instanceof ForgeRemoteVersion)
                     iconType = VersionIconType.FORGE;
+                else if (remoteVersion instanceof NeoForgedRemoteVersion)
+                    iconType = VersionIconType.NEO_FORGED;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
                     iconType = VersionIconType.FABRIC;
                 else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
