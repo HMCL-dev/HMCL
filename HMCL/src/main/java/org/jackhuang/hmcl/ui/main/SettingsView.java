@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateChannel;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.util.Arrays;
