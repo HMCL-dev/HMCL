@@ -15,11 +15,13 @@ dependencies {
     api("org.nanohttpd:nanohttpd:2.3.1")
     api("org.apache.commons:commons-compress:1.23.0")
     compileOnlyApi("org.jetbrains:annotations:24.0.1")
-    compileOnlyApi("com.github.burningtnt:BytecodeImplGenerator:975a0fcfde5abfa407787fa816376de9e3e23fec")
+    compileOnlyApi("com.github.burningtnt:BytecodeImplGenerator:b45b6638eeaeb903aa22ea947d37c45e5716a18c")
 }
 
 tasks.compileJava {
-    val bytecodeClasses = emptyList<String>()
+    val bytecodeClasses = listOf(
+        "org/jackhuang/hmcl/util/platform/ManagedProcess"
+    )
 
     doLast {
         javaexec {

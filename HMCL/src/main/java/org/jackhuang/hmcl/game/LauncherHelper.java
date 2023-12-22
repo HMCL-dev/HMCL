@@ -747,7 +747,7 @@ public final class LauncherHelper {
 
             if (showLogs)
                 Platform.runLater(() -> {
-                    logWindow = new LogWindow();
+                    logWindow = new LogWindow(process);
                     logWindow.showNormal();
                     logWindowLatch.countDown();
                 });
