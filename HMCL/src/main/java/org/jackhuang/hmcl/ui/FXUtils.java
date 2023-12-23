@@ -492,7 +492,7 @@ public final class FXUtils {
                 frame.setSize(width, height);
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 frame.setLocationByPlatform(true);
-                frame.setIconImage(new ImageIcon(FXUtils.class.getResource("/assets/img/icon.png")).getImage());
+                frame.setIconImage(AwtUtils.loadBuiltinWebpImage("/assets/img/icon.webp"));
                 frame.setLayout(new BorderLayout());
 
                 final JProgressBar progressBar = new JProgressBar();

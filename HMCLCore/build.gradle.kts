@@ -4,7 +4,11 @@ plugins {
     `java-library`
 }
 
+val simpleWEBPSha1 = "efb5a9be1c54cdc9c93661387346ff89eb5fbd4c"
+
 dependencies {
+    api("com.github.burningtnt.SimpleWEBP:jfx:$simpleWEBPSha1")
+    api("com.github.burningtnt.SimpleWEBP:awt:$simpleWEBPSha1")
     api("org.glavo:simple-png-javafx:0.3.0")
     api("com.google.code.gson:gson:2.10.1")
     api("com.moandjiezana.toml:toml4j:0.7.2")
@@ -16,6 +20,7 @@ dependencies {
     api("org.apache.commons:commons-compress:1.23.0")
     compileOnlyApi("org.jetbrains:annotations:24.0.1")
     compileOnlyApi("com.github.burningtnt:BytecodeImplGenerator:b45b6638eeaeb903aa22ea947d37c45e5716a18c")
+    testImplementation(project(":HMCL"))
 }
 
 tasks.compileJava {

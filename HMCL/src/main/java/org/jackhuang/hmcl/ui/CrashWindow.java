@@ -70,7 +70,7 @@ public class CrashWindow extends Stage {
 
         Scene scene = new Scene(pane, 800, 480);
         setScene(scene);
-        getIcons().add(newBuiltinImage("/assets/img/icon.png"));
+        getIcons().add(newBuiltinImage("/assets/img/icon.webp"));
         setTitle(i18n("message.error"));
 
         setOnCloseRequest(e -> System.exit(1));

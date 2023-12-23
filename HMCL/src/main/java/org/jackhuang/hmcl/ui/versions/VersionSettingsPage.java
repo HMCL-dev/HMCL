@@ -145,7 +145,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             rootPane.getChildren().add(iconPickerItemWrapper);
 
             iconPickerItem = new ImagePickerItem();
-            iconPickerItem.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+            iconPickerItem.setImage(FXUtils.newBuiltinImage("/assets/img/icon.webp"));
             iconPickerItem.setTitle(i18n("settings.icon"));
             iconPickerItem.setOnSelectButtonClicked(e -> onExploreIcon());
             iconPickerItem.setOnDeleteButtonClicked(e -> onDeleteIcon());

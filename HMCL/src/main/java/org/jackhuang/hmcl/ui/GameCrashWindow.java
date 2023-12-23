@@ -116,7 +116,7 @@ public class GameCrashWindow extends Stage {
         setScene(new Scene(view, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
-        getIcons().add(newBuiltinImage("/assets/img/icon.png"));
+        getIcons().add(newBuiltinImage("/assets/img/icon.webp"));
 
         analyzeCrashReport();
     }

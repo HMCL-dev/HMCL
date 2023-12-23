@@ -302,7 +302,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     if (stream != null) {
                         imageView.setImage(new Image(stream, 40, 40, true, true));
                     } else {
-                        imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
+                        imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.webp", 40, 40, true, true));
                     }
                 }).start();
             }

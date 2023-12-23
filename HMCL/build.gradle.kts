@@ -224,6 +224,8 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.base/com.sun.javafx.event",
                 "javafx.base/com.sun.javafx.runtime",
                 "javafx.graphics/javafx.css",
+                "javafx.graphics/com.sun.javafx.iio",
+                "javafx.graphics/com.sun.javafx.iio.common",
                 "javafx.graphics/com.sun.javafx.stage",
                 "javafx.graphics/com.sun.prism",
                 "javafx.controls/com.sun.javafx.scene.control",
