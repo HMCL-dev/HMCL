@@ -16,4 +16,16 @@ public final class Hooks {
         }
         System.exit(1);
     }
+
+    public static String onInitApplicationName(String name) {
+        return name + " (PR Collection)";
+    }
+
+    public static String onInitApplicationFullName(String fullName) {
+        return fullName + " (PR Collection)";
+    }
+
+    public static String onInitApplicationVersion(String version) {
+        return version + " (PR Collection)";
+    }
 }

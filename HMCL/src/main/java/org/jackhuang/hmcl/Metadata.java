@@ -30,9 +30,9 @@ import java.nio.file.Paths;
 public final class Metadata {
     private Metadata() {}
 
-    public static final String NAME = "HMCL";
-    public static final String FULL_NAME = "Hello Minecraft! Launcher";
-    public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getManifestAttribute("Implementation-Version", "@develop@"));
+    public static final String NAME = net.burningtnt.hmclprs.Hooks.onInitApplicationName("HMCL");
+    public static final String FULL_NAME = net.burningtnt.hmclprs.Hooks.onInitApplicationFullName("Hello Minecraft! Launcher");
+    public static final String VERSION = net.burningtnt.hmclprs.Hooks.onInitApplicationVersion(System.getProperty("hmcl.version.override", JarUtils.getManifestAttribute("Implementation-Version", "@develop@")));
 
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
