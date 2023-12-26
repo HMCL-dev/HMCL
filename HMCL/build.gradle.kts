@@ -108,6 +108,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     archiveClassifier.set(null as String?)
 
     exclude("**/package-info.class")
+    exclude("META-INF/maven/**")
 
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
