@@ -152,7 +152,7 @@ public class AboutPage extends StackPane {
 
             IconedTwoLineListItem simpleWebp = new IconedTwoLineListItem();
             simpleWebp.setTitle("SimpleWEBP");
-            simpleWebp.setSubtitle("Copyright © Copyright 2023 Burning_TNT.\nLicensed under the Apache 2.0 License.");
+            simpleWebp.setSubtitle("Copyright © 2023 Burning_TNT.\nLicensed under the Apache 2.0 License.");
             simpleWebp.setExternalLink("https://github.com/burningtnt/SimpleWEBP");
 
             IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
