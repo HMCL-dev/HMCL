@@ -59,8 +59,9 @@ public final class JavaFXPatcher {
         // Add-Exports and Add-Opens
         try {
             // Some hacks
-            MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup());
-            MethodHandle handle = lookup.findVirtual(Module.class, "implAddOpensToAllUnnamed", MethodType.methodType(void.class, String.class));
+            final MethodHandle handle = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup())
+                    .findVirtual(Module.class, "implAddOpensToAllUnnamed", MethodType.methodType(void.class, String.class));
+
             for (String target : addOpens) {
                 String[] name = target.split("/", 2); // <module>/<package>
                 layer.findModule(name[0]).ifPresent(m -> {
