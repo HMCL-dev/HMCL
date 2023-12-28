@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -557,91 +558,92 @@ public class DefaultLauncher extends Launcher {
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
-        OutputStream outputStream = new FileOutputStream(scriptFile);
-        Charset charset = StandardCharsets.UTF_8;
+        try (OutputStream outputStream = Files.newOutputStream(scriptFile.toPath())) {
+            Charset charset = StandardCharsets.UTF_8;
 
-        if (isWindows) {
-            if (usePowerShell) {
-                // Write UTF-8 BOM
-                try {
-                    outputStream.write(0xEF);
-                    outputStream.write(0xBB);
-                    outputStream.write(0xBF);
-                } catch (IOException e) {
-                    outputStream.close();
-                    throw e;
+            if (isWindows) {
+                if (usePowerShell) {
+                    // Write UTF-8 BOM
+                    try {
+                        outputStream.write(0xEF);
+                        outputStream.write(0xBB);
+                        outputStream.write(0xBF);
+                    } catch (IOException e) {
+                        outputStream.close();
+                        throw e;
+                    }
+                } else {
+                    charset = OperatingSystem.NATIVE_CHARSET;
                 }
-            } else {
-                charset = OperatingSystem.NATIVE_CHARSET;
             }
-        }
 
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
-            if (usePowerShell) {
-                if (isWindows) {
-                    writer.write("$Env:APPDATA=");
-                    writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
-                    writer.newLine();
-                }
-                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                    writer.write("$Env:" + entry.getKey() + "=");
-                    writer.write(CommandBuilder.pwshString(entry.getValue()));
-                    writer.newLine();
-                }
-                writer.write("Set-Location -Path ");
-                writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
-                writer.newLine();
-
-                writer.write('&');
-                for (String rawCommand : commandLine.commandLine.asList()) {
-                    writer.write(' ');
-                    writer.write(CommandBuilder.pwshString(rawCommand));
-                }
-                writer.newLine();
-            } else {
-                if (isWindows) {
-                    writer.write("@echo off");
-                    writer.newLine();
-                    writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
-                    writer.newLine();
-                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                        writer.write("set " + entry.getKey() + "=" + CommandBuilder.toBatchStringLiteral(entry.getValue()));
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
+                if (usePowerShell) {
+                    if (isWindows) {
+                        writer.write("$Env:APPDATA=");
+                        writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
                         writer.newLine();
                     }
-                    writer.newLine();
-                    writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                } else {
-                    writer.write("#!/usr/bin/env bash");
-                    writer.newLine();
                     for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                        writer.write("export " + entry.getKey() + "=" + CommandBuilder.toShellStringLiteral(entry.getValue()));
+                        writer.write("$Env:" + entry.getKey() + "=");
+                        writer.write(CommandBuilder.pwshString(entry.getValue()));
+                        writer.newLine();
+                    }
+                    writer.write("Set-Location -Path ");
+                    writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
+                    writer.newLine();
+
+                    writer.write('&');
+                    for (String rawCommand : commandLine.commandLine.asList()) {
+                        writer.write(' ');
+                        writer.write(CommandBuilder.pwshString(rawCommand));
+                    }
+                    writer.newLine();
+                } else {
+                    if (isWindows) {
+                        writer.write("@echo off");
+                        writer.newLine();
+                        writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                        writer.newLine();
+                        for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                            writer.write("set " + entry.getKey() + "=" + CommandBuilder.toBatchStringLiteral(entry.getValue()));
+                            writer.newLine();
+                        }
+                        writer.newLine();
+                        writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                    } else {
+                        writer.write("#!/usr/bin/env bash");
+                        writer.newLine();
+                        for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                            writer.write("export " + entry.getKey() + "=" + CommandBuilder.toShellStringLiteral(entry.getValue()));
+                            writer.newLine();
+                        }
+                        if (commandLine.tempNativeFolder != null) {
+                            writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.getAbsolutePath(), commandLine.tempNativeFolder.toString()).toString());
+                            writer.newLine();
+                        }
+                        writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                    }
+                    writer.newLine();
+                    if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                        writer.write(options.getPreLaunchCommand());
+                        writer.newLine();
+                    }
+                    writer.write(command);
+                    writer.newLine();
+                    if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                        writer.write(options.getPostExitCommand());
+                        writer.newLine();
+                    }
+
+                    if (isWindows) {
+                        writer.write("pause");
                         writer.newLine();
                     }
                     if (commandLine.tempNativeFolder != null) {
-                        writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.getAbsolutePath(), commandLine.tempNativeFolder.toString()).toString());
+                        writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
                         writer.newLine();
                     }
-                    writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                }
-                writer.newLine();
-                if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-                    writer.write(options.getPreLaunchCommand());
-                    writer.newLine();
-                }
-                writer.write(command);
-                writer.newLine();
-                if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                    writer.write(options.getPostExitCommand());
-                    writer.newLine();
-                }
-
-                if (isWindows) {
-                    writer.write("pause");
-                    writer.newLine();
-                }
-                if (commandLine.tempNativeFolder != null) {
-                    writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
-                    writer.newLine();
                 }
             }
         }
