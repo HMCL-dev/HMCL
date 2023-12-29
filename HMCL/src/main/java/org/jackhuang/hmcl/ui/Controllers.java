@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
+import org.jackhuang.hmcl.ui.multiplayer.MultiplayerPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
@@ -96,6 +97,8 @@ public final class Controllers {
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
+
+    private static Lazy<MultiplayerPage> multiplayerPage = new Lazy<>(MultiplayerPage::new);
     private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
 
     private Controllers() {
@@ -122,6 +125,11 @@ public final class Controllers {
     // FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
+    }
+
+    // FXThread
+    public static MultiplayerPage getMultiplayerPage() {
+        return multiplayerPage.get();
     }
 
     // FXThread
@@ -352,6 +360,7 @@ public final class Controllers {
         gameListPage = null;
         downloadPage = null;
         accountListPage = null;
+        multiplayerPage = null;
         settingsPage = null;
         decorator = null;
         stage = null;
