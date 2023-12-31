@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -174,6 +175,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
+            skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
+                if (isSearching) {
+                    search();
+                }
+            });
 
             center.setContent(listView);
             root.getContent().add(center);
@@ -219,7 +225,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                predicate = s -> s.contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
