@@ -1138,7 +1138,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public void execute() {
+        public void execute() throws InterruptedException {
             if (!done.getAsBoolean()) {
                 updateProgress(0.0D);
 
@@ -1148,7 +1148,7 @@ public abstract class Task<T> {
                     updateProgressImmediately(-k / ((System.currentTimeMillis() - start) / 1000D + k2) + MAX_VALUE);
 
                     Thread.yield();
-                    LockSupport.parkNanos(1000000);
+                    Thread.sleep(1000);
                 }
             }
 
