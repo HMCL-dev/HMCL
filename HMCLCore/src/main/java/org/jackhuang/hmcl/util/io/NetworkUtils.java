@@ -144,8 +144,8 @@ public final class NetworkUtils {
         while (true) {
 
             conn.setUseCaches(false);
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
             conn.setInstanceFollowRedirects(false);
             Map<String, List<String>> properties = conn.getRequestProperties();
             String method = conn.getRequestMethod();
@@ -209,13 +209,13 @@ public final class NetworkUtils {
     public static String readData(HttpURLConnection con) throws IOException {
         try {
             try (InputStream stdout = con.getInputStream()) {
-                return IOUtils.readFullyAsString(stdout);
+                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding()) ? IOUtils.wrapFromGZip(stdout) : stdout);
             }
         } catch (IOException e) {
             try (InputStream stderr = con.getErrorStream()) {
                 if (stderr == null)
                     throw e;
-                return IOUtils.readFullyAsString(stderr);
+                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding()) ? IOUtils.wrapFromGZip(stderr) : stderr);
             }
         }
     }

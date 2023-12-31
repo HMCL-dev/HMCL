@@ -19,11 +19,11 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class StringUtils {
@@ -208,39 +208,71 @@ public final class StringUtils {
     }
 
     public static List<String> tokenize(String str) {
-        if (str == null)
+        if (isBlank(str)) {
             return new ArrayList<>();
-        else {
-            // Split the string with ' or " and space cleverly.
-
-            final char groupSplit;
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                groupSplit = '"';
-            } else {
-                groupSplit = '\'';
-            }
-
+        } else {
+            // Split the string with ' and space cleverly.
             ArrayList<String> parts = new ArrayList<>();
 
-            {
-                boolean inside = false;
-                StringBuilder current = new StringBuilder();
+            boolean hasValue = false;
+            StringBuilder current = new StringBuilder(str.length());
+            for (int i = 0; i < str.length(); ) {
+                char c = str.charAt(i);
+                if (c == '\'') {
+                    hasValue = true;
+                    int end = str.indexOf(c, i + 1);
+                    if (end < 0) {
+                        end = str.length();
+                    }
+                    current.append(str, i + 1, end);
+                    i = end + 1;
 
-                for (int i = 0; i < str.length(); i++) {
-                    char c = str.charAt(i);
-                    if (c == groupSplit) {
-                        inside = !inside;
-                    } else if (!inside && c == ' ') {
+                } else if (c == '"') {
+                    hasValue = true;
+                    i++;
+                    while (i < str.length()) {
+                        c = str.charAt(i++);
+                        if (c == '"') {
+                            break;
+                        } else if (c == '\\' && i < str.length()) {
+                            c = str.charAt(i++);
+                            switch (c) {
+                                case 'n':
+                                    c = '\n';
+                                    break;
+                                case 'r':
+                                    c = '\r';
+                                    break;
+                                case 't':
+                                    c = '\t';
+                                    break;
+                                case 'v':
+                                    c = '\u000b';
+                                    break;
+                                case 'a':
+                                    c = '\u0007';
+                                    break;
+                            }
+                            current.append(c);
+                        } else {
+                            current.append(c);
+                        }
+                    }
+                } else if (c == ' ') {
+                    if (hasValue) {
                         parts.add(current.toString());
                         current.setLength(0);
-                    } else {
-                        current.append(c);
+                        hasValue = false;
                     }
+                    i++;
+                } else {
+                    hasValue = true;
+                    current.append(c);
+                    i++;
                 }
-
-                if (current.length() != 0) {
-                    parts.add(current.toString());
-                }
+            }
+            if (hasValue) {
+                parts.add(current.toString());
             }
 
             return parts;
@@ -249,17 +281,17 @@ public final class StringUtils {
 
     public static List<String> parseCommand(String command, Map<String, String> env) {
         StringBuilder stringBuilder = new StringBuilder(command);
-        env.forEach((key, value) -> {
-            key = "$" + key;
+        for (Map.Entry<String, String> entry : env.entrySet()) {
+            String key = "$" + entry.getKey();
             int i = 0;
             while (true) {
                 i = stringBuilder.indexOf(key, i);
                 if (i == -1) {
                     break;
                 }
-                stringBuilder.replace(i, i + key.length(), value);
+                stringBuilder.replace(i, i + key.length(), entry.getValue());
             }
-        });
+        }
 
         return tokenize(stringBuilder.toString());
     }
@@ -323,6 +355,32 @@ public final class StringUtils {
                 return false;
         }
         return true;
+    }
+
+    public static class DynamicCommonSubsequence {
+        private LongestCommonSubsequence calculator;
+
+        public DynamicCommonSubsequence(int intLengthA, int intLengthB) {
+            if (intLengthA > intLengthB) {
+                calculator = new LongestCommonSubsequence(intLengthA, intLengthB);
+            } else {
+                calculator = new LongestCommonSubsequence(intLengthB, intLengthA);
+            }
+        }
+
+        public int calc(CharSequence a, CharSequence b) {
+            if (a.length() < b.length()) {
+                CharSequence t = a;
+                a = b;
+                b = t;
+            }
+
+            if (calculator.maxLengthA < a.length() || calculator.maxLengthB < b.length()) {
+                calculator = new LongestCommonSubsequence(a.length(), b.length());
+            }
+
+            return calculator.calc(a, b);
+        }
     }
 
     /**
