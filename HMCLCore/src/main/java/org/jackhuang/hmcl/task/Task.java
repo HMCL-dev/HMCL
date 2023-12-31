@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -1147,7 +1146,6 @@ public abstract class Task<T> {
                 while (!done.getAsBoolean()) {
                     updateProgressImmediately(-k / ((System.currentTimeMillis() - start) / 1000D + k2) + MAX_VALUE);
 
-                    Thread.yield();
                     Thread.sleep(1000);
                 }
             }
