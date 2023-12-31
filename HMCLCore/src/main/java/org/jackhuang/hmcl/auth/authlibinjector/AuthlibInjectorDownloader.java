@@ -22,7 +22,6 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.io.IOException;
@@ -112,10 +111,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
 
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
         try {
-            return JsonUtils.fromNonNullJson(
-                    HttpRequest.GET(downloadProvider.get().injectURL(LATEST_BUILD_URL)).getString(),
-                    AuthlibInjectorVersionInfo.class
-            );
+            return HttpRequest.GET(downloadProvider.get().injectURL(LATEST_BUILD_URL)).getJson(AuthlibInjectorVersionInfo.class);
         } catch (JsonParseException e) {
             throw new IOException("Malformed response", e);
         }
