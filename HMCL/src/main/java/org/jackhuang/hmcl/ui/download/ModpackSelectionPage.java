@@ -69,7 +69,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         this.getChildren().setAll(
                 title,
                 createButton("local", this::onChooseLocalFile),
-                createButton("remote", this::onChooseRemoteFile)
+                createButton("remote", this::onChooseRemoteFile),
+                createButton("repository", this::onChooseRepository)
         );
 
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
@@ -166,6 +167,12 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                 reject.accept(e.getMessage());
             }
         });
+    }
+
+    public void onChooseRepository() {
+        DownloadPage downloadPage = new DownloadPage();
+        downloadPage.showModpackDownloads();
+        Controllers.navigate(downloadPage);
     }
 
     @Override

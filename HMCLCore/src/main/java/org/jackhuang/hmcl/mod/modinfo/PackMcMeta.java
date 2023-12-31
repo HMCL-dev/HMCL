@@ -15,11 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -36,7 +39,6 @@ import java.util.List;
 
 @Immutable
 public class PackMcMeta implements Validation {
-
     @SerializedName("pack")
     private final PackInfo pack;
 

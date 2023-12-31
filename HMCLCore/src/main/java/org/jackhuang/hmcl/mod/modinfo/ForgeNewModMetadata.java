@@ -1,7 +1,10 @@
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonParseException;
 import com.moandjiezana.toml.Toml;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -20,7 +23,6 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 
 @Immutable
 public final class ForgeNewModMetadata {
-
     private final String modLoader;
 
     private final String loaderVersion;
@@ -134,7 +136,7 @@ public final class ForgeNewModMetadata {
             }
         }
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), ModLoaderType.FORGE), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
-                mod.getAuthors(), mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
+                mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());
     }
