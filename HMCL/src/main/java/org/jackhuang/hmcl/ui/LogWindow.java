@@ -445,7 +445,7 @@ public final class LogWindow extends Stage {
                 } else {
                     exportDumpButton.setText(i18n("logwindow.export_dump.no_dependency.button"));
                     exportDumpButton.setTooltip(new Tooltip(i18n("logwindow.export_dump.no_dependency.tooltip")));
-                    exportDumpButton.setButtonType(JFXButton.ButtonType.RAISED);
+                    exportDumpButton.setDisable(true);
                 }
 
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
