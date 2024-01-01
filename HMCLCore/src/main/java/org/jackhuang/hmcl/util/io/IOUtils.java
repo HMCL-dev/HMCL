@@ -45,6 +45,12 @@ public final class IOUtils {
         return result.toByteArray();
     }
 
+    public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
+        copyTo(stream, result);
+        return result.toString("UTF-8");
+    }
+
     /**
      * Read all bytes to a buffer from given input stream, and close the input stream finally.
      *

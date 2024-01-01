@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
