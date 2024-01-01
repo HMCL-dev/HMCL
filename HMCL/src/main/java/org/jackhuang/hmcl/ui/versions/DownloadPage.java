@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -27,14 +27,12 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -49,11 +47,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.SimpleMultimap;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +62,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -81,8 +78,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final DownloadCallback callback;
     private final DownloadListPage page;
 
-    private List<RemoteMod> dependencies;
-    private SimpleMultimap<String, RemoteMod.Version> versions;
+    private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> versions;
 
     public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
         this.page = page;
@@ -105,10 +101,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         setLoading(true);
         setFailed(false);
 
-        Task.allOf(
-                        Task.supplyAsync(() -> addon.getData().loadDependencies(repository)),
-                        Task.supplyAsync(() -> {
-                            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
+        Task.supplyAsync(() -> {
+            Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
 //                            if (StringUtils.isNotBlank(version.getVersion())) {
 //                                Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
 //                                if (gameVersion.isPresent()) {
@@ -116,30 +110,23 @@ public class DownloadPage extends Control implements DecoratorPage {
 //                                            .filter(file -> file.getGameVersions().contains(gameVersion.get())));
 //                                }
 //                            }
-                            return sortVersions(versions);
-                        }))
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception == null) {
-                        @SuppressWarnings("unchecked")
-                        List<RemoteMod> dependencies = (List<RemoteMod>) result.get(0);
-                        @SuppressWarnings("unchecked")
-                        SimpleMultimap<String, RemoteMod.Version> versions = (SimpleMultimap<String, RemoteMod.Version>) result.get(1);
+            return sortVersions(versions);
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                this.versions = result;
 
-                        this.dependencies = dependencies;
-                        this.versions = versions;
-
-                        loaded.set(true);
-                        setFailed(false);
-                    } else {
-                        setFailed(true);
-                    }
-                    setLoading(false);
-                }).start();
+                loaded.set(true);
+                setFailed(false);
+            } else {
+                setFailed(true);
+            }
+            setLoading(false);
+        }).start();
     }
 
-    private SimpleMultimap<String, RemoteMod.Version> sortVersions(Stream<RemoteMod.Version> versions) {
-        SimpleMultimap<String, RemoteMod.Version> classifiedVersions
-                = new SimpleMultimap<String, RemoteMod.Version>(HashMap::new, ArrayList::new);
+    private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> sortVersions(Stream<RemoteMod.Version> versions) {
+        SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> classifiedVersions
+                = new SimpleMultimap<>(HashMap::new, ArrayList::new);
         versions.forEach(version -> {
             for (String gameVersion : version.getGameVersions()) {
                 classifiedVersions.put(gameVersion, version);
@@ -147,7 +134,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         });
 
         for (String gameVersion : classifiedVersions.keys()) {
-            List<RemoteMod.Version> versionList = (List<RemoteMod.Version>) classifiedVersions.get(gameVersion);
+            List<RemoteMod.Version> versionList = classifiedVersions.get(gameVersion);
             versionList.sort(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed());
         }
         return classifiedVersions;
@@ -246,7 +233,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             {
                 ImageView imageView = new ImageView();
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.setImage(new Image(getSkinnable().addon.getIconUrl(), 40, 40, true, true, true));
+                    imageView.setImage(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 40, 40, true, true, true));
                 }
                 descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
 
@@ -264,12 +251,14 @@ public class DownloadPage extends Control implements DecoratorPage {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
+                    openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
                     runInFX(() -> FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod")));
 
                     if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
                         JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
                         openMcbbsButton.setExternalLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs()));
                         descriptionPane.getChildren().add(openMcbbsButton);
+                        openMcbbsButton.setMinWidth(Region.USE_PREF_SIZE);
                         runInFX(() -> FXUtils.installFastTooltip(openMcbbsButton, i18n("mods.mcbbs")));
                     }
                 }
@@ -277,30 +266,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
+                openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
                 runInFX(() -> FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage()));
-            }
-
-            {
-                ComponentList dependencyPane = new ComponentList();
-                dependencyPane.getStyleClass().add("no-padding");
-
-                FXUtils.onChangeAndOperate(control.loaded, loaded -> {
-                    if (loaded) {
-                        dependencyPane.getContent().setAll(control.dependencies.stream()
-                                .map(dependency -> new DependencyModItem(getSkinnable().page, dependency, control.version, control.callback))
-                                .collect(Collectors.toList()));
-                    }
-                });
-
-                Node title = ComponentList.createComponentListTitle(i18n("mods.dependencies"));
-
-                BooleanBinding show = Bindings.createBooleanBinding(() -> control.loaded.get() && !control.dependencies.isEmpty(), control.loaded);
-                title.managedProperty().bind(show);
-                title.visibleProperty().bind(show);
-                dependencyPane.managedProperty().bind(show);
-                dependencyPane.visibleProperty().bind(show);
-
-                pane.getChildren().addAll(title, dependencyPane);
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();
@@ -324,6 +291,23 @@ public class DownloadPage extends Control implements DecoratorPage {
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
 
+                    if (control.version.getProfile() != null && control.version.getVersion() != null) {
+                        Version game = control.version.getProfile().getRepository().getResolvedPreservingPatchesVersion(control.version.getVersion());
+                        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(game);
+                        libraryAnalyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT).ifPresent(currentGameVersion -> {
+                            Set<ModLoaderType> currentGameModLoaders = libraryAnalyzer.getModLoaders();
+                            if (control.versions.containsKey(currentGameVersion)) {
+                                control.versions.get(currentGameVersion).stream()
+                                        .filter(version1 -> version1.getLoaders().isEmpty() || version1.getLoaders().stream().anyMatch(currentGameModLoaders::contains))
+                                        .findFirst()
+                                        .ifPresent(value -> list.getContent().addAll(
+                                                ComponentList.createComponentListTitle(i18n("mods.download.recommend", currentGameVersion)),
+                                                new ModItem(value, control)
+                                        ));
+                            }
+                        });
+                    }
+
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
                             .collect(Collectors.toList())) {
@@ -332,7 +316,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                         .map(version -> new ModItem(version, control))
                                         .collect(Collectors.toList()));
                         sublist.getStyleClass().add("no-padding");
-                        sublist.setTitle(gameVersion);
+                        sublist.setTitle("Minecraft " + gameVersion);
 
                         list.getContent().add(sublist);
                     }
@@ -344,10 +328,19 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class DependencyModItem extends StackPane {
+        public static final EnumMap<RemoteMod.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
+                Pair.pair(RemoteMod.DependencyType.EMBEDDED, "mods.dependency.embedded"),
+                Pair.pair(RemoteMod.DependencyType.OPTIONAL, "mods.dependency.optional"),
+                Pair.pair(RemoteMod.DependencyType.REQUIRED, "mods.dependency.required"),
+                Pair.pair(RemoteMod.DependencyType.TOOL, "mods.dependency.tool"),
+                Pair.pair(RemoteMod.DependencyType.INCLUDE, "mods.dependency.include"),
+                Pair.pair(RemoteMod.DependencyType.INCOMPATIBLE, "mods.dependency.incompatible"),
+                Pair.pair(RemoteMod.DependencyType.BROKEN, "mods.dependency.broken")
+        ));
 
         DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
             HBox pane = new HBox(8);
-            pane.setPadding(new Insets(8));
+            pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -366,7 +359,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     .collect(Collectors.toList()));
 
             if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                imageView.setImage(new Image(addon.getIconUrl(), 40, 40, true, true, true));
+                imageView.setImage(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true, true));
             }
         }
     }
@@ -374,61 +367,149 @@ public class DownloadPage extends Control implements DecoratorPage {
     private static final class ModItem extends StackPane {
 
         ModItem(RemoteMod.Version dataItem, DownloadPage selfPage) {
-            HBox pane = new HBox(8);
-            pane.setPadding(new Insets(8));
-            pane.setAlignment(Pos.CENTER_LEFT);
-            TwoLineListItem content = new TwoLineListItem();
-            StackPane graphicPane = new StackPane();
-            JFXButton saveAsButton = new JFXButton();
+            VBox pane = new VBox(8);
+            pane.setPadding(new Insets(8, 0, 8, 0));
+
+            {
+                HBox descPane = new HBox(8);
+                descPane.setPadding(new Insets(0, 8, 0, 8));
+                descPane.setAlignment(Pos.CENTER_LEFT);
+
+                {
+                    StackPane graphicPane = new StackPane();
+                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+
+                    TwoLineListItem content = new TwoLineListItem();
+                    HBox.setHgrow(content, Priority.ALWAYS);
+                    content.setTitle(dataItem.getName());
+                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
+
+                    switch (dataItem.getVersionType()) {
+                        case Alpha:
+                        case Beta:
+                            content.getTags().add(i18n("version.game.snapshot"));
+                            break;
+                        case Release:
+                            content.getTags().add(i18n("version.game.release"));
+                            break;
+                    }
+
+                    for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
+                        switch (modLoaderType) {
+                            case FORGE:
+                                content.getTags().add(i18n("install.installer.forge"));
+                                break;
+                            case FABRIC:
+                                content.getTags().add(i18n("install.installer.fabric"));
+                                break;
+                            case LITE_LOADER:
+                                content.getTags().add(i18n("install.installer.liteloader"));
+                                break;
+                            case QUILT:
+                                content.getTags().add(i18n("install.installer.quilt"));
+                                break;
+                        }
+                    }
+
+                    descPane.getChildren().setAll(graphicPane, content);
+                }
+
+                pane.getChildren().add(descPane);
+            }
 
             RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> selfPage.download(dataItem));
+            container.setOnMouseClicked(e -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
             getChildren().setAll(container);
-
-            saveAsButton.getStyleClass().add("toggle-icon4");
-            saveAsButton.setGraphic(SVG.CONTENT_SAVE_MOVE_OUTLINE.createIcon(Theme.blackFill(), -1, -1));
-
-            HBox.setHgrow(content, Priority.ALWAYS);
-            pane.getChildren().setAll(graphicPane, content, saveAsButton);
-
-            content.setTitle(dataItem.getName());
-            content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
-            saveAsButton.setOnAction(e -> selfPage.saveAs(dataItem));
-
-            switch (dataItem.getVersionType()) {
-                case Release:
-                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
-                    content.getTags().add(i18n("version.game.release"));
-                    break;
-                case Beta:
-                    graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
-                    content.getTags().add(i18n("version.game.snapshot"));
-                    break;
-                case Alpha:
-                    graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
-                    content.getTags().add(i18n("version.game.snapshot"));
-                    break;
-            }
-
-            for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
-                switch (modLoaderType) {
-                    case FORGE:
-                        content.getTags().add(i18n("install.installer.forge"));
-                        break;
-                    case FABRIC:
-                        content.getTags().add(i18n("install.installer.fabric"));
-                        break;
-                    case LITE_LOADER:
-                        content.getTags().add(i18n("install.installer.liteloader"));
-                        break;
-                    case QUILT:
-                        content.getTags().add(i18n("install.installer.quilt"));
-                        break;
-                }
-            }
 
             // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
             this.setMinHeight(50);
+        }
+    }
+
+    private static final class ModVersion extends JFXDialogLayout {
+        public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
+            this.setHeading(new HBox(new Label(i18n("mods.download.title", version.getName()))));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+            ModItem modItem = new ModItem(version, selfPage);
+            modItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+            box.getChildren().setAll(modItem);
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
+            loadDependencies(version, selfPage, spinnerPane, dependenciesList);
+            spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
+
+            scrollPane.setContent(dependenciesList);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXButton downloadButton = new JFXButton(i18n("download"));
+            downloadButton.getStyleClass().add("dialog-accept");
+            downloadButton.setOnAction(e -> {
+                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                    fireEvent(new DialogCloseEvent());
+                }
+                selfPage.download(version);
+            });
+
+            JFXButton saveAsButton = new JFXButton(i18n("button.save_as"));
+            saveAsButton.getStyleClass().add("dialog-accept");
+            saveAsButton.setOnAction(e -> {
+                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                    fireEvent(new DialogCloseEvent());
+                }
+                selfPage.saveAs(version);
+            });
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.getStyleClass().add("dialog-cancel");
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            this.setActions(downloadButton, saveAsButton, cancelButton);
+
+            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+        }
+
+        private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+            spinnerPane.setLoading(true);
+            Task.supplyAsync(() -> {
+                EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                for (RemoteMod.Dependency dependency : version.getDependencies()) {
+                    if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
+                        continue;
+                    }
+
+                    if (!dependencies.containsKey(dependency.getType())) {
+                        List<Node> list = new ArrayList<>();
+                        Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
+                        title.setPadding(new Insets(0, 8, 0, 8));
+                        list.add(title);
+                        dependencies.put(dependency.getType(), list);
+                    }
+                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
+                    dependencyModItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+                    dependencies.get(dependency.getType()).add(dependencyModItem);
+                }
+
+                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                spinnerPane.setLoading(false);
+                if (exception == null) {
+                    dependenciesList.getContent().setAll(result);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    dependenciesList.getContent().setAll();
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+            }).start();
         }
     }
 

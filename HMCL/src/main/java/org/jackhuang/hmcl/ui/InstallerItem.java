@@ -30,7 +30,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -207,7 +206,7 @@ public class InstallerItem extends Control {
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.imageUrl != null) {
-                ImageView view = new ImageView(new Image(control.imageUrl));
+                ImageView view = new ImageView(FXUtils.newRemoteImage(control.imageUrl));
                 Node node = FXUtils.limitingSize(view, 32, 32);
                 node.setMouseTransparent(true);
                 node.getStyleClass().add("installer-item-image");

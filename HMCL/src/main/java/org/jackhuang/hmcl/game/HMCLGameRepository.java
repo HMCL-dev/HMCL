@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -263,7 +263,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newImage("/assets/img/grass.webp");
+            return newBuiltinImage("/assets/img/grass.webp");
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
         VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
@@ -276,21 +276,21 @@ public class HMCLGameRepository extends DefaultGameRepository {
             else if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return newImage("/assets/img/fabric.webp");
+                    return newBuiltinImage("/assets/img/fabric.webp");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return newImage("/assets/img/forge.webp");
+                    return newBuiltinImage("/assets/img/forge.webp");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return newImage("/assets/img/quilt.webp");
+                    return newBuiltinImage("/assets/img/quilt.webp");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return newImage("/assets/img/command.webp");
+                    return newBuiltinImage("/assets/img/command.webp");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return newImage("/assets/img/chicken.webp");
+                    return newBuiltinImage("/assets/img/chicken.webp");
                 else
-                    return newImage("/assets/img/furnace.webp");
+                    return newBuiltinImage("/assets/img/furnace.webp");
             } else
-                return newImage("/assets/img/grass.webp");
+                return newBuiltinImage("/assets/img/grass.webp");
         } else {
-            return newImage(iconType.getResourceUrl());
+            return newBuiltinImage(iconType.getResourceUrl());
         }
     }
 

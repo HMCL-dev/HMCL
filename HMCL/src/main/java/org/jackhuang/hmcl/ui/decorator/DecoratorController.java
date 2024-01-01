@@ -64,7 +64,7 @@ import java.util.stream.Stream;
 import static java.util.logging.Level.WARNING;
 import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
@@ -172,7 +172,7 @@ public class DecoratorController {
                     image = tryLoadImage(backgroundImageUrl).orElse(null);
                 break;
             case CLASSIC:
-                image = newImage("/assets/img/background-classic.jpg");
+                image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
             case TRANSLUCENT:
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
@@ -202,7 +202,7 @@ public class DecoratorController {
 
         return image.orElseGet(() -> {
             if (defaultBackground == null)
-                defaultBackground = newImage("/assets/img/background.jpg");
+                defaultBackground = newBuiltinImage("/assets/img/background.jpg");
             return defaultBackground;
         });
     }

@@ -33,10 +33,12 @@ import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.resource.RemoteResourceManager;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -71,45 +73,10 @@ public final class Launcher extends Application {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
 
         CookieHandler.setDefault(COOKIE_MANAGER);
-      
+
         WEBPImageLoaderFactory.setupListener();
 
-        Skin.registerDefaultSkinLoader((type) -> {
-            switch (type) {
-                case ALEX:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.webp");
-                case ARI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.webp");
-                case EFE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.webp");
-                case KAI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.webp");
-                case MAKENA:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.webp");
-                case NOOR:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.webp");
-                case STEVE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.webp");
-                case SUNNY:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.webp");
-                case ZURI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.webp");
-                default:
-                    return null;
-            }
-        });
-
-        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon.webp", new RemoteMod.IMod() {
-            @Override
-            public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-                throw new IOException();
-            }
-
-            @Override
-            public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-                throw new IOException();
-            }
-        }));
+        register();
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
@@ -159,11 +126,54 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
+                RemoteResourceManager.init();
+
+                RemoteResourceManager.register();
+
                 primaryStage.show();
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
+    }
+
+    private static void register() {
+        Skin.registerDefaultSkinLoader((type) -> {
+            switch (type) {
+                case ALEX:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.webp");
+                case ARI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.webp");
+                case EFE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.webp");
+                case KAI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.webp");
+                case MAKENA:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.webp");
+                case NOOR:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.webp");
+                case STEVE:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.webp");
+                case SUNNY:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.webp");
+                case ZURI:
+                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.webp");
+                default:
+                    return null;
+            }
+        });
+
+        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon@8x.png", new RemoteMod.IMod() {
+            @Override
+            public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+
+            @Override
+            public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+                throw new IOException();
+            }
+        }));
     }
 
     private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
@@ -285,6 +295,10 @@ public final class Launcher extends Application {
                     .orElse("Unknown"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
+
+            if (System.getProperty("hmcl.update_source.override") != null) {
+                Logging.LOG.log(Level.WARNING, "'hmcl.update_source.override' is deprecated! Please use 'hmcl.hmcl_update_source.override' instead");
+            }
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.

@@ -37,7 +37,7 @@ public abstract class VersionList<T extends RemoteVersion> {
      * key: game version.
      * values: corresponding remote versions.
      */
-    protected final SimpleMultimap<String, T> versions = new SimpleMultimap<String, T>(HashMap::new, TreeSet::new);
+    protected final SimpleMultimap<String, T, TreeSet<T>> versions = new SimpleMultimap<>(HashMap::new, TreeSet::new);
 
     /**
      * True if the version list has been loaded.
