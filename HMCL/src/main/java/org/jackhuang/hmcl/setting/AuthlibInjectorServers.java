@@ -37,7 +37,7 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class AuthlibInjectorServers {
+public final class AuthlibInjectorServers {
 
     public static final String CONFIG_FILENAME = "authlib-injectors.json";
 
