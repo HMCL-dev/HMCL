@@ -55,7 +55,7 @@ public class AuthlibInjectorServers {
 
     public static void init() {
         Path configLocation;
-        Path jarPath = JarUtils.thisJar().orElse(null);
+        Path jarPath = JarUtils.thisJarPath();
         if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
             configLocation = jarPath.getParent().resolve(CONFIG_FILENAME);
         } else {
