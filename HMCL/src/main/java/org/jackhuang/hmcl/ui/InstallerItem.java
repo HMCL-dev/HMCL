@@ -30,7 +30,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -207,7 +206,7 @@ public class InstallerItem extends Control {
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.imageUrl != null) {
-                ImageView view = new ImageView(new Image(control.imageUrl));
+                ImageView view = new ImageView(FXUtils.newRemoteImage(control.imageUrl));
                 Node node = FXUtils.limitingSize(view, 32, 32);
                 node.setMouseTransparent(true);
                 node.getStyleClass().add("installer-item-image");
@@ -252,7 +251,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton closeButton = new JFXButton();
-            closeButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
+            closeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1));
             closeButton.getStyleClass().add("toggle-icon4");
             closeButton.visibleProperty().bind(control.removable);
             closeButton.managedProperty().bind(closeButton.visibleProperty());
@@ -261,8 +260,8 @@ public class InstallerItem extends Control {
 
             JFXButton arrowButton = new JFXButton();
             arrowButton.graphicProperty().bind(Bindings.createObjectBinding(() -> control.upgradable.get()
-                            ? SVG.update(Theme.blackFillBinding(), -1, -1)
-                            : SVG.arrowRight(Theme.blackFillBinding(), -1, -1),
+                            ? SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1)
+                            : SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1),
                     control.upgradable));
             arrowButton.getStyleClass().add("toggle-icon4");
             arrowButton.visibleProperty().bind(Bindings.createBooleanBinding(

@@ -68,9 +68,9 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
-                new IconedMenuItem(FXUtils.limitingSize(SVG.gearOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.datapack"), FXUtils.withJFXPopupClosing(skinnable::manageDatapacks, popup)),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.export(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.export"), FXUtils.withJFXPopupClosing(skinnable::export, popup)),
-                new IconedMenuItem(FXUtils.limitingSize(SVG.folderOutline(Theme.blackFillBinding(), 14, 14), 14, 14), i18n("world.reveal"), FXUtils.withJFXPopupClosing(skinnable::reveal, popup)));
+                new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("world.datapack"), skinnable::manageDatapacks, popup),
+                new IconedMenuItem(SVG.EXPORT, i18n("world.export"), skinnable::export, popup),
+                new IconedMenuItem(SVG.FOLDER_OUTLINE, i18n("world.reveal"), skinnable::reveal, popup));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -81,7 +81,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         });
         btnManage.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnManage, Pos.CENTER);
-        btnManage.setGraphic(SVG.dotsVertical(Theme.blackFillBinding(), -1, -1));
+        btnManage.setGraphic(SVG.DOTS_VERTICAL.createIcon(Theme.blackFill(), -1, -1));
         right.getChildren().add(btnManage);
         root.setRight(right);
 

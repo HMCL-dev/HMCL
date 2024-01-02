@@ -29,6 +29,10 @@ public class CrashReport {
         nonFatal = false;
     }
 
+    public Throwable getThrowable() {
+        return this.throwable;
+    }
+
     public CrashReport setNonFatal() {
         nonFatal = true;
         return this;
@@ -36,6 +40,9 @@ public class CrashReport {
 
     public boolean shouldBeReport() {
         if (!stackTrace.contains("org.jackhuang"))
+            return false;
+
+        if (throwable instanceof VirtualMachineError)
             return false;
 
         return true;

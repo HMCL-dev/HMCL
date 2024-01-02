@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.scene.Node;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
@@ -92,7 +91,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createCustomIcon() {
-        Node shape = SVG.plusCircleOutline(Theme.blackFillBinding(), 32, 32);
+        Node shape = SVG.PLUS_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 32, 32);
         shape.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);
@@ -104,7 +103,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createIcon(VersionIconType type) {
-        ImageView imageView = new ImageView(new Image(type.getResourceUrl()));
+        ImageView imageView = new ImageView(FXUtils.newBuiltinImage(type.getResourceUrl()));
         imageView.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(imageView);
         FXUtils.setLimitWidth(container, 36);
