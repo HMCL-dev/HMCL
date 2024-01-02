@@ -243,9 +243,9 @@ public final class Versions {
 
     private static void ensureSelectedAccount(Consumer<Account> action) {
         Account account = Accounts.getSelectedAccount();
-        if (ConfigHolder.isNewlyCreated() && AuthlibInjectorServers.getConfigInstance().getServers().size() > 0 &&
-                !(account instanceof AuthlibInjectorAccount && AuthlibInjectorServers.getConfigInstance().getServers().contains(((AuthlibInjectorAccount) account).getServer()))) {
-            CreateAccountPane dialog = new CreateAccountPane(AuthlibInjectorServers.getConfigInstance().getServers().iterator().next());
+        if (ConfigHolder.isNewlyCreated() && !AuthlibInjectorServers.getServers().isEmpty() &&
+                !(account instanceof AuthlibInjectorAccount && AuthlibInjectorServers.getServers().contains(((AuthlibInjectorAccount) account).getServer()))) {
+            CreateAccountPane dialog = new CreateAccountPane(AuthlibInjectorServers.getServers().iterator().next());
             dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {
                 Account newAccount = Accounts.getSelectedAccount();
                 if (newAccount == null) {
