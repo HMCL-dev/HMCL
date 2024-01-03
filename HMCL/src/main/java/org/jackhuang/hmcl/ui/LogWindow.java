@@ -36,7 +36,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.game.GameDumpCreator;
+import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.util.Holder;
@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -227,14 +228,14 @@ public final class LogWindow extends Stage {
         private void onExportDump(JFXButton button) {
             thread(() -> {
                 if (button.getText().equals(i18n("logwindow.export_dump.dependency_ok.button"))) {
-                    if (GameDumpCreator.checkDependencies()) {
+                    if (SystemUtils.supportJVMAttachment()) {
                         Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.doing_button")));
 
                         Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
 
                         try {
                             if (gameProcess.isRunning()) {
-                                GameDumpCreator.writeDumpTo(gameProcess.getPID(), dumpFile);
+                                GameDumpGenerator.writeDumpTo(gameProcess.getPID(), dumpFile);
                                 FXUtils.showFileInExplorer(dumpFile);
                             }
                         } catch (Throwable e) {
@@ -439,7 +440,7 @@ public final class LogWindow extends Stage {
                 terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
 
                 JFXButton exportDumpButton = new JFXButton();
-                if (GameDumpCreator.checkDependencies()) {
+                if (SystemUtils.supportJVMAttachment()) {
                     exportDumpButton.setText(i18n("logwindow.export_dump.dependency_ok.button"));
                     exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpButton));
                 } else {

@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.game;
 
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.*;
@@ -29,14 +29,15 @@ import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public final class GameDumpCreator {
-    private static final Pattern ACCESS_TOKEN_HIDER = Pattern.compile("--accessToken \\S+");
-
-    private GameDumpCreator() {
+/**
+ * Generate a JVM dump on a process.
+ * WARNING: Initializing this class may cause NoClassDefFoundError.
+ */
+public final class GameDumpGenerator {
+    private GameDumpGenerator() {
     }
 
     private static final int TOOL_VERSION = 9;
@@ -45,18 +46,9 @@ public final class GameDumpCreator {
 
     private static final int RETRY_TIME = 3;
 
-    public static boolean checkDependencies() {
-        return JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9
-                && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
-    }
-
-    public static void writeDumpTo(long pid, Path path) throws IOException, InterruptedException, ClassNotFoundException {
-        if (!checkDependencies()) {
-            throw new ClassNotFoundException("com.sun.tools.attach.VirtualMachine");
-        }
-
+    public static void writeDumpTo(long pid, Path path) throws IOException, InterruptedException {
         try (Writer writer = Files.newBufferedWriter(path)) {
-            // On local machine, the lvmid and the pid are the same.
+            // On a local machine, the lvmid and the pid are the same.
             VirtualMachine vm = attachVM(String.valueOf(pid), writer);
 
             try {
@@ -83,17 +75,17 @@ public final class GameDumpCreator {
 
         StringBuilder stringBuilder = new StringBuilder();
         {
-            executeJCmd(vm, "VM.command_line", stringBuilder);
+            execute(vm, "VM.command_line", stringBuilder);
             writeDumpHeadKeyValueTo(
                     "VM Command Line",
-                    ACCESS_TOKEN_HIDER.matcher(stringBuilder).replaceAll("--accessToken <access token>"),
+                    Logging.filterForbiddenToken(stringBuilder.toString()),
                     writer,
                     true
             );
         }
         {
             stringBuilder.setLength(0);
-            executeJCmd(vm, "VM.version", stringBuilder);
+            execute(vm, "VM.version", stringBuilder);
             writeDumpHeadKeyValueTo("VM Version", stringBuilder.toString(), writer, true);
         }
 
@@ -102,10 +94,10 @@ public final class GameDumpCreator {
 
     public static void writeDumpHeadKeyValueTo(String key, String value, Writer writer, boolean multiline) throws IOException {
         writer.write(key);
-        writer.write(": ");
+        writer.write(':');
+        writer.write(' ');
 
         if (multiline) {
-            // Multiple Line Value
             writer.write('{');
             writer.write('\n');
 
@@ -131,17 +123,16 @@ public final class GameDumpCreator {
 
             writer.write('}');
         } else {
-            // Single Line Value
             writer.write(value);
         }
         writer.write('\n');
     }
 
     private static void writeDumpBodyTo(VirtualMachine vm, Writer writer) throws IOException {
-        executeJCmd(vm, "Thread.print", writer);
+        execute(vm, "Thread.print", writer);
     }
 
-    private static VirtualMachine attachVM(String lvmid, Writer writer) throws IOException {
+    private static VirtualMachine attachVM(String lvmid, Writer writer) throws IOException, InterruptedException {
         for (int i = 0; i < RETRY_TIME; i++) {
             try {
                 return VirtualMachine.attach(lvmid);
@@ -149,6 +140,7 @@ public final class GameDumpCreator {
                 LOG.log(Level.WARNING, "An exception encountered while attaching vm " + lvmid, e);
                 writer.write(StringUtils.getStackTrace(e));
                 writer.write('\n');
+                Thread.sleep(3000);
             }
         }
 
@@ -157,13 +149,13 @@ public final class GameDumpCreator {
         throw new IOException(message);
     }
 
-    private static void executeJCmd(VirtualMachine vm, String command, Appendable target) throws IOException {
-        try (Reader reader = new InputStreamReader(executeJCmdNative(vm, command), OperatingSystem.NATIVE_CHARSET)) {
-            CharBuffer dataCache = CharBuffer.allocate(256);
-            while (reader.read(dataCache) > 0) {
-                dataCache.flip();
-                target.append(dataCache);
-                dataCache.clear();
+    private static void execute(VirtualMachine vm, String command, Appendable target) throws IOException {
+        try (Reader reader = new InputStreamReader(executeJVMCommand(vm, command), OperatingSystem.NATIVE_CHARSET)) {
+            char[] data = new char[256];
+            CharBuffer cb = CharBuffer.wrap(data);
+            int len;
+            while ((len = reader.read(data)) > 0) { // Directly read the data into a CharBuffer would cause useless array copy actions.
+                target.append(cb, 0, len);
             }
         } catch (Throwable throwable) {
             LOG.log(Level.WARNING, "An exception encountered while executing jcmd " + vm.id(), throwable);
@@ -172,7 +164,7 @@ public final class GameDumpCreator {
         }
     }
 
-    private static InputStream executeJCmdNative(VirtualMachine vm, String command) throws IOException, AttachNotSupportedException {
+    private static InputStream executeJVMCommand(VirtualMachine vm, String command) throws IOException, AttachNotSupportedException {
         if (vm instanceof sun.tools.attach.HotSpotVirtualMachine) {
             return ((sun.tools.attach.HotSpotVirtualMachine) vm).executeJCmd(command);
         } else {
