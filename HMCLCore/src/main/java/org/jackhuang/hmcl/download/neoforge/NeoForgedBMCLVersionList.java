@@ -50,27 +50,32 @@ public final class NeoForgedBMCLVersionList extends VersionList<NeoForgedRemoteV
 
     @Override
     public CompletableFuture<?> loadAsync() {
-        throw new UnsupportedOperationException("NeoForgedBMCLVersionList does not support loading the entire Forge remote version list.");
+        throw new UnsupportedOperationException("NeoForgedBMCLVersionList does not support loading the entire NeoForge remote version list.");
     }
 
     @Override
     public CompletableFuture<?> refreshAsync() {
-        throw new UnsupportedOperationException("NeoForgedBMCLVersionList does not support loading the entire Forge remote version list.");
+        throw new UnsupportedOperationException("NeoForgedBMCLVersionList does not support loading the entire NeoForge remote version list.");
     }
 
     @Override
     public CompletableFuture<?> refreshAsync(String gameVersion) {
         return CompletableFuture.completedFuture((Void) null)
-                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).<List<NeoForgedVersion>>getJson(new TypeToken<List<NeoForgedVersion>>(){}.getType())))
+                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).<List<NeoForgedVersion>>getJson(new TypeToken<List<NeoForgedVersion>>() {
+                }.getType())))
                 .thenAcceptAsync(neoForgedVersions -> {
                     lock.writeLock().lock();
 
                     try {
                         versions.clear(gameVersion);
                         for (NeoForgedVersion neoForgedVersion : neoForgedVersions) {
+                            String nf = StringUtils.removePrefix(
+                                    neoForgedVersion.version,
+                                    "1.20.1".equals(gameVersion) ? "1.20.1-forge-" : "neoforge-" // Som of the version numbers for 1.20.1 are like forge.
+                            );
                             versions.put(gameVersion, new NeoForgedRemoteVersion(
                                     neoForgedVersion.mcVersion,
-                                    neoForgedVersion.version,
+                                    nf,
                                     Lang.immutableListOf(
                                             apiRoot + "/neoforge/version/" + neoForgedVersion.version + "/download/installer.jar"
                                     )
