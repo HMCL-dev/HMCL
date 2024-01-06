@@ -1,32 +1,29 @@
-name: Bug Feedback
+name: Bug 反馈 | Bug Feedback
 description: 
-  反馈一个错误。
-  为了提高反馈效率，请优先在 KOOK、赞助频道或者 Discord 频道中反馈。若确认是 HMCL 问题，请发布 issue。
+  反馈一个 HMCL 错误。| Bug Feedback.
+title: "[Bug] "
 labels: bug
 body:
   - type: markdown
     attributes:
       value: |
-        提交前请确保你的启动器版本是**最新的开发版**，可以在启动器设置中更换更新通道至开发版获取更新。
+        提交前请确认：
+        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
+        * 你的启动器版本是**最新的快照版本**，可以点击 [此处](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) 下载最新快照版本。
     
-        我们发现，对于不经常检查邮箱的人来说，GitHub Issues 的反馈效率太低，时隔几个小时甚至一天的情况很多。
-        为了改善反馈效率，并将积极为 HMCL 提供问题反馈和建议的人聚集起来，我们希望在这里反馈的人可以在 
-        [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U)中反馈信息，
-        **而不在 GitHub Issues 中反馈问题**。
-
-        如果你希望在 QQ 群中反馈问题，请[赞助 HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
-  - type: input
-    id: hmcl-version
-    attributes:
-      label: 启动器版本 Launcher Version
-      description: 请输入您所使用的的 HMCL 启动器版本。 Please enter the HMCL launcher version you are using. 
-      placeholder: e.g. 3.5.3.211
-    validations:
-      required: true
+        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
+        如果你希望在 QQ 群中反馈问题，请 [赞助 HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
+        
+        Before submitting, please confirm:
+        * The issue is indeed **an error of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
+        * Your launcher version is **the latest snapshot version**. You can click [here](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) to download the latest snapshot version.
+        
+        If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
+        If you want to report a problem in the QQ group, please [sponsor HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) and apply to join the group chat. Please also fill in the information form below and send it directly in the group to speed up our communication.
   - type: input
     id: platform
     attributes:
-      label: 平台 Platform 
+      label: 平台 | Platform
       description: 请输入您遇到 BUG 的平台。 Please enter the platform on which you encountered the bug. 
       placeholder: e.g. Windows 11
     validations:
@@ -34,41 +31,25 @@ body:
   - type: textarea
     id: bug-report
     attributes:
-      label: 问题描述 Problem Description
-      description: 请尽可能地详细描述问题，特别是您是怎么遇到这个 BUG 的。 Please describe the problem in as much detail as possible, especially how you encountered this bug.
+      label: 问题描述 | Problem Description
+      description: 请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。 Please describe the problem you met in as much detail as possible. Besides, please describe how to trigger this problem again.
+      placeholder: |
+        1. 点击 HMCL 上的某个按钮 | Click a button named ...
+        2. 向下翻页 | Scroll down
+        3. ...
     validations:
       required: true
-  - type: input
-    id: java-version
-    attributes:
-      label: Java
-      description: 请输入您所使用的 Java 的名称与版本。 Please enter the name and version of Java you are using. 
-      placeholder: e.g. LibericaJDK Full JDK 17.0.1
-  - type: input
-    id: game-version
-    attributes:
-      label: 游戏版本 Game Version
-      description: 如果您是在启动通过 HMCL 启动器自动下载的游戏时遇到了问题，请输入您所启动的游戏版本。If you are having trouble launching a game that was automatically downloaded through the HMCL launcher, please enter the version of the game you are launching.
-      placeholder: e.g. 1.19
-  - type: input
-    id: game-modify
-    attributes:
-      label: 对游戏所做的修改 Modifications Made to the Game 
-      description: 如果您为游戏安装了 OptiFine、Forge，或者是其他的 mod，请将您所做的修改填入下方。 If you have OptiFine, Forge, or other mods installed for the game, please enter your modifications below.
-      placeholder: e.g. OptiFine HD_U_G9, Rift
   - type: textarea
-    id: game-crash-report
+    id: hmcl-crash-report-or-logs
     attributes:
-      label: 游戏崩溃报告 Game Crash Report
-      description: 如果有游戏崩溃报告的话，请填入（或将文件拖入）下方。 If there is a game crash report, please fill in (or drag the file into) below.
-  - type: textarea
-    id: hmcl-crash-report
-    attributes:
-      label: 启动器崩溃报告 Launcher Crash Report
-      description: 如果有启动器崩溃报告的话，请填入（或将文件拖入）下方。 If there is a launcher crash report, please fill it in (or drag the file in) below.
-  - type: textarea
-    id: hmcl-logs
-    attributes:
-      label: 启动器日志文件 Launcher Log File
-      description: 遇到问题后，请在启动器的【设置】>【通用】>【调试】一栏中点击“导出启动器日志”，并将导出的日志拖到下方的输入栏中。 After encountering a problem, please click "Export Launcher Log" in the [Settings] > [General] > [Debug] column of the launcher, and drag the exported log to the input field below.
-
+      label: 启动器崩溃报告 / 启动器日志文件 | Launcher Crash Report / Launcher Log File
+      description: |
+        如果您的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
+        如果您的启动器没有崩溃，请在遇到问题后不要退出启动器，在启动器的【设置】>【通用】>【调试】一栏中点击“导出启动器日志”，并将导出的日志拖到下方的输入栏中。 
+        **请注意：启动器崩溃报告或日志文件是诊断问题的重要依据，请务必上传！**
+        
+        If your launcher crashes, please fill it in (or drag the file in) below.
+        If your launcher doesn't crash, please DO NOT EXIT your launcher, click "Export Launcher Log" in the [Settings] > [General] > [Debug] column of the launcher, and drag the exported log to the input field below.
+        **Attention: The crash report or the log file is the key to solve the problem. Please update it!**
+    validations:
+      required: true

@@ -293,7 +293,7 @@ public class MaintainTask extends Task<Version> {
     public static Version unique(Version version) {
         List<Library> libraries = new ArrayList<>();
 
-        SimpleMultimap<String, Integer> multimap = new SimpleMultimap<String, Integer>(HashMap::new, ArrayList::new);
+        SimpleMultimap<String, Integer, List<Integer>> multimap = new SimpleMultimap<>(HashMap::new, ArrayList::new);
 
         for (Library library : version.getLibraries()) {
             String id = library.getGroupId() + ":" + library.getArtifactId();

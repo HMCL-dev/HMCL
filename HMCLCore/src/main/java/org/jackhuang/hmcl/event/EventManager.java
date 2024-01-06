@@ -30,7 +30,7 @@ import java.util.function.Consumer;
  */
 public final class EventManager<T extends Event> {
 
-    private final SimpleMultimap<EventPriority, Consumer<T>> handlers
+    private final SimpleMultimap<EventPriority, Consumer<T>, CopyOnWriteArraySet<Consumer<T>>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
 
     public Consumer<T> registerWeak(Consumer<T> consumer) {

@@ -832,7 +832,7 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d.", exitCode), Log4jLevel.INFO));
+                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x).", exitCode, exitCode), Log4jLevel.INFO));
             }
 
             launchingLatch.countDown();
