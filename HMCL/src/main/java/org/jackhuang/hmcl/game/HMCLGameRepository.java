@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -263,7 +263,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newImage("/assets/img/grass.png");
+            return newBuiltinImage("/assets/img/grass.png");
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
         VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
@@ -276,21 +276,21 @@ public class HMCLGameRepository extends DefaultGameRepository {
             else if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return newImage("/assets/img/fabric.png");
+                    return newBuiltinImage("/assets/img/fabric.png");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return newImage("/assets/img/forge.png");
+                    return newBuiltinImage("/assets/img/forge.png");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return newImage("/assets/img/quilt.png");
+                    return newBuiltinImage("/assets/img/quilt.png");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return newImage("/assets/img/command.png");
+                    return newBuiltinImage("/assets/img/command.png");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return newImage("/assets/img/chicken.png");
+                    return newBuiltinImage("/assets/img/chicken.png");
                 else
-                    return newImage("/assets/img/furnace.png");
+                    return newBuiltinImage("/assets/img/furnace.png");
             } else
-                return newImage("/assets/img/grass.png");
+                return newBuiltinImage("/assets/img/grass.png");
         } else {
-            return newImage(iconType.getResourceUrl());
+            return newBuiltinImage(iconType.getResourceUrl());
         }
     }
 
