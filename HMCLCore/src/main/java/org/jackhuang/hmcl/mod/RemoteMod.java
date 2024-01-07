@@ -120,7 +120,7 @@ public class RemoteMod {
 
         private final String id;
 
-        private RemoteMod remoteMod = null;
+        private transient RemoteMod remoteMod = null;
 
         private Dependency(DependencyType type, RemoteModRepository remoteModRepository, String modid) {
             this.type = type;
@@ -164,6 +164,26 @@ public class RemoteMod {
                 }
             }
             return this.remoteMod;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Dependency that = (Dependency) o;
+
+            if (type != that.type) return false;
+            if (!remoteModRepository.equals(that.remoteModRepository)) return false;
+            return id.equals(that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = type.hashCode();
+            result = 31 * result + remoteModRepository.hashCode();
+            result = 31 * result + id.hashCode();
+            return result;
         }
     }
 

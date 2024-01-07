@@ -582,7 +582,7 @@ public class CurseAddon implements RemoteMod.IMod {
                             throw new IllegalStateException("Broken datas.");
                         }
                         return RemoteMod.Dependency.ofGeneral(RELATION_TYPE.get(dependency.getRelationType()), CurseForgeRemoteModRepository.MODS, Integer.toString(dependency.getModId()));
-                    }).filter(Objects::nonNull).collect(Collectors.toList()),
+                    }).distinct().filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
                     gameVersions.stream().flatMap(version -> {
                         if ("fabric".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FABRIC);
