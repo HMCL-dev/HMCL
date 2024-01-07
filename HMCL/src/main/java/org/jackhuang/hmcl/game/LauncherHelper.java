@@ -33,7 +33,10 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.LauncherVisibility;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -216,9 +219,10 @@ public final class LauncherHelper {
                             Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
                         });
                     }
-                }).thenRunAsync(() -> {
-                    launchingLatch.await();
-                }).withStage("launch.state.waiting_launching"))
+                }).withFakeProgress(
+                        i18n("message.doing"),
+                        () -> launchingLatch.getCount() == 0, 6.95
+                ).withStage("launch.state.waiting_launching"))
                 .withStagesHint(Lang.immutableListOf(
                         "launch.state.java",
                         "launch.state.dependencies",
@@ -617,7 +621,7 @@ public final class LauncherHelper {
     /**
      * Directly start java downloading.
      *
-     * @param javaVersion target Java version
+     * @param javaVersion      target Java version
      * @param downloadProvider download provider
      * @return JavaVersion, null if we failed to download java, failed if an error occurred when downloading.
      */
