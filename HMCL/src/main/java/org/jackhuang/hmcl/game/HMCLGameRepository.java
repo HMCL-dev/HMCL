@@ -279,6 +279,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                     return newBuiltinImage("/assets/img/fabric.webp");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
                     return newBuiltinImage("/assets/img/forge.webp");
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
+                    return newBuiltinImage("/assets/img/neoforge.png");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
                     return newBuiltinImage("/assets/img/quilt.webp");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))

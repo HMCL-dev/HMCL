@@ -65,6 +65,7 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.CRAFT_TABLE),
                 createIcon(VersionIconType.FABRIC),
                 createIcon(VersionIconType.FORGE),
+                createIcon(VersionIconType.NEO_FORGE),
                 createIcon(VersionIconType.FURNACE),
                 createIcon(VersionIconType.QUILT)
         );
