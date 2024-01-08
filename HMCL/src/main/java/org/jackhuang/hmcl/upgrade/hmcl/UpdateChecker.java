@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.upgrade;
+package org.jackhuang.hmcl.upgrade.hmcl;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -85,7 +85,7 @@ public final class UpdateChecker {
             throw new IOException("Self verification failed");
         }
 
-        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+        String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, mapOf(
                 pair("version", Metadata.VERSION),
                 pair("channel", channel.channelName)));
 

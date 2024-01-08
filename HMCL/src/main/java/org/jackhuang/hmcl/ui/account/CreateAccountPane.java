@@ -58,7 +58,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.upgrade.IntegrityChecker;
+import org.jackhuang.hmcl.upgrade.hmcl.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
