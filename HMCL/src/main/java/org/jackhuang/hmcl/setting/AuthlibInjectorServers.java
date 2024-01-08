@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 
@@ -37,7 +39,7 @@ import java.util.logging.Level;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public final class AuthlibInjectorServers {
+public final class AuthlibInjectorServers implements Validation {
 
     public static final String CONFIG_FILENAME = "authlib-injectors.json";
 
@@ -51,6 +53,13 @@ public final class AuthlibInjectorServers {
 
     private AuthlibInjectorServers(List<String> urls) {
         this.urls = urls;
+    }
+
+    @Override
+    public void validate() throws JsonParseException, TolerableValidationException {
+        if (this.urls == null) {
+            throw new JsonParseException("authlib-injectors.json -> urls cannot be null.");
+        }
     }
 
     public static void init() {
