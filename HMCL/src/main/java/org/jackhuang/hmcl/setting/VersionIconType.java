@@ -27,7 +27,7 @@ public enum VersionIconType {
     CRAFT_TABLE("/assets/img/craft_table.webp"),
     FABRIC("/assets/img/fabric.webp"),
     FORGE("/assets/img/forge.webp"),
-    NEO_FORGE("/assets/img/neoforge.png"),
+    NEO_FORGE("/assets/img/neoforge.webp"),
     FURNACE("/assets/img/furnace.webp"),
     QUILT("/assets/img/quilt.webp");
 

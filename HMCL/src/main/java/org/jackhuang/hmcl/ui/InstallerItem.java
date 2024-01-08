@@ -93,7 +93,7 @@ public class InstallerItem extends Control {
                 imageUrl = "/assets/img/quilt.webp";
                 break;
             case "neoforge":
-                imageUrl = "/assets/img/neoforge.png";
+                imageUrl = "/assets/img/neoforge.webp";
                 break;
             default:
                 imageUrl = null;
