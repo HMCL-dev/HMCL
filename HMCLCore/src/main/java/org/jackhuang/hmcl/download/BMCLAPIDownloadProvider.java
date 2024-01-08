@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
-import org.jackhuang.hmcl.download.neoforge.NeoForgedBMCLVersionList;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
@@ -37,7 +37,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     private final FabricVersionList fabric;
     private final FabricAPIVersionList fabricApi;
     private final ForgeBMCLVersionList forge;
-    private final NeoForgedBMCLVersionList neoforged;
+    private final NeoForgeBMCLVersionList neoforge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
@@ -49,7 +49,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
         this.fabric = new FabricVersionList(this);
         this.fabricApi = new FabricAPIVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
-        this.neoforged = new NeoForgedBMCLVersionList(apiRoot);
+        this.neoforge = new NeoForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderBMCLVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
@@ -82,7 +82,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
             case "forge":
                 return forge;
             case "neoforge":
-                return neoforged;
+                return neoforge;
             case "liteloader":
                 return liteLoader;
             case "optifine":

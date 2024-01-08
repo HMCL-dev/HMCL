@@ -33,13 +33,13 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
 
-public final class NeoForgedBMCLVersionList extends VersionList<NeoForgedRemoteVersion> {
+public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVersion> {
     private final String apiRoot;
 
     /**
      * @param apiRoot API Root of BMCLAPI implementations
      */
-    public NeoForgedBMCLVersionList(String apiRoot) {
+    public NeoForgeBMCLVersionList(String apiRoot) {
         this.apiRoot = apiRoot;
     }
 
@@ -50,34 +50,34 @@ public final class NeoForgedBMCLVersionList extends VersionList<NeoForgedRemoteV
 
     @Override
     public CompletableFuture<?> loadAsync() {
-        throw new UnsupportedOperationException("NeoForgedBMCLVersionList does not support loading the entire NeoForge remote version list.");
+        throw new UnsupportedOperationException("NeoForgeBMCLVersionList does not support loading the entire NeoForge remote version list.");
     }
 
     @Override
     public CompletableFuture<?> refreshAsync() {
-        throw new UnsupportedOperationException("NeoForgedBMCLVersionList does not support loading the entire NeoForge remote version list.");
+        throw new UnsupportedOperationException("NeoForgeBMCLVersionList does not support loading the entire NeoForge remote version list.");
     }
 
     @Override
     public CompletableFuture<?> refreshAsync(String gameVersion) {
         return CompletableFuture.completedFuture((Void) null)
-                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).<List<NeoForgedVersion>>getJson(new TypeToken<List<NeoForgedVersion>>() {
+                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).<List<NeoForgeVersion>>getJson(new TypeToken<List<NeoForgeVersion>>() {
                 }.getType())))
-                .thenAcceptAsync(neoForgedVersions -> {
+                .thenAcceptAsync(neoForgeVersions -> {
                     lock.writeLock().lock();
 
                     try {
                         versions.clear(gameVersion);
-                        for (NeoForgedVersion neoForgedVersion : neoForgedVersions) {
+                        for (NeoForgeVersion neoForgeVersion : neoForgeVersions) {
                             String nf = StringUtils.removePrefix(
-                                    neoForgedVersion.version,
+                                    neoForgeVersion.version,
                                     "1.20.1".equals(gameVersion) ? "1.20.1-forge-" : "neoforge-" // Som of the version numbers for 1.20.1 are like forge.
                             );
-                            versions.put(gameVersion, new NeoForgedRemoteVersion(
-                                    neoForgedVersion.mcVersion,
+                            versions.put(gameVersion, new NeoForgeRemoteVersion(
+                                    neoForgeVersion.mcVersion,
                                     nf,
                                     Lang.immutableListOf(
-                                            apiRoot + "/neoforge/version/" + neoForgedVersion.version + "/download/installer.jar"
+                                            apiRoot + "/neoforge/version/" + neoForgeVersion.version + "/download/installer.jar"
                                     )
                             ));
                         }
@@ -88,13 +88,13 @@ public final class NeoForgedBMCLVersionList extends VersionList<NeoForgedRemoteV
     }
 
     @Override
-    public Optional<NeoForgedRemoteVersion> getVersion(String gameVersion, String remoteVersion) {
+    public Optional<NeoForgeRemoteVersion> getVersion(String gameVersion, String remoteVersion) {
         remoteVersion = StringUtils.substringAfter(remoteVersion, "-", remoteVersion);
         return super.getVersion(gameVersion, remoteVersion);
     }
 
     @Immutable
-    private static final class NeoForgedVersion implements Validation {
+    private static final class NeoForgeVersion implements Validation {
         private final String rawVersion;
 
         private final String version;
@@ -102,7 +102,7 @@ public final class NeoForgedBMCLVersionList extends VersionList<NeoForgedRemoteV
         @SerializedName("mcversion")
         private final String mcVersion;
 
-        public NeoForgedVersion(String rawVersion, String version, String mcVersion) {
+        public NeoForgeVersion(String rawVersion, String version, String mcVersion) {
             this.rawVersion = rawVersion;
             this.version = version;
             this.mcVersion = mcVersion;
@@ -123,13 +123,13 @@ public final class NeoForgedBMCLVersionList extends VersionList<NeoForgedRemoteV
         @Override
         public void validate() throws JsonParseException {
             if (this.rawVersion == null) {
-                throw new JsonParseException("NeoForgedVersion rawVersion cannot be null.");
+                throw new JsonParseException("NeoForgeVersion rawVersion cannot be null.");
             }
             if (this.version == null) {
-                throw new JsonParseException("NeoForgedVersion version cannot be null.");
+                throw new JsonParseException("NeoForgeVersion version cannot be null.");
             }
             if (this.mcVersion == null) {
-                throw new JsonParseException("NeoForgedVersion mcversion cannot be null.");
+                throw new JsonParseException("NeoForgeVersion mcversion cannot be null.");
             }
         }
     }

@@ -20,12 +20,12 @@ import java.util.*;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
-public final class NeoForgedInstallTask extends Task<Version> {
+public final class NeoForgeInstallTask extends Task<Version> {
     private final DefaultDependencyManager dependencyManager;
 
     private final Version version;
 
-    private final NeoForgedRemoteVersion remoteVersion;
+    private final NeoForgeRemoteVersion remoteVersion;
 
     private Path installer = null;
 
@@ -33,7 +33,7 @@ public final class NeoForgedInstallTask extends Task<Version> {
 
     private Task<Version> dependency;
 
-    public NeoForgedInstallTask(DefaultDependencyManager dependencyManager, Version version, NeoForgedRemoteVersion remoteVersion) {
+    public NeoForgeInstallTask(DefaultDependencyManager dependencyManager, Version version, NeoForgeRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remoteVersion = remoteVersion;
@@ -46,7 +46,7 @@ public final class NeoForgedInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
-        installer = Files.createTempFile("neoforged-installer", ".jar");
+        installer = Files.createTempFile("neoforge-installer", ".jar");
 
         dependent = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()),
@@ -93,28 +93,28 @@ public final class NeoForgedInstallTask extends Task<Version> {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
-                return new ForgeNewInstallTask(dependencyManager, version, modifyNeoForgedOldVersion(gameVersion.get(), profile.getVersion()), installer).thenApplyAsync(neoForgeVersion -> {
+                return new ForgeNewInstallTask(dependencyManager, version, modifyNeoForgeOldVersion(gameVersion.get(), profile.getVersion()), installer).thenApplyAsync(neoForgeVersion -> {
                     if (!neoForgeVersion.getId().equals(LibraryAnalyzer.LibraryType.FORGE.getPatchId()) || neoForgeVersion.getVersion() == null) {
-                        throw new IOException("Invalid neoforged version.");
+                        throw new IOException("Invalid neoforge version.");
                     }
-                    return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()).setVersion(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId()));
+                    return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId()).setVersion(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId()));
                 });
-            } else if (LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId().equals(installProfile.get("profile"))) {
+            } else if (LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId().equals(installProfile.get("profile"))) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
-                return new NeoForgedOldInstallTask(dependencyManager, version, modifyNeoForgedNewVersion(profile.getVersion()), installer);
+                return new NeoForgeOldInstallTask(dependencyManager, version, modifyNeoForgeNewVersion(profile.getVersion()), installer);
             } else {
                 throw new IOException();
             }
         }
     }
 
-    private static String modifyNeoForgedOldVersion(String gameVersion, String version) {
+    private static String modifyNeoForgeOldVersion(String gameVersion, String version) {
         return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
     }
 
-    private static String modifyNeoForgedNewVersion(String version) {
+    private static String modifyNeoForgeNewVersion(String version) {
         return removePrefix(version.replace("neoforge", ""), "-");
     }
 }

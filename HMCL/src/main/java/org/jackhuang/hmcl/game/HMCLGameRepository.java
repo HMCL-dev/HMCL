@@ -279,7 +279,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                     return newBuiltinImage("/assets/img/fabric.png");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
                     return newBuiltinImage("/assets/img/forge.png");
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGED))
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
                     return newBuiltinImage("/assets/img/neoforge.png");
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
                     return newBuiltinImage("/assets/img/quilt.png");

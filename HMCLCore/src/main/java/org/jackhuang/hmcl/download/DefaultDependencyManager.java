@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.neoforge.NeoForgedInstallTask;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -181,7 +181,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return Task
                 .composeAsync(() -> {
                     try {
-                        return NeoForgedInstallTask.install(this, oldVersion, installer);
+                        return NeoForgeInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {
                     }
 

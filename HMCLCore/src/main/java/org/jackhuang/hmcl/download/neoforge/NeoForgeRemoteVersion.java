@@ -8,13 +8,13 @@ import org.jackhuang.hmcl.task.Task;
 
 import java.util.List;
 
-public class NeoForgedRemoteVersion extends RemoteVersion {
-    public NeoForgedRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId(), gameVersion, selfVersion, null, urls);
+public class NeoForgeRemoteVersion extends RemoteVersion {
+    public NeoForgeRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
+        super(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId(), gameVersion, selfVersion, null, urls);
     }
 
     @Override
     public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
-        return new NeoForgedInstallTask(dependencyManager, baseVersion, this);
+        return new NeoForgeInstallTask(dependencyManager, baseVersion, this);
     }
 }

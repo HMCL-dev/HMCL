@@ -82,7 +82,7 @@ public final class CurseInstallTask extends Task<Void> {
             } else if (modLoader.getId().startsWith("fabric-")) {
                 builder.version("fabric", modLoader.getId().substring("fabric-".length()));
             } else if (modLoader.getId().startsWith("neoforge-")) {
-                builder.version("neoforged", modLoader.getId().substring("neoforge-".length()));
+                builder.version("neoforge", modLoader.getId().substring("neoforge-".length()));
             }
         }
         dependents.add(builder.buildAsync());

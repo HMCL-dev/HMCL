@@ -59,7 +59,7 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
-public class NeoForgedOldInstallTask extends Task<Version> {
+public class NeoForgeOldInstallTask extends Task<Version> {
 
     private class ProcessorTask extends Task<Void> {
 
@@ -188,7 +188,7 @@ public class NeoForgedOldInstallTask extends Task<Version> {
     private Path tempDir;
     private AtomicInteger processorDoneCount = new AtomicInteger(0);
 
-    NeoForgedOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+    NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;
@@ -408,7 +408,7 @@ public class NeoForgedOldInstallTask extends Task<Version> {
 
         setResult(neoForgeVersion
                 .setPriority(30000)
-                .setId(LibraryAnalyzer.LibraryType.NEO_FORGED.getPatchId())
+                .setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
                 .setVersion(selfVersion));
     }
 
