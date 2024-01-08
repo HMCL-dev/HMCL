@@ -2,7 +2,7 @@ plugins {
     `java-library`
 }
 
-val simpleWEBPSha1 = "a005e0142e814ac3dc90941dc329b6a7c726f0da"
+val simpleWEBPSha1 = "cf5838cab4710bab9f50be07fa8eabe43cba5975"
 
 dependencies {
     api("com.github.burningtnt.SimpleWEBP:jfx:$simpleWEBPSha1")
