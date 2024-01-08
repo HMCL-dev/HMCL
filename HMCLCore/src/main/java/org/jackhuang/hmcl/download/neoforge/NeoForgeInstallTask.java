@@ -99,7 +99,7 @@ public final class NeoForgeInstallTask extends Task<Version> {
                     }
                     return neoForgeVersion.setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId()).setVersion(neoForgeVersion.getVersion().replace(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId()));
                 });
-            } else if (LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId().equals(installProfile.get("profile"))) {
+            } else if (LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId().equals(installProfile.get("profile")) || "NeoForge".equals(installProfile.get("profile"))) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());
