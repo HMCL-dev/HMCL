@@ -33,7 +33,10 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.LauncherVisibility;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -216,9 +219,10 @@ public final class LauncherHelper {
                             Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
                         });
                     }
-                }).thenRunAsync(() -> {
-                    launchingLatch.await();
-                }).withStage("launch.state.waiting_launching"))
+                }).withFakeProgress(
+                        i18n("message.doing"),
+                        () -> launchingLatch.getCount() == 0, 6.95
+                ).withStage("launch.state.waiting_launching"))
                 .withStagesHint(Lang.immutableListOf(
                         "launch.state.java",
                         "launch.state.dependencies",
@@ -506,9 +510,7 @@ public final class LauncherHelper {
                             break;
                         case MODDED_JAVA_16:
                             // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
-                            String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                                    .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
-                                    .orElse(null);
+                            String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE).orElse(null);
                             if (forgePatchVersion != null && VersionNumber.VERSION_COMPARATOR.compare(forgePatchVersion, "37.0.60") < 0)
                                 suggestions.add(i18n("launch.advice.forge37_0_60"));
                             else
@@ -617,7 +619,7 @@ public final class LauncherHelper {
     /**
      * Directly start java downloading.
      *
-     * @param javaVersion target Java version
+     * @param javaVersion      target Java version
      * @param downloadProvider download provider
      * @return JavaVersion, null if we failed to download java, failed if an error occurred when downloading.
      */
@@ -745,7 +747,7 @@ public final class LauncherHelper {
 
             if (showLogs)
                 Platform.runLater(() -> {
-                    logWindow = new LogWindow();
+                    logWindow = new LogWindow(process);
                     logWindow.showNormal();
                     logWindowLatch.countDown();
                 });
@@ -832,7 +834,7 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d.", exitCode), Log4jLevel.INFO));
+                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x).", exitCode, exitCode), Log4jLevel.INFO));
             }
 
             launchingLatch.countDown();

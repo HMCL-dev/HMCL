@@ -21,14 +21,13 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -244,7 +243,19 @@ public final class Versions {
 
     private static void ensureSelectedAccount(Consumer<Account> action) {
         Account account = Accounts.getSelectedAccount();
-        if (account == null) {
+        if (ConfigHolder.isNewlyCreated() && !AuthlibInjectorServers.getServers().isEmpty() &&
+                !(account instanceof AuthlibInjectorAccount && AuthlibInjectorServers.getServers().contains(((AuthlibInjectorAccount) account).getServer()))) {
+            CreateAccountPane dialog = new CreateAccountPane(AuthlibInjectorServers.getServers().iterator().next());
+            dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {
+                Account newAccount = Accounts.getSelectedAccount();
+                if (newAccount == null) {
+                    // user cancelled operation
+                } else {
+                    Platform.runLater(() -> action.accept(newAccount));
+                }
+            });
+            Controllers.dialog(dialog);
+        } else if (account == null) {
             CreateAccountPane dialog = new CreateAccountPane();
             dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {
                 Account newAccount = Accounts.getSelectedAccount();
