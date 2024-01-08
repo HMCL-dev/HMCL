@@ -28,12 +28,12 @@ import java.util.function.Supplier;
  *
  * @author huangyuhui
  */
-public final class SimpleMultimap<K, V> {
+public final class SimpleMultimap<K, V, M extends Collection<V>> {
 
-    private final Map<K, Collection<V>> map;
-    private final Supplier<Collection<V>> valuer;
+    private final Map<K, M> map;
+    private final Supplier<M> valuer;
 
-    public SimpleMultimap(Supplier<Map<K, Collection<V>>> mapper, Supplier<Collection<V>> valuer) {
+    public SimpleMultimap(Supplier<Map<K, M>> mapper, Supplier<M> valuer) {
         this.map = mapper.get();
         this.valuer = valuer;
     }
@@ -48,7 +48,7 @@ public final class SimpleMultimap<K, V> {
 
     public Collection<V> values() {
         Collection<V> res = valuer.get();
-        for (Map.Entry<K, Collection<V>> entry : map.entrySet())
+        for (Map.Entry<K, M> entry : map.entrySet())
             res.addAll(entry.getValue());
         return res;
     }
@@ -61,27 +61,27 @@ public final class SimpleMultimap<K, V> {
         return map.containsKey(key) && !map.get(key).isEmpty();
     }
 
-    public Collection<V> get(K key) {
+    public M get(K key) {
         return map.computeIfAbsent(key, any -> valuer.get());
     }
 
     public void put(K key, V value) {
-        Collection<V> set = get(key);
+        M set = get(key);
         set.add(value);
     }
 
     public void putAll(K key, Collection<? extends V> value) {
-        Collection<V> set = get(key);
+        M set = get(key);
         set.addAll(value);
     }
 
-    public Collection<V> removeKey(K key) {
+    public M removeKey(K key) {
         return map.remove(key);
     }
 
     public boolean removeValue(V value) {
         boolean flag = false;
-        for (Collection<V> c : map.values())
+        for (M c : map.values())
             flag |= c.remove(value);
         return flag;
     }
