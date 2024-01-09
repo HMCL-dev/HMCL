@@ -223,7 +223,7 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
         // lwjgl assumes path to native libraries encoded by ASCII.
-        // Here is a workaround for this issue: https://github.com/huanghongxun/HMCL/issues/1141.
+        // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
