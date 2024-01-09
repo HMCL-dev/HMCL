@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
@@ -335,6 +336,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     iconType = VersionIconType.COMMAND;
                 else if (remoteVersion instanceof ForgeRemoteVersion)
                     iconType = VersionIconType.FORGE;
+                else if (remoteVersion instanceof NeoForgeRemoteVersion)
+                    iconType = VersionIconType.NEO_FORGE;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
                     iconType = VersionIconType.FABRIC;
                 else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)

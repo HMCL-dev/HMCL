@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
@@ -28,7 +27,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Map;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -167,8 +165,7 @@ public final class ConfigHolder {
                 if (deserialized == null) {
                     LOG.info("Config is empty");
                 } else {
-                    Map<?, ?> raw = new Gson().fromJson(content, Map.class);
-                    ConfigUpgrader.upgradeConfig(deserialized, raw);
+                    ConfigUpgrader.upgradeConfig(deserialized, content);
                     return deserialized;
                 }
             } catch (JsonParseException e) {

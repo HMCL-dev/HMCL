@@ -22,70 +22,76 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class AuthlibInjectorServers implements Validation {
+public final class AuthlibInjectorServers implements Validation {
 
     public static final String CONFIG_FILENAME = "authlib-injectors.json";
 
+    private static final Set<AuthlibInjectorServer> servers = new CopyOnWriteArraySet<>();
+
+    public static Set<AuthlibInjectorServer> getServers() {
+        return servers;
+    }
+
     private final List<String> urls;
 
-    public AuthlibInjectorServers(List<String> urls) {
+    private AuthlibInjectorServers(List<String> urls) {
         this.urls = urls;
     }
 
-    public List<String> getUrls() {
-        return urls;
-    }
-
     @Override
-    public void validate() throws JsonParseException {
-        if (urls == null)
-            throw new JsonParseException("authlib-injectors.json -> urls cannot be null");
+    public void validate() throws JsonParseException, TolerableValidationException {
+        if (this.urls == null) {
+            throw new JsonParseException("authlib-injectors.json -> urls cannot be null.");
+        }
     }
 
-    private static final Path configLocation = Paths.get(CONFIG_FILENAME);
-    private static AuthlibInjectorServers configInstance;
-
-    public synchronized static void init() {
-        if (configInstance != null) {
-            throw new IllegalStateException("AuthlibInjectorServers is already loaded");
+    public static void init() {
+        Path configLocation;
+        Path jarPath = JarUtils.thisJarPath();
+        if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
+            configLocation = jarPath.getParent().resolve(CONFIG_FILENAME);
+        } else {
+            configLocation = Paths.get(CONFIG_FILENAME);
         }
 
-        configInstance = new AuthlibInjectorServers(Collections.emptyList());
-
-        if (Files.exists(configLocation)) {
+        if (ConfigHolder.isNewlyCreated() && Files.exists(configLocation)) {
+            AuthlibInjectorServers configInstance;
             try {
                 String content = FileUtils.readText(configLocation);
                 configInstance = JsonUtils.GSON.fromJson(content, AuthlibInjectorServers.class);
             } catch (IOException | JsonParseException e) {
                 LOG.log(Level.WARNING, "Malformed authlib-injectors.json", e);
+                return;
+            }
+
+            if (!configInstance.urls.isEmpty()) {
+                config().setPreferredLoginType(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
+                for (String url : configInstance.urls) {
+                    Task.supplyAsync(Schedulers.io(), () -> AuthlibInjectorServer.locateServer(url))
+                            .thenAcceptAsync(Schedulers.javafx(), server -> {
+                                config().getAuthlibInjectorServers().add(server);
+                                servers.add(server);
+                            })
+                            .start();
+                }
             }
         }
-
-        if (ConfigHolder.isNewlyCreated() && !AuthlibInjectorServers.getConfigInstance().getUrls().isEmpty()) {
-            config().setPreferredLoginType(Accounts.getLoginType(Accounts.FACTORY_AUTHLIB_INJECTOR));
-            for (String url : AuthlibInjectorServers.getConfigInstance().getUrls()) {
-                Task.supplyAsync(Schedulers.io(), () -> AuthlibInjectorServer.locateServer(url))
-                        .thenAcceptAsync(Schedulers.javafx(), server -> config().getAuthlibInjectorServers().add(server))
-                        .start();
-            }
-        }
-    }
-
-    public static AuthlibInjectorServers getConfigInstance() {
-        return configInstance;
     }
 }
