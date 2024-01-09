@@ -145,7 +145,6 @@ public enum JavaVersionConstraint {
                                                @Nullable JavaVersion javaVersion, @Nullable LibraryAnalyzer analyzer) {
             if (version == null || javaVersion == null || analyzer == null) return false;
             VersionNumber forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                    .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
                     .map(VersionNumber::asVersion)
                     .orElse(null);
             if (forgePatchVersion == null) {

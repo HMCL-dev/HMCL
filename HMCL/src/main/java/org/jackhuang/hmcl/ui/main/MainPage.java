@@ -54,9 +54,9 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.upgrade.RemoteVersion;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.hmcl.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -105,7 +105,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             } catch (IOException ignored) {
             }
         } else {
-            titleIcon.setImage(new Image("/assets/img/icon.png", 20, 20, false, false));
+            titleIcon.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png", 20, 20, false, false));
         }
 
         Label titleLabel = new Label(Metadata.FULL_TITLE);
