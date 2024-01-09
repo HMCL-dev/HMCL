@@ -17,12 +17,9 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
-import static org.jackhuang.hmcl.util.io.IOUtils.readFullyAsByteArray;
-import static org.jackhuang.hmcl.util.io.IOUtils.readFullyWithoutClosing;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -35,6 +32,8 @@ import java.util.Optional;
 import java.util.logging.Level;
 
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +76,7 @@ public class AuthlibInjectorServer implements Observable {
 
             try {
                 AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                server.refreshMetadata(readFullyWithoutClosing(conn.getInputStream()));
+                server.refreshMetadata(IOUtils.readFullyAsStringWithClosing(conn.getInputStream()));
                 return server;
             } finally {
                 conn.disconnect();
@@ -159,12 +158,11 @@ public class AuthlibInjectorServer implements Observable {
     }
 
     public void refreshMetadata() throws IOException {
-        refreshMetadata(readFullyAsByteArray(new URL(url).openStream()));
+        refreshMetadata(HttpRequest.GET(url).getString());
     }
 
-    private void refreshMetadata(byte[] rawResponse) throws IOException {
+    private void refreshMetadata(String text) throws IOException {
         long timestamp = System.currentTimeMillis();
-        String text = new String(rawResponse, UTF_8);
         try {
             setMetadataResponse(text, timestamp);
         } catch (JsonParseException e) {

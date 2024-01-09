@@ -51,7 +51,39 @@ public interface RemoteModRepository {
         DESC
     }
 
-    Stream<RemoteMod> search(String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
+    class SearchResult {
+        private final Stream<RemoteMod> sortedResults;
+
+        private final Stream<RemoteMod> unsortedResults;
+
+        private final int totalPages;
+
+        public SearchResult(Stream<RemoteMod> sortedResults, Stream<RemoteMod> unsortedResults, int totalPages) {
+            this.sortedResults = sortedResults;
+            this.unsortedResults = unsortedResults;
+            this.totalPages = totalPages;
+        }
+
+        public SearchResult(Stream<RemoteMod> sortedResults, int pages) {
+            this.sortedResults = sortedResults;
+            this.unsortedResults = sortedResults;
+            this.totalPages = pages;
+        }
+
+        public Stream<RemoteMod> getResults() {
+            return this.sortedResults;
+        }
+
+        public Stream<RemoteMod> getUnsortedResults() {
+            return this.unsortedResults;
+        }
+
+        public int getTotalPages() {
+            return this.totalPages;
+        }
+    }
+
+    SearchResult search(String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
             throws IOException;
 
     Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;
@@ -89,7 +121,7 @@ public interface RemoteModRepository {
     }
 
     String[] DEFAULT_GAME_VERSIONS = new String[]{
-            "1.20.1", "1.20",
+            "1.20.4", "1.20.3", "1.20.2", "1.20.1", "1.20",
             "1.19.4", "1.19.3", "1.19.2", "1.19.1", "1.19",
             "1.18.2", "1.18.1", "1.18",
             "1.17.1", "1.17",

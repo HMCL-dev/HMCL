@@ -15,13 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -106,7 +110,7 @@ public final class LiteModMetadata {
         return updateURI;
     }
     
-    public static LocalModFile fromFile(ModManager modManager, Path modFile) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         try (ZipFile zipFile = new ZipFile(modFile.toFile())) {
             ZipEntry entry = zipFile.getEntry("litemod.json");
             if (entry == null)

@@ -1,3 +1,6 @@
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -7,19 +10,30 @@ import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.google.code.gson:gson:2.10.1")
+    }
+}
+
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
+        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF")
+    .isNullOrEmpty())
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
     if (number != null) {
         (number - offset).toString()
     } else {
-        val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
+        val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
         val prefix = if (isOfficial) "dev" else "unofficial"
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
@@ -38,7 +52,7 @@ dependencies {
     implementation("libs:JFoenix")
 }
 
-fun digest(algorithm: String, bytes: ByteArray) = MessageDigest.getInstance(algorithm).digest(bytes)
+fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
@@ -80,6 +94,62 @@ fun attachSignature(jar: File) {
     }
 }
 
+tasks.getByName<JavaCompile>("compileJava") {
+    dependsOn(tasks.create("computeDynamicResources") {
+        this@create.inputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"))
+        this@create.outputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json"))
+
+        doLast {
+            Gson().also { gsonInstance ->
+                Files.newBufferedReader(
+                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"),
+                    Charsets.UTF_8
+                ).use { br ->
+                    (gsonInstance.fromJson(br, JsonElement::class.java) as JsonObject)
+                }.also { data ->
+                    data.asMap().forEach { (namespace, namespaceData) ->
+                        (namespaceData as JsonObject).asMap().forEach { (name, nameData) ->
+                            (nameData as JsonObject).asMap().forEach { (version, versionData) ->
+                                require(versionData is JsonObject)
+                                val localPath =
+                                    (versionData.get("local_path") as com.google.gson.JsonPrimitive).asString
+                                val sha1 = (versionData.get("sha1") as com.google.gson.JsonPrimitive).asString
+
+                                val currentSha1 = digest(
+                                    "SHA-1",
+                                    Files.readAllBytes(rootProject.rootDir.toPath().resolve(localPath))
+                                ).joinToString(separator = "") { "%02x".format(it) }
+
+                                if (!sha1.equals(currentSha1, ignoreCase = true)) {
+                                    throw IllegalStateException("Mismatched SHA-1 in $.${namespace}.${name}.${version} of dynamic remote resources detected. Require ${currentSha1}, but found $sha1")
+                                }
+                            }
+                        }
+                    }
+
+                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json").also { zippedPath ->
+                        gsonInstance.toJson(data).also { expectedData ->
+                            if (Files.exists(zippedPath)) {
+                                Files.readString(zippedPath, Charsets.UTF_8).also { rawData ->
+                                    if (!rawData.equals(expectedData)) {
+                                        if (System.getenv("GITHUB_SHA") == null) {
+                                            Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
+                                        } else {
+                                            throw IllegalStateException("Mismatched zipped dynamic-remote-resources json file!")
+                                        }
+                                    }
+                                }
+                            } else {
+                                Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    })
+}
+
 val java11 = sourceSets.create("java11") {
     java {
         srcDir("src/main/java11")
@@ -107,9 +177,11 @@ val jarPath = tasks.jar.get().archiveFile.get().asFile
 tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
     archiveClassifier.set(null as String?)
 
+    exclude("**/package-info.class")
+    exclude("META-INF/maven/**")
+
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
-        exclude(dependency("com.github.steveice10:.*:.*"))
         exclude(dependency("libs:JFoenix:.*"))
     }
 
@@ -136,7 +208,8 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.graphics/com.sun.prism",
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin"
+                "javafx.controls/javafx.scene.control.skin",
+                "jdk.attach/sun.tools.attach"
             ).joinToString(" ")
         )
 
@@ -187,7 +260,7 @@ tasks.processResources {
     dependsOn(tasks["java11Classes"])
 
     into("assets") {
-        from(project.buildDir.resolve("openjfx-dependencies.json"))
+        from(project.layout.buildDirectory.file("openjfx-dependencies.json"))
     }
     dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }
