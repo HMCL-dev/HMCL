@@ -588,6 +588,7 @@ public class CurseAddon implements RemoteMod.IMod {
                         if ("fabric".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FORGE);
                         else if ("quilt".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.QUILT);
+                        else if ("neoforge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.NEO_FORGED);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             );

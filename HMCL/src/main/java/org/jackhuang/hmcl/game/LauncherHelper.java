@@ -510,9 +510,7 @@ public final class LauncherHelper {
                             break;
                         case MODDED_JAVA_16:
                             // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
-                            String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                                    .map(LibraryAnalyzer.LibraryType.FORGE::patchVersion)
-                                    .orElse(null);
+                            String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE).orElse(null);
                             if (forgePatchVersion != null && VersionNumber.VERSION_COMPARATOR.compare(forgePatchVersion, "37.0.60") < 0)
                                 suggestions.add(i18n("launch.advice.forge37_0_60"));
                             else
@@ -749,7 +747,7 @@ public final class LauncherHelper {
 
             if (showLogs)
                 Platform.runLater(() -> {
-                    logWindow = new LogWindow();
+                    logWindow = new LogWindow(process);
                     logWindow.showNormal();
                     logWindowLatch.countDown();
                 });
