@@ -513,7 +513,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
+                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGED);
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
+                        else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             ));

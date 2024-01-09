@@ -41,8 +41,12 @@ public final class SystemUtils {
         return managedProcess.getProcess().waitFor();
     }
 
+    public static boolean supportJVMAttachment() {
+        return JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9
+                && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
+    }
+
     private static void onLogLine(String log) {
         LOG.info(log);
     }
-
 }
