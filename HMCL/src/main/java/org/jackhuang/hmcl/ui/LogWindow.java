@@ -36,13 +36,16 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,14 +60,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
- *
  * @author huangyuhui
  */
 public final class LogWindow extends Stage {
@@ -90,13 +92,17 @@ public final class LogWindow extends Stage {
 
     private boolean stopCheckLogCount = false;
 
-    public LogWindow() {
+    private final ManagedProcess gameProcess;
+
+    public LogWindow(ManagedProcess gameProcess) {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
-        getIcons().add(newImage("/assets/img/icon.png"));
+        getIcons().add(newBuiltinImage("/assets/img/icon.png"));
 
         levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
+
+        this.gameProcess = gameProcess;
     }
 
     public void logLine(String filteredLine, Log4jLevel level) {
@@ -219,6 +225,35 @@ public final class LogWindow extends Stage {
             });
         }
 
+        private void onExportDump(JFXButton button) {
+            thread(() -> {
+                if (button.getText().equals(i18n("logwindow.export_dump.dependency_ok.button"))) {
+                    if (SystemUtils.supportJVMAttachment()) {
+                        Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.doing_button")));
+
+                        Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
+
+                        try {
+                            if (gameProcess.isRunning()) {
+                                GameDumpGenerator.writeDumpTo(gameProcess.getPID(), dumpFile);
+                                FXUtils.showFileInExplorer(dumpFile);
+                            }
+                        } catch (Throwable e) {
+                            LOG.log(Level.WARNING, "Failed to create minecraft jstack dump", e);
+
+                            Platform.runLater(() -> {
+                                Alert alert = new Alert(Alert.AlertType.ERROR, i18n("logwindow.export_dump.dependency_ok.button"));
+                                alert.setTitle(i18n("message.error"));
+                                alert.showAndWait();
+                            });
+                        }
+
+                        Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.button")));
+                    }
+                }
+            });
+        }
+
         private void onExportGameCrashInfo() {
             if (exportGameCrashInfoCallback == null) return;
             exportGameCrashInfoCallback.accept(logs.stream().map(x -> x.log).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
@@ -303,7 +338,7 @@ public final class LogWindow extends Stage {
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
                         getStyleClass().add("log-window-list-cell");
-                        Region clippedContainer = (Region)listView.lookup(".clipped-container");
+                        Region clippedContainer = (Region) listView.lookup(".clipped-container");
                         if (clippedContainer != null) {
                             maxWidthProperty().bind(clippedContainer.widthProperty());
                             prefWidthProperty().bind(clippedContainer.widthProperty());
@@ -398,15 +433,25 @@ public final class LogWindow extends Stage {
                 autoScrollCheckBox.setSelected(true);
                 control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
 
-                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
-                terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
-
                 JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
                 exportLogsButton.setOnMouseClicked(e -> getSkinnable().onExportLogs());
 
+                JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
+                terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
+
+                JFXButton exportDumpButton = new JFXButton();
+                if (SystemUtils.supportJVMAttachment()) {
+                    exportDumpButton.setText(i18n("logwindow.export_dump.dependency_ok.button"));
+                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpButton));
+                } else {
+                    exportDumpButton.setText(i18n("logwindow.export_dump.no_dependency.button"));
+                    exportDumpButton.setTooltip(new Tooltip(i18n("logwindow.export_dump.no_dependency.tooltip")));
+                    exportDumpButton.setDisable(true);
+                }
+
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
                 clearButton.setOnMouseClicked(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, clearButton);
+                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpButton, clearButton);
 
                 vbox.getChildren().add(bottom);
             }

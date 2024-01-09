@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
@@ -36,6 +37,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     private final FabricVersionList fabric;
     private final FabricAPIVersionList fabricApi;
     private final ForgeBMCLVersionList forge;
+    private final NeoForgeBMCLVersionList neoforge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
@@ -47,6 +49,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
         this.fabric = new FabricVersionList(this);
         this.fabricApi = new FabricAPIVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
+        this.neoforge = new NeoForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderBMCLVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
@@ -78,6 +81,8 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 return fabricApi;
             case "forge":
                 return forge;
+            case "neoforge":
+                return neoforge;
             case "liteloader":
                 return liteLoader;
             case "optifine":
@@ -102,6 +107,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
                 .replace("https://libraries.minecraft.net", apiRoot + "/libraries")
                 .replaceFirst("https?://files\\.minecraftforge\\.net/maven", apiRoot + "/maven")
                 .replace("https://maven.minecraftforge.net", apiRoot + "/maven")
+                .replace("https://maven.neoforged.net/releases/net/neoforged/forge", apiRoot + "/maven/net/neoforged/forge")
                 .replace("http://dl.liteloader.com/versions/versions.json", apiRoot + "/maven/com/mumfrey/liteloader/versions.json")
                 .replace("http://dl.liteloader.com/versions", apiRoot + "/maven")
                 .replace("https://meta.fabricmc.net", apiRoot + "/fabric-meta")
