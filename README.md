@@ -59,13 +59,13 @@ Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or
 
 ### Dynamic Remote Resource
 
-This is an HMCL feature that is used to automatically update dynamically changing resources such as mod_data.txt and modpack_data.txt independently of HMCL's versioning system for ease of updating.
+This feature in HMCL enables the automatic updating of dynamically changing resources, such as mod_data.txt and modpack_data.txt, independently of HMCL's versioning system for ease of updating.
 
-For users with unstable connections, HMCL will still build in a copy of the resources that need to be updated as normal. Moreover, the downloaded resources will be saved to the global folder of HMCL, and will not directly modify the built-in files of HMCL, the saving path is: Remote -> HMCL global folder -> Built-in files.
+For users with unstable connections, HMCL will still include a copy of the resources that need updating during the normal build process. Additionally, the downloaded resources will be saved to HMCL's global folder, avoiding direct modifications to the built-in files. The saving path is as follows: Remote -> HMCL global folder -> Built-in files.
 
-Currently, the update source is an independent Dynamic Remote Resources system, the update URL is in [here](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L42), if you need to update the resources, just update the resources and build the project, and specify [data-json/dynamic-remote-resources.json](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json/dynamic-remote-resources.json) as the update URL.
+Currently, the update source utilizes an independent Dynamic Remote Resources system. The update URL can be found [here](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L42). To update the resources, simply update them and build the project, specifying [data-json/dynamic-remote-resources.json](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json/dynamic-remote-resources.json) as the update URL.
 
-Note: The current HMCL specifies an off-site resource, when updating the resource, you need to update the off-site resource as well, see [here](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json#readme) for details.
+Note: The current HMCL specifies an off-site resource. When updating the resource, ensure that the off-site resource is also updated; refer to [this link](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json#readme) for details.
 
 ## JVM Options (for debugging)
 
