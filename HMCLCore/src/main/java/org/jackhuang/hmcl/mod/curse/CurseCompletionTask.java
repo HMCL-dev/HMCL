@@ -138,14 +138,27 @@ public final class CurseCompletionTask extends Task<Void> {
                         .collect(Collectors.toList()));
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
 
+        File resourcePacks = new File(repository.getVersionRoot(modManager.getVersion()), "resourcepacks");
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {
-                if (!modManager.hasSimpleMod(file.getFileName())) {
-                    FileDownloadTask task = new FileDownloadTask(file.getUrl(), modManager.getSimpleModPath(file.getFileName()).toFile());
-                    task.setCacheRepository(dependency.getCacheRepository());
-                    task.setCaching(true);
-                    dependencies.add(task.withCounter("hmcl.modpack.download"));
+                RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
+                File target;
+                if (((CurseAddon) mod.getData()).getClassId() == 12) {
+                    target = new File(resourcePacks, file.getFileName());
+                    if (target.exists()) {
+                        continue;
+                    }
+                } else {
+                    if (modManager.hasSimpleMod(file.getFileName())) {
+                        continue;
+                    }
+                    target = modManager.getSimpleModPath(file.getFileName()).toFile();
                 }
+
+                FileDownloadTask task = new FileDownloadTask(file.getUrl(), target);
+                task.setCacheRepository(dependency.getCacheRepository());
+                task.setCaching(true);
+                dependencies.add(task.withCounter("hmcl.modpack.download"));
             }
 
         if (!dependencies.isEmpty()) {

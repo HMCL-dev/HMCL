@@ -21,6 +21,8 @@ import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -30,6 +32,15 @@ import java.util.stream.Stream;
 
 @Immutable
 public class CurseAddon implements RemoteMod.IMod {
+    public static final Map<Integer, RemoteMod.DependencyType> RELATION_TYPE = Lang.mapOf(
+            Pair.pair(1, RemoteMod.DependencyType.EMBEDDED),
+            Pair.pair(2, RemoteMod.DependencyType.OPTIONAL),
+            Pair.pair(3, RemoteMod.DependencyType.REQUIRED),
+            Pair.pair(4, RemoteMod.DependencyType.TOOL),
+            Pair.pair(5, RemoteMod.DependencyType.INCOMPATIBLE),
+            Pair.pair(6, RemoteMod.DependencyType.INCLUDE)
+    );
+
     private final int id;
     private final int gameId;
     private final String name;
@@ -566,12 +577,18 @@ public class CurseAddon implements RemoteMod.IMod {
                     getFileDate(),
                     versionType,
                     new RemoteMod.File(Collections.emptyMap(), getDownloadUrl(), getFileName()),
-                    Collections.emptyList(),
+                    dependencies.stream().map(dependency -> {
+                        if (!RELATION_TYPE.containsKey(dependency.getRelationType())) {
+                            throw new IllegalStateException("Broken datas.");
+                        }
+                        return RemoteMod.Dependency.ofGeneral(RELATION_TYPE.get(dependency.getRelationType()), CurseForgeRemoteModRepository.MODS, Integer.toString(dependency.getModId()));
+                    }).distinct().filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions.stream().filter(ver -> ver.startsWith("1.") || ver.contains("w")).collect(Collectors.toList()),
                     gameVersions.stream().flatMap(version -> {
                         if ("fabric".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.FORGE);
                         else if ("quilt".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.QUILT);
+                        else if ("neoforge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.NEO_FORGED);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             );
