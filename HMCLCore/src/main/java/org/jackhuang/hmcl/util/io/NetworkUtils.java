@@ -85,8 +85,16 @@ public final class NetworkUtils {
         return result;
     }
 
+    private static boolean endsWithDomainSuffix(String host, String domainSuffix) {
+        return host.endsWith(domainSuffix.toLowerCase());
+    }
+    
     public static URLConnection createConnection(URL url) throws IOException {
         URLConnection connection = url.openConnection();
+        if (endsWithDomainSuffix(host, "d.pcs.baidu.com") || endsWithDomainSuffix(host, "baidupcs.com")) {
+            // Docs: https://alist.nn.ci/zh/guide/drivers/baidu.html
+            connection.setRequestProperty("User-Agent", "pan.baidu.com");
+        }
         connection.setUseCaches(false);
         connection.setConnectTimeout(5000);
         connection.setReadTimeout(5000);
