@@ -99,11 +99,13 @@ public class ModrinthManifest implements ModpackManifest, Validation {
     public static class File implements ModpackFile {
         private final String path;
         private final Map<String, String> hashes;
+
+        @Nullable
         private final Map<String, String> env;
         private final List<URL> downloads;
         private final int fileSize;
 
-        public File(String path, Map<String, String> hashes, Map<String, String> env, List<URL> downloads, int fileSize) {
+        public File(String path, Map<String, String> hashes, @Nullable Map<String, String> env, List<URL> downloads, int fileSize) {
             this.path = path;
             this.hashes = hashes;
             this.env = env;
@@ -119,6 +121,7 @@ public class ModrinthManifest implements ModpackManifest, Validation {
             return hashes;
         }
 
+        @Nullable
         public Map<String, String> getEnv() {
             return env;
         }
@@ -136,7 +139,7 @@ public class ModrinthManifest implements ModpackManifest, Validation {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             File file = (File) o;
-            return fileSize == file.fileSize && path.equals(file.path) && hashes.equals(file.hashes) && env.equals(file.env) && downloads.equals(file.downloads);
+            return fileSize == file.fileSize && path.equals(file.path) && hashes.equals(file.hashes) && Objects.equals(env, file.env) && downloads.equals(file.downloads);
         }
 
         @Override
