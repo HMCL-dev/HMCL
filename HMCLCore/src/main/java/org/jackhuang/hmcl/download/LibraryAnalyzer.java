@@ -99,8 +99,9 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         if (type == null) return version;
 
         List<Library> libraries = new ArrayList<>();
-        for (Library library : version.getLibraries()) {
-            if (type.matchLibrary(library)) {
+        List<Library> rawLibraries = version.getLibraries();
+        for (Library library : rawLibraries) {
+            if (type.matchLibrary(library, rawLibraries)) {
                 // skip
             } else {
                 libraries.add(library);
@@ -135,9 +136,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
 
-        for (Library library : version.resolve(null).getLibraries()) {
+        List<Library> rawLibraries = version.resolve(null).getLibraries();
+        for (Library library : rawLibraries) {
             for (LibraryType type : LibraryType.values()) {
-                if (type.matchLibrary(library)) {
+                if (type.matchLibrary(library, rawLibraries)) {
                     libraries.put(type.getPatchId(), pair(library, type.patchVersion(version, library.getVersion())));
                     break;
                 }
@@ -185,10 +187,27 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 }
                 return super.patchVersion(gameVersion, libraryVersion);
             }
+
+            @Override
+            public boolean matchLibrary(Library library, List<Library> libraries) {
+                for (Library l : libraries) {
+                    if (NEO_FORGE.matchLibrary(l, libraries)) {
+                        return false;
+                    }
+                }
+                return super.matchLibrary(library, libraries);
+            }
         },
         NEO_FORGE(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED) {
+            private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
+
             @Override
             public String patchVersion(Version gameVersion, String libraryVersion) {
+                Matcher matcher = NEO_FORGE_VERSION_MATCHER.matcher(libraryVersion);
+                if (matcher.find()) {
+                    return matcher.group("forge");
+                }
+
                 String res = scanVersion(gameVersion);
                 if (res != null) {
                     return res;
@@ -266,7 +285,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return null;
         }
 
-        public boolean matchLibrary(Library library) {
+        public boolean matchLibrary(Library library, List<Library> libraries) {
             return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
         }
 
