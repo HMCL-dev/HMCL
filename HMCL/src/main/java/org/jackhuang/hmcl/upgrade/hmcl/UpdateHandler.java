@@ -138,7 +138,7 @@ public final class UpdateHandler {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
-        if (!IntegrityChecker.isSelfVerified() || !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new IOException("Self verification failed");
         }
         ExecutableHeaderHelper.copyWithHeader(self, target);
@@ -158,7 +158,7 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        if (!IntegrityChecker.isSelfVerified() || !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new IOException("Self verification failed");
         }
         startJava(updateTo, "--apply-to", self.toString());
