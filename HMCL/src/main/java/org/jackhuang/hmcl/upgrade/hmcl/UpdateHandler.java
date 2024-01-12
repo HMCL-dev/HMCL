@@ -163,6 +163,12 @@ public final class UpdateHandler {
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
+        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String && ((String) key).startsWith("hmcl.")) {
+                commandline.add("-D" + key + "=" + entry.getValue());
+            }
+        }
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
