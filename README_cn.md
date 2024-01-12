@@ -55,6 +55,16 @@ HMCL 有着强大的跨平台能力. 它不仅支持 Windows、Linux、macOS 等
 
 请确保您至少安装了含有 JavaFX 8 的 Java. 建议使用 Liberica Full JDK 8 或更高版本.
 
+### Dynamic Remote Resource
+
+这是一个 HMCL 的功能，用于 mod_data.txt 和 modpack_data.txt 等需要动态变化资源的自动更新独立于 HMCL 的版本系统，方便更新。
+
+为了网络连接不稳定的用户考虑，HMCL 依然会正常的内置一份需要更新的资源。并且，下载的资源会保存到 HMCL 的全局文件夹中，不会直接修改 HMCL 内置的文件，保存路径为：远程 -> HMCL 全局文件夹 -> 内置文件。
+
+目前更新源为一个独立的 Dynamic Remote Resources 系统，更新 URL 在[此处](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L42)，如需更新资源，只需将资源更新并构建项目，并指定 [data-json/dynamic-remote-resources.json](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json/dynamic-remote-resources.json) 为更新 URL 即可。
+
+注意：当前 HMCL 指定的是站外资源，当更新资源时需要一并更新站外资源，详细见[此处](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json#readme).
+
 ## JVM 选项 (用于调试)
 
 | 参数                                             | 简介                                                                                              |
