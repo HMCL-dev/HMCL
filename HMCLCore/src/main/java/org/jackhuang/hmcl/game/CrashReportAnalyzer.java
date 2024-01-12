@@ -101,7 +101,7 @@ public final class CrashReportAnalyzer {
         UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
 
         //https://github.com/huanghongxun/HMCL/pull/1813
-        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("(java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.texture\\.SpriteContents\\.<init>\\(net\\.minecraft\\.resources\\.ResourceLocation, |java\\.lang\\.NoSuchMethodError: 'void net\\.minecraftforge\\.client\\.gui\\.overlay\\.ForgeGui\\.renderSelectedItemName\\(net\\.minecraft\\.client\\.gui\\.GuiGraphics, int\\)'|java.lang.NoSuchMethodError: 'java\\.lang\\.String com\\.mojang\\.blaze3d\\.systems\\.RenderSystem\\.getBackendDescription\\(\\)'|java\\.lang\\.NoSuchMethodError: 'net\\.minecraft\\.network\\.chat\\.FormattedText net\\.minecraft\\.client\\.gui\\.Font\\.ellipsize\\(net\\.minecraft\\.network\\.chat\\.FormattedText, int\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.server\\.level\\.DistanceManager\\.(.*?)\\(net\\.minecraft\\.server\\.level\\.TicketType, net\\.minecraft\\.world\\.level\\.ChunkPos, int, java\\.lang\\.Object, boolean\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.block\\.model\\.BakedQuad\\.<init>\\(int\\[\\], int, net\\.minecraft\\.core\\.Direction, net\\.minecraft\\.client\\.renderer\\.texture\\.TextureAtlasSprite, boolean, boolean\\)'|TRANSFORMER/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.<clinit>\\(Reflector\\.java)")),
+        OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("(java\\.lang\\.NoSuchMethodError: 'java\\.lang\\.Class sun\\.misc\\.Unsafe\\.defineAnonymousClass\\(java\\.lang\\.Class, byte\\[\\], java\\.lang\\.Object\\[\\]\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.texture\\.SpriteContents\\.\\<init\\>\\(net\\.minecraft\\.resources\\.ResourceLocation, |java\\.lang\\.NoSuchMethodError: 'void net\\.minecraftforge\\.client\\.gui\\.overlay\\.ForgeGui\\.renderSelectedItemName\\(net\\.minecraft\\.client\\.gui\\.GuiGraphics, int\\)'|java\\.lang\\.NoSuchMethodError: 'java\\.lang\\.String com\\.mojang\\.blaze3d\\.systems\\.RenderSystem\\.getBackendDescription\\(\\)'|java\\.lang\\.NoSuchMethodError: 'net\\.minecraft\\.network\\.chat\\.FormattedText net\\.minecraft\\.client\\.gui\\.Font\\.ellipsize\\(net\\.minecraft\\.network\\.chat\\.FormattedText, int\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.server\\.level\\.DistanceManager\\.(.*?)\\(net\\.minecraft\\.server\\.level\\.TicketType, net\\.minecraft\\.world\\.level\\.ChunkPos, int, java\\.lang\\.Object, boolean\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.block\\.model\\.BakedQuad\\.\\<init\\>\\(int\\[\\], int, net\\.minecraft\\.core\\.Direction, net\\.minecraft\\.client\\.renderer\\.texture\\.TextureAtlasSprite, boolean, boolean\\)'|TRANSFORMER/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.\\<clinit\\>\\(Reflector\\.java)")),
         MOD_FILES_ARE_DECOMPRESSED(Pattern.compile("(The directories below appear to be extracted jar files\\. Fix this before you continue|Extracted mod jars found, loading will NOT continue)")),//Mod文件被解压
         OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager$ProxyTicketManager\\.shouldForceTicks\\(J\\)Z")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
         TOO_MANY_MODS_LEAD_TO_EXCEEDING_THE_ID_LIMIT(Pattern.compile("maximum id range exceeded")),//Mod过多导致超出ID限制
@@ -114,7 +114,7 @@ public final class CrashReportAnalyzer {
         FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
-        
+
         //Forge 默认会把每一个 mod jar 都当做一个 JPMS 的模块（Module）加载。在这个 jar 没有给出 module-info 声明的情况下，JPMS 会采用这样的顺序决定 module 名字：
         //1. META-INF/MANIFEST.MF 里的 Automatic-Module-Name
         //2. 根据文件名生成。文件名里的 .jar 后缀名先去掉，然后检查是否有 -(\\d+(\\.|$)) 的部分，有的话只取 - 前面的部分，- 后面的部分成为 module 的版本号（即尝试判断文件名里是否有版本号，有的话去掉），然后把不是拉丁字母和数字的字符（正则表达式 [^A-Za-z0-9]）都换成点，然后把连续的多个点换成一个点，最后去掉开头和结尾的点。那么
@@ -178,10 +178,30 @@ public final class CrashReportAnalyzer {
         public Matcher getMatcher() {
             return matcher;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Result result = (Result) o;
+
+            if (rule != result.rule) return false;
+            if (!log.equals(result.log)) return false;
+            return matcher.equals(result.matcher);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = rule.hashCode();
+            result = 31 * result + log.hashCode();
+            result = 31 * result + matcher.hashCode();
+            return result;
+        }
     }
 
-    public static List<Result> anaylze(String log) {
-        List<Result> results = new ArrayList<>();
+    public static Set<Result> anaylze(String log) {
+        Set<Result> results = new HashSet<>();
         for (Rule rule : Rule.values()) {
             Matcher matcher = rule.pattern.matcher(log);
             if (matcher.find()) {

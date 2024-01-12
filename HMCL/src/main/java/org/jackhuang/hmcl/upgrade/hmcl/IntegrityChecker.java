@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.upgrade;
+package org.jackhuang.hmcl.upgrade.hmcl;
 
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -123,7 +123,7 @@ public final class IntegrityChecker {
             }
 
             try {
-                verifyJar(JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location")));
+                verifyJar(JarUtils.thisJarPath());
 
                 LOG.info("Successfully verified current JAR");
                 selfVerified = true;

@@ -56,16 +56,16 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             JFXDepthManager.setDepth(toolbar, 1);
             toolbar.setPickOnBounds(false);
 
-            toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG::refresh, skinnable::refresh));
-            toolbar.getChildren().add(createToolbarButton(i18n("datapack.add"), SVG::plus, skinnable::add));
-            toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG::delete, () -> {
+            toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh));
+            toolbar.getChildren().add(createToolbarButton(i18n("datapack.add"), SVG.PLUS, skinnable::add));
+            toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG.DELETE, () -> {
                 Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                     skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                 }, null);
             }));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.enable"), SVG::check, () ->
+            toolbar.getChildren().add(createToolbarButton(i18n("mods.enable"), SVG.CHECK, () ->
                     skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.disable"), SVG::close, () ->
+            toolbar.getChildren().add(createToolbarButton(i18n("mods.disable"), SVG.CLOSE, () ->
                     skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())));
             root.setTop(toolbar);
         }

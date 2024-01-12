@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -806,9 +807,11 @@ public abstract class Task<T> {
     }
 
     public Task<T> withStage(String stage) {
-        StageTask task = new StageTask();
-        task.setStage(stage);
-        return task;
+        return new StageTask(stage);
+    }
+
+    public Task<T> withFakeProgress(String name, BooleanSupplier done, double k) {
+        return new FakeProgressTask(done, k).setExecutor(Schedulers.defaultScheduler()).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
     public Task<T> withStagesHint(List<String> stages) {
@@ -1100,7 +1103,10 @@ public abstract class Task<T> {
         }
     }
 
-    public class StageTask extends Task<T> {
+    private final class StageTask extends Task<T> {
+        private StageTask(String stage) {
+            this.setStage(stage);
+        }
 
         @Override
         public Collection<Task<?>> getDependents() {
@@ -1108,7 +1114,43 @@ public abstract class Task<T> {
         }
 
         @Override
-        public void execute() throws Exception {
+        public void execute() {
+            setResult(Task.this.getResult());
+        }
+    }
+
+    private final class FakeProgressTask extends Task<T> {
+        private static final double MAX_VALUE = 0.98D;
+
+        private final BooleanSupplier done;
+
+        private final double k;
+
+        private FakeProgressTask(BooleanSupplier done, double k) {
+            this.done = done;
+            this.k = k;
+        }
+
+        @Override
+        public Collection<Task<?>> getDependents() {
+            return Collections.singleton(Task.this);
+        }
+
+        @Override
+        public void execute() throws InterruptedException {
+            if (!done.getAsBoolean()) {
+                updateProgress(0.0D);
+
+                final long start = System.currentTimeMillis();
+                final double k2 = k / MAX_VALUE;
+                while (!done.getAsBoolean()) {
+                    updateProgressImmediately(-k / ((System.currentTimeMillis() - start) / 1000D + k2) + MAX_VALUE);
+
+                    Thread.sleep(1000);
+                }
+            }
+
+            updateProgress(1.0D);
             setResult(Task.this.getResult());
         }
     }
