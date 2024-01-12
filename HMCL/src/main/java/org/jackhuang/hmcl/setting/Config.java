@@ -203,6 +203,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("shownTips")
     private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
+    @SerializedName("drrOptions")
+    private ObservableMap<String, Object> drrOptions = FXCollections.observableHashMap();
+
     private transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
@@ -675,5 +678,9 @@ public final class Config implements Cloneable, Observable {
 
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
+    }
+
+    public ObservableMap<String, Object> getDRROptions() {
+        return drrOptions;
     }
 }
