@@ -59,13 +59,11 @@ Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or
 
 ### Dynamic Remote Resource
 
-This feature in HMCL enables the automatic updating of dynamically changing resources, such as mod_data.txt and modpack_data.txt, independently of HMCL's versioning system for ease of updating.
+HMCL automatically updates some dynamically changing resources, such as the Chinese translation of mods and modpacks, which is independent of the general versioning system of HMCL.
 
-For users with unstable connections, HMCL will still include a copy of the resources that need updating during the normal build process. Additionally, the downloaded resources will be saved to HMCL's global folder, avoiding direct modifications to the built-in files. The saving path is as follows: Remote -> HMCL global folder -> Built-in files.
+A copy of the resources will still be packed inside the HMCL for the users who have unstable network connection, or who have to use HMCL without network.
 
-Currently, the update source utilizes an independent Dynamic Remote Resources system. The update URL can be found [here](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L42). To update the resources, simply update them and build the project, specifying [data-json/dynamic-remote-resources.json](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json/dynamic-remote-resources.json) as the update URL.
-
-Note: The current HMCL specifies an off-site resource. When updating the resource, ensure that the off-site resource is also updated; refer to [this link](https://github.com/HMCL-dev/HMCL/blob/javafx/data-json#readme) for details.
+For more information about this feature, see [this file](data-json/README.md).
 
 ## JVM Options (for debugging)
 
