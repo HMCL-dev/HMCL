@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXRadioButton;
+import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
@@ -40,6 +41,7 @@ import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
@@ -144,6 +146,24 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
+                    ComponentSublist drrUpdate = new ComponentSublist();
+                    drrUpdate.setTitle(i18n("drr.update"));
+                    drrUpdate.setSubtitle(i18n("drr.update.hint"));
+                    drrUpdate.setHasSubtitle(true);
+                    VBox vBox = new VBox(8);
+
+                    JFXRadioButton btnModData = new JFXRadioButton(i18n("drr.update.items.mod_data"));
+                    bindDRROption("translation:mod_data:1", btnModData.selectedProperty());
+
+                    JFXRadioButton btnModpackData = new JFXRadioButton(i18n("drr.update.items.modpack_data"));
+                    bindDRROption("translation:modpack_data:1", btnModpackData.selectedProperty());
+
+                    vBox.getChildren().setAll(btnModData, btnModpackData);
+                    drrUpdate.getContent().add(vBox);
+                    settingsPane.getContent().add(drrUpdate);
+                }
+
+                {
                     fileCommonLocation = new MultiFileItem<>();
                     fileCommonLocationSublist = new ComponentSublist();
                     fileCommonLocationSublist.getContent().add(fileCommonLocation);
@@ -202,6 +222,12 @@ public abstract class SettingsView extends StackPane {
             }
             scroll.setContent(rootPane);
         }
+    }
+
+    public final void bindDRROption(String key, BooleanProperty property) {
+        config().getDRROptions().putIfAbsent(key, Boolean.TRUE);
+        property.set(!Objects.equals(config().getDRROptions().get(key), Boolean.FALSE));
+        property.addListener((observable, oldValue, newValue) -> config().getDRROptions().put(key, newValue));
     }
 
     protected abstract void onUpdate();

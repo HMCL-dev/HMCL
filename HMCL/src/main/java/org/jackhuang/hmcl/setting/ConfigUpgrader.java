@@ -23,10 +23,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
@@ -37,7 +34,7 @@ final class ConfigUpgrader {
     private ConfigUpgrader() {
     }
 
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
 
     /**
      * This method is for the compatibility with old HMCL versions.
@@ -127,6 +124,12 @@ final class ConfigUpgrader {
                 Pair.pair(2, (deserialized, rawJson) -> {
                     deserialized.setX(0.5D - deserialized.getWidth() / Controllers.SCREEN.getBounds().getWidth() / 2);
                     deserialized.setY(0.5D - deserialized.getHeight() / Controllers.SCREEN.getBounds().getHeight() / 2);
+                }),
+                Pair.pair(3, (deserialized, rawJson) -> {
+                    if (deserialized.getLocalization().getLocale() == Locale.CHINA) {
+                        deserialized.getDRROptions().put("translation:mod_data:1", Boolean.TRUE);
+                        deserialized.getDRROptions().put("translation:modpack_data:1", Boolean.TRUE);
+                    }
                 })
         );
 

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.upgrade.resource;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -40,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -173,21 +175,30 @@ public final class RemoteResourceManager {
     private static final Map<String, RemoteResourceKey> keys = new ConcurrentHashMap<>();
 
     public static void init() {
-        Task.<Map<String, Map<String, Map<String, RemoteResource>>>>supplyAsync(() ->
-                IntegrityChecker.isSelfVerified() ? HttpRequest.GET(Metadata.RESOURCE_UPDATE_URL).getJson(
-                        new TypeToken<Map<String, Map<String, Map<String, RemoteResource>>>>() {
-                        }.getType()
-                ) : null
-        ).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
-            if (exception == null && result != null) {
-                remoteResources.clear();
-                remoteResources.putAll(result);
+        for (Map.Entry<String, Object> entry : ConfigHolder.config().getDRROptions().entrySet()) {
+            if (!Objects.equals(entry.getValue(), Boolean.FALSE)) {
+                Task.<Map<String, Map<String, Map<String, RemoteResource>>>>supplyAsync(() ->
+                        IntegrityChecker.isSelfVerified() ? HttpRequest.GET(Metadata.RESOURCE_UPDATE_URL).getJson(
+                                new TypeToken<Map<String, Map<String, Map<String, RemoteResource>>>>() {
+                                }.getType()
+                        ) : null
+                ).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
+                    if (exception == null && result != null) {
+                        remoteResources.clear();
+                        remoteResources.putAll(result);
 
-                for (RemoteResourceKey key : keys.values()) {
-                    key.downloadRemoteResourceIfNecessary();
-                }
+                        for (RemoteResourceKey key : keys.values()) {
+                            Object o = ConfigHolder.config().getDRROptions().get(key.namespace + ':' + key.name + ':' + key.version);
+                            if (o == null || Objects.equals(o, Boolean.TRUE)) {
+                                key.downloadRemoteResourceIfNecessary();
+                            }
+                        }
+                    }
+                }).start();
+
+                break;
             }
-        }).start();
+        }
     }
 
     public static void register() {
@@ -195,7 +206,7 @@ public final class RemoteResourceManager {
     }
 
     public static RemoteResourceKey get(@NotNull String namespace, @NotNull String name, @NotNull String version, ExceptionalSupplier<InputStream, IOException> defaultSupplier) {
-        String stringKey = String.format("%s:%s:%s", namespace, name, version);
+        String stringKey = namespace + ':' + name + ':' + version;
         RemoteResourceKey key = keys.containsKey(stringKey) ? keys.get(stringKey) : new RemoteResourceKey(namespace, name, version, defaultSupplier);
         Task.runAsync(key::downloadRemoteResourceIfNecessary).start();
         keys.put(stringKey, key);
