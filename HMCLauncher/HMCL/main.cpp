@@ -75,20 +75,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
 
-  OSVERSIONINFOEX osvi;
-  DWORDLONG dwlConditionMask = 0;
-  int op = VER_GREATER_EQUAL;
-
-  // Initialize the OSVERSIONINFOEX structure.
-  ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-  osvi.dwMajorVersion = 6;
-  osvi.dwMinorVersion = 1;
-
-  // Initialize the condition mask.
-  VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, op);
-  VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
-
   SYSTEM_INFO systemInfo;
   GetNativeSystemInfo(&systemInfo);
   // TODO: check whether the bundled JRE is valid.
