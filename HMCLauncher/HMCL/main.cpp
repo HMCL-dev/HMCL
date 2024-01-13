@@ -153,7 +153,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName, jvmOptions);
   }
 
-error:
   LPCWSTR downloadLink;
 
   if (isARM64) {
