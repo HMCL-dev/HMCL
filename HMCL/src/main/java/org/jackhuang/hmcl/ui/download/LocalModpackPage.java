@@ -111,7 +111,7 @@ public final class LocalModpackPage extends ModpackPage {
                         lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
-                            // trim: https://github.com/huanghongxun/HMCL/issues/962
+                            // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
 
@@ -134,7 +134,7 @@ public final class LocalModpackPage extends ModpackPage {
                         lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
-                            // trim: https://github.com/huanghongxun/HMCL/issues/962
+                            // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(manifest.getName().trim());
                         }
                     }
