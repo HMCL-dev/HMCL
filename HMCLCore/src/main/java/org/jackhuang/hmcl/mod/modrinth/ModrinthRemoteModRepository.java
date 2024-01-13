@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,8 +100,10 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
-        String sha1 = DigestUtils.digestToString("SHA-1", file);
+        return getRemoteVersionBySHA1(DigestUtils.digestToString("SHA-1", file));
+    }
 
+    public Optional<RemoteMod.Version> getRemoteVersionBySHA1(String sha1) throws IOException {
         try {
             ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
                             pair("algorithm", "sha1"))

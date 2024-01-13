@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
-import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -26,10 +25,8 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseManifest;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthManifest;
+import org.jackhuang.hmcl.mod.ModpackFile;
+import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -40,20 +37,17 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -128,41 +122,10 @@ public final class LocalModpackPage extends ModpackPage {
                         txtModpackName.setText(manifest.getName().trim());
                     }
 
-                    if (manifest.getManifest() instanceof ModrinthManifest) {
-                        optionalFiles.updateOptionalFileList(((ModrinthManifest) manifest.getManifest()).getFiles());
-                    } else if (manifest.getManifest() instanceof CurseManifest) {
-                        waitingForOptionalFiles.set(true);
-                    } else {
-                        optionalFiles.updateOptionalFileList(Collections.emptyList());
-                    }
+                    pendingOptionalFiles(manifest);
 
-                    return manifest;
-                }).thenApplyAsync((manifest) -> {
-                    if (manifest.getManifest() instanceof CurseManifest) {
-                        CurseManifest manifest1 = (CurseManifest) manifest.getManifest(); // Fetch optional files in advance so that we can display the optional mods
-                        return manifest.setManifest(manifest1.setFiles(
-                                manifest1.getFiles().parallelStream()
-                                        .map(file -> {
-                                            if ((StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) && file.isOptional()) {
-                                                try {
-                                                    RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
-                                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
-                                                } catch (FileNotFoundException fof) {
-                                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
-                                                    return file;
-                                                } catch (IOException | JsonParseException e) {
-                                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
-                                                    return file;
-                                                }
-                                            } else {
-                                                return file;
-                                            }
-                                        })
-                                        .collect(Collectors.toList())));
-                    } else {
-                        return manifest;
-                    }
-                }).whenComplete(Schedulers.javafx(), (manifest, exception) -> {
+                    return null;
+                }).whenComplete(Schedulers.javafx(), (_unused, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
                         lblName.setText(selectedFile.getName());
@@ -175,7 +138,8 @@ public final class LocalModpackPage extends ModpackPage {
                         }
 
                         Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
-                                () -> {},
+                                () -> {
+                                },
                                 controller::onEnd);
 
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
@@ -183,9 +147,25 @@ public final class LocalModpackPage extends ModpackPage {
                         LOG.log(Level.WARNING, "Failed to read modpack manifest", exception);
                         Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         Platform.runLater(controller::onEnd);
-                    } else if (manifest.getManifest() instanceof CurseManifest) {
-                        optionalFiles.updateOptionalFileList(((CurseManifest) manifest.getManifest()).getFiles());
-                        waitingForOptionalFiles.set(false);
+                    }
+                }).start();
+    }
+
+    private void pendingOptionalFiles(Modpack manifest) {
+        waitingForOptionalFiles.set(true);
+        if (!(manifest.getManifest() instanceof ModpackManifest.SupportOptional)) {
+            optionalFiles.setOptionalFileList(Collections.emptyList());
+            return;
+        }
+        optionalFiles.setPending();
+        Task.supplyAsync(() -> manifest.setManifest(manifest.getManifest().getProvider().loadFiles(manifest.getManifest())))
+                .whenComplete(Schedulers.javafx(), (manifest1, exception) -> {
+                    List<? extends ModpackFile> files = ((ModpackManifest.SupportOptional) manifest1.getManifest()).getFiles();
+                    optionalFiles.setOptionalFileList(files);
+                    waitingForOptionalFiles.set(false);
+                    if (exception != null || files.stream().anyMatch(s -> s.isOptional() && (s.getMod() == null || s.getFileName() == null))) {
+                        LOG.log(Level.WARNING, "Failed to load optional files", exception);
+                        optionalFiles.setRetry(() -> pendingOptionalFiles(manifest));
                     }
                 }).start();
     }

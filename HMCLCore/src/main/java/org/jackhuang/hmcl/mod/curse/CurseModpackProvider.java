@@ -23,15 +23,20 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public final class CurseModpackProvider implements ModpackProvider {
     public static final CurseModpackProvider INSTANCE = new CurseModpackProvider();
@@ -73,4 +78,30 @@ public final class CurseModpackProvider implements ModpackProvider {
         };
     }
 
+    @Override
+    public CurseManifest loadFiles(ModpackManifest manifest1) {
+        if (!(manifest1 instanceof CurseManifest))
+            throw new IllegalArgumentException("manifest1 is not a CurseManifest");
+        CurseManifest manifest = (CurseManifest) manifest1;
+        return manifest.setFiles(
+                manifest.getFiles().parallelStream()
+                        .map(file -> {
+                            if ((StringUtils.isBlank(file.getFileName()) || file.getUrl() == null) && file.isOptional()) {
+                                try {
+                                    RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
+                                    RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
+                                    return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl()).withMod(mod);
+                                } catch (FileNotFoundException fof) {
+                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
+                                    return file;
+                                } catch (IOException | JsonParseException e) {
+                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
+                                    return file;
+                                }
+                            } else {
+                                return file;
+                            }
+                        })
+                        .collect(Collectors.toList()));
+    }
 }

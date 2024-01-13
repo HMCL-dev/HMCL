@@ -30,7 +30,7 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
-public final class CurseManifest implements ModpackManifest {
+public final class CurseManifest implements ModpackManifest, ModpackManifest.SupportOptional {
 
     @SerializedName("manifestType")
     private final String manifestType;

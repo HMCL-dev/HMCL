@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod.curse;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.mod.ModpackFile;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  *
@@ -50,16 +52,24 @@ public final class CurseManifestFile implements Validation, ModpackFile {
     @SerializedName("required")
     private final boolean required;
 
+    @Nullable
+    private final RemoteMod mod;
+
     public CurseManifestFile() {
-        this(0, 0, null, null, true);
+        this(0, 0, null, null, true, null);
     }
 
-    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required) {
+    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required, RemoteMod mod) {
         this.projectID = projectID;
         this.fileID = fileID;
         this.fileName = fileName;
         this.url = url;
         this.required = required;
+        this.mod = mod;
+    }
+
+    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required) {
+        this(projectID, fileID, fileName, url, required, null);
     }
 
     public int getProjectID() {
@@ -107,12 +117,21 @@ public final class CurseManifestFile implements Validation, ModpackFile {
         }
     }
 
+    @SuppressWarnings("OptionalAssignedToNull")
+    public @Nullable Optional<RemoteMod> getMod() {
+        return mod == null ? null : Optional.of(mod);
+    }
+
     public CurseManifestFile withFileName(String fileName) {
-        return new CurseManifestFile(projectID, fileID, fileName, url, required);
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
     }
 
     public CurseManifestFile withURL(String url) {
-        return new CurseManifestFile(projectID, fileID, fileName, url, required);
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
+    }
+
+    public CurseManifestFile withMod(RemoteMod mod) {
+        return new CurseManifestFile(projectID, fileID, fileName, url, required, mod);
     }
 
     @Override

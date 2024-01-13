@@ -22,14 +22,19 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public final class ModrinthModpackProvider implements ModpackProvider {
     public static final ModrinthModpackProvider INSTANCE = new ModrinthModpackProvider();
@@ -64,4 +69,30 @@ public final class ModrinthModpackProvider implements ModpackProvider {
         };
     }
 
+    @Override
+    public ModpackManifest loadFiles(ModpackManifest manifest1) {
+        if (!(manifest1 instanceof ModrinthManifest))
+            throw new IllegalArgumentException("Manifest is not a ModrinthManifest");
+        ModrinthManifest manifest = (ModrinthManifest) manifest1;
+        return manifest.withFiles(manifest.getFiles().parallelStream().map(file -> {
+            if (file.isOptional() && file.getMod() == null) {
+                try {
+                    RemoteMod.Version version = ModrinthRemoteModRepository.MODS.getRemoteVersionBySHA1(file.getHashes().get("sha1")).orElse(null);
+                    if (version == null) {
+                        return file.withMod(Optional.empty());
+                    }
+                    RemoteMod mod = ModrinthRemoteModRepository.MODS.getModById(version.getModid());
+                    return file.withMod(Optional.ofNullable(mod));
+                } catch (FileNotFoundException fof) {
+                    Logging.LOG.log(Level.WARNING, "Could not query modrinth for deleted mods: " + file.getFileName(), fof);
+                    return file;
+                } catch (IOException | JsonParseException e) {
+                    Logging.LOG.log(Level.WARNING, "Unable to fetch the modid for" + file.getFileName(), e);
+                    return file;
+                }
+            } else {
+                return file;
+            }
+        }).collect(Collectors.toList()));
+    }
 }

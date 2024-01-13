@@ -49,4 +49,9 @@ public interface ModpackProvider {
 
     default void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
     }
+
+    // Complete the manifest with additional information
+    default ModpackManifest loadFiles(ModpackManifest manifest) {
+        return manifest;
+    }
 }
