@@ -23,6 +23,7 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -155,10 +156,17 @@ public class OptionalFilesSelectionPane extends BorderPane {
 
     private static class ModInfo extends JFXDialogLayout {
         public ModInfo(RemoteMod mod) {
+            HBox container = new HBox(8);
+            ImageView imageView = new ImageView(mod.getIconUrl());
+            imageView.setFitHeight(32);
+            imageView.setFitWidth(32);
+            container.getChildren().add(imageView);
+
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(mod.getTitle());
             title.setSubtitle(mod.getAuthor());
-            setHeading(title);
+            container.getChildren().add(title);
+            setHeading(container);
 
             Label description = new Label(mod.getDescription());
             setBody(description);
