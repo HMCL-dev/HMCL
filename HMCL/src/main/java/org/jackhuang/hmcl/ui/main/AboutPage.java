@@ -95,7 +95,7 @@ public class AboutPage extends StackPane {
             contributors.setImage(FXUtils.newBuiltinImage("/assets/img/github.png"));
             contributors.setTitle(i18n("about.thanks_to.contributors"));
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
-            contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
+            contributors.setExternalLink("https://github.com/HMCL-dev/HMCL/graphs/contributors");
 
             IconedTwoLineListItem users = new IconedTwoLineListItem();
             users.setImage(FXUtils.newBuiltinImage("/assets/img/craft_table.png"));
@@ -166,7 +166,7 @@ public class AboutPage extends StackPane {
             IconedTwoLineListItem openSource = new IconedTwoLineListItem();
             openSource.setTitle(i18n("about.open_source"));
             openSource.setSubtitle(i18n("about.open_source.statement"));
-            openSource.setExternalLink("https://github.com/huanghongxun/HMCL");
+            openSource.setExternalLink("https://github.com/HMCL-dev/HMCL");
 
             legal.getContent().setAll(copyright, claim, openSource);
         }

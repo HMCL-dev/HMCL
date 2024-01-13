@@ -116,7 +116,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             return new SearchResult(res, (int)Math.ceil((double)response.pagination.totalCount / pageSize));
         }
 
-        // https://github.com/huanghongxun/HMCL/issues/1549
+        // https://github.com/HMCL-dev/HMCL/issues/1549
         String lowerCaseSearchFilter = searchFilter.toLowerCase();
         Map<String, Integer> searchFilterWords = new HashMap<>();
         for (String s : StringUtils.tokenize(lowerCaseSearchFilter)) {

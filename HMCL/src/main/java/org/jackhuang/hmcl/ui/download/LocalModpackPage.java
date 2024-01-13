@@ -106,25 +106,8 @@ public final class LocalModpackPage extends ModpackPage {
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
                     manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), encoding);
-                    return manifest;
-                })
-                .thenApplyAsync(Schedulers.javafx(), (manifest) -> {
-                    hideSpinner();
-                    controller.getSettings().put(MODPACK_MANIFEST, manifest);
-                    lblName.setText(manifest.getName());
-                    lblVersion.setText(manifest.getVersion());
-                    lblAuthor.setText(manifest.getAuthor());
-
-                    lblModpackLocation.setText(selectedFile.getAbsolutePath());
-
-                    if (!name.isPresent()) {
-                        // trim: https://github.com/huanghongxun/HMCL/issues/962
-                        txtModpackName.setText(manifest.getName().trim());
-                    }
-
                     pendingOptionalFiles(manifest);
-
-                    return null;
+                    return manifest;
                 }).whenComplete(Schedulers.javafx(), (_unused, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
@@ -133,13 +116,12 @@ public final class LocalModpackPage extends ModpackPage {
                         lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
-                            // trim: https://github.com/huanghongxun/HMCL/issues/962
+                            // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
 
                         Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
-                                () -> {
-                                },
+                                () -> {},
                                 controller::onEnd);
 
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
@@ -147,6 +129,19 @@ public final class LocalModpackPage extends ModpackPage {
                         LOG.log(Level.WARNING, "Failed to read modpack manifest", exception);
                         Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         Platform.runLater(controller::onEnd);
+                    } else {
+                        hideSpinner();
+                        controller.getSettings().put(MODPACK_MANIFEST, manifest);
+                        lblName.setText(manifest.getName());
+                        lblVersion.setText(manifest.getVersion());
+                        lblAuthor.setText(manifest.getAuthor());
+
+                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
+
+                        if (!name.isPresent()) {
+                            // trim: https://github.com/HMCL-dev/HMCL/issues/962
+                            txtModpackName.setText(manifest.getName().trim());
+                        }
                     }
                 }).start();
     }
