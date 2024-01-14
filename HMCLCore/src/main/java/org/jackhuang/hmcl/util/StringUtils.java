@@ -198,10 +198,6 @@ public final class StringUtils {
         return false;
     }
 
-    public static boolean isChinese(char ch) {
-        return ch >= '\u4e00' && ch <= '\u9fa5';
-    }
-
     public static boolean containsChinese(String str) {
         for (int i = 0; i < str.length(); i++) {
             char ch = str.charAt(i);
