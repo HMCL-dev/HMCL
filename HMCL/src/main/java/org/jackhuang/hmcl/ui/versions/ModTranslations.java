@@ -192,18 +192,18 @@ public enum ModTranslations {
         keywords = new ArrayList<>();
         maxKeywordLength = -1;
         for (Mod mod : mods) {
-            String key;
-            if (StringUtils.isNotBlank(mod.getAbbr())) {
-                key = mod.getAbbr();
-            } else if (StringUtils.isNotBlank(mod.getSubname())) {
-                key = mod.getSubname();
-            } else if (StringUtils.isNotBlank(mod.getName())) {
-                key = mod.getName();
-            } else {
-                continue;
+            if (StringUtils.isNotBlank(mod.getName())) {
+                keywords.add(pair(mod.getName(), mod));
+                maxKeywordLength = Math.max(maxKeywordLength, mod.getName().length());
             }
-            keywords.add(pair(key, mod));
-            maxKeywordLength = Math.max(maxKeywordLength, key.length());
+            if (StringUtils.isNotBlank(mod.getSubname())) {
+                keywords.add(pair(mod.getSubname(), mod));
+                maxKeywordLength = Math.max(maxKeywordLength, mod.getSubname().length());
+            }
+            if (StringUtils.isNotBlank(mod.getAbbr())) {
+                keywords.add(pair(mod.getAbbr(), mod));
+                maxKeywordLength = Math.max(maxKeywordLength, mod.getAbbr().length());
+            }
         }
         return true;
     }
