@@ -357,29 +357,59 @@ public final class StringUtils {
         return true;
     }
 
-    public static class DynamicCommonSubsequence {
-        private LongestCommonSubsequence calculator;
+    public static class LevCalculator {
+        private int[][] lev;
 
-        public DynamicCommonSubsequence(int intLengthA, int intLengthB) {
-            if (intLengthA > intLengthB) {
-                calculator = new LongestCommonSubsequence(intLengthA, intLengthB);
-            } else {
-                calculator = new LongestCommonSubsequence(intLengthB, intLengthA);
+        public LevCalculator() {
+        }
+
+        public LevCalculator(int length1, int length2) {
+            allocate(length1, length2);
+        }
+
+        private void allocate(int length1, int length2) {
+            length1 += 1;
+            length2 += 1;
+            lev = new int[length1][length2];
+            for (int i = 1; i < length1; i++) {
+                lev[i][0] = i;
+            }
+            int[] cache = lev[0];
+            for (int i = 0; i < length2; i++) {
+                cache[i] = i;
             }
         }
 
+        public int getLength1() {
+            return lev.length;
+        }
+
+        public int getLength2() {
+            return lev[0].length;
+        }
+
+        private int min(int a, int b, int c) {
+            return Math.min(a, Math.min(b, c));
+        }
+
         public int calc(CharSequence a, CharSequence b) {
-            if (a.length() < b.length()) {
-                CharSequence t = a;
-                a = b;
-                b = t;
+            if (lev == null || a.length() >= lev.length || b.length() >= lev[0].length) {
+                allocate(a.length(), b.length());
             }
 
-            if (calculator.maxLengthA < a.length() || calculator.maxLengthB < b.length()) {
-                calculator = new LongestCommonSubsequence(a.length(), b.length());
+            int lengthA = a.length() + 1, lengthB = b.length() + 1;
+
+            for (int i = 1; i < lengthA; i++) {
+                for (int j = 1; j < lengthB; j++) {
+                    lev[i][j] = min(
+                            lev[i][j - 1] + 1, // insert
+                            lev[i - 1][j] + 1, // del
+                            a.charAt(i - 1) == b.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1 // replace
+                    );
+                }
             }
 
-            return calculator.calc(a, b);
+            return lev[a.length()][b.length()];
         }
     }
 
