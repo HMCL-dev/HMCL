@@ -100,18 +100,18 @@ public final class CrashReportAnalyzer {
         // Cannot find native libraries
         UNSATISFIED_LINK_ERROR(Pattern.compile("java.lang.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)"), "name"),
 
-        //https://github.com/huanghongxun/HMCL/pull/1813
+        //https://github.com/HMCL-dev/HMCL/pull/1813
         OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE(Pattern.compile("(java\\.lang\\.NoSuchMethodError: 'java\\.lang\\.Class sun\\.misc\\.Unsafe\\.defineAnonymousClass\\(java\\.lang\\.Class, byte\\[\\], java\\.lang\\.Object\\[\\]\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.texture\\.SpriteContents\\.\\<init\\>\\(net\\.minecraft\\.resources\\.ResourceLocation, |java\\.lang\\.NoSuchMethodError: 'void net\\.minecraftforge\\.client\\.gui\\.overlay\\.ForgeGui\\.renderSelectedItemName\\(net\\.minecraft\\.client\\.gui\\.GuiGraphics, int\\)'|java\\.lang\\.NoSuchMethodError: 'java\\.lang\\.String com\\.mojang\\.blaze3d\\.systems\\.RenderSystem\\.getBackendDescription\\(\\)'|java\\.lang\\.NoSuchMethodError: 'net\\.minecraft\\.network\\.chat\\.FormattedText net\\.minecraft\\.client\\.gui\\.Font\\.ellipsize\\(net\\.minecraft\\.network\\.chat\\.FormattedText, int\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.server\\.level\\.DistanceManager\\.(.*?)\\(net\\.minecraft\\.server\\.level\\.TicketType, net\\.minecraft\\.world\\.level\\.ChunkPos, int, java\\.lang\\.Object, boolean\\)'|java\\.lang\\.NoSuchMethodError: 'void net\\.minecraft\\.client\\.renderer\\.block\\.model\\.BakedQuad\\.\\<init\\>\\(int\\[\\], int, net\\.minecraft\\.core\\.Direction, net\\.minecraft\\.client\\.renderer\\.texture\\.TextureAtlasSprite, boolean, boolean\\)'|TRANSFORMER/net\\.optifine/net\\.optifine\\.reflect\\.Reflector\\.\\<clinit\\>\\(Reflector\\.java)")),
         MOD_FILES_ARE_DECOMPRESSED(Pattern.compile("(The directories below appear to be extracted jar files\\. Fix this before you continue|Extracted mod jars found, loading will NOT continue)")),//Mod文件被解压
         OPTIFINE_CAUSES_THE_WORLD_TO_FAIL_TO_LOAD(Pattern.compile("java\\.lang\\.NoSuchMethodError: net\\.minecraft\\.world\\.server\\.ChunkManager$ProxyTicketManager\\.shouldForceTicks\\(J\\)Z")),//OptiFine导致无法加载世界 https://www.minecraftforum.net/forums/support/java-edition-support/3051132-exception-ticking-world
         TOO_MANY_MODS_LEAD_TO_EXCEEDING_THE_ID_LIMIT(Pattern.compile("maximum id range exceeded")),//Mod过多导致超出ID限制
 
         // Mod issues
-        //https://github.com/huanghongxun/HMCL/pull/2038
+        //https://github.com/HMCL-dev/HMCL/pull/2038
         MODMIXIN_FAILURE(Pattern.compile("(MixinApplyError|Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt\\.(?<reason>(.*)[\\n\\r]*((.*)[\\n\\r]*)+)at "), "reason"),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(\tMod File:|-- MOD |\tFailure message:)")),
-        FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
+        FORGE_REPEAT_INSTALLATION(Pattern.compile("--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W]*?--launchTarget, fmlclient, --fml.forgeVersion,[\\w\\W\\n\\r]*?MultipleArgumentsForOptionException: Found multiple arguments for option gameDir, but you asked for only one")),//https://github.com/HMCL-dev/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
 

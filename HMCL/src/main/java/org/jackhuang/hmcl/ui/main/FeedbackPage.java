@@ -51,7 +51,7 @@ public class FeedbackPage extends SpinnerPane {
             github.setImage(FXUtils.newBuiltinImage("/assets/img/github.webp"));
             github.setTitle(i18n("feedback.github"));
             github.setSubtitle(i18n("feedback.github.statement"));
-            github.setExternalLink("https://github.com/huanghongxun/HMCL/issues/new/choose");
+            github.setExternalLink("https://github.com/HMCL-dev/HMCL/issues/new/choose");
 
             IconedTwoLineListItem discord = new IconedTwoLineListItem();
             discord.setImage(FXUtils.newBuiltinImage("/assets/img/discord.webp"));
