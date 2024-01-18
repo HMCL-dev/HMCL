@@ -59,8 +59,7 @@ fi
 # First, find Java in HMCL_JAVA_HOME
 if [ -n "${HMCL_JAVA_HOME+x}" ]; then
   if [ -x "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-    "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-    exit 0
+    exec "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
   else
     if [ "$_HMCL_USE_CHINESE" == true ]; then
       echo "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。" 1>&2
@@ -77,50 +76,42 @@ fi
 case "$_HMCL_ARCH" in
   x86_64)
     if [ -x "$_HMCL_DIR/jre-x64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-x64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-x64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     if [ -x "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   x86)
     if [ -x "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   arm64)
     if [ -x "$_HMCL_DIR/jre-arm64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-arm64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-arm64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   arm32)
     if [ -x "$_HMCL_DIR/jre-arm32/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-arm32/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-arm32/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   loongarch64)
     if [ -x "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
 esac
 
 # Find Java in JAVA_HOME
 if [ -f "$JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-  "$JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-  exit 0
+  exec "$JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
 fi
 
 # Find Java in PATH
 if [ -x "$(command -v $_HMCL_JAVA_EXE_NAME)" ]; then
-  $_HMCL_JAVA_EXE_NAME $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-  exit 0
+  exec $_HMCL_JAVA_EXE_NAME $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
 fi
 
 # Java not found
