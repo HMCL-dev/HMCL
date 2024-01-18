@@ -100,7 +100,7 @@ public class ManagedProcess {
                 // However, this method is supplied since Java 9.
                 // So, there is no ways to get the pid.
                 throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on Windows.");
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 // On Linux or Mac, we can get field UnixProcess.pid field to get the pid.
                 // All the Java version is accepted.
                 // See https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/solaris/classes/java/lang/UNIXProcess.java.linux
