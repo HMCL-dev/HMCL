@@ -15,6 +15,8 @@ case "$OSTYPE" in
     _HMCL_OS="linux";;
   darwin*)
     _HMCL_OS="osx";;
+  freebsd*)
+    _HMCL_OS="freebsd";;
   msys*|cygwin*)
     _HMCL_OS="windows";;
   *)
@@ -123,7 +125,7 @@ fi
 
 # Java not found
 
-if [[ "$_HMCL_OS" == "unknown" || "$_HMCL_ARCH" == "unknown" ]]; then
+if [[ "$_HMCL_OS" == "unknown" || "$_HMCL_OS" == "freebsd" || "$_HMCL_ARCH" == "unknown" ]]; then
   if [ "$_HMCL_USE_CHINESE" == true ]; then
     echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
     echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
