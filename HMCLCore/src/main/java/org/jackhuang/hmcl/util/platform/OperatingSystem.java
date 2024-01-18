@@ -221,6 +221,8 @@ public enum OperatingSystem {
             return OSX;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
             return LINUX;
+        else if (name.equals("freebsd"))
+            return FREEBSD;
         else
             return UNKNOWN;
     }
