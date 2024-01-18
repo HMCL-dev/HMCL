@@ -93,7 +93,7 @@ public final class NativePatcher {
         if (settings.isNotPatchNatives())
             return version;
 
-        if (arch.isX86())
+        if ((os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.OSX) && arch.isX86())
             return version;
 
         if ((os == OperatingSystem.OSX || os == OperatingSystem.WINDOWS) && arch == Architecture.ARM64
