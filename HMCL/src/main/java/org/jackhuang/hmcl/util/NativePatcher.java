@@ -93,10 +93,10 @@ public final class NativePatcher {
         if (settings.isNotPatchNatives())
             return version;
 
-        if ((os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.OSX) && arch.isX86())
+        if (arch.isX86() && (os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.OSX))
             return version;
 
-        if ((os == OperatingSystem.OSX || os == OperatingSystem.WINDOWS) && arch == Architecture.ARM64
+        if (arch == Architecture.ARM64 && (os == OperatingSystem.OSX || os == OperatingSystem.WINDOWS)
                 && gameVersionNumber != null
                 && gameVersionNumber.compareTo("1.19") >= 0)
             return version;

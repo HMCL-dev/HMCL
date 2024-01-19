@@ -122,7 +122,7 @@ else
     _HMCL_DOWNLOAD_PAGE_OS="$_HMCL_OS"
 fi
 
-case "$_HMCL_DOWNLOAD_PAGE_OS-$_HMCL_ARCH" in
+case "$_HMCL_OS-$_HMCL_ARCH" in
   windows-x86|windows-x86_64|windows-arm64|linux-x86|linux-x86_64|linux-arm32|linux-arm64|linux-loongarch64|macos-x86_64|macos-arm64)
     if [ "$_HMCL_USE_CHINESE" == true ]; then
       echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
