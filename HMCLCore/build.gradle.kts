@@ -26,7 +26,7 @@ tasks.getByName<JavaCompile>("compileJava") {
             classpath(project.sourceSets["main"].compileClasspath)
             mainClass.set("net.burningtnt.bcigenerator.BytecodeImplGenerator")
             System.getProperty("bci.debug.address")?.let { address -> jvmArgs("-agentlib:jdwp=transport=dt_socket,server=n,address=$address,suspend=y") }
-            args(bytecodeClasses.stream().map { s -> project.layout.buildDirectory.file("classes/java/main/$s.class").get().asFile.path }.toList())
+            args(bytecodeClasses.map { s -> project.layout.buildDirectory.file("classes/java/main/$s.class").get().asFile.path })
         }
     }
 }
