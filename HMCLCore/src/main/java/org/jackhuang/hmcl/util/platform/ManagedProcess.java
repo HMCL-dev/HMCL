@@ -93,7 +93,6 @@ public class ManagedProcess {
         if (JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9) {
             // Method Process.pid() is provided (Java 9 or later). Invoke it to get the pid.
             try {
-
                 return (long) MethodHandles.publicLookup()
                         .findVirtual(Process.class, "pid", MethodType.methodType(long.class))
                         .invokeExact(process);
