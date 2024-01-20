@@ -29,13 +29,13 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
-import java.util.Date;
+import java.time.Instant;
 
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
+import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListItem extends Control {
@@ -49,7 +49,7 @@ public class WorldListItem extends Control {
 
         title.set(parseColorEscapes(world.getWorldName()));
 
-        subtitle.set(i18n("world.description", world.getFileName(), Locales.SIMPLE_DATE_FORMAT.get().format(new Date(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+        subtitle.set(i18n("world.description", world.getFileName(), formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
 
         setOnMouseClicked(event -> showInfo());
     }

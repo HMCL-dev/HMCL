@@ -55,7 +55,7 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -308,7 +308,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
             content.setTitle(remoteVersion.getSelfVersion());
             if (remoteVersion.getReleaseDate() != null) {
-                content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate().toInstant()));
+                content.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate().toInstant()));
             } else {
                 content.setSubtitle(null);
             }
