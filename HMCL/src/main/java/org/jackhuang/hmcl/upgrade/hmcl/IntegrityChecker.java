@@ -129,7 +129,6 @@ public final class IntegrityChecker {
 
             try {
                 verifySelf();
-
                 LOG.info("Successfully verified current JAR");
                 selfVerified = true;
             } catch (IOException e) {
