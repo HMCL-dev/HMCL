@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.IllegalFormatException;
 import java.util.MissingResourceException;
@@ -66,6 +67,10 @@ public final class I18n {
             LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
             return key;
         }
+    }
+
+    public static String formatDateTime(Instant instant) {
+        return getCurrentLocale().getDateTimeFormatter().format(instant);
     }
 
     public static boolean hasKey(String key) {

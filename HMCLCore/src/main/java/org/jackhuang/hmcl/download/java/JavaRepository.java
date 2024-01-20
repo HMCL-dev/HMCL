@@ -57,6 +57,7 @@ public final class JavaRepository {
                                 Optional.ofNullable(System.getenv("ProgramFiles(x86)")).orElse("C:\\Program Files (x86)"),
                                 "Minecraft Launcher\\runtime"));
             case LINUX:
+            case FREEBSD:
                 return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home", ".minecraft/runtime")));
             case OSX:
                 return Stream.of(FileUtils.tryGetPath(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"));

@@ -43,6 +43,7 @@ val jfxPlatforms = listOf(
     Platform("linux-loongarch64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "17.0.8-loongarch64"),
     Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
     Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
+    Platform("freebsd-x86_64", "freebsd", groupId = "org.glavo.hmcl.openjfx", version = "14.0.2.1-freebsd", unsupportedModules = listOf("media", "web")),
 )
 
 val jfxInClasspath =
@@ -59,6 +60,7 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
             osName.contains("win") -> "windows"
             osName.contains("mac") -> "osx"
             osName.contains("linux") || osName.contains("unix") -> "linux"
+            osName.contains("freebsd") -> "freebsd"
             else -> null
         }
     }

@@ -110,7 +110,7 @@ public final class UpdateHandler {
 
                 if (success) {
                     try {
-                        if (!IntegrityChecker.isSelfVerified()) {
+                        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
                         }
 
@@ -138,7 +138,9 @@ public final class UpdateHandler {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
-        IntegrityChecker.requireVerifiedJar(self);
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
+            throw new IOException("Self verification failed");
+        }
         ExecutableHeaderHelper.copyWithHeader(self, target);
 
         Optional<Path> newFilename = tryRename(target, Metadata.VERSION);
@@ -156,13 +158,21 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        IntegrityChecker.requireVerifiedJar(updateTo);
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
+            IntegrityChecker.verifyJar(updateTo);
+        }
         startJava(updateTo, "--apply-to", self.toString());
     }
 
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
+        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String && ((String) key).startsWith("hmcl.")) {
+                commandline.add("-D" + key + "=" + entry.getValue());
+            }
+        }
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
