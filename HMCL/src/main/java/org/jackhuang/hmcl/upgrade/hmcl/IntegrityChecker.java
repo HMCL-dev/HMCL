@@ -62,7 +62,7 @@ public final class IntegrityChecker {
         }
     }
 
-    static void verifyJar(Path jarPath) throws IOException {
+    private static void verifyJar(Path jarPath) throws IOException {
         PublicKey publickey = getPublicKey();
         MessageDigest md = DigestUtils.getDigest("SHA-512");
 
