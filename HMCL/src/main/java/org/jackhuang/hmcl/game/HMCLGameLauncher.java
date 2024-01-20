@@ -87,7 +87,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         VersionNumber gameVersion = VersionNumber.asVersion(repository.getGameVersion(version).orElse("0.0"));
         if (gameVersion.compareTo("1.1") < 0) {
             lang = null;
-        } else if (gameVersion.compareTo("1.10") <= 0) {
+        } else if (gameVersion.compareTo("1.11") < 0) {
             lang = "zh_CN";
         } else {
             lang = "zh_cn";
