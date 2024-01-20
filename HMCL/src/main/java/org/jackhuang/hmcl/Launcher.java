@@ -195,7 +195,7 @@ public final class Launcher extends Application {
                     || configPath.contains("\\INetCache\\")
                     || configPath.contains("\\$Recycle.Bin\\")
                     || configPath.contains("\\recycler\\");
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
             return configPath.startsWith("/tmp/")
                     || configPath.startsWith("/var/tmp/")
                     || configPath.startsWith("/var/cache/")
@@ -290,7 +290,7 @@ public final class Launcher extends Application {
                     .findAny()
                     .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
                     .orElse("Unknown"));
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD())
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
 
             if (System.getProperty("hmcl.update_source.override") != null) {

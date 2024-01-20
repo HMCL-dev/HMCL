@@ -424,7 +424,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             container.setOnMouseClicked(e -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
             getChildren().setAll(container);
 
-            // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
+            // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
             this.setMinHeight(50);
         }
     }

@@ -15,6 +15,8 @@ case "$OSTYPE" in
     _HMCL_OS="linux";;
   darwin*)
     _HMCL_OS="osx";;
+  freebsd*)
+    _HMCL_OS="freebsd";;
   msys*|cygwin*)
     _HMCL_OS="windows";;
   *)
@@ -57,8 +59,7 @@ fi
 # First, find Java in HMCL_JAVA_HOME
 if [ -n "${HMCL_JAVA_HOME+x}" ]; then
   if [ -x "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-    "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-    exit 0
+    exec "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
   else
     if [ "$_HMCL_USE_CHINESE" == true ]; then
       echo "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。" 1>&2
@@ -75,117 +76,75 @@ fi
 case "$_HMCL_ARCH" in
   x86_64)
     if [ -x "$_HMCL_DIR/jre-x64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-x64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-x64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     if [ -x "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   x86)
     if [ -x "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-x86/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   arm64)
     if [ -x "$_HMCL_DIR/jre-arm64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-arm64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-arm64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   arm32)
     if [ -x "$_HMCL_DIR/jre-arm32/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-arm32/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-arm32/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
   loongarch64)
     if [ -x "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-      "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-      exit 0
+      exec "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
 esac
 
 # Find Java in JAVA_HOME
 if [ -f "$JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" ]; then
-  "$JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-  exit 0
+  exec "$JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
 fi
 
 # Find Java in PATH
 if [ -x "$(command -v $_HMCL_JAVA_EXE_NAME)" ]; then
-  $_HMCL_JAVA_EXE_NAME $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
-  exit 0
+  exec $_HMCL_JAVA_EXE_NAME $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
 fi
 
 # Java not found
 
-if [[ "$_HMCL_OS" == "unknown" || "$_HMCL_ARCH" == "unknown" ]]; then
-  if [ "$_HMCL_USE_CHINESE" == true ]; then
-    echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
-    echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
-  else
-    echo "The Java runtime environment is required to run HMCL. " 1>&2
-    echo "Please install Java and set the environment variables and try again." 1>&2
-    echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
-  fi
-  exit 1
-fi
-
-if [[ "$_HMCL_ARCH" == "loongarch64" ]]; then
-  if [ "$_HMCL_USE_CHINESE" == true ]; then
-    echo "运行 HMCL 需要 Java 运行时环境，请安装龙芯 JDK (https://docs.hmcl.net/downloads/loongnix.html) 并设置环境变量后重试。" 1>&2
-    echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
-  else
-    echo "The Java runtime environment is required to run HMCL." 1>&2
-    echo "Please install Loongson JDK (https://docs.hmcl.net/downloads/loongnix.html) and set the environment variables, then try again." 1>&2
-    echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
-  fi
-  exit 1
-fi
-
-
-case "$_HMCL_OS" in
-  linux)
-    _HMCL_DOWNLOAD_PAGE_OS="linux";;
-  osx)
-    _HMCL_DOWNLOAD_PAGE_OS="macos";;
-  windows)
-    _HMCL_DOWNLOAD_PAGE_OS="windows";;
-  *)
-    echo "Unknown os: $_HMCL_OS" 1>&2
-    exit 1
-    ;;
-esac
-
-case "$_HMCL_ARCH" in
-  arm64)
-    _HMCL_DOWNLOAD_PAGE_ARCH="arm64";;
-  arm32)
-    _HMCL_DOWNLOAD_PAGE_ARCH="arm32";;
-  x86_64)
-    _HMCL_DOWNLOAD_PAGE_ARCH="x86_64";;
-  x86)
-    _HMCL_DOWNLOAD_PAGE_ARCH="x86";;
-  *)
-    echo "Unknown architecture: $_HMCL_ARCH" 1>&2
-    exit 1
-    ;;
-esac
-
-_HMCL_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_DOWNLOAD_PAGE_ARCH.html"
-
-if [ "$_HMCL_USE_CHINESE" == true ]; then
-  echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
-  echo "$_HMCL_DOWNLOAD_PAGE" 1>&2
-  echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
+if [ "$_HMCL_OS" == "osx" ]; then
+    _HMCL_DOWNLOAD_PAGE_OS="macos"
 else
-  echo "The Java runtime environment is required to run HMCL. " 1>&2
-  echo "Please install Java and set the environment variables and try again." 1>&2
-  echo "$_HMCL_DOWNLOAD_PAGE" 1>&2
-  echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
+    _HMCL_DOWNLOAD_PAGE_OS="$_HMCL_OS"
 fi
+
+case "$_HMCL_OS-$_HMCL_ARCH" in
+  windows-x86|windows-x86_64|windows-arm64|linux-x86|linux-x86_64|linux-arm32|linux-arm64|linux-loongarch64|macos-x86_64|macos-arm64)
+    if [ "$_HMCL_USE_CHINESE" == true ]; then
+      echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
+      echo "https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_HMCL_ARCH.html" 1>&2
+      echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
+    else
+      echo "The Java runtime environment is required to run HMCL. " 1>&2
+      echo "Please install Java and set the environment variables and try again." 1>&2
+      echo "https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_HMCL_ARCH.html" 1>&2
+      echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
+    fi
+    ;;
+  *)
+    if [ "$_HMCL_USE_CHINESE" == true ]; then
+      echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
+      echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
+    else
+      echo "The Java runtime environment is required to run HMCL. " 1>&2
+      echo "Please install Java and set the environment variables and try again." 1>&2
+      echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
+    fi
+    ;;
+esac
+
 exit 1
