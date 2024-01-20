@@ -158,8 +158,8 @@ public final class UpdateHandler {
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
-        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
+            IntegrityChecker.verifyJar(updateTo);
         }
         startJava(updateTo, "--apply-to", self.toString());
     }
