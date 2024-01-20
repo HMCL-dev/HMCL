@@ -52,6 +52,10 @@ public enum OperatingSystem {
      */
     OSX("osx"),
     /**
+     * FreeBSD.
+     */
+    FREEBSD("freebsd"),
+    /**
      * Unknown operating system.
      */
     UNKNOWN("universal");
@@ -64,6 +68,10 @@ public enum OperatingSystem {
 
     public String getCheckedName() {
         return checkedName;
+    }
+
+    public boolean isLinuxOrBSD() {
+        return this == LINUX || this == FREEBSD;
     }
 
     /**
@@ -213,6 +221,8 @@ public enum OperatingSystem {
             return OSX;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
             return LINUX;
+        else if (name.equals("freebsd"))
+            return FREEBSD;
         else
             return UNKNOWN;
     }
@@ -273,6 +283,7 @@ public enum OperatingSystem {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {
             case LINUX:
+            case FREEBSD:
                 return Paths.get(home, "." + folder).toAbsolutePath();
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");

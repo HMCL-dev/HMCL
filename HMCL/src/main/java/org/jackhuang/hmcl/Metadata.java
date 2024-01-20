@@ -55,7 +55,7 @@ public final class Metadata {
     static {
         String hmclHome = System.getProperty("hmcl.home");
         if (hmclHome == null) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
                     HMCL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath();
