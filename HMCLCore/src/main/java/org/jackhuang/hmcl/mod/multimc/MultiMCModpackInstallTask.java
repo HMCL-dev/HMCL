@@ -79,7 +79,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             });
 
             // MultiMC hasn't supported NeoForge yet.
-            // Optional<MultiMCManifest.MultiMCManifestComponent> neoForge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals(?)).findAny();
+            // Optional<MultiMCManifest.MultiMCManifestComponent> neoForge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.neoforged")).findAny();
             // neoForge.ifPresent(c -> {
             //     if (c.getVersion() != null)
             //         builder.version("neoforge", c.getVersion());
