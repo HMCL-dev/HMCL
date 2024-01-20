@@ -21,18 +21,14 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Locales {
     private Locales() {
@@ -104,10 +100,11 @@ public final class Locales {
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
-    public static class SupportedLocale {
+    public static final class SupportedLocale {
         private final Locale locale;
         private final String name;
         private final ResourceBundle resourceBundle;
+        private DateTimeFormatter dateTimeFormatter;
 
         SupportedLocale(Locale locale) {
             this(locale, null);
@@ -132,12 +129,20 @@ public final class Locales {
             return resourceBundle;
         }
 
+        public DateTimeFormatter getDateTimeFormatter() {
+            if (dateTimeFormatter == null) {
+                dateTimeFormatter = DateTimeFormatter.ofPattern(resourceBundle.getString("world.time")).withZone(ZoneId.systemDefault());
+            }
+
+            return dateTimeFormatter;
+        }
+
         public String getName(ResourceBundle newResourceBundle) {
             if (name == null) return resourceBundle.getString("lang");
             else return newResourceBundle.getString(name);
         }
 
-        public static class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
+        public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
             @Override
             public void write(JsonWriter out, SupportedLocale value) throws IOException {
                 out.value(getNameByLocale(value));
@@ -149,7 +154,4 @@ public final class Locales {
             }
         }
     }
-
-    public static final Lazy<SimpleDateFormat> SIMPLE_DATE_FORMAT = new Lazy<>(() -> new SimpleDateFormat(i18n("world.time")));
-    public static final Lazy<DateTimeFormatter> DATE_TIME_FORMATTER = new Lazy<>(() -> DateTimeFormatter.ofPattern(i18n("world.time")).withZone(ZoneId.systemDefault()));
 }
