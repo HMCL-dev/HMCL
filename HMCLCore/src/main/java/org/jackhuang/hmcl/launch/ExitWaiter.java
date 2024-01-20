@@ -72,7 +72,7 @@ final class ExitWaiter implements Runnable {
             } else if (exitCode != 0 || StringUtils.containsOne(errorLines, "Unable to launch")) {
                 EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
 
-                if (exitCode == 137 && OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                if (exitCode == 137 && OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                     exitType = ProcessListener.ExitType.SIGKILL;
                 } else {
                     exitType = ProcessListener.ExitType.APPLICATION_ERROR;
