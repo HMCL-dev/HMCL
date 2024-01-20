@@ -380,7 +380,7 @@ public final class FXUtils {
             openCommand = "explorer.exe";
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             openCommand = "/usr/bin/open";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && new File("/usr/bin/xdg-open").exists())
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -471,7 +471,7 @@ public final class FXUtils {
                     LOG.log(Level.WARNING, "An exception occurred while calling rundll32", e);
                 }
             }
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
                     try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
                         if (is.read() != -1) {

@@ -63,7 +63,7 @@ public final class RemoteModpackPage extends ModpackPage {
             txtModpackName.setText(name.get());
             txtModpackName.setDisable(true);
         } else {
-            // trim: https://github.com/huanghongxun/HMCL/issues/962
+            // trim: https://github.com/HMCL-dev/HMCL/issues/962
             txtModpackName.setText(manifest.getName().trim());
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),

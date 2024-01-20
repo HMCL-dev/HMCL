@@ -33,7 +33,7 @@ public final class FractureiserDetector {
                         check(falseEdgePath.resolve("run.bat"));
                     }
                 }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 Path dataDir = Paths.get(System.getProperty("user.home"), ".config", ".data");
                 if (Files.exists(dataDir)) {
                     check(dataDir.resolve(".ref"));

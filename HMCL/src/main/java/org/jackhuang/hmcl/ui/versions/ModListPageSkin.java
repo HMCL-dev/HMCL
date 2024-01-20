@@ -195,6 +195,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE.getAnimationProducer());
+            if (newToolbar == searchBar) {
+                searchField.requestFocus();
+            }
         }
     }
 
