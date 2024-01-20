@@ -227,6 +227,30 @@ public enum OperatingSystem {
             return UNKNOWN;
     }
 
+    public static boolean isWindows7OrLater() {
+        if (CURRENT_OS != WINDOWS) {
+            return false;
+        }
+
+        int major;
+        int dotIndex = SYSTEM_VERSION.indexOf('.');
+        try {
+            if (dotIndex < 0) {
+                major = Integer.parseInt(SYSTEM_VERSION);
+            } else {
+                major = Integer.parseInt(SYSTEM_VERSION.substring(0, dotIndex));
+            }
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+
+        // Windows XP:      NT 5.1~5.2
+        // Windows Vista:   NT 6.0
+        // Windows 7:       NT 6.1
+
+        return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
+    }
+
     @SuppressWarnings("deprecation")
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
