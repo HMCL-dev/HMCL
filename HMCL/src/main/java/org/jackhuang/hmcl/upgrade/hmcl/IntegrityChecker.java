@@ -62,7 +62,12 @@ public final class IntegrityChecker {
         }
     }
 
-    private static void verifyJar(Path jarPath) throws IOException {
+    private static void verifySelf() throws IOException {
+        Path jarPath = JarUtils.thisJarPath();
+        if (jarPath == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
+
         PublicKey publickey = getPublicKey();
         MessageDigest md = DigestUtils.getDigest("SHA-512");
 
@@ -123,7 +128,7 @@ public final class IntegrityChecker {
             }
 
             try {
-                verifyJar(JarUtils.thisJarPath());
+                verifySelf();
 
                 LOG.info("Successfully verified current JAR");
                 selfVerified = true;
