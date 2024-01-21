@@ -21,16 +21,16 @@ import org.jackhuang.hmcl.ui.construct.DoubleValidator;
 import org.jackhuang.hmcl.ui.construct.NumberValidator;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.i18n.Locales;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.time.Instant;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Locale;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class WorldInfoPage extends StackPane implements DecoratorPage {
@@ -110,7 +110,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 lastPlayedPane.setLeft(label);
 
                 Label lastPlayedLabel = new Label();
-                lastPlayedLabel.setText(Locales.SIMPLE_DATE_FORMAT.get().format(new Date(world.getLastPlayed())));
+                lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
                 BorderPane.setAlignment(lastPlayedLabel, Pos.CENTER_RIGHT);
                 lastPlayedPane.setRight(lastPlayedLabel);
             }
