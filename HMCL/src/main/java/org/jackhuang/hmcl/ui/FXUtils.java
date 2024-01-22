@@ -101,11 +101,10 @@ public final class FXUtils {
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
-
     private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
 
     public static void shutdown() {
-        for (Map.Entry<String, Path> entry: remoteImageCache.entrySet()) {
+        for (Map.Entry<String, Path> entry : remoteImageCache.entrySet()) {
             try {
                 Files.deleteIfExists(entry.getValue());
             } catch (IOException e) {
