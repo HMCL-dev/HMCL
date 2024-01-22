@@ -43,7 +43,9 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -275,9 +277,15 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
             File iconFile = getVersionIconFile(id);
-            if (iconFile.exists())
-                return new Image(iconFile.getAbsoluteFile().toURI().toString());
-            else if (LibraryAnalyzer.isModded(this, version)) {
+            if (iconFile.exists()) {
+                try (InputStream inputStream = new FileInputStream(iconFile)) {
+                    return new Image(inputStream);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to load version icon of " + id, e);
+                }
+            }
+
+            if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return VersionIconType.FABRIC.getIcon();
@@ -293,8 +301,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
                     return VersionIconType.CHICKEN.getIcon();
                 else
                     return VersionIconType.FURNACE.getIcon();
-            } else
-                return VersionIconType.DEFAULT.getIcon();
+            }
+
+            return VersionIconType.DEFAULT.getIcon();
         } else {
             return iconType.getIcon();
         }
