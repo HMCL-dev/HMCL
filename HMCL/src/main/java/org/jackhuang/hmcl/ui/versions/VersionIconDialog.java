@@ -104,7 +104,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createIcon(VersionIconType type) {
-        ImageView imageView = new ImageView(FXUtils.newBuiltinImage(type.getResourceUrl()));
+        ImageView imageView = new ImageView(type.getIcon());
         imageView.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(imageView);
         FXUtils.setLimitWidth(container, 36);

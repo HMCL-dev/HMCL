@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -263,36 +262,41 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newBuiltinImage("/assets/img/grass.png");
+            return VersionIconType.DEFAULT.getIcon();
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
-        VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
+        VersionIconType iconType;
+        if (vs != null) {
+            iconType = Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT);
+        } else {
+            iconType = VersionIconType.DEFAULT;
+        }
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
             File iconFile = getVersionIconFile(id);
             if (iconFile.exists())
-                return new Image("file:" + iconFile.getAbsolutePath());
+                return new Image(iconFile.getAbsoluteFile().toURI().toString());
             else if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return newBuiltinImage("/assets/img/fabric.png");
+                    return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return newBuiltinImage("/assets/img/forge.png");
+                    return VersionIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return newBuiltinImage("/assets/img/neoforge.png");
+                    return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return newBuiltinImage("/assets/img/quilt.png");
+                    return VersionIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return newBuiltinImage("/assets/img/command.png");
+                    return VersionIconType.COMMAND.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return newBuiltinImage("/assets/img/chicken.png");
+                    return VersionIconType.CHICKEN.getIcon();
                 else
-                    return newBuiltinImage("/assets/img/furnace.png");
+                    return VersionIconType.FURNACE.getIcon();
             } else
-                return newBuiltinImage("/assets/img/grass.png");
+                return VersionIconType.DEFAULT.getIcon();
         } else {
-            return newBuiltinImage(iconType.getResourceUrl());
+            return iconType.getIcon();
         }
     }
 
