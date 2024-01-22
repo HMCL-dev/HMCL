@@ -267,12 +267,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return VersionIconType.DEFAULT.getIcon();
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
-        VersionIconType iconType;
-        if (vs != null) {
-            iconType = Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT);
-        } else {
-            iconType = VersionIconType.DEFAULT;
-        }
+        VersionIconType iconType = vs != null ? Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
