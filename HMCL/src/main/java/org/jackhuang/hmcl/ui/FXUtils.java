@@ -686,7 +686,13 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url) {
-        return newBuiltinImage(url, 0, 0, false, false);
+        return builtinImageCache.computeIfAbsent(url, s -> {
+            try {
+                return new Image(s);
+            } catch (IllegalArgumentException e) {
+                throw new ResourceNotFoundError("Cannot access image: " + s, e);
+            }
+        });
     }
 
     /**
@@ -706,13 +712,11 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
-        return builtinImageCache.computeIfAbsent(url, s -> {
-            try {
-                return new Image(s, requestedWidth, requestedHeight, preserveRatio, smooth);
-            } catch (IllegalArgumentException e) {
-                throw new ResourceNotFoundError("Cannot access image: " + s, e);
-            }
-        });
+        try {
+            return new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundError("Cannot access image: " + url, e);
+        }
     }
 
     /**
