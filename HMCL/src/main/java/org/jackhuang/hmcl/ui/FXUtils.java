@@ -686,13 +686,11 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url) {
-        return builtinImageCache.computeIfAbsent(url, s -> {
-            try {
-                return new Image(s);
-            } catch (IllegalArgumentException e) {
-                throw new ResourceNotFoundError("Cannot access image: " + s, e);
-            }
-        });
+        try {
+            return builtinImageCache.computeIfAbsent(url, Image::new);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundError("Cannot access image: " + url, e);
+        }
     }
 
     /**
