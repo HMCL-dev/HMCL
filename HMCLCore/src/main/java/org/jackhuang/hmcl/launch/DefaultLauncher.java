@@ -222,12 +222,15 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
         configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
+        Optional<String> gameVersion = repository.getGameVersion(version);
+
         // lwjgl assumes path to native libraries encoded by ASCII.
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                && !StringUtils.isASCII(nativeFolderPath)) {
+                && !StringUtils.isASCII(nativeFolderPath)
+                && gameVersion.isPresent() && VersionNumber.VERSION_COMPARATOR.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
         }
@@ -256,7 +259,7 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            if (VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("0.0"), "1.20") < 0) {
+            if (VersionNumber.VERSION_COMPARATOR.compare(gameVersion.orElse("0.0"), "1.20") < 0) {
                 res.add("--server");
                 res.add(args[0]);
                 res.add("--port");
