@@ -213,7 +213,7 @@ public class MaintainTask extends Task<Version> {
         Optional<String> bslVersion = libraryAnalyzer.getVersion(BOOTSTRAP_LAUNCHER);
 
         if (bslVersion.isPresent()) {
-            if (VersionNumber.VERSION_COMPARATOR.compare(bslVersion.get(), "0.1.17") < 0) {
+            if (VersionNumber.compare(bslVersion.get(), "0.1.17") < 0) {
                 // The default ignoreList will be applied to all components of libraries in classpath,
                 // so if game directory located in some directory like /Users/asm, all libraries will be ignored,
                 // which is not expected. We fix this here.

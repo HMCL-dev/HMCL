@@ -94,7 +94,7 @@ public class VersionNumberTest {
 
     @Test
     public void testSorting() {
-        final Comparator<String> comparator = VersionNumber.VERSION_COMPARATOR.thenComparing(String::compareTo);
+        final Comparator<String> comparator = ((Comparator<String>) VersionNumber::compare).thenComparing(String::compareTo);
         final List<String> input = Collections.unmodifiableList(Arrays.asList(
                 "0",
                 "0.10.0",
