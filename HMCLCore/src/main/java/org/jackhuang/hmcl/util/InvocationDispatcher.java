@@ -47,7 +47,7 @@ public final class InvocationDispatcher<ARG> implements Consumer<ARG> {
     public void accept(ARG arg) {
         if (pendingArg.getAndSet(new Holder<>(arg)) == null) {
             executor.execute(() -> {
-                synchronized (action) {
+                synchronized (InvocationDispatcher.this) {
                     action.accept(pendingArg.getAndSet(null).value);
                 }
             });
