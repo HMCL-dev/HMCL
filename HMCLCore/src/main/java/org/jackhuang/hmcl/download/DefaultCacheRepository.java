@@ -63,7 +63,7 @@ public class DefaultCacheRepository extends CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile))
-                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile.toFile()), Index.class);
+                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile), Index.class);
             else
                 index = new Index();
         } catch (IOException | JsonParseException e) {
@@ -180,7 +180,7 @@ public class DefaultCacheRepository extends CacheRepository {
             hash = DigestUtils.digestToString(SHA1, path);
 
         Path cache = getFile(SHA1, hash);
-        FileUtils.copyFile(path.toFile(), cache.toFile());
+        FileUtils.copyFile(path, cache);
 
         Lock writeLock = lock.writeLock();
         writeLock.lock();
@@ -198,7 +198,7 @@ public class DefaultCacheRepository extends CacheRepository {
     private void saveIndex() {
         if (indexFile == null || index == null) return;
         try {
-            FileUtils.writeText(indexFile.toFile(), JsonUtils.GSON.toJson(index));
+            FileUtils.writeText(indexFile, JsonUtils.GSON.toJson(index));
         } catch (IOException e) {
             Logging.LOG.log(Level.SEVERE, "Unable to save index.json", e);
         }
@@ -217,7 +217,7 @@ public class DefaultCacheRepository extends CacheRepository {
      *     // assets and versions will not be included in index.
      * }
      */
-    private class Index implements Validation {
+    private static final class Index implements Validation {
         private final Set<LibraryIndex> libraries;
 
         public Index() {

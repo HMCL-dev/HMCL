@@ -35,6 +35,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
@@ -46,7 +47,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public class InstallerItem extends Control {
     private final String id;
-    private final String imageUrl;
+    private final VersionIconType iconType;
     public final StringProperty libraryVersion = new SimpleStringProperty();
     public final StringProperty incompatibleLibraryName = new SimpleStringProperty();
     public final StringProperty dependencyName = new SimpleStringProperty();
@@ -73,30 +74,30 @@ public class InstallerItem extends Control {
 
         switch (id) {
             case "game":
-                imageUrl = "/assets/img/grass.png";
+                iconType = VersionIconType.GRASS;
                 break;
             case "fabric":
             case "fabric-api":
-                imageUrl = "/assets/img/fabric.png";
+                iconType = VersionIconType.FABRIC;
                 break;
             case "forge":
-                imageUrl = "/assets/img/forge.png";
+                iconType = VersionIconType.FORGE;
                 break;
             case "liteloader":
-                imageUrl = "/assets/img/chicken.png";
+                iconType = VersionIconType.CHICKEN;
                 break;
             case "optifine":
-                imageUrl = "/assets/img/command.png";
+                iconType = VersionIconType.COMMAND;
                 break;
             case "quilt":
             case "quilt-api":
-                imageUrl = "/assets/img/quilt.png";
+                iconType = VersionIconType.QUILT;
                 break;
             case "neoforge":
-                imageUrl = "/assets/img/neoforge.png";
+                iconType = VersionIconType.NEO_FORGE;
                 break;
             default:
-                imageUrl = null;
+                iconType = null;
                 break;
         }
     }
@@ -221,8 +222,8 @@ public class InstallerItem extends Control {
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
-            if (control.imageUrl != null) {
-                ImageView view = new ImageView(FXUtils.newBuiltinImage(control.imageUrl));
+            if (control.iconType != null) {
+                ImageView view = new ImageView(control.iconType.getIcon());
                 Node node = FXUtils.limitingSize(view, 32, 32);
                 node.setMouseTransparent(true);
                 node.getStyleClass().add("installer-item-image");
