@@ -54,7 +54,7 @@ public final class CommandBuilder {
     }
 
     /**
-     * "Parsing" (quoting) will ignore your manual escaping
+     * Parsing will ignore your manual escaping
      *
      * @param args commands
      * @return this
