@@ -48,7 +48,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
  */
 @JsonAdapter(Profile.Serializer.class)
 public final class Profile implements Observable {
-    @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
 
