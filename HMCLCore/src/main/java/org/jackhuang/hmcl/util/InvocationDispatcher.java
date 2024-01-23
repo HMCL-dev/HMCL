@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * When {@link #accept(ARG)} is called, this class invokes the handler on another thread.
@@ -32,24 +31,26 @@ import java.util.function.Supplier;
 public final class InvocationDispatcher<ARG> implements Consumer<ARG> {
 
     public static <ARG> InvocationDispatcher<ARG> runOn(Executor executor, Consumer<ARG> action) {
-        return new InvocationDispatcher<>(arg -> executor.execute(() -> {
-            synchronized (action) {
-                action.accept(arg.get());
-            }
-        }));
+        return new InvocationDispatcher<>(executor, action);
     }
 
-    private final Consumer<Supplier<ARG>> handler;
+    private final Executor executor;
+    private final Consumer<ARG> action;
     private final AtomicReference<Holder<ARG>> pendingArg = new AtomicReference<>();
 
-    public InvocationDispatcher(Consumer<Supplier<ARG>> handler) {
-        this.handler = handler;
+    private InvocationDispatcher(Executor executor, Consumer<ARG> action) {
+        this.executor = executor;
+        this.action = action;
     }
 
     @Override
     public void accept(ARG arg) {
         if (pendingArg.getAndSet(new Holder<>(arg)) == null) {
-            handler.accept(() -> pendingArg.getAndSet(null).value);
+            executor.execute(() -> {
+                synchronized (action) {
+                    action.accept(pendingArg.getAndSet(null).value);
+                }
+            });
         }
     }
 }
