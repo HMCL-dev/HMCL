@@ -416,7 +416,7 @@ public final class StringUtils {
     /**
      * Class for computing the longest common subsequence between strings.
      */
-    public static class LongestCommonSubsequence {
+    public static final class LongestCommonSubsequence {
         // We reuse dynamic programming storage array here to reduce allocations.
         private final int[][] f;
         private final int maxLengthA;

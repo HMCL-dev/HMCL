@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;

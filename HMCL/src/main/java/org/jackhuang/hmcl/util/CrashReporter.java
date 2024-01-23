@@ -38,7 +38,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author huangyuhui
  */
-public class CrashReporter implements Thread.UncaughtExceptionHandler {
+public final class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     // Lazy initialization resources
     private static final class Hole {
