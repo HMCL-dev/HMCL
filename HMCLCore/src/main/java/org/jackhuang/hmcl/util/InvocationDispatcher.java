@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -41,7 +40,7 @@ public final class InvocationDispatcher<ARG> implements Consumer<ARG> {
     }
 
     private final Consumer<Supplier<ARG>> handler;
-    private final AtomicReference<Optional<ARG>> pendingArg = new AtomicReference<>();
+    private final AtomicReference<Holder<ARG>> pendingArg = new AtomicReference<>();
 
     public InvocationDispatcher(Consumer<Supplier<ARG>> handler) {
         this.handler = handler;
@@ -49,8 +48,8 @@ public final class InvocationDispatcher<ARG> implements Consumer<ARG> {
 
     @Override
     public void accept(ARG arg) {
-        if (pendingArg.getAndSet(Optional.ofNullable(arg)) == null) {
-            handler.accept(() -> pendingArg.getAndSet(null).orElse(null));
+        if (pendingArg.getAndSet(new Holder<>(arg)) == null) {
+            handler.accept(() -> pendingArg.getAndSet(null).value);
         }
     }
 }
