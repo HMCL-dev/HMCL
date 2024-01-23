@@ -309,7 +309,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     for (String gameVersion : control.versions.keys().stream()
-                            .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
+                            .sorted(Collections.reverseOrder(VersionNumber::compare))
                             .collect(Collectors.toList())) {
                         ComponentList sublist = new ComponentList(() ->
                                 control.versions.get(gameVersion).stream()

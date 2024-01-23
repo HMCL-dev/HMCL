@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -30,7 +29,7 @@ import java.util.function.Supplier;
  *
  * @author yushijinhun
  */
-public class InvocationDispatcher<ARG> implements Consumer<ARG> {
+public final class InvocationDispatcher<ARG> implements Consumer<ARG> {
 
     public static <ARG> InvocationDispatcher<ARG> runOn(Executor executor, Consumer<ARG> action) {
         return new InvocationDispatcher<>(arg -> executor.execute(() -> {
@@ -40,9 +39,8 @@ public class InvocationDispatcher<ARG> implements Consumer<ARG> {
         }));
     }
 
-    private Consumer<Supplier<ARG>> handler;
-
-    private AtomicReference<Optional<ARG>> pendingArg = new AtomicReference<>();
+    private final Consumer<Supplier<ARG>> handler;
+    private final AtomicReference<Holder<ARG>> pendingArg = new AtomicReference<>();
 
     public InvocationDispatcher(Consumer<Supplier<ARG>> handler) {
         this.handler = handler;
@@ -50,8 +48,8 @@ public class InvocationDispatcher<ARG> implements Consumer<ARG> {
 
     @Override
     public void accept(ARG arg) {
-        if (pendingArg.getAndSet(Optional.ofNullable(arg)) == null) {
-            handler.accept(() -> pendingArg.getAndSet(null).orElse(null));
+        if (pendingArg.getAndSet(new Holder<>(arg)) == null) {
+            handler.accept(() -> pendingArg.getAndSet(null).value);
         }
     }
 }

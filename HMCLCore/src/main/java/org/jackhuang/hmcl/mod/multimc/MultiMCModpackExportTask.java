@@ -77,6 +77,9 @@ public class MultiMCModpackExportTask extends Task<Void> {
             components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, "net.minecraft", gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
                     components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.minecraftforge", forgeVersion)));
+            // MultiMC hasn't supported NeoForge yet.
+            //  analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
+            //          components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.neoforged", neoForgeVersion)));
             analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
                     components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "com.mumfrey.liteloader", liteLoaderVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->

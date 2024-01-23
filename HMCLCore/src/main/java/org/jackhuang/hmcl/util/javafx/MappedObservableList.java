@@ -21,6 +21,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.WeakListChangeListener;
+import org.jackhuang.hmcl.util.Holder;
 
 import java.util.*;
 import java.util.function.Function;
@@ -35,14 +36,14 @@ public final class MappedObservableList {
     private MappedObservableList() {
     }
 
-    private static class MappedObservableListUpdater<T, U> implements ListChangeListener<T> {
-        private ObservableList<T> origin;
-        private ObservableList<U> target;
-        private Function<T, U> mapper;
+    private static final class MappedObservableListUpdater<T, U> implements ListChangeListener<T> {
+        private final ObservableList<T> origin;
+        private final ObservableList<U> target;
+        private final Function<T, U> mapper;
 
         // If we directly synchronize changes to target, each operation on target will cause a event to be fired.
         // So we first write changes to buffer. After all the changes are processed, we use target.setAll to synchronize the changes.
-        private List<U> buffer;
+        private final List<U> buffer;
 
         MappedObservableListUpdater(ObservableList<T> origin, ObservableList<U> target, Function<T, U> mapper) {
             this.origin = origin;
@@ -125,7 +126,7 @@ public final class MappedObservableList {
         ListChangeListener<T> listener = new MappedObservableListUpdater<>(origin, target, mapper);
 
         // let target hold a reference to listener to prevent listener being garbage-collected before target is garbage-collected
-        target.addListener(new ReferenceHolder(listener));
+        target.addListener(new Holder<>(listener));
 
         // let origin hold a weak reference to listener, so that target can be garbage-collected when it's no longer used
         origin.addListener(new WeakListChangeListener<>(listener));

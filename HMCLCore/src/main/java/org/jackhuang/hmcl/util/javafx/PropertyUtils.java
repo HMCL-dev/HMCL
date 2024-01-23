@@ -36,7 +36,7 @@ public final class PropertyUtils {
     private PropertyUtils() {
     }
 
-    public static class PropertyHandle {
+    public static final class PropertyHandle {
         public final WritableValue<Object> accessor;
         public final Observable observable;
 
@@ -160,8 +160,6 @@ public final class PropertyUtils {
 
     public static void attachListener(Object instance, InvalidationListener listener) {
         getPropertyHandleFactories(instance.getClass())
-                .forEach((name, factory) -> {
-                    factory.apply(instance).observable.addListener(listener);
-                });
+                .forEach((name, factory) -> factory.apply(instance).observable.addListener(listener));
     }
 }
