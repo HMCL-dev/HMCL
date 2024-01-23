@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.Optional;
-import java.util.StringJoiner;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -49,6 +48,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
  */
 @JsonAdapter(Profile.Serializer.class)
 public final class Profile implements Observable {
+    @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
 
