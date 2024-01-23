@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.util.platform;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -43,7 +45,7 @@ public final class CommandBuilder {
         this.os = os;
     }
 
-    private String quote(String s) {
+    private String parse(String s) {
         if (OperatingSystem.WINDOWS == os) {
             return toBatchStringLiteral(s);
         } else {
@@ -217,7 +219,7 @@ public final class CommandBuilder {
 
     @Override
     public String toString() {
-        return raw.stream().map(i -> i.quote ? quote(i.arg) : i.arg).collect(Collectors.joining(" "));
+        return raw.stream().map(i -> i.parse ? parse(i.arg) : i.arg).collect(Collectors.joining(" "));
     }
 
     public List<String> asList() {
@@ -230,16 +232,16 @@ public final class CommandBuilder {
 
     private static class Item {
         final String arg;
-        final boolean quote;
+        final boolean parse;
 
-        Item(String arg, boolean quote) {
+        Item(String arg, boolean parse) {
             this.arg = arg;
-            this.quote = quote;
+            this.parse = parse;
         }
 
         @Override
         public String toString() {
-            return quote ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? toBatchStringLiteral(arg) : toShellStringLiteral(arg)) : arg;
+            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? toBatchStringLiteral(arg) : toShellStringLiteral(arg)) : arg;
         }
     }
 
@@ -282,6 +284,14 @@ public final class CommandBuilder {
         return true;
     }
 
+    private static boolean containsEscape(String str, String escapeChars) {
+        for (int i = 0; i < escapeChars.length(); i++) {
+            if (str.indexOf(escapeChars.charAt(i)) >= 0)
+                return true;
+        }
+        return false;
+    }
+
     private static String escape(String str, char... escapeChars) {
         for (char ch : escapeChars) {
             str = str.replace("" + ch, "\\" + ch);
@@ -291,7 +301,7 @@ public final class CommandBuilder {
 
     private static String toBatchStringLiteral(String s) {
         String escape = " \t\"^&<>|?*";
-        if (StringUtils.containsOne(s, escape.toCharArray()))
+        if (containsEscape(s, escape))
             // The argument has not been quoted, add quotes.
             // See explanation at https://github.com/Artoria2e5/node/blob/fix!/child-process-args/lib/child_process.js
             // about making the string "inert to CMD", and associated unit tests
@@ -301,11 +311,6 @@ public final class CommandBuilder {
     }
 
     private static String toShellStringLiteral(String s) {
-        String escape = " \t\"!#$&'()*,;<=>?[\\]^`{|}~";
-        if (StringUtils.containsOne(s, escape.toCharArray())) {
-            return "'" + s.replace("'", "'\''") + "'";
-        } else {
-            return s;
-        }
+        return containsEscape(s, " \t\"!#$&'()*,;<=>?[\\]^`{|}~") ? "'" + s.replace("'", "'''") + "'" : s;
     }
 }
