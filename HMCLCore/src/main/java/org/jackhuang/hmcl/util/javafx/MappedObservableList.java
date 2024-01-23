@@ -21,6 +21,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.WeakListChangeListener;
+import org.jackhuang.hmcl.util.Holder;
 
 import java.util.*;
 import java.util.function.Function;
@@ -125,7 +126,7 @@ public final class MappedObservableList {
         ListChangeListener<T> listener = new MappedObservableListUpdater<>(origin, target, mapper);
 
         // let target hold a reference to listener to prevent listener being garbage-collected before target is garbage-collected
-        target.addListener(new ReferenceHolder(listener));
+        target.addListener(new Holder<>(listener));
 
         // let origin hold a weak reference to listener, so that target can be garbage-collected when it's no longer used
         origin.addListener(new WeakListChangeListener<>(listener));
