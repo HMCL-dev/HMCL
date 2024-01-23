@@ -310,6 +310,6 @@ public final class CommandBuilder {
     }
 
     public static String toShellStringLiteral(String s) {
-        return containsEscape(s, " \t\"!#$&'()*,;<=>?[\\]^`{|}~") ? "'" + s.replace("'", "'''") + "'" : s;
+        return containsEscape(s, " \t\"!#$&'()*,;<=>?[\\]^`{|}~") ? '"' + escape(s, '"', '$', '&', '`') + '"' : s;
     }
 }
