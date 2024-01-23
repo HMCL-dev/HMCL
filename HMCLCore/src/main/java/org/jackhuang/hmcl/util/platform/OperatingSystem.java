@@ -52,6 +52,10 @@ public enum OperatingSystem {
      */
     OSX("osx"),
     /**
+     * FreeBSD.
+     */
+    FREEBSD("freebsd"),
+    /**
      * Unknown operating system.
      */
     UNKNOWN("universal");
@@ -64,6 +68,10 @@ public enum OperatingSystem {
 
     public String getCheckedName() {
         return checkedName;
+    }
+
+    public boolean isLinuxOrBSD() {
+        return this == LINUX || this == FREEBSD;
     }
 
     /**
@@ -176,8 +184,7 @@ public enum OperatingSystem {
         }
 
         TOTAL_MEMORY = getPhysicalMemoryStatus()
-                .map(PhysicalMemoryStatus::getTotal)
-                .map(bytes -> (int) (bytes / 1024 / 1024))
+                .map(physicalMemoryStatus -> (int) (physicalMemoryStatus.getTotal() / 1024 / 1024))
                 .orElse(1024);
 
         SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
@@ -214,8 +221,34 @@ public enum OperatingSystem {
             return OSX;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
             return LINUX;
+        else if (name.equals("freebsd"))
+            return FREEBSD;
         else
             return UNKNOWN;
+    }
+
+    public static boolean isWindows7OrLater() {
+        if (CURRENT_OS != WINDOWS) {
+            return false;
+        }
+
+        int major;
+        int dotIndex = SYSTEM_VERSION.indexOf('.');
+        try {
+            if (dotIndex < 0) {
+                major = Integer.parseInt(SYSTEM_VERSION);
+            } else {
+                major = Integer.parseInt(SYSTEM_VERSION.substring(0, dotIndex));
+            }
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+
+        // Windows XP:      NT 5.1~5.2
+        // Windows Vista:   NT 6.0
+        // Windows 7:       NT 6.1
+
+        return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
     }
 
     @SuppressWarnings("deprecation")
@@ -274,6 +307,7 @@ public enum OperatingSystem {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {
             case LINUX:
+            case FREEBSD:
                 return Paths.get(home, "." + folder).toAbsolutePath();
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");

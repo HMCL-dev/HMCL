@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.ui.FXUtils;
+
 public enum VersionIconType {
     DEFAULT("/assets/img/grass.png"),
 
@@ -27,6 +30,7 @@ public enum VersionIconType {
     CRAFT_TABLE("/assets/img/craft_table.png"),
     FABRIC("/assets/img/fabric.png"),
     FORGE("/assets/img/forge.png"),
+    NEO_FORGE("/assets/img/neoforge.png"),
     FURNACE("/assets/img/furnace.png"),
     QUILT("/assets/img/quilt.png");
 
@@ -38,7 +42,7 @@ public enum VersionIconType {
         this.resourceUrl = resourceUrl;
     }
 
-    public String getResourceUrl() {
-        return resourceUrl;
+    public Image getIcon() {
+        return FXUtils.newBuiltinImage(resourceUrl);
     }
 }

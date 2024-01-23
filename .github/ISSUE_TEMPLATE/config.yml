@@ -1,14 +1,14 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: KOOK 频道
+  - name: KOOK 频道 | KOOK Channel
     url: https://kook.top/Kx7n3t
-    about: Hello Minecraft! Launcher 的官方 KOOK 频道。
-  - name: Discord 频道
+    about: Hello Minecraft! Launcher 的官方 KOOK 频道。| The official KOOK channel of Hello Minecraft! Laucher.
+  - name: Discord 频道 | Discord Channel
     url: https://discord.gg/jVvC7HfM6U
-    about: Hello Minecraft! Launcher 的官方 Discord 频道。
-  - name: 赞助通道
+    about: Hello Minecraft! Launcher 的官方 Discord 频道。| The official Discord channel of Hello Minecraft! Launcher.
+  - name: 赞助通道 | Sponsorship channel
     url: https://afdian.net/@huanghongxun
-    about: 前往爱发电赞助 HMCL。赞助后可以申请加入官方 QQ 群反馈问题。
-  - name: 其他反馈
-    url: https://github.com/huanghongxun/HMCL/discussions/new/choose
-    about: 通过 Discussions 反馈其他问题。
+    about: 前往爱发电赞助 HMCL，赞助后可以申请加入官方 QQ 群反馈问题。| Sponsor Hello Minecraft! Launcher on afdian.net and you can apply to join the official QQ group.
+  - name: 其他反馈 | Others
+    url: https://github.com/HMCL-dev/HMCL/discussions/new/choose
+    about: 通过 Discussions 反馈其他问题。| Report other problems in Discussions.

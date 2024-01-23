@@ -112,6 +112,12 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("proxyPassword")
     private StringProperty proxyPass = new SimpleStringProperty();
 
+    @SerializedName("x")
+    private DoubleProperty x = new SimpleDoubleProperty();
+
+    @SerializedName("y")
+    private DoubleProperty y = new SimpleDoubleProperty();
+
     @SerializedName("width")
     private DoubleProperty width = new SimpleDoubleProperty();
 
@@ -377,6 +383,30 @@ public final class Config implements Cloneable, Observable {
 
     public StringProperty proxyPassProperty() {
         return proxyPass;
+    }
+
+    public double getX() {
+        return x.get();
+    }
+
+    public DoubleProperty xProperty() {
+        return x;
+    }
+
+    public void setX(double height) {
+        this.x.set(height);
+    }
+
+    public double getY() {
+        return y.get();
+    }
+
+    public DoubleProperty yProperty() {
+        return y;
+    }
+
+    public void setY(double height) {
+        this.y.set(height);
     }
 
     public double getWidth() {

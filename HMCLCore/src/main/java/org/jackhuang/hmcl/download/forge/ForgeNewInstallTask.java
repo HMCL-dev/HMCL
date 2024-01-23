@@ -192,7 +192,7 @@ public class ForgeNewInstallTask extends Task<Version> {
     private Path tempDir;
     private AtomicInteger processorDoneCount = new AtomicInteger(0);
 
-    ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+    public ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.version = version;

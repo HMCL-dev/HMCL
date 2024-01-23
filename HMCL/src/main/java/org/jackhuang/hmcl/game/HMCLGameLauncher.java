@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,9 +84,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             1.11 ~ 12：zh_cn 时正常，zh_CN 时虽然显示了中文但语言设置会错误地显示选择英文
             1.13+    ：zh_cn 时正常，zh_CN 时自动切换为英文
          */
-        if (this.version.compareTo(new Version("1.1")) < 0) {
+        VersionNumber gameVersion = VersionNumber.asVersion(repository.getGameVersion(version).orElse("0.0"));
+        if (gameVersion.compareTo("1.1") < 0) {
             lang = null;
-        } else if (this.version.compareTo(new Version("1.10")) <= 0) {
+        } else if (gameVersion.compareTo("1.11") < 0) {
             lang = "zh_CN";
         } else {
             lang = "zh_cn";
@@ -93,7 +95,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
         if (lang != null) {
             try {
-                FileUtils.writeText(optionsFile, String.format("lang:%s\nforceUnicodeFont:true\n", lang));
+                FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
             } catch (IOException e) {
                 Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
             }

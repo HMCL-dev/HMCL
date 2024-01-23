@@ -75,7 +75,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         List<List<String>> facets = new ArrayList<>();
         facets.add(Collections.singletonList("project_type:" + projectType));
         if (StringUtils.isNotBlank(gameVersion)) {
@@ -87,14 +87,14 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         Map<String, String> query = mapOf(
                 pair("query", searchFilter),
                 pair("facets", JsonUtils.UGLY_GSON.toJson(facets)),
-                pair("offset", Integer.toString(pageOffset)),
+                pair("offset", Integer.toString(pageOffset * pageSize)),
                 pair("limit", Integer.toString(pageSize)),
                 pair("index", convertSortType(sort))
         );
         Response<ProjectSearchResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/v2/search", query))
                 .getJson(new TypeToken<Response<ProjectSearchResult>>() {
                 }.getType());
-        return response.getHits().stream().map(ProjectSearchResult::toMod);
+        return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int)Math.ceil((double)response.totalHits / pageSize));
     }
 
     @Override
@@ -286,17 +286,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            Set<String> dependencies = modRepository.getRemoteVersionsById(getId())
+            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(getId())
                     .flatMap(version -> version.getDependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
-            for (String dependencyId : dependencies) {
-                if (dependencyId == null) {
-                    mods.add(RemoteMod.getEmptyRemoteMod());
-                }
-                if (StringUtils.isNotBlank(dependencyId)) {
-                    mods.add(modRepository.getModById(dependencyId));
-                }
+            for (RemoteMod.Dependency dependency : dependencies) {
+                mods.add(dependency.load());
             }
             return mods;
         }
@@ -313,9 +308,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     title,
                     description,
                     categories,
-                    null,
+                    String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    (RemoteMod.IMod) this
+                    this
             );
         }
     }
@@ -351,6 +346,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     public static class ProjectVersion implements RemoteMod.IVersion {
+        private static final Map<String, RemoteMod.@Nullable DependencyType> DEPENDENCY_TYPE = Lang.mapOf(
+                Pair.pair("required", RemoteMod.DependencyType.REQUIRED),
+                Pair.pair("optional", RemoteMod.DependencyType.OPTIONAL),
+                Pair.pair("embedded", RemoteMod.DependencyType.EMBEDDED),
+                Pair.pair("incompatible", RemoteMod.DependencyType.INCOMPATIBLE)
+        );
+
         private final String name;
 
         @SerializedName("version_number")
@@ -496,12 +498,24 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     datePublished,
                     type,
                     files.get(0).toFile(),
-                    dependencies.stream().map(dependency -> dependency.getVersionId() == null ? null : dependency.getProjectId()).collect(Collectors.toList()),
+                    dependencies.stream().map(dependency -> {
+                        if (dependency.projectId == null) {
+                            return RemoteMod.Dependency.ofBroken();
+                        }
+
+                        if (!DEPENDENCY_TYPE.containsKey(dependency.dependencyType)) {
+                            throw new IllegalStateException("Broken datas");
+                        }
+
+                        return RemoteMod.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), MODS, dependency.projectId);
+                    }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
                     loaders.stream().flatMap(loader -> {
                         if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
                         else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
+                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGED);
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
+                        else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             ));
@@ -651,17 +665,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-            Set<String> dependencies = modRepository.getRemoteVersionsById(getProjectId())
+            Set<RemoteMod.Dependency> dependencies = modRepository.getRemoteVersionsById(getProjectId())
                     .flatMap(version -> version.getDependencies().stream())
                     .collect(Collectors.toSet());
             List<RemoteMod> mods = new ArrayList<>();
-            for (String dependencyId : dependencies) {
-                if (dependencyId == null) {
-                    mods.add(RemoteMod.getEmptyRemoteMod());
-                }
-                if (StringUtils.isNotBlank(dependencyId)) {
-                    mods.add(modRepository.getModById(dependencyId));
-                }
+            for (RemoteMod.Dependency dependency : dependencies) {
+                mods.add(dependency.load());
             }
             return mods;
         }

@@ -96,7 +96,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         launchArguments.set(versionSetting.getMinecraftArgs());
         javaArguments.set(versionSetting.getJavaArgs());
 
-        canIncludeLauncher = JarUtils.thisJar().isPresent();
+        canIncludeLauncher = JarUtils.thisJarPath() != null;
 
         next.set(e -> onNext());
     }

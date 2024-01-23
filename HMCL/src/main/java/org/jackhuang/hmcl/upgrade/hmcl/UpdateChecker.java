@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.upgrade;
+package org.jackhuang.hmcl.upgrade.hmcl;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -81,11 +81,11 @@ public final class UpdateChecker {
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
-        if (!IntegrityChecker.isSelfVerified() && !"true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new IOException("Self verification failed");
         }
 
-        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+        String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, mapOf(
                 pair("version", Metadata.VERSION),
                 pair("channel", channel.channelName)));
 

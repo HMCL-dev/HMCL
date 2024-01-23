@@ -22,19 +22,21 @@ import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 
 /**
- * @see <a href="http://wiki.vg">http://wiki.vg</a>
  * @author huangyuhui
+ * @see <a href="http://wiki.vg">http://wiki.vg</a>
  */
 public class MojangDownloadProvider implements DownloadProvider {
     private final GameVersionList game;
     private final FabricVersionList fabric;
     private final FabricAPIVersionList fabricApi;
     private final ForgeBMCLVersionList forge;
+    private final NeoForgeBMCLVersionList neoforge;
     private final LiteLoaderVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
@@ -47,6 +49,7 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.fabric = new FabricVersionList(this);
         this.fabricApi = new FabricAPIVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
+        this.neoforge = new NeoForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
@@ -74,6 +77,8 @@ public class MojangDownloadProvider implements DownloadProvider {
                 return fabricApi;
             case "forge":
                 return forge;
+            case "neoforge":
+                return neoforge;
             case "liteloader":
                 return liteLoader;
             case "optifine":

@@ -38,7 +38,7 @@ public class CrashReportAnalyzerTest {
         return IOUtils.readFullyAsString(is);
     }
 
-    private CrashReportAnalyzer.Result findResultByRule(List<CrashReportAnalyzer.Result> results, CrashReportAnalyzer.Rule rule) {
+    private CrashReportAnalyzer.Result findResultByRule(Set<CrashReportAnalyzer.Result> results, CrashReportAnalyzer.Rule rule) {
         CrashReportAnalyzer.Result r = results.stream().filter(result -> result.getRule() == rule).findFirst().orElse(null);
         assertNotNull(r);
         return r;
