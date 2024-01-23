@@ -584,22 +584,22 @@ public class DefaultLauncher extends Launcher {
                 if (usePowerShell) {
                     if (isWindows) {
                         writer.write("$Env:APPDATA=");
-                        writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
+                        writer.write(CommandBuilder.toPowerShellStringLiteral(options.getGameDir().getAbsoluteFile().getParent()));
                         writer.newLine();
                     }
                     for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
                         writer.write("$Env:" + entry.getKey() + "=");
-                        writer.write(CommandBuilder.pwshString(entry.getValue()));
+                        writer.write(CommandBuilder.toPowerShellStringLiteral(entry.getValue()));
                         writer.newLine();
                     }
                     writer.write("Set-Location -Path ");
-                    writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
+                    writer.write(CommandBuilder.toPowerShellStringLiteral(repository.getRunDirectory(version.getId()).getAbsolutePath()));
                     writer.newLine();
 
                     writer.write('&');
                     for (String rawCommand : commandLine.commandLine.asList()) {
                         writer.write(' ');
-                        writer.write(CommandBuilder.pwshString(rawCommand));
+                        writer.write(CommandBuilder.toPowerShellStringLiteral(rawCommand));
                     }
                     writer.newLine();
                 } else {

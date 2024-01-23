@@ -245,8 +245,7 @@ public final class CommandBuilder {
         }
     }
 
-    // Quote for powershell.
-    public static String toPwshStringLiteral(String str) {
+    public static String toPowerShellStringLiteral(String str) {
         return "'" + str.replace("'", "''") + "'";
     }
 
@@ -299,7 +298,7 @@ public final class CommandBuilder {
         return str;
     }
 
-    private static String toBatchStringLiteral(String s) {
+    public static String toBatchStringLiteral(String s) {
         String escape = " \t\"^&<>|?*";
         if (containsEscape(s, escape))
             // The argument has not been quoted, add quotes.
@@ -310,7 +309,7 @@ public final class CommandBuilder {
             return s;
     }
 
-    private static String toShellStringLiteral(String s) {
+    public static String toShellStringLiteral(String s) {
         return containsEscape(s, " \t\"!#$&'()*,;<=>?[\\]^`{|}~") ? "'" + s.replace("'", "'''") + "'" : s;
     }
 }
