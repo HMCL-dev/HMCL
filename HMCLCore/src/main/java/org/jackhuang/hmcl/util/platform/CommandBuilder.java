@@ -245,7 +245,7 @@ public final class CommandBuilder {
         }
     }
 
-    public static String toPowerShellStringLiteral(String str) {
+    public static String pwshString(String str) {
         return "'" + str.replace("'", "''") + "'";
     }
 
