@@ -28,7 +28,7 @@ import javafx.beans.binding.ObjectBinding;
 /**
  * @author yushijinhun
  */
-public class ObservableOptionalCache<K, V, E extends Exception> {
+public final class ObservableOptionalCache<K, V, E extends Exception> {
 
     private final ObservableCache<K, Optional<V>, E> backed;
 

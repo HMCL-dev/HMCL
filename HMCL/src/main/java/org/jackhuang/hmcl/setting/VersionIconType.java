@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.ui.FXUtils;
+
 public enum VersionIconType {
     DEFAULT("/assets/img/grass.webp"),
 
@@ -39,7 +42,7 @@ public enum VersionIconType {
         this.resourceUrl = resourceUrl;
     }
 
-    public String getResourceUrl() {
-        return resourceUrl;
+    public Image getIcon() {
+        return FXUtils.newBuiltinImage(resourceUrl);
     }
 }

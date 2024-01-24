@@ -35,7 +35,7 @@ import javafx.beans.binding.ObjectBinding;
 /**
  * @author yushijinhun
  */
-public class ObservableCache<K, V, E extends Exception> {
+public final class ObservableCache<K, V, E extends Exception> {
 
     private final ExceptionalFunction<K, V, E> source;
     private final BiConsumer<K, Throwable> exceptionHandler;

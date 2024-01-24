@@ -46,6 +46,9 @@ minecraft-exported-crash-info*
 # macos
 .DS_Store
 
+# vscode
+.vscode/
+
 # test
 /hmcl.json
 /.hmcl.json

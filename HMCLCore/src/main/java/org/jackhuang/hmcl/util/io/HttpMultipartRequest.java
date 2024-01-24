@@ -26,8 +26,8 @@ import java.net.HttpURLConnection;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class HttpMultipartRequest implements Closeable {
-    private static final String endl = "\r\n";
+public final class HttpMultipartRequest implements Closeable {
+    private static final byte[] ENDL = {'\r', '\n'};
 
     private final String boundary = "*****" + System.currentTimeMillis() + "*****";
     private final HttpURLConnection urlConnection;
@@ -44,7 +44,7 @@ public class HttpMultipartRequest implements Closeable {
 
     private void addLine(String content) throws IOException {
         stream.write(content.getBytes(UTF_8));
-        stream.write(endl.getBytes(UTF_8));
+        stream.write(ENDL);
     }
 
     public HttpMultipartRequest file(String name, String filename, String contentType, InputStream inputStream) throws IOException {
