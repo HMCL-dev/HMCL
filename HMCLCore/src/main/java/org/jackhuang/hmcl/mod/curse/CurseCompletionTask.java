@@ -150,7 +150,7 @@ public final class CurseCompletionTask extends Task<Void> {
         File resourcePacks = new File(repository.getVersionRoot(modManager.getVersion()), "resourcepacks");
         for (CurseManifestFile file : newManifest.getFiles()) {
             if (selectedFiles != null && !selectedFiles.contains(file))
-	        continue; // Not selected
+            continue; // Not selected
             if (StringUtils.isNotBlank(file.getFileName())) {
                 RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
                 File target;
@@ -171,7 +171,7 @@ public final class CurseCompletionTask extends Task<Void> {
                 task.setCaching(true);
                 dependencies.add(task.withCounter("hmcl.modpack.download"));
             }
-	}
+    }
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());

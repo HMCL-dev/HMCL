@@ -51,7 +51,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
     private final VBox title = new VBox();
     private final Label retryOptionalFiles = new Label(i18n("modpack.retry_optional_files"));
     private final Label pendingOptionalFiles = new Label(i18n("modpack.pending_optional_files"));
-	private final Label noOptionalFiles = new Label(i18n("modpack.no_optional_files"));
+    private final Label noOptionalFiles = new Label(i18n("modpack.no_optional_files"));
     private Runnable retry;
 
     private final JFXListView<ModpackFile> list = new JFXListView<>();
@@ -73,7 +73,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
         list.getItems().clear();
         list.setCellFactory(it -> new OptionalFileEntry(list, new Holder<>()));
         int i = 0;
-        for(ModpackFile file : files) {
+        for (ModpackFile file : files) {
             selected.add(file);
             if (file.isOptional()) {
                 list.getItems().add(file);
@@ -152,7 +152,6 @@ public class OptionalFilesSelectionPane extends BorderPane {
             }
         }
     }
-
 
     private static class ModInfo extends JFXDialogLayout {
         public ModInfo(RemoteMod mod) {

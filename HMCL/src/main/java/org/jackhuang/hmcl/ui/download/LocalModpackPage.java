@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
