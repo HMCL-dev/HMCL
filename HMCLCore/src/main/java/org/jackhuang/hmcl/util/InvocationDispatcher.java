@@ -44,8 +44,8 @@ public final class InvocationDispatcher<T> implements Consumer<T> {
     }
 
     @Override
-    public void accept(T arg) {
-        if (pendingArg.getAndSet(new Holder<>(arg)) == null) {
+    public void accept(T t) {
+        if (pendingArg.getAndSet(new Holder<>(t)) == null) {
             executor.execute(() -> {
                 synchronized (InvocationDispatcher.this) {
                     action.accept(pendingArg.getAndSet(null).value);
