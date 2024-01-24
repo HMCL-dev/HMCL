@@ -22,29 +22,29 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * When {@link #accept(ARG)} is called, this class invokes the handler on another thread.
- * If {@link #accept(ARG)} is called more than one time before the handler starts processing,
+ * When {@link #accept(T)} is called, this class invokes the handler on another thread.
+ * If {@link #accept(T)} is called more than one time before the handler starts processing,
  * the handler will only be invoked once, taking the latest argument as its input.
  *
  * @author yushijinhun
  */
-public final class InvocationDispatcher<ARG> implements Consumer<ARG> {
+public final class InvocationDispatcher<T> implements Consumer<T> {
 
-    public static <ARG> InvocationDispatcher<ARG> runOn(Executor executor, Consumer<ARG> action) {
+    public static <T> InvocationDispatcher<T> runOn(Executor executor, Consumer<T> action) {
         return new InvocationDispatcher<>(executor, action);
     }
 
     private final Executor executor;
-    private final Consumer<ARG> action;
-    private final AtomicReference<Holder<ARG>> pendingArg = new AtomicReference<>();
+    private final Consumer<T> action;
+    private final AtomicReference<Holder<T>> pendingArg = new AtomicReference<>();
 
-    private InvocationDispatcher(Executor executor, Consumer<ARG> action) {
+    private InvocationDispatcher(Executor executor, Consumer<T> action) {
         this.executor = executor;
         this.action = action;
     }
 
     @Override
-    public void accept(ARG arg) {
+    public void accept(T arg) {
         if (pendingArg.getAndSet(new Holder<>(arg)) == null) {
             executor.execute(() -> {
                 synchronized (InvocationDispatcher.this) {
