@@ -180,24 +180,45 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
         return Task
                 .composeAsync(() -> {
+                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(oldVersion);
                     try {
-                        return NeoForgeInstallTask.install(this, oldVersion, installer);
+                        Task<Version> task = NeoForgeInstallTask.install(this, oldVersion, installer);
+                        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                            throw new IncompatibleLibraryInstallerException();
+                        return task;
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return ForgeInstallTask.install(this, oldVersion, installer);
+                        Task<Version> task = ForgeInstallTask.install(this, oldVersion, installer);
+                        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                            throw new IncompatibleLibraryInstallerException();
+                        return task;
                     } catch (IOException ignore) {
                     }
 
                     try {
-                        return OptiFineInstallTask.install(this, oldVersion, installer);
+                        Task<Version> task = OptiFineInstallTask.install(this, oldVersion, installer);
+                        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) ||
+                                analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                            throw new IncompatibleLibraryInstallerException();
+                        return task;
                     } catch (IOException ignore) {
                     }
 
                     throw new UnsupportedLibraryInstallerException();
                 })
                 .thenApplyAsync(oldVersion::addPatch);
+    }
+
+    public static class IncompatibleLibraryInstallerException extends Exception {
     }
 
     public static class UnsupportedLibraryInstallerException extends Exception {

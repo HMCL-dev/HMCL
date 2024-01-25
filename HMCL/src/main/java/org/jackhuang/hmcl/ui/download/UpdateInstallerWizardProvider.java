@@ -167,6 +167,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+        } else if (exception instanceof DefaultDependencyManager.IncompatibleLibraryInstallerException) {
+            Controllers.dialog(i18n("install.failed.incompatible"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof ArtifactMalformedException || exception instanceof ZipException) {
             Controllers.dialog(i18n("install.failed.malformed"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
