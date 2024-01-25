@@ -29,6 +29,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -331,7 +332,7 @@ public final class FileUtils {
                     targetFile = filesDir.resolve(name + "." + n);
                 }
 
-                String time = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now());
+                String time = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
                 if (file.isDirectory()) {
                     FileUtils.copyDirectory(file.toPath(), targetFile);
                 } else {
