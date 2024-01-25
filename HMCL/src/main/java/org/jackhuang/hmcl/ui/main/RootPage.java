@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.nbt.NBTHelper;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -102,7 +103,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                                 Controllers.navigate(new NBTEditorPage(file));
                             } catch (Throwable e) {
                                 LOG.log(Level.WARNING, "Fail to open nbt file", e);
-                                Controllers.dialog("Fail to open nbt file", // TODO
+                                Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }
                         }

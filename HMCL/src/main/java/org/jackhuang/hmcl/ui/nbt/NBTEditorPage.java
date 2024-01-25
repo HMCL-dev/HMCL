@@ -29,12 +29,16 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
     private final File file;
     private final NBTFileType type;
 
-    public NBTEditorPage(File file) {
+    public NBTEditorPage(File file) throws IOException {
         getStyleClass().add("gray-background");
 
         this.state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("nbt.title", file.getAbsolutePath())));
         this.file = file;
         this.type = NBTFileType.ofFile(file);
+
+        if (type == null) {
+            throw new IOException("Unknown type of file " + file);
+        }
 
         setCenter(new ProgressIndicator());
 
@@ -62,23 +66,15 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
 
         actions.getChildren().setAll(saveButton, cancelButton);
 
-        CompletableFuture.supplyAsync(Lang.wrap(() -> {
-                    if (type == null)
-                        throw new IOException("Unknown type of file " + file);
-                    return type.readAsTree(file);
-                }))
+        CompletableFuture.supplyAsync(Lang.wrap(() -> type.readAsTree(file)))
                 .thenAcceptAsync(tree -> {
                     setCenter(new NBTTreeView(tree));
-                    setBottom(actions);
+                    // setBottom(actions);
                 }, Schedulers.javafx())
                 .handleAsync((result, e) -> {
                     if (e != null) {
                         LOG.log(Level.WARNING, "Fail to open nbt file", e);
-                        Controllers.dialog(
-                                i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e), null,
-                                MessageDialogPane.MessageType.WARNING,
-                                cancelButton::fire
-                        );
+                        Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e), null, MessageDialogPane.MessageType.WARNING, cancelButton::fire);
                     }
                     return null;
                 }, Schedulers.javafx());
