@@ -1,9 +1,24 @@
 package org.jackhuang.hmcl.util;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+
 import java.util.Objects;
 
-public final class Holder<T> {
+public final class Holder<T> implements InvalidationListener {
     public T value;
+
+    public Holder() {
+    }
+
+    public Holder(T value) {
+        this.value = value;
+    }
+
+    @Override
+    public void invalidated(Observable observable) {
+        // no-op
+    }
 
     @Override
     public int hashCode() {

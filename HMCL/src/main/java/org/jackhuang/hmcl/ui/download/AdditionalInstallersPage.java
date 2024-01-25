@@ -87,6 +87,7 @@ class AdditionalInstallersPage extends InstallersPage {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolvePreservingPatches(repository));
         String game = analyzer.getVersion(MINECRAFT).orElse(null);
         String forge = analyzer.getVersion(FORGE).orElse(null);
+        String neoForge = analyzer.getVersion(NEO_FORGE).orElse(null);
         String liteLoader = analyzer.getVersion(LITELOADER).orElse(null);
         String optiFine = analyzer.getVersion(OPTIFINE).orElse(null);
         String fabric = analyzer.getVersion(FABRIC).orElse(null);
@@ -95,7 +96,7 @@ class AdditionalInstallersPage extends InstallersPage {
         String quiltApi = analyzer.getVersion(QUILT_API).orElse(null);
 
         InstallerItem[] libraries = group.getLibraries();
-        String[] versions = new String[]{game, forge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
+        String[] versions = new String[]{game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
 
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);
 
