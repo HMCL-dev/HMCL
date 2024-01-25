@@ -26,7 +26,6 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.AggregatedObservableList;
@@ -38,6 +37,9 @@ public class TwoLineListItem extends VBox {
     private final StringProperty title = new SimpleStringProperty(this, "title");
     private final ObservableList<String> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
+
+    private final ObservableList<Node> tagLabels;
+    private final AggregatedObservableList<Node> firstLineChildren;
 
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
@@ -56,14 +58,14 @@ public class TwoLineListItem extends VBox {
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
-        ObservableList<Node> tagLabels = MappedObservableList.create(tags, tag -> {
+        tagLabels = MappedObservableList.create(tags, tag -> {
             Label tagLabel = new Label();
             tagLabel.getStyleClass().add("tag");
             tagLabel.setText(tag);
             HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
             return tagLabel;
         });
-        AggregatedObservableList<Node> firstLineChildren = new AggregatedObservableList<>();
+        firstLineChildren = new AggregatedObservableList<>();
         firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
         firstLineChildren.appendList(tagLabels);
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
@@ -83,9 +85,6 @@ public class TwoLineListItem extends VBox {
         });
 
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-
-        this.minWidthProperty().set(0);
-        HBox.setHgrow(this, Priority.SOMETIMES);
     }
 
     public String getTitle() {
