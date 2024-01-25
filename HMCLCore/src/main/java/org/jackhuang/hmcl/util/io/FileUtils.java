@@ -364,9 +364,9 @@ public final class FileUtils {
      * @return true if the method exists.
      */
     public static boolean isMovingToTrashSupported() {
-       if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-           return true;
-       }
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            return true;
+        }
 
         try {
             java.awt.Desktop.class.getMethod("moveToTrash", File.class);
