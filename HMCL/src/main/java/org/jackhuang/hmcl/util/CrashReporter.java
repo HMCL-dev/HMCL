@@ -23,8 +23,8 @@ import javafx.scene.control.Alert.AlertType;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
 import org.jackhuang.hmcl.ui.CrashWindow;
-import org.jackhuang.hmcl.upgrade.IntegrityChecker;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.hmcl.IntegrityChecker;
+import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author huangyuhui
  */
-public class CrashReporter implements Thread.UncaughtExceptionHandler {
+public final class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     // Lazy initialization resources
     private static final class Hole {
@@ -97,13 +97,11 @@ public class CrashReporter implements Thread.UncaughtExceptionHandler {
             if (!report.shouldBeReport())
                 return;
 
-            String text = report.getDisplayText();
-
-            LOG.log(Level.SEVERE, text);
+            LOG.log(Level.SEVERE, report.getDisplayText());
             Platform.runLater(() -> {
                 if (checkThrowable(e)) {
                     if (showCrashWindow) {
-                        new CrashWindow(text).show();
+                        new CrashWindow(report).show();
                     }
                     if (!UpdateChecker.isOutdated() && IntegrityChecker.isSelfVerified()) {
                         reportToServer(report);

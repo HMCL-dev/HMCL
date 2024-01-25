@@ -43,7 +43,9 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -52,7 +54,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -125,7 +126,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
 
-        // https://github.com/huanghongxun/HMCL/issues/938
+        // https://github.com/HMCL-dev/HMCL/issues/938
         System.gc();
     }
 
@@ -263,34 +264,43 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newImage("/assets/img/grass.png");
+            return VersionIconType.DEFAULT.getIcon();
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
-        VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
+        VersionIconType iconType = vs != null ? Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
             File iconFile = getVersionIconFile(id);
-            if (iconFile.exists())
-                return new Image("file:" + iconFile.getAbsolutePath());
-            else if (LibraryAnalyzer.isModded(this, version)) {
+            if (iconFile.exists()) {
+                try (InputStream inputStream = new FileInputStream(iconFile)) {
+                    return new Image(inputStream);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "Failed to load version icon of " + id, e);
+                }
+            }
+
+            if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return newImage("/assets/img/fabric.png");
+                    return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return newImage("/assets/img/forge.png");
+                    return VersionIconType.FORGE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
+                    return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return newImage("/assets/img/quilt.png");
+                    return VersionIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return newImage("/assets/img/command.png");
+                    return VersionIconType.OPTIFINE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return newImage("/assets/img/chicken.png");
+                    return VersionIconType.CHICKEN.getIcon();
                 else
-                    return newImage("/assets/img/furnace.png");
-            } else
-                return newImage("/assets/img/grass.png");
+                    return VersionIconType.FURNACE.getIcon();
+            }
+
+            return VersionIconType.DEFAULT.getIcon();
         } else {
-            return newImage(iconType.getResourceUrl());
+            return iconType.getIcon();
         }
     }
 

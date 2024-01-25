@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  *
  * @param <T> value type
  */
-public class Lazy<T> {
+public final class Lazy<T> {
     private Supplier<T> supplier;
     private T value = null;
 
@@ -40,5 +40,4 @@ public class Lazy<T> {
         }
         return value;
     }
-
 }

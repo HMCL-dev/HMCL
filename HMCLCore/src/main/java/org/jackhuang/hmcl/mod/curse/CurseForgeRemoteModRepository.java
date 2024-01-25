@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.MurmurHash2;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +43,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
+
+    private static final int WORD_PERFECT_MATCH_WEIGHT = 50;
 
     public static boolean isAvailable() {
         return !apiKey.isEmpty();
@@ -91,7 +95,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public Stream<RemoteMod> search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+    public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
         if (category != null) categoryId = ((CurseAddon.Category) category.getSelf()).getId();
         Response<List<CurseAddon>> response = HttpRequest.GET(PREFIX + "/v1/mods/search",
@@ -102,12 +106,37 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                         pair("searchFilter", searchFilter),
                         pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
                         pair("sortOrder", toSortOrder(sortOrder)),
-                        pair("index", Integer.toString(pageOffset)),
+                        pair("index", Integer.toString(pageOffset * pageSize)),
                         pair("pageSize", Integer.toString(pageSize)))
                 .header("X-API-KEY", apiKey)
                 .getJson(new TypeToken<Response<List<CurseAddon>>>() {
                 }.getType());
-        return response.getData().stream().map(CurseAddon::toMod);
+        Stream<RemoteMod> res = response.getData().stream().map(CurseAddon::toMod);
+        if (sortType != SortType.NAME || searchFilter.isEmpty()) {
+            return new SearchResult(res, (int)Math.ceil((double)response.pagination.totalCount / pageSize));
+        }
+
+        // https://github.com/HMCL-dev/HMCL/issues/1549
+        String lowerCaseSearchFilter = searchFilter.toLowerCase();
+        Map<String, Integer> searchFilterWords = new HashMap<>();
+        for (String s : StringUtils.tokenize(lowerCaseSearchFilter)) {
+            searchFilterWords.put(s, searchFilterWords.getOrDefault(s, 0) + 1);
+        }
+
+        StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
+
+        return new SearchResult(res.map(remoteMod -> {
+            String lowerCaseResult = remoteMod.getTitle().toLowerCase();
+            int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
+
+            for (String s : StringUtils.tokenize(lowerCaseResult)) {
+                if (searchFilterWords.containsKey(s)) {
+                    diff -= WORD_PERFECT_MATCH_WEIGHT * searchFilterWords.get(s) * s.length();
+                }
+            }
+
+            return pair(remoteMod, diff);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), res, response.pagination.totalCount);
     }
 
     @Override

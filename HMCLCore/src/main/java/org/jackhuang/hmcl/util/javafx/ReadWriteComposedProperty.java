@@ -27,12 +27,13 @@ import javafx.beans.value.WeakChangeListener;
 /**
  * @author yushijinhun
  */
-public class ReadWriteComposedProperty<T> extends SimpleObjectProperty<T> {
+public final class ReadWriteComposedProperty<T> extends SimpleObjectProperty<T> {
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final ObservableValue<T> readSource;
     private final Consumer<T> writeTarget;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private ChangeListener<T> listener;
 
     public ReadWriteComposedProperty(ObservableValue<T> readSource, Consumer<T> writeTarget) {

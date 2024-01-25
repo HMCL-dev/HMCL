@@ -30,7 +30,7 @@ import javafx.util.StringConverter;
 /**
  * @author yushijinhun
  */
-public class SafeStringConverter<S extends T, T> extends StringConverter<T> {
+public final class SafeStringConverter<S extends T, T> extends StringConverter<T> {
 
     public static SafeStringConverter<Integer, Number> fromInteger() {
         return new SafeStringConverter<Integer, Number>(Integer::parseInt, NumberFormatException.class)
@@ -48,10 +48,10 @@ public class SafeStringConverter<S extends T, T> extends StringConverter<T> {
                 .fallbackTo(0.0);
     }
 
-    private ExceptionalFunction<String, S, ?> converter;
-    private Class<?> malformedExceptionClass;
+    private final ExceptionalFunction<String, S, ?> converter;
+    private final Class<?> malformedExceptionClass;
     private S fallbackValue = null;
-    private List<Predicate<S>> restrictions = new ArrayList<>();
+    private final List<Predicate<S>> restrictions = new ArrayList<>();
 
     public <E extends Exception> SafeStringConverter(ExceptionalFunction<String, S, E> converter, Class<E> malformedExceptionClass) {
         this.converter = converter;
@@ -94,7 +94,7 @@ public class SafeStringConverter<S extends T, T> extends StringConverter<T> {
         return Optional.of(converted);
     }
 
-    protected boolean filter(S value) {
+    private boolean filter(S value) {
         for (Predicate<S> restriction : restrictions) {
             if (!restriction.test(value)) {
                 return false;

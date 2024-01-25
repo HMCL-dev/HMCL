@@ -85,30 +85,30 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         return stackPane;
     }
 
-    public static JFXButton createToolbarButton(String text, SVG.SVGIcon creator, Runnable onClick) {
+    public static JFXButton createToolbarButton(String text, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
         ret.textFillProperty().bind(Theme.foregroundFillBinding());
-        ret.setGraphic(wrap(creator.createIcon(Theme.foregroundFillBinding(), -1, -1)));
+        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1, -1)));
         ret.setText(text);
         ret.setOnMouseClicked(e -> onClick.run());
         return ret;
     }
 
-    public static JFXButton createToolbarButton2(String text, SVG.SVGIcon creator, Runnable onClick) {
+    public static JFXButton createToolbarButton2(String text, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(creator.createIcon(Theme.blackFillBinding(), -1, -1)));
+        ret.setGraphic(wrap(svg.createIcon(Theme.blackFill(), -1, -1)));
         ret.setText(text);
         ret.setOnMouseClicked(e -> onClick.run());
         return ret;
     }
 
-    public static JFXButton createDecoratorButton(String tooltip, SVG.SVGIcon creator, Runnable onClick) {
+    public static JFXButton createDecoratorButton(String tooltip, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-decorator-button");
         ret.textFillProperty().bind(Theme.foregroundFillBinding());
-        ret.setGraphic(wrap(creator.createIcon(Theme.foregroundFillBinding(), -1, -1)));
+        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1, -1)));
         FXUtils.installFastTooltip(ret, tooltip);
         ret.setOnMouseClicked(e -> onClick.run());
         return ret;

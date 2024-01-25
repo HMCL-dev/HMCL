@@ -208,12 +208,12 @@ public class MaintainTask extends Task<Version> {
         LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
 
-        if (!libraryAnalyzer.has(FORGE)) return version;
+        if (!libraryAnalyzer.has(FORGE) && !libraryAnalyzer.has(NEO_FORGE)) return version;
 
         Optional<String> bslVersion = libraryAnalyzer.getVersion(BOOTSTRAP_LAUNCHER);
 
         if (bslVersion.isPresent()) {
-            if (VersionNumber.VERSION_COMPARATOR.compare(bslVersion.get(), "0.1.17") < 0) {
+            if (VersionNumber.compare(bslVersion.get(), "0.1.17") < 0) {
                 // The default ignoreList will be applied to all components of libraries in classpath,
                 // so if game directory located in some directory like /Users/asm, all libraries will be ignored,
                 // which is not expected. We fix this here.
@@ -293,7 +293,7 @@ public class MaintainTask extends Task<Version> {
     public static Version unique(Version version) {
         List<Library> libraries = new ArrayList<>();
 
-        SimpleMultimap<String, Integer> multimap = new SimpleMultimap<String, Integer>(HashMap::new, ArrayList::new);
+        SimpleMultimap<String, Integer, List<Integer>> multimap = new SimpleMultimap<>(HashMap::new, ArrayList::new);
 
         for (Library library : version.getLibraries()) {
             String id = library.getGroupId() + ":" + library.getArtifactId();

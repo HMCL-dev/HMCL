@@ -15,21 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.javafx;
+package org.jackhuang.hmcl.upgrade.hmcl;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
+import org.jackhuang.hmcl.Metadata;
 
-class ReferenceHolder implements InvalidationListener {
-    @SuppressWarnings("unused")
-    private Object ref;
+public enum UpdateChannel {
+    STABLE("stable"),
+    DEVELOPMENT("dev"),
+    NIGHTLY("nightly");
 
-    public ReferenceHolder(Object ref) {
-        this.ref = ref;
+    public final String channelName;
+
+    UpdateChannel(String channelName) {
+        this.channelName = channelName;
     }
 
-    @Override
-    public void invalidated(Observable observable) {
-        // no-op
+    public static UpdateChannel getChannel() {
+        if (Metadata.isDev()) {
+            return DEVELOPMENT;
+        } else if (Metadata.isNightly()) {
+            return NIGHTLY;
+        } else {
+            return STABLE;
+        }
     }
 }

@@ -30,12 +30,12 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
@@ -47,7 +47,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public class InstallerItem extends Control {
     private final String id;
-    private final String imageUrl;
+    private final VersionIconType iconType;
     public final StringProperty libraryVersion = new SimpleStringProperty();
     public final StringProperty incompatibleLibraryName = new SimpleStringProperty();
     public final StringProperty dependencyName = new SimpleStringProperty();
@@ -74,27 +74,30 @@ public class InstallerItem extends Control {
 
         switch (id) {
             case "game":
-                imageUrl = "/assets/img/grass.png";
+                iconType = VersionIconType.GRASS;
                 break;
             case "fabric":
             case "fabric-api":
-                imageUrl = "/assets/img/fabric.png";
+                iconType = VersionIconType.FABRIC;
                 break;
             case "forge":
-                imageUrl = "/assets/img/forge.png";
+                iconType = VersionIconType.FORGE;
                 break;
             case "liteloader":
-                imageUrl = "/assets/img/chicken.png";
+                iconType = VersionIconType.CHICKEN;
                 break;
             case "optifine":
-                imageUrl = "/assets/img/command.png";
+                iconType = VersionIconType.OPTIFINE;
                 break;
             case "quilt":
             case "quilt-api":
-                imageUrl = "/assets/img/quilt.png";
+                iconType = VersionIconType.QUILT;
+                break;
+            case "neoforge":
+                iconType = VersionIconType.NEO_FORGE;
                 break;
             default:
-                imageUrl = null;
+                iconType = null;
                 break;
         }
     }
@@ -123,6 +126,7 @@ public class InstallerItem extends Control {
         public final InstallerItem fabric = new InstallerItem(FABRIC);
         public final InstallerItem fabricApi = new InstallerItem(FABRIC_API);
         public final InstallerItem forge = new InstallerItem(FORGE);
+        public final InstallerItem neoForge = new InstallerItem(NEO_FORGE);
         public final InstallerItem liteLoader = new InstallerItem(LITELOADER);
         public final InstallerItem optiFine = new InstallerItem(OPTIFINE);
         public final InstallerItem quilt = new InstallerItem(QUILT);
@@ -132,30 +136,41 @@ public class InstallerItem extends Control {
             forge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
                 if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
+                if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
                 return null;
-            }, fabric.libraryVersion, quilt.libraryVersion));
+            }, fabric.libraryVersion, quilt.libraryVersion, neoForge.libraryVersion));
+
+            neoForge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
+                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
+                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
+                if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
+                return null;
+            }, fabric.libraryVersion, quilt.libraryVersion, forge.libraryVersion));
 
             liteLoader.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
                 if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
+                if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
                 return null;
-            }, fabric.libraryVersion, quilt.libraryVersion));
+            }, fabric.libraryVersion, quilt.libraryVersion, neoForge.libraryVersion));
 
             optiFine.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
                 if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
+                if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
                 return null;
-            }, fabric.libraryVersion, quilt.libraryVersion));
+            }, fabric.libraryVersion, quilt.libraryVersion, neoForge.libraryVersion));
 
             for (InstallerItem fabric : new InstallerItem[]{fabric, fabricApi}) {
                 fabric.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                     if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
+                    if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
                     if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
                     if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
                     if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
                     if (quiltApi.libraryVersion.get() != null) return QUILT_API.getPatchId();
                     return null;
-                }, forge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion, quilt.libraryVersion, quiltApi.libraryVersion));
+                }, forge.libraryVersion, neoForge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion, quilt.libraryVersion, quiltApi.libraryVersion));
             }
 
             fabricApi.dependencyName.bind(Bindings.createStringBinding(() -> {
@@ -168,10 +183,11 @@ public class InstallerItem extends Control {
                     if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
                     if (fabricApi.libraryVersion.get() != null) return FABRIC_API.getPatchId();
                     if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
+                    if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
                     if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
                     if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
                     return null;
-                }, fabric.libraryVersion, fabricApi.libraryVersion, forge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion));
+                }, fabric.libraryVersion, fabricApi.libraryVersion, forge.libraryVersion, neoForge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion));
             }
 
             quiltApi.dependencyName.bind(Bindings.createStringBinding(() -> {
@@ -181,7 +197,7 @@ public class InstallerItem extends Control {
         }
 
         public InstallerItem[] getLibraries() {
-            return new InstallerItem[]{game, forge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
+            return new InstallerItem[]{game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
         }
     }
 
@@ -206,8 +222,8 @@ public class InstallerItem extends Control {
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
-            if (control.imageUrl != null) {
-                ImageView view = new ImageView(new Image(control.imageUrl));
+            if (control.iconType != null) {
+                ImageView view = new ImageView(control.iconType.getIcon());
                 Node node = FXUtils.limitingSize(view, 32, 32);
                 node.setMouseTransparent(true);
                 node.getStyleClass().add("installer-item-image");
@@ -252,7 +268,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton closeButton = new JFXButton();
-            closeButton.setGraphic(SVG.close(Theme.blackFillBinding(), -1, -1));
+            closeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1));
             closeButton.getStyleClass().add("toggle-icon4");
             closeButton.visibleProperty().bind(control.removable);
             closeButton.managedProperty().bind(closeButton.visibleProperty());
@@ -261,8 +277,8 @@ public class InstallerItem extends Control {
 
             JFXButton arrowButton = new JFXButton();
             arrowButton.graphicProperty().bind(Bindings.createObjectBinding(() -> control.upgradable.get()
-                            ? SVG.update(Theme.blackFillBinding(), -1, -1)
-                            : SVG.arrowRight(Theme.blackFillBinding(), -1, -1),
+                            ? SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1)
+                            : SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1),
                     control.upgradable));
             arrowButton.getStyleClass().add("toggle-icon4");
             arrowButton.visibleProperty().bind(Bindings.createBooleanBinding(

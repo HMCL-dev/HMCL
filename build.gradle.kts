@@ -20,6 +20,7 @@ subprojects {
         }
         mavenCentral()
         maven(url = "https://jitpack.io")
+        maven(url = "https://libraries.minecraft.net")
     }
 
     tasks.withType<JavaCompile> {
@@ -82,6 +83,13 @@ tasks.create("checkTranslations") {
         zh_CN.forEach {
             if (!zh.containsKey(it.key)) {
                 project.logger.warn("I18N_zh.properties missing key '${it.key}'")
+                success = false
+            }
+        }
+
+        zh_CN.forEach {
+            if (it.value.toString().contains("帐户")) {
+                project.logger.warn("The misspelled '帐户' in '${it.key}' should be replaced by '账户'")
                 success = false
             }
         }

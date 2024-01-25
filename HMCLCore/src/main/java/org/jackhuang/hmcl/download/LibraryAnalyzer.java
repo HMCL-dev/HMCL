@@ -17,9 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
-import org.jackhuang.hmcl.game.VersionProvider;
+import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,8 +99,9 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         if (type == null) return version;
 
         List<Library> libraries = new ArrayList<>();
-        for (Library library : version.getLibraries()) {
-            if (type.matchLibrary(library)) {
+        List<Library> rawLibraries = version.getLibraries();
+        for (Library library : rawLibraries) {
+            if (type.matchLibrary(library, rawLibraries)) {
                 // skip
             } else {
                 libraries.add(library);
@@ -112,7 +112,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
     /**
      * Remove library by library id
-     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"
+     *
+     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforge"
      * @return this
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
@@ -135,10 +136,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
 
-        for (Library library : version.resolve(null).getLibraries()) {
+        List<Library> rawLibraries = version.resolve(null).getLibraries();
+        for (Library library : rawLibraries) {
             for (LibraryType type : LibraryType.values()) {
-                if (type.matchLibrary(library)) {
-                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(library.getVersion())));
+                if (type.matchLibrary(library, rawLibraries)) {
+                    libraries.put(type.getPatchId(), pair(library, type.patchVersion(version, library.getVersion())));
                     break;
                 }
             }
@@ -161,37 +163,107 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 || mainClass.startsWith("cpw.mods"));
     }
 
+    public Set<ModLoaderType> getModLoaders() {
+        return Arrays.stream(LibraryType.values())
+                .filter(LibraryType::isModLoader)
+                .filter(this::has)
+                .map(LibraryType::getModLoaderType)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
     public enum LibraryType {
-        MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$")),
-        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader")),
-        FABRIC_API(true, "fabric-api", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-api")),
-        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)")) {
+        MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$"), null),
+        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"), ModLoaderType.FABRIC),
+        FABRIC_API(true, "fabric-api", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-api"), null),
+        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.FORGE) {
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            public String patchVersion(String libraryVersion) {
+            public String patchVersion(Version gameVersion, String libraryVersion) {
                 Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
                 if (matcher.find()) {
                     return matcher.group("forge");
                 }
-                return super.patchVersion(libraryVersion);
+                return super.patchVersion(gameVersion, libraryVersion);
+            }
+
+            @Override
+            public boolean matchLibrary(Library library, List<Library> libraries) {
+                for (Library l : libraries) {
+                    if (NEO_FORGE.matchLibrary(l, libraries)) {
+                        return false;
+                    }
+                }
+                return super.matchLibrary(library, libraries);
             }
         },
-        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader")),
-        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$")),
-        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader")),
-        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api")),
-        BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"));
+        NEO_FORGE(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED) {
+            private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
+
+            @Override
+            public String patchVersion(Version gameVersion, String libraryVersion) {
+                Matcher matcher = NEO_FORGE_VERSION_MATCHER.matcher(libraryVersion);
+                if (matcher.find()) {
+                    return matcher.group("forge");
+                }
+
+                String res = scanVersion(gameVersion);
+                if (res != null) {
+                    return res;
+                }
+
+                for (Version patch : gameVersion.getPatches()) {
+                    res = scanVersion(patch);
+                    if (res != null) {
+                        return res;
+                    }
+                }
+
+                return super.patchVersion(gameVersion, libraryVersion);
+            }
+
+            private String scanVersion(Version version) {
+                Optional<Arguments> optArgument = version.getArguments();
+                if (!optArgument.isPresent()) {
+                    return null;
+                }
+                List<Argument> gameArguments = optArgument.get().getGame();
+                if (gameArguments == null) {
+                    return null;
+                }
+
+                for (int i = 0; i < gameArguments.size() - 1; i++) {
+                    Argument argument = gameArguments.get(i);
+                    if (argument instanceof StringArgument && "--fml.neoForgeVersion".equals(((StringArgument) argument).getArgument())) {
+                        Argument next = gameArguments.get(i + 1);
+                        if (next instanceof StringArgument) {
+                            return ((StringArgument) next).getArgument();
+                        }
+                        return null; // Normally, there should not be two --fml.neoForgeVersion argument.
+                    }
+                }
+                return null;
+            }
+
+        },
+        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader"), ModLoaderType.LITE_LOADER),
+        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"), null),
+        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader"), ModLoaderType.QUILT),
+        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api"), null),
+        BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"), null);
 
         private final boolean modLoader;
         private final String patchId;
         private final Pattern group, artifact;
+        private final ModLoaderType modLoaderType;
 
-        LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact) {
+        LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact, ModLoaderType modLoaderType) {
             this.modLoader = modLoader;
             this.patchId = patchId;
             this.group = group;
             this.artifact = artifact;
+            this.modLoaderType = modLoaderType;
         }
 
         public boolean isModLoader() {
@@ -202,6 +274,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return patchId;
         }
 
+        public ModLoaderType getModLoaderType() {
+            return modLoaderType;
+        }
+
         public static LibraryType fromPatchId(String patchId) {
             for (LibraryType type : values())
                 if (type.getPatchId().equals(patchId))
@@ -209,11 +285,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return null;
         }
 
-        public boolean matchLibrary(Library library) {
+        public boolean matchLibrary(Library library, List<Library> libraries) {
             return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
         }
 
-        public String patchVersion(String libraryVersion) {
+        public String patchVersion(Version gameVersion, String libraryVersion) {
             return libraryVersion;
         }
     }
@@ -243,14 +319,14 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
     public static final String BOOTSTRAP_LAUNCHER_MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher";
 
-    public static final String[] FORGE_TWEAKERS = new String[] {
-        "net.minecraftforge.legacy._1_5_2.LibraryFixerTweaker", // 1.5.2
-        "cpw.mods.fml.common.launcher.FMLTweaker", // 1.6.1 ~ 1.7.10
-        "net.minecraftforge.fml.common.launcher.FMLTweaker" // 1.8 ~ 1.12.2
+    public static final String[] FORGE_TWEAKERS = new String[]{
+            "net.minecraftforge.legacy._1_5_2.LibraryFixerTweaker", // 1.5.2
+            "cpw.mods.fml.common.launcher.FMLTweaker", // 1.6.1 ~ 1.7.10
+            "net.minecraftforge.fml.common.launcher.FMLTweaker" // 1.8 ~ 1.12.2
     };
-    public static final String[] OPTIFINE_TWEAKERS = new String[] {
-        "optifine.OptiFineTweaker",
-        "optifine.OptiFineForgeTweaker"
+    public static final String[] OPTIFINE_TWEAKERS = new String[]{
+            "optifine.OptiFineTweaker",
+            "optifine.OptiFineForgeTweaker"
     };
     public static final String LITELOADER_TWEAKER = "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
 }

@@ -92,9 +92,9 @@ public final class LogExporter {
 
             for (Path file : stream) {
                 if (Files.isRegularFile(file)) {
-                    FileTime time = Files.readAttributes(file, BasicFileAttributes.class).creationTime();
+                    FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
-                        String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file));
+                        String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
                         zipper.putTextFile(crashLog, file.getFileName().toString());
                     }
                 }
