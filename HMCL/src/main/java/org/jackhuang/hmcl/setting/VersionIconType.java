@@ -27,6 +27,7 @@ public enum VersionIconType {
     CHEST("/assets/img/chest.webp"),
     CHICKEN("/assets/img/chicken.webp"),
     COMMAND("/assets/img/command.webp"),
+    OPTIFINE("/assets/img/optifine.webp"),
     CRAFT_TABLE("/assets/img/craft_table.webp"),
     FABRIC("/assets/img/fabric.webp"),
     FORGE("/assets/img/forge.webp"),

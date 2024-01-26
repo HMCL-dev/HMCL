@@ -20,19 +20,25 @@ package org.jackhuang.hmcl.util.io;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 /**
  * @author huang
@@ -293,6 +299,56 @@ public final class FileUtils {
      * @see FileUtils#isMovingToTrashSupported()
      */
     public static boolean moveToTrash(File file) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            if (!file.exists()) {
+                return false;
+            }
+
+            String xdgData = System.getenv("XDG_DATA_HOME");
+
+            Path trashDir;
+            if (StringUtils.isNotBlank(xdgData)) {
+                trashDir = Paths.get(xdgData, "Trash");
+            } else {
+                trashDir = Paths.get(System.getProperty("user.home"), ".local/share/Trash");
+            }
+
+            Path infoDir = trashDir.resolve("info");
+            Path filesDir = trashDir.resolve("files");
+
+            try {
+                Files.createDirectories(infoDir);
+                Files.createDirectories(filesDir);
+
+                String name = file.getName();
+
+                Path infoFile = infoDir.resolve(name + ".trashinfo");
+                Path targetFile = filesDir.resolve(name);
+
+                int n = 0;
+                while (Files.exists(infoFile) || Files.exists(targetFile)) {
+                    n++;
+                    infoFile = infoDir.resolve(name + "." + n + ".trashinfo");
+                    targetFile = filesDir.resolve(name + "." + n);
+                }
+
+                String time = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+                if (file.isDirectory()) {
+                    FileUtils.copyDirectory(file.toPath(), targetFile);
+                } else {
+                    FileUtils.copyFile(file.toPath(), targetFile);
+                }
+
+                FileUtils.writeText(infoFile, "[Trash Info]\nPath=" + file.getAbsolutePath() + "\nDeletionDate=" + time + "\n");
+                FileUtils.forceDelete(file);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to move " + file + " to trash", e);
+                return false;
+            }
+
+            return true;
+        }
+
         try {
             java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
             Method moveToTrash = desktop.getClass().getMethod("moveToTrash", File.class);
@@ -309,6 +365,10 @@ public final class FileUtils {
      * @return true if the method exists.
      */
     public static boolean isMovingToTrashSupported() {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            return true;
+        }
+
         try {
             java.awt.Desktop.class.getMethod("moveToTrash", File.class);
             return true;

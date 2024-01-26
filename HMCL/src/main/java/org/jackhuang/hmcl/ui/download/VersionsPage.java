@@ -323,7 +323,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 if (remoteVersion instanceof LiteLoaderRemoteVersion)
                     iconType = VersionIconType.CHICKEN;
                 else if (remoteVersion instanceof OptiFineRemoteVersion)
-                    iconType = VersionIconType.COMMAND;
+                    iconType = VersionIconType.OPTIFINE;
                 else if (remoteVersion instanceof ForgeRemoteVersion)
                     iconType = VersionIconType.FORGE;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)

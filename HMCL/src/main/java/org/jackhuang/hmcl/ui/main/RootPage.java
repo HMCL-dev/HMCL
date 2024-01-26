@@ -39,9 +39,12 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
+import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.ui.nbt.NBTHelper;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -51,10 +54,12 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -85,12 +90,24 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     public MainPage getMainPage() {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
-            FXUtils.applyDragListener(mainPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-                File modpack = modpacks.get(0);
-                Controllers.getDecorator().startWizard(
-                        new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack),
-                        i18n("install.modpack"));
-            });
+            FXUtils.applyDragListener(mainPage,
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTHelper.isNBTFileByExtension(file),
+                    modpacks -> {
+                        File file = modpacks.get(0);
+                        if (ModpackHelper.isFileModpackByExtension(file)) {
+                            Controllers.getDecorator().startWizard(
+                                    new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
+                                    i18n("install.modpack"));
+                        } else if (NBTHelper.isNBTFileByExtension(file)) {
+                            try {
+                                Controllers.navigate(new NBTEditorPage(file));
+                            } catch (Throwable e) {
+                                LOG.log(Level.WARNING, "Fail to open nbt file", e);
+                                Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
+                                        i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        }
+                    });
 
             FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());

@@ -291,7 +291,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
                     return VersionIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return VersionIconType.COMMAND.getIcon();
+                    return VersionIconType.OPTIFINE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
                     return VersionIconType.CHICKEN.getIcon();
                 else
