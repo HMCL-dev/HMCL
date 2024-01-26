@@ -7,7 +7,6 @@ import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import org.apache.commons.compress.utils.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
 import java.util.Arrays;
