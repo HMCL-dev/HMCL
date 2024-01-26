@@ -105,7 +105,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             } catch (IOException ignored) {
             }
         } else {
-            titleIcon.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png", 20, 20, false, false));
+            titleIcon.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png", 32, 32, false, false));
         }
 
         Label titleLabel = new Label(Metadata.FULL_TITLE);
