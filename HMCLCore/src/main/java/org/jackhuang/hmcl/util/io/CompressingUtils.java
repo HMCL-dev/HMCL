@@ -88,30 +88,48 @@ public final class CompressingUtils {
     }
 
     public static Charset findSuitableEncoding(Path zipFile) throws IOException {
-        return findSuitableEncoding(zipFile, null);
-    }
-
-    public static Charset findSuitableEncoding(Path zipFile, Collection<Charset> candidates) throws IOException {
         try (ZipFile zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
-            return findSuitableEncoding(zf, candidates);
+            return findSuitableEncoding(zf);
         }
     }
 
     public static Charset findSuitableEncoding(ZipFile zipFile) throws IOException {
-        return findSuitableEncoding(zipFile, null);
-    }
-
-    public static Charset findSuitableEncoding(ZipFile zipFile, Collection<Charset> candidates) throws IOException {
         if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
         if (OperatingSystem.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, OperatingSystem.NATIVE_CHARSET))
             return OperatingSystem.NATIVE_CHARSET;
 
-        if (candidates == null)
-            candidates = Charset.availableCharsets().values();
+        String[] candidates = {
+                "GB18030",
+                "Big5",
+                "Shift_JIS",
+                "EUC-JP",
+                "ISO-2022-JP",
+                "EUC-KR",
+                "ISO-2022-KR",
+                "KOI8-R",
+                "windows-1251",
+                "x-MacCyrillic",
+                "IBM855",
+                "IBM866",
+                "windows-1252",
+                "ISO-8859-1",
+                "ISO-8859-5",
+                "ISO-8859-7",
+                "ISO-8859-8",
+                "UTF-16LE", "UTF-16BE",
+                "UTF-32LE", "UTF-32BE"
+        };
 
-        for (Charset charset : candidates)
-            if (charset != null && testEncoding(zipFile, charset))
-                return charset;
+        for (String candidate : candidates) {
+            try {
+                Charset charset = Charset.forName(candidate);
+                if (!charset.equals(OperatingSystem.NATIVE_CHARSET) && testEncoding(zipFile, charset)) {
+                    return charset;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
         throw new IOException("Cannot find suitable encoding for the zip.");
     }
 
@@ -125,7 +143,6 @@ public final class CompressingUtils {
 
     public static final class Builder {
         private boolean autoDetectEncoding = false;
-        private Collection<Charset> charsetCandidates;
         private Charset encoding = StandardCharsets.UTF_8;
         private boolean useTempFile = false;
         private final boolean create;
@@ -138,11 +155,6 @@ public final class CompressingUtils {
 
         public Builder setAutoDetectEncoding(boolean autoDetectEncoding) {
             this.autoDetectEncoding = autoDetectEncoding;
-            return this;
-        }
-
-        public Builder setCharsetCandidates(Collection<Charset> charsetCandidates) {
-            this.charsetCandidates = charsetCandidates;
             return this;
         }
 
@@ -159,7 +171,7 @@ public final class CompressingUtils {
         public FileSystem build() throws IOException {
             if (autoDetectEncoding) {
                 if (!testEncoding(zip, encoding)) {
-                    encoding = findSuitableEncoding(zip, charsetCandidates);
+                    encoding = findSuitableEncoding(zip);
                 }
             }
             return createZipFileSystem(zip, create, useTempFile, encoding);
