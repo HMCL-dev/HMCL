@@ -45,7 +45,7 @@ public enum NBTTagType {
             className = tagName.substring(0, idx) + tagName.substring(idx + 1) + "Tag";
         }
 
-        this.iconUrl = "/assets/img/nbt/TAG_" + tagName + ".png";
+        this.iconUrl = "/assets/img/nbt/TAG_" + tagName + ".webp";
         this.tagClassName = className;
     }
 
