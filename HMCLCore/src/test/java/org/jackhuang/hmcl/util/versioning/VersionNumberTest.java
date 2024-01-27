@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static org.jackhuang.hmcl.util.versioning.VersionNumber.isIntVersionNumber;
-import static org.jackhuang.hmcl.util.versioning.VersionNumber.normalize;
+import static org.jackhuang.hmcl.util.versioning.DefaultVersionNumber.isIntVersionNumber;
+import static org.jackhuang.hmcl.util.versioning.DefaultVersionNumber.normalize;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VersionNumberTest {
@@ -71,8 +71,8 @@ public class VersionNumberTest {
     private static void assertLessThan(String s1, String s2) {
         Supplier<String> messageSupplier = () -> String.format("%s should be less than %s", s1, s2);
 
-        VersionNumber v1 = VersionNumber.asVersion(s1);
-        VersionNumber v2 = VersionNumber.asVersion(s2);
+        DefaultVersionNumber v1 = DefaultVersionNumber.asVersion(s1);
+        DefaultVersionNumber v2 = DefaultVersionNumber.asVersion(s2);
 
         assertTrue(v1.compareTo(v2) < 0, messageSupplier);
         assertTrue(v2.compareTo(v1) > 0, messageSupplier);
@@ -94,7 +94,7 @@ public class VersionNumberTest {
 
     @Test
     public void testSorting() {
-        final Comparator<String> comparator = ((Comparator<String>) VersionNumber::compare).thenComparing(String::compareTo);
+        final Comparator<String> comparator = ((Comparator<String>) DefaultVersionNumber::compare).thenComparing(String::compareTo);
         final List<String> input = Collections.unmodifiableList(Arrays.asList(
                 "0",
                 "0.10.0",

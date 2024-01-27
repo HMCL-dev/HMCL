@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
@@ -186,11 +186,11 @@ public final class OptiFineInstallTask extends Task<Version> {
             Path buildofText = fs.getPath("buildof.txt");
             if (Files.exists(buildofText)) {
                 String buildof = FileUtils.readText(buildofText).trim();
-                VersionNumber buildofVer = VersionNumber.asVersion(buildof);
+                DefaultVersionNumber buildofVer = DefaultVersionNumber.asVersion(buildof);
 
                 if (LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
                     // OptiFine H1 Pre2+ is compatible with Forge 1.17
-                    if (buildofVer.compareTo(VersionNumber.asVersion("20210924-190833")) < 0) {
+                    if (buildofVer.compareTo(DefaultVersionNumber.asVersion("20210924-190833")) < 0) {
                         throw new UnsupportedInstallationException(UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2);
                     }
                 }

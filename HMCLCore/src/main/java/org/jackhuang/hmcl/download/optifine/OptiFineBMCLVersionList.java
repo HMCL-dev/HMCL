@@ -21,7 +21,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -69,7 +69,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                             if (StringUtils.isBlank(element.getGameVersion()))
                                 continue;
 
-                            String gameVersion = VersionNumber.normalize(element.getGameVersion());
+                            String gameVersion = DefaultVersionNumber.normalize(element.getGameVersion());
                             versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
                         }
                     } finally {

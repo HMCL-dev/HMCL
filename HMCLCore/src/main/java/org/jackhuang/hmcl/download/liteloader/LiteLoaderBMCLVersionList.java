@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download.liteloader;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -87,7 +87,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                             String gameVersion = entry.getKey();
                             LiteLoaderGameVersions liteLoader = entry.getValue();
 
-                            String gg = VersionNumber.normalize(gameVersion);
+                            String gg = DefaultVersionNumber.normalize(gameVersion);
                             doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
                             doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
                         }

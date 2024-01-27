@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -229,8 +229,8 @@ public class DefaultLauncher extends Launcher {
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                && !StringUtils.isASCII(nativeFolderPath)
-                && gameVersion.isPresent() && VersionNumber.compare(gameVersion.get(), "1.19") < 0) {
+            && !StringUtils.isASCII(nativeFolderPath)
+            && gameVersion.isPresent() && DefaultVersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
         }
@@ -259,7 +259,7 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            if (VersionNumber.compare(gameVersion.orElse("0.0"), "1.20") < 0) {
+            if (DefaultVersionNumber.compare(gameVersion.orElse("0.0"), "1.20") < 0) {
                 res.add("--server");
                 res.add(args[0]);
                 res.add("--port");
@@ -357,7 +357,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     private boolean isUsingLog4j() {
-        return VersionNumber.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
+        return DefaultVersionNumber.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
     }
 
     public File getLog4jConfigurationFile() {
@@ -367,7 +367,7 @@ public class DefaultLauncher extends Launcher {
     public void extractLog4jConfigurationFile() throws IOException {
         File targetFile = getLog4jConfigurationFile();
         InputStream source;
-        if (VersionNumber.compare(repository.getGameVersion(version).orElse("0.0"), "1.12") < 0) {
+        if (DefaultVersionNumber.compare(repository.getGameVersion(version).orElse("0.0"), "1.12") < 0) {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
         } else {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");

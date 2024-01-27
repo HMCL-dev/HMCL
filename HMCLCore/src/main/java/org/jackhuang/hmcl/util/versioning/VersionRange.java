@@ -15,45 +15,45 @@ public final class VersionRange {
     }
 
     public static VersionRange between(String minimum, String maximum) {
-        return between(VersionNumber.asVersion(minimum), VersionNumber.asVersion(maximum));
+        return between(DefaultVersionNumber.asVersion(minimum), DefaultVersionNumber.asVersion(maximum));
     }
 
-    public static VersionRange between(VersionNumber minimum, VersionNumber maximum) {
+    public static VersionRange between(DefaultVersionNumber minimum, DefaultVersionNumber maximum) {
         assert minimum.compareTo(maximum) <= 0;
         return new VersionRange(minimum, maximum);
     }
 
     public static VersionRange atLeast(String minimum) {
-        return atLeast(VersionNumber.asVersion(minimum));
+        return atLeast(DefaultVersionNumber.asVersion(minimum));
     }
 
-    public static VersionRange atLeast(VersionNumber minimum) {
+    public static VersionRange atLeast(DefaultVersionNumber minimum) {
         assert minimum != null;
         return new VersionRange(minimum, null);
     }
 
     public static VersionRange atMost(String maximum) {
-        return atMost(VersionNumber.asVersion(maximum));
+        return atMost(DefaultVersionNumber.asVersion(maximum));
     }
 
-    public static VersionRange atMost(VersionNumber maximum) {
+    public static VersionRange atMost(DefaultVersionNumber maximum) {
         assert maximum != null;
         return new VersionRange(null, maximum);
     }
 
-    private final VersionNumber minimum;
-    private final VersionNumber maximum;
+    private final DefaultVersionNumber minimum;
+    private final DefaultVersionNumber maximum;
 
-    private VersionRange(VersionNumber minimum, VersionNumber maximum) {
+    private VersionRange(DefaultVersionNumber minimum, DefaultVersionNumber maximum) {
         this.minimum = minimum;
         this.maximum = maximum;
     }
 
-    public VersionNumber getMinimum() {
+    public DefaultVersionNumber getMinimum() {
         return minimum;
     }
 
-    public VersionNumber getMaximum() {
+    public DefaultVersionNumber getMaximum() {
         return maximum;
     }
 
@@ -67,10 +67,10 @@ public final class VersionRange {
 
     public boolean contains(String versionNumber) {
         if (versionNumber == null) return false;
-        return contains(VersionNumber.asVersion(versionNumber));
+        return contains(DefaultVersionNumber.asVersion(versionNumber));
     }
 
-    public boolean contains(VersionNumber versionNumber) {
+    public boolean contains(DefaultVersionNumber versionNumber) {
         if (versionNumber == null) return false;
         if (isEmpty()) return false;
         if (isAll()) return true;
@@ -103,7 +103,7 @@ public final class VersionRange {
         if (!isOverlappedBy(that))
             return EMPTY;
 
-        VersionNumber newMinimum;
+        DefaultVersionNumber newMinimum;
         if (this.minimum == null)
             newMinimum = that.minimum;
         else if (that.minimum == null)
@@ -111,7 +111,7 @@ public final class VersionRange {
         else
             newMinimum = this.minimum.max(that.minimum);
 
-        VersionNumber newMaximum;
+        DefaultVersionNumber newMaximum;
         if (this.maximum == null)
             newMaximum = that.maximum;
         else if (that.maximum == null)

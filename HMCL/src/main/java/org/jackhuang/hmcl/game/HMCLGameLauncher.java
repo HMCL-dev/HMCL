@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +84,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             1.11 ~ 12：zh_cn 时正常，zh_CN 时虽然显示了中文但语言设置会错误地显示选择英文
             1.13+    ：zh_cn 时正常，zh_CN 时自动切换为英文
          */
-        VersionNumber gameVersion = VersionNumber.asVersion(repository.getGameVersion(version).orElse("0.0"));
+        DefaultVersionNumber gameVersion = DefaultVersionNumber.asVersion(repository.getGameVersion(version).orElse("0.0"));
         if (gameVersion.compareTo("1.1") < 0) {
             lang = null;
         } else if (gameVersion.compareTo("1.11") < 0) {

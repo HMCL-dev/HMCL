@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -104,7 +104,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return getVersions().stream()
                 .filter(v -> !v.isHidden())
                 .sorted(Comparator.comparing((Version v) -> v.getReleaseTime() == null ? new Date(0L) : v.getReleaseTime())
-                        .thenComparing(v -> VersionNumber.asVersion(v.getId())));
+                        .thenComparing(v -> DefaultVersionNumber.asVersion(v.getId())));
     }
 
     @Override

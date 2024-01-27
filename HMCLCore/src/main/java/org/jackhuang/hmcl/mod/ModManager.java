@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -124,7 +124,7 @@ public final class ModManager {
         if (Files.isDirectory(getModsDirectory())) {
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
-                    if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
+                    if (Files.isDirectory(subitem) && DefaultVersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
                         // If the folder name is game version, forge will search mod in this subdirectory
                         try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                             for (Path subsubitem : subitemDirectoryStream) {
