@@ -174,29 +174,9 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
     public enum LibraryType {
         MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$"), null, new String[0]),
-        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"), ModLoaderType.FABRIC, new String[] {
-                "forge",
-                "neoforge",
-                "liteloader",
-                "optifine",
-                "quilt",
-                "quilt-api"
-        }),
-        FABRIC_API(true, "fabric-api", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-api"), null, new String[] {
-                "forge",
-                "neoforge",
-                "liteloader",
-                "optifine",
-                "quilt",
-                "quilt-api"
-        }),
-        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.FORGE, new String[] {
-                "neoforge",
-                "fabric",
-                "fabric-api",
-                "quilt",
-                "quilt-api"
-        }) {
+        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"), ModLoaderType.FABRIC, FABRIC_INCOMPATIBLE_LIBRARIES),
+        FABRIC_API(true, "fabric-api", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-api"), null, FABRIC_INCOMPATIBLE_LIBRARIES),
+        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.FORGE, FORGE_INCOMPATIBLE_LIBRARIES) {
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
@@ -218,15 +198,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.matchLibrary(library, libraries);
             }
         },
-        NEO_FORGE(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED, new String[] {
-                "forge",
-                "liteloader",
-                "optifine",
-                "fabric",
-                "fabric-api",
-                "quilt",
-                "quilt-api"
-        }) {
+        NEO_FORGE(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED, NEO_FORGE_INCOMPATIBLE_LIBRARIES) {
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
@@ -275,36 +247,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
 
         },
-        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader"), ModLoaderType.LITE_LOADER, new String[] {
-                "neoforge",
-                "fabric",
-                "fabric-api",
-                "quilt",
-                "quilt-api"
-        }),
-        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"), null, new String[] {
-                "neoforge",
-                "fabric",
-                "fabric-api",
-                "quilt",
-                "quilt-api"
-        }),
-        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader"), ModLoaderType.QUILT, new String[] {
-                "forge",
-                "neoforge",
-                "liteloader",
-                "optifine",
-                "fabric",
-                "fabric-api"
-        }),
-        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api"), null, new String[] {
-                "forge",
-                "neoforge",
-                "liteloader",
-                "optifine",
-                "fabric",
-                "fabric-api"
-        }),
+        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader"), ModLoaderType.LITE_LOADER, FORGE_INCOMPATIBLE_LIBRARIES),
+        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"), null, FORGE_INCOMPATIBLE_LIBRARIES),
+        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader"), ModLoaderType.QUILT, QUILT_INCOMPATIBLE_LIBRARIES),
+        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api"), null, QUILT_INCOMPATIBLE_LIBRARIES),
         BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"), null, new String[0]);
 
         private final boolean modLoader;
@@ -381,6 +327,39 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return libraryVersion;
         }
     }
+
+    private final static String[] FORGE_INCOMPATIBLE_LIBRARIES = new String[] {
+            "neoforge",
+            "fabric",
+            "fabric-api",
+            "quilt",
+            "quilt-api"
+    };
+    private final static String[] NEO_FORGE_INCOMPATIBLE_LIBRARIES = new String[] {
+            "forge",
+            "liteloader",
+            "optifine",
+            "fabric",
+            "fabric-api",
+            "quilt",
+            "quilt-api"
+    };
+    private final static String[] FABRIC_INCOMPATIBLE_LIBRARIES = new String[] {
+            "forge",
+            "neoforge",
+            "liteloader",
+            "optifine",
+            "quilt",
+            "quilt-api"
+    };
+    private final static String[] QUILT_INCOMPATIBLE_LIBRARIES = new String[] {
+            "forge",
+            "neoforge",
+            "liteloader",
+            "optifine",
+            "fabric",
+            "fabric-api"
+    };
 
     public static final String VANILLA_MAIN = "net.minecraft.client.main.Main";
     public static final String LAUNCH_WRAPPER_MAIN = "net.minecraft.launchwrapper.Launch";
