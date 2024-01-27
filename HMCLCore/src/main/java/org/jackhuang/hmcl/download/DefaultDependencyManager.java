@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -180,14 +181,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
         return Task
                 .composeAsync(() -> {
-                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(oldVersion);
                     try {
                         Task<Version> task = NeoForgeInstallTask.install(this, oldVersion, installer);
-                        if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                        if (!LibraryAnalyzer.LibraryType.checkCompatibility(LibraryAnalyzer.LibraryType.NEO_FORGE, oldVersion))
                             throw new IncompatibleLibraryInstallerException();
                         return task;
                     } catch (IOException ignore) {
@@ -195,9 +191,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     try {
                         Task<Version> task = ForgeInstallTask.install(this, oldVersion, installer);
-                        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                        if (!LibraryAnalyzer.LibraryType.checkCompatibility(LibraryAnalyzer.LibraryType.FORGE, oldVersion))
                             throw new IncompatibleLibraryInstallerException();
                         return task;
                     } catch (IOException ignore) {
@@ -205,9 +199,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     try {
                         Task<Version> task = OptiFineInstallTask.install(this, oldVersion, installer);
-                        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) ||
-                                analyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                        if (!LibraryAnalyzer.LibraryType.checkCompatibility(LibraryAnalyzer.LibraryType.OPTIFINE, oldVersion))
                             throw new IncompatibleLibraryInstallerException();
                         return task;
                     } catch (IOException ignore) {

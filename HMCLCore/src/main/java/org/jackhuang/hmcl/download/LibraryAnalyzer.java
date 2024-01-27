@@ -173,10 +173,30 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public enum LibraryType {
-        MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$"), null),
-        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"), ModLoaderType.FABRIC),
-        FABRIC_API(true, "fabric-api", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-api"), null),
-        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.FORGE) {
+        MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$"), null, new String[0]),
+        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"), ModLoaderType.FABRIC, new String[] {
+                "forge",
+                "neoforge",
+                "liteloader",
+                "optifine",
+                "quilt",
+                "quilt-api"
+        }),
+        FABRIC_API(true, "fabric-api", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-api"), null, new String[] {
+                "forge",
+                "neoforge",
+                "liteloader",
+                "optifine",
+                "quilt",
+                "quilt-api"
+        }),
+        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.FORGE, new String[] {
+                "neoforge",
+                "fabric",
+                "fabric-api",
+                "quilt",
+                "quilt-api"
+        }) {
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
@@ -198,7 +218,15 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.matchLibrary(library, libraries);
             }
         },
-        NEO_FORGE(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED) {
+        NEO_FORGE(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED, new String[] {
+                "forge",
+                "liteloader",
+                "optifine",
+                "fabric",
+                "fabric-api",
+                "quilt",
+                "quilt-api"
+        }) {
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
@@ -247,23 +275,51 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
 
         },
-        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader"), ModLoaderType.LITE_LOADER),
-        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"), null),
-        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader"), ModLoaderType.QUILT),
-        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api"), null),
-        BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"), null);
+        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader"), ModLoaderType.LITE_LOADER, new String[] {
+                "neoforge",
+                "fabric",
+                "fabric-api",
+                "quilt",
+                "quilt-api"
+        }),
+        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"), null, new String[] {
+                "neoforge",
+                "fabric",
+                "fabric-api",
+                "quilt",
+                "quilt-api"
+        }),
+        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader"), ModLoaderType.QUILT, new String[] {
+                "forge",
+                "neoforge",
+                "liteloader",
+                "optifine",
+                "fabric",
+                "fabric-api"
+        }),
+        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api"), null, new String[] {
+                "forge",
+                "neoforge",
+                "liteloader",
+                "optifine",
+                "fabric",
+                "fabric-api"
+        }),
+        BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"), null, new String[0]);
 
         private final boolean modLoader;
         private final String patchId;
         private final Pattern group, artifact;
         private final ModLoaderType modLoaderType;
+        private final String[] incompatibleLibraries;
 
-        LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact, ModLoaderType modLoaderType) {
+        LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact, ModLoaderType modLoaderType, String[] incompatibleLibraries) {
             this.modLoader = modLoader;
             this.patchId = patchId;
             this.group = group;
             this.artifact = artifact;
             this.modLoaderType = modLoaderType;
+            this.incompatibleLibraries = incompatibleLibraries;
         }
 
         public boolean isModLoader() {
@@ -291,6 +347,18 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
         public String patchVersion(Version gameVersion, String libraryVersion) {
             return libraryVersion;
+        }
+
+        public String[] getIncompatibleLibraries() {
+            return incompatibleLibraries;
+        }
+
+        public static boolean checkCompatibility(LibraryType type, Version version) {
+            for (LibraryAnalyzer.LibraryType libraryType : Arrays.stream(type.getIncompatibleLibraries()).map(id -> Arrays.stream(LibraryAnalyzer.LibraryType.values()).filter(t -> t.getPatchId().equals(id)).toArray(LibraryAnalyzer.LibraryType[]::new)[0]).toArray(LibraryAnalyzer.LibraryType[]::new)) {
+                if (LibraryAnalyzer.analyze(version).has(libraryType))
+                    return false;
+            }
+            return true;
         }
     }
 
