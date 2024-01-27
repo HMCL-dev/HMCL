@@ -299,8 +299,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return incompatibleLibraries;
         }
 
-        public static boolean checkCompatibility(LibraryType type, Version version) {
-            for (LibraryAnalyzer.LibraryType libraryType : Arrays.stream(type.getIncompatibleLibraries()).map(id -> Arrays.stream(LibraryAnalyzer.LibraryType.values()).filter(t -> t.getPatchId().equals(id)).toArray(LibraryAnalyzer.LibraryType[]::new)[0]).toArray(LibraryAnalyzer.LibraryType[]::new)) {
+        public boolean checkCompatibility(Version version) {
+            for (LibraryAnalyzer.LibraryType libraryType : Arrays.stream(getIncompatibleLibraries()).map(id -> Arrays.stream(LibraryAnalyzer.LibraryType.values()).filter(t -> t.getPatchId().equals(id)).toArray(LibraryAnalyzer.LibraryType[]::new)[0]).toArray(LibraryAnalyzer.LibraryType[]::new)) {
                 if (LibraryAnalyzer.analyze(version).has(libraryType))
                     return false;
             }

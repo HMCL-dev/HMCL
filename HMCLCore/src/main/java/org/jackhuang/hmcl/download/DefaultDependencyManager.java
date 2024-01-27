@@ -182,7 +182,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 .composeAsync(() -> {
                     try {
                         Task<Version> task = NeoForgeInstallTask.install(this, oldVersion, installer);
-                        if (!LibraryAnalyzer.LibraryType.checkCompatibility(LibraryAnalyzer.LibraryType.NEO_FORGE, oldVersion))
+                        if (!LibraryAnalyzer.LibraryType.NEO_FORGE.checkCompatibility(oldVersion))
                             throw new IncompatibleLibraryInstallerException();
                         return task;
                     } catch (IOException ignore) {
@@ -190,7 +190,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     try {
                         Task<Version> task = ForgeInstallTask.install(this, oldVersion, installer);
-                        if (!LibraryAnalyzer.LibraryType.checkCompatibility(LibraryAnalyzer.LibraryType.FORGE, oldVersion))
+                        if (!LibraryAnalyzer.LibraryType.FORGE.checkCompatibility(oldVersion))
                             throw new IncompatibleLibraryInstallerException();
                         return task;
                     } catch (IOException ignore) {
@@ -198,7 +198,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
                     try {
                         Task<Version> task = OptiFineInstallTask.install(this, oldVersion, installer);
-                        if (!LibraryAnalyzer.LibraryType.checkCompatibility(LibraryAnalyzer.LibraryType.OPTIFINE, oldVersion))
+                        if (!LibraryAnalyzer.LibraryType.OPTIFINE.checkCompatibility(oldVersion))
                             throw new IncompatibleLibraryInstallerException();
                         return task;
                     } catch (IOException ignore) {
