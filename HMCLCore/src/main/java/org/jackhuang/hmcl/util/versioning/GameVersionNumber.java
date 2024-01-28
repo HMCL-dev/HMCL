@@ -293,34 +293,36 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return Integer.compare(this.eaVersion, other.eaVersion);
         }
 
-        int compareToSnapshot(Snapshot other) {
-            int idx = Arrays.binarySearch(Versions.SNAPSHOTS, other);
-            if (idx >= 0) {
-                other = Versions.SNAPSHOTS[idx];
+        int compareToSnapshot(Release prev, Release next) {
+            int c = this.compareToRelease(prev);
+            if (c <= 0) {
+                return -1;
+            }
 
-                int c = this.compareToRelease(other.prevRelease);
-                if (c <= 0) {
-                    return -1;
-                }
-
-                if (other.nextRelease == null) {
-                    return -1;
-                }
-
-                c = this.compareToRelease(other.nextRelease);
+            if (next != null) {
+                c = this.compareToRelease(next);
                 return c >= 0 ? 1 : -1;
+            } else {
+                return -1;
+            }
+        }
+
+        int compareToSnapshot(Snapshot other) {
+            int idx = Arrays.binarySearch(Versions.SNAPSHOT_INTS, other.intValue);
+            if (idx >= 0) {
+                return compareToSnapshot(Versions.SNAPSHOT_PREV[idx], Versions.SNAPSHOT_NEXT[idx]);
             }
 
             idx = -(idx + 1);
-            if (idx == Versions.SNAPSHOTS.length) {
+            if (idx == Versions.SNAPSHOT_INTS.length) {
                 return -1;
             }
 
             if (idx == 0) {
-                return this.compareToRelease(Versions.SNAPSHOTS[0].prevRelease);
+                return this.compareToRelease(Versions.SNAPSHOT_PREV[0]);
             }
 
-            return 0; // TODO
+            return compareToSnapshot(Versions.SNAPSHOT_PREV[idx], Versions.SNAPSHOT_NEXT[idx]);
         }
 
         @Override
@@ -355,7 +357,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     }
 
     static final class Snapshot extends GameVersionNumber {
-
         static Snapshot parse(String value) {
             if (value.length() != 6 || value.charAt(2) != 'w') {
                 throw new IllegalArgumentException(value);
@@ -378,35 +379,20 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return new Snapshot(value, year, week, suffix);
         }
 
-        private final int year;
-        private final int week;
-        private final char suffix;
+        static int toInt(int year, int week, char suffix) {
+            return (year << 16) | (week << 8) | suffix;
+        }
 
-        private Release prevRelease;
-        private Release nextRelease;
+        final int intValue;
 
         Snapshot(String value, int year, int week, char suffix) {
             super(value);
-            this.year = year;
-            this.week = week;
-            this.suffix = suffix;
+            this.intValue = toInt(year, week, suffix);
         }
 
         @Override
         Type getType() {
             return Type.NEW;
-        }
-
-        int compareToSnapshot(Snapshot other) {
-            int c = Integer.compare(this.year, other.year);
-            if (c != 0)
-                return c;
-
-            c = Integer.compare(this.week, other.week);
-            if (c != 0)
-                return c;
-
-            return Character.compare(this.suffix, other.suffix);
         }
 
         @Override
@@ -416,7 +402,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             if (other instanceof Snapshot) {
-                return compareToSnapshot((Snapshot) other);
+                return Integer.compare(this.intValue, ((Snapshot) other).intValue);
             }
 
             if (other instanceof Special) {
@@ -431,12 +417,12 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Snapshot other = (Snapshot) o;
-            return year == other.year && week == other.week && suffix == other.suffix;
+            return this.intValue == other.intValue;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(year, week, suffix);
+            return intValue;
         }
     }
 
@@ -444,9 +430,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         private final VersionNumber versionNumber;
 
-        /*
-         *
-         */
         private GameVersionNumber prev;
         private GameVersionNumber next;
 
@@ -509,7 +492,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 return 1;
             }
 
-            if (nn != null && nn.compareTo(other) <= 0) {
+            if (nn.compareTo(other) <= 0) {
                 return -1;
             }
 
@@ -554,9 +537,12 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     }
 
     static final class Versions {
-        static final Snapshot[] SNAPSHOTS;
         static final HashMap<String, Special> SPECIALS = new HashMap<>();
         static final String[] DEFAULT_GAME_VERSIONS;
+
+        static final int[] SNAPSHOT_INTS;
+        static final Release[] SNAPSHOT_PREV;
+        static final Release[] SNAPSHOT_NEXT;
 
         static {
             List<GameVersionNumber> versions = new ArrayList<>(1024);
@@ -574,16 +560,18 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             Release currentRelease = (Release) versions.get(0);
 
             ArrayDeque<String> defaultGameVersions = new ArrayDeque<>(64);
+
             List<Snapshot> snapshots = new ArrayList<>(1024);
+            List<Release> snapshotPrev = new ArrayList<>(1024);
+            List<Release> snapshotNext = new ArrayList<>(1024);
 
             int n = 0;
             for (int i = 1; i < versions.size(); i++) {
                 GameVersionNumber version = versions.get(i);
                 if (version instanceof Snapshot) {
                     Snapshot snapshot = (Snapshot) version;
-
-                    snapshot.prevRelease = currentRelease;
                     snapshots.add(snapshot);
+                    snapshotPrev.add(currentRelease);
                     n++;
                 } else if (version instanceof Release) {
                     currentRelease = (Release) version;
@@ -592,11 +580,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                         defaultGameVersions.addFirst(currentRelease.value);
                     }
 
-                    for (int j = snapshots.size() - n; j < snapshots.size(); j++) {
-                        snapshots.get(j).nextRelease = currentRelease;
+                    while (n > 0) {
+                        snapshotNext.add(currentRelease);
+                        n--;
                     }
-
-                    n = 0;
                 } else if (version instanceof Special) {
                     Special special = (Special) version;
                     special.prev = versions.get(i - 1);
@@ -609,7 +596,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 }
             }
 
-            SNAPSHOTS = snapshots.toArray(new Snapshot[0]);
+            SNAPSHOT_INTS = new int[snapshots.size()];
+            for (int i = 0; i < snapshots.size(); i++) {
+                SNAPSHOT_INTS[i] = snapshots.get(i).intValue;
+            }
+
+            SNAPSHOT_PREV = snapshotPrev.toArray(new Release[SNAPSHOT_INTS.length]);
+            SNAPSHOT_NEXT = snapshotNext.toArray(new Release[SNAPSHOT_INTS.length]);
+
             DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);
         }
     }
