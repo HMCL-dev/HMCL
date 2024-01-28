@@ -265,36 +265,64 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return Type.NEW;
         }
 
+        int compareToRelease(Release other) {
+            int c = Integer.compare(this.major, other.major);
+            if (c != 0) {
+                return c;
+            }
+
+            c = Integer.compare(this.minor, other.minor);
+            if (c != 0) {
+                return c;
+            }
+
+            c = Integer.compare(this.patch, other.patch);
+            if (c != 0) {
+                return c;
+            }
+
+            c = Integer.compare(this.eaType, other.eaType);
+            if (c != 0) {
+                return c;
+            }
+
+            return Integer.compare(this.eaVersion, other.eaVersion);
+        }
+
         int compareToSnapshot(Snapshot other) {
+            int idx = Arrays.binarySearch(Database.SNAPSHOTS, other);
+            if (idx >= 0) {
+                other = Database.SNAPSHOTS[idx];
+
+                int c = this.compareToRelease(other.prevRelease);
+                if (c <= 0) {
+                    return -1;
+                }
+
+                if (other.nextRelease == null) {
+                    return -1;
+                }
+
+                c = this.compareToRelease(other.nextRelease);
+                return c >= 0 ? 1 : -1;
+            }
+
+            idx = -(idx + 1);
+            if (idx == Database.SNAPSHOTS.length) {
+                return -1;
+            }
+
+            if (idx == 0) {
+                return this.compareToRelease(Database.SNAPSHOTS[0].prevRelease);
+            }
+
             return 0; // TODO
         }
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
             if (other instanceof Release) {
-                Release that = (Release) other;
-
-                int c = Integer.compare(this.major, that.major);
-                if (c != 0) {
-                    return c;
-                }
-
-                c = Integer.compare(this.minor, that.minor);
-                if (c != 0) {
-                    return c;
-                }
-
-                c = Integer.compare(this.patch, that.patch);
-                if (c != 0) {
-                    return c;
-                }
-
-                c = Integer.compare(this.eaType, that.eaType);
-                if (c != 0) {
-                    return c;
-                }
-
-                return Integer.compare(this.eaVersion, that.eaVersion);
+                return compareToRelease((Release) other);
             }
 
             if (other instanceof Snapshot) {
@@ -339,7 +367,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             char suffix = value.charAt(5);
-            if (suffix < 'a' || suffix > 'z') {
+            if ((suffix < 'a' || suffix > 'z') && suffix != '~') {
                 throw new IllegalArgumentException(value);
             }
 
@@ -365,6 +393,18 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return Type.NEW;
         }
 
+        int compareToSnapshot(Snapshot other) {
+            int c = Integer.compare(this.year, other.year);
+            if (c != 0)
+                return c;
+
+            c = Integer.compare(this.week, other.week);
+            if (c != 0)
+                return c;
+
+            return Character.compare(this.suffix, other.suffix);
+        }
+
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
             if (other instanceof Release) {
@@ -372,16 +412,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             if (other instanceof Snapshot) {
-                Snapshot that = (Snapshot) other;
-                int c = Integer.compare(this.year, that.year);
-                if (c != 0)
-                    return c;
-
-                c = Integer.compare(this.week, that.week);
-                if (c != 0)
-                    return c;
-
-                return Character.compare(this.suffix, that.suffix);
+                return compareToSnapshot((Snapshot) other);
             }
 
             if (other instanceof Special) {
