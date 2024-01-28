@@ -14,33 +14,37 @@ import java.util.regex.Pattern;
 public abstract class GameVersionNumber implements Comparable<GameVersionNumber> {
 
     public static GameVersionNumber asGameVersion(String version) {
-        if (version.isEmpty()) {
-            return new Special("");
-        }
-
         try {
-            char ch = version.charAt(0);
-            switch (ch) {
-                case 'r':
-                    return Old.parsePreClassic(version);
-                case 'a':
-                case 'b':
-                case 'c':
-                    return Old.parseAlphaBetaClassic(version);
-                case 'i':
-                    return Old.parseInfdev(version);
-            }
+            if (!version.isEmpty()) {
+                char ch = version.charAt(0);
+                switch (ch) {
+                    case 'r':
+                        return Old.parsePreClassic(version);
+                    case 'a':
+                    case 'b':
+                    case 'c':
+                        return Old.parseAlphaBetaClassic(version);
+                    case 'i':
+                        return Old.parseInfdev(version);
+                }
 
-            if (version.startsWith("1.")) {
-                return Release.parse(version);
-            }
+                if (version.startsWith("1.")) {
+                    return Release.parse(version);
+                }
 
-            if (version.length() == 6 && version.charAt(2) == 'w') {
-                return Snapshot.parse(version);
+                if (version.length() == 6 && version.charAt(2) == 'w') {
+                    return Snapshot.parse(version);
+                }
             }
         } catch (IllegalArgumentException ignore) {
         }
-        return new Special(version);
+
+
+        Special special = Versions.SPECIALS.get(version);
+        if (special == null) {
+            special = new Special(version);
+        }
+        return special;
     }
 
     public static String[] getDefaultGameVersions() {
