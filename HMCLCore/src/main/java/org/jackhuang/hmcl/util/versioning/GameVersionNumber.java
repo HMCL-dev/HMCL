@@ -1,10 +1,12 @@
 package org.jackhuang.hmcl.util.versioning;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -554,8 +556,8 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         private static final HashMap<String, Special> specials = new HashMap<>();
 
         static {
-            List<GameVersionNumber> versions = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.UTF_8))) {
+            List<GameVersionNumber> versions = new ArrayList<>(1024);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
                 for (String line; (line = reader.readLine()) != null && !line.isEmpty(); ) {
                     versions.add(GameVersionNumber.asGameVersion(line));
                 }
@@ -563,32 +565,33 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 throw new InternalError(e);
             }
 
-            Release currentRelease = null;
+            assert versions.size() > 1;
+            assert versions.get(0) instanceof Release;
 
-            List<Snapshot> snapshots = new ArrayList<>(32);
+            Release currentRelease = (Release) versions.get(0);
+
+            List<Snapshot> snapshots = new ArrayList<>(1024);
 
             int n = 0;
-            for (int i = 0; i < versions.size(); i++) {
+            for (int i = 1; i < versions.size(); i++) {
                 GameVersionNumber version = versions.get(i);
                 if (version instanceof Snapshot) {
                     Snapshot snapshot = (Snapshot) version;
 
-                    snapshot.nextRelease = currentRelease;
+                    snapshot.prevRelease = currentRelease;
                     snapshots.add(snapshot);
                     n++;
                 } else if (version instanceof Release) {
                     currentRelease = (Release) version;
 
                     for (int j = snapshots.size() - n; j < snapshots.size(); j++) {
-                        snapshots.get(j).prevRelease = currentRelease;
+                        snapshots.get(j).nextRelease = currentRelease;
                     }
 
                     n = 0;
                 } else if (version instanceof Special) {
                     Special special = (Special) version;
-                    if (i > 0) {
-                        special.prev = versions.get(i - 1);
-                    }
+                    special.prev = versions.get(i - 1);
                     if (i < versions.size() - 1) {
                         special.next = versions.get(i + 1);
                     }
@@ -596,10 +599,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 } else {
                     throw new InternalError("version: " + version);
                 }
-            }
-
-            for (int j = snapshots.size() - n; j < snapshots.size(); j++) {
-                snapshots.get(j).prevRelease = currentRelease;
             }
 
             SNAPSHOTS = snapshots.toArray(new Snapshot[0]);
