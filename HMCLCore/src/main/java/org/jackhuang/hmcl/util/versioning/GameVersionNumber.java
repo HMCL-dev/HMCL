@@ -540,7 +540,13 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
                     n = 0;
                 } else if (version instanceof Special) {
-
+                    Special special = (Special) version;
+                    if (i > 0) {
+                        special.prev = versions.get(i - 1);
+                    }
+                    if (i < versions.size() - 1) {
+                        special.next = versions.get(i + 1);
+                    }
                 } else {
                     throw new InternalError("version: " + version);
                 }
