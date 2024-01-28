@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,13 +22,13 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             char ch = version.charAt(0);
             switch (ch) {
                 case 'r':
-                    return PreClassic.parse(version);
+                    return Old.parsePreClassic(version);
                 case 'a':
                 case 'b':
                 case 'c':
-                    return Old.parse(version);
+                    return Old.parseAlphaBetaClassic(version);
                 case 'i':
-                    return Infdev.parse(version);
+                    return Old.parseInfdev(version);
             }
 
             if (version.startsWith("1.")) {
@@ -74,54 +75,21 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         return value;
     }
 
-    static final class PreClassic extends GameVersionNumber {
+    static final class Old extends GameVersionNumber {
 
-        static PreClassic parse(String value) {
+        private static final Pattern PATTERN = Pattern.compile("[abc](?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?([^0-9]*(?<additional>[0-9]+).*)");
+
+        static Old parsePreClassic(String value) {
             int version;
             try {
                 version = Integer.parseInt(value.substring("rd-".length()));
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(e);
             }
-            return new PreClassic(value, version);
+            return new Old(value, Type.PRE_CLASSIC, version, 0, 0, 0);
         }
 
-        private final int version;
-
-        PreClassic(String value, int version) {
-            super(value);
-            this.version = version;
-        }
-
-        @Override
-        Type getType() {
-            return Type.PRE_CLASSIC;
-        }
-
-        @Override
-        int compareToImpl(@NotNull GameVersionNumber other) {
-            return Integer.compare(this.version, ((PreClassic) other).version);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            PreClassic other = (PreClassic) o;
-            return version == other.version;
-        }
-
-        @Override
-        public int hashCode() {
-            return Integer.hashCode(version);
-        }
-    }
-
-    static final class Old extends GameVersionNumber {
-
-        private static final Pattern PATTERN = Pattern.compile("[abc](?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?([^0-9]*(?<additional>[0-9]+).*)");
-
-        static Old parse(String value) {
+        static Old parseAlphaBetaClassic(String value) {
             Matcher matcher = PATTERN.matcher(value);
             if (!matcher.matches()) {
                 throw new IllegalArgumentException(value);
@@ -153,6 +121,32 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
             return new Old(value, type, major, minor, patch, additional);
         }
+
+        static Old parseInfdev(String value) {
+            String version = value.substring("inf-".length());
+            int major;
+            int patch;
+
+            try {
+                major = Integer.parseInt(version);
+                patch = 0;
+            } catch (NumberFormatException e) {
+                int idx = version.indexOf('-');
+                if (idx >= 0) {
+                    try {
+                        major = Integer.parseInt(version.substring(0, idx));
+                        patch = Integer.parseInt(version.substring(idx + 1));
+                    } catch (NumberFormatException ignore) {
+                        throw new IllegalArgumentException(value);
+                    }
+                } else {
+                    throw new IllegalArgumentException(value);
+                }
+            }
+
+            return new Old(value, Type.INFDEV, major, 0, patch, 0);
+        }
+
 
         private final Type type;
         private final int major;
@@ -206,68 +200,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public int hashCode() {
             return Objects.hash(type, major, minor, patch, additional);
-        }
-    }
-
-    static final class Infdev extends GameVersionNumber {
-
-        static Infdev parse(String value) {
-            String version = value.substring("inf-".length());
-            int major;
-            int patch;
-
-            try {
-                major = Integer.parseInt(version);
-                patch = 0;
-            } catch (NumberFormatException e) {
-                int idx = version.indexOf('-');
-                if (idx >= 0) {
-                    try {
-                        major = Integer.parseInt(version.substring(0, idx));
-                        patch = Integer.parseInt(version.substring(idx + 1));
-                    } catch (NumberFormatException ignore) {
-                        throw new IllegalArgumentException(value);
-                    }
-                } else {
-                    throw new IllegalArgumentException(value);
-                }
-            }
-
-            return new Infdev(value, major, patch);
-        }
-
-        private final int major;
-        private final int patch;
-
-        Infdev(String value, int major, int patch) {
-            super(value);
-            this.major = major;
-            this.patch = patch;
-        }
-
-        @Override
-        Type getType() {
-            return Type.INFDEV;
-        }
-
-        @Override
-        int compareToImpl(@NotNull GameVersionNumber other) {
-            Infdev that = (Infdev) other;
-            int c = Integer.compare(this.major, that.major);
-            return c != 0 ? c : Integer.compare(this.patch, that.patch);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Infdev other = (Infdev) o;
-            return major == other.major && patch == other.patch;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(major, patch);
         }
     }
 
@@ -477,6 +409,9 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         private final VersionNumber versionNumber;
 
+        /*
+         *
+         */
         private GameVersionNumber prev;
         private GameVersionNumber next;
 
@@ -491,17 +426,30 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
 
         boolean isUnknown() {
-            return prev == null && next == null;
+            return prev == null;
         }
 
+        /*
+         * Should not return null for all known special versions.
+         */
+        @NotNull
         GameVersionNumber getPrevNormalVersion() {
             GameVersionNumber v = prev;
             while (v instanceof Special) {
                 v = ((Special) v).prev;
             }
+
+            if (v == null) {
+                throw new AssertionError("version: " + value);
+            }
+
             return v;
         }
 
+        /*
+         * Returns null if no new snapshot or official release has been released since the special version.
+         */
+        @Nullable
         GameVersionNumber getNextNormalVersion() {
             GameVersionNumber v = next;
             while (v instanceof Special) {
@@ -518,21 +466,19 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             GameVersionNumber pn = getPrevNormalVersion();
             GameVersionNumber nn = getNextNormalVersion();
 
-            if (pn == null) {
-                throw new AssertionError("version: " + value);
+            if (pn.compareTo(other) >= 0) {
+                return 1;
             }
 
-            if (pn != null) {
-                if (pn.compareTo(other) >= 0) {
-                    return 1;
-                }
+            if (nn == null) {
+                return 1;
             }
 
-            if (nn.compareTo(other) <= 0) {
+            if (nn != null && nn.compareTo(other) <= 0) {
                 return -1;
             }
 
-            return 1;
+            return -1;
         }
 
         @Override
