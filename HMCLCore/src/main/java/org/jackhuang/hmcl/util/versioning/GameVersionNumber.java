@@ -507,6 +507,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
     static final class Database {
         private static final Snapshot[] SNAPSHOTS;
+        private static final HashMap<String, Special> specials = new HashMap<>();
 
         static {
             List<GameVersionNumber> versions = new ArrayList<>();
@@ -547,6 +548,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     if (i < versions.size() - 1) {
                         special.next = versions.get(i + 1);
                     }
+                    specials.put(special.value, special);
                 } else {
                     throw new InternalError("version: " + version);
                 }
