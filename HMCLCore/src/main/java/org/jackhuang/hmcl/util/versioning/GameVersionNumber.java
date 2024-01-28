@@ -336,7 +336,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             if (other instanceof Special) {
-                return -((Special) other).compareToNormal(this);
+                return -((Special) other).compareToReleaseOrSnapshot(this);
             }
 
             throw new AssertionError(other.getClass());
@@ -406,7 +406,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             if (other instanceof Special) {
-                return -((Special) other).compareToNormal(this);
+                return -((Special) other).compareToReleaseOrSnapshot(this);
             }
 
             throw new AssertionError(other.getClass());
@@ -428,14 +428,13 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
     static final class Special extends GameVersionNumber {
 
-        private final VersionNumber versionNumber;
+        private VersionNumber versionNumber;
 
         private GameVersionNumber prev;
         private GameVersionNumber next;
 
         Special(String value) {
             super(value);
-            this.versionNumber = VersionNumber.asVersion(value);
         }
 
         @Override
@@ -445,6 +444,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         boolean isUnknown() {
             return prev == null;
+        }
+
+        VersionNumber asVersionNumber() {
+            if (versionNumber != null) {
+                return versionNumber;
+            }
+
+            return versionNumber = VersionNumber.asVersion(value);
         }
 
         /*
@@ -476,24 +483,43 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return v;
         }
 
-        int compareToNormal(GameVersionNumber other) {
+        int compareToReleaseOrSnapshot(GameVersionNumber other){
             if (isUnknown()) {
                 return 1;
             }
 
-            GameVersionNumber pn = getPrevNormalVersion();
-            GameVersionNumber nn = getNextNormalVersion();
-
-            if (pn.compareTo(other) >= 0) {
+            if (getPrevNormalVersion().compareTo(other) >= 0) {
                 return 1;
             }
 
-            if (nn == null) {
-                return 1;
+            return -1;
+        }
+
+        int compareToSpecial(Special other) {
+            if (this.isUnknown()) {
+                return other.isUnknown() ? this.asVersionNumber().compareTo(other.asVersionNumber()) : 1;
             }
 
-            if (nn.compareTo(other) <= 0) {
+            if (other.isUnknown()) {
                 return -1;
+            }
+
+            if (this.value.equals(other.value)) {
+                return 0;
+            }
+
+            int c = this.getPrevNormalVersion().compareTo(other.getPrevNormalVersion());
+            if (c != 0) {
+                return c;
+            }
+
+            GameVersionNumber v = prev;
+            while (v instanceof Special) {
+                if (v == other) {
+                    return 1;
+                }
+
+                v = ((Special) v).prev;
             }
 
             return -1;
@@ -501,22 +527,16 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber o) {
-            if (o instanceof Release || o instanceof Snapshot) {
-                return compareToNormal(o);
+            if (o instanceof Release) {
+                return compareToReleaseOrSnapshot(o);
+            }
+
+            if (o instanceof Snapshot) {
+                return compareToReleaseOrSnapshot(o);
             }
 
             if (o instanceof Special) {
-                Special other = (Special) o;
-
-                if (this.isUnknown()) {
-                    if (other.isUnknown()) {
-                        return this.versionNumber.compareTo(other.versionNumber);
-                    } else {
-
-                    }
-                }
-
-                // TODO
+                return compareToSpecial((Special) o);
             }
 
             throw new AssertionError(o.getClass());
