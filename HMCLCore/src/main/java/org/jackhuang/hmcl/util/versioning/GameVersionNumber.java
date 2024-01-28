@@ -483,7 +483,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return v;
         }
 
-        int compareToReleaseOrSnapshot(GameVersionNumber other){
+        int compareToReleaseOrSnapshot(GameVersionNumber other) {
             if (isUnknown()) {
                 return 1;
             }
