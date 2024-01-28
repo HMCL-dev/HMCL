@@ -95,7 +95,7 @@ public class WorldListItem extends Control {
     public void manageDatapacks() {
         if (world.getGameVersion() == null || // old game will not write game version to level.dat
                 (VersionNumber.isIntVersionNumber(world.getGameVersion()) // we don't parse snapshot version
-                 && VersionNumber.asVersion(world.getGameVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
+                        && VersionNumber.asVersion(world.getGameVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
             Controllers.dialog(i18n("world.datapack.1_13"));
             return;
         }

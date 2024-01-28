@@ -229,8 +229,8 @@ public class DefaultLauncher extends Launcher {
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-            && !StringUtils.isASCII(nativeFolderPath)
-            && gameVersion.isPresent() && VersionNumber.compare(gameVersion.get(), "1.19") < 0) {
+                && !StringUtils.isASCII(nativeFolderPath)
+                && gameVersion.isPresent() && VersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
         }

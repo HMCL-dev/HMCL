@@ -66,7 +66,7 @@ public final class NativePatcher {
         final boolean useNativeOpenAL = settings.isUseNativeOpenAL();
 
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
-            && VersionNumber.compare(gameVersion, "1.19") >= 0) {
+                && VersionNumber.compare(gameVersion, "1.19") >= 0) {
 
             version = version.setLibraries(version.getLibraries().stream()
                     .filter(library -> {
