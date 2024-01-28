@@ -57,6 +57,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -295,7 +296,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 JFXComboBox<String> gameVersionField = new JFXComboBox<>();
                 gameVersionField.setMaxWidth(Double.MAX_VALUE);
                 gameVersionField.setEditable(true);
-                gameVersionField.getItems().setAll(RemoteModRepository.DEFAULT_GAME_VERSIONS);
+                gameVersionField.getItems().setAll(GameVersionNumber.getDefaultGameVersions());
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 

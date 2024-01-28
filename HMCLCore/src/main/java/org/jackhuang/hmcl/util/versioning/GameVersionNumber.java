@@ -43,6 +43,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         return new Special(version);
     }
 
+    public static String[] getDefaultGameVersions() {
+        return Database.DEFAULT_GAME_VERSIONS;
+    }
+
     final String value;
 
     GameVersionNumber(String value) {
@@ -207,13 +211,13 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>[0-9]+))?");
 
-        private static final int GA = Integer.MAX_VALUE;
+        static final int TYPE_GA = Integer.MAX_VALUE;
 
-        private static final int UNKNOWN = 0;
-        private static final int PRE = 1;
-        private static final int RC = 2;
+        static final int TYPE_UNKNOWN = 0;
+        static final int TYPE_PRE = 1;
+        static final int TYPE_RC = 2;
 
-        static final Release ZERO = new Release("0.0", 0, 0, 0, GA, 0);
+        static final Release ZERO = new Release("0.0", 0, 0, 0, TYPE_GA, 0);
 
         static Release parse(String value) {
             Matcher matcher = PATTERN.matcher(value);
@@ -229,13 +233,13 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             String eaTypeString = matcher.group("eaType");
             int eaType;
             if (eaTypeString == null) {
-                eaType = GA;
+                eaType = TYPE_GA;
             } else if ("-pre".equals(eaTypeString) || " Pre-Release ".equals(eaTypeString)) {
-                eaType = PRE;
+                eaType = TYPE_PRE;
             } else if ("-rc".equals(eaTypeString)) {
-                eaType = RC;
+                eaType = TYPE_RC;
             } else {
-                eaType = UNKNOWN;
+                eaType = TYPE_UNKNOWN;
             }
 
             String eaVersionString = matcher.group("eaVersion");
@@ -550,8 +554,9 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     }
 
     static final class Database {
-        private static final Snapshot[] SNAPSHOTS;
-        private static final HashMap<String, Special> specials = new HashMap<>();
+        static final Snapshot[] SNAPSHOTS;
+        static final HashMap<String, Special> SPECIALS = new HashMap<>();
+        static final String[] DEFAULT_GAME_VERSIONS;
 
         static {
             List<GameVersionNumber> versions = new ArrayList<>(1024);
@@ -568,6 +573,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
             Release currentRelease = (Release) versions.get(0);
 
+            ArrayDeque<String> defaultGameVersions = new ArrayDeque<>(64);
             List<Snapshot> snapshots = new ArrayList<>(1024);
 
             int n = 0;
@@ -582,6 +588,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 } else if (version instanceof Release) {
                     currentRelease = (Release) version;
 
+                    if (currentRelease.eaType == Release.TYPE_GA) {
+                        defaultGameVersions.addFirst(currentRelease.value);
+                    }
+
                     for (int j = snapshots.size() - n; j < snapshots.size(); j++) {
                         snapshots.get(j).nextRelease = currentRelease;
                     }
@@ -593,13 +603,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     if (i < versions.size() - 1) {
                         special.next = versions.get(i + 1);
                     }
-                    specials.put(special.value, special);
+                    SPECIALS.put(special.value, special);
                 } else {
                     throw new InternalError("version: " + version);
                 }
             }
 
             SNAPSHOTS = snapshots.toArray(new Snapshot[0]);
+            DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);
         }
     }
 }
