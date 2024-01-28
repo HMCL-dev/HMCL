@@ -44,7 +44,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     }
 
     public static String[] getDefaultGameVersions() {
-        return Database.DEFAULT_GAME_VERSIONS;
+        return Versions.DEFAULT_GAME_VERSIONS;
     }
 
     final String value;
@@ -294,9 +294,9 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
 
         int compareToSnapshot(Snapshot other) {
-            int idx = Arrays.binarySearch(Database.SNAPSHOTS, other);
+            int idx = Arrays.binarySearch(Versions.SNAPSHOTS, other);
             if (idx >= 0) {
-                other = Database.SNAPSHOTS[idx];
+                other = Versions.SNAPSHOTS[idx];
 
                 int c = this.compareToRelease(other.prevRelease);
                 if (c <= 0) {
@@ -312,12 +312,12 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             idx = -(idx + 1);
-            if (idx == Database.SNAPSHOTS.length) {
+            if (idx == Versions.SNAPSHOTS.length) {
                 return -1;
             }
 
             if (idx == 0) {
-                return this.compareToRelease(Database.SNAPSHOTS[0].prevRelease);
+                return this.compareToRelease(Versions.SNAPSHOTS[0].prevRelease);
             }
 
             return 0; // TODO
@@ -553,7 +553,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
     }
 
-    static final class Database {
+    static final class Versions {
         static final Snapshot[] SNAPSHOTS;
         static final HashMap<String, Special> SPECIALS = new HashMap<>();
         static final String[] DEFAULT_GAME_VERSIONS;
