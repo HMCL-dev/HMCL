@@ -45,7 +45,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -332,7 +332,7 @@ public final class LauncherHelper {
     }
 
     private static Task<JavaVersion> checkGameState(Profile profile, VersionSetting setting, Version version) {
-        DefaultVersionNumber gameVersion = DefaultVersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
+        VersionNumber gameVersion = VersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
 
         if (setting.isNotCheckJVM()) {
             return Task.composeAsync(() -> setting.getJavaVersion(gameVersion, version))
@@ -353,9 +353,9 @@ public final class LauncherHelper {
 
                     if (org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java()) {
                         JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
-                        if (range.getMandatory().contains(DefaultVersionNumber.asVersion("17.0.1"))) {
+                        if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
                             targetJavaVersion = GameJavaVersion.JAVA_17;
-                        } else if (range.getMandatory().contains(DefaultVersionNumber.asVersion("16.0.1"))) {
+                        } else if (range.getMandatory().contains(VersionNumber.asVersion("16.0.1"))) {
                             targetJavaVersion = GameJavaVersion.JAVA_16;
                         } else {
                             String java8Version;
@@ -370,7 +370,7 @@ public final class LauncherHelper {
                                 java8Version = null;
                             }
 
-                            if (java8Version != null && range.getMandatory().contains(DefaultVersionNumber.asVersion(java8Version)))
+                            if (java8Version != null && range.getMandatory().contains(VersionNumber.asVersion(java8Version)))
                                 targetJavaVersion = GameJavaVersion.JAVA_8;
                             else
                                 targetJavaVersion = null;
@@ -511,7 +511,7 @@ public final class LauncherHelper {
                         case MODDED_JAVA_16:
                             // Minecraft<=1.17.1+Forge[37.0.0,37.0.60) not compatible with Java 17
                             String forgePatchVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE).orElse(null);
-                            if (forgePatchVersion != null && DefaultVersionNumber.compare(forgePatchVersion, "37.0.60") < 0)
+                            if (forgePatchVersion != null && VersionNumber.compare(forgePatchVersion, "37.0.60") < 0)
                                 suggestions.add(i18n("launch.advice.forge37_0_60"));
                             else
                                 suggestions.add(i18n("launch.advice.modded_java", 16, gameVersion));
@@ -540,23 +540,23 @@ public final class LauncherHelper {
                 suggestions.add(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY));
             }
 
-            DefaultVersionNumber forgeVersion = version.getLibraries().stream()
+            VersionNumber forgeVersion = version.getLibraries().stream()
                     .filter(it -> it.is("net.minecraftforge", "forge"))
                     .findFirst()
-                    .map(library -> DefaultVersionNumber.asVersion(library.getVersion()))
+                    .map(library -> VersionNumber.asVersion(library.getVersion()))
                     .orElse(null);
 
             // Forge 2760~2773 will crash game with LiteLoader.
             boolean hasForge2760 = forgeVersion != null && (forgeVersion.compareTo("1.12.2-14.23.5.2760") >= 0) && (forgeVersion.compareTo("1.12.2-14.23.5.2773") < 0);
             boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
-            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(DefaultVersionNumber.asVersion("1.12.2")) == 0) {
+            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
                 suggestions.add(i18n("launch.advice.forge2760_liteloader"));
             }
 
             // OptiFine 1.14.4 is not compatible with Forge 28.2.2 and later versions.
             boolean hasForge28_2_2 = forgeVersion != null && (forgeVersion.compareTo("1.14.4-28.2.2") >= 0);
             boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
-            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(DefaultVersionNumber.asVersion("1.14.4")) == 0) {
+            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(VersionNumber.asVersion("1.14.4")) == 0) {
                 suggestions.add(i18n("launch.advice.forge28_2_2_optifine"));
             }
 

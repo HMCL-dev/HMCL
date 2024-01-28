@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -172,7 +172,7 @@ public enum Architecture {
             case "loongarch32":
                 return LOONGARCH32;
             case "loongarch64": {
-                if (DefaultVersionNumber.compare(System.getProperty("os.version"), "5.19") < 0)
+                if (VersionNumber.compare(System.getProperty("os.version"), "5.19") < 0)
                     return LOONGARCH64_OW;
                 return LOONGARCH64;
             }

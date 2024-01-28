@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class GameVersionNumber implements VersionNumber<GameVersionNumber> {
+public abstract class GameVersionNumber implements Comparable<GameVersionNumber> {
 
     public static GameVersionNumber asGameVersion(String version) {
         return null; // TODO
@@ -30,7 +30,6 @@ public abstract class GameVersionNumber implements VersionNumber<GameVersionNumb
 
     abstract int compareToImpl(@NotNull GameVersionNumber other);
 
-    @Override
     public int compareTo(@NotNull String other) {
         return this.compareTo(asGameVersion(other));
     }

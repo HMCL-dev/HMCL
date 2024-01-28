@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Date;
 import java.util.List;
@@ -120,7 +120,7 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     @Override
     public int compareTo(RemoteVersion o) {
         // newer versions are smaller than older versions
-        return DefaultVersionNumber.asVersion(o.selfVersion).compareTo(DefaultVersionNumber.asVersion(selfVersion));
+        return VersionNumber.asVersion(o.selfVersion).compareTo(VersionNumber.asVersion(selfVersion));
     }
 
     public enum Type {

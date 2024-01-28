@@ -47,7 +47,7 @@ import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.util.Comparator;
@@ -120,7 +120,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         .sorted(Comparator
                                 .comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L)
                                         : version.getReleaseTime())
-                                .thenComparing(a -> DefaultVersionNumber.asVersion(a.getId())))
+                                .thenComparing(a -> VersionNumber.asVersion(a.getId())))
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (profile == Profiles.getSelectedProfile())

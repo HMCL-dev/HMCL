@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Collections;
 import java.util.Map;
@@ -55,7 +55,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                         versions.clear();
 
                         for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
-                            String gameVersion = DefaultVersionNumber.normalize(entry.getKey());
+                            String gameVersion = VersionNumber.normalize(entry.getKey());
                             for (int v : entry.getValue()) {
                                 ForgeVersion version = root.getNumber().get(v);
                                 if (version == null)

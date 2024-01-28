@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +28,7 @@ public class JavaVersionConstraintTest {
     @Test
     public void vanillaJava16() {
         JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(
-                DefaultVersionNumber.asVersion("1.17"),
+                VersionNumber.asVersion("1.17"),
                 null
         );
 

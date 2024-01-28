@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,7 +49,7 @@ public final class JavaVersion {
     private final String longVersion;
     private final Platform platform;
     private final int version;
-    private final DefaultVersionNumber versionNumber;
+    private final VersionNumber versionNumber;
 
     public JavaVersion(Path binary, String longVersion, Platform platform) {
         this.binary = binary;
@@ -58,7 +58,7 @@ public final class JavaVersion {
 
         if (longVersion != null) {
             version = parseVersion(longVersion);
-            versionNumber = DefaultVersionNumber.asVersion(longVersion);
+            versionNumber = VersionNumber.asVersion(longVersion);
         } else {
             version = UNKNOWN;
             versionNumber = null;
@@ -89,7 +89,7 @@ public final class JavaVersion {
         return platform.getBits();
     }
 
-    public DefaultVersionNumber getVersionNumber() {
+    public VersionNumber getVersionNumber() {
         return versionNumber;
     }
 

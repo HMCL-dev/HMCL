@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.tukaani.xz.LZMAInputStream;
 
 import java.io.File;
@@ -67,7 +67,7 @@ public class JavaDownloadTask extends Task<Void> {
             if (!osDownloads.containsKey(javaVersion.getComponent())) throw new UnsupportedPlatformException();
             List<JavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.getComponent());
             for (JavaDownloads.JavaDownload download : candidates) {
-                if (DefaultVersionNumber.compare(download.getVersion().getName(), Integer.toString(javaVersion.getMajorVersion())) >= 0) {
+                if (VersionNumber.compare(download.getVersion().getName(), Integer.toString(javaVersion.getMajorVersion())) >= 0) {
                     this.download = download;
                     return new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getManifest().getUrl())));
                 }

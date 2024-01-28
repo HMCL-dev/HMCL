@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.versioning.DefaultVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
 import java.io.IOException;
@@ -213,7 +213,7 @@ public class MaintainTask extends Task<Version> {
         Optional<String> bslVersion = libraryAnalyzer.getVersion(BOOTSTRAP_LAUNCHER);
 
         if (bslVersion.isPresent()) {
-            if (DefaultVersionNumber.compare(bslVersion.get(), "0.1.17") < 0) {
+            if (VersionNumber.compare(bslVersion.get(), "0.1.17") < 0) {
                 // The default ignoreList will be applied to all components of libraries in classpath,
                 // so if game directory located in some directory like /Users/asm, all libraries will be ignored,
                 // which is not expected. We fix this here.
@@ -297,14 +297,14 @@ public class MaintainTask extends Task<Version> {
 
         for (Library library : version.getLibraries()) {
             String id = library.getGroupId() + ":" + library.getArtifactId();
-            DefaultVersionNumber number = DefaultVersionNumber.asVersion(library.getVersion());
+            VersionNumber number = VersionNumber.asVersion(library.getVersion());
             String serialized = JsonUtils.GSON.toJson(library);
 
             if (multimap.containsKey(id)) {
                 boolean duplicate = false;
                 for (int otherLibraryIndex : multimap.get(id)) {
                     Library otherLibrary = libraries.get(otherLibraryIndex);
-                    DefaultVersionNumber otherNumber = DefaultVersionNumber.asVersion(otherLibrary.getVersion());
+                    VersionNumber otherNumber = VersionNumber.asVersion(otherLibrary.getVersion());
                     if (CompatibilityRule.equals(library.getRules(), otherLibrary.getRules())) { // rules equal, ignore older version.
                         boolean flag = true;
                         if (number.compareTo(otherNumber) > 0) { // if this library is newer
