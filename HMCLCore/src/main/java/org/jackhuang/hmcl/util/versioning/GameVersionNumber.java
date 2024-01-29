@@ -1,7 +1,6 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -301,15 +300,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return Integer.compare(this.eaVersion, other.eaVersion);
         }
 
-        int compareToSnapshot(Release prev) {
-            int c = this.compareToRelease(prev);
-            return c <= 0 ? -1 : 1;
-        }
-
         int compareToSnapshot(Snapshot other) {
             int idx = Arrays.binarySearch(Versions.SNAPSHOT_INTS, other.intValue);
             if (idx >= 0) {
-                return compareToSnapshot(Versions.SNAPSHOT_PREV[idx]);
+                return this.compareToRelease(Versions.SNAPSHOT_PREV[idx]) <= 0 ? -1 : 1;
             }
 
             idx = -(idx + 1);
@@ -321,7 +315,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 return this.compareToRelease(Versions.SNAPSHOT_PREV[0]);
             }
 
-            return compareToSnapshot(Versions.SNAPSHOT_PREV[idx]);
+            return this.compareToRelease(Versions.SNAPSHOT_PREV[idx]) <= 0 ? -1 : 1;
         }
 
         @Override
