@@ -54,8 +54,28 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         return special;
     }
 
+    public static GameVersionNumber asGameVersion(Optional<String> version) {
+        return version.isPresent() ? asGameVersion(version.get()) : unknown();
+    }
+
+    public static GameVersionNumber unknown() {
+        return Release.ZERO;
+    }
+
     public static int compare(String version1, String version2) {
         return asGameVersion(version1).compareTo(asGameVersion(version2));
+    }
+
+    public static VersionRange<GameVersionNumber> between(String minimum, String maximum) {
+        return VersionRange.between(asGameVersion(minimum), asGameVersion(maximum));
+    }
+
+    public static VersionRange<GameVersionNumber> atLeast(String minimum) {
+        return VersionRange.atLeast(asGameVersion(minimum));
+    }
+
+    public static VersionRange<GameVersionNumber> atMost(String maximum) {
+        return VersionRange.atMost(asGameVersion(maximum));
     }
 
     final String value;
