@@ -181,7 +181,10 @@ public class GameVersionNumberTest {
                 "23w13a",
                 "23w13a_or_b",
                 "23w14a",
-                "1.20"
+                "1.20",
+
+                "Unknown",
+                "100.0"
         );
     }
 

@@ -539,44 +539,44 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         static final Release[] SNAPSHOT_PREV;
 
         static {
-            List<GameVersionNumber> versions = new ArrayList<>(1024);
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
-                for (String line; (line = reader.readLine()) != null && !line.isEmpty(); ) {
-                    versions.add(GameVersionNumber.asGameVersion(line));
-                }
-            } catch (IOException e) {
-                throw new InternalError(e);
-            }
-
-            assert versions.size() > 1;
-            assert versions.get(0) instanceof Release;
-
-            Release currentRelease = (Release) versions.get(0);
-
             ArrayDeque<String> defaultGameVersions = new ArrayDeque<>(64);
 
             List<Snapshot> snapshots = new ArrayList<>(1024);
             List<Release> snapshotPrev = new ArrayList<>(1024);
 
-            for (int i = 1; i < versions.size(); i++) {
-                GameVersionNumber version = versions.get(i);
-                if (version instanceof Snapshot) {
-                    Snapshot snapshot = (Snapshot) version;
-                    snapshots.add(snapshot);
-                    snapshotPrev.add(currentRelease);
-                } else if (version instanceof Release) {
-                    currentRelease = (Release) version;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
+                Release currentRelease = null;
+                GameVersionNumber prev = null;
 
-                    if (currentRelease.eaType == Release.TYPE_GA) {
-                        defaultGameVersions.addFirst(currentRelease.value);
+                for (String line; (line = reader.readLine()) != null && !line.isEmpty(); ) {
+                    GameVersionNumber version = GameVersionNumber.asGameVersion(line);
+
+                    if (currentRelease == null) {
+                        currentRelease = (Release) version;
                     }
-                } else if (version instanceof Special) {
-                    Special special = (Special) version;
-                    special.prev = versions.get(i - 1);
-                    SPECIALS.put(special.value, special);
-                } else {
-                    throw new InternalError("version: " + version);
+
+                    if (version instanceof Snapshot) {
+                        Snapshot snapshot = (Snapshot) version;
+                        snapshots.add(snapshot);
+                        snapshotPrev.add(currentRelease);
+                    } else if (version instanceof Release) {
+                        currentRelease = (Release) version;
+
+                        if (currentRelease.eaType == Release.TYPE_GA) {
+                            defaultGameVersions.addFirst(currentRelease.value);
+                        }
+                    } else if (version instanceof Special) {
+                        Special special = (Special) version;
+                        special.prev = prev;
+                        SPECIALS.put(special.value, special);
+                    } else {
+                        throw new InternalError("version: " + version);
+                    }
+
+                    prev = version;
                 }
+            } catch (IOException e) {
+                throw new InternalError(e);
             }
 
             SNAPSHOT_INTS = new int[snapshots.size()];
