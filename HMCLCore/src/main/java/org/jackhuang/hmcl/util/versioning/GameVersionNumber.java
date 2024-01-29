@@ -54,6 +54,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         return special;
     }
 
+    public static int compare(String version1, String version2) {
+        return asGameVersion(version1).compareTo(asGameVersion(version2));
+    }
+
     final String value;
 
     GameVersionNumber(String value) {
