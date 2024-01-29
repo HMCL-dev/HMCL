@@ -259,7 +259,7 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            if (!gameVersion.isPresent() || GameVersionNumber.compare(gameVersion.get(), "1.20") < 0) {
+            if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
                 res.add("--server");
                 res.add(args[0]);
                 res.add("--port");
