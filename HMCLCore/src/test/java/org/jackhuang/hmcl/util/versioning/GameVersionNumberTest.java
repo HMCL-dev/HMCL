@@ -52,7 +52,11 @@ public class GameVersionNumberTest {
 
     private static void assertOrder(String... versions) {
         for (int i = 0; i < versions.length - 1; i++) {
-            assertLessThan(versions[i], versions[i + 1]);
+            assertGameVersionEquals(versions[i]);
+
+            for (int j = i + 1; j < versions.length; j++) {
+                assertLessThan(versions[i], versions[j]);
+            }
         }
     }
 
@@ -87,7 +91,50 @@ public class GameVersionNumberTest {
     }
 
     @Test
-    public void testCompareReleaseSnapshot() {
+    public void testCompareMix() {
+        assertOrder(
+                "1.13.2",
+                "19w13b",
+                "3D Shareware v1.34",
+                "19w14a",
+                "1.14 Pre-Release 1",
+                "1.14"
+        );
 
+        assertOrder(
+                "1.15.2",
+                "20w06a",
+                "20w14infinite",
+                "20w22a",
+                "1.16-pre1",
+                "1.16"
+        );
+
+        assertOrder(
+                "1.18.2",
+                "22w13oneblockatatime",
+                "22w11a",
+                "1.19-pre1"
+        );
+
+        assertOrder(
+                "1.19.4",
+                "23w13a",
+                "23w13a_or_b",
+                "23w14a",
+                "1.20"
+        );
+
+        assertOrder(
+                "1.9.2",
+                "1.RV-Pre1",
+                "16w14a",
+                "1.9.3-pre1"
+        );
+
+        assertOrder(
+                "1.5.1",
+                "2.0",
+                "1.5.2");
     }
 }
