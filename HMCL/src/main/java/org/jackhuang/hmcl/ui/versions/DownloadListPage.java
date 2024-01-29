@@ -37,7 +37,6 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -59,7 +58,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -164,24 +162,23 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         retrySearch = null;
         setLoading(true);
         setFailed(false);
-        File versionJar = StringUtils.isNotBlank(version.get().getVersion())
-                ? version.get().getProfile().getRepository().getVersionJar(version.get().getVersion())
-                : null;
+
         if (executor != null && !executor.isCancelled()) {
             executor.cancel();
         }
 
         executor = Task.supplyAsync(() -> {
-            String gameVersion;
-            if (StringUtils.isBlank(version.get().getVersion())) {
-                gameVersion = userGameVersion;
+            Profile.ProfileVersion version = this.version.get();
+            if (StringUtils.isBlank(version.getVersion())) {
+                return userGameVersion;
             } else {
-                gameVersion = GameVersion.minecraftVersion(versionJar).orElse("");
+                return StringUtils.isNotBlank(version.getVersion())
+                        ? version.getProfile().getRepository().getGameVersion(version.getVersion()).orElse("")
+                        : "";
             }
-            return gameVersion;
-        }).thenApplyAsync(gameVersion -> {
-            return repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).thenApplyAsync(gameVersion ->
+                repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
+        ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             setLoading(false);
             if (exception == null) {
                 items.setAll(result.getResults().collect(Collectors.toList()));
