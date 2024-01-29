@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GameVersionNumberTest {
 
     @Test
-    @Disabled("fixme")
     public void testSortVersions() throws IOException {
         List<String> versions = new ArrayList<>();
 
