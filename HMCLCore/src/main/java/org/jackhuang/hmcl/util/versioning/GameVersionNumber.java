@@ -571,6 +571,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             List<Snapshot> snapshots = new ArrayList<>(1024);
             List<Release> snapshotPrev = new ArrayList<>(1024);
 
+            // Convert it to dynamic resource after the website is repaired?
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
                 Release currentRelease = null;
                 GameVersionNumber prev = null;
