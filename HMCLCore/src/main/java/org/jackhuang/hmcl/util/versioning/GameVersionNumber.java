@@ -85,7 +85,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
     static final class Old extends GameVersionNumber {
 
-        private static final Pattern PATTERN = Pattern.compile("[abc](?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?([^0-9]*(?<additional>[0-9]+).*)");
+        private static final Pattern PATTERN = Pattern.compile("[abc](?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?([^0-9]*(?<additional>[0-9]+).*)?");
 
         static Old parsePreClassic(String value) {
             int version;
@@ -156,11 +156,11 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
 
 
-        private final Type type;
-        private final int major;
-        private final int minor;
-        private final int patch;
-        private final int additional;
+        final Type type;
+        final int major;
+        final int minor;
+        final int patch;
+        final int additional;
 
         private Old(String value, Type type, int major, int minor, int patch, int additional) {
             super(value);

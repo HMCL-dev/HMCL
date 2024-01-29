@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.util.versioning;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
@@ -8,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,12 +50,71 @@ public class GameVersionNumberTest {
 
     private static void assertOrder(String... versions) {
         for (int i = 0; i < versions.length - 1; i++) {
-            assertGameVersionEquals(versions[i]);
+            GameVersionNumber version1 = GameVersionNumber.asGameVersion(versions[i]);
+
+            //noinspection EqualsWithItself
+            assertEquals(0, version1.compareTo(version1), "version=" + versions[i]);
 
             for (int j = i + 1; j < versions.length; j++) {
-                assertLessThan(versions[i], versions[j]);
+                GameVersionNumber version2 = GameVersionNumber.asGameVersion(versions[j]);
+
+                assertTrue(version1.compareTo(version2) < 0, String.format("version1=%s, version2=%s", versions[i], versions[j]));
+                assertTrue(version2.compareTo(version1) > 0, String.format("version1=%s, version2=%s", versions[i], versions[j]));
             }
         }
+
+        assertGameVersionEquals(versions[versions.length - 1]);
+    }
+
+    @Test
+    public void testParseOld() {
+        {
+            GameVersionNumber version = GameVersionNumber.asGameVersion("b1.0");
+            assertInstanceOf(GameVersionNumber.Old.class, version);
+            GameVersionNumber.Old old = (GameVersionNumber.Old) version;
+            assertEquals(GameVersionNumber.Type.BETA, old.type);
+            assertEquals(1, old.major);
+            assertEquals(0, old.minor);
+            assertEquals(0, old.patch);
+            assertEquals(0, old.additional);
+        }
+
+        {
+            GameVersionNumber version = GameVersionNumber.asGameVersion("b1.0_01");
+            assertInstanceOf(GameVersionNumber.Old.class, version);
+            GameVersionNumber.Old old = (GameVersionNumber.Old) version;
+            assertEquals(GameVersionNumber.Type.BETA, old.type);
+            assertEquals(1, old.major);
+            assertEquals(0, old.minor);
+            assertEquals(0, old.patch);
+            assertEquals(1, old.additional);
+        }
+    }
+
+    @Test
+    public void testCompareOld() {
+        assertOrder(
+                "rd-132211",
+                "rd-161348",
+                "rd-20090515",
+                "c0.0.11a",
+                "c0.0.13a",
+                "c0.0.13a_03",
+                "c0.30_01c",
+                "inf-20100330-1",
+                "inf-20100330-2",
+                "inf-20100618",
+                "a1.0.4",
+                "a1.0.17_02",
+                "a1.0.17_04",
+                "a1.1.0",
+                "b1.0",
+                "b1.0_01",
+                "b1.1_02",
+                "b1.2",
+                "b1.8.1",
+                "1.0"
+        );
     }
 
     @Test
