@@ -600,12 +600,12 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                         special.prev = prev;
                         SPECIALS.put(special.value, special);
                     } else
-                        throw new InternalError("version: " + version);
+                        throw new AssertionError("version: " + version);
 
                     prev = version;
                 }
             } catch (IOException e) {
-                throw new InternalError(e);
+                throw new AssertionError(e);
             }
 
             DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);
