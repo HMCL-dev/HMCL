@@ -92,33 +92,6 @@ public class GameVersionNumberTest {
     }
 
     @Test
-    public void testCompareOld() {
-        assertOrder(
-                "rd-132211",
-                "rd-161348",
-                "rd-20090515",
-                "c0.0.11a",
-                "c0.0.13a",
-                "c0.0.13a_03",
-                "c0.30_01c",
-                "inf-20100330-1",
-                "inf-20100330-2",
-                "inf-20100618",
-                "a1.0.4",
-                "a1.0.17_02",
-                "a1.0.17_04",
-                "a1.1.0",
-                "b1.0",
-                "b1.0_01",
-                "b1.1_02",
-                "b1.2",
-                "b1.8.1",
-                "0.0",
-                "1.0"
-        );
-    }
-
-    @Test
     public void testCompareRelease() {
         assertGameVersionEquals("0.0");
         assertGameVersionEquals("1.100");
@@ -154,6 +127,29 @@ public class GameVersionNumberTest {
     @Test
     public void testCompareMix() {
         assertOrder(
+                "rd-132211",
+                "rd-161348",
+                "rd-20090515",
+                "c0.0.11a",
+                "c0.0.13a",
+                "c0.0.13a_03",
+                "c0.30_01c",
+                "inf-20100330-1",
+                "inf-20100330-2",
+                "inf-20100618",
+                "a1.0.4",
+                "a1.0.17_02",
+                "a1.0.17_04",
+                "a1.1.0",
+                "b1.0",
+                "b1.0_01",
+                "b1.1_02",
+                "b1.2",
+                "b1.8.1",
+                "0.0",
+                "1.0",
+                "11w47a",
+                "1.1",
                 "1.5.1",
                 "2.0",
                 "1.5.2",
