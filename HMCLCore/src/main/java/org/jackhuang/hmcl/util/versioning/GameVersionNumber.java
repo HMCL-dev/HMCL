@@ -75,7 +75,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     @Override
     public int compareTo(@NotNull GameVersionNumber other) {
         if (this.getType() != other.getType()) {
-            return this.getType().compareTo(other.getType());
+            return Integer.compare(this.getType().ordinal(), other.getType().ordinal());
         }
 
         return compareToImpl(other);
