@@ -245,8 +245,9 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         static final int TYPE_GA = Integer.MAX_VALUE;
 
         static final int TYPE_UNKNOWN = 0;
-        static final int TYPE_PRE = 1;
-        static final int TYPE_RC = 2;
+        static final int TYPE_EXP = 1;
+        static final int TYPE_PRE = 2;
+        static final int TYPE_RC = 3;
 
         static final Release ZERO = new Release("0.0", 0, 0, 0, TYPE_GA, 0);
 
@@ -269,6 +270,8 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 eaType = TYPE_PRE;
             } else if ("-rc".equals(eaTypeString)) {
                 eaType = TYPE_RC;
+            } else if ("-exp".equals(eaTypeString)) {
+                eaType = TYPE_EXP;
             } else {
                 eaType = TYPE_UNKNOWN;
             }
