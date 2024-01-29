@@ -58,8 +58,8 @@ public class GameVersionNumberTest {
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = GameVersionNumber.asGameVersion(versions[j]);
 
-                assertTrue(version1.compareTo(version2) < 0, String.format("version1=%s, version2=%s", versions[i], versions[j]));
-                assertTrue(version2.compareTo(version1) > 0, String.format("version1=%s, version2=%s", versions[i], versions[j]));
+                assertEquals(-1, version1.compareTo(version2), String.format("version1=%s, version2=%s", versions[i], versions[j]));
+                assertEquals(1, version2.compareTo(version1), String.format("version1=%s, version2=%s", versions[i], versions[j]));
             }
         }
 
@@ -113,18 +113,22 @@ public class GameVersionNumberTest {
                 "b1.1_02",
                 "b1.2",
                 "b1.8.1",
+                "0.0",
                 "1.0"
         );
     }
 
     @Test
     public void testCompareRelease() {
+        assertGameVersionEquals("0.0");
         assertGameVersionEquals("1.100");
         assertGameVersionEquals("1.100.1");
         assertGameVersionEquals("1.100.1-pre1");
         assertGameVersionEquals("1.100.1-pre1", "1.100.1 Pre-Release 1");
 
         assertOrder(
+                "0.0",
+                "1.0",
                 "1.99",
                 "1.99.1-unknown1",
                 "1.99.1-pre1",
@@ -192,6 +196,26 @@ public class GameVersionNumberTest {
         assertOrder(
                 "1.5.1",
                 "2.0",
-                "1.5.2");
+                "1.5.2"
+        );
+    }
+
+    @Test
+    public void testCompareUnknown() {
+        // Known: 23w35a < 1.20.2 < 23w40a
+        assertOrder(
+                "23w35a",
+                "1.20.2-pre1",
+                "1.20.2-rc1",
+                "1.20.2",
+                "23w35b", // fictional version number
+                "23w40a"
+        );
+
+        assertOrder(
+                "1.20.4",
+                "24w04a",
+                "1.100"
+        );
     }
 }

@@ -32,6 +32,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                         return Old.parseInfdev(version);
                 }
 
+                if (version.equals("0.0")) {
+                    return Release.ZERO;
+                }
+
                 if (version.startsWith("1.")) {
                     return Release.parse(version);
                 }
@@ -307,7 +311,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 c = this.compareToRelease(next);
                 return c >= 0 ? 1 : -1;
             } else {
-                return -1;
+                return 1;
             }
         }
 
