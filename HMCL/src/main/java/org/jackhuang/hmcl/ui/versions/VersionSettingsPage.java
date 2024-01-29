@@ -614,7 +614,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 return versionSetting.getJavaVersion(VersionNumber.asVersion("Unknown"), null);
             } else {
                 return versionSetting.getJavaVersion(
-                        VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(versionId)).orElse("Unknown")),
+                        VersionNumber.asVersion(profile.getRepository().getGameVersion(versionId).orElse("Unknown")),
                         profile.getRepository().getVersion(versionId));
             }
         }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
