@@ -548,12 +548,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 Release currentRelease = null;
                 GameVersionNumber prev = null;
 
-                for (String line; (line = reader.readLine()) != null && !line.isEmpty(); ) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    if (line.isEmpty())
+                        continue;
+
                     GameVersionNumber version = GameVersionNumber.asGameVersion(line);
 
-                    if (currentRelease == null) {
+                    if (currentRelease == null)
                         currentRelease = (Release) version;
-                    }
 
                     if (version instanceof Snapshot) {
                         Snapshot snapshot = (Snapshot) version;
@@ -569,9 +571,8 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                         Special special = (Special) version;
                         special.prev = prev;
                         SPECIALS.put(special.value, special);
-                    } else {
+                    } else
                         throw new InternalError("version: " + version);
-                    }
 
                     prev = version;
                 }
@@ -579,13 +580,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 throw new InternalError(e);
             }
 
+            DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);
+
             SNAPSHOT_INTS = new int[snapshots.size()];
             for (int i = 0; i < snapshots.size(); i++) {
                 SNAPSHOT_INTS[i] = snapshots.get(i).intValue;
             }
 
             SNAPSHOT_PREV = snapshotPrev.toArray(new Release[SNAPSHOT_INTS.length]);
-            DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);
         }
     }
 }
