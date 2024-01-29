@@ -215,7 +215,15 @@ public class GameVersionNumberTest {
         assertOrder(
                 "1.20.4",
                 "24w04a",
-                "1.100"
+                "1.100"   // fictional version number
         );
+
+        assertOrder(
+                "1.19.4",
+                "23w18a", // fictional version number
+                "1.19.5",
+                "1.20"
+        );
+
     }
 }

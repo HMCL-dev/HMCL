@@ -301,24 +301,15 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return Integer.compare(this.eaVersion, other.eaVersion);
         }
 
-        int compareToSnapshot(Release prev, Release next) {
+        int compareToSnapshot(Release prev) {
             int c = this.compareToRelease(prev);
-            if (c <= 0) {
-                return -1;
-            }
-
-            if (next != null) {
-                c = this.compareToRelease(next);
-                return c >= 0 ? 1 : -1;
-            } else {
-                return 1;
-            }
+            return c <= 0 ? -1 : 1;
         }
 
         int compareToSnapshot(Snapshot other) {
             int idx = Arrays.binarySearch(Versions.SNAPSHOT_INTS, other.intValue);
             if (idx >= 0) {
-                return compareToSnapshot(Versions.SNAPSHOT_PREV[idx], Versions.SNAPSHOT_NEXT[idx]);
+                return compareToSnapshot(Versions.SNAPSHOT_PREV[idx]);
             }
 
             idx = -(idx + 1);
@@ -330,7 +321,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 return this.compareToRelease(Versions.SNAPSHOT_PREV[0]);
             }
 
-            return compareToSnapshot(Versions.SNAPSHOT_PREV[idx], Versions.SNAPSHOT_NEXT[idx]);
+            return compareToSnapshot(Versions.SNAPSHOT_PREV[idx]);
         }
 
         @Override
