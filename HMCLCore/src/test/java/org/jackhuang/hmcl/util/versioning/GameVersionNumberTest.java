@@ -186,7 +186,6 @@ public class GameVersionNumberTest {
 
     @Test
     public void testCompareUnknown() {
-        // Known: 23w35a < 1.20.2 < 23w40a
         assertOrder(
                 "23w35a",
                 "1.20.2-pre1",
@@ -209,5 +208,11 @@ public class GameVersionNumberTest {
                 "1.20"
         );
 
+        assertOrder(
+                "1.0",
+                "10w47a", // fictional version number
+                "11w47a",
+                "1.1"
+        );
     }
 }

@@ -338,10 +338,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 return -1;
             }
 
-            if (idx == 0) {
-                return this.compareToRelease(Versions.SNAPSHOT_PREV[0]);
-            }
-
             return this.compareToRelease(Versions.SNAPSHOT_PREV[idx]) <= 0 ? -1 : 1;
         }
 
