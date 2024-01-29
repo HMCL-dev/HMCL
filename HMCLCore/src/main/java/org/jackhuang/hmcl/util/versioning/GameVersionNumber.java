@@ -13,6 +13,10 @@ import java.util.regex.Pattern;
 
 public abstract class GameVersionNumber implements Comparable<GameVersionNumber> {
 
+    public static String[] getDefaultGameVersions() {
+        return Versions.DEFAULT_GAME_VERSIONS;
+    }
+
     public static GameVersionNumber asGameVersion(String version) {
         try {
             if (!version.isEmpty()) {
@@ -45,10 +49,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             special = new Special(version);
         }
         return special;
-    }
-
-    public static String[] getDefaultGameVersions() {
-        return Versions.DEFAULT_GAME_VERSIONS;
     }
 
     final String value;
