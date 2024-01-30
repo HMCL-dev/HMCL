@@ -146,7 +146,7 @@ public final class Logging {
         if (thrown == null) {
             return builder.toString();
         } else {
-            StringWriter writer = new StringWriter(builder.length() + 512);
+            StringWriter writer = new StringWriter(builder.length() + 2048);
             writer.getBuffer().append(builder);
             try (PrintWriter printWriter = new PrintWriter(writer)) {
                 thrown.printStackTrace(printWriter);
