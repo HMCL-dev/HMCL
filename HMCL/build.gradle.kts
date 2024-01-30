@@ -130,8 +130,8 @@ tasks.getByName<JavaCompile>("compileJava") {
                     rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json").also { zippedPath ->
                         gsonInstance.toJson(data).also { expectedData ->
                             if (Files.exists(zippedPath)) {
-                                Files.readString(zippedPath, Charsets.UTF_8).also { rawData ->
-                                    if (!rawData.equals(expectedData)) {
+                                Files.newBufferedReader(zippedPath, Charsets.UTF_8).use { br -> br.readText() }.also { rawData ->
+                                    if (rawData != expectedData) {
                                         if (System.getenv("GITHUB_SHA") == null) {
                                             Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
                                         } else {
@@ -140,7 +140,7 @@ tasks.getByName<JavaCompile>("compileJava") {
                                     }
                                 }
                             } else {
-                                Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
+                                Files.newBufferedWriter(zippedPath, Charsets.UTF_8).use { bw -> bw.write(expectedData) }
                             }
                         }
                     }
