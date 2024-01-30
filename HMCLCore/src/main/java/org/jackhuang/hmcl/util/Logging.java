@@ -126,7 +126,7 @@ public final class Logging {
     private static String format(LogRecord record) {
         String message = filterForbiddenToken(record.getMessage());
 
-        StringBuilder builder = new StringBuilder(256);
+        StringBuilder builder = new StringBuilder(128 + message.length());
         builder.append('[');
         TIME_FORMATTER.formatTo(Instant.ofEpochMilli(record.getMillis()), builder);
         builder.append(']');
