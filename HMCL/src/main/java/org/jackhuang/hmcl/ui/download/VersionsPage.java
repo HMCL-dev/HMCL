@@ -298,7 +298,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
             content.setTitle(remoteVersion.getSelfVersion());
             if (remoteVersion.getReleaseDate() != null) {
-                content.setSubtitle(formatDateTime(remoteVersion.getReleaseDate().toInstant()));
+                content.setSubtitle(formatDateTime(remoteVersion.getReleaseDate()));
             } else {
                 content.setSubtitle(null);
             }

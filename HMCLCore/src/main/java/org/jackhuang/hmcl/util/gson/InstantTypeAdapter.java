@@ -20,9 +20,13 @@ package org.jackhuang.hmcl.util.gson;
 import com.google.gson.*;
 
 import java.lang.reflect.Type;
-import java.time.Instant;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 
 public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDeserializer<Instant> {
     public static final InstantTypeAdapter INSTANCE = new InstantTypeAdapter();
@@ -31,21 +35,50 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
     }
 
     @Override
-    public Instant deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        if (!(json instanceof JsonPrimitive)) {
-            throw new JsonParseException("The instant should be a string value");
-        } else {
-            Instant instant = Instant.parse(json.getAsString());
-            if (typeOfT == Instant.class) {
-                return instant;
-            } else {
-                throw new IllegalArgumentException(this.getClass() + " cannot be deserialized to " + typeOfT);
+    public JsonElement serialize(Instant t, Type type, JsonSerializationContext jsc) {
+        return new JsonPrimitive(serializeToString(t));
+    }
+
+    @Override
+    public Instant deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+        if (!(json instanceof JsonPrimitive))
+            throw new JsonParseException("The date should be a string value");
+        else {
+            Instant time = deserializeToInstant(json.getAsString());
+            if (type == ZonedDateTime.class)
+                return time;
+            else
+                throw new IllegalArgumentException(this.getClass() + " cannot be deserialized to " + type);
+        }
+    }
+
+    private static final DateTimeFormatter EN_US_FORMAT = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.MEDIUM)
+            .withLocale(Locale.US);
+    private static final DateTimeFormatter ISO_DATE_TIME = new DateTimeFormatterBuilder()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            .optionalStart().appendOffset("+HH:MM", "+00:00").optionalEnd()
+            .optionalStart().appendOffset("+HHMM", "+0000").optionalEnd()
+            .optionalStart().appendOffset("+HH", "Z").optionalEnd()
+            .optionalStart().appendOffsetId().optionalEnd()
+            .toFormatter();
+
+    public static Instant deserializeToInstant(String string) {
+        try {
+            return ZonedDateTime.parse(string, EN_US_FORMAT).toInstant();
+        } catch (DateTimeParseException ex1) {
+            try {
+                return ZonedDateTime.parse(string, ISO_DATE_TIME).toInstant();
+            } catch (DateTimeParseException e) {
+                try {
+                    return LocalDateTime.parse(string, DateTimeFormatter.ISO_LOCAL_DATE_TIME).atZone(ZoneId.systemDefault()).toInstant();
+                } catch (DateTimeParseException e2) {
+                    throw new JsonParseException("Invalid date: " + string, e);
+                }
             }
         }
     }
 
-    @Override
-    public JsonElement serialize(Instant src, Type typeOfSrc, JsonSerializationContext context) {
-        return new JsonPrimitive(DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.systemDefault()).format(src));
+    public static String serializeToString(Instant instant) {
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(instant.truncatedTo(ChronoUnit.SECONDS));
     }
 }

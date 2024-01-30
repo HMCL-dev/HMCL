@@ -29,7 +29,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -113,7 +112,6 @@ public final class JsonUtils {
                 .enableComplexMapKeySerialization()
                 .setPrettyPrinting()
                 .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
-                .registerTypeAdapter(Date.class, DateTypeAdapter.INSTANCE)
                 .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
                 .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
                 .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)

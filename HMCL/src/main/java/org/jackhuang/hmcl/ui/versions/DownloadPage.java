@@ -382,7 +382,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.getName());
-                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
+                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
