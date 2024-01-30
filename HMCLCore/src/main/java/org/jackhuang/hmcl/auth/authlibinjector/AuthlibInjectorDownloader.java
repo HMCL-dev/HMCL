@@ -116,14 +116,14 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
                 return HttpRequest.GET(url.toExternalForm()).getJson(AuthlibInjectorVersionInfo.class);
             } catch (IOException | JsonParseException e) {
                 if (exception == null) {
-                    exception = new IOException("Failed to download authlib-injector");
+                    exception = new IOException("Failed to fetch authlib-injector artifact info");
                 }
                 exception.addSuppressed(e);
             }
         }
 
         if (exception == null) {
-            exception = new IOException("No download providers available");
+            exception = new IOException("No authlib-injector download providers available");
         }
         throw exception;
     }
