@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
@@ -26,6 +27,17 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     private static final String OLD_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge";
 
     private static final String META_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge";
+
+    @Override
+    public Optional<NeoForgeRemoteVersion> getVersion(String gameVersion, String remoteVersion) {
+        if (gameVersion.equals("1.20.1")) {
+            remoteVersion = NeoForgeRemoteVersion.fixInvalidVersion(remoteVersion);
+            if (!remoteVersion.equals("47.1.82")) {
+                remoteVersion = "1.20.1-" + remoteVersion;
+            }
+        }
+        return super.getVersion(gameVersion, remoteVersion);
+    }
 
     @Override
     public CompletableFuture<?> refreshAsync() {
