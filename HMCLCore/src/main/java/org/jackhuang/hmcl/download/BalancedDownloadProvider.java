@@ -18,9 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Official Download Provider fetches version list from Mojang and
@@ -28,12 +26,11 @@ import java.util.stream.Collectors;
  *
  * @author huangyuhui
  */
-public class BalancedDownloadProvider implements DownloadProvider {
-    List<DownloadProvider> candidates;
+public final class BalancedDownloadProvider implements DownloadProvider {
+    private final DownloadProvider[] candidates;
+    private final Map<String, VersionList<?>> versionLists = new HashMap<>();
 
-    Map<String, VersionList<?>> versionLists = new HashMap<>();
-
-    public BalancedDownloadProvider(List<DownloadProvider> candidates) {
+    public BalancedDownloadProvider(DownloadProvider... candidates) {
         this.candidates = candidates;
     }
 
@@ -54,13 +51,13 @@ public class BalancedDownloadProvider implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        if (!versionLists.containsKey(id)) {
-            versionLists.put(id, new MultipleSourceVersionList(
-                    candidates.stream()
-                            .map(downloadProvider -> downloadProvider.getVersionListById(id))
-                            .collect(Collectors.toList())));
-        }
-        return versionLists.get(id);
+        return versionLists.computeIfAbsent(id, value -> {
+            VersionList<?>[] lists = new VersionList<?>[candidates.length];
+            for (int i = 0; i < candidates.length; i++) {
+                lists[i] = candidates[i].getVersionListById(value);
+            }
+            return new MultipleSourceVersionList(lists);
+        });
     }
 
     @Override

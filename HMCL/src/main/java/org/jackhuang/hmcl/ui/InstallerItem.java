@@ -87,7 +87,7 @@ public class InstallerItem extends Control {
                 iconType = VersionIconType.CHICKEN;
                 break;
             case "optifine":
-                iconType = VersionIconType.COMMAND;
+                iconType = VersionIconType.OPTIFINE;
                 break;
             case "quilt":
             case "quilt-api":

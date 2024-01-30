@@ -102,9 +102,7 @@ tasks.getByName<JavaCompile>("compileJava") {
 
         doLast {
             Gson().also { gsonInstance ->
-                rootProject.rootDir.resolve("data-json/dynamic-remote-resources.json").reader(
-                    charset = StandardCharsets.UTF_8
-                ).use { br ->
+                rootProject.rootDir.resolve("data-json/dynamic-remote-resources.json").bufferedReader().use { br ->
                     (gsonInstance.fromJson(br, JsonElement::class.java) as JsonObject)
                 }.also { data ->
                     data.asMap().forEach { (namespace, namespaceData) ->
