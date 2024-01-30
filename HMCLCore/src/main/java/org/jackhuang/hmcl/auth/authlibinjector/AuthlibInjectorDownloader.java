@@ -22,7 +22,6 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.io.IOException;
@@ -114,13 +113,11 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
         List<URL> urls = downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL);
 
-        String result = null;
         IOException exception = null;
         for (URL url : urls) {
             try {
-                result = HttpRequest.GET(url.toExternalForm()).getString();
-                break;
-            } catch (IOException e) {
+                return HttpRequest.GET(url.toExternalForm()).getJson(AuthlibInjectorVersionInfo.class);
+            } catch (IOException | JsonParseException e) {
                 if (exception == null) {
                     exception = new IOException("Failed to download authlib-injector");
                 }
@@ -128,11 +125,10 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
             }
         }
 
-        try {
-            return JsonUtils.fromNonNullJson(result, AuthlibInjectorVersionInfo.class);
-        } catch (JsonParseException e) {
-            throw new IOException("Malformed response", e);
+        if (exception == null) {
+            exception = new IOException("No download providers available");
         }
+        throw exception;
     }
 
     private Optional<AuthlibInjectorArtifactInfo> getLocalArtifact() {
