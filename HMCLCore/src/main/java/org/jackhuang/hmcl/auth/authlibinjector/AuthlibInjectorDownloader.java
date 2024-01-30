@@ -22,12 +22,14 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -110,8 +112,24 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     }
 
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
+        List<URL> urls = downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL);
+
+        String result = null;
+        IOException exception = null;
+        for (URL url : urls) {
+            try {
+                result = HttpRequest.GET(url.toExternalForm()).getString();
+                break;
+            } catch (IOException e) {
+                if (exception == null) {
+                    exception = new IOException("Failed to download authlib-injector");
+                }
+                exception.addSuppressed(e);
+            }
+        }
+
         try {
-            return HttpRequest.GET(downloadProvider.get().injectURL(LATEST_BUILD_URL)).getJson(AuthlibInjectorVersionInfo.class);
+            return JsonUtils.fromNonNullJson(result, AuthlibInjectorVersionInfo.class);
         } catch (JsonParseException e) {
             throw new IOException("Malformed response", e);
         }
@@ -133,7 +151,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         }
     }
 
-    private static class AuthlibInjectorVersionInfo {
+    private static final class AuthlibInjectorVersionInfo {
         @SerializedName("build_number")
         public int buildNumber;
 
