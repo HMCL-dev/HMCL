@@ -110,11 +110,22 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     }
 
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
-        try {
-            return HttpRequest.GET(downloadProvider.get().injectURL(LATEST_BUILD_URL)).getJson(AuthlibInjectorVersionInfo.class);
-        } catch (JsonParseException e) {
-            throw new IOException("Malformed response", e);
+        IOException exception = null;
+        for (URL url : downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL)) {
+            try {
+                return HttpRequest.GET(url.toExternalForm()).getJson(AuthlibInjectorVersionInfo.class);
+            } catch (IOException | JsonParseException e) {
+                if (exception == null) {
+                    exception = new IOException("Failed to fetch authlib-injector artifact info");
+                }
+                exception.addSuppressed(e);
+            }
         }
+
+        if (exception == null) {
+            exception = new IOException("No authlib-injector download providers available");
+        }
+        throw exception;
     }
 
     private Optional<AuthlibInjectorArtifactInfo> getLocalArtifact() {
@@ -133,7 +144,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         }
     }
 
-    private static class AuthlibInjectorVersionInfo {
+    private static final class AuthlibInjectorVersionInfo {
         @SerializedName("build_number")
         public int buildNumber;
 

@@ -17,23 +17,26 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
 
-    private final List<VersionList<?>> backends;
+    private final VersionList<?>[] backends;
 
-    MultipleSourceVersionList(List<VersionList<?>> backends) {
+    MultipleSourceVersionList(VersionList<?>[] backends) {
         this.backends = backends;
 
-        assert (backends.size() >= 1);
+        assert (backends.length >= 1);
     }
 
     @Override
     public boolean hasType() {
-        boolean hasType = backends.get(0).hasType();
-        assert (backends.stream().allMatch(versionList -> versionList.hasType() == hasType));
+        boolean hasType = backends[0].hasType();
+        assert (Arrays.stream(backends).allMatch(versionList -> versionList.hasType() == hasType));
         return hasType;
     }
 
@@ -47,11 +50,9 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
         throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
     }
 
-    @Override
-    public CompletableFuture<?> refreshAsync(String gameVersion) {
-        versions.clear(gameVersion);
-        return CompletableFuture.anyOf(backends.stream()
-                .map(versionList -> versionList.refreshAsync(gameVersion)
+    private CompletableFuture<?> refreshAsync(String gameVersion, int sourceIndex) {
+        VersionList<?> versionList = backends[sourceIndex];
+        CompletableFuture<Void> future = versionList.refreshAsync(gameVersion)
                 .thenRunAsync(() -> {
                     lock.writeLock().lock();
 
@@ -60,7 +61,25 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
                     } finally {
                         lock.writeLock().unlock();
                     }
-                }))
-                .toArray(CompletableFuture[]::new));
+                });
+
+        if (sourceIndex == backends.length - 1) {
+            return future;
+        } else {
+            return future.<CompletableFuture<?>>handle((ignore, e) -> {
+                if (e == null) {
+                    return future;
+                }
+
+                LOG.log(Level.WARNING, "Failed to fetch versions list and try to fetch from other source", e);
+                return refreshAsync(gameVersion, sourceIndex + 1);
+            }).thenCompose(it -> it);
+        }
+    }
+
+    @Override
+    public CompletableFuture<?> refreshAsync(String gameVersion) {
+        versions.clear(gameVersion);
+        return refreshAsync(gameVersion, 0);
     }
 }

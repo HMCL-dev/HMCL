@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.java.JavaDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
@@ -124,7 +125,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
-                } else if (task instanceof NeoForgeInstallTask) {
+                } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.neoforge")));
                 } else if (task instanceof LiteLoaderInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.liteloader")));
