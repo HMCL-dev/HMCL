@@ -45,7 +45,7 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
             throw new JsonParseException("The date should be a string value");
         else {
             Instant time = deserializeToInstant(json.getAsString());
-            if (type == ZonedDateTime.class)
+            if (type == Instant.class)
                 return time;
             else
                 throw new IllegalArgumentException(this.getClass() + " cannot be deserialized to " + type);
