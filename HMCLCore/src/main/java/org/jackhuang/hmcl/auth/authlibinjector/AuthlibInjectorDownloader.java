@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -111,10 +110,8 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     }
 
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
-        List<URL> urls = downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL);
-
         IOException exception = null;
-        for (URL url : urls) {
+        for (URL url : downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL)) {
             try {
                 return HttpRequest.GET(url.toExternalForm()).getJson(AuthlibInjectorVersionInfo.class);
             } catch (IOException | JsonParseException e) {
