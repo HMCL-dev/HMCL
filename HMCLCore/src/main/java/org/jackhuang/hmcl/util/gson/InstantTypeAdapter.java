@@ -84,6 +84,6 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
     }
 
     public static String serializeToString(Instant instant) {
-        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(instant.truncatedTo(ChronoUnit.SECONDS));
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS));
     }
 }
