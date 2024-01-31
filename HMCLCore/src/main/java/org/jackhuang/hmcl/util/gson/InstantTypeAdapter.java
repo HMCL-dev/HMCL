@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.gson;
 
 import com.google.gson.*;
 
-import javax.print.attribute.standard.MediaSize;
 import java.lang.reflect.Type;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +27,8 @@ import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
+
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDeserializer<Instant> {
     public static final InstantTypeAdapter INSTANCE = new InstantTypeAdapter();
@@ -63,17 +64,17 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
             .optionalStart().appendOffsetId().optionalEnd()
             .toFormatter();
 
-    private static final DateTimeFormatter ISO_ZONED_DATE_TIME = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.systemDefault());
-
     public static Instant deserializeToInstant(String string) {
         try {
             return ZonedDateTime.parse(string, EN_US_FORMAT).toInstant();
         } catch (DateTimeParseException ex1) {
             try {
-                return ZonedDateTime.parse(string, ISO_DATE_TIME).toInstant();
+                ZonedDateTime zonedDateTime = ZonedDateTime.parse(string, ISO_DATE_TIME);
+                return zonedDateTime.toInstant();
             } catch (DateTimeParseException e) {
                 try {
-                    return ISO_ZONED_DATE_TIME.parse(string, Instant::from);
+                    LocalDateTime localDateTime = LocalDateTime.parse(string, ISO_LOCAL_DATE_TIME);
+                    return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
                 } catch (DateTimeParseException e2) {
                     throw new JsonParseException("Invalid instant: " + string, e);
                 }
