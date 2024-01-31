@@ -55,7 +55,8 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
     }
 
     private static final DateTimeFormatter EN_US_FORMAT = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.MEDIUM)
-            .withLocale(Locale.US);
+            .withLocale(Locale.US)
+            .withZone(ZoneId.systemDefault());
     private static final DateTimeFormatter ISO_DATE_TIME = new DateTimeFormatterBuilder()
             .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             .optionalStart().appendOffset("+HH:MM", "+00:00").optionalEnd()
