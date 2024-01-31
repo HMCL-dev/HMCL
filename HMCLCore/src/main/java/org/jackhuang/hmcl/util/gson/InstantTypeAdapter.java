@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.gson;
 
 import com.google.gson.*;
 
+import javax.print.attribute.standard.MediaSize;
 import java.lang.reflect.Type;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -42,7 +43,7 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
     @Override
     public Instant deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
         if (!(json instanceof JsonPrimitive))
-            throw new JsonParseException("The date should be a string value");
+            throw new JsonParseException("The instant should be a string value");
         else {
             Instant time = deserializeToInstant(json.getAsString());
             if (type == Instant.class)
@@ -62,6 +63,8 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
             .optionalStart().appendOffsetId().optionalEnd()
             .toFormatter();
 
+    private static final DateTimeFormatter ISO_ZONED_DATE_TIME = DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneId.systemDefault());
+
     public static Instant deserializeToInstant(String string) {
         try {
             return ZonedDateTime.parse(string, EN_US_FORMAT).toInstant();
@@ -70,9 +73,9 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
                 return ZonedDateTime.parse(string, ISO_DATE_TIME).toInstant();
             } catch (DateTimeParseException e) {
                 try {
-                    return LocalDateTime.parse(string, DateTimeFormatter.ISO_LOCAL_DATE_TIME).atZone(ZoneId.systemDefault()).toInstant();
+                    return ISO_ZONED_DATE_TIME.parse(string, Instant::from);
                 } catch (DateTimeParseException e2) {
-                    throw new JsonParseException("Invalid date: " + string, e);
+                    throw new JsonParseException("Invalid instant: " + string, e);
                 }
             }
         }

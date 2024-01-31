@@ -8,7 +8,7 @@ import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DateTypeAdapterTest {
+public class InstantTypeAdapterTest {
 
     @Test
     public void parse() {

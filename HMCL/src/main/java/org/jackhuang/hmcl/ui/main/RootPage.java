@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.nbt.NBTHelper;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -118,7 +119,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((Version version) -> version.getReleaseTime() == null ? Instant.EPOCH : version.getReleaseTime())
+                                .comparing((Version version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
                                 .thenComparing(a -> VersionNumber.asVersion(a.getId())))
                         .collect(Collectors.toList());
                 runInFX(() -> {
