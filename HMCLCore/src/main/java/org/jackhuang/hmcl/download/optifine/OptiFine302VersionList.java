@@ -20,27 +20,21 @@ package org.jackhuang.hmcl.download.optifine;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author huangyuhui
  */
-public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVersion> {
-    private final String apiRoot;
+public final class OptiFine302VersionList extends VersionList<OptiFineRemoteVersion> {
+    private final String versionListURL;
 
-    /**
-     * @param apiRoot API Root of BMCLAPI implementations
-     */
-    public OptiFineBMCLVersionList(String apiRoot) {
-        this.apiRoot = apiRoot;
+    public OptiFine302VersionList(String versionListURL) {
+        this.versionListURL = versionListURL;
     }
 
     @Override
@@ -50,26 +44,19 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
 
     @Override
     public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(apiRoot + "/optifine/versionlist").<List<OptiFineVersion>>getJsonAsync(new TypeToken<List<OptiFineVersion>>() {
+        return HttpRequest.GET(versionListURL).<OptiFine302VersionList.VersionList>getJsonAsync(new TypeToken<OptiFine302VersionList.VersionList>() {
         }.getType()).thenAcceptAsync(root -> {
             lock.writeLock().lock();
 
             try {
                 versions.clear();
-                Set<String> duplicates = new HashSet<>();
-                for (OptiFineVersion element : root) {
-                    String version = element.type + "_" + element.patch;
-                    String mirror = apiRoot + "/optifine/" + element.gameVersion + "/" + element.type + "/" + element.patch;
-                    if (!duplicates.add(mirror))
-                        continue;
-
-                    boolean isPre = element.patch != null && (element.patch.startsWith("pre") || element.patch.startsWith("alpha"));
-
-                    if (StringUtils.isBlank(element.gameVersion))
-                        continue;
-
+                for (OptiFineVersion element : root.versions) {
                     String gameVersion = VersionNumber.normalize(element.gameVersion);
-                    versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
+                    versions.put(gameVersion, new OptiFineRemoteVersion(
+                            gameVersion, element.version,
+                            root.downloadBases.stream().map(u -> u + element.fileName).collect(Collectors.toList()),
+                            element.fileName.startsWith("pre")
+                    ));
                 }
             } finally {
                 lock.writeLock().unlock();
@@ -77,22 +64,30 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
         });
     }
 
-    /**
-     * @author huangyuhui
-     */
+    private static final class VersionList {
+        @SerializedName("file")
+        private final List<OptiFineVersion> versions;
+
+        @SerializedName("download")
+        private final List<String> downloadBases;
+
+        public VersionList(List<OptiFineVersion> versions, List<String> downloadBases) {
+            this.versions = versions;
+            this.downloadBases = downloadBases;
+        }
+    }
+
     private static final class OptiFineVersion {
-        @SerializedName("type")
-        private final String type;
-
-        @SerializedName("patch")
-        private final String patch;
-
+        @SerializedName("name")
+        private final String version;
+        @SerializedName("filename")
+        private final String fileName;
         @SerializedName("mcversion")
         private final String gameVersion;
 
-        public OptiFineVersion(String type, String patch, String gameVersion) {
-            this.type = type;
-            this.patch = patch;
+        public OptiFineVersion(String version, String fileName, String gameVersion) {
+            this.version = version;
+            this.fileName = fileName;
             this.gameVersion = gameVersion;
         }
     }
