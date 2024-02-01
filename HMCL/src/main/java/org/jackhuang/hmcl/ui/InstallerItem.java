@@ -206,7 +206,7 @@ public class InstallerItem extends Control {
             if (gameVersion == null) {
                this.libraries = new InstallerItem[]{game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
             } else if (VersionNumber.compare(gameVersion, "1.13") < 0) {
-                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
+                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine};
             } else {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
             }
