@@ -40,10 +40,6 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
