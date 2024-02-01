@@ -503,6 +503,9 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
         }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
+            env.put("INST_NEOFORGE", "1");
+        }
         if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
             env.put("INST_LITELOADER", "1");
         }
