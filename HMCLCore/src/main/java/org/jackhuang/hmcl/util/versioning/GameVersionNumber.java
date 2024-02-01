@@ -46,7 +46,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         } catch (IllegalArgumentException ignore) {
         }
 
-
         Special special = Versions.SPECIALS.get(version);
         if (special == null) {
             special = new Special(version);
