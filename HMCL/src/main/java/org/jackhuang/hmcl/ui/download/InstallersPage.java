@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Map;
 
@@ -69,12 +70,32 @@ public class InstallersPage extends Control implements WizardPage {
             item.setStyleMode(InstallerItem.Style.CARD);
         }
 
+        boolean checkOptiFine = gameVersion != null && VersionNumber.compare(gameVersion, "1.17") >= 0;
+
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
             library.action.set(e -> {
                 if (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)) {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+                }
+
+                if (checkOptiFine) {
+                    boolean needWarning = false;
+                    if (LibraryAnalyzer.LibraryType.OPTIFINE.getPatchId().equals(libraryId)) {
+                        for (InstallerItem other : group.getLibraries()) {
+                            if (other != library && other != group.game && other.libraryVersion.get() != null) {
+                                needWarning = true;
+                                break;
+                            }
+                        }
+                    } else if (group.optiFine.libraryVersion.get() != null) {
+                        needWarning = true;
+                    }
+
+                    if (needWarning) {
+                        Controllers.dialog(i18n("install.installer.optifine.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+                    }
                 }
 
                 if (library.incompatibleLibraryName.get() == null)
