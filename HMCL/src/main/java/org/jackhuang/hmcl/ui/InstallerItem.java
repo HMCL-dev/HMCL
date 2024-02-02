@@ -209,7 +209,6 @@ public class InstallerItem extends Control {
             } else {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
             }
-
         }
 
         public InstallerItem[] getLibraries() {
