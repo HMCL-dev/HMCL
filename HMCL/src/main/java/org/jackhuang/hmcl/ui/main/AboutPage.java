@@ -67,6 +67,12 @@ public class AboutPage extends StackPane {
             glavo.setTitle("Glavo");
             glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
             glavo.setExternalLink("https://github.com/Glavo");
+
+            IconedTwoLineListItem burningtnt = new IconedTwoLineListItem();
+            burningtnt.setImage(FXUtils.newBuiltinImage("/assets/img/burningtnt.png"));
+            burningtnt.setTitle("Burning_TNT");
+            burningtnt.setSubtitle(i18n("about.thanks_to.burningtnt.statement"));
+            burningtnt.setExternalLink("https://github.com/burningtnt/");
             
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
@@ -103,7 +109,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, burningtnt, mcbbs, mcmod, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();
