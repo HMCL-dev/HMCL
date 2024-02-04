@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.css.PseudoClass;
@@ -39,6 +40,11 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -135,45 +141,55 @@ public class InstallerItem extends Control {
 
         private final InstallerItem[] libraries;
 
+        private final HashMap<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
+
+        private Set<InstallerItem> getIncompatibles(InstallerItem item) {
+            return incompatibleMap.computeIfAbsent(item, it -> new HashSet<>());
+        }
+
+        private void addIncompatibles(InstallerItem item, InstallerItem... others) {
+            Set<InstallerItem> set = getIncompatibles(item);
+            for (InstallerItem other : others) {
+                set.add(other);
+                getIncompatibles(other).add(item);
+            }
+        }
+
+        private void mutualIncompatible(InstallerItem... items) {
+            for (InstallerItem item : items) {
+                Set<InstallerItem> set = getIncompatibles(item);
+
+                for (InstallerItem item2 : items) {
+                    if (item2 != item) {
+                        set.add(item2);
+                    }
+                }
+            }
+        }
+
         public InstallerItemGroup(String gameVersion) {
-            forge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
-                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
-                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
-                if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
-                return null;
-            }, fabric.libraryVersion, quilt.libraryVersion, neoForge.libraryVersion));
+            mutualIncompatible(forge, fabric, quilt, neoForge, liteLoader);
+            addIncompatibles(optiFine, fabric, quilt, neoForge);
+            addIncompatibles(fabricApi, forge, quilt, quiltApi, neoForge, liteLoader, optiFine);
+            addIncompatibles(quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine);
 
-            neoForge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
-                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
-                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
-                if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
-                return null;
-            }, fabric.libraryVersion, quilt.libraryVersion, forge.libraryVersion));
+            InvalidationListener listener = o -> {
+                for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
+                    InstallerItem item = entry.getKey();
 
-            liteLoader.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
-                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
-                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
-                if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
-                return null;
-            }, fabric.libraryVersion, quilt.libraryVersion, neoForge.libraryVersion));
+                    String incompatibleId = null;
+                    for (InstallerItem other : entry.getValue()) {
+                        if (other.libraryVersion.get() != null) {
+                            incompatibleId = other.id;
+                            break;
+                        }
+                    }
 
-            optiFine.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
-                if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
-                if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
-                if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
-                return null;
-            }, fabric.libraryVersion, quilt.libraryVersion, neoForge.libraryVersion));
-
-            for (InstallerItem fabric : new InstallerItem[]{fabric, fabricApi}) {
-                fabric.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
-                    if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
-                    if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
-                    if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
-                    if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
-                    if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
-                    if (quiltApi.libraryVersion.get() != null) return QUILT_API.getPatchId();
-                    return null;
-                }, forge.libraryVersion, neoForge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion, quilt.libraryVersion, quiltApi.libraryVersion));
+                    item.incompatibleLibraryName.set(incompatibleId);
+                }
+            };
+            for (InstallerItem item : incompatibleMap.keySet()) {
+                item.libraryVersion.addListener(listener);
             }
 
             fabricApi.dependencyName.bind(Bindings.createStringBinding(() -> {
@@ -181,23 +197,10 @@ public class InstallerItem extends Control {
                 else return null;
             }, fabric.libraryVersion));
 
-            for (InstallerItem quilt : new InstallerItem[]{quilt, quiltApi}) {
-                quilt.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
-                    if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
-                    if (fabricApi.libraryVersion.get() != null) return FABRIC_API.getPatchId();
-                    if (forge.libraryVersion.get() != null) return FORGE.getPatchId();
-                    if (neoForge.libraryVersion.get() != null) return NEO_FORGE.getPatchId();
-                    if (liteLoader.libraryVersion.get() != null) return LITELOADER.getPatchId();
-                    if (optiFine.libraryVersion.get() != null) return OPTIFINE.getPatchId();
-                    return null;
-                }, fabric.libraryVersion, fabricApi.libraryVersion, forge.libraryVersion, neoForge.libraryVersion, liteLoader.libraryVersion, optiFine.libraryVersion));
-            }
-
             quiltApi.dependencyName.bind(Bindings.createStringBinding(() -> {
                 if (quilt.libraryVersion.get() == null) return QUILT.getPatchId();
                 else return null;
             }, quilt.libraryVersion));
-
 
             if (gameVersion == null) {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
