@@ -26,12 +26,18 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
+import org.jackhuang.hmcl.util.Pair;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  *
  * @author huang
  */
-public class BMCLAPIDownloadProvider implements DownloadProvider {
+public final class BMCLAPIDownloadProvider implements DownloadProvider {
     private final String apiRoot;
     private final GameVersionList game;
     private final FabricVersionList fabric;
@@ -42,6 +48,7 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
+    private final List<Pair<String, String>> replacement;
 
     public BMCLAPIDownloadProvider(String apiRoot) {
         this.apiRoot = apiRoot;
@@ -54,6 +61,24 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new QuiltAPIVersionList(this);
+        this.replacement = Arrays.asList(
+                pair("https://bmclapi2.bangbang93.com", apiRoot),
+                pair("https://launchermeta.mojang.com", apiRoot),
+                pair("https://piston-meta.mojang.com", apiRoot),
+                pair("https://piston-data.mojang.com", apiRoot),
+                pair("https://launcher.mojang.com", apiRoot),
+                pair("https://libraries.minecraft.net", apiRoot + "/libraries"),
+                pair("http://files.minecraftforge.net/maven", apiRoot + "/maven"),
+                pair("https://files.minecraftforge.net/maven", apiRoot + "/maven"),
+                pair("https://maven.minecraftforge.net", apiRoot + "/maven"),
+                pair("https://maven.neoforged.net/releases/net/neoforged/forge", apiRoot + "/maven/net/neoforged/forge"),
+                pair("http://dl.liteloader.com/versions/versions.json", apiRoot + "/maven/com/mumfrey/liteloader/versions.json"),
+                pair("http://dl.liteloader.com/versions", apiRoot + "/maven"),
+                pair("https://meta.fabricmc.net", apiRoot + "/fabric-meta"),
+                pair("https://maven.fabricmc.net", apiRoot + "/maven"),
+                pair("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector"),
+                pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
+        );
     }
 
     public String getApiRoot() {
@@ -98,22 +123,13 @@ public class BMCLAPIDownloadProvider implements DownloadProvider {
 
     @Override
     public String injectURL(String baseURL) {
-        return baseURL
-                .replace("https://bmclapi2.bangbang93.com", apiRoot)
-                .replace("https://launchermeta.mojang.com", apiRoot)
-                .replace("https://piston-meta.mojang.com", apiRoot)
-                .replace("https://piston-data.mojang.com", apiRoot)
-                .replace("https://launcher.mojang.com", apiRoot)
-                .replace("https://libraries.minecraft.net", apiRoot + "/libraries")
-                .replaceFirst("https?://files\\.minecraftforge\\.net/maven", apiRoot + "/maven")
-                .replace("https://maven.minecraftforge.net", apiRoot + "/maven")
-                .replace("https://maven.neoforged.net/releases/net/neoforged/forge", apiRoot + "/maven/net/neoforged/forge")
-                .replace("http://dl.liteloader.com/versions/versions.json", apiRoot + "/maven/com/mumfrey/liteloader/versions.json")
-                .replace("http://dl.liteloader.com/versions", apiRoot + "/maven")
-                .replace("https://meta.fabricmc.net", apiRoot + "/fabric-meta")
-                .replace("https://maven.fabricmc.net", apiRoot + "/maven")
-                .replace("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector")
-                .replace("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public");
+        for (Pair<String, String> pair : replacement) {
+            if (baseURL.startsWith(pair.getKey())) {
+                return pair.getValue() + baseURL.substring(pair.getKey().length());
+            }
+        }
+
+        return baseURL;
     }
 
     @Override

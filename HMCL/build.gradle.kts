@@ -101,10 +101,7 @@ tasks.getByName<JavaCompile>("compileJava") {
 
         doLast {
             Gson().also { gsonInstance ->
-                Files.newBufferedReader(
-                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"),
-                    Charsets.UTF_8
-                ).use { br ->
+                rootProject.rootDir.resolve("data-json/dynamic-remote-resources-raw.json").bufferedReader().use { br ->
                     (gsonInstance.fromJson(br, JsonElement::class.java) as JsonObject)
                 }.also { data ->
                     data.asMap().forEach { (namespace, namespaceData) ->
@@ -117,7 +114,7 @@ tasks.getByName<JavaCompile>("compileJava") {
 
                                 val currentSha1 = digest(
                                     "SHA-1",
-                                    Files.readAllBytes(rootProject.rootDir.toPath().resolve(localPath))
+                                    rootProject.rootDir.resolve(localPath).readBytes()
                                 ).joinToString(separator = "") { "%02x".format(it) }
 
                                 if (!sha1.equals(currentSha1, ignoreCase = true)) {
@@ -127,20 +124,20 @@ tasks.getByName<JavaCompile>("compileJava") {
                         }
                     }
 
-                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json").also { zippedPath ->
+                    rootProject.rootDir.resolve("data-json/dynamic-remote-resources.json").also { zippedPath ->
                         gsonInstance.toJson(data).also { expectedData ->
-                            if (Files.exists(zippedPath)) {
-                                Files.readString(zippedPath, Charsets.UTF_8).also { rawData ->
-                                    if (!rawData.equals(expectedData)) {
+                            if (zippedPath.exists()) {
+                                zippedPath.readText().also { rawData ->
+                                    if (rawData != expectedData) {
                                         if (System.getenv("GITHUB_SHA") == null) {
-                                            Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
+                                            zippedPath.writeText(expectedData)
                                         } else {
                                             throw IllegalStateException("Mismatched zipped dynamic-remote-resources json file!")
                                         }
                                     }
                                 }
                             } else {
-                                Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
+                                zippedPath.writeText(expectedData)
                             }
                         }
                     }
