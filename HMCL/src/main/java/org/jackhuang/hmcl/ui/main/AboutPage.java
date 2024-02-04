@@ -68,6 +68,12 @@ public class AboutPage extends StackPane {
             glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
             glavo.setExternalLink("https://github.com/Glavo");
             
+            IconedTwoLineListItem zkitefly = new IconedTwoLineListItem();
+            zkitefly.setImage(FXUtils.newBuiltinImage("/assets/img/zkitefly.png"));
+            zkitefly.setTitle("Zkitefly");
+            zkitefly.setSubtitle(i18n("about.thanks_to.zkitefly.statement"));
+            zkitefly.setExternalLink("https://github.com/zkitefly");
+
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
             gamerteam.setImage(FXUtils.newBuiltinImage("/assets/img/gamerteam.png"));
@@ -103,7 +109,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zkitefly ,mcbbs, mcmod, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();

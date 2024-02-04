@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -121,7 +122,7 @@ public class InstallerItem extends Control {
         return new InstallerItemSkin(this);
     }
 
-    public static class InstallerItemGroup {
+    public final static class InstallerItemGroup {
         public final InstallerItem game = new InstallerItem(MINECRAFT);
         public final InstallerItem fabric = new InstallerItem(FABRIC);
         public final InstallerItem fabricApi = new InstallerItem(FABRIC_API);
@@ -132,7 +133,9 @@ public class InstallerItem extends Control {
         public final InstallerItem quilt = new InstallerItem(QUILT);
         public final InstallerItem quiltApi = new InstallerItem(QUILT_API);
 
-        public InstallerItemGroup() {
+        private final InstallerItem[] libraries;
+
+        public InstallerItemGroup(String gameVersion) {
             forge.incompatibleLibraryName.bind(Bindings.createStringBinding(() -> {
                 if (fabric.libraryVersion.get() != null) return FABRIC.getPatchId();
                 if (quilt.libraryVersion.get() != null) return QUILT.getPatchId();
@@ -194,10 +197,19 @@ public class InstallerItem extends Control {
                 if (quilt.libraryVersion.get() == null) return QUILT.getPatchId();
                 else return null;
             }, quilt.libraryVersion));
+
+
+            if (gameVersion == null) {
+                this.libraries = new InstallerItem[]{game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
+            } else if (VersionNumber.compare(gameVersion, "1.13") < 0) {
+                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine};
+            } else {
+                this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
+            }
         }
 
         public InstallerItem[] getLibraries() {
-            return new InstallerItem[]{game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
+            return libraries;
         }
     }
 
