@@ -102,11 +102,11 @@ public class RemoteMod {
     }
 
     public enum DependencyType {
-        EMBEDDED,
-        OPTIONAL,
         REQUIRED,
+        OPTIONAL,
         TOOL,
         INCLUDE,
+        EMBEDDED,
         INCOMPATIBLE,
         BROKEN
     }

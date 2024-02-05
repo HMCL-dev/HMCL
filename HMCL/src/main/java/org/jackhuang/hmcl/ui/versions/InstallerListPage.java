@@ -84,7 +84,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             itemsProperty().clear();
 
-            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup();
+            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion);
 
             // Conventional libraries: game, fabric, forge, neoforge, liteloader, optifine
             for (InstallerItem installerItem : group.getLibraries()) {

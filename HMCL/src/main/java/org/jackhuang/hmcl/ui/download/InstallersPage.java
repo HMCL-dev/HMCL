@@ -48,12 +48,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallersPage extends Control implements WizardPage {
     protected final WizardController controller;
 
-    protected InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup();
+    protected InstallerItem.InstallerItemGroup group;
     protected JFXTextField txtName = new JFXTextField();
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
+        this.group = new InstallerItem.InstallerItemGroup(gameVersion);
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
@@ -152,14 +153,22 @@ public class InstallersPage extends Control implements WizardPage {
             }
 
             {
-                FlowPane libraryPane = new FlowPane(control.group.getLibraries());
+                InstallerItem[] libraries = control.group.getLibraries();
+
+                FlowPane libraryPane = new FlowPane(libraries);
                 libraryPane.setVgap(16);
                 libraryPane.setHgap(16);
-                ScrollPane scrollPane = new ScrollPane(libraryPane);
-                scrollPane.setFitToWidth(true);
-                scrollPane.setFitToHeight(true);
-                BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
-                root.setCenter(scrollPane);
+
+                if (libraries.length <= 8) {
+                    BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(libraryPane);
+                } else {
+                    ScrollPane scrollPane = new ScrollPane(libraryPane);
+                    scrollPane.setFitToWidth(true);
+                    scrollPane.setFitToHeight(true);
+                    BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(scrollPane);
+                }
             }
 
 

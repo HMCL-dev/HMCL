@@ -5,13 +5,13 @@ on:
 
 jobs:
   run:
-    if: ${{ github.repository_owner == 'huanghongxun' }}
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
       - name: Mirror GitHub to Gitee
         uses: Yikun/hub-mirror-action@v1.3
         with:
-          src: github/huanghongxun
+          src: github/HMCL-dev
           dst: gitee/huanghongxun
           static_list: 'HMCL'
           force_update: true

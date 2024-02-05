@@ -183,8 +183,6 @@ public class DecoratorController {
         return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
     }
 
-    private volatile Image defaultBackground;
-
     /**
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
@@ -199,12 +197,7 @@ public class DecoratorController {
         if (!image.isPresent()) {
             image = tryLoadImage(Paths.get("background.gif"));
         }
-
-        return image.orElseGet(() -> {
-            if (defaultBackground == null)
-                defaultBackground = newBuiltinImage("/assets/img/background.jpg");
-            return defaultBackground;
-        });
+        return image.orElseGet(() -> newBuiltinImage("/assets/img/background.jpg"));
     }
 
     private Optional<Image> randomImageIn(Path imageDir) {
