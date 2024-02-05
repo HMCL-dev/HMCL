@@ -59,6 +59,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void rtssForestSodium() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/rtss_forest_sodium.txt")),
+                CrashReportAnalyzer.Rule.RTSS_FOREST_SODIUM);
+    }
+
+    @Test
     public void jvm32() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit.txt")),
@@ -288,6 +295,14 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void mixinApplyModFailed() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/mixin_apply_mod_failed.txt")),
+                CrashReportAnalyzer.Rule.MIXIN_APPLY_MOD_FAILED);
+        assertEquals("enhancedblockentities", result.getMatcher().group("id"));
+    }
+
+    @Test
     public void unsatisfiedLinkError() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/unsatisfied_link_error.txt")),
@@ -432,9 +447,37 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void incompleteForgeInstallation4() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation4.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation5() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation5.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation6() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation6.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
     public void forgeRepeatInstallation() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation.txt")),
+                CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
+    }
+
+    @Test
+    public void forgeRepeatInstallation1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation2.txt")),
                 CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
     }
 
@@ -449,6 +492,13 @@ public class CrashReportAnalyzerTest {
     public void needJDK112() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk112.txt")),
+                CrashReportAnalyzer.Rule.NEED_JDK11);
+    }
+
+    @Test
+    public void needJDK113() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk113.txt")),
                 CrashReportAnalyzer.Rule.NEED_JDK11);
     }
 
@@ -502,17 +552,10 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
-    public void cannotFindLaunchTargetFmlclient() throws IOException {
+    public void installMixinbootstrap() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient.txt")),
-                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
-    }
-
-    @Test
-    public void cannotFindLaunchTargetFmlclient2() throws IOException {
-        CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient2.txt")),
-                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
+                CrashReportAnalyzer.anaylze(loadLog("/logs/install_mixinbootstrap.txt")),
+                CrashReportAnalyzer.Rule.INSTALL_MIXINBOOTSTRAP);
     }
 
     @Test
