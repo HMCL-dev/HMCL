@@ -137,7 +137,12 @@ public final class CrashReportAnalyzer {
         // TwilightForest is not compatible with OptiFine on Minecraft 1.16
         TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java\\.lang\\.IllegalArgumentException: (.*) outside of image bounds (.*)")),
         // Jade is not compatible with OptiFine on Minecraft 1.20+
-        JADE_FOREST_OPTIFINE(Pattern.compile("Critical injection failure: LVT in net/minecraft/client/renderer/GameRenderer::m_109093_\\(FJZ\\)V has incompatible changes at opcode 760 in callback jade\\.mixins\\.json:GameRendererMixin-\\>@Inject::jade\\$runTick\\(FJZLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;IILcom/mojang/blaze3d/platform/Window;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/GuiGraphics;\\)V\\."));
+        JADE_FOREST_OPTIFINE(Pattern.compile("Critical injection failure: LVT in net/minecraft/client/renderer/GameRenderer::m_109093_\\(FJZ\\)V has incompatible changes at opcode 760 in callback jade\\.mixins\\.json:GameRendererMixin-\\>@Inject::jade\\$runTick\\(FJZLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;IILcom/mojang/blaze3d/platform/Window;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/GuiGraphics;\\)V\\.")),
+
+        // 一些模组与 Sodium 不兼容
+        // https://github.com/CaffeineMC/sodium-fabric/wiki/Known-Issues#rtss-incompatible
+        RTSS_FOREST_SODIUM(Pattern.compile("RivaTuner Statistics Server (RTSS) is not compatible with Sodium"));
+
 
         private final Pattern pattern;
         private final String[] groupNames;

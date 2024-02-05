@@ -59,6 +59,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void rtssForestSodium() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/rtss_forest_sodium.txt")),
+                CrashReportAnalyzer.Rule.RTSS_FOREST_SODIUM);
+    }
+
+    @Test
     public void jvm32() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit.txt")),
