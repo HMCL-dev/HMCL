@@ -109,6 +109,7 @@ public final class CrashReportAnalyzer {
         // Mod issues
         //https://github.com/HMCL-dev/HMCL/pull/2038
         MODMIXIN_FAILURE(Pattern.compile("(MixinApplyError|Mixin prepare failed |Mixin apply failed |mixin\\.injection\\.throwables\\.|\\.mixins\\.json\\] FAILED during \\))")),//ModMixin失败
+        MIXIN_APPLY_MOD_FAILED(Pattern.compile("Mixin apply for mod (?<mod>.*) failed "), "id"),//Mixin应用失败
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt\\.(?<reason>(.*)[\\n\\r]*((.*)[\\n\\r]*)+)at "), "reason"),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(\tMod File:|-- MOD |\tFailure message:)")),
         FORGE_REPEAT_INSTALLATION(Pattern.compile("MultipleArgumentsForOptionException: Found multiple arguments for option (.*?), but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880

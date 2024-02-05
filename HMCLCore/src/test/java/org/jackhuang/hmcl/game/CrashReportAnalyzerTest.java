@@ -288,6 +288,14 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void mixinApplyModFailed() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/mixin_apply_mod_failed.txt")),
+                CrashReportAnalyzer.Rule.MIXIN_APPLY_MOD_FAILED);
+        assertEquals("enhancedblockentities", result.getMatcher().group("id"));
+    }
+
+    @Test
     public void unsatisfiedLinkError() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/unsatisfied_link_error.txt")),
