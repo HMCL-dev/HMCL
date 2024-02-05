@@ -78,7 +78,7 @@ public final class DownloadProviders {
 
         AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider();
         fileProvider.setDownloadProviderCandidates(Arrays.asList(MCBBS, BMCLAPI, MOJANG));
-        BalancedDownloadProvider balanced = new BalancedDownloadProvider(Arrays.asList(MCBBS, BMCLAPI, MOJANG));
+        BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, MCBBS, BMCLAPI);
 
         providersById = mapOf(
                 pair("official", new AutoDownloadProvider(MOJANG, fileProvider)),

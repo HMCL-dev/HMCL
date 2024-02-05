@@ -85,6 +85,8 @@ public class ServerModpackExportTask extends Task<Void> {
             addons.add(new ServerModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
                     addons.add(new ServerModpackManifest.Addon(FORGE.getPatchId(), forgeVersion)));
+            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
+                    addons.add(new ServerModpackManifest.Addon(NEO_FORGE.getPatchId(), neoForgeVersion)));
             analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
                     addons.add(new ServerModpackManifest.Addon(LITELOADER.getPatchId(), liteLoaderVersion)));
             analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion ->

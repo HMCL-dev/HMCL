@@ -28,7 +28,7 @@ import java.util.function.Function;
 /**
  * @author yushijinhun
  */
-public class MappedProperty<T, U> extends SimpleObjectProperty<U> {
+public final class MappedProperty<T, U> extends SimpleObjectProperty<U> {
 
     private final Property<T> predecessor;
     private final Function<U, T> reservedMapper;

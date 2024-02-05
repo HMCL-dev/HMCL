@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,7 +52,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class UpdateHandler {
-    private UpdateHandler() {}
+    private UpdateHandler() {
+    }
 
     /**
      * @return whether to exit
@@ -71,6 +73,11 @@ public final class UpdateHandler {
         }
 
         if (args.length == 2 && args[0].equals("--apply-to")) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+                SwingUtils.showErrorDialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL));
+                return true;
+            }
+
             try {
                 applyUpdate(Paths.get(args[1]));
             } catch (IOException e) {
@@ -90,6 +97,11 @@ public final class UpdateHandler {
 
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+            Controllers.dialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL), i18n("message.error"), MessageType.ERROR);
+            return;
+        }
 
         Controllers.dialog(new UpgradeDialog(version, () -> {
             Path downloaded;

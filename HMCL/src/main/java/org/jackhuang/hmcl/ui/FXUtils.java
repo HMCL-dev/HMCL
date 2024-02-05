@@ -101,11 +101,10 @@ public final class FXUtils {
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
-
     private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
 
     public static void shutdown() {
-        for (Map.Entry<String, Path> entry: remoteImageCache.entrySet()) {
+        for (Map.Entry<String, Path> entry : remoteImageCache.entrySet()) {
             try {
                 Files.deleteIfExists(entry.getValue());
             } catch (IOException e) {
@@ -686,7 +685,11 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url) {
-        return newBuiltinImage(url, 0, 0, false, false);
+        try {
+            return builtinImageCache.computeIfAbsent(url, Image::new);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundError("Cannot access image: " + url, e);
+        }
     }
 
     /**
@@ -706,13 +709,11 @@ public final class FXUtils {
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
-        return builtinImageCache.computeIfAbsent(url, s -> {
-            try {
-                return new Image(s, requestedWidth, requestedHeight, preserveRatio, smooth);
-            } catch (IllegalArgumentException e) {
-                throw new ResourceNotFoundError("Cannot access image: " + s, e);
-            }
-        });
+        try {
+            return new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundError("Cannot access image: " + url, e);
+        }
     }
 
     /**
