@@ -141,7 +141,7 @@ public final class CrashReportAnalyzer {
 
         // 一些模组与 Sodium 不兼容
         // https://github.com/CaffeineMC/sodium-fabric/wiki/Known-Issues#rtss-incompatible
-        RTSS_FOREST_SODIUM(Pattern.compile("RivaTuner Statistics Server (RTSS) is not compatible with Sodium"));
+        RTSS_FOREST_SODIUM(Pattern.compile("RivaTuner Statistics Server \\(RTSS\\) is not compatible with Sodium"));
 
 
         private final Pattern pattern;
