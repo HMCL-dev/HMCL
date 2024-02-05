@@ -112,7 +112,7 @@ public final class CrashReportAnalyzer {
         MIXIN_APPLY_MOD_FAILED(Pattern.compile("Mixin apply for mod (?<id>.*) failed"), "id"),//Mixin应用失败
         FORGE_ERROR(Pattern.compile("An exception was thrown, the game will display an error screen and halt\\.(?<reason>(.*)[\\n\\r]*((.*)[\\n\\r]*)+)at "), "reason"),//Forge报错,Forge可能已经提供了错误信息
         MOD_RESOLUTION0(Pattern.compile("(\tMod File:|-- MOD |\tFailure message:)")),
-        FORGE_REPEAT_INSTALLATION(Pattern.compile("MultipleArgumentsForOptionException: Found multiple arguments for option (.*?), but you asked for only one")),//https://github.com/huanghongxun/HMCL/issues/1880
+        FORGE_REPEAT_INSTALLATION(Pattern.compile("MultipleArgumentsForOptionException: Found multiple arguments for option (.*?), but you asked for only one")),//https://github.com/HMCL-dev/HMCL/issues/1880
         OPTIFINE_REPEAT_INSTALLATION(Pattern.compile("ResolutionException: Module optifine reads another module named optifine")),//Optifine 重复安装（及Mod文件夹有，自动安装也有）
         JAVA_VERSION_IS_TOO_HIGH(Pattern.compile("(Unable to make protected final java\\.lang\\.Class java\\.lang\\.ClassLoader\\.defineClass|java\\.lang\\.NoSuchFieldException: ucp|Unsupported class file major version|because module java\\.base does not export|java\\.lang\\.ClassNotFoundException: jdk\\.nashorn\\.api\\.scripting\\.NashornScriptEngineFactory|java\\.lang\\.ClassNotFoundException: java\\.lang\\.invoke\\.LambdaMetafactory)")),//Java版本过高
         INSTALL_MIXINBOOTSTRAP(Pattern.compile("java\\.lang\\.ClassNotFoundException: org\\.spongepowered\\.asm\\.launch\\.MixinTweaker")),
