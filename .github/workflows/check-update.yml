@@ -11,7 +11,6 @@ permissions:
 jobs:
   stable-check-update:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
-    needs: dev-check-update
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -57,9 +56,8 @@ jobs:
           echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
-        uses: softprops/action-gh-release@v1
+        uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
-          body_path: RELEASE_NOTE
           files: |
             HMCL-${{ env.HMCL_VERSION }}.exe
             HMCL-${{ env.HMCL_VERSION }}.exe.sha1
@@ -67,12 +65,12 @@ jobs:
             HMCL-${{ env.HMCL_VERSION }}.jar.sha1
             HMCL-${{ env.HMCL_VERSION }}.sh
             HMCL-${{ env.HMCL_VERSION }}.sh.sha1
-          target_commitish: ${{ env.HMCL_COMMIT_SHA }}
-          name: ${{ env.HMCL_TAG_NAME }}
-          tag_name: ${{ env.HMCL_TAG_NAME }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          title: ${{ env.HMCL_TAG_NAME }}
+          automatic_release_tag: ${{ env.HMCL_TAG_NAME }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
   dev-check-update:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
+    needs: stable-check-update
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -117,17 +115,16 @@ jobs:
           echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
-        uses: softprops/action-gh-release@v1
+        uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
-          body_path: RELEASE_NOTE
           files: |
+            RELEASE_NOTE
             HMCL-${{ env.HMCL_VERSION }}.exe
             HMCL-${{ env.HMCL_VERSION }}.exe.sha1
             HMCL-${{ env.HMCL_VERSION }}.jar
             HMCL-${{ env.HMCL_VERSION }}.jar.sha1
             HMCL-${{ env.HMCL_VERSION }}.sh
             HMCL-${{ env.HMCL_VERSION }}.sh.sha1
-          target_commitish: ${{ env.HMCL_COMMIT_SHA }}
-          name: ${{ env.HMCL_TAG_NAME }}
-          tag_name: ${{ env.HMCL_TAG_NAME }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          title: ${{ env.HMCL_TAG_NAME }}
+          automatic_release_tag: ${{ env.HMCL_TAG_NAME }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
