@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: '30 * * * *'
 
+permissions:
+  contents: write
+
 jobs:
   dev-check-update:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
