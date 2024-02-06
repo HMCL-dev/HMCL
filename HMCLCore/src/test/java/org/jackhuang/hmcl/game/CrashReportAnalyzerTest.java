@@ -371,6 +371,22 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void fabricWarnings2() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric_warnings3.txt")),
+                CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
+        assertEquals(("net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!\n" +
+                        "确定了一种可能的解决方法，这样做可能会解决你的问题：\n" +
+                        "\t - 安装 fabric-api，任意版本。\n" +
+                        "\t - 安装 sodium，0.5.6 及以上版本。\n" +
+                        "更多信息：\n" +
+                        "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 fabric-api 的 任意版本，但没有安装它！\n" +
+                        "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 sodium 的 0.5.6 及以上版本，但没有安装它！\n" +
+                        "\tat net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:51) ~").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
     public void fabricConflicts() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-conflict.txt")),
