@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   stable-check-update:
-    if: ${{ github.repository_owner == 'HMCL-dev' }}
+    # if: ${{ github.repository_owner == 'HMCL-dev' }}
     needs: dev-check-update
     runs-on: ubuntu-latest
     steps:
@@ -72,7 +72,7 @@ jobs:
           tag_name: ${{ env.HMCL_TAG_NAME }}
           token: ${{ secrets.GITHUB_TOKEN }}
   dev-check-update:
-    if: ${{ github.repository_owner == 'HMCL-dev' }}
+    # if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
