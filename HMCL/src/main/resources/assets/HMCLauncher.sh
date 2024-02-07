@@ -63,10 +63,10 @@ if [ -n "${HMCL_JAVA_HOME+x}" ]; then
   else
     if [ "$_HMCL_USE_CHINESE" == true ]; then
       echo "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。" 1>&2
-      echo "你可以访问 docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
+      echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
     else
       echo "The value of the environment variable HMCL_JAVA_HOME is invalid, please set it to a valid Java path." 1>&2
-      echo "You can visit the docs.hmcl.net/help.html page for help." 1>&2
+      echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
     fi
     exit 1
   fi
