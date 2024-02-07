@@ -126,7 +126,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         @Override
         public OAuth.Session startServer() throws IOException, AuthenticationException {
-            if (StringUtils.isBlank(getClientId())) {
+            if (StringUtils.isBlank(getClientId()) || getClientId().equals("null")) {
                 throw new MicrosoftAuthenticationNotSupportedException();
             }
 
