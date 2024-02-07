@@ -301,9 +301,16 @@ public abstract class FetchTask<T> extends Task<T> {
         concurrency = Math.max(concurrency, 1);
         synchronized (Schedulers.class) {
             downloadExecutorConcurrency = concurrency;
-            if (DOWNLOAD_EXECUTOR != null) {
-                DOWNLOAD_EXECUTOR.setCorePoolSize(concurrency);
-                DOWNLOAD_EXECUTOR.setMaximumPoolSize(concurrency);
+
+            ThreadPoolExecutor downloadExecutor = DOWNLOAD_EXECUTOR;
+            if (downloadExecutor != null) {
+                if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
+                    downloadExecutor.setMaximumPoolSize(concurrency);
+                    downloadExecutor.setCorePoolSize(concurrency);
+                } else {
+                    downloadExecutor.setCorePoolSize(concurrency);
+                    downloadExecutor.setMaximumPoolSize(concurrency);
+                }
             }
         }
     }

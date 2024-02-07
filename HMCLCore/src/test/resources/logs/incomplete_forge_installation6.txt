@@ -1,0 +1,44 @@
+[authlib-injector] [INFO] Logging file: /home/zkitefly/Desktop/.minecraft/authlib-injector.log
+[authlib-injector] [INFO] Version: 1.2.4
+[authlib-injector] [INFO] Authentication server: http://localhost:37183
+[authlib-injector] [WARNING] You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.
+[14:44:51] [main/INFO]: ModLauncher running: args [--username, Zkitefky, --version, 1.20.4, --gameDir, /home/zkitefly/Desktop/.minecraft, --assetsDir, /home/zkitefly/Desktop/.minecraft/assets, --assetIndex, 12, --uuid, 627aa9226fd33670a0196027fa781599, --accessToken, **********, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, msa, --versionType, HMCL (PR Collection) 3.5.unofficial-99173a1 (PR Collection), --width, 854, --height, 480, --launchTarget, forge_client]
+[14:44:51] [main/INFO]: JVM identified as BellSoft OpenJDK 64-Bit Client VM 17.0.6+10-LTS
+[14:44:51] [main/INFO]: ModLauncher 10.1.2 starting: java version 17.0.6 by BellSoft; OS Linux arch amd64 version 5.10.0-amd64-desktop
+[14:44:51] [main/INFO]: Loading ImmediateWindowProvider fmlearlywindow
+[14:44:51] [main/INFO]: Trying GL version 4.6
+[14:44:51] [main/INFO]: Requested GL version 4.6 got version 4.6
+[14:44:51] [EarlyDisplay/INFO]: GL info: Mesa Intel(R) HD Graphics 530 (SKL GT2) GL version 4.6 (Core Profile) Mesa 21.3.8, Intel
+[14:44:51] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=jar:file:///home/zkitefly/Desktop/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar!/ Service=ModLauncher Env=CLIENT
+Exception in thread "main" java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at net.minecraftforge.bootstrap.Bootstrap.start(Bootstrap.java:48)
+	at net.minecraftforge.bootstrap.ForgeBootstrap.main(ForgeBootstrap.java:18)
+Caused by: java.lang.IllegalStateException: Could not find net/minecraft/client/Minecraft.class in classloader SecureModuleClassLoader[SECURE-BOOTSTRAP]@2074820378
+	at SECURE-BOOTSTRAP/net.minecraftforge.fmlloader@1.20.4-49.0.19/net.minecraftforge.fml.loading.targets.CommonLaunchHandler.getPathFromResource(CommonLaunchHandler.java:98)
+	at SECURE-BOOTSTRAP/net.minecraftforge.fmlloader@1.20.4-49.0.19/net.minecraftforge.fml.loading.targets.ForgeProdLaunchHandler$Client.getMinecraftPaths(ForgeProdLaunchHandler.java:28)
+	at SECURE-BOOTSTRAP/net.minecraftforge.fmlloader@1.20.4-49.0.19/net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator.scanMods(MinecraftLocator.java:24)
+	at SECURE-BOOTSTRAP/net.minecraftforge.fmlloader@1.20.4-49.0.19/net.minecraftforge.fml.loading.moddiscovery.ModDiscoverer.discoverMods(ModDiscoverer.java:80)
+	at SECURE-BOOTSTRAP/net.minecraftforge.fmlloader@1.20.4-49.0.19/net.minecraftforge.fml.loading.FMLLoader.beginModScan(FMLLoader.java:154)
+	at SECURE-BOOTSTRAP/net.minecraftforge.fmlloader@1.20.4-49.0.19/net.minecraftforge.fml.loading.FMLServiceProvider.beginScanning(FMLServiceProvider.java:58)
+	at SECURE-BOOTSTRAP/cpw.mods.modlauncher@10.1.2/cpw.mods.modlauncher.TransformationServiceDecorator.runScan(TransformationServiceDecorator.java:98)
+	at SECURE-BOOTSTRAP/cpw.mods.modlauncher@10.1.2/cpw.mods.modlauncher.TransformationServicesHandler.lambda$runScanningTransformationServices$7(TransformationServicesHandler.java:96)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.HashMap$ValueSpliterator.forEachRemaining(HashMap.java:1779)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:575)
+	at java.base/java.util.stream.AbstractPipeline.evaluateToArrayNode(AbstractPipeline.java:260)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:616)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:622)
+	at java.base/java.util.stream.ReferencePipeline.toList(ReferencePipeline.java:627)
+	at SECURE-BOOTSTRAP/cpw.mods.modlauncher@10.1.2/cpw.mods.modlauncher.TransformationServicesHandler.runScanningTransformationServices(TransformationServicesHandler.java:98)
+	at SECURE-BOOTSTRAP/cpw.mods.modlauncher@10.1.2/cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:49)
+	at SECURE-BOOTSTRAP/cpw.mods.modlauncher@10.1.2/cpw.mods.modlauncher.Launcher.run(Launcher.java:86)
+	at SECURE-BOOTSTRAP/cpw.mods.modlauncher@10.1.2/cpw.mods.modlauncher.Launcher.main(Launcher.java:73)
+	at SECURE-BOOTSTRAP/cpw.mods.modlauncher@10.1.2/cpw.mods.modlauncher.BootstrapEntry.main(BootstrapEntry.java:17)
+	at net.minecraftforge.bootstrap@2.0.0/net.minecraftforge.bootstrap.Bootstrap.moduleMain(Bootstrap.java:97)
+	... 6 more

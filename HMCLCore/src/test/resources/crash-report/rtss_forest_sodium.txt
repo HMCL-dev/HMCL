@@ -1,0 +1,328 @@
+---- Minecraft Crash Report ----
+// My bad.
+
+Time: 2024-02-05 22:59:34
+Description: Initializing game
+
+java.lang.RuntimeException: RivaTuner Statistics Server (RTSS) is not compatible with Sodium, see here for more details: https://github.com/CaffeineMC/sodium-fabric/wiki/Known-Issues#rtss-incompatible
+	at me.jellysquid.mods.sodium.client.compatibility.checks.ModuleScanner.checkModules(ModuleScanner.java:36)
+	at net.minecraft.class_1041.handler$cda000$sodium$postWindowCreated(class_1041.java:2572)
+	at net.minecraft.class_1041.<init>(class_1041.java:109)
+	at net.minecraft.class_3682.method_16038(class_3682.java:21)
+	at net.minecraft.class_310.<init>(class_310.java:515)
+	at net.minecraft.client.main.Main.main(Main.java:223)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:470)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:74)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at me.jellysquid.mods.sodium.client.compatibility.checks.ModuleScanner.checkModules(ModuleScanner.java:36)
+	at net.minecraft.class_1041.handler$cda000$sodium$postWindowCreated(class_1041.java:2572)
+	at net.minecraft.class_1041.<init>(class_1041.java:109)
+	at net.minecraft.class_3682.method_16038(class_3682.java:21)
+	at net.minecraft.class_310.<init>(class_310.java:515)
+
+-- Initialization --
+Details:
+	Modules: 
+		ADVAPI32.dll:楂樼骇 Windows 32 鍩烘湰 API:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		COMCTL32.dll:鐢ㄦ埛浣撻獙鎺т欢搴�6.10 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPT32.dll:鍔犲瘑 API32:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTBASE.dll:Base cryptographic API DLL:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTSP.dll:Cryptographic Service Provider API:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		CoreMessaging.dll:Microsoft CoreMessaging Dll:10.0.19041.2193:Microsoft Corporation
+		CoreUIComponents.dll:Microsoft Core UI Components Dll:10.0.19041.546:Microsoft Corporation
+		DBGHELP.DLL:Windows Image Helper:10.0.19041.867 (WinBuild.160101.0800):Microsoft Corporation
+		DEVOBJ.dll:Device Information Set DLL:10.0.19041.1620 (WinBuild.160101.0800):Microsoft Corporation
+		DNSAPI.dll:DNS 瀹㈡埛绔� API DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		GDI32.dll:GDI Client DLL:10.0.19041.2130 (WinBuild.160101.0800):Microsoft Corporation
+		GLU32.dll:OpenGL 瀹炵敤宸ュ叿搴� DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		IMM32.DLL:Multi-User Windows IMM32 API Client DLL:10.0.19041.2193 (WinBuild.160101.0800):Microsoft Corporation
+		IPHLPAPI.DLL:IP 甯姪绋嬪簭 API:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		KERNEL32.DLL:Windows NT 鍩烘湰 API 瀹㈡埛绔� DLL:10.0.19041.1741 (WinBuild.160101.0800):Microsoft Corporation
+		KERNELBASE.dll:Windows NT 鍩烘湰 API 瀹㈡埛绔� DLL:10.0.19041.1741 (WinBuild.160101.0800):Microsoft Corporation
+		MSCTF.dll:MSCTF 鏈嶅姟鍣� DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		NLAapi.dll:Network Location Awareness 2:10.0.19041.2193 (WinBuild.160101.0800):Microsoft Corporation
+		NSI.dll:NSI User-mode interface DLL:10.0.19041.610 (WinBuild.160101.0800):Microsoft Corporation
+		NTASN1.dll:Microsoft ASN.1 API:10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		Ole32.dll:鐢ㄤ簬 Windows 鐨� Microsoft OLE:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		OleAut32.dll:OLEAUT32.DLL:10.0.19041.985 (WinBuild.160101.0800):Microsoft Corporation
+		POWRPROF.dll:鐢垫簮閰嶇疆鏂囦欢甯姪绋嬪簭 DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		PROPSYS.dll:Microsoft 灞炴�х郴缁�7.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		PSAPI.DLL:Process Status Helper:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		Pdh.dll:Windows 鎬ц兘鏁版嵁鍔╂墜 DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		RPCRT4.dll:杩滅▼杩囩▼璋冪敤杩愯鏃�10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		RTSSHooks64.dll
+		SETUPAPI.dll:Windows 瀹夎绋嬪簭 API:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		SHCORE.dll:SHCORE:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		SHELL32.dll:Windows Shell 鍏敤 DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		UMPDC.dll
+		USER32.dll:澶氱敤鎴� Windows 鐢ㄦ埛 API 瀹㈡埛绔� DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		USERENV.dll:Userenv:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		VCRUNTIME140.dll:Microsoft庐 C Runtime Library:14.29.30139.0 built by: vcwrkspc:Microsoft Corporation
+		VERSION.dll:Version Checking and File Installation Libraries:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		WINHTTP.dll:Windows HTTP 鏈嶅姟:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		WINMM.dll:MCI API DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		WINSTA.dll:Winstation Library:10.0.19041.2075 (WinBuild.160101.0800):Microsoft Corporation
+		WINTRUST.dll:Microsoft Trust Verification APIs:10.0.19041.2193 (WinBuild.160101.0800):Microsoft Corporation
+		WS2_32.dll:Windows Socket 2.0 32 浣� DLL:10.0.19041.1081 (WinBuild.160101.0800):Microsoft Corporation
+		WSOCK32.dll:Windows Socket 32-Bit DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		WTSAPI32.dll:Windows Remote Desktop Session Host Server SDK APIs:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		Wldp.dll:Windows 閿佸畾绛栫暐:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		amsi.dll:Anti-Malware Scan Interface:10.0.19041.2075 (WinBuild.160101.0800):Microsoft Corporation
+		bcrypt.dll:Windows 鍔犲瘑鍩哄厓搴�10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		bcryptPrimitives.dll:Windows Cryptographic Primitives Library:10.0.19041.1415 (WinBuild.160101.0800):Microsoft Corporation
+		cfgmgr32.dll:Configuration Manager DLL:10.0.19041.1620 (WinBuild.160101.0800):Microsoft Corporation
+		clbcatq.dll:COM+ Configuration Catalog:2001.12.10941.16384 (WinBuild.160101.0800):Microsoft Corporation
+		combase.dll:鐢ㄤ簬 Windows 鐨� Microsoft COM:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		cryptnet.dll:Crypto Network Related API:10.0.19041.906 (WinBuild.160101.0800):Microsoft Corporation
+		dbgcore.DLL:Windows Core Debugging Helpers:10.0.19041.789 (WinBuild.160101.0800):Microsoft Corporation
+		dhcpcsvc.DLL:DHCP 瀹㈡埛绔湇鍔�10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		dhcpcsvc6.DLL:DHCPv6 瀹㈡埛绔�10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		dinput8.dll:Microsoft DirectInput:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		drvstore.dll:Driver Store API:10.0.19041.1949 (WinBuild.160101.0800):Microsoft Corporation
+		dwmapi.dll:Microsoft 妗岄潰绐楀彛绠＄悊鍣� API:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		dxcore.dll:DXCore:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		extnet.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		fwpuclnt.dll:FWP/IPsec 鐢ㄦ埛妯″紡 API:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		gdi32full.dll:GDI Client DLL:10.0.19041.2130 (WinBuild.160101.0800):Microsoft Corporation
+		glfw.dll:GLFW 3.4.0 DLL:3.4.0:GLFW
+		iertutil.dll:Internet Explorer 鐨勮繍琛屾椂瀹炵敤绋嬪簭:11.00.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		inputhost.dll:InputHost:10.0.19041.1741 (WinBuild.160101.0800):Microsoft Corporation
+		java.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		java.exe:OpenJDK Platform binary:17.0.10.0:Microsoft
+		jemalloc.dll
+		jimage.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		jli.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		jna17843680146815234223.dll:JNA native library:6.1.6:Java(TM) Native Access (JNA)
+		jsvml.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		jvm.dll:OpenJDK 64-Bit server VM:17.0.10.0:Microsoft
+		kernel.appcore.dll:AppModel API Host:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		lwjgl.dll
+		lwjgl_opengl.dll
+		management.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		management_ext.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		msasn1.dll:ASN.1 Runtime APIs:10.0.19041.2251 (WinBuild.160101.0800):Microsoft Corporation
+		msvcp140.dll:Microsoft庐 C Runtime Library:14.29.30139.0 built by: vcwrkspc:Microsoft Corporation
+		msvcp_win.dll:Microsoft庐 C Runtime Library:10.0.19041.789 (WinBuild.160101.0800):Microsoft Corporation
+		msvcrt.dll:Windows NT CRT DLL:7.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		mswsock.dll:Microsoft Windows Sockets 2.0 鏈嶅姟鎻愪緵绋嬪簭:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		napinsp.dll:鐢靛瓙閭欢鍛藉悕濉厖鎻愪緵绋嬪簭:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		ncrypt.dll:Windows NCrypt 璺敱鍣�10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		net.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		netutils.dll:Net Win32 API Helpers DLL:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		nio.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		ntdll.dll:NT 灞� DLL:10.0.19041.1741 (WinBuild.160101.0800):Microsoft Corporation
+		ntmarta.dll:Windows NT MARTA 鎻愪緵绋嬪簭:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		nvoglv64.dll:NVIDIA Compatible OpenGL ICD:31.0.15.3179:NVIDIA Corporation
+		nvspcap64.dll:NVIDIA Game Proxy:3.27.0.120:NVIDIA Corporation
+		opengl32.dll:OpenGL Client DLL:10.0.19041.2193 (WinBuild.160101.0800):Microsoft Corporation
+		perfos.dll:Windows 绯荤粺鎬ц兘瀵硅薄 DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		pnrpnsp.dll:PNRP 鍛藉悕绌洪棿鎻愪緵绋嬪簭:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		profapi.dll:User Profile Basic API:10.0.19041.844 (WinBuild.160101.0800):Microsoft Corporation
+		rasadhlp.dll:Remote Access AutoDial Helper:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		rsaenh.dll:Microsoft Enhanced Cryptographic Provider:10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		sechost.dll:Host for SCM/SDDL/LSA Lookup APIs:10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		shlwapi.dll:澶栧３绠�鏄撳疄鐢ㄥ伐鍏峰簱:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		srvcli.dll:Server Service Client DLL:10.0.19041.1645 (WinBuild.160101.0800):Microsoft Corporation
+		sunmscapi.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		textinputframework.dll:"TextInputFramework.DYNLINK":10.0.19041.2075 (WinBuild.160101.0800):Microsoft Corporation
+		ucrtbase.dll:Microsoft庐 C Runtime Library:10.0.19041.789 (WinBuild.160101.0800):Microsoft Corporation
+		urlmon.dll:Win32 鐨� OLE32 鎵╁睍:11.00.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		uxtheme.dll:Microsoft UxTheme 搴�10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		vcruntime140_1.dll:Microsoft庐 C Runtime Library:14.29.30139.0 built by: vcwrkspc:Microsoft Corporation
+		verify.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+		win32u.dll:Win32u:10.0.19041.2251 (WinBuild.160101.0800):Microsoft Corporation
+		windows.storage.dll:Microsoft WinRT Storage API:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		winrnr.dll:LDAP RnR Provider DLL:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		wintypes.dll:Windows 鍩烘湰绫诲瀷 DLL:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		wshbth.dll:Windows Sockets Helper DLL:10.0.19041.546 (WinBuild.160101.0800):Microsoft Corporation
+		wshunix.dll:AF_UNIX Winsock2 Helper DLL:10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		xinput1_4.dll:Microsoft 鍏叡鎺у埗鍣� API:10.0.19041.3203 (WinBuild.160101.0800):Microsoft Corporation
+		zip.dll:OpenJDK Platform binary:17.0.10.0:Microsoft
+Stacktrace:
+	at net.minecraft.client.main.Main.main(Main.java:223)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:470)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:74)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.4
+	Minecraft Version ID: 1.20.4
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 17.0.10, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Microsoft
+	Memory: 376107072 bytes (358 MiB) / 805306368 bytes (768 MiB) up to 7650410496 bytes (7296 MiB)
+	CPUs: 8
+	Processor Vendor: GenuineIntel
+	Processor Name: Intel(R) Xeon(R) CPU E3-1230 v3 @ 3.30GHz
+	Identifier: Intel64 Family 6 Model 60 Stepping 3
+	Microarchitecture: Haswell (Client)
+	Frequency (GHz): 3.29
+	Number of physical packages: 1
+	Number of physical CPUs: 4
+	Number of logical CPUs: 8
+	Graphics card #0 name: NVIDIA GeForce GTX 960
+	Graphics card #0 vendor: NVIDIA (0x10de)
+	Graphics card #0 VRAM (MB): 4095.00
+	Graphics card #0 deviceId: 0x1401
+	Graphics card #0 versionInfo: DriverVersion=31.0.15.3179
+	Memory slot #0 capacity (MB): 8192.00
+	Memory slot #0 clockSpeed (GHz): 1.60
+	Memory slot #0 type: DDR3
+	Memory slot #1 capacity (MB): 8192.00
+	Memory slot #1 clockSpeed (GHz): 1.60
+	Memory slot #1 type: DDR3
+	Virtual memory max (MB): 23006.26
+	Virtual memory used (MB): 10964.91
+	Swap memory total (MB): 6656.00
+	Swap memory used (MB): 29.00
+	JVM Flags: 11 total; -Xmx7275m -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32m -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:-DontCompileHugeMethods -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	Fabric Mods: 
+		animatica: Animatica 0.6+1.20
+		bobby: Bobby 5.0.3
+			com_typesafe_config: config 1.4.2
+			io_leangen_geantyref_geantyref: geantyref 1.3.13
+			org_spongepowered_configurate-core: configurate-core 4.1.2
+			org_spongepowered_configurate-hocon: configurate-hocon 4.1.2
+		capes: Capes 1.5.3+1.20.2
+		cloth-config: Cloth Config v13 13.0.121
+			cloth-basic-math: cloth-basic-math 0.6.1
+		continuity: Continuity 3.0.0-beta.4+1.20.2
+		dynamic_fps: Dynamic FPS 3.3.3
+		enhancedblockentities: Enhanced Block Entities 0.9.1+1.20.2
+			advanced_runtime_resource_pack: Runtime Resource Pack 0.8.0
+			spruceui: SpruceUI 5.0.3+1.20.2
+		entity_texture_features: Entity Texture Features 5.1.2
+			org_apache_httpcomponents_httpmime: httpmime 4.5.10
+		entityculling: EntityCulling 1.6.3.1
+		fabric-api: Fabric API 0.94.0+1.20.4
+			fabric-api-base: Fabric API Base 0.4.36+78d798af4f
+			fabric-api-lookup-api-v1: Fabric API Lookup API (v1) 1.6.47+82b1bb3e4f
+			fabric-biome-api-v1: Fabric Biome API (v1) 13.0.16+78d798af4f
+			fabric-block-api-v1: Fabric Block API (v1) 1.0.15+78d798af4f
+			fabric-block-view-api-v2: Fabric BlockView API (v2) 1.0.4+78d798af4f
+			fabric-blockrenderlayer-v1: Fabric BlockRenderLayer Registration (v1) 1.1.46+78d798af4f
+			fabric-client-tags-api-v1: Fabric Client Tags 1.1.7+78d798af4f
+			fabric-command-api-v1: Fabric Command API (v1) 1.2.41+f71b366f4f
+			fabric-command-api-v2: Fabric Command API (v2) 2.2.20+78d798af4f
+			fabric-commands-v0: Fabric Commands (v0) 0.2.58+df3654b34f
+			fabric-containers-v0: Fabric Containers (v0) 0.1.84+df3654b34f
+			fabric-content-registries-v0: Fabric Content Registries (v0) 5.0.10+78d798af4f
+			fabric-convention-tags-v1: Fabric Convention Tags 1.5.10+78d798af4f
+			fabric-crash-report-info-v1: Fabric Crash Report Info (v1) 0.2.23+78d798af4f
+			fabric-data-generation-api-v1: Fabric Data Generation API (v1) 13.1.20+78d798af4f
+			fabric-dimensions-v1: Fabric Dimensions API (v1) 2.1.61+78d798af4f
+			fabric-entity-events-v1: Fabric Entity Events (v1) 1.6.0+44c0f8c64f
+			fabric-events-interaction-v0: Fabric Events Interaction (v0) 0.7.1+389931eb4f
+			fabric-events-lifecycle-v0: Fabric Events Lifecycle (v0) 0.2.72+df3654b34f
+			fabric-game-rule-api-v1: Fabric Game Rule API (v1) 1.0.46+78d798af4f
+			fabric-item-api-v1: Fabric Item API (v1) 2.2.0+d6f2b0844f
+			fabric-item-group-api-v1: Fabric Item Group API (v1) 4.0.21+78d798af4f
+			fabric-key-binding-api-v1: Fabric Key Binding API (v1) 1.0.41+78d798af4f
+			fabric-keybindings-v0: Fabric Key Bindings (v0) 0.2.39+df3654b34f
+			fabric-lifecycle-events-v1: Fabric Lifecycle Events (v1) 2.2.30+78d798af4f
+			fabric-loot-api-v2: Fabric Loot API (v2) 2.1.5+78d798af4f
+			fabric-message-api-v1: Fabric Message API (v1) 6.0.5+78d798af4f
+			fabric-mining-level-api-v1: Fabric Mining Level API (v1) 2.1.60+78d798af4f
+			fabric-model-loading-api-v1: Fabric Model Loading API (v1) 1.0.8+78d798af4f
+			fabric-models-v0: Fabric Models (v0) 0.4.7+9386d8a74f
+			fabric-networking-api-v1: Fabric Networking API (v1) 3.1.5+b7e146354f
+			fabric-object-builder-api-v1: Fabric Object Builder API (v1) 13.0.9+06274a474f
+			fabric-particles-v1: Fabric Particles (v1) 1.1.7+78d798af4f
+			fabric-recipe-api-v1: Fabric Recipe API (v1) 2.0.18+78d798af4f
+			fabric-registry-sync-v0: Fabric Registry Sync (v0) 4.0.16+78d798af4f
+			fabric-renderer-api-v1: Fabric Renderer API (v1) 3.2.4+78d798af4f
+			fabric-renderer-indigo: Fabric Renderer - Indigo 1.5.4+78d798af4f
+			fabric-renderer-registries-v1: Fabric Renderer Registries (v1) 3.2.51+df3654b34f
+			fabric-rendering-data-attachment-v1: Fabric Rendering Data Attachment (v1) 0.3.42+73761d2e4f
+			fabric-rendering-fluids-v1: Fabric Rendering Fluids (v1) 3.0.33+78d798af4f
+			fabric-rendering-v0: Fabric Rendering (v0) 1.1.54+df3654b34f
+			fabric-rendering-v1: Fabric Rendering (v1) 3.0.13+78d798af4f
+			fabric-resource-conditions-api-v1: Fabric Resource Conditions API (v1) 2.3.14+78d798af4f
+			fabric-resource-loader-v0: Fabric Resource Loader (v0) 0.11.16+78d798af4f
+			fabric-screen-api-v1: Fabric Screen API (v1) 2.0.17+78d798af4f
+			fabric-screen-handler-api-v1: Fabric Screen Handler API (v1) 1.3.53+78d798af4f
+			fabric-sound-api-v1: Fabric Sound API (v1) 1.0.17+78d798af4f
+			fabric-transfer-api-v1: Fabric Transfer API (v1) 4.0.8+e84342304f
+			fabric-transitive-access-wideners-v1: Fabric Transitive Access Wideners (v1) 5.0.14+78d798af4f
+		fabric-language-kotlin: Fabric Language Kotlin 1.10.17+kotlin.1.9.22
+			org_jetbrains_kotlin_kotlin-reflect: kotlin-reflect 1.9.22
+			org_jetbrains_kotlin_kotlin-stdlib: kotlin-stdlib 1.9.22
+			org_jetbrains_kotlin_kotlin-stdlib-jdk7: kotlin-stdlib-jdk7 1.9.22
+			org_jetbrains_kotlin_kotlin-stdlib-jdk8: kotlin-stdlib-jdk8 1.9.22
+			org_jetbrains_kotlinx_atomicfu-jvm: atomicfu-jvm 0.23.1
+			org_jetbrains_kotlinx_kotlinx-coroutines-core-jvm: kotlinx-coroutines-core-jvm 1.7.3
+			org_jetbrains_kotlinx_kotlinx-coroutines-jdk8: kotlinx-coroutines-jdk8 1.7.3
+			org_jetbrains_kotlinx_kotlinx-datetime-jvm: kotlinx-datetime-jvm 0.5.0
+			org_jetbrains_kotlinx_kotlinx-serialization-cbor-jvm: kotlinx-serialization-cbor-jvm 1.6.2
+			org_jetbrains_kotlinx_kotlinx-serialization-core-jvm: kotlinx-serialization-core-jvm 1.6.2
+			org_jetbrains_kotlinx_kotlinx-serialization-json-jvm: kotlinx-serialization-json-jvm 1.6.2
+		fabricloader: Fabric Loader 0.15.5
+			mixinextras: MixinExtras 0.3.2
+		fabricskyboxes: FabricSkyBoxes 0.7.3+mc1.20.2
+		fsb-interop: FabricSkyBoxes Interop 1.3.6+mc1.20.2-build.52
+		gammautils: Gamma Utils 1.7.18
+		immediatelyfast: ImmediatelyFast 1.2.8+1.20.4
+			net_lenni0451_reflect: Reflect 1.3.1
+		indium: Indium 1.0.28+mc1.20.4
+		iris: Iris 1.6.14
+			io_github_douira_glsl-transformer: glsl-transformer 2.0.0-pre13
+			org_anarres_jcpp: jcpp 1.4.14
+			org_antlr_antlr4-runtime: antlr4-runtime 4.11.1
+		java: OpenJDK 64-Bit Server VM 17
+		minecraft: Minecraft 1.20.4
+		modernfix: ModernFix 5.12.1+mc1.20.4
+		modmenu: Mod Menu 9.0.0
+		moreculling: More Culling 1.20.4-0.21.0
+			conditional-mixin: conditional mixin 0.3.2
+			mixinsquared: MixinSquared 0.1.1
+		no_fog: No Fog 1.3.5+1.16.5-1.20.4
+		optigui: OptiGUI 2.1.7
+			optiglue: OptiGlue 2.1.7-mc.1.19.3
+			org_apache_commons_commons-text: commons-text 1.10.0
+			org_ini4j_ini4j: ini4j 0.5.4
+		puzzle: Puzzle 1.6.1+1.20.4
+			midnightlib: MidnightLib 1.5.2
+			puzzle-base: Puzzle Base 1.6.1+1.20.4
+			puzzle-gui: Puzzle GUI 1.6.1+1.20.4
+			puzzle-models: Puzzle Models 1.6.1+1.20.4
+			puzzle-splashscreen: Puzzle Splash Screen 1.6.1+1.20.4
+		reeses-sodium-options: Reese's Sodium Options 1.7.0+mc1.20.2-build.97
+		sodium: Sodium 0.5.5
+		sodium-extra: Sodium Extra 0.5.3+mc1.20.2-build.114
+			caffeineconfig: CaffeineConfig 1.3.0+1.17
+			crowdin-translate: CrowdinTranslate 1.4+1.19.3
+		yet_another_config_lib_v3: YetAnotherConfigLib 3.3.1+1.20.4
+			com_twelvemonkeys_common_common-image: common-image 3.10.0
+			com_twelvemonkeys_common_common-io: common-io 3.10.0
+			com_twelvemonkeys_common_common-lang: common-lang 3.10.0
+			com_twelvemonkeys_imageio_imageio-core: imageio-core 3.10.0
+			com_twelvemonkeys_imageio_imageio-metadata: imageio-metadata 3.10.0
+			com_twelvemonkeys_imageio_imageio-webp: imageio-webp 3.10.0
+			org_quiltmc_parsers_gson: gson 0.2.1
+			org_quiltmc_parsers_json: json 0.2.1
+		zoomify: Zoomify 2.12.0
+			com_akuleshov7_ktoml-core-jvm: ktoml-core-jvm 0.5.0
+			dev_isxander_settxi_settxi-core: settxi-core 2.10.6
+			dev_isxander_settxi_settxi-kotlinx-serialization: settxi-kotlinx-serialization 2.10.6
+	Launched Version: NotiFine
+	Launcher name: HMCL
+	Backend library: LWJGL version 3.3.2-snapshot
+	Backend API: Unknown
+	Window size: <not initialized>
+	GL Caps: Using framebuffer using OpenGL 3.2
+	GL debug messages: <disabled>
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'fabric'
+	Universe: 404
+	Type: Client (map_client.txt)
+	Locale: zh_CN
+	CPU: <unknown>

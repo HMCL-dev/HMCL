@@ -59,6 +59,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void rtssForestSodium() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/rtss_forest_sodium.txt")),
+                CrashReportAnalyzer.Rule.RTSS_FOREST_SODIUM);
+    }
+
+    @Test
     public void jvm32() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit.txt")),
@@ -288,6 +295,14 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void mixinApplyModFailed() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/mixin_apply_mod_failed.txt")),
+                CrashReportAnalyzer.Rule.MIXIN_APPLY_MOD_FAILED);
+        assertEquals("enhancedblockentities", result.getMatcher().group("id"));
+    }
+
+    @Test
     public void unsatisfiedLinkError() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/unsatisfied_link_error.txt")),
@@ -352,6 +367,22 @@ public class CrashReportAnalyzerTest {
                         "Unmet dependency listing:\n" +
                         "\t - Mod 'Roughly Searchable' (roughlysearchable) 2.2.1+1.17.1 requires version 6.0.2 or later of roughlyenoughitems, which is missing!\n" +
                         "\tat net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:190) ~").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
+    public void fabricWarnings2() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric_warnings3.txt")),
+                CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
+        assertEquals(("net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!\n" +
+                        "确定了一种可能的解决方法，这样做可能会解决你的问题：\n" +
+                        "\t - 安装 fabric-api，任意版本。\n" +
+                        "\t - 安装 sodium，0.5.6 及以上版本。\n" +
+                        "更多信息：\n" +
+                        "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 fabric-api 的 任意版本，但没有安装它！\n" +
+                        "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 sodium 的 0.5.6 及以上版本，但没有安装它！\n" +
+                        "\tat net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:51) ~").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 
@@ -432,9 +463,37 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void incompleteForgeInstallation4() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation4.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation5() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation5.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation6() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation6.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
     public void forgeRepeatInstallation() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation.txt")),
+                CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
+    }
+
+    @Test
+    public void forgeRepeatInstallation1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation2.txt")),
                 CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
     }
 
@@ -449,6 +508,13 @@ public class CrashReportAnalyzerTest {
     public void needJDK112() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk112.txt")),
+                CrashReportAnalyzer.Rule.NEED_JDK11);
+    }
+
+    @Test
+    public void needJDK113() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk113.txt")),
                 CrashReportAnalyzer.Rule.NEED_JDK11);
     }
 
@@ -502,17 +568,10 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
-    public void cannotFindLaunchTargetFmlclient() throws IOException {
+    public void installMixinbootstrap() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient.txt")),
-                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
-    }
-
-    @Test
-    public void cannotFindLaunchTargetFmlclient2() throws IOException {
-        CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/cannot_find_launch_target_fmlclient2.txt")),
-                CrashReportAnalyzer.Rule.CANNOT_FIND_LAUNCH_TARGET_FMLCLIENT);
+                CrashReportAnalyzer.anaylze(loadLog("/logs/install_mixinbootstrap.txt")),
+                CrashReportAnalyzer.Rule.INSTALL_MIXINBOOTSTRAP);
     }
 
     @Test
