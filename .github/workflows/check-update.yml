@@ -130,3 +130,4 @@ jobs:
           target_commitish: ${{ env.HMCL_COMMIT_SHA }}
           name: ${{ env.HMCL_TAG_NAME }}
           tag_name: ${{ env.HMCL_TAG_NAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
