@@ -287,8 +287,9 @@ public class CacheRepository {
     }
 
     public void saveETagIndex() throws IOException {
-        if (!Files.exists(indexFile))
-            indexFile.toFile().createNewFile();
+        if (!Files.exist(indexFile)) {
+            Files.createFile(indexFile);
+        }
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
