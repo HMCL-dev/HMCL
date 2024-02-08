@@ -1,0 +1,51 @@
+[authlib-injector] [INFO] Logging file: /home/zkitefly/Desktop/新建文件夹1/.minecraft/authlib-injector.log
+[authlib-injector] [INFO] Version: 1.2.3
+[authlib-injector] [INFO] Authentication server: http://localhost:37549
+[authlib-injector] [WARNING] You are using HTTP protocol, which is INSECURE! Please switch to HTTPS if possible.
+[22:35:10] [main/INFO]: Loading tweak class name optifine.OptiFineTweaker
+[22:35:10] [main/INFO]: Using primary tweak class name optifine.OptiFineTweaker
+[22:35:10] [main/INFO]: Calling tweak class optifine.OptiFineTweaker
+[22:35:10] [main/INFO]: [OptiFine] OptiFineTweaker: acceptOptions
+[22:35:10] [main/INFO]: [OptiFine] OptiFineTweaker: injectIntoClassLoader
+[22:35:10] [main/INFO]: [OptiFine] OptiFine ClassTransformer
+[22:35:10] [main/INFO]: [OptiFine] OptiFine ZIP file: /home/zkitefly/Desktop/新建文件夹1/.minecraft/libraries/optifine/OptiFine/1.20.1_HD_U_I5/OptiFine-1.20.1_HD_U_I5.jar
+[22:35:10] [main/INFO]: [OptiFine] OptiFineTweaker: getLaunchArguments
+[22:35:10] [main/INFO]: [OptiFine] OptiFineTweaker: getLaunchTarget
+[authlib-injector] [INFO] Transformed [net.minecraft.client.main.Main] with [Main Arguments Transformer]
+[22:35:10] [main/INFO]: Launching wrapped minecraft {net.minecraft.client.main.Main}
+[authlib-injector] [INFO] Transformed [com.mojang.authlib.properties.Property] with [Yggdrasil Public Key Transformer]
+[authlib-injector] [INFO] Httpd is running on port 41575
+[authlib-injector] [INFO] Transformed [fiv] with [Constant URL Transformer]
+[authlib-injector] [INFO] Transformed [com.mojang.authlib.HttpAuthenticationService] with [ConcatenateURL Workaround]
+[22:35:11] [main/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.eventbus.api.Event$Result
+[22:35:11] [main/INFO]: [OptiFine] (Reflector) Method not present: net.minecraftforge.common.extensions.IForgeEntity.canUpdate
+[22:35:11] [main/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.logging.CrashReportExtender
+[22:35:12] [main/INFO]: [OptiFine] (Reflector) Method not present: ane.create
+[22:35:15] [Datafixer Bootstrap/INFO]: 188 Datafixer optimizations took 360 milliseconds
+[22:35:17] [Render thread/INFO]: [OptiFine] (Reflector) Class not present: net.minecraftforge.client.ForgeHooksClient
+[22:35:17] [Render thread/INFO]: [STDERR]: [LWJGL] Platform/architecture mismatch detected for module: org.lwjgl
+		Linux amd64 17.0.6
+		OpenJDK 64-Bit Server VM v17.0.6+10-LTS by BellSoft
+	Platform available on classpath:
+		linux/x64
+[22:35:17] [Render thread/INFO]: [STDERR]: 	JVM platform:
+[22:35:17] [Render thread/INFO]: [STDERR]: [LWJGL] Failed to load a library. Possible solutions:
+	a) Add the directory that contains the shared library to -Djava.library.path or -Dorg.lwjgl.librarypath.
+	b) Add the JAR that contains the shared library to the classpath.
+[22:35:17] [Render thread/INFO]: [STDERR]: [LWJGL] Enable debug mode with -Dorg.lwjgl.util.Debug=true for better diagnostics.
+[22:35:17] [Render thread/INFO]: [STDERR]: [LWJGL] Enable the SharedLibraryLoader debug mode with -Dorg.lwjgl.util.DebugLoader=true for better diagnostics.
+[22:35:17] [Render thread/ERROR]: Unable to launch
+java.lang.reflect.InvocationTargetException: null
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?]
+	at net.minecraft.launchwrapper.Launch.launch(Launch.java:159) ~[launchwrapper-of-2.3.jar:2.3]
+	at net.minecraft.launchwrapper.Launch.main(Launch.java:30) ~[launchwrapper-of-2.3.jar:2.3]
+Caused by: java.lang.NoClassDefFoundError: Could not initialize class com.mojang.blaze3d.systems.RenderSystem
+	at ab.a(SourceFile:66) ~[ab.class:?]
+	at enn.a(SourceFile:2424) ~[enn.class:?]
+	at enn.a(SourceFile:2419) ~[enn.class:?]
+	at net.minecraft.client.main.Main.main(SourceFile:220) ~[Main.class:?]
+	... 6 more
+[HMCL ProcessListener] Minecraft exit with code 1.
