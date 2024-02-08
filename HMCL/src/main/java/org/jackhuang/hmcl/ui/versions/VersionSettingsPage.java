@@ -88,7 +88,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final ComponentSublist gameDirSublist;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
-    private final JFXComboBox<ProcessPriority> cboProcessPriority;
+    // private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final OptionToggleButton showLogsPane;
     private final ImagePickerItem iconPickerItem;
 
@@ -351,17 +351,18 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             showLogsPane = new OptionToggleButton();
             showLogsPane.setTitle(i18n("settings.show_log"));
 
-            BorderPane processPriorityPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.process_priority"));
-                processPriorityPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            // The process priority is useless as admin permission is required on *uix and start command has issues on Windows.
+            // BorderPane processPriorityPane = new BorderPane();
+            // {
+            //     Label label = new Label(i18n("settings.advanced.process_priority"));
+            //     processPriorityPane.setLeft(label);
+            //     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                cboProcessPriority = new JFXComboBox<>();
-                processPriorityPane.setRight(cboProcessPriority);
-                BorderPane.setAlignment(cboProcessPriority, Pos.CENTER_RIGHT);
-                FXUtils.setLimitWidth(cboProcessPriority, 300);
-            }
+            //     cboProcessPriority = new JFXComboBox<>();
+            //     processPriorityPane.setRight(cboProcessPriority);
+            //     BorderPane.setAlignment(cboProcessPriority, Pos.CENTER_RIGHT);
+            //     FXUtils.setLimitWidth(cboProcessPriority, 300);
+            // }
 
             GridPane serverPane = new GridPane();
             {
@@ -406,7 +407,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     launcherVisibilityPane,
                     dimensionPane,
                     showLogsPane,
-                    processPriorityPane,
+                    // processPriorityPane,
                     serverPane,
                     showAdvancedSettingPane
             );
@@ -423,8 +424,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
         cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT))));
 
-        cboProcessPriority.getItems().setAll(ProcessPriority.values());
-        cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
+        // cboProcessPriority.getItems().setAll(ProcessPriority.values());
+        // cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
     }
 
     private void initialize() {
@@ -513,7 +514,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility);
-            FXUtils.unbindEnum(cboProcessPriority);
+            // FXUtils.unbindEnum(cboProcessPriority);
 
             lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
             lastVersionSetting.javaDirProperty().removeListener(javaListener);
@@ -543,7 +544,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
-        FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
+        // FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
         versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
         if (versionId != null)
