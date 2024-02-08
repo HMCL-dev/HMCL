@@ -138,21 +138,13 @@ public final class CurseCompletionTask extends Task<Void> {
                         .collect(Collectors.toList()));
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
 
-        File resourcePacks = new File(repository.getVersionRoot(modManager.getVersion()), "resourcepacks");
+        File versionRoot = repository.getVersionRoot(modManager.getVersion());
+        File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
         for (CurseManifestFile file : newManifest.getFiles())
             if (StringUtils.isNotBlank(file.getFileName())) {
-                RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
-                File target;
-                if (((CurseAddon) mod.getData()).getClassId() == 12) {
-                    target = new File(resourcePacks, file.getFileName());
-                    if (target.exists()) {
-                        continue;
-                    }
-                } else {
-                    if (modManager.hasSimpleMod(file.getFileName())) {
-                        continue;
-                    }
-                    target = modManager.getSimpleModPath(file.getFileName()).toFile();
+                File target = guessFilePath(file, resourcePacksRoot, shaderPacksRoot);
+                if (target == null) {
+                    continue;
                 }
 
                 FileDownloadTask task = new FileDownloadTask(file.getUrl(), target);
@@ -164,6 +156,33 @@ public final class CurseCompletionTask extends Task<Void> {
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
             notifyPropertiesChanged();
+        }
+    }
+
+    /**
+     * Guess where to store the file.
+     * @param file The file.
+     * @param resourcePacksRoot ./resourcepacks.
+     * @param shaderPacksRoot ./shaderpacks.
+     * @return ./resourcepacks/$filename or ./shaderpacks/$filename or ./mods/$filename if the file doesn't exist. null if the file existed.
+     * @throws IOException If IOException was encountered during getting data from CurseForge.
+     */
+    private File guessFilePath(CurseManifestFile file, File resourcePacksRoot, File shaderPacksRoot) throws IOException {
+        RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
+        int classID = ((CurseAddon) mod.getData()).getClassId();
+        String fileName = file.getFileName();
+        switch (classID) {
+            case 12: // Resource pack
+            case 6552: { // Shader pack
+                File res = new File(classID == 12 ? resourcePacksRoot : shaderPacksRoot, fileName);
+                return res.exists() ? null : res;
+            }
+            default: {
+                if (modManager.hasSimpleMod(fileName)) {
+                    return null;
+                }
+                return modManager.getSimpleModPath(fileName).toFile();
+            }
         }
     }
 
