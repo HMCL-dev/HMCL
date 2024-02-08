@@ -170,7 +170,7 @@ public class InstallerItem extends Control {
         public InstallerItemGroup(String gameVersion) {
             mutualIncompatible(forge, fabric, quilt, neoForge, liteLoader);
             addIncompatibles(optiFine, fabric, quilt, neoForge);
-            addIncompatibles(fabricApi, forge, quilt, quiltApi, neoForge, liteLoader, optiFine);
+            addIncompatibles(fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine);
             addIncompatibles(quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine);
 
             InvalidationListener listener = o -> {
