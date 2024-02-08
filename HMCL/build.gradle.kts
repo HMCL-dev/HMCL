@@ -7,16 +7,6 @@ import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("com.google.code.gson:gson:2.10.1")
-    }
-}
-
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
