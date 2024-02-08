@@ -1,6 +1,3 @@
-import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -9,16 +6,6 @@ import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("com.google.code.gson:gson:2.10.1")
-    }
-}
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -92,59 +79,6 @@ fun attachSignature(jar: File) {
     FileSystems.newFileSystem(URI.create("jar:" + jar.toURI()), emptyMap<String, Any>()).use { zipfs ->
         Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature")).use { it.write(signature) }
     }
-}
-
-tasks.getByName<JavaCompile>("compileJava") {
-    dependsOn(tasks.create("computeDynamicResources") {
-        this@create.inputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"))
-        this@create.outputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json"))
-
-        doLast {
-            Gson().also { gsonInstance ->
-                rootProject.rootDir.resolve("data-json/dynamic-remote-resources-raw.json").bufferedReader().use { br ->
-                    (gsonInstance.fromJson(br, JsonElement::class.java) as JsonObject)
-                }.also { data ->
-                    data.asMap().forEach { (namespace, namespaceData) ->
-                        (namespaceData as JsonObject).asMap().forEach { (name, nameData) ->
-                            (nameData as JsonObject).asMap().forEach { (version, versionData) ->
-                                require(versionData is JsonObject)
-                                val localPath =
-                                    (versionData.get("local_path") as com.google.gson.JsonPrimitive).asString
-                                val sha1 = (versionData.get("sha1") as com.google.gson.JsonPrimitive).asString
-
-                                val currentSha1 = digest(
-                                    "SHA-1",
-                                    rootProject.rootDir.resolve(localPath).readBytes()
-                                ).joinToString(separator = "") { "%02x".format(it) }
-
-                                if (!sha1.equals(currentSha1, ignoreCase = true)) {
-                                    throw IllegalStateException("Mismatched SHA-1 in $.${namespace}.${name}.${version} of dynamic remote resources detected. Require ${currentSha1}, but found $sha1")
-                                }
-                            }
-                        }
-                    }
-
-                    rootProject.rootDir.resolve("data-json/dynamic-remote-resources.json").also { zippedPath ->
-                        gsonInstance.toJson(data).also { expectedData ->
-                            if (zippedPath.exists()) {
-                                zippedPath.readText().also { rawData ->
-                                    if (rawData != expectedData) {
-                                        if (System.getenv("GITHUB_SHA") == null) {
-                                            zippedPath.writeText(expectedData)
-                                        } else {
-                                            throw IllegalStateException("Mismatched zipped dynamic-remote-resources json file!")
-                                        }
-                                    }
-                                }
-                            } else {
-                                zippedPath.writeText(expectedData)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    })
 }
 
 val java11 = sourceSets.create("java11") {
