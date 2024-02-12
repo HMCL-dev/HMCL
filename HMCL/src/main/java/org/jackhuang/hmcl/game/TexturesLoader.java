@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.game;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.canvas.Canvas;
@@ -29,9 +32,13 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -179,26 +186,61 @@ public final class TexturesLoader {
                 }, uuidFallback);
     }
 
-    public static ObjectBinding<LoadedTexture> skinBinding(Account account) {
+    public static ObservableValue<LoadedTexture> skinBinding(Account account) {
         LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(account.getUUID()));
-        return BindingMapping.of(account.getTextures())
-                .asyncMap(textures -> {
-                    if (textures.isPresent()) {
-                        Texture texture = textures.get().get(TextureType.SKIN);
-                        if (texture != null && StringUtils.isNotBlank(texture.getUrl())) {
-                            return CompletableFuture.supplyAsync(() -> {
-                                try {
-                                    return loadTexture(texture);
-                                } catch (Throwable e) {
-                                    LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
-                                    return uuidFallback;
-                                }
-                            }, POOL);
-                        }
-                    }
+        if (account instanceof OfflineAccount) {
+            OfflineAccount offlineAccount = (OfflineAccount) account;
 
-                    return CompletableFuture.completedFuture(uuidFallback);
-                }, uuidFallback);
+            SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
+
+            InvalidationListener listener = o -> {
+                Skin skin = offlineAccount.getSkin();
+                String username = offlineAccount.getUsername();
+
+                binding.set(uuidFallback);
+                if (skin != null) {
+                    skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null) {
+                            LOG.log(Level.WARNING, "Failed to load texture", exception);
+                        } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
+
+                            Map<String, String> metadata;
+                            if (result.getModel() != null) {
+                                metadata = singletonMap("model", result.getModel().modelName);
+                            } else {
+                                metadata = emptyMap();
+                            }
+
+                            binding.set(new LoadedTexture(result.getSkin().getImage(), metadata));
+                        }
+                    }).start();
+                }
+            };
+
+            binding.addListener(new Holder<>(listener));
+            offlineAccount.addListener(new WeakInvalidationListener(listener));
+
+            return binding;
+        } else {
+            return BindingMapping.of(account.getTextures())
+                    .asyncMap(textures -> {
+                        if (textures.isPresent()) {
+                            Texture texture = textures.get().get(TextureType.SKIN);
+                            if (texture != null && StringUtils.isNotBlank(texture.getUrl())) {
+                                return CompletableFuture.supplyAsync(() -> {
+                                    try {
+                                        return loadTexture(texture);
+                                    } catch (Throwable e) {
+                                        LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                        return uuidFallback;
+                                    }
+                                }, POOL);
+                            }
+                        }
+
+                        return CompletableFuture.completedFuture(uuidFallback);
+                    }, uuidFallback);
+        }
     }
 
     // ====
@@ -267,9 +309,9 @@ public final class TexturesLoader {
         static final WeakHashMap<Canvas, SkinBindingChangeListener> hole = new WeakHashMap<>();
 
         final WeakReference<Canvas> canvasRef;
-        final ObjectBinding<LoadedTexture> binding;
+        final ObservableValue<LoadedTexture> binding;
 
-        SkinBindingChangeListener(Canvas canvas, ObjectBinding<LoadedTexture> binding) {
+        SkinBindingChangeListener(Canvas canvas, ObservableValue<LoadedTexture> binding) {
             this.canvasRef = new WeakReference<>(canvas);
             this.binding = binding;
         }
@@ -283,14 +325,14 @@ public final class TexturesLoader {
         }
     }
 
-    public static void fxAvatarBinding(Canvas canvas, ObjectBinding<LoadedTexture> skinBinding) {
+    public static void fxAvatarBinding(Canvas canvas, ObservableValue<LoadedTexture> skinBinding) {
         synchronized (SkinBindingChangeListener.hole) {
             SkinBindingChangeListener oldListener = SkinBindingChangeListener.hole.remove(canvas);
             if (oldListener != null)
                 oldListener.binding.removeListener(oldListener);
 
             SkinBindingChangeListener listener = new SkinBindingChangeListener(canvas, skinBinding);
-            listener.changed(skinBinding, null, skinBinding.get());
+            listener.changed(skinBinding, null, skinBinding.getValue());
             skinBinding.addListener(listener);
 
             SkinBindingChangeListener.hole.put(canvas, listener);
