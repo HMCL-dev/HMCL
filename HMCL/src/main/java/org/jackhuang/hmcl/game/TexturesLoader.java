@@ -202,7 +202,6 @@ public final class TexturesLoader {
                         if (exception != null) {
                             LOG.log(Level.WARNING, "Failed to load texture", exception);
                         } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
-
                             Map<String, String> metadata;
                             if (result.getModel() != null) {
                                 metadata = singletonMap("model", result.getModel().modelName);
