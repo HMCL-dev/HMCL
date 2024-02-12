@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -141,16 +141,7 @@ public final class TexturesLoader {
     }
 
     private static void loadDefaultSkin(String path, TextureModel model) {
-        Image skin;
-        try {
-            skin = new Image(path);
-            if (skin.isError())
-                throw skin.getException();
-        } catch (Throwable e) {
-            throw new ResourceNotFoundError("Cannot load default skin from " + path, e);
-        }
-
-        DEFAULT_SKINS.put(model, new LoadedTexture(skin, singletonMap("model", model.modelName)));
+        DEFAULT_SKINS.put(model, new LoadedTexture(FXUtils.newBuiltinImage(path), singletonMap("model", model.modelName)));
     }
 
     public static LoadedTexture getDefaultSkin(TextureModel model) {
