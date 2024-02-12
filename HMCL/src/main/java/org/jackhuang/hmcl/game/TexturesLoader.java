@@ -182,23 +182,22 @@ public final class TexturesLoader {
     public static ObjectBinding<LoadedTexture> skinBinding(Account account) {
         LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(account.getUUID()));
         return BindingMapping.of(account.getTextures())
-                .map(textures -> textures
-                        .flatMap(it -> Optional.ofNullable(it.get(TextureType.SKIN)))
-                        .filter(it -> StringUtils.isNotBlank(it.getUrl())))
-                .asyncMap(it -> {
-                    if (it.isPresent()) {
-                        Texture texture = it.get();
-                        return CompletableFuture.supplyAsync(() -> {
-                            try {
-                                return loadTexture(texture);
-                            } catch (Throwable e) {
-                                LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
-                                return uuidFallback;
-                            }
-                        }, POOL);
-                    } else {
-                        return CompletableFuture.completedFuture(uuidFallback);
+                .asyncMap(textures -> {
+                    if (textures.isPresent()) {
+                        Texture texture = textures.get().get(TextureType.SKIN);
+                        if (texture != null && StringUtils.isNotBlank(texture.getUrl())) {
+                            return CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return loadTexture(texture);
+                                } catch (Throwable e) {
+                                    LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                    return uuidFallback;
+                                }
+                            }, POOL);
+                        }
                     }
+
+                    return CompletableFuture.completedFuture(uuidFallback);
                 }, uuidFallback);
     }
 
