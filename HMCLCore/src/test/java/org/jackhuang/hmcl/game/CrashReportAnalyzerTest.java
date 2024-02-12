@@ -325,6 +325,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void outOfMemoryJVM1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/out_of_memory2.txt")),
+                CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
+    }
+
+    @Test
     public void memoryExceeded() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/memory_exceeded.txt")),

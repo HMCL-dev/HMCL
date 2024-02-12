@@ -1,0 +1,3 @@
+Error occurred during initialization of VM
+Too small maximum heap
+[HMCL ProcessListener] Minecraft exit with code 1(0x1).
