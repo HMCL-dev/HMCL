@@ -192,7 +192,6 @@ public final class TexturesLoader {
             OfflineAccount offlineAccount = (OfflineAccount) account;
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
-
             InvalidationListener listener = o -> {
                 Skin skin = offlineAccount.getSkin();
                 String username = offlineAccount.getUsername();
@@ -216,6 +215,8 @@ public final class TexturesLoader {
                     }).start();
                 }
             };
+
+            listener.invalidated(offlineAccount);
 
             binding.addListener(new Holder<>(listener));
             offlineAccount.addListener(new WeakInvalidationListener(listener));
@@ -344,7 +345,7 @@ public final class TexturesLoader {
     }
 
     public static void bindAvatar(Canvas canvas, Account account) {
-        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount)
+        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount || account instanceof OfflineAccount)
             fxAvatarBinding(canvas, skinBinding(account));
         else {
             unbindAvatar(canvas);
