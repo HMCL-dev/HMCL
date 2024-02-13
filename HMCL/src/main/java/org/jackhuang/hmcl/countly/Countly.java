@@ -20,10 +20,9 @@ package org.jackhuang.hmcl.countly;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -40,7 +39,7 @@ public class Countly {
                 pair("metrics", metrics),
                 pair("device_id", deviceId),
                 pair("timestamp", Long.toString(System.currentTimeMillis())),
-                pair("tz", Integer.toString(TimeZone.getDefault().getOffset(new Date().getTime()) / 60000)),
+                pair("tz", Integer.toString(getTimezoneOffset())),
                 pair("hour", Integer.toString(currentHour())),
                 pair("dow", Integer.toString(currentDayOfWeek())),
                 pair("app_key", APP_KEY),
@@ -50,7 +49,7 @@ public class Countly {
     }
 
     private static int getTimezoneOffset() {
-        return TimeZone.getDefault().getOffset(new Date().getTime()) / 60000;
+        return ZonedDateTime.now().getOffset().getTotalSeconds() / 60;
     }
 
     private static String getLocale() {

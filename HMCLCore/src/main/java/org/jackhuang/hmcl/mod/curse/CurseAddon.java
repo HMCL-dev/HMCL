@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -58,15 +59,15 @@ public class CurseAddon implements RemoteMod.IMod {
     private final int mainFileId;
     private final List<LatestFile> latestFiles;
     private final List<LatestFileIndex> latestFileIndices;
-    private final Date dateCreated;
-    private final Date dateModified;
-    private final Date dateReleased;
+    private final Instant dateCreated;
+    private final Instant dateModified;
+    private final Instant dateReleased;
     private final boolean allowModDistribution;
     private final int gamePopularityRank;
     private final boolean isAvailable;
     private final int thumbsUpCount;
 
-    public CurseAddon(int id, int gameId, String name, String slug, Links links, String summary, int status, int downloadCount, boolean isFeatured, int primaryCategoryId, List<Category> categories, int classId, List<Author> authors, Logo logo, int mainFileId, List<LatestFile> latestFiles, List<LatestFileIndex> latestFileIndices, Date dateCreated, Date dateModified, Date dateReleased, boolean allowModDistribution, int gamePopularityRank, boolean isAvailable, int thumbsUpCount) {
+    public CurseAddon(int id, int gameId, String name, String slug, Links links, String summary, int status, int downloadCount, boolean isFeatured, int primaryCategoryId, List<Category> categories, int classId, List<Author> authors, Logo logo, int mainFileId, List<LatestFile> latestFiles, List<LatestFileIndex> latestFileIndices, Instant dateCreated, Instant dateModified, Instant dateReleased, boolean allowModDistribution, int gamePopularityRank, boolean isAvailable, int thumbsUpCount) {
         this.id = id;
         this.gameId = gameId;
         this.name = name;
@@ -161,15 +162,15 @@ public class CurseAddon implements RemoteMod.IMod {
         return latestFileIndices;
     }
 
-    public Date getDateCreated() {
+    public Instant getDateCreated() {
         return dateCreated;
     }
 
-    public Date getDateModified() {
+    public Instant getDateModified() {
         return dateModified;
     }
 
-    public Date getDateReleased() {
+    public Instant getDateReleased() {
         return dateReleased;
     }
 
@@ -438,7 +439,7 @@ public class CurseAddon implements RemoteMod.IMod {
         private final int releaseType;
         private final int fileStatus;
         private final List<LatestFileHash> hashes;
-        private final Date fileDate;
+        private final Instant fileDate;
         private final int fileLength;
         private final int downloadCount;
         private final String downloadUrl;
@@ -448,7 +449,7 @@ public class CurseAddon implements RemoteMod.IMod {
         private final boolean isServerPack;
         private final long fileFingerprint;
 
-        public LatestFile(int id, int gameId, int modId, boolean isAvailable, String displayName, String fileName, int releaseType, int fileStatus, List<LatestFileHash> hashes, Date fileDate, int fileLength, int downloadCount, String downloadUrl, List<String> gameVersions, List<Dependency> dependencies, int alternateFileId, boolean isServerPack, long fileFingerprint) {
+        public LatestFile(int id, int gameId, int modId, boolean isAvailable, String displayName, String fileName, int releaseType, int fileStatus, List<LatestFileHash> hashes, Instant fileDate, int fileLength, int downloadCount, String downloadUrl, List<String> gameVersions, List<Dependency> dependencies, int alternateFileId, boolean isServerPack, long fileFingerprint) {
             this.id = id;
             this.gameId = gameId;
             this.modId = modId;
@@ -505,7 +506,7 @@ public class CurseAddon implements RemoteMod.IMod {
             return hashes;
         }
 
-        public Date getFileDate() {
+        public Instant getFileDate() {
             return fileDate;
         }
 
@@ -650,7 +651,7 @@ public class CurseAddon implements RemoteMod.IMod {
         private final String slug;
         private final String url;
         private final String iconUrl;
-        private final Date dateModified;
+        private final Instant dateModified;
         private final boolean isClass;
         private final int classId;
         private final int parentCategoryId;
@@ -658,10 +659,10 @@ public class CurseAddon implements RemoteMod.IMod {
         private transient final List<Category> subcategories;
 
         public Category() {
-            this(0, 0, "", "", "", "", new Date(), false, 0, 0);
+            this(0, 0, "", "", "", "", Instant.now(), false, 0, 0);
         }
 
-        public Category(int id, int gameId, String name, String slug, String url, String iconUrl, Date dateModified, boolean isClass, int classId, int parentCategoryId) {
+        public Category(int id, int gameId, String name, String slug, String url, String iconUrl, Instant dateModified, boolean isClass, int classId, int parentCategoryId) {
             this.id = id;
             this.gameId = gameId;
             this.name = name;
@@ -700,7 +701,7 @@ public class CurseAddon implements RemoteMod.IMod {
             return iconUrl;
         }
 
-        public Date getDateModified() {
+        public Instant getDateModified() {
             return dateModified;
         }
 
