@@ -141,6 +141,7 @@ public final class CurseCompletionTask extends Task<Void> {
 
         File versionRoot = repository.getVersionRoot(modManager.getVersion());
         File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
+        finished.set(0);
         newManifest.getFiles()
                 .stream().parallel()
                 .filter(f -> f.getFileName() != null)
@@ -149,10 +150,12 @@ public final class CurseCompletionTask extends Task<Void> {
                         return Pair.pair(f.getUrl(), guessFilePath(f, resourcePacksRoot, shaderPacksRoot));
                     } catch (IOException e) {
                         Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for mod: " + f.getProjectID() + ", " + f.getFileID(), e);
-                        throw new UncheckedIOException(e);
+                        return null; // Ignore this file.
+                    } finally {
+                        updateProgress(finished.incrementAndGet(), newManifest.getFiles().size());
                     }
                 })
-                .filter(p -> p.getValue() != null)
+                .filter(p -> p != null && p.getValue() != null)
                 .forEach(p -> {
                     FileDownloadTask task = new FileDownloadTask(p.getKey(), p.getValue());
                     task.setCacheRepository(dependency.getCacheRepository());
