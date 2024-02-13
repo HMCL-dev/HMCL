@@ -24,11 +24,23 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ResourcePackDownloadListPage extends DownloadListPage {
-    public ResourcePackDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
+    public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, ModrinthRemoteModRepository.MODS);
+    }
+
+    public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MODPACK, CurseForgeRemoteModRepository.MODPACKS, ModrinthRemoteModRepository.MODPACKS);
+    }
+
+    public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, ModrinthRemoteModRepository.RESOURCE_PACKS);
+    }
+
+    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteModRepository.Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
         super(null, callback, versionSelection);
 
-        repository = new Repository();
+        repository = new Repository(type, curseForge, modrinth);
 
         supportChinese.set(true);
         downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
@@ -39,13 +51,22 @@ public class ResourcePackDownloadListPage extends DownloadListPage {
     }
 
     private class Repository extends LocalizedRemoteModRepository {
+        private final RemoteModRepository.Type type;
+        private final CurseForgeRemoteModRepository curseForge;
+        private final ModrinthRemoteModRepository modrinth;
+
+        public Repository(Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
+            this.type = type;
+            this.curseForge = curseForge;
+            this.modrinth = modrinth;
+        }
 
         @Override
         protected RemoteModRepository getBackedRemoteModRepository() {
             if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.RESOURCE_PACKS;
+                return modrinth;
             } else {
-                return CurseForgeRemoteModRepository.RESOURCE_PACKS;
+                return curseForge;
             }
         }
 
@@ -60,7 +81,7 @@ public class ResourcePackDownloadListPage extends DownloadListPage {
 
         @Override
         public Type getType() {
-            return Type.MOD;
+            return type;
         }
     }
 
