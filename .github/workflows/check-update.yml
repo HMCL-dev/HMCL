@@ -5,9 +5,12 @@ on:
   schedule:
     - cron: '30 * * * *'
 
+permissions:
+  contents: write
+
 jobs:
   dev-check-update:
-    if: ${{ github.repository_owner == 'huanghongxun' }}
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -66,7 +69,7 @@ jobs:
           name: ${{ env.HMCL_TAG_NAME }}
           tag_name: ${{ env.HMCL_TAG_NAME }}
   stable-check-update:
-    if: ${{ github.repository_owner == 'huanghongxun' }}
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
     needs: dev-check-update
     runs-on: ubuntu-latest
     steps:

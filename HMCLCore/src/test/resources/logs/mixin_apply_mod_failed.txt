@@ -1,0 +1,500 @@
+	at org.quiltmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:527) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.Knot.launch(Knot.java:82) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:28) ~[quilt-loader-0.19.0-beta.11.jar:?]
+Caused by: java.net.SocketTimeoutException: Read timed out
+	at sun.nio.ch.NioSocketImpl.timedRead(NioSocketImpl.java:283) ~[?:?]
+	at sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:309) ~[?:?]
+	at sun.nio.ch.NioSocketImpl.read(NioSocketImpl.java:350) ~[?:?]
+	at sun.nio.ch.NioSocketImpl$1.read(NioSocketImpl.java:803) ~[?:?]
+	at java.net.Socket$SocketInputStream.read(Socket.java:966) ~[?:?]
+	at java.io.BufferedInputStream.fill(BufferedInputStream.java:244) ~[?:?]
+	at java.io.BufferedInputStream.read1(BufferedInputStream.java:284) ~[?:?]
+	at java.io.BufferedInputStream.read(BufferedInputStream.java:343) ~[?:?]
+	at sun.net.www.http.HttpClient.parseHTTPHeader(HttpClient.java:791) ~[?:?]
+	at sun.net.www.http.HttpClient.parseHTTP(HttpClient.java:726) ~[?:?]
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1688) ~[?:?]
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1589) ~[?:?]
+	at sun.net.www.protocol.http.HttpURLConnection.getHeaderField(HttpURLConnection.java:3221) ~[?:?]
+	at java.net.URLConnection.getHeaderFieldLong(URLConnection.java:637) ~[?:?]
+	at java.net.URLConnection.getContentLengthLong(URLConnection.java:509) ~[?:?]
+	at xaero.map.misc.Internet.checkModVersion(Internet.java:51) ~[transformed-mod-xaeroworldmap.i0:0/:?]
+	... 17 more
+[12:16:23] [Render thread/INFO]: Loading Xaero's Minimap - Stage 1/2
+[12:16:23] [Render thread/WARN]: Static binding violation: PRIVATE @Overwrite method method_23182 in #sodium:sodium.mixins.json:features.item.MixinItemRenderer from mod sodium cannot reduce visibiliy of PUBLIC target method, visibility will be upgraded.
+[12:16:23] [Render thread/INFO]: [Quilt Command|Client] Networking support is enabled
+[12:16:23] [Render thread/INFO]: ARRP register - before vanilla
+[12:16:23] [Render thread/INFO]: ARRP register - after vanilla
+[12:16:23] [Render thread/INFO]: Backend library: LWJGL version 3.3.1 build 7
+[12:16:24] [Render thread/INFO]: ARRP register - before vanilla
+[12:16:24] [Render thread/INFO]: ARRP register - after vanilla
+[12:16:24] [Render thread/INFO]: ARRP register - before vanilla
+[12:16:24] [Render thread/INFO]: ARRP register - after vanilla
+[12:16:24] [Render thread/INFO]: ARRP register - before vanilla
+[12:16:24] [Render thread/INFO]: ARRP register - after vanilla
+[12:16:24] [Render thread/INFO]: ARRP register - before user
+[12:16:24] [Render thread/WARN]: Error loading class: net/minecraft/class_809$class_811 (java.lang.ClassNotFoundException: net/minecraft/class_809$class_811)
+[12:16:24] [Render thread/ERROR]: Mixin apply for mod enhancedblockentities failed #enhancedblockentities:enhancedblockentities.mixins.json:BuiltinModelItemRendererMixin from mod enhancedblockentities -> net.minecraft.class_756: org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException Unexpecteded ClassMetadataNotFoundException whilst transforming the mixin class: [MAIN Applicator Phase -> #enhancedblockentities:enhancedblockentities.mixins.json:BuiltinModelItemRendererMixin from mod enhancedblockentities -> Apply Methods -> (Lnet/minecraft/class_1799;Lnet/minecraft/class_809$class_811;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;IILorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V:handler$zea000$enhancedblockentities$enhanced_bes$renderBeds -> Transform LVT -> var=mode -> desc=Lnet/minecraft/class_809$class_811;]
+org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: Unexpecteded ClassMetadataNotFoundException whilst transforming the mixin class: [MAIN Applicator Phase -> #enhancedblockentities:enhancedblockentities.mixins.json:BuiltinModelItemRendererMixin from mod enhancedblockentities -> Apply Methods -> (Lnet/minecraft/class_1799;Lnet/minecraft/class_809$class_811;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;IILorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V:handler$zea000$enhancedblockentities$enhanced_bes$renderBeds -> Transform LVT -> var=mode -> desc=Lnet/minecraft/class_809$class_811;]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformMethod(MixinTargetContext.java:510) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyNormalMethod(MixinApplicatorStandard.java:535) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMethods(MixinApplicatorStandard.java:521) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMixin(MixinApplicatorStandard.java:388) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:327) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:421) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:403) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:363) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClass(MixinTransformer.java:234) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClassBytes(MixinTransformer.java:202) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.getPostMixinClassByteArray(KnotClassDelegate.java:453) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.tryLoadClass(KnotClassDelegate.java:244) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClassOnly(KnotClassDelegate.java:164) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:150) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:228) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:520) ~[?:?]
+	at net.minecraft.class_310.<init>(class_310.java:573) ~[transformed-mod-minecraft.i0:0/:?]
+	at net.minecraft.client.main.Main.main(Main.java:198) ~[1.19.jar:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?]
+	at org.quiltmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:527) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.Knot.launch(Knot.java:82) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:28) ~[quilt-loader-0.19.0-beta.11.jar:?]
+Caused by: org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: net.minecraft.class_809$class_811
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformSingleDescriptor(MixinTargetContext.java:1002) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformSingleDescriptor(MixinTargetContext.java:962) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformLVT(MixinTargetContext.java:563) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformMethod(MixinTargetContext.java:469) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	... 24 more
+[12:16:24] [Render thread/WARN]: Mixin transformation of net.minecraft.class_756 failed
+org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClass(MixinTransformer.java:234) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClassBytes(MixinTransformer.java:202) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.getPostMixinClassByteArray(KnotClassDelegate.java:453) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.tryLoadClass(KnotClassDelegate.java:244) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClassOnly(KnotClassDelegate.java:164) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:150) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:228) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:520) ~[?:?]
+	at net.minecraft.class_310.<init>(class_310.java:573) ~[transformed-mod-minecraft.i0:0/:?]
+	at net.minecraft.client.main.Main.main(Main.java:198) ~[1.19.jar:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?]
+	at org.quiltmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:527) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.Knot.launch(Knot.java:82) ~[quilt-loader-0.19.0-beta.11.jar:?]
+	at org.quiltmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:28) ~[quilt-loader-0.19.0-beta.11.jar:?]
+Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Mixin [#enhancedblockentities:enhancedblockentities.mixins.json:BuiltinModelItemRendererMixin from mod enhancedblockentities] from phase [DEFAULT] in config [#enhancedblockentities:enhancedblockentities.mixins.json] FAILED during APPLY
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.handleMixinError(MixinProcessor.java:638) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.handleMixinApplyError(MixinProcessor.java:589) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:379) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	... 17 more
+Caused by: org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: Unexpecteded ClassMetadataNotFoundException whilst transforming the mixin class: [MAIN Applicator Phase -> #enhancedblockentities:enhancedblockentities.mixins.json:BuiltinModelItemRendererMixin from mod enhancedblockentities -> Apply Methods -> (Lnet/minecraft/class_1799;Lnet/minecraft/class_809$class_811;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;IILorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V:handler$zea000$enhancedblockentities$enhanced_bes$renderBeds -> Transform LVT -> var=mode -> desc=Lnet/minecraft/class_809$class_811;]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformMethod(MixinTargetContext.java:510) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyNormalMethod(MixinApplicatorStandard.java:535) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMethods(MixinApplicatorStandard.java:521) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMixin(MixinApplicatorStandard.java:388) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:327) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:421) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:403) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:363) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	... 17 more
+Caused by: org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: net.minecraft.class_809$class_811
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformSingleDescriptor(MixinTargetContext.java:1002) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformSingleDescriptor(MixinTargetContext.java:962) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformLVT(MixinTargetContext.java:563) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformMethod(MixinTargetContext.java:469) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyNormalMethod(MixinApplicatorStandard.java:535) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMethods(MixinApplicatorStandard.java:521) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMixin(MixinApplicatorStandard.java:388) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:327) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:421) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:403) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:363) ~[sponge-mixin-0.12.4+mixin.0.8.5.jar:0.12.4+mixin.0.8.5]
+	... 17 more
+---- Minecraft Crash Report ----
+// Hi. I'm Minecraft, and I'm a crashaholic.
+
+Time: 2023-04-16 12:16:24
+Description: Initializing game
+
+java.lang.RuntimeException: Mixin transformation of net.minecraft.class_756 failed
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.getPostMixinClassByteArray(KnotClassDelegate.java:458)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.tryLoadClass(KnotClassDelegate.java:244)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClassOnly(KnotClassDelegate.java:164)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:150)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:228)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:520)
+	at net.minecraft.class_310.<init>(class_310.java:573)
+	at net.minecraft.client.main.Main.main(Main.java:198)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.quiltmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:527)
+	at org.quiltmc.loader.impl.launch.knot.Knot.launch(Knot.java:82)
+	at org.quiltmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:28)
+Caused by: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:392)
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClass(MixinTransformer.java:234)
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClassBytes(MixinTransformer.java:202)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.getPostMixinClassByteArray(KnotClassDelegate.java:453)
+	... 14 more
+Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Mixin [#enhancedblockentities:enhancedblockentities.mixins.json:BuiltinModelItemRendererMixin from mod enhancedblockentities] from phase [DEFAULT] in config [#enhancedblockentities:enhancedblockentities.mixins.json] FAILED during APPLY
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.handleMixinError(MixinProcessor.java:638)
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.handleMixinApplyError(MixinProcessor.java:589)
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:379)
+	... 17 more
+Caused by: org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: Unexpecteded ClassMetadataNotFoundException whilst transforming the mixin class: [MAIN Applicator Phase -> #enhancedblockentities:enhancedblockentities.mixins.json:BuiltinModelItemRendererMixin from mod enhancedblockentities -> Apply Methods -> (Lnet/minecraft/class_1799;Lnet/minecraft/class_809$class_811;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;IILorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V:handler$zea000$enhancedblockentities$enhanced_bes$renderBeds -> Transform LVT -> var=mode -> desc=Lnet/minecraft/class_809$class_811;]
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformMethod(MixinTargetContext.java:510)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyNormalMethod(MixinApplicatorStandard.java:535)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMethods(MixinApplicatorStandard.java:521)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyMixin(MixinApplicatorStandard.java:388)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:327)
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:421)
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:403)
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:363)
+	... 17 more
+Caused by: org.spongepowered.asm.mixin.throwables.ClassMetadataNotFoundException: net.minecraft.class_809$class_811
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformSingleDescriptor(MixinTargetContext.java:1002)
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformSingleDescriptor(MixinTargetContext.java:962)
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformLVT(MixinTargetContext.java:563)
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.transformMethod(MixinTargetContext.java:469)
+	... 24 more
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.getPostMixinClassByteArray(KnotClassDelegate.java:458)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.tryLoadClass(KnotClassDelegate.java:244)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClassOnly(KnotClassDelegate.java:164)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:150)
+	at org.quiltmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:228)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:520)
+	at net.minecraft.class_310.<init>(class_310.java:573)
+
+-- Initialization --
+Details:
+	Modules: 
+		ADVAPI32.dll:Advanced Windows 32 Base API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		COMCTL32.dll:User Experience Controls Library:6.10 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPT32.dll:Crypto API32:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTBASE.dll:Base cryptographic API DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTSP.dll:Cryptographic Service Provider API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		CoreMessaging.dll:Microsoft CoreMessaging Dll:10.0.22621.1465 (WinBuild.160101.0800):Microsoft Corporation
+		DBGHELP.DLL:Windows Image Helper:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		DEVOBJ.dll:Device Information Set DLL:10.0.22621.1325 (WinBuild.160101.0800):Microsoft Corporation
+		DNSAPI.dll:DNS Client API DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		GDI32.dll:GDI Client DLL:10.0.22621.436 (WinBuild.160101.0800):Microsoft Corporation
+		GLU32.dll:OpenGL Utility Library DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		IMM32.DLL:Multi-User Windows IMM32 API Client DLL:10.0.22621.1325 (WinBuild.160101.0800):Microsoft Corporation
+		IPHLPAPI.DLL:IP Helper API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		KERNEL32.DLL:Windows NT BASE API Client DLL:10.0.22621.1537 (WinBuild.160101.0800):Microsoft Corporation
+		KERNELBASE.dll:Windows NT BASE API Client DLL:10.0.22621.1537 (WinBuild.160101.0800):Microsoft Corporation
+		MMDevApi.dll:MMDevice API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		MSCTF.dll:MSCTF Server DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		MpOav.dll:IOfficeAntiVirus Module:4.18.2303.8 (WinBuild.160101.0800):Microsoft Corporation
+		NSI.dll:NSI User-mode interface DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		NTASN1.dll:Microsoft ASN.1 API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		OLEAUT32.dll:OLEAUT32.DLL:10.0.22621.436 (WinBuild.160101.0800):Microsoft Corporation
+		Ole32.dll:Microsoft OLE for Windows:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		OpenAL.dll:Main implementation library:1.21.1:
+		PSAPI.DLL:Process Status Helper:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		Pdh.dll:Windows Performance Data Helper DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		RPCRT4.dll:Remote Procedure Call Runtime:10.0.22621.1325 (WinBuild.160101.0800):Microsoft Corporation
+		SETUPAPI.dll:Windows Setup API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		SHCORE.dll:SHCORE:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		SHELL32.dll:Windows Shell Common Dll:10.0.22621.1537 (WinBuild.160101.0800):Microsoft Corporation
+		UMPDC.dll:User Mode Power Dependency Coordinator:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		USER32.dll:Multi-User Windows USER API Client DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		USERENV.dll:Userenv:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		VCRUNTIME140.dll:Microsoft® C Runtime Library:14.29.30133.0 built by: vcwrkspc:Microsoft Corporation
+		VERSION.dll:Version Checking and File Installation Libraries:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		WINHTTP.dll:Windows HTTP Services:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		WINMM.dll:MCI API DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		WINSTA.dll:Winstation Library:10.0.22621.1465 (WinBuild.160101.0800):Microsoft Corporation
+		WINTRUST.dll:Microsoft Trust Verification APIs:10.0.22621.1537 (WinBuild.160101.0800):Microsoft Corporation
+		WS2_32.dll:Windows Socket 2.0 32-Bit DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		WSOCK32.dll:Windows Socket 32-Bit DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		WTSAPI32.dll:Windows Remote Desktop Session Host Server SDK APIs:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		amsi.dll:Anti-Malware Scan Interface:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		bcrypt.dll:Windows Cryptographic Primitives Library:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		bcryptPrimitives.dll:Windows Cryptographic Primitives Library:10.0.22621.1175 (WinBuild.160101.0800):Microsoft Corporation
+		cfgmgr32.dll:Configuration Manager DLL:10.0.22621.746 (WinBuild.160101.0800):Microsoft Corporation
+		clbcatq.dll:COM+ Configuration Catalog:2001.12.10941.16384 (WinBuild.160101.0800):Microsoft Corporation
+		combase.dll:Microsoft COM for Windows:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		cryptnet.dll:Crypto Network Related API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		dbgcore.DLL:Windows Core Debugging Helpers:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		dhcpcsvc.DLL:DHCP Client Service:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		dhcpcsvc6.DLL:DHCPv6 Client:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		dinput8.dll:Microsoft DirectInput:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		drvstore.dll:Driver Store API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		dwmapi.dll:Microsoft Desktop Window Manager API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		dxcore.dll:DXCore:10.0.22621.1465 (WinBuild.160101.0800):Microsoft Corporation
+		fwpuclnt.dll:FWP/IPsec User-Mode API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		gdi32full.dll:GDI Client DLL:10.0.22621.1465 (WinBuild.160101.0800):Microsoft Corporation
+		glfw.dll:GLFW 3.4.0 DLL:3.4.0:GLFW
+		icm32.dll:Microsoft Color Management Module (CMM):10.0.22621.586 (WinBuild.160101.0800):Microsoft Corporation
+		iertutil.dll:Run time utility for Internet Explorer:11.00.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		inputhost.dll:InputHost:10.0.22621.1325 (WinBuild.160101.0800):Microsoft Corporation
+		java.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		java.exe:OpenJDK Platform binary:17.0.1.0:Microsoft
+		jemalloc.dll
+		jimage.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		jli.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		jna4873420272456839116.dll:JNA native library:6.1.4:Java(TM) Native Access (JNA)
+		jvm.dll:OpenJDK 64-Bit server VM:17.0.1.0:Microsoft
+		kernel.appcore.dll:AppModel API Host:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		lwjgl.dll
+		lwjgl_opengl.dll
+		lwjgl_stb.dll
+		management.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		management_ext.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		msasn1.dll:ASN.1 Runtime APIs:10.0.22621.891 (WinBuild.160101.0800):Microsoft Corporation
+		mscms.dll:Microsoft Color Matching System DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		msvcp140.dll:Microsoft® C Runtime Library:14.29.30133.0 built by: vcwrkspc:Microsoft Corporation
+		msvcp_win.dll:Microsoft® C Runtime Library:10.0.22621.436 (WinBuild.160101.0800):Microsoft Corporation
+		msvcrt.dll:Windows NT CRT DLL:7.0.22621.436 (WinBuild.160101.0800):Microsoft Corporation
+		mswsock.dll:Microsoft Windows Sockets 2.0 Service Provider:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		napinsp.dll:E-mail Naming Shim Provider:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		ncrypt.dll:Windows NCrypt Router:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		net.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		netutils.dll:Net Win32 API Helpers DLL:10.0.22621.870 (WinBuild.160101.0800):Microsoft Corporation
+		nio.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		nlansp_c.dll:NLA Namespace Service Provider DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		ntdll.dll:NT Layer DLL:10.0.22621.1537 (WinBuild.160101.0800):Microsoft Corporation
+		ntmarta.dll:Windows NT MARTA provider:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		nvoglv64.dll:NVIDIA Compatible OpenGL ICD:31.0.15.2802:NVIDIA Corporation
+		nvspcap64.dll:NVIDIA Game Proxy:3.26.0.160:NVIDIA Corporation
+		opengl32.dll:OpenGL Client DLL:10.0.22621.1465 (WinBuild.160101.0800):Microsoft Corporation
+		perfos.dll:Windows System Performance Objects DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		pfclient.dll:SysMain Client:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		pnrpnsp.dll:PNRP Name Space Provider:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		powrprof.dll:Power Profile Helper DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		profapi.dll:User Profile Basic API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		rasadhlp.dll:Remote Access AutoDial Helper:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		rsaenh.dll:Microsoft Enhanced Cryptographic Provider:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		sechost.dll:Host for SCM/SDDL/LSA Lookup APIs:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		shlwapi.dll:Shell Light-weight Utility Library:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		srvcli.dll:Server Service Client DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		sunmscapi.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		svml.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		textinputframework.dll:"TextInputFramework.DYNLINK":10.0.22621.1325 (WinBuild.160101.0800):Microsoft Corporation
+		ucrtbase.dll:Microsoft® C Runtime Library:10.0.22621.436 (WinBuild.160101.0800):Microsoft Corporation
+		urlmon.dll:OLE32 Extensions for Win32:11.00.22621.746 (WinBuild.160101.0800):Microsoft Corporation
+		uxtheme.dll:Microsoft UxTheme Library:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		vcruntime140_1.dll:Microsoft® C Runtime Library:14.29.30133.0 built by: vcwrkspc:Microsoft Corporation
+		verify.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+		win32u.dll:Win32u:10.0.22621.1470 (WinBuild.160101.0800):Microsoft Corporation
+		windows.storage.dll:Microsoft WinRT Storage API:10.0.22621.580 (WinBuild.160101.0800):Microsoft Corporation
+		winrnr.dll:LDAP RnR Provider DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		wintypes.dll:Windows Base Types DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		wldp.dll:Windows Lockdown Policy:10.0.22621.885 (WinBuild.160101.0800):Microsoft Corporation
+		wshbth.dll:Windows Sockets Helper DLL:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		xinput1_4.dll:Microsoft Common Controller API:10.0.22621.1 (WinBuild.160101.0800):Microsoft Corporation
+		zip.dll:OpenJDK Platform binary:17.0.1.0:Microsoft
+Stacktrace:
+	at net.minecraft.client.main.Main.main(Main.java:198)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.quiltmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:527)
+	at org.quiltmc.loader.impl.launch.knot.Knot.launch(Knot.java:82)
+	at org.quiltmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:28)
+
+-- System Details --
+Details:
+	Minecraft Version: 1.19.4
+	Minecraft Version ID: 1.19.4
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 17.0.1, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode), Microsoft
+	Memory: 627025632 bytes (597 MiB) / 1577058304 bytes (1504 MiB) up to 6845104128 bytes (6528 MiB)
+	CPUs: 12
+	Processor Vendor: AuthenticAMD
+	Processor Name: AMD Ryzen 5 3600 6-Core Processor              
+	Identifier: AuthenticAMD Family 23 Model 113 Stepping 0
+	Microarchitecture: Zen 2
+	Frequency (GHz): 3.60
+	Number of physical packages: 1
+	Number of physical CPUs: 6
+	Number of logical CPUs: 12
+	Graphics card #0 name: NVIDIA GeForce RTX 2060
+	Graphics card #0 vendor: NVIDIA (0x10de)
+	Graphics card #0 VRAM (MB): 4095.00
+	Graphics card #0 deviceId: 0x1f08
+	Graphics card #0 versionInfo: DriverVersion=31.0.15.2802
+	Memory slot #0 capacity (MB): 8192.00
+	Memory slot #0 clockSpeed (GHz): 3.00
+	Memory slot #0 type: DDR4
+	Memory slot #1 capacity (MB): 8192.00
+	Memory slot #1 clockSpeed (GHz): 3.00
+	Memory slot #1 type: DDR4
+	Virtual memory max (MB): 29133.06
+	Virtual memory used (MB): 20495.20
+	Swap memory total (MB): 12800.00
+	Swap memory used (MB): 833.95
+	JVM Flags: 11 total; -Xmx6505m -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32m -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:-DontCompileHugeMethods -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	Quilt Mods: 
+		| Index | Mod                                               | ID                                                    | Version                     | Plugin                 | File(s)                                                                                                               | Sub-Files                                                                           | Sub-Files                            |
+		|------:|---------------------------------------------------|-------------------------------------------------------|-----------------------------|------------------------|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|--------------------------------------|
+		|   123 | Advanced XRay (Fabric)                            | advanced-xray-fabric                                  | 1.19.4-1.4.0-build.15       | quilted_fabric_loader  | <mods>\advanced-xray-fabric-1.19.4-1.4.0-build.15.jar                                                                 |                                                                                     |                                      |
+		|    45 | AppleSkin                                         | appleskin                                             | 2.4.3+mc1.19.4              | quilted_fabric_loader  | <mods>\appleskin-fabric-mc1.19.4-2.4.3.jar                                                                            |                                                                                     |                                      |
+		|    32 | Autofish                                          | autofish                                              | 0.9.8-SNAPSHOT              | quilted_fabric_loader  | <mods>\Autofish-0.9.8-fabric-mc1.19.3.jar                                                                             |                                                                                     |                                      |
+		|    19 | Baritone                                          | baritone                                              | 1.5.3-830-g3e249073         | quilted_fabric_loader  | <mods>\baritone-api-fabric-1.5.3-830-g3e249073.jar                                                                    |                                                                                     |                                      |
+		|     8 | CaffeineConfig                                    | caffeineconfig                                        | 1.1.0+1.17                  | quilted_fabric_loader  | <mods>\sodium-extra-0.4.18+mc1.19.4-build.100.jar                                                                     | /META-INF/jars/CaffeineConfig-1.1.0+1.17.jar                                        |                                      |
+		|    39 | Cloth Config v9                                   | cloth-config                                          | 10.0.95                     | quilted_fabric_loader  | <mods>\appleskin-fabric-mc1.19.4-2.4.3.jar                                                                            | /META-INF/jars/cloth-config-fabric-10.0.95.jar                                      |                                      |
+		|    33 | CrowdinTranslate                                  | crowdin-translate                                     | 1.4+1.19.3                  | quilted_fabric_loader  | <mods>\sodium-extra-0.4.18+mc1.19.4-build.100.jar                                                                     | /META-INF/jars/crowdin-translate-1.4+1.19.3.jar                                     |                                      |
+		|    29 | Dynamic FPS                                       | dynamicfps                                            | 2.2.0                       | quilted_fabric_loader  | <mods>\dynamic-fps-2.2.0.jar                                                                                          |                                                                                     |                                      |
+		|    26 | Enhanced Block Entities                           | enhancedblockentities                                 | 0.8+1.19.3                  | quilted_fabric_loader  | <mods>\enhancedblockentities-0.8+1.19.3.jar                                                                           |                                                                                     |                                      |
+		|    14 | EntityCulling-Fabric                              | entityculling                                         | 1.6.2-mc1.19.4              | quilted_fabric_loader  | <mods>\entityculling-fabric-1.6.2-mc1.19.4.jar                                                                        |                                                                                     |                                      |
+		|    81 | Fabric Language Kotlin                            | fabric-language-kotlin                                | 1.9.3+kotlin.1.8.20         | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 |                                                                                     |                                      |
+		|    28 | Farsight Mod                                      | farsight                                              | 1.19-3.4                    | quilted_fabric_loader  | <mods>\farsight-fabric-1.19-3.4.jar                                                                                   |                                                                                     |                                      |
+		|   105 | Inventory Profiles Next                           | inventoryprofilesnext                                 | 1.9.5                       | quilted_fabric_loader  | <mods>\InventoryProfilesNext-fabric-1.19.4-1.9.5.jar                                                                  |                                                                                     |                                      |
+		|    13 | Litematica                                        | litematica                                            | 0.14.2                      | quilted_fabric_loader  | <mods>\litematica-fabric-1.19.4-0.14.2.jar                                                                            |                                                                                     |                                      |
+		|   103 | Lithium                                           | lithium                                               | 0.11.1                      | quilted_fabric_loader  | <mods>\lithium-fabric-mc1.19.4-0.11.1.jar                                                                             |                                                                                     |                                      |
+		|     3 | MaLiLib                                           | malilib                                               | 0.15.3                      | quilted_fabric_loader  | <mods>\malilib-fabric-1.19.4-0.15.3.jar                                                                               |                                                                                     |                                      |
+		|   126 | Minecraft                                         | minecraft                                             | 1.19.4                      | quilt_loader           | <game>\.cache\quilt_loader\remappedJars\minecraft-1.19.4-0.19.0-beta.11\client-intermediary.jar                       |                                                                                     |                                      |
+		|    20 | MiniHUD                                           | minihud                                               | 0.26.2                      | quilted_fabric_loader  | <mods>\minihud-fabric-1.19.4-0.26.2.jar                                                                               |                                                                                     |                                      |
+		|    99 | MobHealthBar                                      | mobhealthbar                                          | 2.1.2                       | quilted_fabric_loader  | <mods>\mobhealthbar-fabric-1.19.3-2.1.2.jar                                                                           |                                                                                     |                                      |
+		|    65 | More Culling                                      | moreculling                                           | 1.19.4-0.17.0               | quilted_fabric_loader  | <mods>\moreculling-1.19.4-0.17.0.jar                                                                                  |                                                                                     |                                      |
+		|     5 | MoreChatHistory                                   | morechathistory                                       | 1.1.1                       | quilted_fabric_loader  | <mods>\morechathistory-1.19.1-1.1.1.jar                                                                               |                                                                                     |                                      |
+		|    62 | OpenJDK 64-Bit Server VM                          | java                                                  | 17                          | quilt_loader           | <user>\AppData\Roaming\.minecraft\cache\java\java-runtime-beta\windows-x64\java-runtime-beta                          |                                                                                     |                                      |
+		|   133 | Quilt Advancement API                             | quilt_advancement                                     | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/advancement-5.0.0-beta.2+1.19.4.jar                                  |                                      |
+		|    35 | Quilt Base API                                    | quilt_base                                            | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/qsl_base-5.0.0-beta.2+1.19.4.jar                                     |                                      |
+		|    92 | Quilt Biome API                                   | quilt_biome                                           | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/biome-5.0.0-beta.2+1.19.4.jar                                        |                                      |
+		|   102 | Quilt Block Content Registry API                  | quilt_block_content_registry                          | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/block_content_registry-5.0.0-beta.2+1.19.4.jar                       |                                      |
+		|    71 | Quilt Block Entity API                            | quilt_block_entity                                    | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/block_entity-5.0.0-beta.2+1.19.4.jar                                 |                                      |
+		|    75 | Quilt Block Extensions API                        | quilt_block_extensions                                | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/block_extensions-5.0.0-beta.2+1.19.4.jar                             |                                      |
+		|   119 | Quilt Chat API                                    | quilt_chat                                            | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/chat-5.0.0-beta.2+1.19.4.jar                                         |                                      |
+		|    84 | Quilt Client Command API                          | quilt_client_command                                  | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/client_command-5.0.0-beta.2+1.19.4.jar                               |                                      |
+		|   111 | Quilt Command API                                 | quilt_command                                         | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/command-5.0.0-beta.2+1.19.4.jar                                      |                                      |
+		|    76 | Quilt Crash Info                                  | quilt_crash_info                                      | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/crash_info-5.0.0-beta.2+1.19.4.jar                                   |                                      |
+		|    86 | Quilt Dimension API                               | quilt_dimension                                       | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/dimension-5.0.0-beta.2+1.19.4.jar                                    |                                      |
+		|    68 | Quilt Entity API                                  | quilt_entity                                          | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/entity-5.0.0-beta.2+1.19.4.jar                                       |                                      |
+		|    46 | Quilt Entity Events                               | quilt_entity_events                                   | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/entity_events-5.0.0-beta.2+1.19.4.jar                                |                                      |
+		|    52 | Quilt Entity Networking API                       | quilt_entity_networking                               | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/entity_networking-5.0.0-beta.2+1.19.4.jar                            |                                      |
+		|   117 | Quilt Entity Rendering API                        | quilt_entity_rendering                                | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/entity_rendering-5.0.0-beta.2+1.19.4.jar                             |                                      |
+		|    63 | Quilt Item Content Registry API                   | quilt_item_content_registry                           | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/item_content_registry-5.0.0-beta.2+1.19.4.jar                        |                                      |
+		|    88 | Quilt Item Extensions API                         | quilt_item_extensions                                 | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/item_extensions-5.0.0-beta.2+1.19.4.jar                              |                                      |
+		|   122 | Quilt Item Setting API                            | quilt_item_setting                                    | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/item_setting-5.0.0-beta.2+1.19.4.jar                                 |                                      |
+		|    51 | Quilt Lifecycle Events                            | quilt_lifecycle_events                                | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/lifecycle_events-5.0.0-beta.2+1.19.4.jar                             |                                      |
+		|   125 | Quilt Loader                                      | quilt_loader                                          | 0.19.0-beta.11              | quilt_loader           | <user>\OneDrive\Desktop\.minecraft\libraries\org\quiltmc\quilt-loader\0.19.0-beta.11\quilt-loader-0.19.0-beta.11.jar  |                                                                                     |                                      |
+		|    97 | Quilt Multipart Entity API                        | quilt_entity_multipart                                | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/multipart-5.0.0-beta.2+1.19.4.jar                                    |                                      |
+		|    50 | Quilt Networking                                  | quilt_networking                                      | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/networking-5.0.0-beta.2+1.19.4.jar                                   |                                      |
+		|    40 | Quilt Point of Interest API                       | quilt_point_of_interest                               | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/point_of_interest-5.0.0-beta.2+1.19.4.jar                            |                                      |
+		|    94 | Quilt Recipe API                                  | quilt_recipe                                          | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/recipe-5.0.0-beta.2+1.19.4.jar                                       |                                      |
+		|    89 | Quilt Registry API                                | quilt_registry                                        | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/registry-5.0.0-beta.2+1.19.4.jar                                     |                                      |
+		|    60 | Quilt Registry Entry Attachment                   | quilt_registry_entry_attachment                       | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/registry_entry_attachment-5.0.0-beta.2+1.19.4.jar                    |                                      |
+		|    48 | Quilt Resource Loader                             | quilt_resource_loader                                 | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/resource_loader-5.0.0-beta.2+1.19.4.jar                              |                                      |
+		|    90 | Quilt Screen API                                  | quilt_screen                                          | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/screen-5.0.0-beta.2+1.19.4.jar                                       |                                      |
+		|    82 | Quilt Status Effect API                           | quilt_status_effect                                   | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/status_effect-5.0.0-beta.2+1.19.4.jar                                |                                      |
+		|    96 | Quilt Surface Rule API                            | quilt_surface_rule                                    | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/surface_rule-5.0.0-beta.2+1.19.4.jar                                 |                                      |
+		|   136 | Quilt Tags API                                    | quilt_tags                                            | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/tags-5.0.0-beta.2+1.19.4.jar                                         |                                      |
+		|    54 | Quilt Testing API                                 | quilt_testing                                         | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/testing-5.0.0-beta.2+1.19.4.jar                                      |                                      |
+		|   124 | Quilt Tooltip API                                 | quilt_tooltip                                         | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/tooltip-5.0.0-beta.2+1.19.4.jar                                      |                                      |
+		|   131 | Quilt Vehicle API                                 | quilt_vehicle                                         | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/vehicle-5.0.0-beta.2+1.19.4.jar                                      |                                      |
+		|   104 | Quilt Villager API                                | quilt_villager                                        | 5.0.0-beta.2+1.19.4         | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/villager-5.0.0-beta.2+1.19.4.jar                                     |                                      |
+		|   138 | Quilted Fabric API                                | quilted_fabric_api                                    | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  |                                                                                     |                                      |
+		|    42 | Quilted Fabric API Base                           | quilted_fabric_api_base                               | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-api-base-6.0.0-beta.3+0.76.0-1.19.4.jar                       |                                      |
+		|   130 | Quilted Fabric API Lookup API (v1)                | quilted_fabric_api_lookup_api_v1                      | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-api-lookup-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar              |                                      |
+		|   100 | Quilted Fabric Biome API (v1)                     | quilted_fabric_biome_api_v1                           | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-biome-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                   |                                      |
+		|    77 | Quilted Fabric Block API (v1)                     | quilted_fabric_block_api_v1                           | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-block-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                   |                                      |
+		|   101 | Quilted Fabric BlockRenderLayer Registration (v1) | quilted_fabric_blockrenderlayer_v1                    | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-blockrenderlayer-v1-6.0.0-beta.3+0.76.0-1.19.4.jar            |                                      |
+		|    55 | Quilted Fabric Client Tags                        | quilted_fabric_client_tags_api_v1                     | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-client-tags-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar             |                                      |
+		|   129 | Quilted Fabric Command API (v1)                   | quilted_fabric_command_api_v1                         | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-command-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                 |                                      |
+		|   121 | Quilted Fabric Command API (v2)                   | quilted_fabric_command_api_v2                         | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-command-api-v2-6.0.0-beta.3+0.76.0-1.19.4.jar                 |                                      |
+		|    67 | Quilted Fabric Commands (v0)                      | quilted_fabric_commands_v0                            | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-commands-v0-6.0.0-beta.3+0.76.0-1.19.4.jar                    |                                      |
+		|   112 | Quilted Fabric Containers (v0)                    | quilted_fabric_containers_v0                          | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-containers-v0-6.0.0-beta.3+0.76.0-1.19.4.jar                  |                                      |
+		|    91 | Quilted Fabric Content Registries (v0)            | quilted_fabric_content_registries_v0                  | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-content-registries-v0-6.0.0-beta.3+0.76.0-1.19.4.jar          |                                      |
+		|    47 | Quilted Fabric Convention Tags API (v1)           | quilted_fabric_convention_tags_api_v1                 | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-convention-tags-v1-6.0.0-beta.3+0.76.0-1.19.4.jar             |                                      |
+		|   135 | Quilted Fabric Crash Report Info (v1)             | quilted_fabric_crash_report_info_v1                   | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-crash-report-info-v1-6.0.0-beta.3+0.76.0-1.19.4.jar           |                                      |
+		|    37 | Quilted Fabric Data Generation API (v1)           | quilted_fabric_data_generation_api_v1                 | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-data-generation-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar         |                                      |
+		|    74 | Quilted Fabric Dimensions API (v1)                | quilted_fabric_dimensions_v1                          | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-dimensions-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                  |                                      |
+		|    79 | Quilted Fabric Entity Events (v1)                 | quilted_fabric_entity_events_v1                       | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-entity-events-v1-6.0.0-beta.3+0.76.0-1.19.4.jar               |                                      |
+		|    43 | Quilted Fabric Events Interaction (v0)            | quilted_fabric_events_interaction_v0                  | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-events-interaction-v0-6.0.0-beta.3+0.76.0-1.19.4.jar          |                                      |
+		|   108 | Quilted Fabric Events Lifecycle (v0)              | quilted_fabric_events_lifecycle_v0                    | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-events-lifecycle-v0-6.0.0-beta.3+0.76.0-1.19.4.jar            |                                      |
+		|   109 | Quilted Fabric Game Rule API (v1)                 | quilted_fabric_game_rule_api_v1                       | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-game-rule-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar               |                                      |
+		|    44 | Quilted Fabric Item API (v1)                      | quilted_fabric_item_api_v1                            | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-item-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                    |                                      |
+		|   127 | Quilted Fabric Item Group API (v1)                | quilted_fabric_item_group_api_v1                      | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-item-group-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar              |                                      |
+		|    80 | Quilted Fabric Key Binding API (v1)               | quilted_fabric_key_binding_api_v1                     | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-key-binding-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar             |                                      |
+		|   132 | Quilted Fabric Key Bindings (v0)                  | quilted_fabric_keybindings_v0                         | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-keybindings-v0-6.0.0-beta.3+0.76.0-1.19.4.jar                 |                                      |
+		|   110 | Quilted Fabric Lifecycle Events (v1)              | quilted_fabric_lifecycle_events_v1                    | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-lifecycle-events-v1-6.0.0-beta.3+0.76.0-1.19.4.jar            |                                      |
+		|    49 | Quilted Fabric Loot API (v2)                      | quilted_fabric_loot_api_v2                            | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-loot-api-v2-6.0.0-beta.3+0.76.0-1.19.4.jar                    |                                      |
+		|    78 | Quilted Fabric Loot Tables (v1)                   | quilted_fabric_loot_tables_v1                         | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-loot-tables-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                 |                                      |
+		|    61 | Quilted Fabric Message API (v1)                   | quilted_fabric_message_api_v1                         | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-message-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                 |                                      |
+		|    64 | Quilted Fabric Mining Level API (v1)              | quilted_fabric_mining_level_api_v1                    | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-mining-level-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar            |                                      |
+		|    36 | Quilted Fabric Models (v0)                        | quilted_fabric_models_v0                              | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-models-v0-6.0.0-beta.3+0.76.0-1.19.4.jar                      |                                      |
+		|   134 | Quilted Fabric Networking (v0)                    | quilted_fabric_networking_v0                          | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-networking-v0-6.0.0-beta.3+0.76.0-1.19.4.jar                  |                                      |
+		|    38 | Quilted Fabric Networking API (v1)                | quilted_fabric_networking_api_v1                      | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-networking-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar              |                                      |
+		|    87 | Quilted Fabric Object Builder API (v1)            | quilted_fabric_object_builder_api_v1                  | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-object-builder-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar          |                                      |
+		|    59 | Quilted Fabric Particles (v1)                     | quilted_fabric_particles_v1                           | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-particles-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                   |                                      |
+		|    69 | Quilted Fabric Recipe API (v1)                    | quilted_fabric_recipe_api_v1                          | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-recipe-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                  |                                      |
+		|   115 | Quilted Fabric Registry Sync (v0)                 | quilted_fabric_registry_sync_v0                       | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-registry-sync-v0-6.0.0-beta.3+0.76.0-1.19.4.jar               |                                      |
+		|    58 | Quilted Fabric Renderer - Indigo                  | quilted_fabric_renderer_indigo                        | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-renderer-indigo-6.0.0-beta.3+0.76.0-1.19.4.jar                |                                      |
+		|    70 | Quilted Fabric Renderer API (v1)                  | quilted_fabric_renderer_api_v1                        | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-renderer-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                |                                      |
+		|    85 | Quilted Fabric Renderer Registries (v1)           | quilted_fabric_renderer_registries_v1                 | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-renderer-registries-v1-6.0.0-beta.3+0.76.0-1.19.4.jar         |                                      |
+		|   118 | Quilted Fabric Rendering (v0)                     | quilted_fabric_rendering_v0                           | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-rendering-v0-6.0.0-beta.3+0.76.0-1.19.4.jar                   |                                      |
+		|    57 | Quilted Fabric Rendering (v1)                     | quilted_fabric_rendering_v1                           | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-rendering-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                   |                                      |
+		|   116 | Quilted Fabric Rendering Data Attachment (v1)     | quilted_fabric_rendering_data_attachment_v1           | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-rendering-data-attachment-v1-6.0.0-beta.3+0.76.0-1.19.4.jar   |                                      |
+		|   114 | Quilted Fabric Rendering Fluids (v1)              | quilted_fabric_rendering_fluids_v1                    | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-rendering-fluids-v1-6.0.0-beta.3+0.76.0-1.19.4.jar            |                                      |
+		|    56 | Quilted Fabric Resource Conditions API (v1)       | quilted_fabric_resource_conditions_api_v1             | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-resource-conditions-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar     |                                      |
+		|    95 | Quilted Fabric Resource Loader (v0)               | quilted_fabric_resource_loader_v0                     | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-resource-loader-v0-6.0.0-beta.3+0.76.0-1.19.4.jar             |                                      |
+		|    66 | Quilted Fabric Screen API (v1)                    | quilted_fabric_screen_api_v1                          | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-screen-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                  |                                      |
+		|   113 | Quilted Fabric Screen Handler API (v1)            | quilted_fabric_screen_handler_api_v1                  | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-screen-handler-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar          |                                      |
+		|    53 | Quilted Fabric Sound API (v1)                     | quilted_fabric_sound_api_v1                           | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-sound-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                   |                                      |
+		|   107 | Quilted Fabric Transfer API (v1)                  | quilted_fabric_transfer_api_v1                        | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-transfer-api-v1-6.0.0-beta.3+0.76.0-1.19.4.jar                |                                      |
+		|    83 | Quilted Fabric Transitive Access Wideners (v1)    | quilted_fabric_transitive_access_wideners_v1          | 6.0.0-beta.3+0.76.0-1.19.4  | quilt_loader           | <mods>\qfapi-6.0.0-beta.3_qsl-5.0.0-beta.2_fapi-0.76.0_mc-1.19.4.jar                                                  | /META-INF/jars/fabric-transitive-access-wideners-v1-6.0.0-beta.3+0.76.0-1.19.4.jar  |                                      |
+		|    25 | Reese's Sodium Options                            | reeses-sodium-options                                 | 1.5.0+mc1.19.4-build.72     | quilted_fabric_loader  | <mods>\reeses_sodium_options-1.5.0+mc1.19.4-build.72.jar                                                              |                                                                                     |                                      |
+		|    22 | Runtime Resource Pack                             | advanced_runtime_resource_pack                        | 0.6.7                       | quilted_fabric_loader  | <mods>\enhancedblockentities-0.8+1.19.3.jar                                                                           | /META-INF/jars/arrp-0.6.7.jar                                                       |                                      |
+		|    73 | Settxi Gui (YetAnotherConfigLib)                  | settxi-gui-yacl                                       | 2.10.6                      | quilted_fabric_loader  | <mods>\Zoomify-2.9.2.jar                                                                                              | /META-INF/jars/settxi-gui-yacl-2.10.6-fabric-1.19.3.jar                             |                                      |
+		|    93 | Sodium                                            | sodium                                                | 0.4.10+build.24             | quilted_fabric_loader  | <mods>\sodium-fabric-mc1.19.4-0.4.10+build.24.jar                                                                     |                                                                                     |                                      |
+		|   128 | Sodium Extra                                      | sodium-extra                                          | 0.4.18+mc1.19.4-build.100   | quilted_fabric_loader  | <mods>\sodium-extra-0.4.18+mc1.19.4-build.100.jar                                                                     |                                                                                     |                                      |
+		|   137 | SpruceUI                                          | spruceui                                              | 4.1.0+1.19.3                | quilted_fabric_loader  | <mods>\enhancedblockentities-0.8+1.19.3.jar                                                                           | /META-INF/jars/spruceui-4.1.0+1.19.3.jar                                            |                                      |
+		|    30 | Tweakeroo                                         | tweakeroo                                             | 0.16.0                      | quilted_fabric_loader  | <mods>\tweakeroo-fabric-1.19.4-0.16.0.jar                                                                             |                                                                                     |                                      |
+		|   106 | Xaero's Minimap                                   | xaerominimap                                          | 23.3.3                      | quilted_fabric_loader  | <mods>\Xaeros_Minimap_23.3.3_Fabric_1.19.4.jar                                                                        |                                                                                     |                                      |
+		|    98 | Xaero's World Map                                 | xaeroworldmap                                         | 1.29.5                      | quilted_fabric_loader  | <mods>\XaerosWorldMap_1.29.5_Fabric_1.19.4.jar                                                                        |                                                                                     |                                      |
+		|   120 | YetAnotherConfigLib                               | yet-another-config-lib                                | 2.4.1                       | quilted_fabric_loader  | <mods>\YetAnotherConfigLib-2.4.1.jar                                                                                  |                                                                                     |                                      |
+		|    72 | Zoomify                                           | zoomify                                               | 2.9.2                       | quilted_fabric_loader  | <mods>\Zoomify-2.9.2.jar                                                                                              |                                                                                     |                                      |
+		|    18 | atomicfu-jvm                                      | org_jetbrains_kotlinx_atomicfu-jvm                    | 0.20.1                      | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/atomicfu-jvm-0.20.1.jar                                              |                                      |
+		|    15 | cloth-basic-math                                  | cloth-basic-math                                      | 0.6.1                       | quilted_fabric_loader  | <mods>\moreculling-1.19.4-0.17.0.jar                                                                                  | /META-INF/jars/cloth-config-fabric-9.0.94.jar                                       | /META-INF/jars/basic-math-0.6.1.jar  |
+		|    34 | conditional mixin                                 | conditional-mixin                                     | 0.3.2                       | quilted_fabric_loader  | <mods>\moreculling-1.19.4-0.17.0.jar                                                                                  | /META-INF/jars/conditional-mixin-v0.3.2.jar                                         |                                      |
+		|    27 | jctools-core                                      | com_github_jctools_jctools_jctools-core               | v4.0.1                      | quilted_fabric_loader  | <mods>\farsight-fabric-1.19-3.4.jar                                                                                   | /META-INF/jars/jctools-core-v4.0.1.jar                                              |                                      |
+		|    24 | kotlin-reflect                                    | org_jetbrains_kotlin_kotlin-reflect                   | 1.8.20                      | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlin-reflect-1.8.20.jar                                            |                                      |
+		|     6 | kotlin-stdlib                                     | org_jetbrains_kotlin_kotlin-stdlib                    | 1.8.20                      | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlin-stdlib-1.8.20.jar                                             |                                      |
+		|     0 | kotlin-stdlib-jdk7                                | org_jetbrains_kotlin_kotlin-stdlib-jdk7               | 1.8.20                      | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlin-stdlib-jdk7-1.8.20.jar                                        |                                      |
+		|     4 | kotlin-stdlib-jdk8                                | org_jetbrains_kotlin_kotlin-stdlib-jdk8               | 1.8.20                      | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlin-stdlib-jdk8-1.8.20.jar                                        |                                      |
+		|    11 | kotlinx-coroutines-core-jvm                       | org_jetbrains_kotlinx_kotlinx-coroutines-core-jvm     | 1.6.4                       | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlinx-coroutines-core-jvm-1.6.4.jar                                |                                      |
+		|    16 | kotlinx-coroutines-jdk8                           | org_jetbrains_kotlinx_kotlinx-coroutines-jdk8         | 1.6.4                       | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlinx-coroutines-jdk8-1.6.4.jar                                    |                                      |
+		|     7 | kotlinx-datetime-jvm                              | org_jetbrains_kotlinx_kotlinx-datetime-jvm            | 0.4.0                       | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlinx-datetime-jvm-0.4.0.jar                                       |                                      |
+		|    31 | kotlinx-serialization-cbor-jvm                    | org_jetbrains_kotlinx_kotlinx-serialization-cbor-jvm  | 1.5.0                       | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlinx-serialization-cbor-jvm-1.5.0.jar                             |                                      |
+		|     1 | kotlinx-serialization-core-jvm                    | org_jetbrains_kotlinx_kotlinx-serialization-core-jvm  | 1.5.0                       | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlinx-serialization-core-jvm-1.5.0.jar                             |                                      |
+		|    21 | kotlinx-serialization-json-jvm                    | org_jetbrains_kotlinx_kotlinx-serialization-json-jvm  | 1.5.0                       | quilted_fabric_loader  | <mods>\fabric-language-kotlin-1.9.3+kotlin.1.8.20.jar                                                                 | /META-INF/jars/kotlinx-serialization-json-jvm-1.5.0.jar                             |                                      |
+		|    17 | ktoml-core-jvm                                    | com_akuleshov7_ktoml-core-jvm                         | 0.3.0                       | quilted_fabric_loader  | <mods>\Zoomify-2.9.2.jar                                                                                              | /META-INF/jars/ktoml-core-jvm-0.3.0.jar                                             |                                      |
+		|    41 | libIPN                                            | libipn                                                | 2.0.4                       | quilted_fabric_loader  | <mods>\libIPN-fabric-1.19.4-2.0.4.jar                                                                                 |                                                                                     |                                      |
+		|     9 | mixinextras                                       | com_github_llamalad7_mixinextras                      | 0.1.1                       | quilted_fabric_loader  | <mods>\Zoomify-2.9.2.jar                                                                                              | /META-INF/jars/mixinextras-0.1.1.jar                                                |                                      |
+		|    23 | settxi-core                                       | dev_isxander_settxi_settxi-core                       | 2.10.6                      | quilted_fabric_loader  | <mods>\Zoomify-2.9.2.jar                                                                                              | /META-INF/jars/settxi-core-2.10.6.jar                                               |                                      |
+		|    10 | settxi-gui                                        | dev_isxander_settxi_settxi-gui                        | 2.10.6                      | quilted_fabric_loader  | <mods>\Zoomify-2.9.2.jar                                                                                              | /META-INF/jars/settxi-gui-2.10.6.jar                                                |                                      |
+		|    12 | settxi-kotlinx-serialization                      | dev_isxander_settxi_settxi-kotlinx-serialization      | 2.10.6                      | quilted_fabric_loader  | <mods>\Zoomify-2.9.2.jar                                                                                              | /META-INF/jars/settxi-kotlinx-serialization-2.10.6.jar                              |                                      |
+		|     2 | toml4j                                            | com_moandjiezana_toml_toml4j                          | 0.7.2                       | quilted_fabric_loader  | <mods>\dynamic-fps-2.2.0.jar                                                                                          | /META-INF/jars/toml4j-0.7.2.jar                                                     |                                      |
+		|------:|---------------------------------------------------|-------------------------------------------------------|-----------------------------|------------------------|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|--------------------------------------|
+		
+	Quilted Fabric API: !! WARNING !! This instance is using Fabric API modules re-implemented by QSL. If the issue comes from Quilted Fabric API, DO NOT report to Fabric; report them to Quilt instead!
+	Launched Version: 1.19
+	Backend library: LWJGL version 3.3.1 build 7
+	Backend API: NVIDIA GeForce RTX 2060/PCIe/SSE2 GL version 3.2.0 NVIDIA 528.02, NVIDIA Corporation
+	Window size: <not initialized>
+	GL Caps: Using framebuffer using OpenGL 3.2
+	GL debug messages: 
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'quilt'
+	Type: Client (map_client.txt)
+	CPU: 12x AMD Ryzen 5 3600 6-Core Processor 
+#@!@# Game crashed! Crash report saved to: #@!@# C:\Users\arthu\OneDrive\Desktop\.minecraft\versions\1.19\crash-reports\crash-2023-04-16_12.16.24-client.txt
