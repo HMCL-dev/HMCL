@@ -42,7 +42,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 /**
  * @author huangyuhui
  */
-public final class GameVersion {
+final class GameVersion {
     private GameVersion() {
     }
 

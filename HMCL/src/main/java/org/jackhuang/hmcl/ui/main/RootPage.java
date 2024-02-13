@@ -120,7 +120,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         .sorted(Comparator
                                 .comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L)
                                         : version.getReleaseTime())
-                                .thenComparing(a -> VersionNumber.asVersion(a.getId())))
+                                .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (profile == Profiles.getSelectedProfile())
