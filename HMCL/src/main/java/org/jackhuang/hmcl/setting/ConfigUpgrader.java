@@ -37,7 +37,7 @@ final class ConfigUpgrader {
     private ConfigUpgrader() {
     }
 
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 1;
 
     /**
      * This method is for the compatibility with old HMCL versions.
@@ -53,6 +53,7 @@ final class ConfigUpgrader {
         int configVersion = deserialized.getConfigVersion();
         if (configVersion > CURRENT_VERSION) {
             LOG.log(Level.WARNING, String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", CURRENT_VERSION, configVersion));
+            deserialized.setConfigVersion(CURRENT_VERSION);
             return;
         }
 
@@ -123,15 +124,11 @@ final class ConfigUpgrader {
                                     }
                                 });
                     }
-                }),
-                Pair.pair(2, (deserialized, rawJson) -> {
-                    deserialized.setX(0.5D - deserialized.getWidth() / Controllers.SCREEN.getBounds().getWidth() / 2);
-                    deserialized.setY(0.5D - deserialized.getHeight() / Controllers.SCREEN.getBounds().getHeight() / 2);
                 })
         );
 
         if (dfu.get(dfu.size() - 1).getKey() != CURRENT_VERSION) {
-            throw new IllegalStateException("The last dfu must adapt all the config version below CURRENT_VERSION");
+            throw new AssertionError("The last dfu must adapt all the config version below CURRENT_VERSION");
         }
 
         return dfu;

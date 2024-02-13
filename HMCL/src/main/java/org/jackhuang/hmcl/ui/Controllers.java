@@ -207,7 +207,7 @@ public final class Controllers {
         double initWidth = Math.max(MIN_WIDTH, config().getWidth());
         double initHeight = Math.max(MIN_HEIGHT, config().getHeight());
 
-        if (!ConfigHolder.isNewlyCreated()) {
+        {
             double initX = config().getX() * SCREEN.getBounds().getWidth();
             double initY = config().getY() * SCREEN.getBounds().getHeight();
 
@@ -216,7 +216,7 @@ public final class Controllers {
             for (Screen screen : Screen.getScreens()) {
                 Rectangle2D bound = screen.getBounds();
 
-                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY + initHeight && initY <= bound.getMaxY() - border) {
+                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY && initY <= bound.getMaxY() - border) {
                     invalid = false;
                     break;
                 }
