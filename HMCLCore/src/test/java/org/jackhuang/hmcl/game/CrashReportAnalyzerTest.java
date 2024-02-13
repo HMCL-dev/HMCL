@@ -266,6 +266,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void macosFailedToFindServicePortForDisplay() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/macos_failed_to_find_service_port_for_display.txt")),
+                CrashReportAnalyzer.Rule.MACOS_FAILED_TO_FIND_SERVICE_PORT_FOR_DISPLAY);
+    }
+
+    @Test
     public void modName() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_name.txt")),
