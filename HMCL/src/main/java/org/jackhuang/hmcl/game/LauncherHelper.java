@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
@@ -332,7 +333,7 @@ public final class LauncherHelper {
     }
 
     private static Task<JavaVersion> checkGameState(Profile profile, VersionSetting setting, Version version) {
-        VersionNumber gameVersion = VersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(version));
 
         if (setting.isNotCheckJVM()) {
             return Task.composeAsync(() -> setting.getJavaVersion(gameVersion, version))
@@ -549,14 +550,14 @@ public final class LauncherHelper {
             // Forge 2760~2773 will crash game with LiteLoader.
             boolean hasForge2760 = forgeVersion != null && (forgeVersion.compareTo("1.12.2-14.23.5.2760") >= 0) && (forgeVersion.compareTo("1.12.2-14.23.5.2773") < 0);
             boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
-            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
+            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo("1.12.2") == 0) {
                 suggestions.add(i18n("launch.advice.forge2760_liteloader"));
             }
 
             // OptiFine 1.14.4 is not compatible with Forge 28.2.2 and later versions.
             boolean hasForge28_2_2 = forgeVersion != null && (forgeVersion.compareTo("1.14.4-28.2.2") >= 0);
             boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
-            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(VersionNumber.asVersion("1.14.4")) == 0) {
+            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo("1.14.4") == 0) {
                 suggestions.add(i18n("launch.advice.forge28_2_2_optifine"));
             }
 

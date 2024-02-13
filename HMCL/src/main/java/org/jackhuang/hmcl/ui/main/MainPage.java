@@ -30,7 +30,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -54,15 +53,12 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.upgrade.hmcl.RemoteVersion;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -96,18 +92,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleNode.setPadding(new Insets(0, 0, 0, 2));
         titleNode.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView titleIcon = new ImageView();
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9) {
-            // JavaFX 8 has some problems with @2x images
-            // Force load the original icon
-            try (InputStream is = MainPage.class.getResourceAsStream("/assets/img/icon.png")) {
-                titleIcon.setImage(new Image(is, 20, 20, false, false));
-            } catch (IOException ignored) {
-            }
-        } else {
-            titleIcon.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png", 20, 20, false, false));
-        }
-
+        ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
         Label titleLabel = new Label(Metadata.FULL_TITLE);
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleNode.getChildren().setAll(titleIcon, titleLabel);

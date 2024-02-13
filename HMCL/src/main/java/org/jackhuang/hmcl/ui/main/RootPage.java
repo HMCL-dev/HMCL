@@ -43,7 +43,7 @@ import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTHelper;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -120,7 +120,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
                                 .comparing((Version version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
-                                .thenComparing(a -> VersionNumber.asVersion(a.getId())))
+                                .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (profile == Profiles.getSelectedProfile())

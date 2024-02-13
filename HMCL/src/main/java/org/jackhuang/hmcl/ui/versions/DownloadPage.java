@@ -51,7 +51,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -309,7 +309,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     for (String gameVersion : control.versions.keys().stream()
-                            .sorted(Collections.reverseOrder(VersionNumber::compare))
+                            .sorted(Collections.reverseOrder(GameVersionNumber::compare))
                             .collect(Collectors.toList())) {
                         ComponentList sublist = new ComponentList(() ->
                                 control.versions.get(gameVersion).stream()
