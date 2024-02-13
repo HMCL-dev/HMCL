@@ -38,7 +38,7 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
 
     @Override
     public JsonElement serialize(Instant t, Type type, JsonSerializationContext jsc) {
-        return new JsonPrimitive(serializeToString(t));
+        return new JsonPrimitive(serializeToString(t, ZoneId.systemDefault()));
     }
 
     @Override
@@ -83,7 +83,7 @@ public final class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDe
         }
     }
 
-    public static String serializeToString(Instant instant) {
-        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()).truncatedTo(ChronoUnit.SECONDS));
+    public static String serializeToString(Instant instant, ZoneId zone) {
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.ofInstant(instant, zone).truncatedTo(ChronoUnit.SECONDS));
     }
 }
