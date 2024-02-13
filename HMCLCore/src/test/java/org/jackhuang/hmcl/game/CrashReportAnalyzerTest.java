@@ -167,6 +167,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void javaVersionIsTooHigh() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/java_version_is_too_high.txt")),
+                CrashReportAnalyzer.Rule.JAVA_VERSION_IS_TOO_HIGH);
+    }
+
+    @Test
     public void securityException() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/security.txt")),
