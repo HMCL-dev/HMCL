@@ -87,11 +87,13 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
     @Override
     protected String getLocalizedCategory(String category) {
-        if ("mods.modrinth".equals(downloadSource.get())) {
-            return i18n("modrinth.category." + category);
-        } else {
-            return i18n("curse.category." + category);
+        if (category.isEmpty()) {
+            return "";
         }
+
+        String key = ("mods.modrinth".equals(downloadSource.get()) ? "modrinth" : "curse") + ".category." + category;
+        String r = i18n(key);
+        return r.equals(key) ? Character.toUpperCase(category.charAt(0)) + category.substring(1) : r;
     }
 
     @Override
