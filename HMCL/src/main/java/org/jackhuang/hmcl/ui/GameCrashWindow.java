@@ -289,6 +289,9 @@ public class GameCrashWindow extends Stage {
                     alert.showAndWait();
                 }, Schedulers.javafx())
                 .exceptionally(e -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.failed", e));
+                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
+                    alert.showAndWait();
                     LOG.log(Level.WARNING, "Failed to export game crash info", e);
                     return null;
                 });
