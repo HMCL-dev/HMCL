@@ -172,12 +172,15 @@ public class GameCrashWindow extends Stage {
 
                 List<Node> segments = new ArrayList<>();
 
+                segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
+
                 boolean hasMultipleRules = results.keySet().stream().distinct().count() > 1;
                 if (hasMultipleRules) {
-                    segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
                     segments.add(new Text("\n"));
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
                     LOG.log(Level.INFO, "Multiple reasons detected");
+                } else {
+                    segments.add(new Text("\n\n"));
                 }
 
                 for (CrashReportAnalyzer.Result result : results.values()) {
@@ -211,14 +214,7 @@ public class GameCrashWindow extends Stage {
                                             .toArray()), Controllers::onHyperlinkAction));
                             break;
                     }
-                    segments.add(new Text("\n"));
-                    if (hasMultipleRules) {
-                        segments.add(new Text("\n"));
-                    } else {
-                        segments.add(new Text("\n"));
-                        segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-                        segments.add(new Text("\n"));
-                    }
+                    segments.add(new Text("\n\n"));
                     LOG.log(Level.INFO, "Crash cause: " + result.getRule());
                 }
                 if (results.isEmpty()) {
