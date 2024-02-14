@@ -266,6 +266,10 @@ public class GameCrashWindow extends Stage {
         LogWindow logWindow = new LogWindow(managedProcess);
 
         logWindow.logLine(Logging.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO);
+        logWindow.logLine(Logging.filterForbiddenToken("Physical Memory Size: " + GameCrashWindow.this.total_memory), Log4jLevel.INFO);
+        logWindow.logLine(Logging.filterForbiddenToken("Memory: " + GameCrashWindow.this.memory), Log4jLevel.INFO);
+        logWindow.logLine(Logging.filterForbiddenToken("Operating System: " + GameCrashWindow.this.os), Log4jLevel.INFO);
+        logWindow.logLine(Logging.filterForbiddenToken("Architecture: " + GameCrashWindow.this.arch), Log4jLevel.INFO);
         if (managedProcess.getClasspath() != null)
             logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
         for (Map.Entry<String, Log4jLevel> entry : logs)
