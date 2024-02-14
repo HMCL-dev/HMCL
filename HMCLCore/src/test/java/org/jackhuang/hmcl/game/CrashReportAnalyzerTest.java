@@ -167,6 +167,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void javaVersionIsTooHigh() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/java_version_is_too_high.txt")),
+                CrashReportAnalyzer.Rule.JAVA_VERSION_IS_TOO_HIGH);
+    }
+
+    @Test
     public void securityException() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/security.txt")),
@@ -321,6 +328,13 @@ public class CrashReportAnalyzerTest {
     public void outOfMemoryJVM() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/out_of_memory.txt")),
+                CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
+    }
+
+    @Test
+    public void outOfMemoryJVM1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/out_of_memory2.txt")),
                 CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
     }
 

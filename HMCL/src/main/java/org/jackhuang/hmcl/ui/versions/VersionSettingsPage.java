@@ -46,7 +46,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -611,10 +611,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         Task.composeAsync(Schedulers.javafx(), () -> {
             if (versionId == null) {
-                return versionSetting.getJavaVersion(VersionNumber.asVersion("Unknown"), null);
+                return versionSetting.getJavaVersion(GameVersionNumber.unknown(), null);
             } else {
                 return versionSetting.getJavaVersion(
-                        VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(versionId)).orElse("Unknown")),
+                        GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId)),
                         profile.getRepository().getVersion(versionId));
             }
         }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
