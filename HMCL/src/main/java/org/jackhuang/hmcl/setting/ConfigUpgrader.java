@@ -41,11 +41,12 @@ final class ConfigUpgrader {
      * @param rawContent   raw json content of the config settings without modification
      */
     static void upgradeConfig(Config deserialized, String rawContent) {
-        if (deserialized.getConfigVersion() == CURRENT_VERSION) {
+        int configVersion = deserialized.getConfigVersion();
+
+        if (configVersion == CURRENT_VERSION) {
             return;
         }
 
-        int configVersion = deserialized.getConfigVersion();
         if (configVersion > CURRENT_VERSION) {
             LOG.log(Level.WARNING, String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", CURRENT_VERSION, configVersion));
             deserialized.setConfigVersion(CURRENT_VERSION);
