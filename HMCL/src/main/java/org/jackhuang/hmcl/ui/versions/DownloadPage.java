@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,11 +173,11 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.failed.set(failed);
     }
 
-    public void download(RemoteMod.Version file) {
+    public void download(RemoteMod.Version file, boolean shouldProvideRenameUI) {
         if (this.callback == null) {
             saveAs(file);
         } else {
-            this.callback.download(version.getProfile(), version.getVersion(), file);
+            this.callback.download(version.getProfile(), version.getVersion(), file, shouldProvideRenameUI);
         }
     }
 
@@ -377,7 +378,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 {
                     StackPane graphicPane = new StackPane();
-                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
 
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
@@ -386,11 +386,16 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
+                            content.getTags().add(i18n("version.game.snapshot"));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            break;
                         case Beta:
                             content.getTags().add(i18n("version.game.snapshot"));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                         case Release:
                             content.getTags().add(i18n("version.game.release"));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                     }
 
@@ -453,21 +458,31 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(i18n("download"));
-            downloadButton.getStyleClass().add("dialog-accept");
-            downloadButton.setOnAction(e -> {
-                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+            boolean isModPack = selfPage.page.repository.getType() == RemoteModRepository.Type.MODPACK;
+            if (OperatingSystem.isNameValid(version.getFile().getFilename())) {
+                JFXButton downloadButton = new JFXButton(i18n("button.install"));
+                downloadButton.getStyleClass().add("dialog-accept");
+                downloadButton.setOnAction(e -> {
+                    if (isModPack) {
+                        fireEvent(new DialogCloseEvent());
+                    }
+                    selfPage.download(version, false);
+                });
+                getActions().add(downloadButton);
+            }
+
+            JFXButton renameAndInstallButton = new JFXButton(i18n("button.rename_and_install"));
+            renameAndInstallButton.getStyleClass().add("dialog-accept");
+            renameAndInstallButton.setOnAction(e -> {
+                if (isModPack) {
                     fireEvent(new DialogCloseEvent());
                 }
-                selfPage.download(version);
+                selfPage.download(version, true);
             });
 
             JFXButton saveAsButton = new JFXButton(i18n("button.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
             saveAsButton.setOnAction(e -> {
-                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
-                    fireEvent(new DialogCloseEvent());
-                }
                 selfPage.saveAs(version);
             });
 
@@ -475,7 +490,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.getStyleClass().add("dialog-cancel");
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            this.setActions(downloadButton, saveAsButton, cancelButton);
+            this.getActions().addAll(renameAndInstallButton, saveAsButton, cancelButton);
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
@@ -519,6 +534,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, RemoteMod.Version file);
+        void download(Profile profile, @Nullable String version, RemoteMod.Version file, boolean shouldProvideRenameUI);
     }
 }

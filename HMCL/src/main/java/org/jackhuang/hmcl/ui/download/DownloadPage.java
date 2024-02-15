@@ -43,7 +43,10 @@ import org.jackhuang.hmcl.ui.construct.TabControl;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.*;
+import org.jackhuang.hmcl.ui.versions.DownloadListPage;
+import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
+import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -87,8 +90,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.getActions().add(installLocalModpackButton);
             return page;
         }));
-        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
+        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file, shouldProvideRenameUI) -> download(profile, version, file, "mods", shouldProvideRenameUI), true)));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file, shouldProvideRenameUI) -> download(profile, version, file, "resourcepacks", shouldProvideRenameUI), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
 
@@ -157,37 +160,43 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    private static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
+    private static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName, boolean shouldProvideRenameUI) {
         if (version == null) version = profile.getSelectedVersion();
 
-        Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
+        Path runDirectory = (profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory()).toPath().resolve(subdirectoryName);
 
-        Controllers.prompt(i18n("archive.name"), (result, resolve, reject) -> {
-            if (!OperatingSystem.isNameValid(result)) {
-                reject.accept(i18n("install.new_game.malformed"));
-                return;
-            }
-            Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
-
-            Controllers.taskDialog(Task.composeAsync(() -> {
-                FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest.toFile());
-                task.setName(file.getName());
-                return task;
-            }).whenComplete(Schedulers.javafx(), exception -> {
-                if (exception != null) {
-                    if (exception instanceof CancellationException) {
-                        Controllers.showToast(i18n("message.cancelled"));
-                    } else {
-                        Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
-                    }
-                } else {
-                    Controllers.showToast(i18n("install.success"));
+        String filename = file.getFile().getFilename();
+        if (shouldProvideRenameUI) {
+            Controllers.prompt(i18n("archive.name"), (result, resolve, reject) -> {
+                if (!OperatingSystem.isNameValid(result)) {
+                    reject.accept(i18n("install.new_game.malformed"));
+                    return;
                 }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
 
-            resolve.run();
-        }, file.getFile().getFilename());
+                download0(file, runDirectory.resolve(result));
+                resolve.run();
+            }, filename);
+        } else {
+            download0(file, runDirectory.resolve(filename));
+        }
+    }
 
+    private static void download0(RemoteMod.Version file, Path dest) {
+        Controllers.taskDialog(Task.composeAsync(() -> {
+            FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(file.getFile().getUrl()), dest.toFile());
+            task.setName(file.getName());
+            return task;
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception != null) {
+                if (exception instanceof CancellationException) {
+                    Controllers.showToast(i18n("message.cancelled"));
+                } else {
+                    Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                }
+            } else {
+                Controllers.showToast(i18n("install.success"));
+            }
+        }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
     }
 
     private void loadVersions(Profile profile) {

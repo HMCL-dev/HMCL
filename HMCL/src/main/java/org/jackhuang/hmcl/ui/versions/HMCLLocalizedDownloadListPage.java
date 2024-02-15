@@ -50,7 +50,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             downloadSource.set("mods.modrinth");
     }
 
-    private class Repository extends LocalizedRemoteModRepository {
+    public class Repository extends LocalizedRemoteModRepository {
         private final RemoteModRepository.Type type;
         private final CurseForgeRemoteModRepository curseForge;
         private final ModrinthRemoteModRepository modrinth;
