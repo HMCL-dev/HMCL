@@ -69,10 +69,10 @@ public class AboutPage extends StackPane {
             glavo.setExternalLink("https://github.com/Glavo");
 
             IconedTwoLineListItem zekerzhayard = new IconedTwoLineListItem();
-            glavo.setImage(FXUtils.newBuiltinImage("/assets/img/zekerzhayard.png"));
-            glavo.setTitle("ZekerZhayard");
-            glavo.setSubtitle(i18n("about.thanks_to.zekerzhayard.statement"));
-            glavo.setExternalLink("https://github.com/ZekerZhayard");
+            zekerzhayard.setImage(FXUtils.newBuiltinImage("/assets/img/zekerzhayard.png"));
+            zekerzhayard.setTitle("ZekerZhayard");
+            zekerzhayard.setSubtitle(i18n("about.thanks_to.zekerzhayard.statement"));
+            zekerzhayard.setExternalLink("https://github.com/ZekerZhayard");
 
             IconedTwoLineListItem zkitefly = new IconedTwoLineListItem();
             zkitefly.setImage(FXUtils.newBuiltinImage("/assets/img/zkitefly.png"));
