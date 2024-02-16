@@ -93,7 +93,7 @@ public enum JavaVersionConstraint {
         }
 
         @Override
-        public VersionRange getJavaVersionRange(Version version) {
+        public VersionRange<VersionNumber> getJavaVersionRange(Version version) {
             String javaVersion;
             if (Objects.requireNonNull(version.getJavaVersion()).getMajorVersion() >= 9) {
                 javaVersion = "" + version.getJavaVersion().getMajorVersion();
