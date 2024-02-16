@@ -109,7 +109,7 @@ public final class Versions {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
         boolean isMovingToTrashSupported = FileUtils.isMovingToTrashSupported();
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
-                isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
+                isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version) :
                         i18n("version.manage.remove.confirm", version);
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));

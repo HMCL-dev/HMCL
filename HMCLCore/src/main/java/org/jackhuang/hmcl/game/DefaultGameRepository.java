@@ -246,7 +246,7 @@ public class DefaultGameRepository implements GameRepository {
         if (!file.exists())
             return true;
         // test if no file in this version directory is occupied.
-        File removedFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + "_removed");
+        File removedFile = new File(file.getAbsoluteFile().getParentFile(), file.getName());
         if (!file.renameTo(removedFile))
             return false;
 
