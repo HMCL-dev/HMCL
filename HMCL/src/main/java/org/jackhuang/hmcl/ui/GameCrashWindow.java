@@ -319,6 +319,8 @@ public class GameCrashWindow extends Stage {
                         break;
                 }
 
+                LOG.log(Level.INFO, "ExitType: " + exitType);
+
                 titlePane.setAlignment(Pos.CENTER);
                 titlePane.getStyleClass().addAll("jfx-tool-bar-second", "depth-1", "padding-8");
                 titlePane.getChildren().setAll(title);
