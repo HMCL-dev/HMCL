@@ -271,7 +271,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         downloadSourceComboBox.setConverter(stringConverter(I18n::i18n));
                         selectedItemPropertyFor(downloadSourceComboBox).bindBidirectional(control.downloadSource);
 
-                        searchPane.add(new Label(i18n("settings.launcher.download_source")), columns++, rowIndex);
+                        searchPane.add(new Label(i18n("search.download_source")), columns++, rowIndex);
                         searchPane.add(lastNode = downloadSourceComboBox, columns++, rowIndex);
                     }
 
