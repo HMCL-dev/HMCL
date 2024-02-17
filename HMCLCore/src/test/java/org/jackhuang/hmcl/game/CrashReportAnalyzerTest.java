@@ -101,6 +101,15 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void forgeFoundDuplicateMods() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_found_duplicate_mods.txt")),
+                CrashReportAnalyzer.Rule.FORGE_FOUND_DUPLICATE_MODS);
+        assertEquals(("\tMod ID: 'jei' from mod files: REIPluginCompatibilities-forge-12.0.93.jar, jei-1.20.1-forge-15.2.0.27.jar\n").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
     public void modResolutionCollection() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
