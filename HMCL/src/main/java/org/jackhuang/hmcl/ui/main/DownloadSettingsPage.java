@@ -59,7 +59,7 @@ public class DownloadSettingsPage extends StackPane {
 
                 VBox chooseWrapper = new VBox();
                 chooseWrapper.setPadding(new Insets(8, 0, 8, 0));
-                JFXCheckBox chkAutoChooseDownloadSource = new JFXCheckBox(i18n("settings.launcher.download_source.auto"));
+                JFXCheckBox chkAutoChooseDownloadSource = new JFXCheckBox(i18n("settings.launcher.version_list_source_and_download_source.auto"));
                 chkAutoChooseDownloadSource.selectedProperty().bindBidirectional(config().autoChooseDownloadTypeProperty());
                 chooseWrapper.getChildren().setAll(chkAutoChooseDownloadSource);
 
@@ -67,7 +67,7 @@ public class DownloadSettingsPage extends StackPane {
                 versionListSourcePane.setPadding(new Insets(0, 0, 8, 30));
                 versionListSourcePane.disableProperty().bind(chkAutoChooseDownloadSource.selectedProperty().not());
                 {
-                    Label label = new Label(i18n("settings.launcher.version_list_source"));
+                    Label label = new Label(i18n("settings.launcher.version_list_source_and_download_source.auto.selection_mode"));
                     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                     versionListSourcePane.setLeft(label);
 
@@ -84,7 +84,7 @@ public class DownloadSettingsPage extends StackPane {
                 downloadSourcePane.setPadding(new Insets(0, 0, 8, 30));
                 downloadSourcePane.disableProperty().bind(chkAutoChooseDownloadSource.selectedProperty());
                 {
-                    Label label = new Label(i18n("settings.launcher.download_source"));
+                    Label label = new Label(i18n("settings.launcher.version_list_source_and_download_source.priority_use"));
                     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                     downloadSourcePane.setLeft(label);
 
@@ -100,7 +100,7 @@ public class DownloadSettingsPage extends StackPane {
                 downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source")), downloadSource);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source_and_download_source")), downloadSource);
         }
 
         {
