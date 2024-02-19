@@ -58,6 +58,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -324,18 +325,22 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                Lang.<Pair<String, RemoteModRepository>>immutableListOf(
-                        pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
-                        pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
-                ).forEach(item -> {
-                    String text = item.getKey();
-                    RemoteModRepository remoteModRepository = item.getValue();
+                for (int i = 0;i < 2;i ++) {
+                    String text;
+                    RemoteModRepository repository;
+                    if (i == 0) {
+                        text = "mods.curseforge";
+                        repository = CurseForgeRemoteModRepository.MODS;
+                    } else {
+                        text = "mods.modrinth";
+                        repository = ModrinthRemoteModRepository.MODS;
+                    }
 
                     JFXHyperlink button = new JFXHyperlink(i18n(text));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = remoteModRepository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = remoteModRepository.getModById(versionOptional.get().getModid());
+                            RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
                                     String loaderName;
@@ -358,15 +363,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                         default:
                                             continue;
                                     }
-                                    if (!title.getTags().contains(loaderName)) {
-                                        title.getTags().add(loaderName);
+                                    List<String> tags = title.getTags();
+                                    synchronized (tags) {
+                                        if (!tags.contains(loaderName)) {
+                                            tags.add(loaderName);
+                                        }
                                     }
                                 }
 
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            new DownloadListPage(remoteModRepository),
+                                            repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
                                             null
@@ -378,7 +386,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     }).start();
                     button.setDisable(true);
                     getActions().add(button);
-                });
+                }
             }
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {

@@ -29,6 +29,14 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, ModrinthRemoteModRepository.MODS);
     }
 
+    public static DownloadListPage ofCurseForgeMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, null);
+    }
+
+    public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, null, ModrinthRemoteModRepository.MODS);
+    }
+
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MODPACK, CurseForgeRemoteModRepository.MODPACKS, ModrinthRemoteModRepository.MODPACKS);
     }
@@ -44,10 +52,13 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
         supportChinese.set(true);
         downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
-        if (CurseForgeRemoteModRepository.isAvailable())
+        if (curseForge != null) {
             downloadSource.set("mods.curseforge");
-        else
+        } else if (modrinth != null) {
             downloadSource.set("mods.modrinth");
+        } else {
+            throw new AssertionError("Should not be here.");
+        }
     }
 
     private class Repository extends LocalizedRemoteModRepository {
