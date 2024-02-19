@@ -36,7 +36,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -54,7 +53,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest;
-    private final List<Task<?>> dependencies = new CopyOnWriteArrayList<>();
+    private List<Task<?>> dependencies;
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);
@@ -142,7 +141,7 @@ public final class CurseCompletionTask extends Task<Void> {
         File versionRoot = repository.getVersionRoot(modManager.getVersion());
         File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
         finished.set(0);
-        newManifest.getFiles()
+        dependencies = newManifest.getFiles()
                 .stream().parallel()
                 .filter(f -> f.getFileName() != null)
                 .map(f -> {
@@ -156,12 +155,12 @@ public final class CurseCompletionTask extends Task<Void> {
                     }
                 })
                 .filter(p -> p != null && p.getValue() != null)
-                .forEach(p -> {
+                .map(p -> {
                     FileDownloadTask task = new FileDownloadTask(p.getKey(), p.getValue());
                     task.setCacheRepository(dependency.getCacheRepository());
                     task.setCaching(true);
-                    dependencies.add(task.withCounter("hmcl.modpack.download"));
-                });
+                    return task.withCounter("hmcl.modpack.download");
+                }).collect(Collectors.toList());
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
