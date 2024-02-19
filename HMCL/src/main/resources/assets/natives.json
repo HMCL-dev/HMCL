@@ -2358,13 +2358,13 @@
       }
     },
     "org.lwjgl:lwjgl:3.3.2:natives-linux": {
-      "name": "org.lwjgl:lwjgl:3.3.4-SNAPSHOT:natives-freebsd",
+      "name": "org.lwjgl:lwjgl:3.3.4-SNAPSHOT:natives-linux-riscv64",
       "downloads": {
         "artifact": {
-          "path": "org/lwjgl/lwjgl/3.3.4-SNAPSHOT/lwjgl-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl/3.3.4-SNAPSHOT/lwjgl-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "sha1": "2d38355b453edfe2daee1a567bcdb82c0485edcf",
-          "size": 95872
+          "path": "org/lwjgl/lwjgl/3.3.4-SNAPSHOT/lwjgl-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl/3.3.4-SNAPSHOT/lwjgl-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "sha1": "642848dc964fc5332cda40225771a5143740b49c",
+          "size": 79691
         }
       }
     },
@@ -2380,13 +2380,13 @@
       }
     },
     "org.lwjgl:lwjgl-jemalloc:3.3.2:natives-linux": {
-      "name": "org.lwjgl:lwjgl-jemalloc:3.3.4-SNAPSHOT:natives-freebsd",
+      "name": "org.lwjgl:lwjgl-jemalloc:3.3.4-SNAPSHOT:natives-linux-riscv64",
       "downloads": {
         "artifact": {
-          "path": "org/lwjgl/lwjgl-jemalloc/3.3.4-SNAPSHOT/lwjgl-jemalloc-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-jemalloc/3.3.4-SNAPSHOT/lwjgl-jemalloc-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "sha1": "bdba1662b621228679c7aed87945d1f28c590d5b",
-          "size": 155867
+          "path": "org/lwjgl/lwjgl-jemalloc/3.3.4-SNAPSHOT/lwjgl-jemalloc-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-jemalloc/3.3.4-SNAPSHOT/lwjgl-jemalloc-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "sha1": "01129d98674994eb8204f62c26b5717d4d989536",
+          "size": 200633
         }
       }
     },
@@ -2402,13 +2402,13 @@
       }
     },
     "org.lwjgl:lwjgl-openal:3.3.2:natives-linux": {
-      "name": "org.lwjgl:lwjgl-openal:3.3.4-SNAPSHOT:natives-freebsd",
+      "name": "org.lwjgl:lwjgl-openal:3.3.4-SNAPSHOT:natives-linux-riscv64",
       "downloads": {
         "artifact": {
-          "path": "org/lwjgl/lwjgl-openal/3.3.4-SNAPSHOT/lwjgl-openal-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-openal/3.3.4-SNAPSHOT/lwjgl-openal-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "sha1": "0fc6495e6752727b629cf03a105c9d56087d4edd",
-          "size": 597512
+          "path": "org/lwjgl/lwjgl-openal/3.3.4-SNAPSHOT/lwjgl-openal-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-openal/3.3.4-SNAPSHOT/lwjgl-openal-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "sha1": "bce3174f137d0ffcbbe88ddae305de11c5131137",
+          "size": 520217
         }
       }
     },
@@ -2424,13 +2424,13 @@
       }
     },
     "org.lwjgl:lwjgl-opengl:3.3.2:natives-linux": {
-      "name": "org.lwjgl:lwjgl-opengl:3.3.4-SNAPSHOT:natives-freebsd",
+      "name": "org.lwjgl:lwjgl-opengl:3.3.4-SNAPSHOT:natives-linux-riscv64",
       "downloads": {
         "artifact": {
-          "path": "org/lwjgl/lwjgl-opengl/3.3.4-SNAPSHOT/lwjgl-opengl-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-opengl/3.3.4-SNAPSHOT/lwjgl-opengl-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "sha1": "d3e8ec997cef8bc66819c7e0ad7a54182f7aff2a",
-          "size": 81034
+          "path": "org/lwjgl/lwjgl-opengl/3.3.4-SNAPSHOT/lwjgl-opengl-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-opengl/3.3.4-SNAPSHOT/lwjgl-opengl-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "sha1": "13dccf954b781883b0661bd55dfc423f8eece864",
+          "size": 57244
         }
       }
     },
@@ -2446,13 +2446,13 @@
       }
     },
     "org.lwjgl:lwjgl-glfw:3.3.2:natives-linux": {
-      "name": "org.lwjgl:lwjgl-glfw:3.3.4-SNAPSHOT:natives-freebsd",
+      "name": "org.lwjgl:lwjgl-glfw:3.3.4-SNAPSHOT:natives-linux-riscv64",
       "downloads": {
         "artifact": {
-          "path": "org/lwjgl/lwjgl-glfw/3.3.4-SNAPSHOT/lwjgl-glfw-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-glfw/3.3.4-SNAPSHOT/lwjgl-glfw-3.3.4-20231218.151521-4-natives-freebsd.jar",
-          "sha1": "4881a965c7679b4984c0d8a5890f07ea85c653c4",
-          "size": 101847
+          "path": "org/lwjgl/lwjgl-glfw/3.3.4-SNAPSHOT/lwjgl-glfw-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-glfw/3.3.4-SNAPSHOT/lwjgl-glfw-3.3.4-20231218.151521-4-natives-linux-riscv64.jar",
+          "sha1": "865417f4aa171aa8e7a448d88877a82844896c92",
+          "size": 113875
         }
       }
     },
@@ -2468,13 +2468,13 @@
       }
     },
     "org.lwjgl:lwjgl-stb:3.3.2:natives-linux": {
-      "name": "org.lwjgl:lwjgl-stb:3.3.4-SNAPSHOT:natives-freebsd",
+      "name": "org.lwjgl:lwjgl-stb:3.3.4-SNAPSHOT:natives-linux-riscv64",
       "downloads": {
         "artifact": {
-          "path": "org/lwjgl/lwjgl-stb/3.3.4-SNAPSHOT/lwjgl-stb-3.3.4-20231218.151521-3-natives-freebsd.jar",
-          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-stb/3.3.4-SNAPSHOT/lwjgl-stb-3.3.4-20231218.151521-3-natives-freebsd.jar",
-          "sha1": "0aad82a857ebb9a3a212dc2c386761d57e11a8f2",
-          "size": 225735
+          "path": "org/lwjgl/lwjgl-stb/3.3.4-SNAPSHOT/lwjgl-stb-3.3.4-20231218.151521-3-natives-linux-riscv64.jar",
+          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-stb/3.3.4-SNAPSHOT/lwjgl-stb-3.3.4-20231218.151521-3-natives-linux-riscv64.jar",
+          "sha1": "f5b96c0fd649cb1e18816f63bed49e0dfe1d1f1a",
+          "size": 217005
         }
       }
     },
@@ -2490,13 +2490,13 @@
       }
     },
     "org.lwjgl:lwjgl-tinyfd:3.3.2:natives-linux": {
-      "name": "org.lwjgl:lwjgl-tinyfd:3.3.4-SNAPSHOT:natives-freebsd",
+      "name": "org.lwjgl:lwjgl-tinyfd:3.3.4-SNAPSHOT:natives-linux-riscv64",
       "downloads": {
         "artifact": {
-          "path": "org/lwjgl/lwjgl-tinyfd/3.3.4-SNAPSHOT/lwjgl-tinyfd-3.3.4-20231218.151521-3-natives-freebsd.jar",
-          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-tinyfd/3.3.4-SNAPSHOT/lwjgl-tinyfd-3.3.4-20231218.151521-3-natives-freebsd.jar",
-          "sha1": "124d0e48ae1584f09e5701588ae8ad139be26003",
-          "size": 39077
+          "path": "org/lwjgl/lwjgl-tinyfd/3.3.4-SNAPSHOT/lwjgl-tinyfd-3.3.4-20231218.151521-3-natives-linux-riscv64.jar",
+          "url": "https://oss.sonatype.org/content/repositories/snapshots/org/lwjgl/lwjgl-tinyfd/3.3.4-SNAPSHOT/lwjgl-tinyfd-3.3.4-20231218.151521-3-natives-linux-riscv64.jar",
+          "sha1": "f042c17188c5db910b195d298c284bbfbe550c53",
+          "size": 46885
         }
       }
     },
