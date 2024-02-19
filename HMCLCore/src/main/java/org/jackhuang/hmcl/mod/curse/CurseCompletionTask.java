@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Complete the CurseForge version.
@@ -144,22 +145,23 @@ public final class CurseCompletionTask extends Task<Void> {
         dependencies = newManifest.getFiles()
                 .stream().parallel()
                 .filter(f -> f.getFileName() != null)
-                .map(f -> {
+                .flatMap(f -> {
                     try {
-                        return Pair.pair(f.getUrl(), guessFilePath(f, resourcePacksRoot, shaderPacksRoot));
+                        File path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
+                        if (path == null) {
+                            return Stream.empty();
+                        }
+
+                        FileDownloadTask task = new FileDownloadTask(f.getUrl(), path);
+                        task.setCacheRepository(dependency.getCacheRepository());
+                        task.setCaching(true);
+                        return Stream.of(task.withCounter("hmcl.modpack.download"));
                     } catch (IOException e) {
                         Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for mod: " + f.getProjectID() + ", " + f.getFileID(), e);
-                        return null; // Ignore this file.
+                        return Stream.empty(); // Ignore this file.
                     } finally {
                         updateProgress(finished.incrementAndGet(), newManifest.getFiles().size());
                     }
-                })
-                .filter(p -> p != null && p.getValue() != null)
-                .map(p -> {
-                    FileDownloadTask task = new FileDownloadTask(p.getKey(), p.getValue());
-                    task.setCacheRepository(dependency.getCacheRepository());
-                    task.setCaching(true);
-                    return task.withCounter("hmcl.modpack.download");
                 })
                 .collect(Collectors.toList());
 
