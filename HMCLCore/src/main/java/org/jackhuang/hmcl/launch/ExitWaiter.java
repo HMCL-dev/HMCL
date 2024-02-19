@@ -69,7 +69,10 @@ final class ExitWaiter implements Runnable {
                     "A fatal exception has occurred. Program will exit.")) {
                 EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(this, process));
                 exitType = ProcessListener.ExitType.JVM_ERROR;
-            } else if (exitCode != 0 || StringUtils.containsOne(errorLines, "Unable to launch")) {
+            } else if (exitCode != 0 || StringUtils.containsOne(errorLines,
+                    "Someone is closing me!",
+                    "Crash report saved to", "Could not save crash report to", "This crash report has been saved to:",
+                    "Unable to launch", "An exception was thrown, the game will display an error screen and halt.")) {
                 EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(this, process));
 
                 if (exitCode == 137 && OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {

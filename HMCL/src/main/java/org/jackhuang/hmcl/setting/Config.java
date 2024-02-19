@@ -131,7 +131,7 @@ public final class Config implements Cloneable, Observable {
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
     @SerializedName("autoDownloadThreads")
-    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(false);
+    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
     @SerializedName("downloadThreads")
     private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
@@ -393,8 +393,8 @@ public final class Config implements Cloneable, Observable {
         return x;
     }
 
-    public void setX(double height) {
-        this.x.set(height);
+    public void setX(double x) {
+        this.x.set(x);
     }
 
     public double getY() {
@@ -405,8 +405,8 @@ public final class Config implements Cloneable, Observable {
         return y;
     }
 
-    public void setY(double height) {
-        this.y.set(height);
+    public void setY(double y) {
+        this.y.set(y);
     }
 
     public double getWidth() {

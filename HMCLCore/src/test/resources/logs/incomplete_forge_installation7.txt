@@ -1,0 +1,51 @@
+2024-02-19 11:23:55,738 main WARN Advanced terminal features are not available in this environment
+[11:23:55] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--username, Lod_Superdark, --version, The Legend of Tinker, --gameDir, F:\我你爹\The Legend of Tinker\.minecraft\versions\The Legend of Tinker, --assetsDir, F:\我你爹\The Legend of Tinker\.minecraft\assets, --assetIndex, 1.18, --uuid, 000000000000300D9C90BD99F9099C10, --accessToken, ????????, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, Legacy, --versionType, sad, --width, 854, --height, 480, --launchTarget, forgeclient, --fml.forgeVersion, 40.2.10, --fml.mcVersion, 1.18.2, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20220404.173914]
+[11:23:55] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 9.1.3+9.1.3+main.9b69c82a starting: java version 17.0.2 by Oracle Corporation
+[11:23:56] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/F:/我你爹/The%20Legend%20of%20Tinker/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%2348!/ Service=ModLauncher Env=CLIENT
+[2024-02-19 11:23:56] [INFO]: I18nUpdate Mod 3.4.1 is loaded in 1.18.2 with Forge
+Exception in thread "main" java.lang.reflect.InvocationTargetException
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58)
+	at oolloo.jlw.Wrapper.main(Wrapper.java:51)
+Caused by: java.io.UncheckedIOException: java.io.IOException: Invalid paths argument, contained no existing paths: [F:\我你爹\The Legend of Tinker\.minecraft\libraries\net\minecraftforge\fmlcore\1.18.2-40.2.10\fmlcore-1.18.2-40.2.10.jar]
+	at cpw.mods.securejarhandler@1.0.8/cpw.mods.jarhandling.impl.Jar.<init>(Jar.java:74)
+	at cpw.mods.securejarhandler@1.0.8/cpw.mods.jarhandling.SecureJar.from(SecureJar.java:58)
+	at cpw.mods.securejarhandler@1.0.8/cpw.mods.jarhandling.SecureJar.from(SecureJar.java:54)
+	at cpw.mods.securejarhandler@1.0.8/cpw.mods.jarhandling.SecureJar.from(SecureJar.java:46)
+	at cpw.mods.securejarhandler@1.0.8/cpw.mods.jarhandling.SecureJar.from(SecureJar.java:38)
+	at MC-BOOTSTRAP/fmlloader@1.18.2-40.2.10/net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator.lambda$scanMods$3(MinecraftLocator.java:35)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.AbstractList$RandomAccessSpliterator.forEachRemaining(AbstractList.java:720)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.ReduceOps$ReduceOp.evaluateSequential(ReduceOps.java:921)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+	at java.base/java.util.stream.ReferencePipeline.collect(ReferencePipeline.java:682)
+	at MC-BOOTSTRAP/fmlloader@1.18.2-40.2.10/net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator.scanMods(MinecraftLocator.java:37)
+	at MC-BOOTSTRAP/fmlloader@1.18.2-40.2.10/net.minecraftforge.fml.loading.moddiscovery.ModDiscoverer.discoverMods(ModDiscoverer.java:59)
+	at MC-BOOTSTRAP/fmlloader@1.18.2-40.2.10/net.minecraftforge.fml.loading.FMLLoader.beginModScan(FMLLoader.java:166)
+	at MC-BOOTSTRAP/fmlloader@1.18.2-40.2.10/net.minecraftforge.fml.loading.FMLServiceProvider.beginScanning(FMLServiceProvider.java:86)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.TransformationServiceDecorator.runScan(TransformationServiceDecorator.java:112)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.TransformationServicesHandler.lambda$runScanningTransformationServices$8(TransformationServicesHandler.java:100)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.HashMap$ValueSpliterator.forEachRemaining(HashMap.java:1779)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:575)
+	at java.base/java.util.stream.AbstractPipeline.evaluateToArrayNode(AbstractPipeline.java:260)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:616)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:622)
+	at java.base/java.util.stream.ReferencePipeline.toList(ReferencePipeline.java:627)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.TransformationServicesHandler.runScanningTransformationServices(TransformationServicesHandler.java:102)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:55)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.Launcher.run(Launcher.java:87)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.Launcher.main(Launcher.java:77)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@9.1.3/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.0.0/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:149)
+	... 6 more
+Caused by: java.io.IOException: Invalid paths argument, contained no existing paths: [F:\我你爹\The Legend of Tinker\.minecraft\libraries\net\minecraftforge\fmlcore\1.18.2-40.2.10\fmlcore-1.18.2-40.2.10.jar]
+	... 41 more
