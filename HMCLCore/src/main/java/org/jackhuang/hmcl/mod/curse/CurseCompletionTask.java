@@ -160,7 +160,8 @@ public final class CurseCompletionTask extends Task<Void> {
                     task.setCacheRepository(dependency.getCacheRepository());
                     task.setCaching(true);
                     return task.withCounter("hmcl.modpack.download");
-                }).collect(Collectors.toList());
+                })
+                .collect(Collectors.toList());
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
