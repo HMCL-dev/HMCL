@@ -125,7 +125,7 @@ public final class CrashReportAnalyzer {
         MOD_NAME(Pattern.compile("Invalid module name: '' is not a Java identifier")),
 
         //Forge 安装不完整
-        INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(.*?)forge-(.*?)-client\\.jar\\]|Failed to find Minecraft resource version (.*?) at (.*?)forge-(.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch|java\\.lang\\.IllegalStateException: Could not find net/minecraft/client/Minecraft\\.class in classloader SecureModuleClassLoader)")),
+        INCOMPLETE_FORGE_INSTALLATION(Pattern.compile("(java\\.io\\.UncheckedIOException: java\\.io\\.IOException: Invalid paths argument, contained no existing paths: \\[(.*?)(forge-(.*?)-client\\.jar|fmlcore-(.*?)\\.jar)\\]|Failed to find Minecraft resource version (.*?) at (.*?)forge-(.*?)-client\\.jar|Cannot find launch target fmlclient, unable to launch|java\\.lang\\.IllegalStateException: Could not find net/minecraft/client/Minecraft\\.class in classloader SecureModuleClassLoader)")),
 
         NIGHT_CONFIG_FIXES(Pattern.compile("com\\.electronwill\\.nightconfig\\.core\\.io\\.ParsingException: Not enough data available")),//https://github.com/Fuzss/nightconfigfixes
         //Shaders Mod detected. Please remove it, OptiFine has built-in support for shaders.
