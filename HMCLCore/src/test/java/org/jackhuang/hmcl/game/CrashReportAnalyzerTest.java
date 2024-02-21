@@ -101,6 +101,15 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void forgeFoundDuplicateMods() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_found_duplicate_mods.txt")),
+                CrashReportAnalyzer.Rule.FORGE_FOUND_DUPLICATE_MODS);
+        assertEquals(("\tMod ID: 'jei' from mod files: REIPluginCompatibilities-forge-12.0.93.jar, jei-1.20.1-forge-15.2.0.27.jar\n").replaceAll("\\s+", ""),
+                result.getMatcher().group("reason").replaceAll("\\s+", ""));
+    }
+
+    @Test
     public void modResolutionCollection() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
@@ -164,6 +173,13 @@ public class CrashReportAnalyzerTest {
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/too_old_java2.txt")),
                 CrashReportAnalyzer.Rule.TOO_OLD_JAVA);
         assertEquals("52", result.getMatcher().group("expected"));
+    }
+
+    @Test
+    public void javaVersionIsTooHigh() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/java_version_is_too_high.txt")),
+                CrashReportAnalyzer.Rule.JAVA_VERSION_IS_TOO_HIGH);
     }
 
     @Test
@@ -325,6 +341,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void outOfMemoryJVM1() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/out_of_memory2.txt")),
+                CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
+    }
+
+    @Test
     public void memoryExceeded() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/memory_exceeded.txt")),
@@ -480,6 +503,13 @@ public class CrashReportAnalyzerTest {
     public void incompleteForgeInstallation6() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation6.txt")),
+                CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
+    }
+
+    @Test
+    public void incompleteForgeInstallation7() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation7.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 

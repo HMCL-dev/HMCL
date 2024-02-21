@@ -34,7 +34,7 @@ public class AboutPage extends StackPane {
         ComponentList about = new ComponentList();
         {
             IconedTwoLineListItem launcher = new IconedTwoLineListItem();
-            launcher.setImage(FXUtils.newBuiltinImage("/assets/img/craft_table.png"));
+            launcher.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
             launcher.setExternalLink("https://hmcl.huangyuhui.net");
@@ -85,11 +85,11 @@ public class AboutPage extends StackPane {
             redLnn.setImage(FXUtils.newBuiltinImage("/assets/img/red_lnn.png"));
             redLnn.setSubtitle(i18n("about.thanks_to.red_lnn.statement"));
 
-            IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
-            mcbbs.setImage(FXUtils.newBuiltinImage("/assets/img/chest.png"));
-            mcbbs.setTitle(i18n("about.thanks_to.mcbbs"));
-            mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
-            mcbbs.setExternalLink("https://www.mcbbs.net/");
+            // IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
+            // mcbbs.setImage(FXUtils.newBuiltinImage("/assets/img/chest.png"));
+            // mcbbs.setTitle(i18n("about.thanks_to.mcbbs"));
+            // mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
+            // mcbbs.setExternalLink("https://www.mcbbs.net/");
 
             IconedTwoLineListItem mcmod = new IconedTwoLineListItem();
             mcmod.setImage(FXUtils.newBuiltinImage("/assets/img/mcmod.png"));
@@ -104,12 +104,12 @@ public class AboutPage extends StackPane {
             contributors.setExternalLink("https://github.com/HMCL-dev/HMCL/graphs/contributors");
 
             IconedTwoLineListItem users = new IconedTwoLineListItem();
-            users.setImage(FXUtils.newBuiltinImage("/assets/img/craft_table.png"));
+            users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             users.setTitle(i18n("about.thanks_to.users"));
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zkitefly ,mcbbs, mcmod, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zkitefly, /* mcbbs, */ mcmod, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();

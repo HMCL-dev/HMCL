@@ -9,7 +9,7 @@
 | ARM64            | 👌 (Minecraft 1.8~1.18.2)<br/>✅ (Minecraft 1.19+)  | 👌 (Minecraft 1.8~1.20.4)  | 👌 (Minecraft 1.6~1.18.2)<br/>✅ (Minecraft 1.19+)<br/>✅ (使用 Rosetta 2) | ❔                         |
 | ARM32            | /️                                                 | 👌  (Minecraft 1.6~1.20.1) | /                                                                      | /                         |
 | MIPS64el         | /                                                  | 👌 (Minecraft 1.6~1.20.1)  | /                                                                      | /                         |
-| RISC-V 64        | /                                                  | 👌 (Minecraft 1.13~1.20.1) | /                                                                      | /                         |
+| RISC-V 64        | /                                                  | 👌 (Minecraft 1.13~1.20.4) | /                                                                      | /                         |
 | LoongArch64      | /                                                  | 👌 (Minecraft 1.6~1.20.1)  | /                                                                      | /                         |
 | PowerPC-64 (小端序) | /                                                  | ❔                          | /                                                                      | /                         |
 | S390x            | /                                                  | ❔                          | /                                                                      | /                         |

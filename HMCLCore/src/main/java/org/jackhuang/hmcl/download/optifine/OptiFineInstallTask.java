@@ -190,7 +190,7 @@ public final class OptiFineInstallTask extends Task<Version> {
 
                 if (LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
                     // OptiFine H1 Pre2+ is compatible with Forge 1.17
-                    if (buildofVer.compareTo(VersionNumber.asVersion("20210924-190833")) < 0) {
+                    if (buildofVer.compareTo("20210924-190833") < 0) {
                         throw new UnsupportedInstallationException(UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2);
                     }
                 }

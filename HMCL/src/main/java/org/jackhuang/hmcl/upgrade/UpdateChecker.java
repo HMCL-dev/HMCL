@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.upgrade.hmcl;
+package org.jackhuang.hmcl.upgrade;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -32,13 +32,12 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.versioning.VersionNumber.asVersion;
 
 public final class UpdateChecker {
     private UpdateChecker() {}
 
-    private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
-    private static BooleanBinding outdated = Bindings.createBooleanBinding(
+    private static final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
+    private static final BooleanBinding outdated = Bindings.createBooleanBinding(
             () -> {
                 RemoteVersion latest = latestVersion.get();
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
@@ -46,11 +45,11 @@ public final class UpdateChecker {
                 } else {
                     // We can update from development version to stable version,
                     // which can be downgrading.
-                    return asVersion(latest.getVersion()).compareTo(asVersion(Metadata.VERSION)) != 0;
+                    return !latest.getVersion().equals(Metadata.VERSION);
                 }
             },
             latestVersion);
-    private static ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+    private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel());

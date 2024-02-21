@@ -22,9 +22,10 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.logging.*;
 
 /**
@@ -120,35 +121,39 @@ public final class Logging {
         }
     }
 
-    private static final MessageFormat FORMAT = new MessageFormat("[{0,date,HH:mm:ss}] [{1}.{2}/{3}] {4}\n");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
 
     private static String format(LogRecord record) {
         String message = filterForbiddenToken(record.getMessage());
 
+        StringBuilder builder = new StringBuilder(128 + message.length());
+        builder.append('[');
+        TIME_FORMATTER.formatTo(Instant.ofEpochMilli(record.getMillis()), builder);
+        builder.append(']');
+
+        builder.append(" [")
+                .append(record.getSourceClassName())
+                .append('.')
+                .append(record.getSourceMethodName())
+                .append('/')
+                .append(record.getLevel().getName())
+                .append("] ")
+                .append(message)
+                .append('\n');
+
+
         Throwable thrown = record.getThrown();
-
-        StringWriter writer;
-        StringBuffer buffer;
         if (thrown == null) {
-            writer = null;
-            buffer = new StringBuffer(256);
+            return builder.toString();
         } else {
-            writer = new StringWriter(1024);
-            buffer = writer.getBuffer();
-        }
-
-        FORMAT.format(new Object[]{
-                new Date(record.getMillis()),
-                record.getSourceClassName(), record.getSourceMethodName(), record.getLevel().getName(),
-                message
-        }, buffer, null);
-
-        if (thrown != null) {
+            StringWriter writer = new StringWriter(builder.length() + 2048);
+            writer.getBuffer().append(builder);
             try (PrintWriter printWriter = new PrintWriter(writer)) {
                 thrown.printStackTrace(printWriter);
             }
+
+            return writer.toString();
         }
-        return buffer.toString();
     }
 
     private static final class DefaultFormatter extends Formatter {

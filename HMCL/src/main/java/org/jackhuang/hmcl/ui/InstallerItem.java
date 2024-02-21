@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,7 +170,7 @@ public class InstallerItem extends Control {
         public InstallerItemGroup(String gameVersion) {
             mutualIncompatible(forge, fabric, quilt, neoForge, liteLoader);
             addIncompatibles(optiFine, fabric, quilt, neoForge);
-            addIncompatibles(fabricApi, forge, quilt, quiltApi, neoForge, liteLoader, optiFine);
+            addIncompatibles(fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine);
             addIncompatibles(quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine);
 
             InvalidationListener listener = o -> {
@@ -204,7 +204,7 @@ public class InstallerItem extends Control {
 
             if (gameVersion == null) {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
-            } else if (VersionNumber.compare(gameVersion, "1.13") < 0) {
+            } else if (GameVersionNumber.compare(gameVersion, "1.13") < 0) {
                 this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine};
             } else {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};

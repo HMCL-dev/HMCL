@@ -43,15 +43,16 @@ import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTHelper;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -118,9 +119,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L)
-                                        : version.getReleaseTime())
-                                .thenComparing(a -> VersionNumber.asVersion(a.getId())))
+                                .comparing((Version version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
+                                .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (profile == Profiles.getSelectedProfile())
