@@ -83,6 +83,18 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         return true;
     }
 
+    public static VersionRange<VersionNumber> between(String minimum, String maximum) {
+        return VersionRange.between(asVersion(minimum), asVersion(maximum));
+    }
+
+    public static VersionRange<VersionNumber> atLeast(String minimum) {
+        return VersionRange.atLeast(asVersion(minimum));
+    }
+
+    public static VersionRange<VersionNumber> atMost(String maximum) {
+        return VersionRange.atMost(asVersion(maximum));
+    }
+
     private interface Item {
         int LONG_ITEM = 0;
         int BIGINTEGER_ITEM = 1;
@@ -473,14 +485,6 @@ public final class VersionNumber implements Comparable<VersionNumber> {
 
     public String getCanonical() {
         return canonical;
-    }
-
-    public VersionNumber min(VersionNumber that) {
-        return this.compareTo(that) <= 0 ? this : that;
-    }
-
-    public VersionNumber max(VersionNumber that) {
-        return this.compareTo(that) >= 0 ? this : that;
     }
 
     @Override

@@ -155,7 +155,8 @@ public class Skin {
                 if (defaultSkinLoader == null) {
                     return Task.supplyAsync(() -> null);
                 }
-                return Task.supplyAsync(() -> new LoadedSkin(TextureModel.STEVE, Texture.loadTexture(defaultSkinLoader.apply(type)), null));
+                TextureModel model = type == Type.ALEX ? TextureModel.ALEX : TextureModel.STEVE;
+                return Task.supplyAsync(() -> new LoadedSkin(model, Texture.loadTexture(defaultSkinLoader.apply(type)), null));
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
                     Texture skin = null, cape = null;

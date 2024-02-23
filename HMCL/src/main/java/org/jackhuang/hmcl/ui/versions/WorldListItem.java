@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.time.Instant;
@@ -94,8 +94,7 @@ public class WorldListItem extends Control {
 
     public void manageDatapacks() {
         if (world.getGameVersion() == null || // old game will not write game version to level.dat
-                (VersionNumber.isIntVersionNumber(world.getGameVersion()) // we don't parse snapshot version
-                        && VersionNumber.asVersion(world.getGameVersion()).compareTo(VersionNumber.asVersion("1.13")) < 0)) {
+                GameVersionNumber.compare(world.getGameVersion(), "1.13") < 0) {
             Controllers.dialog(i18n("world.datapack.1_13"));
             return;
         }

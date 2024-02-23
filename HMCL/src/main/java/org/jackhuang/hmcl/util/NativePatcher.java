@@ -8,7 +8,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -45,7 +45,7 @@ public final class NativePatcher {
 
     public static Version patchNative(Version version, String gameVersion, JavaVersion javaVersion, VersionSetting settings) {
         if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
-            if (gameVersion != null && VersionNumber.compare(gameVersion, "1.19") < 0)
+            if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
 
             ArrayList<Library> newLibraries = new ArrayList<>();
@@ -66,7 +66,7 @@ public final class NativePatcher {
         final boolean useNativeOpenAL = settings.isUseNativeOpenAL();
 
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
-                && VersionNumber.compare(gameVersion, "1.19") >= 0) {
+                && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
 
             version = version.setLibraries(version.getLibraries().stream()
                     .filter(library -> {
@@ -88,7 +88,7 @@ public final class NativePatcher {
 
         OperatingSystem os = javaVersion.getPlatform().getOperatingSystem();
         Architecture arch = javaVersion.getArchitecture();
-        VersionNumber gameVersionNumber = gameVersion != null ? VersionNumber.asVersion(gameVersion) : null;
+        GameVersionNumber gameVersionNumber = gameVersion != null ? GameVersionNumber.asGameVersion(gameVersion) : null;
 
         if (settings.isNotPatchNatives())
             return version;

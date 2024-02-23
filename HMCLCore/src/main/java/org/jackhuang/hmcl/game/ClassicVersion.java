@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.game;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.Arrays;
-import java.util.Date;
 
 /**
  * The Minecraft version for 1.5.x and earlier.
@@ -32,7 +32,7 @@ public class ClassicVersion extends Version {
         super(true, "Classic", null, null, "${auth_player_name} ${auth_session} --workDir ${game_directory}",
                 null, "net.minecraft.client.Minecraft", null, null, null, null, null, null,
                 Arrays.asList(new ClassicLibrary("lwjgl"), new ClassicLibrary("jinput"), new ClassicLibrary("lwjgl_util")),
-                null, null, null, ReleaseType.UNKNOWN, new Date(), new Date(), 0, false, false, null);
+                null, null, null, ReleaseType.UNKNOWN, Instant.now(), Instant.now(), 0, false, false, null);
     }
 
     private static class ClassicLibrary extends Library {

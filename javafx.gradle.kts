@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.google.code.gson:gson:2.8.1")
+        classpath("com.google.code.gson:gson:2.10.1")
     }
 }
 
@@ -30,7 +30,7 @@ data class Platform(
 
 val jfxModules = listOf("base", "graphics", "controls", "media", "web")
 val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
-val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
+val jfxDependenciesFile = project("HMCL").layout.buildDirectory.file("openjfx-dependencies.json").get().asFile
 val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86"),
     Platform("windows-x86_64", "win"),

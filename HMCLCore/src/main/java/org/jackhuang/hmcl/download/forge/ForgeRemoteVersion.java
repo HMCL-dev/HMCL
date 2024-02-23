@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 public class ForgeRemoteVersion extends RemoteVersion {
@@ -34,7 +34,7 @@ public class ForgeRemoteVersion extends RemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar original URL.
      */
-    public ForgeRemoteVersion(String gameVersion, String selfVersion, Date releaseDate, List<String> url) {
+    public ForgeRemoteVersion(String gameVersion, String selfVersion, Instant releaseDate, List<String> url) {
         super(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), gameVersion, selfVersion, releaseDate, url);
     }
 

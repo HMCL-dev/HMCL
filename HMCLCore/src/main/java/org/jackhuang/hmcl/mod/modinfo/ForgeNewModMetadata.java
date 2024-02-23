@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -32,10 +32,6 @@ public final class ForgeNewModMetadata {
     private final String license;
 
     private final List<Mod> mods;
-
-    public ForgeNewModMetadata() {
-        this("", "", "", "", Collections.emptyList());
-    }
 
     public ForgeNewModMetadata(String modLoader, String loaderVersion, String logoFile, String license, List<Mod> mods) {
         this.modLoader = modLoader;
@@ -120,8 +116,9 @@ public final class ForgeNewModMetadata {
     public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path modstoml = fs.getPath("META-INF/mods.toml");
         if (Files.notExists(modstoml))
-            throw new IOException("File " + modFile + " is not a Forge 1.13+ mod.");
-        ForgeNewModMetadata metadata = new Toml().read(FileUtils.readText(modstoml)).to(ForgeNewModMetadata.class);
+            throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
+        Toml toml = new Toml().read(FileUtils.readText(modstoml));
+        ForgeNewModMetadata metadata = toml.to(ForgeNewModMetadata.class);
         if (metadata == null || metadata.getMods().isEmpty())
             throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
         Mod mod = metadata.getMods().get(0);
@@ -135,9 +132,29 @@ public final class ForgeNewModMetadata {
                 LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile);
             }
         }
-        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), ModLoaderType.FORGE), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
+
+        ModLoaderType modLoaderType = analyzeModLoader(toml, mod.getModId());
+        if (modLoaderType == null) {
+            throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
+        }
+
+        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), modLoaderType), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());
+    }
+
+    private static ModLoaderType analyzeModLoader(Toml toml, String modID) {
+        List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
+        if (dependencies != null) {
+            for (HashMap<String, Object> dependency : dependencies) {
+                switch ((String) dependency.get("modId")) {
+                    case "forge": return ModLoaderType.FORGE;
+                    case "neoforge": return ModLoaderType.NEO_FORGED;
+                }
+            }
+        }
+
+        return null;
     }
 }

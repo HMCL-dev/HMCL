@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -644,11 +644,11 @@ public final class VersionSetting implements Cloneable {
         launcherVisibilityProperty.set(launcherVisibility);
     }
 
-    public Task<JavaVersion> getJavaVersion(VersionNumber gameVersion, Version version) {
+    public Task<JavaVersion> getJavaVersion(GameVersionNumber gameVersion, Version version) {
         return getJavaVersion(gameVersion, version, true);
     }
 
-    public Task<JavaVersion> getJavaVersion(VersionNumber gameVersion, Version version, boolean checkJava) {
+    public Task<JavaVersion> getJavaVersion(GameVersionNumber gameVersion, Version version, boolean checkJava) {
         return Task.runAsync(Schedulers.javafx(), () -> {
             if (StringUtils.isBlank(getJava())) {
                 setJava(StringUtils.isBlank(getJavaDir()) ? "Auto" : "Custom");
