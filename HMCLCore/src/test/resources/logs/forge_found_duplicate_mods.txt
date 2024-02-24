@@ -1,0 +1,79 @@
+[10:41:20] [main/INFO]: ModLauncher running: args [--username, pretentiou, --version, 1.20.1, --gameDir, C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft, --assetsDir, C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\assets, --assetIndex, 5, --uuid, 202b1899ef5247368d9a289c5d2ec63f, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, msa, --versionType, HMCL 3.5.5.235, --width, 854, --height, 480, --launchTarget, forgeclient, --fml.forgeVersion, 47.2.16, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412]
+[10:41:20] [main/INFO]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.8 by Microsoft; OS Windows 10 arch amd64 version 10.0
+[10:41:20] [main/INFO]: Loading ImmediateWindowProvider fmlearlywindow
+[10:41:20] [main/INFO]: Trying GL version 4.6
+[10:41:20] [main/INFO]: Requested GL version 4.6 got version 4.6
+[10:41:21] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/姚资柱/Desktop/新建文件夹/game/.minecraft/libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar%23100!/ Service=ModLauncher Env=CLIENT
+[10:41:21] [pool-2-thread-1/INFO]: GL info: AMD Radeon(TM) Graphics GL version 4.6.13596 Core Profile Forward-Compatible Context 20.10.28.10 27.20.11028.10001, ATI Technologies Inc.
+[10:41:21] [main/INFO]: Found mod file architectury-9.1.13-forge.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file cloth-config-11.1.118-forge.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file create-1.20.1-0.5.1.f.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file ftb-library-forge-2001.1.5.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file ftb-ultimine-forge-2001.1.4.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file Jade-1.20.1-forge-11.7.1.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file jei-1.20.1-forge-15.2.0.27.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file REIPluginCompatibilities-forge-12.0.93.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file RoughlyEnoughItems-12.0.684-forge.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file Xaeros_Minimap_23.9.7_Forge_1.20.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/INFO]: Found mod file XaerosWorldMap_1.37.7_Forge_1.20.jar of type MOD with provider {mods folder locator at C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\mods}
+[10:41:21] [main/WARN]: Mod file C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\libraries\net\minecraftforge\fmlcore\1.20.1-47.2.16\fmlcore-1.20.1-47.2.16.jar is missing mods.toml file
+[10:41:21] [main/WARN]: Mod file C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\libraries\net\minecraftforge\javafmllanguage\1.20.1-47.2.16\javafmllanguage-1.20.1-47.2.16.jar is missing mods.toml file
+[10:41:21] [main/WARN]: Mod file C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\libraries\net\minecraftforge\lowcodelanguage\1.20.1-47.2.16\lowcodelanguage-1.20.1-47.2.16.jar is missing mods.toml file
+[10:41:21] [main/WARN]: Mod file C:\Users\姚资柱\Desktop\新建文件夹\game\.minecraft\libraries\net\minecraftforge\mclanguage\1.20.1-47.2.16\mclanguage-1.20.1-47.2.16.jar is missing mods.toml file
+[10:41:21] [main/INFO]: Found mod file fmlcore-1.20.1-47.2.16.jar of type LIBRARY with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@878537d
+[10:41:21] [main/INFO]: Found mod file javafmllanguage-1.20.1-47.2.16.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@878537d
+[10:41:21] [main/INFO]: Found mod file lowcodelanguage-1.20.1-47.2.16.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@878537d
+[10:41:21] [main/INFO]: Found mod file mclanguage-1.20.1-47.2.16.jar of type LANGPROVIDER with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@878537d
+[10:41:21] [main/INFO]: Found mod file client-1.20.1-20230612.114412-srg.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@878537d
+[10:41:21] [main/INFO]: Found mod file forge-1.20.1-47.2.16-universal.jar of type MOD with provider net.minecraftforge.fml.loading.moddiscovery.MinecraftLocator@878537d
+[10:41:21] [main/ERROR]: Found duplicate mods:
+	Mod ID: 'jei' from mod files: REIPluginCompatibilities-forge-12.0.93.jar, jei-1.20.1-forge-15.2.0.27.jar
+[10:41:21] [main/ERROR]: Failed to build unique mod list after mod discovery.
+net.minecraftforge.fml.loading.EarlyLoadingException: Duplicate mods found
+	at net.minecraftforge.fml.loading.UniqueModListBuilder.buildUniqueList(UniqueModListBuilder.java:87) ~[fmlloader-1.20.1-47.2.16.jar:1.0]
+	at net.minecraftforge.fml.loading.moddiscovery.ModDiscoverer.discoverMods(ModDiscoverer.java:106) ~[fmlloader-1.20.1-47.2.16.jar:?]
+	at net.minecraftforge.fml.loading.FMLLoader.beginModScan(FMLLoader.java:164) ~[fmlloader-1.20.1-47.2.16.jar:1.0]
+	at net.minecraftforge.fml.loading.FMLServiceProvider.beginScanning(FMLServiceProvider.java:86) ~[fmlloader-1.20.1-47.2.16.jar:1.0]
+	at cpw.mods.modlauncher.TransformationServiceDecorator.runScan(TransformationServiceDecorator.java:112) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.lambda$runScanningTransformationServices$8(TransformationServicesHandler.java:100) ~[modlauncher-10.0.9.jar:?]
+	at java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[?:?]
+	at java.util.HashMap$ValueSpliterator.forEachRemaining(HashMap.java:1779) ~[?:?]
+	at java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[?:?]
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[?:?]
+	at java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:575) ~[?:?]
+	at java.util.stream.AbstractPipeline.evaluateToArrayNode(AbstractPipeline.java:260) ~[?:?]
+	at java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:616) ~[?:?]
+	at java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:622) ~[?:?]
+	at java.util.stream.ReferencePipeline.toList(ReferencePipeline.java:627) ~[?:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.runScanningTransformationServices(TransformationServicesHandler.java:102) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:55) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:88) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?]
+[10:41:21] [main/ERROR]: Mod Discovery failed. Skipping dependency discovery.
+Exception in thread "main" java.lang.IllegalStateException: Failed to find system mod: minecraft
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.2.16/net.minecraftforge.fml.loading.ModSorter.detectSystemMods(ModSorter.java:181)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.2.16/net.minecraftforge.fml.loading.ModSorter.buildUniqueList(ModSorter.java:145)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.2.16/net.minecraftforge.fml.loading.ModSorter.sort(ModSorter.java:53)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.2.16/net.minecraftforge.fml.loading.moddiscovery.ModValidator.stage2Validation(ModValidator.java:98)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.2.16/net.minecraftforge.fml.loading.FMLLoader.completeScan(FMLLoader.java:172)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.2.16/net.minecraftforge.fml.loading.FMLServiceProvider.completeScan(FMLServiceProvider.java:91)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.TransformationServiceDecorator.onCompleteScan(TransformationServiceDecorator.java:174)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.TransformationServicesHandler.lambda$triggerScanCompletion$24(TransformationServicesHandler.java:145)
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+	at java.base/java.util.HashMap$ValueSpliterator.forEachRemaining(HashMap.java:1779)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:575)
+	at java.base/java.util.stream.AbstractPipeline.evaluateToArrayNode(AbstractPipeline.java:260)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:616)
+	at java.base/java.util.stream.ReferencePipeline.toArray(ReferencePipeline.java:622)
+	at java.base/java.util.stream.ReferencePipeline.toList(ReferencePipeline.java:627)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.TransformationServicesHandler.triggerScanCompletion(TransformationServicesHandler.java:147)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.run(Launcher.java:95)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.main(Launcher.java:78)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.1.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141)

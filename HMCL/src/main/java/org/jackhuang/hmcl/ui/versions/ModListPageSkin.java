@@ -223,7 +223,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.contains(lowerQueryString);
+                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?

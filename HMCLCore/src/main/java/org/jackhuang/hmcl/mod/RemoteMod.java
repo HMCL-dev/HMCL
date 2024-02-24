@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 
 import java.io.IOException;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -218,14 +218,14 @@ public class RemoteMod {
         private final String name;
         private final String version;
         private final String changelog;
-        private final Date datePublished;
+        private final Instant datePublished;
         private final VersionType versionType;
         private final File file;
         private final List<Dependency> dependencies;
         private final List<String> gameVersions;
         private final List<ModLoaderType> loaders;
 
-        public Version(IVersion self, String modid, String name, String version, String changelog, Date datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
             this.self = self;
             this.modid = modid;
             this.name = name;
@@ -259,7 +259,7 @@ public class RemoteMod {
             return changelog;
         }
 
-        public Date getDatePublished() {
+        public Instant getDatePublished() {
             return datePublished;
         }
 

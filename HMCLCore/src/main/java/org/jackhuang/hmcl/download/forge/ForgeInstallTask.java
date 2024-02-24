@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -100,7 +100,7 @@ public final class ForgeInstallTask extends Task<Version> {
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
-        if (VersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
+        if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
             if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass)
                     && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass)

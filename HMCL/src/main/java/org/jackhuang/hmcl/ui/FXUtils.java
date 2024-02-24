@@ -907,7 +907,9 @@ public final class FXUtils {
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        Controllers.showToast(i18n("message.copied"));
+        if (!Controllers.isStopped()) {
+            Controllers.showToast(i18n("message.copied"));
+        }
     }
 
     public static List<Node> parseSegment(String segment, Consumer<String> hyperlinkAction) {
