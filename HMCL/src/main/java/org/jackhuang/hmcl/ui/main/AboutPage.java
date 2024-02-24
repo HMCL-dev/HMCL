@@ -61,13 +61,19 @@ public class AboutPage extends StackPane {
             bangbang93.setTitle("bangbang93");
             bangbang93.setSubtitle(i18n("about.thanks_to.bangbang93.statement"));
             bangbang93.setExternalLink("https://bmclapi2.bangbang93.com/");
-            
+
             IconedTwoLineListItem glavo = new IconedTwoLineListItem();
             glavo.setImage(FXUtils.newBuiltinImage("/assets/img/glavo.png"));
             glavo.setTitle("Glavo");
             glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
             glavo.setExternalLink("https://github.com/Glavo");
-            
+
+            IconedTwoLineListItem zekerzhayard = new IconedTwoLineListItem();
+            zekerzhayard.setImage(FXUtils.newBuiltinImage("/assets/img/zekerzhayard.png"));
+            zekerzhayard.setTitle("ZekerZhayard");
+            zekerzhayard.setSubtitle(i18n("about.thanks_to.zekerzhayard.statement"));
+            zekerzhayard.setExternalLink("https://github.com/ZekerZhayard");
+
             IconedTwoLineListItem zkitefly = new IconedTwoLineListItem();
             zkitefly.setImage(FXUtils.newBuiltinImage("/assets/img/zkitefly.png"));
             zkitefly.setTitle("Zkitefly");
@@ -109,7 +115,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zkitefly, /* mcbbs, */ mcmod, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, /* mcbbs, */ mcmod, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();
