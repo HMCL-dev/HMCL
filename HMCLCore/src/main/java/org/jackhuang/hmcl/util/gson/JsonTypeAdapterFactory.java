@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JsonTypeAdapterFactory implements TypeAdapterFactory {
+public final class JsonTypeAdapterFactory implements TypeAdapterFactory {
 
     public static final JsonTypeAdapterFactory INSTANCE = new JsonTypeAdapterFactory();
 

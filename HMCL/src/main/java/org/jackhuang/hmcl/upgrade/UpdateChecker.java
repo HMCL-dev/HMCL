@@ -32,13 +32,12 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.versioning.VersionNumber.asVersion;
 
 public final class UpdateChecker {
     private UpdateChecker() {}
 
-    private static ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
-    private static BooleanBinding outdated = Bindings.createBooleanBinding(
+    private static final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>();
+    private static final BooleanBinding outdated = Bindings.createBooleanBinding(
             () -> {
                 RemoteVersion latest = latestVersion.get();
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
@@ -46,11 +45,11 @@ public final class UpdateChecker {
                 } else {
                     // We can update from development version to stable version,
                     // which can be downgrading.
-                    return asVersion(latest.getVersion()).compareTo(asVersion(Metadata.VERSION)) != 0;
+                    return !latest.getVersion().equals(Metadata.VERSION);
                 }
             },
             latestVersion);
-    private static ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+    private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel());
@@ -81,11 +80,11 @@ public final class UpdateChecker {
     }
 
     private static RemoteVersion checkUpdate(UpdateChannel channel) throws IOException {
-        if (!IntegrityChecker.isSelfVerified() && !"true".equals(System.getProperty("hmcl.self_integrity_check.disable"))) {
+        if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new IOException("Self verification failed");
         }
 
-        String url = NetworkUtils.withQuery(Metadata.UPDATE_URL, mapOf(
+        String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, mapOf(
                 pair("version", Metadata.VERSION),
                 pair("channel", channel.channelName)));
 

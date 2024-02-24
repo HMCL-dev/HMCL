@@ -35,10 +35,8 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.game.GameVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -58,8 +56,8 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -77,6 +75,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean versionSelection;
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
+    private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
+    private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
     private final ListProperty<RemoteMod> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ObservableList<String> versions = FXCollections.observableArrayList();
     private final StringProperty selectedVersion = new SimpleStringProperty();
@@ -154,34 +154,39 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.loading.set(loading);
     }
 
+    public void selectVersion(String versionID) {
+        FXUtils.runInFX(() -> selectedVersion.set(versionID));
+    }
+
     public void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
         retrySearch = null;
         setLoading(true);
         setFailed(false);
-        File versionJar = StringUtils.isNotBlank(version.get().getVersion())
-                ? version.get().getProfile().getRepository().getVersionJar(version.get().getVersion())
-                : null;
+
         if (executor != null && !executor.isCancelled()) {
             executor.cancel();
         }
 
         executor = Task.supplyAsync(() -> {
-            String gameVersion;
-            if (StringUtils.isBlank(version.get().getVersion())) {
-                gameVersion = userGameVersion;
+            Profile.ProfileVersion version = this.version.get();
+            if (StringUtils.isBlank(version.getVersion())) {
+                return userGameVersion;
             } else {
-                gameVersion = GameVersion.minecraftVersion(versionJar).orElse("");
+                return StringUtils.isNotBlank(version.getVersion())
+                        ? version.getProfile().getRepository().getGameVersion(version.getVersion()).orElse("")
+                        : "";
             }
-            return gameVersion;
-        }).thenApplyAsync(gameVersion -> {
-            return repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).thenApplyAsync(gameVersion ->
+                repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
+        ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             setLoading(false);
             if (exception == null) {
-                items.setAll(result.collect(Collectors.toList()));
+                items.setAll(result.getResults().collect(Collectors.toList()));
+                pageCount.set(result.getTotalPages());
                 failed.set(false);
             } else {
                 failed.set(true);
+                pageCount.set(-1);
                 retrySearch = () -> search(userGameVersion, category, pageOffset, searchFilter, sort);
             }
         }).executor(true);
@@ -221,8 +226,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
-        private final AggregatedObservableList<Node> actions = new AggregatedObservableList<>();
-
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
@@ -290,7 +293,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 JFXComboBox<String> gameVersionField = new JFXComboBox<>();
                 gameVersionField.setMaxWidth(Double.MAX_VALUE);
                 gameVersionField.setEditable(true);
-                gameVersionField.getItems().setAll(RemoteModRepository.DEFAULT_GAME_VERSIONS);
+                gameVersionField.getItems().setAll(GameVersionNumber.getDefaultGameVersions());
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
@@ -341,25 +344,90 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortComboBox.getSelectionModel().select(0);
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
-                JFXButton searchButton = FXUtils.newRaisedButton(i18n("search"));
-                ObservableList<Node> last = FXCollections.observableArrayList(searchButton);
-                HBox searchBox = new HBox(8);
-                actions.appendList(control.actions);
-                actions.appendList(last);
-                Bindings.bindContent(searchBox.getChildren(), actions.getAggregatedList());
-                GridPane.setColumnSpan(searchBox, 4);
-                searchBox.setAlignment(Pos.CENTER_RIGHT);
-                searchPane.addRow(rowIndex++, searchBox);
+                StringProperty previousSearchFilter = new SimpleStringProperty(this, "Previous Seach Filter", "");
+                EventHandler<ActionEvent> searchAction = e -> {
+                    if (!previousSearchFilter.get().equals(nameField.getText())) {
+                        control.pageOffset.set(0);
+                    }
 
-                EventHandler<ActionEvent> searchAction = e -> getSkinnable()
-                        .search(gameVersionField.getSelectionModel().getSelectedItem(),
-                                Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
-                                        .map(CategoryIndented::getCategory)
-                                        .orElse(null),
-                                0,
-                                nameField.getText(),
-                                sortComboBox.getSelectionModel().getSelectedItem());
-                searchButton.setOnAction(searchAction);
+                    previousSearchFilter.set(nameField.getText());
+                    getSkinnable().search(gameVersionField.getSelectionModel().getSelectedItem(),
+                            Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
+                                    .map(CategoryIndented::getCategory)
+                                    .orElse(null),
+                            control.pageOffset.get(),
+                            nameField.getText(),
+                            sortComboBox.getSelectionModel().getSelectedItem());
+                };
+
+                HBox actionsBox = new HBox(8);
+                GridPane.setColumnSpan(actionsBox, 4);
+                actionsBox.setAlignment(Pos.CENTER);
+                {
+                    AggregatedObservableList<Node> actions = new AggregatedObservableList<>();
+
+                    JFXButton firstPageButton = FXUtils.newBorderButton(i18n("search.first_page"));
+                    firstPageButton.setOnAction(event -> {
+                        control.pageOffset.set(0);
+                        searchAction.handle(event);
+                    });
+                    firstPageButton.setDisable(true);
+                    control.pageCount.addListener((observable, oldValue, newValue) -> firstPageButton.setDisable(control.pageCount.get() == -1));
+
+                    JFXButton previousPageButton = FXUtils.newBorderButton(i18n("search.previous_page"));
+                    previousPageButton.setOnAction(event -> {
+                        if (control.pageOffset.get() > 0) {
+                            control.pageOffset.set(control.pageOffset.get() - 1);
+                            searchAction.handle(event);
+                        }
+                    });
+                    previousPageButton.setDisable(true);
+                    control.pageOffset.addListener((observable, oldValue, newValue) -> previousPageButton.setDisable(
+                            control.pageCount.get() == -1 || control.pageOffset.get() == 0
+                    ));
+
+                    Label pageOffset = new Label(i18n("search.page_n", 0, "-"));
+                    control.pageOffset.addListener((observable, oldValue, newValue) -> pageOffset.setText(i18n(
+                            "search.page_n", control.pageOffset.get() + 1, control.pageCount.get() == -1 ? "-" : control.pageCount.getValue().toString()
+                    )));
+                    control.pageCount.addListener((observable, oldValue, newValue) -> pageOffset.setText(i18n(
+                            "search.page_n", control.pageOffset.get() + 1, control.pageCount.get() == -1 ? "-" : control.pageCount.getValue().toString()
+                    )));
+
+                    JFXButton nextPageButton = FXUtils.newBorderButton(i18n("search.next_page"));
+                    nextPageButton.setOnAction(event -> {
+                        control.pageOffset.set(control.pageOffset.get() + 1);
+                        searchAction.handle(event);
+                    });
+                    nextPageButton.setDisable(true);
+                    control.pageOffset.addListener((observable, oldValue, newValue) -> nextPageButton.setDisable(
+                            control.pageCount.get() == -1 || control.pageOffset.get() >= control.pageCount.get() - 1
+                    ));
+                    control.pageCount.addListener((observable, oldValue, newValue) -> nextPageButton.setDisable(
+                            control.pageCount.get() == -1 || control.pageOffset.get() >= control.pageCount.get() - 1
+                    ));
+
+                    JFXButton lastPageButton = FXUtils.newBorderButton(i18n("search.last_page"));
+                    lastPageButton.setOnAction(event -> {
+                        control.pageOffset.set(control.pageCount.get() - 1);
+                        searchAction.handle(event);
+                    });
+                    lastPageButton.setDisable(true);
+                    control.pageCount.addListener((observable, oldValue, newValue) -> lastPageButton.setDisable(control.pageCount.get() == -1));
+
+                    Pane placeholder = new Pane();
+                    HBox.setHgrow(placeholder, Priority.SOMETIMES);
+
+                    JFXButton searchButton = FXUtils.newRaisedButton(i18n("search"));
+                    searchButton.setOnAction(searchAction);
+
+                    actions.appendList(FXCollections.observableArrayList(firstPageButton, previousPageButton, pageOffset, nextPageButton, lastPageButton, placeholder, searchButton));
+                    actions.appendList(control.actions);
+                    Bindings.bindContent(actionsBox.getChildren(), actions.getAggregatedList());
+                }
+
+                searchPane.addRow(rowIndex++, actionsBox);
+
                 nameField.setOnAction(searchAction);
                 gameVersionField.setOnAction(searchAction);
                 categoryComboBox.setOnAction(searchAction);
@@ -402,6 +470,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         pane.getChildren().add(container);
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
+                        HBox.setHgrow(content, Priority.ALWAYS);
                     }
 
                     @Override
@@ -415,7 +484,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .collect(Collectors.toList()));
 
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.setImage(new Image(dataItem.getIconUrl(), 40, 40, true, true, true));
+                            imageView.setImage(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true, true));
                         }
                     }
                 });

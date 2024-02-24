@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 
 import java.io.IOException;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -101,6 +101,92 @@ public class RemoteMod {
         Alpha
     }
 
+    public enum DependencyType {
+        REQUIRED,
+        OPTIONAL,
+        TOOL,
+        INCLUDE,
+        EMBEDDED,
+        INCOMPATIBLE,
+        BROKEN
+    }
+
+    public static final class Dependency {
+        private static Dependency BROKEN_DEPENDENCY = null;
+
+        private final DependencyType type;
+
+        private final RemoteModRepository remoteModRepository;
+
+        private final String id;
+
+        private transient RemoteMod remoteMod = null;
+
+        private Dependency(DependencyType type, RemoteModRepository remoteModRepository, String modid) {
+            this.type = type;
+            this.remoteModRepository = remoteModRepository;
+            this.id = modid;
+        }
+
+        public static Dependency ofGeneral(DependencyType type, RemoteModRepository remoteModRepository, String modid) {
+            if (type == DependencyType.BROKEN) {
+                return ofBroken();
+            } else {
+                return new Dependency(type, remoteModRepository, modid);
+            }
+        }
+
+        public static Dependency ofBroken() {
+            if (BROKEN_DEPENDENCY == null) {
+                BROKEN_DEPENDENCY = new Dependency(DependencyType.BROKEN, null, null);
+            }
+            return BROKEN_DEPENDENCY;
+        }
+
+        public DependencyType getType() {
+            return this.type;
+        }
+
+        public RemoteModRepository getRemoteModRepository() {
+            return this.remoteModRepository;
+        }
+
+        public String getId() {
+            return this.id;
+        }
+
+        public RemoteMod load() throws IOException {
+            if (this.remoteMod == null) {
+                if (this.type == DependencyType.BROKEN) {
+                    this.remoteMod = RemoteMod.getEmptyRemoteMod();
+                } else {
+                    this.remoteMod = this.remoteModRepository.getModById(this.id);
+                }
+            }
+            return this.remoteMod;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Dependency that = (Dependency) o;
+
+            if (type != that.type) return false;
+            if (!remoteModRepository.equals(that.remoteModRepository)) return false;
+            return id.equals(that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = type.hashCode();
+            result = 31 * result + remoteModRepository.hashCode();
+            result = 31 * result + id.hashCode();
+            return result;
+        }
+    }
+
     public enum Type {
         CURSEFORGE(CurseForgeRemoteModRepository.MODS),
         MODRINTH(ModrinthRemoteModRepository.MODS);
@@ -132,14 +218,14 @@ public class RemoteMod {
         private final String name;
         private final String version;
         private final String changelog;
-        private final Date datePublished;
+        private final Instant datePublished;
         private final VersionType versionType;
         private final File file;
-        private final List<String> dependencies;
+        private final List<Dependency> dependencies;
         private final List<String> gameVersions;
         private final List<ModLoaderType> loaders;
 
-        public Version(IVersion self, String modid, String name, String version, String changelog, Date datePublished, VersionType versionType, File file, List<String> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
             this.self = self;
             this.modid = modid;
             this.name = name;
@@ -173,7 +259,7 @@ public class RemoteMod {
             return changelog;
         }
 
-        public Date getDatePublished() {
+        public Instant getDatePublished() {
             return datePublished;
         }
 
@@ -185,7 +271,7 @@ public class RemoteMod {
             return file;
         }
 
-        public List<String> getDependencies() {
+        public List<Dependency> getDependencies() {
             return dependencies;
         }
 

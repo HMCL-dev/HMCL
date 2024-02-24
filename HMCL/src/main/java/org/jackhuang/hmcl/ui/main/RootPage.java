@@ -39,22 +39,28 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
+import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.ui.nbt.NBTHelper;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -85,12 +91,24 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     public MainPage getMainPage() {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
-            FXUtils.applyDragListener(mainPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-                File modpack = modpacks.get(0);
-                Controllers.getDecorator().startWizard(
-                        new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack),
-                        i18n("install.modpack"));
-            });
+            FXUtils.applyDragListener(mainPage,
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTHelper.isNBTFileByExtension(file),
+                    modpacks -> {
+                        File file = modpacks.get(0);
+                        if (ModpackHelper.isFileModpackByExtension(file)) {
+                            Controllers.getDecorator().startWizard(
+                                    new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
+                                    i18n("install.modpack"));
+                        } else if (NBTHelper.isNBTFileByExtension(file)) {
+                            try {
+                                Controllers.navigate(new NBTEditorPage(file));
+                            } catch (Throwable e) {
+                                LOG.log(Level.WARNING, "Fail to open nbt file", e);
+                                Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
+                                        i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        }
+                    });
 
             FXUtils.onChangeAndOperate(Profiles.selectedVersionProperty(), mainPage::setCurrentGame);
             mainPage.showUpdateProperty().bind(UpdateChecker.outdatedProperty());
@@ -101,9 +119,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L)
-                                        : version.getReleaseTime())
-                                .thenComparing(a -> VersionNumber.asVersion(a.getId())))
+                                .comparing((Version version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
+                                .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
                     if (profile == Profiles.getSelectedProfile())
@@ -139,14 +156,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG::viewList));
+            gameItem.setLeftGraphic(wrap(SVG.VIEW_LIST));
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG::downloadOutline));
+            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD_OUTLINE));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
@@ -154,7 +171,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // fifth item in left sidebar
             AdvancedListItem multiplayerItem = new AdvancedListItem();
-            multiplayerItem.setLeftGraphic(wrap(SVG::lan));
+            multiplayerItem.setLeftGraphic(wrap(SVG.LAN));
             multiplayerItem.setActionButtonVisible(false);
             multiplayerItem.setTitle(i18n("multiplayer"));
             JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
@@ -167,7 +184,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG::gearOutline));
+            launcherSettingsItem.setLeftGraphic(wrap(SVG.GEAR_OUTLINE));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));

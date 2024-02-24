@@ -19,14 +19,13 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.logging.*;
 
 /**
@@ -60,10 +59,11 @@ public final class Logging {
         LOG.setLevel(Level.ALL);
         LOG.setUseParentHandlers(false);
         LOG.setFilter(record -> {
-            record.setMessage(filterForbiddenToken(record.getMessage()));
+            record.setMessage(format(record));
             return true;
         });
 
+        DefaultFormatter formatter = new DefaultFormatter();
         try {
             if (Files.isRegularFile(logFolder))
                 Files.delete(logFolder);
@@ -71,7 +71,7 @@ public final class Logging {
             Files.createDirectories(logFolder);
             FileHandler fileHandler = new FileHandler(logFolder.resolve("hmcl.log").toAbsolutePath().toString());
             fileHandler.setLevel(Level.FINEST);
-            fileHandler.setFormatter(DefaultFormatter.INSTANCE);
+            fileHandler.setFormatter(formatter);
             fileHandler.setEncoding("UTF-8");
             LOG.addHandler(fileHandler);
         } catch (IOException e) {
@@ -79,11 +79,11 @@ public final class Logging {
         }
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
+        consoleHandler.setFormatter(formatter);
         consoleHandler.setLevel(Level.FINER);
         LOG.addHandler(consoleHandler);
 
-        StreamHandler streamHandler = new StreamHandler(storedLogs, DefaultFormatter.INSTANCE) {
+        StreamHandler streamHandler = new StreamHandler(storedLogs, formatter) {
             @Override
             public synchronized void publish(LogRecord record) {
                 super.publish(record);
@@ -104,7 +104,7 @@ public final class Logging {
         LOG.setUseParentHandlers(false);
 
         ConsoleHandler consoleHandler = new ConsoleHandler();
-        consoleHandler.setFormatter(DefaultFormatter.INSTANCE);
+        consoleHandler.setFormatter(new DefaultFormatter());
         consoleHandler.setLevel(Level.FINER);
         LOG.addHandler(consoleHandler);
     }
@@ -121,23 +121,45 @@ public final class Logging {
         }
     }
 
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
+
+    private static String format(LogRecord record) {
+        String message = filterForbiddenToken(record.getMessage());
+
+        StringBuilder builder = new StringBuilder(128 + message.length());
+        builder.append('[');
+        TIME_FORMATTER.formatTo(Instant.ofEpochMilli(record.getMillis()), builder);
+        builder.append(']');
+
+        builder.append(" [")
+                .append(record.getSourceClassName())
+                .append('.')
+                .append(record.getSourceMethodName())
+                .append('/')
+                .append(record.getLevel().getName())
+                .append("] ")
+                .append(message)
+                .append('\n');
+
+
+        Throwable thrown = record.getThrown();
+        if (thrown == null) {
+            return builder.toString();
+        } else {
+            StringWriter writer = new StringWriter(builder.length() + 2048);
+            writer.getBuffer().append(builder);
+            try (PrintWriter printWriter = new PrintWriter(writer)) {
+                thrown.printStackTrace(printWriter);
+            }
+
+            return writer.toString();
+        }
+    }
+
     private static final class DefaultFormatter extends Formatter {
-
-        static final DefaultFormatter INSTANCE = new DefaultFormatter();
-        private static final MessageFormat format = new MessageFormat("[{0,date,HH:mm:ss}] [{1}.{2}/{3}] {4}\n");
-
         @Override
         public String format(LogRecord record) {
-            String log = format.format(new Object[]{
-                    new Date(record.getMillis()),
-                    record.getSourceClassName(), record.getSourceMethodName(), record.getLevel().getName(),
-                    record.getMessage()
-            }, new StringBuffer(128), null).toString();
-            if (record.getThrown() != null)
-                log += StringUtils.getStackTrace(record.getThrown());
-
-            return log;
+            return record.getMessage();
         }
-
     }
 }

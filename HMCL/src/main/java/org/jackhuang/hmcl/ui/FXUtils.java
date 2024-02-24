@@ -31,10 +31,10 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.*;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
@@ -46,7 +46,11 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.png.PNGType;
+import org.glavo.png.PNGWriter;
+import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Holder;
@@ -74,11 +78,11 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -94,7 +98,23 @@ public final class FXUtils {
     private FXUtils() {
     }
 
-    public static String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+    public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+
+    private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
+    private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
+
+    public static void shutdown() {
+        for (Map.Entry<String, Path> entry : remoteImageCache.entrySet()) {
+            try {
+                Files.deleteIfExists(entry.getValue());
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", entry.getValue()), e);
+            }
+            remoteImageCache.remove(entry.getKey());
+        }
+
+        builtinImageCache.clear();
+    }
 
     public static void runInFX(Runnable runnable) {
         if (Platform.isFxApplicationThread()) {
@@ -359,7 +379,7 @@ public final class FXUtils {
             openCommand = "explorer.exe";
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             openCommand = "/usr/bin/open";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && new File("/usr/bin/xdg-open").exists())
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -449,7 +469,8 @@ public final class FXUtils {
                 } catch (Throwable e) {
                     LOG.log(Level.WARNING, "An exception occurred while calling rundll32", e);
                 }
-            } if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            }
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
                     try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
                         if (is.read() != -1) {
@@ -663,17 +684,123 @@ public final class FXUtils {
      * @see org.jackhuang.hmcl.util.CrashReporter
      * @see ResourceNotFoundError
      */
-    public static Image newImage(String url) {
+    public static Image newBuiltinImage(String url) {
         try {
-            return new Image(url);
+            return builtinImageCache.computeIfAbsent(url, Image::new);
         } catch (IllegalArgumentException e) {
             throw new ResourceNotFoundError("Cannot access image: " + url, e);
         }
     }
 
+    /**
+     * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
+     *
+     * @param url             the url of image. The image resource should be a file within the jar.
+     * @param requestedWidth  the image's bounding box width
+     * @param requestedHeight the image's bounding box height
+     * @param preserveRatio   indicates whether to preserve the aspect ratio of
+     *                        the original image when scaling to fit the image within the
+     *                        specified bounding box
+     * @param smooth          indicates whether to use a better quality filtering
+     *                        algorithm or a faster one when scaling this image to fit within
+     *                        the specified bounding box
+     * @return the image resource within the jar.
+     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see ResourceNotFoundError
+     */
+    public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        try {
+            return new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth);
+        } catch (IllegalArgumentException e) {
+            throw new ResourceNotFoundError("Cannot access image: " + url, e);
+        }
+    }
+
+    /**
+     * Load image from the internet. It will cache the data of images for the further usage.
+     * The cached data will be deleted when HMCL is closed or hidden.
+     *
+     * @param url the url of image. The image resource should be a file on the internet.
+     * @return the image resource within the jar.
+     */
+    public static Image newRemoteImage(String url) {
+        return newRemoteImage(url, 0, 0, false, false, false);
+    }
+
+    /**
+     * Load image from the internet. It will cache the data of images for the further usage.
+     * The cached data will be deleted when HMCL is closed or hidden.
+     *
+     * @param url             the url of image. The image resource should be a file on the internet.
+     * @param requestedWidth  the image's bounding box width
+     * @param requestedHeight the image's bounding box height
+     * @param preserveRatio   indicates whether to preserve the aspect ratio of
+     *                        the original image when scaling to fit the image within the
+     *                        specified bounding box
+     * @param smooth          indicates whether to use a better quality filtering
+     *                        algorithm or a faster one when scaling this image to fit within
+     *                        the specified bounding box
+     * @return the image resource within the jar.
+     */
+    public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
+        Path currentPath = remoteImageCache.get(url);
+        if (currentPath != null) {
+            if (Files.isReadable(currentPath)) {
+                try (InputStream inputStream = Files.newInputStream(currentPath)) {
+                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
+                } catch (IOException e) {
+                    LOG.log(Level.WARNING, "An exception encountered while reading data from cached image file.", e);
+                }
+            }
+
+            // The file is unavailable or unreadable.
+            remoteImageCache.remove(url);
+
+            try {
+                Files.deleteIfExists(currentPath);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "An exception encountered while deleting broken cached image file.", e);
+            }
+        }
+
+        Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
+        image.progressProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
+                Task.runAsync(() -> {
+                    Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
+                    try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
+                            OutputStream outputStream = Files.newOutputStream(newPath);
+                            PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
+                    ) {
+                        writer.write(PNGJavaFXUtils.asArgbImage(image));
+                    } catch (IOException e) {
+                        try {
+                            Files.delete(newPath);
+                        } catch (IOException e2) {
+                            e2.addSuppressed(e);
+                            throw e2;
+                        }
+                        throw e;
+                    }
+                    if (remoteImageCache.putIfAbsent(url, newPath) != null) {
+                        Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
+                    }
+                }).start();
+            }
+        });
+        return image;
+    }
+
     public static JFXButton newRaisedButton(String text) {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-raised");
+        button.setButtonType(JFXButton.ButtonType.RAISED);
+        return button;
+    }
+
+    public static JFXButton newBorderButton(String text) {
+        JFXButton button = new JFXButton(text);
+        button.getStyleClass().add("jfx-button-border");
         button.setButtonType(JFXButton.ButtonType.RAISED);
         return button;
     }
@@ -766,13 +893,6 @@ public final class FXUtils {
         }
     };
 
-    public static Runnable withJFXPopupClosing(Runnable runnable, JFXPopup popup) {
-        return () -> {
-            runnable.run();
-            popup.hide();
-        };
-    }
-
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -787,7 +907,9 @@ public final class FXUtils {
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        Controllers.showToast(i18n("message.copied"));
+        if (!Controllers.isStopped()) {
+            Controllers.showToast(i18n("message.copied"));
+        }
     }
 
     public static List<Node> parseSegment(String segment, Consumer<String> hyperlinkAction) {

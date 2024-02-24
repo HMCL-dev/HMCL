@@ -17,96 +17,90 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.google.gson.Gson;
 import org.jackhuang.hmcl.util.StringUtils;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Logging.LOG;
 
 final class ConfigUpgrader {
-    private static final int VERSION = 0;
-
     private ConfigUpgrader() {
     }
 
+    private static final int CURRENT_VERSION = 2;
+
     /**
-     * This method is for the compatibility with old HMCL 3.x as well as HMCL 2.x.
+     * This method is for the compatibility with old HMCL versions.
      *
      * @param deserialized deserialized config settings
-     * @param rawJson      raw json structure of the config settings without modification
-     * @return true if config version is upgraded
+     * @param rawContent   raw json content of the config settings without modification
      */
-    static boolean upgradeConfig(Config deserialized, Map<?, ?> rawJson) {
-        boolean upgraded;
-        if (deserialized.getConfigVersion() < VERSION) {
-            deserialized.setConfigVersion(VERSION);
-            // TODO: Add upgrade code here.
-            upgraded = true;
-        } else {
-            upgraded = false;
+    static void upgradeConfig(Config deserialized, String rawContent) {
+        int configVersion = deserialized.getConfigVersion();
+
+        if (configVersion == CURRENT_VERSION) {
+            return;
         }
 
-        upgradeV2(deserialized, rawJson);
-        upgradeV3(deserialized, rawJson);
+        if (configVersion > CURRENT_VERSION) {
+            LOG.log(Level.WARNING, String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", CURRENT_VERSION, configVersion));
+            deserialized.setConfigVersion(CURRENT_VERSION);
+            return;
+        }
 
-        return upgraded;
-    }
+        LOG.log(Level.INFO, String.format("Updating configuration from %d to %d.", configVersion, CURRENT_VERSION));
+        Map<?, ?> rawJson = Collections.unmodifiableMap(new Gson().<Map<?, ?>>fromJson(rawContent, Map.class));
 
-    /**
-     * Upgrade configuration of HMCL 2.x
-     *
-     * @param deserialized deserialized config settings
-     * @param rawJson      raw json structure of the config settings without modification
-     */
-    private static void upgradeV2(Config deserialized, Map<?, ?> rawJson) {
-        // Convert OfflineAccounts whose stored uuid is important.
-        tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
-            tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
-                String selected = rawJson.containsKey("selectedAccount") ? null
-                        : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
+        if (configVersion < 1) {
+            // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
+            tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
+                tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
+                    String selected = rawJson.containsKey("selectedAccount") ? null
+                            : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
 
-                tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> {
-                    ((Map<?, ?>) uuidMap).forEach((key, value) -> {
-                        Map<Object, Object> storage = new HashMap<>();
-                        storage.put("type", "offline");
-                        storage.put("username", key);
-                        storage.put("uuid", value);
-                        if (key.equals(selected)) {
-                            storage.put("selected", true);
-                        }
-                        deserialized.getAccountStorages().add(storage);
+                    tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> {
+                        ((Map<?, ?>) uuidMap).forEach((key, value) -> {
+                            Map<Object, Object> storage = new HashMap<>();
+                            storage.put("type", "offline");
+                            storage.put("username", key);
+                            storage.put("uuid", value);
+                            if (key.equals(selected)) {
+                                storage.put("selected", true);
+                            }
+                            deserialized.getAccountStorages().add(storage);
+                        });
                     });
                 });
             });
-        });
-    }
 
-    /**
-     * Upgrade configuration of HMCL earlier than 3.1.70
-     *
-     * @param deserialized deserialized config settings
-     * @param rawJson      raw json structure of the config settings without modification
-     */
-    private static void upgradeV3(Config deserialized, Map<?, ?> rawJson) {
-        if (!rawJson.containsKey("commonDirType"))
-            deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
-        if (!rawJson.containsKey("backgroundType"))
-            deserialized.setBackgroundImageType(StringUtils.isNotBlank(deserialized.getBackgroundImage()) ? EnumBackgroundImage.CUSTOM : EnumBackgroundImage.DEFAULT);
-        if (!rawJson.containsKey("hasProxy"))
-            deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
-        if (!rawJson.containsKey("hasProxyAuth"))
-            deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
+            // Upgrade configuration of HMCL earlier than 3.1.70
+            if (!rawJson.containsKey("commonDirType"))
+                deserialized.setCommonDirType(deserialized.getCommonDirectory().equals(Settings.getDefaultCommonDirectory()) ? EnumCommonDirectory.DEFAULT : EnumCommonDirectory.CUSTOM);
+            if (!rawJson.containsKey("backgroundType"))
+                deserialized.setBackgroundImageType(StringUtils.isNotBlank(deserialized.getBackgroundImage()) ? EnumBackgroundImage.CUSTOM : EnumBackgroundImage.DEFAULT);
+            if (!rawJson.containsKey("hasProxy"))
+                deserialized.setHasProxy(StringUtils.isNotBlank(deserialized.getProxyHost()));
+            if (!rawJson.containsKey("hasProxyAuth"))
+                deserialized.setHasProxyAuth(StringUtils.isNotBlank(deserialized.getProxyUser()));
 
-        if (!rawJson.containsKey("downloadType")) {
-            tryCast(rawJson.get("downloadtype"), Number.class)
-                    .map(Number::intValue)
-                    .ifPresent(id -> {
-                        if (id == 0) {
-                            deserialized.setDownloadType("mojang");
-                        } else if (id == 1) {
-                            deserialized.setDownloadType("bmclapi");
-                        }
-                    });
+            if (!rawJson.containsKey("downloadType")) {
+                tryCast(rawJson.get("downloadtype"), Number.class)
+                        .map(Number::intValue)
+                        .ifPresent(id -> {
+                            if (id == 0) {
+                                deserialized.setDownloadType("mojang");
+                            } else if (id == 1) {
+                                deserialized.setDownloadType("bmclapi");
+                            }
+                        });
+            }
         }
+
+        deserialized.setConfigVersion(CURRENT_VERSION);
     }
 }

@@ -24,21 +24,20 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
@@ -51,10 +50,7 @@ import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
-import org.jackhuang.hmcl.util.FutureCallback;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
@@ -65,11 +61,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.*;
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
+import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
+    public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
+    public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
+    private static DoubleProperty stageX = new SimpleDoubleProperty();
+    private static DoubleProperty stageY = new SimpleDoubleProperty();
     private static DoubleProperty stageWidth = new SimpleDoubleProperty();
     private static DoubleProperty stageHeight = new SimpleDoubleProperty();
 
@@ -146,6 +147,14 @@ public final class Controllers {
 
     public static void onApplicationStop() {
         stageSizeChangeListener = null;
+        if (stageX != null) {
+            config().setX(stageX.get() / SCREEN.getBounds().getWidth());
+            stageX = null;
+        }
+        if (stageY != null) {
+            config().setY(stageY.get() / SCREEN.getBounds().getHeight());
+            stageY = null;
+        }
         if (stageHeight != null) {
             config().setHeight(stageHeight.get());
             stageHeight = null;
@@ -163,7 +172,28 @@ public final class Controllers {
 
         stageSizeChangeListener = o -> {
             ReadOnlyDoubleProperty sourceProperty = (ReadOnlyDoubleProperty) o;
-            DoubleProperty targetProperty = "width".equals(sourceProperty.getName()) ? stageWidth : stageHeight;
+            DoubleProperty targetProperty;
+            switch (sourceProperty.getName()) {
+                case "x": {
+                    targetProperty = stageX;
+                    break;
+                }
+                case "y": {
+                    targetProperty = stageY;
+                    break;
+                }
+                case "width": {
+                    targetProperty = stageWidth;
+                    break;
+                }
+                case "height": {
+                    targetProperty = stageHeight;
+                    break;
+                }
+                default: {
+                    targetProperty = null;
+                }
+            }
 
             if (targetProperty != null
                     && Controllers.stage != null
@@ -174,13 +204,41 @@ public final class Controllers {
 
         WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
 
-        double initHeight = config().getHeight();
-        double initWidth = config().getWidth();
+        double initWidth = Math.max(MIN_WIDTH, config().getWidth());
+        double initHeight = Math.max(MIN_HEIGHT, config().getHeight());
+
+        {
+            double initX = config().getX() * SCREEN.getBounds().getWidth();
+            double initY = config().getY() * SCREEN.getBounds().getHeight();
+
+            boolean invalid = true;
+            double border = 20D;
+            for (Screen screen : Screen.getScreens()) {
+                Rectangle2D bound = screen.getBounds();
+
+                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY && initY <= bound.getMaxY() - border) {
+                    invalid = false;
+                    break;
+                }
+            }
+
+            if (invalid) {
+                initX = (0.5D - initWidth / SCREEN.getBounds().getWidth() / 2) * SCREEN.getBounds().getWidth();
+                initY = (0.5D - initHeight / SCREEN.getBounds().getHeight() / 2) * SCREEN.getBounds().getHeight();
+            }
+
+            stage.setX(initX);
+            stage.setY(initY);
+            stageX.set(initX);
+            stageY.set(initY);
+        }
 
         stage.setHeight(initHeight);
         stage.setWidth(initWidth);
         stageHeight.set(initHeight);
         stageWidth.set(initWidth);
+        stage.xProperty().addListener(weakListener);
+        stage.yProperty().addListener(weakListener);
         stage.heightProperty().addListener(weakListener);
         stage.widthProperty().addListener(weakListener);
 
@@ -198,13 +256,13 @@ public final class Controllers {
 
         scene = new Scene(decorator.getDecorator());
         scene.setFill(Color.TRANSPARENT);
-        stage.setMinHeight(450 + 2 + 40 + 16); // bg height + border width*2 + toolbar height + shadow width*2
-        stage.setMinWidth(800 + 2 + 16); // bg width + border width*2 + shadow width*2
+        stage.setMinWidth(MIN_WIDTH);
+        stage.setMinHeight(MIN_HEIGHT);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
 
-        stage.getIcons().add(newImage("/assets/img/icon.png"));
+        stage.getIcons().add(newBuiltinImage("/assets/img/icon.png"));
         stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
@@ -216,6 +274,11 @@ public final class Controllers {
                 Controllers.dialog(i18n("fatal.unsupported_platform.osx_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&
+                    (Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64
+                            || Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW
+                            || Architecture.SYSTEM_ARCH == Architecture.MIPS64EL)) {
+                Controllers.dialog(i18n("fatal.unsupported_platform.loongarch"), null, MessageType.INFO, continueAction);
             } else {
                 Controllers.dialog(i18n("fatal.unsupported_platform"), null, MessageType.WARNING, continueAction);
             }
@@ -352,5 +415,7 @@ public final class Controllers {
         stage = null;
         scene = null;
         onApplicationStop();
+
+        FXUtils.shutdown();
     }
 }

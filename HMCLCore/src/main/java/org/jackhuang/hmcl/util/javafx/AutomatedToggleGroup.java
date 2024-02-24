@@ -25,7 +25,7 @@ import javafx.scene.control.ToggleGroup;
 /**
  * @author yushijinhun
  */
-public class AutomatedToggleGroup extends ToggleGroup {
+public final class AutomatedToggleGroup extends ToggleGroup {
 
     private final ObservableList<? extends Toggle> toggles;
     private final ListChangeListener<Toggle> listListener;

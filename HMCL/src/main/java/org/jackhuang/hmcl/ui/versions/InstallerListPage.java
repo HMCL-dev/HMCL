@@ -84,9 +84,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             itemsProperty().clear();
 
-            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup();
+            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion);
 
-            // Conventional libraries: game, fabric, forge, liteloader, optifine
+            // Conventional libraries: game, fabric, forge, neoforge, liteloader, optifine
             for (InstallerItem installerItem : group.getLibraries()) {
                 String libraryId = installerItem.getLibraryId();
                 String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
@@ -96,7 +96,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 installerItem.action.set(e -> {
                     Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
                 });
-                boolean removable = !"game".equals(libraryId) && libraryVersion != null;
+                boolean removable = !LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(libraryId) && libraryVersion != null;
                 installerItem.removable.set(removable);
                 if (removable) {
                     Runnable action = removeAction.apply(libraryId);
@@ -175,7 +175,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         @Override
         protected List<Node> initializeToolbar(InstallerListPage skinnable) {
             return Collections.singletonList(
-                    createToolbarButton2(i18n("install.installer.install_offline"), SVG::plus, skinnable::installOffline));
+                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.PLUS, skinnable::installOffline));
         }
     }
 }

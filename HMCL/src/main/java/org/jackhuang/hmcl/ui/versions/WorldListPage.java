@@ -99,7 +99,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
                                 .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                                 .map(WorldListItem::new).collect(Collectors.toList()));
 
-                    // https://github.com/huanghongxun/HMCL/issues/938
+                    // https://github.com/HMCL-dev/HMCL/issues/938
                     System.gc();
                 }, Platform::runLater);
     }
@@ -169,9 +169,9 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
             return Arrays.asList(chkShowAll,
-                    createToolbarButton2(i18n("button.refresh"), SVG::refresh, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG::plus, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG::plus, skinnable::download));
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("world.add"), SVG.PLUS, skinnable::add),
+                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD_OUTLINE, skinnable::download));
         }
     }
 }

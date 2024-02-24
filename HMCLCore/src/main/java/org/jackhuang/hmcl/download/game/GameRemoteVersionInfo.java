@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 
-import java.util.Date;
+import java.time.Instant;
 
 /**
  *
@@ -36,10 +36,10 @@ public final class GameRemoteVersionInfo implements Validation {
     private final String gameVersion;
 
     @SerializedName("time")
-    private final Date time;
+    private final Instant time;
 
     @SerializedName("releaseTime")
-    private final Date releaseTime;
+    private final Instant releaseTime;
 
     @SerializedName("type")
     private final ReleaseType type;
@@ -48,14 +48,14 @@ public final class GameRemoteVersionInfo implements Validation {
     private final String url;
 
     public GameRemoteVersionInfo() {
-        this("", new Date(), new Date(), ReleaseType.UNKNOWN);
+        this("", Instant.now(), Instant.now(), ReleaseType.UNKNOWN);
     }
 
-    public GameRemoteVersionInfo(String gameVersion, Date time, Date releaseTime, ReleaseType type) {
+    public GameRemoteVersionInfo(String gameVersion, Instant time, Instant releaseTime, ReleaseType type) {
         this(gameVersion, time, releaseTime, type, Constants.DEFAULT_LIBRARY_URL + gameVersion + "/" + gameVersion + ".json");
     }
 
-    public GameRemoteVersionInfo(String gameVersion, Date time, Date releaseTime, ReleaseType type, String url) {
+    public GameRemoteVersionInfo(String gameVersion, Instant time, Instant releaseTime, ReleaseType type, String url) {
         this.gameVersion = gameVersion;
         this.time = time;
         this.releaseTime = releaseTime;
@@ -67,11 +67,11 @@ public final class GameRemoteVersionInfo implements Validation {
         return gameVersion;
     }
 
-    public Date getTime() {
+    public Instant getTime() {
         return time;
     }
 
-    public Date getReleaseTime() {
+    public Instant getReleaseTime() {
         return releaseTime;
     }
 

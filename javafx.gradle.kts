@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.google.code.gson:gson:2.8.1")
+        classpath("com.google.code.gson:gson:2.10.1")
     }
 }
 
@@ -23,14 +23,14 @@ data class Platform(
         module: String, classifier: String, ext: String,
         repo: String = "https://repo1.maven.org/maven2"
     ): java.net.URL =
-        java.net.URL(
+        java.net.URI(
             "$repo/${groupId.replace('.', '/')}/javafx-$module/$version/javafx-$module-$version-$classifier.$ext"
-        )
+        ).toURL()
 }
 
 val jfxModules = listOf("base", "graphics", "controls", "media", "web")
-val jfxMirrorRepos = listOf("https://maven.aliyun.com/repository/central")
-val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
+val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
+val jfxDependenciesFile = project("HMCL").layout.buildDirectory.file("openjfx-dependencies.json").get().asFile
 val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86"),
     Platform("windows-x86_64", "win"),
@@ -40,8 +40,10 @@ val jfxPlatforms = listOf(
     Platform("linux-x86_64", "linux"),
     Platform("linux-arm32", "linux-arm32-monocle", unsupportedModules = listOf("media", "web")),
     Platform("linux-arm64", "linux-aarch64"),
+    Platform("linux-loongarch64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "17.0.8-loongarch64"),
     Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
     Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
+    Platform("freebsd-x86_64", "freebsd", groupId = "org.glavo.hmcl.openjfx", version = "14.0.2.1-freebsd", unsupportedModules = listOf("media", "web")),
 )
 
 val jfxInClasspath =
@@ -53,16 +55,17 @@ val jfxInClasspath =
     }
 
 if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
-    val os = System.getProperty("os.name").toLowerCase().let { osName ->
+    val os = System.getProperty("os.name").lowercase().let { osName ->
         when {
             osName.contains("win") -> "windows"
             osName.contains("mac") -> "osx"
             osName.contains("linux") || osName.contains("unix") -> "linux"
+            osName.contains("freebsd") -> "freebsd"
             else -> null
         }
     }
 
-    val arch = when (System.getProperty("os.arch").toLowerCase()) {
+    val arch = when (System.getProperty("os.arch").lowercase()) {
         "x86_64", "x86-64", "amd64", "ia32e", "em64t", "x64" -> "x86_64"
         "x86", "x86_32", "x86-32", "i386", "i486", "i586", "i686", "i86pc", "ia32", "x32" -> "x86"
         "arm64", "aarch64", "armv8", "armv9" -> "arm64"

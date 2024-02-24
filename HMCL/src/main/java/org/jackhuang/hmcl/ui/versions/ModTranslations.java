@@ -96,9 +96,9 @@ public enum ModTranslations {
     public List<Mod> searchMod(String query) {
         if (!loadKeywords()) return Collections.emptyList();
 
-        StringBuilder newQuery = query.chars()
+        StringBuilder newQuery = ((CharSequence) query).chars()
                 .filter(ch -> !Character.isSpaceChar(ch))
-                .collect(StringBuilder::new, (sb, value) -> sb.append((char)value), StringBuilder::append);
+                .collect(StringBuilder::new, (sb, value) -> sb.append((char) value), StringBuilder::append);
         query = newQuery.toString();
 
         StringUtils.LongestCommonSubsequence lcs = new StringUtils.LongestCommonSubsequence(query.length(), maxKeywordLength);
@@ -121,6 +121,7 @@ public enum ModTranslations {
             mods = Collections.emptyList();
             return true;
         }
+
         try {
             String modData = IOUtils.readFullyAsString(ModTranslations.class.getResourceAsStream(resourceName));
             mods = Arrays.stream(modData.split("\n")).filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());
