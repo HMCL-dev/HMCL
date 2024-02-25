@@ -150,8 +150,14 @@ public class DefaultLauncher extends Launcher {
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
         }
-        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+
+        if (options.getJava().getParsedVersion() < 19) {
+            res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+        } else {
+            res.addDefault("-Dstdout.encoding=", encoding.name());
+            res.addDefault("-Dstderr.encoding=", encoding.name());
+        }
 
         // Fix RCE vulnerability of log4j2
         res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
