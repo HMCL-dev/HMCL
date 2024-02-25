@@ -33,12 +33,10 @@ import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
-import org.jackhuang.hmcl.upgrade.resource.RemoteResourceManager;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -123,10 +121,6 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
-                RemoteResourceManager.init();
-
-                RemoteResourceManager.register();
-
                 primaryStage.show();
             });
         } catch (Throwable e) {
@@ -195,7 +189,7 @@ public final class Launcher extends Application {
                     || configPath.contains("\\INetCache\\")
                     || configPath.contains("\\$Recycle.Bin\\")
                     || configPath.contains("\\recycler\\");
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
             return configPath.startsWith("/tmp/")
                     || configPath.startsWith("/var/tmp/")
                     || configPath.startsWith("/var/cache/")
@@ -290,12 +284,8 @@ public final class Launcher extends Application {
                     .findAny()
                     .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
                     .orElse("Unknown"));
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD())
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
-
-            if (System.getProperty("hmcl.update_source.override") != null) {
-                Logging.LOG.log(Level.WARNING, "'hmcl.update_source.override' is deprecated! Please use 'hmcl.hmcl_update_source.override' instead");
-            }
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -210,13 +211,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final String team;
 
-        private final Date published;
+        private final Instant published;
 
-        private final Date updated;
+        private final Instant updated;
 
         private final List<String> versions;
 
-        public Project(String slug, String title, String description, List<String> categories, String body, String projectType, int downloads, String iconUrl, String id, String team, Date published, Date updated, List<String> versions) {
+        public Project(String slug, String title, String description, List<String> categories, String body, String projectType, int downloads, String iconUrl, String id, String team, Instant published, Instant updated, List<String> versions) {
             this.slug = slug;
             this.title = title;
             this.description = description;
@@ -272,11 +273,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return team;
         }
 
-        public Date getPublished() {
+        public Instant getPublished() {
             return published;
         }
 
-        public Date getUpdated() {
+        public Instant getUpdated() {
             return updated;
         }
 
@@ -381,7 +382,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final String authorId;
 
         @SerializedName("date_published")
-        private final Date datePublished;
+        private final Instant datePublished;
 
         private final int downloads;
 
@@ -390,7 +391,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final List<ProjectVersionFile> files;
 
-        public ProjectVersion(String name, String versionNumber, String changelog, List<Dependency> dependencies, List<String> gameVersions, String versionType, List<String> loaders, boolean featured, String id, String projectId, String authorId, Date datePublished, int downloads, String changelogUrl, List<ProjectVersionFile> files) {
+        public ProjectVersion(String name, String versionNumber, String changelog, List<Dependency> dependencies, List<String> gameVersions, String versionType, List<String> loaders, boolean featured, String id, String projectId, String authorId, Instant datePublished, int downloads, String changelogUrl, List<ProjectVersionFile> files) {
             this.name = name;
             this.versionNumber = versionNumber;
             this.changelog = changelog;
@@ -452,7 +453,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return authorId;
         }
 
-        public Date getDatePublished() {
+        public Instant getDatePublished() {
             return datePublished;
         }
 
@@ -587,15 +588,15 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final List<String> versions;
 
         @SerializedName("date_created")
-        private final Date dateCreated;
+        private final Instant dateCreated;
 
         @SerializedName("date_modified")
-        private final Date dateModified;
+        private final Instant dateModified;
 
         @SerializedName("latest_version")
         private final String latestVersion;
 
-        public ProjectSearchResult(String slug, String title, String description, List<String> categories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Date dateCreated, Date dateModified, String latestVersion) {
+        public ProjectSearchResult(String slug, String title, String description, List<String> categories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Instant dateCreated, Instant dateModified, String latestVersion) {
             this.slug = slug;
             this.title = title;
             this.description = description;
@@ -651,11 +652,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return versions;
         }
 
-        public Date getDateCreated() {
+        public Instant getDateCreated() {
             return dateCreated;
         }
 
-        public Date getDateModified() {
+        public Instant getDateModified() {
             return dateModified;
         }
 

@@ -112,36 +112,22 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 .getJson(new TypeToken<Response<List<CurseAddon>>>() {
                 }.getType());
         Stream<RemoteMod> res = response.getData().stream().map(CurseAddon::toMod);
-        if (sortType != SortType.NAME || searchFilter.length() == 0) {
+        if (sortType != SortType.NAME || searchFilter.isEmpty()) {
             return new SearchResult(res, (int)Math.ceil((double)response.pagination.totalCount / pageSize));
         }
 
-        // https://github.com/huanghongxun/HMCL/issues/1549
+        // https://github.com/HMCL-dev/HMCL/issues/1549
         String lowerCaseSearchFilter = searchFilter.toLowerCase();
         Map<String, Integer> searchFilterWords = new HashMap<>();
         for (String s : StringUtils.tokenize(lowerCaseSearchFilter)) {
             searchFilterWords.put(s, searchFilterWords.getOrDefault(s, 0) + 1);
         }
 
+        StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
+
         return new SearchResult(res.map(remoteMod -> {
             String lowerCaseResult = remoteMod.getTitle().toLowerCase();
-            int[][] lev = new int[lowerCaseSearchFilter.length() + 1][lowerCaseResult.length() + 1];
-            for (int i = 0; i < lowerCaseResult.length() + 1; i++) {
-                lev[0][i] = i;
-            }
-            for (int i = 0; i < lowerCaseSearchFilter.length() + 1; i++) {
-                lev[i][0] = i;
-            }
-            for (int i = 1; i < lowerCaseSearchFilter.length() + 1; i++) {
-                for (int j = 1; j < lowerCaseResult.length() + 1; j++) {
-                    int countByInsert = lev[i][j - 1] + 1;
-                    int countByDel = lev[i - 1][j] + 1;
-                    int countByReplace = lowerCaseSearchFilter.charAt(i - 1) == lowerCaseResult.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1;
-                    lev[i][j] = Math.min(countByInsert, Math.min(countByDel, countByReplace));
-                }
-            }
-
-            int diff = lev[lowerCaseSearchFilter.length()][lowerCaseResult.length()];
+            int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
             for (String s : StringUtils.tokenize(lowerCaseResult)) {
                 if (searchFilterWords.containsKey(s)) {

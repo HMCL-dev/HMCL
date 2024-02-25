@@ -2,58 +2,50 @@ package org.jackhuang.hmcl.util.versioning;
 
 import java.util.Objects;
 
-public final class VersionRange {
-    private static final VersionRange EMPTY = new VersionRange(null, null);
-    private static final VersionRange ALL = new VersionRange(null, null);
+/**
+ * @author Glavo
+ */
+@SuppressWarnings("unchecked")
+public final class VersionRange<T extends Comparable<T>> {
+    private static final VersionRange<?> EMPTY = new VersionRange<>(null, null);
+    private static final VersionRange<?> ALL = new VersionRange<>(null, null);
 
-    public static VersionRange empty() {
-        return EMPTY;
+    public static <T extends Comparable<T>> VersionRange<T> empty() {
+        return (VersionRange<T>) EMPTY;
     }
 
-    public static VersionRange all() {
-        return ALL;
+    public static <T extends Comparable<T>> VersionRange<T> all() {
+        return (VersionRange<T>) ALL;
     }
 
-    public static VersionRange between(String minimum, String maximum) {
-        return between(VersionNumber.asVersion(minimum), VersionNumber.asVersion(maximum));
-    }
-
-    public static VersionRange between(VersionNumber minimum, VersionNumber maximum) {
+    public static <T extends Comparable<T>> VersionRange<T> between(T minimum, T maximum) {
         assert minimum.compareTo(maximum) <= 0;
-        return new VersionRange(minimum, maximum);
+        return new VersionRange<>(minimum, maximum);
     }
 
-    public static VersionRange atLeast(String minimum) {
-        return atLeast(VersionNumber.asVersion(minimum));
-    }
-
-    public static VersionRange atLeast(VersionNumber minimum) {
+    public static <T extends Comparable<T>> VersionRange<T> atLeast(T minimum) {
         assert minimum != null;
-        return new VersionRange(minimum, null);
+        return new VersionRange<>(minimum, null);
     }
 
-    public static VersionRange atMost(String maximum) {
-        return atMost(VersionNumber.asVersion(maximum));
-    }
-
-    public static VersionRange atMost(VersionNumber maximum) {
+    public static <T extends Comparable<T>> VersionRange<T> atMost(T maximum) {
         assert maximum != null;
-        return new VersionRange(null, maximum);
+        return new VersionRange<>(null, maximum);
     }
 
-    private final VersionNumber minimum;
-    private final VersionNumber maximum;
+    private final T minimum;
+    private final T maximum;
 
-    private VersionRange(VersionNumber minimum, VersionNumber maximum) {
+    private VersionRange(T minimum, T maximum) {
         this.minimum = minimum;
         this.maximum = maximum;
     }
 
-    public VersionNumber getMinimum() {
+    public T getMinimum() {
         return minimum;
     }
 
-    public VersionNumber getMaximum() {
+    public T getMaximum() {
         return maximum;
     }
 
@@ -65,12 +57,7 @@ public final class VersionRange {
         return !isEmpty() && minimum == null && maximum == null;
     }
 
-    public boolean contains(String versionNumber) {
-        if (versionNumber == null) return false;
-        return contains(VersionNumber.asVersion(versionNumber));
-    }
-
-    public boolean contains(VersionNumber versionNumber) {
+    public boolean contains(T versionNumber) {
         if (versionNumber == null) return false;
         if (isEmpty()) return false;
         if (isAll()) return true;
@@ -78,7 +65,7 @@ public final class VersionRange {
         return (minimum == null || minimum.compareTo(versionNumber) <= 0) && (maximum == null || maximum.compareTo(versionNumber) >= 0);
     }
 
-    public boolean isOverlappedBy(final VersionRange that) {
+    public boolean isOverlappedBy(final VersionRange<T> that) {
         if (this.isEmpty() || that.isEmpty())
             return false;
 
@@ -94,32 +81,32 @@ public final class VersionRange {
         return that.contains(minimum) || that.contains(maximum) || (that.minimum != null && contains(that.minimum));
     }
 
-    public VersionRange intersectionWith(VersionRange that) {
+    public VersionRange<T> intersectionWith(VersionRange<T> that) {
         if (this.isAll())
             return that;
         if (that.isAll())
             return this;
 
         if (!isOverlappedBy(that))
-            return EMPTY;
+            return empty();
 
-        VersionNumber newMinimum;
+        T newMinimum;
         if (this.minimum == null)
             newMinimum = that.minimum;
         else if (that.minimum == null)
             newMinimum = this.minimum;
         else
-            newMinimum = this.minimum.max(that.minimum);
+            newMinimum = this.minimum.compareTo(that.minimum) >= 0 ? this.minimum : that.minimum;
 
-        VersionNumber newMaximum;
+        T newMaximum;
         if (this.maximum == null)
             newMaximum = that.maximum;
         else if (that.maximum == null)
             newMaximum = this.maximum;
         else
-            newMaximum = this.maximum.min(that.maximum);
+            newMaximum = this.maximum.compareTo(that.maximum) <= 0 ? this.maximum : that.maximum;
 
-        return new VersionRange(newMinimum, newMaximum);
+        return new VersionRange<>(newMinimum, newMaximum);
     }
 
     @Override
@@ -139,7 +126,7 @@ public final class VersionRange {
         if (!(obj instanceof VersionRange))
             return false;
 
-        VersionRange that = (VersionRange) obj;
+        VersionRange<T> that = (VersionRange<T>) obj;
 
         return this.isEmpty() == that.isEmpty() && this.isAll() == that.isAll()
                 && Objects.equals(this.minimum, that.minimum)

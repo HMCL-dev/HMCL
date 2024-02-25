@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.util.io;
 import java.io.IOException;
 import java.net.URL;
 
-public class ResponseCodeException extends IOException {
+public final class ResponseCodeException extends IOException {
 
     private final URL url;
     private final int responseCode;

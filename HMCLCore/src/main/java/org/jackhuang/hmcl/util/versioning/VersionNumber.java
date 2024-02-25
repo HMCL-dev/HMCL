@@ -18,7 +18,11 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * Copied from org.apache.maven.artifact.versioning.ComparableVersion
@@ -29,11 +33,13 @@ import java.util.*;
  */
 public final class VersionNumber implements Comparable<VersionNumber> {
 
-    public static final Comparator<String> VERSION_COMPARATOR = Comparator.comparing(VersionNumber::asVersion);
-
     public static VersionNumber asVersion(String version) {
         Objects.requireNonNull(version);
         return new VersionNumber(version);
+    }
+
+    public static int compare(String version1, String version2) {
+        return asVersion(version1).compareTo(asVersion(version2));
     }
 
     public static String normalize(String str) {
@@ -75,6 +81,18 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         } while (cont);
 
         return true;
+    }
+
+    public static VersionRange<VersionNumber> between(String minimum, String maximum) {
+        return VersionRange.between(asVersion(minimum), asVersion(maximum));
+    }
+
+    public static VersionRange<VersionNumber> atLeast(String minimum) {
+        return VersionRange.atLeast(asVersion(minimum));
+    }
+
+    public static VersionRange<VersionNumber> atMost(String maximum) {
+        return VersionRange.atMost(asVersion(maximum));
     }
 
     private interface Item {
@@ -346,7 +364,7 @@ public final class VersionNumber implements Comparable<VersionNumber> {
     private static final int MAX_LONGITEM_LENGTH = 18;
 
     private final String value;
-    public final ListItem items;
+    private final ListItem items;
     private final String canonical;
 
     private VersionNumber(String version) {
@@ -467,14 +485,6 @@ public final class VersionNumber implements Comparable<VersionNumber> {
 
     public String getCanonical() {
         return canonical;
-    }
-
-    public VersionNumber min(VersionNumber that) {
-        return this.compareTo(that) <= 0 ? this : that;
-    }
-
-    public VersionNumber max(VersionNumber that) {
-        return this.compareTo(that) >= 0 ? this : that;
     }
 
     @Override

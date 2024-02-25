@@ -34,7 +34,7 @@ public class AboutPage extends StackPane {
         ComponentList about = new ComponentList();
         {
             IconedTwoLineListItem launcher = new IconedTwoLineListItem();
-            launcher.setImage(FXUtils.newBuiltinImage("/assets/img/craft_table.png"));
+            launcher.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
             launcher.setExternalLink("https://hmcl.huangyuhui.net");
@@ -61,13 +61,25 @@ public class AboutPage extends StackPane {
             bangbang93.setTitle("bangbang93");
             bangbang93.setSubtitle(i18n("about.thanks_to.bangbang93.statement"));
             bangbang93.setExternalLink("https://bmclapi2.bangbang93.com/");
-            
+
             IconedTwoLineListItem glavo = new IconedTwoLineListItem();
             glavo.setImage(FXUtils.newBuiltinImage("/assets/img/glavo.png"));
             glavo.setTitle("Glavo");
             glavo.setSubtitle(i18n("about.thanks_to.glavo.statement"));
             glavo.setExternalLink("https://github.com/Glavo");
-            
+
+            IconedTwoLineListItem zekerzhayard = new IconedTwoLineListItem();
+            zekerzhayard.setImage(FXUtils.newBuiltinImage("/assets/img/zekerzhayard.png"));
+            zekerzhayard.setTitle("ZekerZhayard");
+            zekerzhayard.setSubtitle(i18n("about.thanks_to.zekerzhayard.statement"));
+            zekerzhayard.setExternalLink("https://github.com/ZekerZhayard");
+
+            IconedTwoLineListItem zkitefly = new IconedTwoLineListItem();
+            zkitefly.setImage(FXUtils.newBuiltinImage("/assets/img/zkitefly.png"));
+            zkitefly.setTitle("Zkitefly");
+            zkitefly.setSubtitle(i18n("about.thanks_to.zkitefly.statement"));
+            zkitefly.setExternalLink("https://github.com/zkitefly");
+
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
             gamerteam.setImage(FXUtils.newBuiltinImage("/assets/img/gamerteam.png"));
@@ -79,11 +91,11 @@ public class AboutPage extends StackPane {
             redLnn.setImage(FXUtils.newBuiltinImage("/assets/img/red_lnn.png"));
             redLnn.setSubtitle(i18n("about.thanks_to.red_lnn.statement"));
 
-            IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
-            mcbbs.setImage(FXUtils.newBuiltinImage("/assets/img/chest.png"));
-            mcbbs.setTitle(i18n("about.thanks_to.mcbbs"));
-            mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
-            mcbbs.setExternalLink("https://www.mcbbs.net/");
+            // IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
+            // mcbbs.setImage(FXUtils.newBuiltinImage("/assets/img/chest.png"));
+            // mcbbs.setTitle(i18n("about.thanks_to.mcbbs"));
+            // mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
+            // mcbbs.setExternalLink("https://www.mcbbs.net/");
 
             IconedTwoLineListItem mcmod = new IconedTwoLineListItem();
             mcmod.setImage(FXUtils.newBuiltinImage("/assets/img/mcmod.png"));
@@ -95,28 +107,28 @@ public class AboutPage extends StackPane {
             contributors.setImage(FXUtils.newBuiltinImage("/assets/img/github.png"));
             contributors.setTitle(i18n("about.thanks_to.contributors"));
             contributors.setSubtitle(i18n("about.thanks_to.contributors.statement"));
-            contributors.setExternalLink("https://github.com/huanghongxun/HMCL/graphs/contributors");
+            contributors.setExternalLink("https://github.com/HMCL-dev/HMCL/graphs/contributors");
 
             IconedTwoLineListItem users = new IconedTwoLineListItem();
-            users.setImage(FXUtils.newBuiltinImage("/assets/img/craft_table.png"));
+            users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             users.setTitle(i18n("about.thanks_to.users"));
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, mcbbs, mcmod, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, /* mcbbs, */ mcmod, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();
         {
             IconedTwoLineListItem javafx = new IconedTwoLineListItem();
             javafx.setTitle("JavaFX");
-            javafx.setSubtitle("Copyright © 2013, 2023, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.");
+            javafx.setSubtitle("Copyright © 2013, 2024, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.");
             javafx.setExternalLink("https://openjfx.io/");
 
             IconedTwoLineListItem jfoenix = new IconedTwoLineListItem();
             jfoenix.setTitle("JFoenix");
             jfoenix.setSubtitle("Copyright © 2016 JFoenix.\nLicensed under the MIT License.");
-            jfoenix.setExternalLink("http://www.jfoenix.com/");
+            jfoenix.setExternalLink("https://github.com/sshahine/JFoenix");
 
             IconedTwoLineListItem gson = new IconedTwoLineListItem();
             gson.setTitle("Gson");
@@ -126,7 +138,7 @@ public class AboutPage extends StackPane {
             IconedTwoLineListItem xz = new IconedTwoLineListItem();
             xz.setTitle("XZ for Java");
             xz.setSubtitle("Lasse Collin, Igor Pavlov, and/or Brett Okken.\nPublic Domain.");
-            xz.setExternalLink("https://tukaani.org/xz/java.html");
+            xz.setExternalLink("https://xz.tukaani.org/xz-for-java/");
 
             IconedTwoLineListItem fxgson = new IconedTwoLineListItem();
             fxgson.setTitle("fx-gson");
@@ -141,7 +153,7 @@ public class AboutPage extends StackPane {
             IconedTwoLineListItem openNBT = new IconedTwoLineListItem();
             openNBT.setTitle("OpenNBT");
             openNBT.setSubtitle("Copyright © 2013-2021 Steveice10.\nLicensed under the MIT License.");
-            openNBT.setExternalLink("https://github.com/Steveice10/OpenNBT");
+            openNBT.setExternalLink("https://github.com/GeyserMC/OpenNBT");
 
             IconedTwoLineListItem minecraftJFXSkin = new IconedTwoLineListItem();
             minecraftJFXSkin.setTitle("minecraft-jfx-skin");
@@ -166,7 +178,7 @@ public class AboutPage extends StackPane {
             IconedTwoLineListItem openSource = new IconedTwoLineListItem();
             openSource.setTitle(i18n("about.open_source"));
             openSource.setSubtitle(i18n("about.open_source.statement"));
-            openSource.setExternalLink("https://github.com/huanghongxun/HMCL");
+            openSource.setExternalLink("https://github.com/HMCL-dev/HMCL");
 
             legal.getContent().setAll(copyright, claim, openSource);
         }

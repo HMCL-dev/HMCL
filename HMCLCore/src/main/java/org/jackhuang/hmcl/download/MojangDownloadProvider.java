@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
-import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
@@ -36,20 +36,21 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final FabricVersionList fabric;
     private final FabricAPIVersionList fabricApi;
     private final ForgeBMCLVersionList forge;
-    private final NeoForgeBMCLVersionList neoforge;
+    private final NeoForgeOfficialVersionList neoforge;
     private final LiteLoaderVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
 
     public MojangDownloadProvider() {
+        // If there is no official download channel available, fallback to BMCLAPI.
         String apiRoot = "https://bmclapi2.bangbang93.com";
 
         this.game = new GameVersionList(this);
         this.fabric = new FabricVersionList(this);
         this.fabricApi = new FabricAPIVersionList(this);
         this.forge = new ForgeBMCLVersionList(apiRoot);
-        this.neoforge = new NeoForgeBMCLVersionList(apiRoot);
+        this.neoforge = new NeoForgeOfficialVersionList(this);
         this.liteLoader = new LiteLoaderVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);

@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.google.code.gson:gson:2.8.1")
+        classpath("com.google.code.gson:gson:2.10.1")
     }
 }
 
@@ -30,7 +30,7 @@ data class Platform(
 
 val jfxModules = listOf("base", "graphics", "controls", "media", "web")
 val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
-val jfxDependenciesFile = project("HMCL").buildDir.resolve("openjfx-dependencies.json")
+val jfxDependenciesFile = project("HMCL").layout.buildDirectory.file("openjfx-dependencies.json").get().asFile
 val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86"),
     Platform("windows-x86_64", "win"),
@@ -43,6 +43,7 @@ val jfxPlatforms = listOf(
     Platform("linux-loongarch64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "17.0.8-loongarch64"),
     Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
     Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
+    Platform("freebsd-x86_64", "freebsd", groupId = "org.glavo.hmcl.openjfx", version = "14.0.2.1-freebsd", unsupportedModules = listOf("media", "web")),
 )
 
 val jfxInClasspath =
@@ -59,6 +60,7 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
             osName.contains("win") -> "windows"
             osName.contains("mac") -> "osx"
             osName.contains("linux") || osName.contains("unix") -> "linux"
+            osName.contains("freebsd") -> "freebsd"
             else -> null
         }
     }

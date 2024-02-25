@@ -26,7 +26,6 @@ import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -42,7 +41,6 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -55,9 +53,7 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.i18n.Locales;
 
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -66,6 +62,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionsPage extends BorderPane implements WizardPage, Refreshable {
@@ -182,8 +179,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1)));
 
         Holder<RemoteVersionListCell> lastCell = new Holder<>();
-        EnumMap<VersionIconType, Image> icons = new EnumMap<>(VersionIconType.class);
-        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, icons));
+        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell));
 
         list.setOnMouseClicked(e -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
@@ -243,7 +239,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 });
             }
 
-            // https://github.com/huanghongxun/HMCL/issues/938
+            // https://github.com/HMCL-dev/HMCL/issues/938
             System.gc();
         });
     }
@@ -276,19 +272,13 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         final StackPane pane = new StackPane();
 
         private final Holder<RemoteVersionListCell> lastCell;
-        private final EnumMap<VersionIconType, Image> icons;
 
-        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, EnumMap<VersionIconType, Image> icons) {
+        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell) {
             this.lastCell = lastCell;
-            this.icons = icons;
 
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(content, new Insets(10, 16, 10, 16));
             pane.getChildren().setAll(ripplerContainer);
-        }
-
-        private Image getIcon(VersionIconType type) {
-            return icons.computeIfAbsent(type, iconType -> FXUtils.newBuiltinImage(iconType.getResourceUrl()));
         }
 
         @Override
@@ -308,7 +298,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
             content.setTitle(remoteVersion.getSelfVersion());
             if (remoteVersion.getReleaseDate() != null) {
-                content.setSubtitle(Locales.DATE_TIME_FORMATTER.get().format(remoteVersion.getReleaseDate().toInstant()));
+                content.setSubtitle(formatDateTime(remoteVersion.getReleaseDate()));
             } else {
                 content.setSubtitle(null);
             }
@@ -317,15 +307,15 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 switch (remoteVersion.getVersionType()) {
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
-                        content.setImage(getIcon(VersionIconType.GRASS));
+                        content.setImage(VersionIconType.GRASS.getIcon());
                         break;
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
-                        content.setImage(getIcon(VersionIconType.COMMAND));
+                        content.setImage(VersionIconType.COMMAND.getIcon());
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));
-                        content.setImage(getIcon(VersionIconType.CRAFT_TABLE));
+                        content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         break;
                 }
             } else {
@@ -333,7 +323,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 if (remoteVersion instanceof LiteLoaderRemoteVersion)
                     iconType = VersionIconType.CHICKEN;
                 else if (remoteVersion instanceof OptiFineRemoteVersion)
-                    iconType = VersionIconType.COMMAND;
+                    iconType = VersionIconType.OPTIFINE;
                 else if (remoteVersion instanceof ForgeRemoteVersion)
                     iconType = VersionIconType.FORGE;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
@@ -345,7 +335,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 else
                     iconType = null;
 
-                content.setImage(iconType != null ? getIcon(iconType) : null);
+                content.setImage(iconType != null ? iconType.getIcon() : null);
                 if (content.getSubtitle() == null)
                     content.setSubtitle(remoteVersion.getGameVersion());
                 else

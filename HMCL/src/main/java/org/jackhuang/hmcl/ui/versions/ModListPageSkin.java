@@ -195,6 +195,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE.getAnimationProducer());
+            if (newToolbar == searchBar) {
+                searchField.requestFocus();
+            }
         }
     }
 
@@ -220,7 +223,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.contains(lowerQueryString);
+                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
@@ -388,14 +391,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 getActions().add(officialPageButton);
             }
 
-            if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
-                JFXHyperlink mcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
-                mcbbsButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
-                });
-                getActions().add(mcbbsButton);
-            }
+            // if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
+            //     JFXHyperlink mcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
+            //     mcbbsButton.setOnAction(e -> {
+            //         fireEvent(new DialogCloseEvent());
+            //         FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
+            //     });
+            //     getActions().add(mcbbsButton);
+            // }
 
             if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));

@@ -28,7 +28,7 @@ import javafx.scene.image.WritableImage;
  *
  * @author yushijinhun
  */
-public class NormalizedSkin {
+public final class NormalizedSkin {
 
     private static void copyImage(Image src, WritableImage dst, int sx, int sy, int dx, int dy, int w, int h, boolean flipHorizontal) {
         PixelReader reader = src.getPixelReader();

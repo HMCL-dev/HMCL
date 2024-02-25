@@ -26,7 +26,7 @@ import java.util.Map;
  * @param <K>
  * @param <V>
  */
-public class JsonMap<K, V> extends HashMap<K, V> {
+public final class JsonMap<K, V> extends HashMap<K, V> {
     public JsonMap(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);
     }

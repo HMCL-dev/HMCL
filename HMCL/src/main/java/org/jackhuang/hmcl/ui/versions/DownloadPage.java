@@ -34,7 +34,6 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
@@ -51,7 +50,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -254,13 +253,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
                     runInFX(() -> FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod")));
 
-                    if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
-                        JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
-                        openMcbbsButton.setExternalLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs()));
-                        descriptionPane.getChildren().add(openMcbbsButton);
-                        openMcbbsButton.setMinWidth(Region.USE_PREF_SIZE);
-                        runInFX(() -> FXUtils.installFastTooltip(openMcbbsButton, i18n("mods.mcbbs")));
-                    }
+                    // if (StringUtils.isNotBlank(getSkinnable().mod.getMcbbs())) {
+                    //     JFXHyperlink openMcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
+                    //     openMcbbsButton.setExternalLink(ModManager.getMcbbsUrl(getSkinnable().mod.getMcbbs()));
+                    //     descriptionPane.getChildren().add(openMcbbsButton);
+                    //     openMcbbsButton.setMinWidth(Region.USE_PREF_SIZE);
+                    //     runInFX(() -> FXUtils.installFastTooltip(openMcbbsButton, i18n("mods.mcbbs")));
+                    // }
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
@@ -309,7 +308,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     for (String gameVersion : control.versions.keys().stream()
-                            .sorted(VersionNumber.VERSION_COMPARATOR.reversed())
+                            .sorted(Collections.reverseOrder(GameVersionNumber::compare))
                             .collect(Collectors.toList())) {
                         ComponentList sublist = new ComponentList(() ->
                                 control.versions.get(gameVersion).stream()
@@ -382,7 +381,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.getName());
-                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished().toInstant()));
+                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
@@ -424,7 +423,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             container.setOnMouseClicked(e -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
             getChildren().setAll(container);
 
-            // Workaround for https://github.com/huanghongxun/HMCL/issues/2129
+            // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
             this.setMinHeight(50);
         }
     }

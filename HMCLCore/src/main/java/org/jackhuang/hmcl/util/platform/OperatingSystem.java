@@ -52,6 +52,10 @@ public enum OperatingSystem {
      */
     OSX("osx"),
     /**
+     * FreeBSD.
+     */
+    FREEBSD("freebsd"),
+    /**
      * Unknown operating system.
      */
     UNKNOWN("universal");
@@ -64,6 +68,10 @@ public enum OperatingSystem {
 
     public String getCheckedName() {
         return checkedName;
+    }
+
+    public boolean isLinuxOrBSD() {
+        return this == LINUX || this == FREEBSD;
     }
 
     /**
@@ -213,8 +221,34 @@ public enum OperatingSystem {
             return OSX;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
             return LINUX;
+        else if (name.equals("freebsd"))
+            return FREEBSD;
         else
             return UNKNOWN;
+    }
+
+    public static boolean isWindows7OrLater() {
+        if (CURRENT_OS != WINDOWS) {
+            return false;
+        }
+
+        int major;
+        int dotIndex = SYSTEM_VERSION.indexOf('.');
+        try {
+            if (dotIndex < 0) {
+                major = Integer.parseInt(SYSTEM_VERSION);
+            } else {
+                major = Integer.parseInt(SYSTEM_VERSION.substring(0, dotIndex));
+            }
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+
+        // Windows XP:      NT 5.1~5.2
+        // Windows Vista:   NT 6.0
+        // Windows 7:       NT 6.1
+
+        return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
     }
 
     @SuppressWarnings("deprecation")
@@ -273,6 +307,7 @@ public enum OperatingSystem {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {
             case LINUX:
+            case FREEBSD:
                 return Paths.get(home, "." + folder).toAbsolutePath();
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");

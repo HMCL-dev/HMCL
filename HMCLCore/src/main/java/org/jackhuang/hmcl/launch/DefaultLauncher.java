@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -70,14 +70,14 @@ public class DefaultLauncher extends Launcher {
             case HIGH:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-1");
                 }
                 break;
@@ -87,14 +87,14 @@ public class DefaultLauncher extends Launcher {
             case BELOW_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "5");
                 }
                 break;
@@ -150,8 +150,14 @@ public class DefaultLauncher extends Launcher {
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
         }
-        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+
+        if (options.getJava().getParsedVersion() < 19) {
+            res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+        } else {
+            res.addDefault("-Dstdout.encoding=", encoding.name());
+            res.addDefault("-Dstderr.encoding=", encoding.name());
+        }
 
         // Fix RCE vulnerability of log4j2
         res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
@@ -222,12 +228,15 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
         configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
+        Optional<String> gameVersion = repository.getGameVersion(version);
+
         // lwjgl assumes path to native libraries encoded by ASCII.
-        // Here is a workaround for this issue: https://github.com/huanghongxun/HMCL/issues/1141.
+        // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                && !StringUtils.isASCII(nativeFolderPath)) {
+                && !StringUtils.isASCII(nativeFolderPath)
+                && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
         }
@@ -256,7 +265,7 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            if (version.compareTo(new Version("1.20")) < 0) {
+            if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
                 res.add("--server");
                 res.add(args[0]);
                 res.add("--port");
@@ -354,7 +363,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     private boolean isUsingLog4j() {
-        return VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
+        return GameVersionNumber.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
     }
 
     public File getLog4jConfigurationFile() {
@@ -364,7 +373,7 @@ public class DefaultLauncher extends Launcher {
     public void extractLog4jConfigurationFile() throws IOException {
         File targetFile = getLog4jConfigurationFile();
         InputStream source;
-        if (VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("0.0"), "1.12") < 0) {
+        if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
         } else {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
@@ -499,6 +508,9 @@ public class DefaultLauncher extends Launcher {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
+            env.put("INST_NEOFORGE", "1");
         }
         if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
             env.put("INST_LITELOADER", "1");
