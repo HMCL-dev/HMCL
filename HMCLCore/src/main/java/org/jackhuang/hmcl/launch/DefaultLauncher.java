@@ -430,7 +430,9 @@ public class DefaultLauncher extends Launcher {
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
         if (StringUtils.isNotBlank(options.getWrapper())) {
-            rawCommandLine.addAll(0, StringUtils.parseCommand(options.getWrapper(), getEnvVars()));
+            String command1 = options.getWrapper();
+            Map<String, String> env = getEnvVars();
+            rawCommandLine.addAll(0, StringUtils.tokenize(command1, env));
         }
 
         if (command.tempNativeFolder != null) {
@@ -452,7 +454,9 @@ public class DefaultLauncher extends Launcher {
         File runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
+            String command1 = options.getPreLaunchCommand();
+            Map<String, String> env = getEnvVars();
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(command1, env)).directory(runDirectory);
             builder.environment().putAll(getEnvVars());
             SystemUtils.callExternalProcess(builder);
         }
@@ -683,7 +687,9 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
+                    String command = options.getPostExitCommand();
+                    Map<String, String> env = getEnvVars();
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(command, env)).directory(options.getGameDir());
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
