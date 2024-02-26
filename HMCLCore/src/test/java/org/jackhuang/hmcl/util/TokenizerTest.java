@@ -8,10 +8,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public final class StringUtilsTest {
+public final class TokenizerTest {
 
     @Test
-    public void testTokenize() {
+    public void textTokenizer() {
         assertEquals(
                 Arrays.asList("C:/Program Files/Bellsoft/JDK-11/bin.java.exe", "-version", "a.b.c", "something", "else"),
                 StringUtils.tokenize("\"C:/Program Files/Bellsoft/JDK-11/bin.java.exe\" -version \"a.b.c\" something else")
