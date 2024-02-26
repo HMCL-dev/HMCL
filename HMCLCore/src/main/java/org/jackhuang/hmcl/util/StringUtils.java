@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author huangyuhui
@@ -332,8 +331,6 @@ public final class StringUtils {
 
         return parts;
     }
-
-    private static final Pattern VAR_PATTERN = Pattern.compile("\\$[a-zA-Z_][a-zA-Z_0-9]*");
 
     public static String parseColorEscapes(String original) {
         if (original.indexOf('\u00A7') < 0)
