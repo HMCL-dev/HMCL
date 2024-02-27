@@ -72,7 +72,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         CompletableFuture.supplyAsync(() -> {
             gameVersion = profile.getRepository().getGameVersion(version).orElse(null);
 
-            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));
+            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
             Function<String, Runnable> removeAction = libraryId -> () -> {
                 profile.getDependency().removeLibraryAsync(version, libraryId)

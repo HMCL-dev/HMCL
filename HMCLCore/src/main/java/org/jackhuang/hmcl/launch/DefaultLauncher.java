@@ -505,7 +505,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
         }
