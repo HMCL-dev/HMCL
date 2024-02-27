@@ -74,9 +74,6 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
-
-            System.out.println(">>>"+analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
-
             Function<String, Runnable> removeAction = libraryId -> () -> {
                 profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::saveAsync)
