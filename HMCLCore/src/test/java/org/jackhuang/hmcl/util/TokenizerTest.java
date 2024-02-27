@@ -54,8 +54,8 @@ public final class TokenizerTest {
                 StringUtils.tokenize("Text with empty part $EMPTY", env)
         );
         assertEquals(
-                Arrays.asList("head", "1.20.4", "$UNKNOWN", instDir, "", instDir + instName + "$UNKNOWN" + instDir + "\n$UNKNOWN $$"),
-                StringUtils.tokenize("head $INST_NAME $UNKNOWN $INST_DIR $EMPTY $INST_DIR$INST_NAME$UNKNOWN\"$INST_DIR`n$UNKNOWN $EMPTY$\"$", env)
+                Arrays.asList("head", "1.20.4", "$UNKNOWN", instDir, "", instDir + instName + "$UNKNOWN" + instDir + "$INST_DIR\n$UNKNOWN $$"),
+                StringUtils.tokenize("head $INST_NAME $UNKNOWN $INST_DIR $EMPTY $INST_DIR$INST_NAME$UNKNOWN\"$INST_DIR`$INST_DIR`n$UNKNOWN $EMPTY$\"$", env)
         );
     }
 }
