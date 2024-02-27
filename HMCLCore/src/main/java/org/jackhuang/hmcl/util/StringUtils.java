@@ -267,9 +267,18 @@ public final class StringUtils {
                     c = str.charAt(i++);
                     if (c == '"') {
                         break;
-                    } else if (c == '\\' && i < str.length()) {
+                    } else if (c == '`' && i < str.length()) {
                         c = str.charAt(i++);
                         switch (c) {
+                            case 'a':
+                                c = '\u0007';
+                                break;
+                            case 'b':
+                                c = '\b';
+                                break;
+                            case 'f':
+                                c = '\f';
+                                break;
                             case 'n':
                                 c = '\n';
                                 break;
@@ -281,9 +290,6 @@ public final class StringUtils {
                                 break;
                             case 'v':
                                 c = '\u000b';
-                                break;
-                            case 'a':
-                                c = '\u0007';
                                 break;
                         }
                         current.append(c);

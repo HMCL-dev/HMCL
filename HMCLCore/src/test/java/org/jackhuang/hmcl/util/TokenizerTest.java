@@ -33,8 +33,8 @@ public final class TokenizerTest {
                 StringUtils.tokenize("Text with empty part ''")
         );
         assertEquals(
-                Arrays.asList("headabc\n\\\"$end"),
-                StringUtils.tokenize("head\"abc\\n\\\\\\\"\"$end")
+                Arrays.asList("headabc\n`\"$end"),
+                StringUtils.tokenize("head\"abc`n```\"\"$end")
         );
 
         String instName = "1.20.4";
@@ -55,7 +55,7 @@ public final class TokenizerTest {
         );
         assertEquals(
                 Arrays.asList("head", "1.20.4", "$UNKNOWN", instDir, "", instDir + instName + "$UNKNOWN" + instDir + "\n$UNKNOWN $$"),
-                StringUtils.tokenize("head $INST_NAME $UNKNOWN $INST_DIR $EMPTY $INST_DIR$INST_NAME$UNKNOWN\"$INST_DIR\\n$UNKNOWN $EMPTY$\"$", env)
+                StringUtils.tokenize("head $INST_NAME $UNKNOWN $INST_DIR $EMPTY $INST_DIR$INST_NAME$UNKNOWN\"$INST_DIR`n$UNKNOWN $EMPTY$\"$", env)
         );
     }
 }
