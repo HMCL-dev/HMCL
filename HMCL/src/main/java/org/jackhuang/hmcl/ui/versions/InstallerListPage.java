@@ -72,8 +72,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         CompletableFuture.supplyAsync(() -> {
             gameVersion = profile.getRepository().getGameVersion(version).orElse(null);
 
-            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId));
+            return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
+
+            System.out.println(">>>"+analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
+
             Function<String, Runnable> removeAction = libraryId -> () -> {
                 profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::saveAsync)

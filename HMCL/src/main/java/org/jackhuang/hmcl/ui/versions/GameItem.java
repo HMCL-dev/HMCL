@@ -27,6 +27,8 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -62,7 +64,9 @@ public class GameItem extends Control {
         CompletableFuture.supplyAsync(() -> profile.getRepository().getGameVersion(id).orElse(i18n("message.unknown")), POOL_VERSION_RESOLVE)
                 .thenAcceptAsync(game -> {
                     StringBuilder libraries = new StringBuilder(game);
-                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
+                    HMCLGameRepository repository = profile.getRepository();
+                    Version resolved = repository.getResolvedPreservingPatchesVersion(id);
+                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
                     for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                         String libraryId = mark.getLibraryId();
                         String libraryVersion = mark.getLibraryVersion();
