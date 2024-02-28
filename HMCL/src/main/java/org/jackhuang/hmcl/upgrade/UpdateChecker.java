@@ -43,9 +43,10 @@ public final class UpdateChecker {
                 RemoteVersion latest = latestVersion.get();
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
                     return false;
-                } else if (latest.isForce() || latest.getChannel() != UpdateChannel.getChannel()) {
-                    // We can update from development version to stable version,
-                    // which can be downgrading.
+                } else if (latest.isForce()
+                        || Metadata.isNightly()
+                        || latest.getChannel() == UpdateChannel.NIGHTLY
+                        || latest.getChannel() != UpdateChannel.getChannel()) {
                     return !latest.getVersion().equals(Metadata.VERSION);
                 } else {
                     return VersionNumber.compare(Metadata.VERSION, latest.getVersion()) < 0;
