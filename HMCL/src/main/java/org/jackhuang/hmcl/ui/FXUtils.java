@@ -678,13 +678,13 @@ public final class FXUtils {
     }
 
     public static void setIcon(Stage stage) {
+        String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            stage.getIcons().add(newBuiltinImage("/assets/img/icon.png"));
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-            stage.getIcons().add(newBuiltinImage("/assets/img/icon@8x.png"));
+            icon = "/assets/img/icon.png";
         } else {
-            stage.getIcons().add(newBuiltinImage("/assets/img/icon@4x.png"));
+            icon = "/assets/img/icon@4x.png";
         }
+        stage.getIcons().add(newBuiltinImage(icon));
     }
 
     /**
