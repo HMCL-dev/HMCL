@@ -61,7 +61,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.*;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
@@ -262,7 +261,7 @@ public final class Controllers {
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
 
-        stage.getIcons().add(newBuiltinImage("/assets/img/icon.png"));
+        FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
