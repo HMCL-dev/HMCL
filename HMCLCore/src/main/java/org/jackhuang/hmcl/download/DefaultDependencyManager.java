@@ -106,7 +106,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             Version original = repository.getVersion(version.getId());
             Version resolved = original.resolvePreservingPatches(repository);
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
             for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
                 if (!analyzer.has(type))
                     continue;
