@@ -150,8 +150,14 @@ public class DefaultLauncher extends Launcher {
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
         }
-        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+
+        if (options.getJava().getParsedVersion() < 19) {
+            res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+        } else {
+            res.addDefault("-Dstdout.encoding=", encoding.name());
+            res.addDefault("-Dstderr.encoding=", encoding.name());
+        }
 
         // Fix RCE vulnerability of log4j2
         res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
@@ -424,7 +430,7 @@ public class DefaultLauncher extends Launcher {
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
         if (StringUtils.isNotBlank(options.getWrapper())) {
-            rawCommandLine.addAll(0, StringUtils.parseCommand(options.getWrapper(), getEnvVars()));
+            rawCommandLine.addAll(0, StringUtils.tokenize(options.getWrapper(), getEnvVars()));
         }
 
         if (command.tempNativeFolder != null) {
@@ -446,7 +452,7 @@ public class DefaultLauncher extends Launcher {
         File runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
             builder.environment().putAll(getEnvVars());
             SystemUtils.callExternalProcess(builder);
         }
@@ -499,7 +505,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
         }
@@ -677,7 +683,7 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
