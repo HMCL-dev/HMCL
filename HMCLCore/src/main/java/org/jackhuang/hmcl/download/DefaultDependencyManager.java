@@ -218,8 +218,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         if (version.isResolved())
             throw new IllegalArgumentException("removeLibraryWithoutSavingAsync requires non-resolved version");
         Version independentVersion = version.resolvePreservingPatches(repository);
+        String gameVersion = repository.getGameVersion(independentVersion).orElse(null);
 
-        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion, null).removeLibrary(libraryId).build());
+        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(libraryId).build());
     }
 
 }
