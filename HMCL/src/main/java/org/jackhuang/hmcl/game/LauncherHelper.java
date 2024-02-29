@@ -417,7 +417,7 @@ public final class LauncherHelper {
             JavaVersionConstraint violatedMandatoryConstraint = null;
             List<JavaVersionConstraint> violatedSuggestedConstraints = null;
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, gameVersion.toString());
             for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
                 if (constraint.appliesToVersion(gameVersion, version, javaVersion, analyzer)) {
                     if (!constraint.checkJava(gameVersion, version, javaVersion)) {

@@ -43,6 +43,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -676,6 +677,16 @@ public final class FXUtils {
             comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }
 
+    public static void setIcon(Stage stage) {
+        String icon;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            icon = "/assets/img/icon.webp";
+        } else {
+            icon = "/assets/img/icon@4x.webp";
+        }
+        stage.getIcons().add(newBuiltinImage(icon));
+    }
+
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
@@ -769,8 +780,8 @@ public final class FXUtils {
                 Task.runAsync(() -> {
                     Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
                     try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
-                            OutputStream outputStream = Files.newOutputStream(newPath);
-                            PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
+                          OutputStream outputStream = Files.newOutputStream(newPath);
+                          PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
                     ) {
                         writer.write(PNGJavaFXUtils.asArgbImage(image));
                     } catch (IOException e) {

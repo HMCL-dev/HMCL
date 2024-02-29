@@ -60,7 +60,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
@@ -98,7 +97,7 @@ public final class LogWindow extends Stage {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
-        getIcons().add(newBuiltinImage("/assets/img/icon.webp"));
+        FXUtils.setIcon(this);
 
         levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
 

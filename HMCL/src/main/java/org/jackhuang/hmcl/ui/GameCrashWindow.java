@@ -66,7 +66,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -99,7 +98,7 @@ public class GameCrashWindow extends Stage {
         this.version = version;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = LibraryAnalyzer.analyze(version);
+        this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
 
@@ -116,7 +115,7 @@ public class GameCrashWindow extends Stage {
         setScene(new Scene(view, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
-        getIcons().add(newBuiltinImage("/assets/img/icon.webp"));
+        FXUtils.setIcon(this);
 
         analyzeCrashReport();
     }

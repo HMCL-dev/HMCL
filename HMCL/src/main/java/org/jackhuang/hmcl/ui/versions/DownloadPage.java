@@ -32,6 +32,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -291,8 +292,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                     if (control.versions == null) return;
 
                     if (control.version.getProfile() != null && control.version.getVersion() != null) {
-                        Version game = control.version.getProfile().getRepository().getResolvedPreservingPatchesVersion(control.version.getVersion());
-                        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(game);
+                        HMCLGameRepository repository = control.version.getProfile().getRepository();
+                        Version game = repository.getResolvedPreservingPatchesVersion(control.version.getVersion());
+                        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(game, repository.getGameVersion(game).orElse(null));
                         libraryAnalyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT).ifPresent(currentGameVersion -> {
                             Set<ModLoaderType> currentGameModLoaders = libraryAnalyzer.getModLoaders();
                             if (control.versions.containsKey(currentGameVersion)) {
