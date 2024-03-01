@@ -49,8 +49,6 @@ jobs:
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
-          echo "HMCL v$HMCL_VERSION" >> RELEASE_NOTE
-          echo "" >> RELEASE_NOTE
           echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/dev.html" >> RELEASE_NOTE
           echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
@@ -112,10 +110,10 @@ jobs:
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
-          echo " === **Stable Version** === " >> RELEASE_NOTE
-          echo "HMCL v$HMCL_VERSION" >> RELEASE_NOTE
+          echo "**This version is a stable version.**" >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
           echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/stable.html" >> RELEASE_NOTE
+          echo "" >> RELEASE_NOTE
           echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
           echo "| File Name | SHA-256 Checksum |"  >> RELEASE_NOTE
