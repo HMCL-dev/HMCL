@@ -41,7 +41,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Logging.LOG;
