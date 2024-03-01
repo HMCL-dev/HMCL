@@ -2,10 +2,10 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -53,8 +53,8 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                 for (String version : results[0].versions) {
                     versions.put("1.20.1", new NeoForgeRemoteVersion(
                             "1.20.1", StringUtils.removePrefix(version, "1.20.1-"),
-                            Lang.immutableListOf(
-                                    downloadProvider.injectURL("https://maven.neoforged.net/releases/net/neoforged/forge/" + version + "/forge-" + version + "-installer.jar")
+                            Collections.singletonList(
+                                    "https://maven.neoforged.net/releases/net/neoforged/forge/" + version + "/forge-" + version + "-installer.jar"
                             )
                     ));
                 }
@@ -63,8 +63,8 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                     String mcVersion = "1." + version.substring(0, version.indexOf('.', version.indexOf('.') + 1));
                     versions.put(mcVersion, new NeoForgeRemoteVersion(
                             mcVersion, version,
-                            Lang.immutableListOf(
-                                    downloadProvider.injectURL("https://maven.neoforged.net/releases/net/neoforged/neoforge/" + version + "/neoforge-" + version + "-installer.jar")
+                            Collections.singletonList(
+                                    "https://maven.neoforged.net/releases/net/neoforged/neoforge/" + version + "/neoforge-" + version + "-installer.jar"
                             )
                     ));
                 }
