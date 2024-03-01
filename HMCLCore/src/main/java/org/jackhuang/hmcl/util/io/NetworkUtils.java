@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloader;
 import org.jackhuang.hmcl.util.Pair;
 
 import java.io.*;
