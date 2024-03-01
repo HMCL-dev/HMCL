@@ -61,7 +61,7 @@ HMCL 有着强大的跨平台能力. 它不仅支持 Windows、Linux、macOS 等
 |----------------------------------------------|----------------------------------------------------------------|
 | `-Dhmcl.home=<path>`                         | 覆盖 HMCL 数据文件夹.                                                 |
 | `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时绕过本体完整性检查.                                                |
-| `-Dhmcl.bmclapi.override=<version>`          | 覆盖 BMCLAPI 的 API Root, 默认值为 `https://bmclapi2.bangbang93.com`. |
+| `-Dhmcl.bmclapi.override=<url>`              | 覆盖 BMCLAPI 的 API Root, 默认值为 `https://bmclapi2.bangbang93.com`. |
 | `-Dhmcl.font.override=<font family>`         | 覆盖字族.                                                          |
 | `-Dhmcl.version.override=<version>`          | 覆盖版本号.                                                         |
 | `-Dhmcl.update_source.override=<url>`        | 覆盖 HMCL 更新源.                                                   |
