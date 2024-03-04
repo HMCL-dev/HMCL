@@ -22,7 +22,7 @@ jobs:
         java-version: '11'
         java-package: 'jdk+fx'
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew build --no-daemon
       env:
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         MICROSOFT_AUTH_SECRET: ${{ secrets.MICROSOFT_AUTH_SECRET }}

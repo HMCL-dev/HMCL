@@ -20,6 +20,6 @@ jobs:
           java-version: '11'
           java-package: 'jdk+fx'
       - name: Check style main
-        run: ./gradlew checkstyleMain
+        run: ./gradlew checkstyleMain --no-daemon
       - name: Check style test
-        run: ./gradlew checkstyleTest
+        run: ./gradlew checkstyleTest --no-daemon

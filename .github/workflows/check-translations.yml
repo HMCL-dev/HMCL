@@ -20,4 +20,4 @@ jobs:
           java-version: '11'
           java-package: 'jdk+fx'
       - name: Check style test
-        run: ./gradlew checkTranslations
+        run: ./gradlew checkTranslations --no-daemon
