@@ -1,0 +1,28 @@
+name: Build HMCLauncher
+
+on:
+  push:
+    paths:
+      - 'HMCLauncher/**'
+  pull_request:
+    paths:
+      - 'HMCLauncher/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x86
+      - name: Build HMCLauncher
+        run: msbuild /p:Configuration=Release /t:Rebuild /verbosity:diag .\HMCLauncher\
+      - name: Get short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: HMCLauncher-${{ env.SHORT_SHA }}
+          path: HMCLauncher/Release/HMCLauncher.exe
