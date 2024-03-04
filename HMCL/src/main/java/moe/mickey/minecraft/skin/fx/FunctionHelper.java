@@ -20,11 +20,6 @@ public final class FunctionHelper {
     }
 
     @SafeVarargs
-    public static <A, B> void alwaysA(BiConsumer<A, B> consumer, A a, B... bs) {
-        Arrays.asList(bs).forEach(b -> consumer.accept(a, b));
-    }
-
-    @SafeVarargs
     public static <A, B> void alwaysB(BiConsumer<A, B> consumer, B b, A... as) {
         Arrays.asList(as).forEach(a -> consumer.accept(a, b));
     }
