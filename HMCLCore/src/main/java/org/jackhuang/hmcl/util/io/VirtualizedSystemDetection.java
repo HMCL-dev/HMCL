@@ -8,6 +8,7 @@ public final class VirtualizedSystemDetection {
     private VirtualizedSystemDetection() {
         throw new UnsupportedOperationException();
     }
+    
     public static boolean isChromeOSContainer() {
         String isVirtualSystemProductPath = "/sys/devices/virtual/dmi/id/";
         String isChromeOSContainerProductFile = "product_name";
