@@ -1,14 +1,8 @@
 package org.jackhuang.hmcl.util.io;
 
-import com.sun.tools.sjavac.Log;
-import sun.util.logging.PlatformLogger;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.logging.Level;
-
-import static org.jackhuang.hmcl.util.Logging.LOG;
 
 public class VirtualizedSystemDetection {
     public static boolean isChromeOSContainer(){
