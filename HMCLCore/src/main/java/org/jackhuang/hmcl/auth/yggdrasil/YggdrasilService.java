@@ -53,8 +53,6 @@ public class YggdrasilService {
 
     private static final ThreadPoolExecutor POOL = threadPool("YggdrasilProfileProperties", true, 2, 10, TimeUnit.SECONDS);
 
-    public static final YggdrasilService MOJANG = new YggdrasilService(new MojangYggdrasilProvider());
-
     private final YggdrasilProvider provider;
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
