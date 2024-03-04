@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'HMCLauncher/**'
+      - '.github/workflows/build-launcher.yml'
   pull_request:
     paths:
       - 'HMCLauncher/**'
+      - '.github/workflows/build-launcher.yml'
 
 jobs:
   build:
