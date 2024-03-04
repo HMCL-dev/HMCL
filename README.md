@@ -72,4 +72,3 @@ Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or
 | `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding.                                                                  |
 | `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID.                                                               |
 | `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App secret.                                                           |
-
