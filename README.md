@@ -10,7 +10,7 @@ English | [中文](README_cn.md)
 
 ## Introduction
 
-HMCL is a cross-platform Minecraft launcher which supports Mod Management, Game Customizing, Auto Installing (Forge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL is a cross-platform Minecraft launcher which supports Mod Management, Game Customizing, Auto Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
 
 HMCL has amazing cross-platform capabilities.
 It can not only run on different operating systems such as Windows, Linux, and macOS,
@@ -44,7 +44,7 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 If you want to submit a pull request, there are some requirements:
 
 * IDE: Intellij IDEA
-* Compiler: Java 1.8
+* Compiler: Java 1.8 or Java 11+
 * Do NOT modify `gradle` files
 
 ### Compilation
@@ -63,7 +63,7 @@ Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or
 |----------------------------------------------|------------------------------------------------------------------------------------------------|
 | `-Dhmcl.home=<path>`                         | Override HMCL directory.                                                                       |
 | `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for update.                                      |
-| `-Dhmcl.bmclapi.override=<version>`          | Override API Root of BMCLAPI download provider, defaults to `https://bmclapi2.bangbang93.com`. |
+| `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider, defaults to `https://bmclapi2.bangbang93.com`. |
 | `-Dhmcl.font.override=<font family>`         | Override font family.                                                                          |
 | `-Dhmcl.version.override=<version>`          | Override the version number.                                                                   |
 | `-Dhmcl.update_source.override=<url>`        | Override the update source for HMCL itself.                                                    |
