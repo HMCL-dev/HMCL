@@ -15,13 +15,11 @@ public class VirtualizedSystemDetection {
         String isVirtualSystemProductPath = "/sys/devices/virtual/dmi/id/";
         String isChromeOSContainerProductFile = "product_name";
         if(Files.exists(Paths.get(isVirtualSystemProductPath))){
-            LOG.log(Level.INFO,"Running in Virtualized System");
-            //System.out.println("Running in Virtualized System");
             try{
                 String isChromeOS = new String(Files.readAllBytes(Paths.get(isVirtualSystemProductPath+isChromeOSContainerProductFile)));
                 if (isChromeOS.contains("crosvm")){
-                    LOG.log(Level.INFO,"Running Under Chrome OS Linux Container");
-                    //System.out.println("Running Under Chrome OS Linux Container");
+                    //LOG.log(Level.INFO,"Running Under Chrome OS Linux Container");
+                    System.out.println("Running Under Chrome OS Linux Container");
                     return true;
                 }else {
                     return false;
