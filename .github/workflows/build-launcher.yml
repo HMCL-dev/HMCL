@@ -22,7 +22,7 @@ jobs:
       - name: Build HMCLauncher
         run: msbuild /p:Configuration=Release /t:Rebuild /verbosity:detailed .\HMCLauncher\
       - name: Get short SHA
-        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+        run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 7))" >> $env:GITHUB_ENV
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
