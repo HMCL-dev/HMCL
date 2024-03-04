@@ -3,10 +3,10 @@ name: Check Style
 on:
   push:
     paths:
-      '**.java'
+      - '**.java'
   pull_request:
     paths:
-      '**.java'
+      - '**.java'
 
 jobs:
   build:

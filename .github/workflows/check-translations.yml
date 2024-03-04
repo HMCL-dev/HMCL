@@ -3,10 +3,10 @@ name: Check Translations
 on:
   push:
     paths:
-      '**.properties'
+      - '**.properties'
   pull_request:
     paths:
-      '**.properties'
+      - '**.properties'
 
 jobs:
   build:

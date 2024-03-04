@@ -3,10 +3,12 @@ name: Java CI
 on:
   push:
     paths-ignore:
-      '**.md'
+      - '**.md'
+      - 'HMCLauncher/**'
   pull_request:
     paths-ignore:
-      '**.md'
+      - '**.md'
+      - 'HMCLauncher/**'
 
 jobs:
   build:
