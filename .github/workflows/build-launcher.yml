@@ -20,7 +20,7 @@ jobs:
         with:
           msbuild-architecture: x86
       - name: Build HMCLauncher
-        run: msbuild /p:Configuration=Release /t:Rebuild /verbosity:diag .\HMCLauncher\
+        run: msbuild /p:Configuration=Release /t:Rebuild /verbosity:detailed .\HMCLauncher\
       - name: Get short SHA
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
       - name: Upload Artifacts
