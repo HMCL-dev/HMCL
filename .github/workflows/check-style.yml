@@ -1,6 +1,12 @@
 name: Check Style
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      '**.java'
+  pull_request:
+    paths:
+      '**.java'
 
 jobs:
   build:

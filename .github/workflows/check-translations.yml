@@ -1,6 +1,12 @@
 name: Check Translations
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      '**.properties'
+  pull_request:
+    paths:
+      '**.properties'
 
 jobs:
   build:
