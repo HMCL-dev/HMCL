@@ -1,0 +1,30 @@
+name: Build HMCLauncher
+
+on:
+  push:
+    paths:
+      - 'HMCLauncher/**'
+      - '.github/workflows/build-launcher.yml'
+  pull_request:
+    paths:
+      - 'HMCLauncher/**'
+      - '.github/workflows/build-launcher.yml'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x86
+      - name: Build HMCLauncher
+        run: msbuild /p:Configuration=Release /t:Rebuild /verbosity:detailed .\HMCLauncher\
+      - name: Get short SHA
+        run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 7))" >> $env:GITHUB_ENV
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: HMCLauncher-${{ env.SHORT_SHA }}
+          path: HMCLauncher/Release/HMCLauncher.exe
