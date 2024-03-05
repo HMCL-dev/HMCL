@@ -10,23 +10,18 @@ public final class VirtualizedSystemDetection {
     }
     
     public static boolean isChromeOSContainer() {
-        String isVirtualSystemProductPath = "/sys/devices/virtual/dmi/id/";
-        String isChromeOSContainerProductFile = "product_name";
-        if (Files.exists(Paths.get(isVirtualSystemProductPath))) {
-            try {
-                String isChromeOS = new String(Files.readAllBytes(Paths.get(isVirtualSystemProductPath + isChromeOSContainerProductFile)));
-                if (isChromeOS.contains("crosvm")) {
-                    //LOG.log(Level.INFO,"Running Under Chrome OS Linux Container");
-                    System.out.println("Running Under Chrome OS Linux Container");
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+        String isChromeOSContainerProductFile = "/sys/devices/virtual/dmi/id/product_name";
+        try {
+            String isChromeOS = new String(Files.readAllBytes(Paths.get(isChromeOSContainerProductFile)));
+            if (isChromeOS.contains("crosvm")) {
+                //LOG.log(Level.INFO,"Running Under Chrome OS Linux Container");
+                System.out.println("Running Under Chrome OS Linux Container");
+                return true;
+            } else {
                 return false;
             }
-        } else {
+        } catch (IOException e) {
+            e.printStackTrace();
             return false;
         }
     }
