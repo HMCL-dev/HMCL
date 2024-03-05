@@ -2,9 +2,6 @@ name: Java CI
 
 on:
   push:
-    paths-ignore:
-      - '**.md'
-      - 'HMCLauncher/**'
   pull_request:
     paths-ignore:
       - '**.md'
