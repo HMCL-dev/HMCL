@@ -29,7 +29,7 @@ import java.util.logging.Level;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
-public class YggdrasilAccount extends ClassicAccount {
+public abstract class YggdrasilAccount extends ClassicAccount {
 
     protected final YggdrasilService service;
     protected final UUID characterUUID;
