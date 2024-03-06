@@ -42,10 +42,10 @@ public class FeedbackPage extends SpinnerPane {
         ComponentList community = new ComponentList();
         {
             IconedTwoLineListItem users = new IconedTwoLineListItem();
-            users.setImage(FXUtils.newBuiltinImage("/assets/img/craft_table.webp"));
+            users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.webp"));
             users.setTitle(i18n("feedback.qq_group"));
             users.setSubtitle(i18n("feedback.qq_group.statement"));
-            users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+            users.setExternalLink("https://docs.hmcl.net/groups.html");
 
             IconedTwoLineListItem github = new IconedTwoLineListItem();
             github.setImage(FXUtils.newBuiltinImage("/assets/img/github.webp"));

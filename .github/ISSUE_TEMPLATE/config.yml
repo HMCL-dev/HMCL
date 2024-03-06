@@ -6,9 +6,9 @@ contact_links:
   - name: Discord 频道 | Discord Channel
     url: https://discord.gg/jVvC7HfM6U
     about: Hello Minecraft! Launcher 的官方 Discord 频道。| The official Discord channel of Hello Minecraft! Launcher.
-  - name: 赞助通道 | Sponsorship channel
-    url: https://afdian.net/@huanghongxun
-    about: 前往爱发电赞助 HMCL，赞助后可以申请加入官方 QQ 群反馈问题。| Sponsor Hello Minecraft! Launcher on afdian.net and you can apply to join the official QQ group.
+  - name: QQ 群 | QQ Groups
+    url: https://docs.hmcl.net/groups.html
+    about: Hello Minecraft! Launcher 的官方 QQ 交流群。| The official QQ groups of Hello Minecraft! Laucher.
   - name: 其他反馈 | Others
     url: https://github.com/HMCL-dev/HMCL/discussions/new/choose
     about: 通过 Discussions 反馈其他问题。| Report other problems in Discussions.

@@ -5,12 +5,13 @@
 ![Stars](https://img.shields.io/github/stars/huanghongxun/HMCL)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![KOOK](https://img.shields.io/badge/KOOK-HMCL-brightgreen)](https://kook.top/Kx7n3t)
+[![QQ Group](https://img.shields.io/badge/QQ-HMCL-brightgreen)](https://docs.hmcl.net/groups.html)
 
 [English](README.md) | 中文
 
 ## 简介
 
-HMCL 是一款跨平台 Minecraft 启动器, 支持 Mod 管理, 游戏自定义, 游戏自动安装 (Forge, Fabric, Quilt, LiteLoader 与 OptiFine), 模组包创建, 界面自定义等功能.
+HMCL 是一款跨平台 Minecraft 启动器, 支持 Mod 管理, 游戏自定义, 游戏自动安装 (Forge, NeoForge, Fabric, Quilt, LiteLoader 与 OptiFine), 整合包创建, 界面自定义等功能.
 
 HMCL 有着强大的跨平台能力. 它不仅支持 Windows、Linux、macOS 等常见的操作系统，同时也支持 x86、ARM、MIPS 和 LoongArch 等不同的 CPU 架构.
 您可以使用 HMCL 在不同平台上轻松的游玩 Minecraft.
@@ -42,7 +43,7 @@ HMCL 有着强大的跨平台能力. 它不仅支持 Windows、Linux、macOS 等
 如果您想提交一个 Pull Request, 必须遵守如下要求:
 
 * IDE: Intellij IDEA
-* 编译器: Java 1.8
+* 编译器: Java 1.8 或 Java 11+
 * **不要**修改 `gradle` 相关文件
 
 ### 编译
@@ -61,7 +62,7 @@ HMCL 有着强大的跨平台能力. 它不仅支持 Windows、Linux、macOS 等
 |----------------------------------------------|----------------------------------------------------------------|
 | `-Dhmcl.home=<path>`                         | 覆盖 HMCL 数据文件夹.                                                 |
 | `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时绕过本体完整性检查.                                                |
-| `-Dhmcl.bmclapi.override=<version>`          | 覆盖 BMCLAPI 的 API Root, 默认值为 `https://bmclapi2.bangbang93.com`. |
+| `-Dhmcl.bmclapi.override=<url>`              | 覆盖 BMCLAPI 的 API Root, 默认值为 `https://bmclapi2.bangbang93.com`. |
 | `-Dhmcl.font.override=<font family>`         | 覆盖字族.                                                          |
 | `-Dhmcl.version.override=<version>`          | 覆盖版本号.                                                         |
 | `-Dhmcl.update_source.override=<url>`        | 覆盖 HMCL 更新源.                                                   |
