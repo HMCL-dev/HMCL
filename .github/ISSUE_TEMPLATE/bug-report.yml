@@ -8,18 +8,16 @@ body:
     attributes:
       value: |
         提交前请确认：
-        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
+        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[KOOK 频道](https://kook.top/Kx7n3t)/[Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
         * 你的启动器版本是**最新的快照版本**，可以点击 [此处](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) 下载最新快照版本。
     
-        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [KOOK 频道](https://kook.top/Kx7n3t) 或 [Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
-        如果你希望在 QQ 群中反馈问题，请 [赞助 HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) 后申请加入群聊，也请将下面的信息表填好直接发在群中，加快我们的沟通速度。
+        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[KOOK 频道](https://kook.top/Kx7n3t)/[Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
         
         Before submitting, please confirm:
-        * The issue is indeed **an error of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
+        * The issue is indeed **an error of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [QQ group](https://docs.hmcl.net/groups.html) or [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
         * Your launcher version is **the latest snapshot version**. You can click [here](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) to download the latest snapshot version.
         
-        If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
-        If you want to report a problem in the QQ group, please [sponsor HMCL](https://hmcl.huangyuhui.net/api/redirect/sponsor) and apply to join the group chat. Please also fill in the information form below and send it directly in the group to speed up our communication.
+        If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [KOOK channel](https://kook.top/Kx7n3t) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
   - type: input
     id: platform
     attributes:
