@@ -109,7 +109,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                             }
 
                             versions.put(gameVersion, new ForgeRemoteVersion(
-                                    version.getGameVersion(), version.getVersion(), releaseDate == null ? null : Date.from(releaseDate), urls));
+                                    version.getGameVersion(), version.getVersion(), releaseDate, urls));
                         }
                     } finally {
                         lock.writeLock().unlock();

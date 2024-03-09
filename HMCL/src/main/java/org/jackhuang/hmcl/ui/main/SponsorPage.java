@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -128,7 +128,7 @@ public class SponsorPage extends StackPane {
         private final String name;
 
         @SerializedName("create_time")
-        private final Date createTime;
+        private final Instant createTime;
 
         @SerializedName("money")
         private final BigDecimal money;
@@ -140,10 +140,10 @@ public class SponsorPage extends StackPane {
         private final String afdianId;
 
         public Sponsor() {
-            this("", new Date(), BigDecimal.ZERO, "", "");
+            this("", Instant.now(), BigDecimal.ZERO, "", "");
         }
 
-        public Sponsor(String name, Date createTime, BigDecimal money, String contact, String afdianId) {
+        public Sponsor(String name, Instant createTime, BigDecimal money, String contact, String afdianId) {
             this.name = name;
             this.createTime = createTime;
             this.money = money;
@@ -155,7 +155,7 @@ public class SponsorPage extends StackPane {
             return name;
         }
 
-        public Date getCreateTime() {
+        public Instant getCreateTime() {
             return createTime;
         }
 
