@@ -251,18 +251,6 @@ public enum OperatingSystem {
         return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
     }
 
-    public static boolean isChromeOSContainer() {
-        if (CURRENT_OS != LINUX) {
-            return false;
-        }
-
-        try {
-            return new String(Files.readAllBytes(Paths.get("/sys/devices/virtual/dmi/id/product_name"))).trim().equals("crosvm");
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
     @SuppressWarnings("deprecation")
     public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
