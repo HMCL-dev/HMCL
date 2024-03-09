@@ -94,8 +94,13 @@ public final class LogExporter {
                 if (Files.isRegularFile(file)) {
                     FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
-                        String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
-                        zipper.putTextFile(crashLog, file.getFileName().toString());
+                        LOG.log(Level.INFO, "Processing log file: " + file + ", processStartTime: " + processStartTime + ", lastModifiedTime: " + time.toMillis());
+                        try {
+                            String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
+                            zipper.putTextFile(crashLog, file.getFileName().toString());
+                        } catch (IOException e) {
+                            LOG.log(Level.WARNING, "Failed to process log file: " + file, e);
+                        }
                     }
                 }
             }
