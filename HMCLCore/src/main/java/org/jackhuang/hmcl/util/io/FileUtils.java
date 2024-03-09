@@ -302,6 +302,7 @@ public final class FileUtils {
                 case "xfce":
                 case "kde":
                 case "mate":
+                case "deepin"
                     return true;
             }
         }
