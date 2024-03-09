@@ -284,8 +284,10 @@ public final class Launcher extends Application {
                     .findAny()
                     .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
                     .orElse("Unknown"));
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
+                LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
+            }
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
