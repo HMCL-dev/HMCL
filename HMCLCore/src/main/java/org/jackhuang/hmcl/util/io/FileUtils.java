@@ -299,7 +299,7 @@ public final class FileUtils {
      * @see FileUtils#isMovingToTrashSupported()
      */
     public static boolean moveToTrash(File file) {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && !OperatingSystem.isChromeOSContainer()) {
             if (!file.exists()) {
                 return false;
             }
