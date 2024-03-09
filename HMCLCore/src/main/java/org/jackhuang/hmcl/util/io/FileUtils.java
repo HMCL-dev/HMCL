@@ -365,7 +365,7 @@ public final class FileUtils {
      * @return true if the method exists.
      */
     public static boolean isMovingToTrashSupported() {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && !OperatingSystem.isChromeOSContainer()) {
             return true;
         }
 
