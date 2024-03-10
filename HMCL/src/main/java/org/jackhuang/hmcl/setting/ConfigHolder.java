@@ -21,12 +21,14 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Locale;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -87,6 +89,8 @@ public final class ConfigHolder {
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> markGlobalConfigDirty());
 
+        Locale.setDefault(config().getLocalization().getLocale());
+        I18n.setLocale(configInstance.getLocalization());
         Settings.init();
 
         if (newlyCreated) {
