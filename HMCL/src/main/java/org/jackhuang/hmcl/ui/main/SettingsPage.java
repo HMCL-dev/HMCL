@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -132,7 +133,7 @@ public final class SettingsPage extends SettingsView {
             try {
                 Files.write(logFile, Logging.getRawLogs());
             } catch (IOException e) {
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed", e), null, MessageType.ERROR));
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
                 LOG.log(Level.WARNING, "Failed to export logs", e);
                 return;
             }
