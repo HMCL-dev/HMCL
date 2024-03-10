@@ -44,7 +44,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
-    private static final int WORD_PERFECT_MATCH_WEIGHT = 50;
+    private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
     public static boolean isAvailable() {
         return !apiKey.isEmpty();
@@ -112,7 +112,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 .getJson(new TypeToken<Response<List<CurseAddon>>>() {
                 }.getType());
         Stream<RemoteMod> res = response.getData().stream().map(CurseAddon::toMod);
-        if (sortType != SortType.NAME || searchFilter.isEmpty()) {
+        if (searchFilter.isEmpty()) {
             return new SearchResult(res, (int)Math.ceil((double)response.pagination.totalCount / pageSize));
         }
 
