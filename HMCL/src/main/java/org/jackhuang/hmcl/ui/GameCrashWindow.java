@@ -103,7 +103,7 @@ public class GameCrashWindow extends Stage {
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
 
-        total_memory = Optional.ofNullable(OperatingSystem.TOTAL_MEMORY).map(i -> i + " MB").orElse("-");
+        total_memory = OperatingSystem.TOTAL_MEMORY + " MB";
 
         this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
                 ? launchOptions.getJava().getVersion()

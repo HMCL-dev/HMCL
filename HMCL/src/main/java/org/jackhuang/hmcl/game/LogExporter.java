@@ -99,7 +99,7 @@ public final class LogExporter {
                             String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
                             zipper.putTextFile(crashLog, file.getFileName().toString());
                         } catch (IOException e) {
-                            LOG.log(Level.WARNING, "Failed to process log file: " + file, e);
+                            LOG.log(Level.WARNING, "Failed to read log file: " + file, e);
                         }
                     }
                 }
