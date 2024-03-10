@@ -132,7 +132,7 @@ public final class SettingsPage extends SettingsView {
             try {
                 Files.write(logFile, Logging.getRawLogs());
             } catch (IOException e) {
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + e, null, MessageType.ERROR));
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed", e), null, MessageType.ERROR));
                 LOG.log(Level.WARNING, "Failed to export logs", e);
                 return;
             }
