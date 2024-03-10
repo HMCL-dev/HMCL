@@ -60,6 +60,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -280,18 +281,20 @@ public class GameCrashWindow extends Stage {
                         logs.stream().map(Pair::getKey).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
                 .thenComposeAsync(logs ->
                         LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
-                .thenRunAsync(() -> {
-                    FXUtils.showFileInExplorer(logFile);
+                .handleAsync((result, exception) -> {
+                    Alert alert;
 
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    if (exception == null) {
+                        FXUtils.showFileInExplorer(logFile);
+                        alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    } else {
+                        LOG.log(Level.WARNING, "Failed to export game crash info", exception);
+                        alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed", exception));
+                    }
+
                     alert.setTitle(i18n("settings.launcher.launcher_log.export"));
                     alert.showAndWait();
-                }, Schedulers.javafx())
-                .exceptionally(e -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.failed", e));
-                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                    alert.showAndWait();
-                    LOG.log(Level.WARNING, "Failed to export game crash info", e);
+
                     return null;
                 });
     }
