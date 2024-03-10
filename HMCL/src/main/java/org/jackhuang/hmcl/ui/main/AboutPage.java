@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
@@ -82,7 +81,7 @@ public class AboutPage extends StackPane {
             zkitefly.setExternalLink("https://github.com/zkitefly");
 
             IconedTwoLineListItem burningtnt = new IconedTwoLineListItem();
-            burningtnt.setImage(new WritableImage(32, 32));
+            burningtnt.setImage(FXUtils.newBuiltinImage("/assets/img/burningtnt.png"));
             burningtnt.setTitle("Burning_TNT");
             burningtnt.setSubtitle(i18n("about.thanks_to.burningtnt.statement"));
             burningtnt.setExternalLink("https://github.com/burningtnt");
