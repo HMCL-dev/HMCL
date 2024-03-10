@@ -934,11 +934,12 @@ public final class FXUtils {
                         String href = element.getAttribute("href");
                         JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
                         hyperlink.setOnAction(e -> {
+                            String link = href;
                             try {
-                                hyperlinkAction.accept(new URI(href).toASCIIString());
+                                link = new URI(href).toASCIIString();
                             } catch (URISyntaxException ignored) {
-                                hyperlinkAction.accept(href);
                             }
+                            hyperlinkAction.accept(link);
                         });
                         texts.add(hyperlink);
                     } else if ("b".equals(element.getTagName())) {
