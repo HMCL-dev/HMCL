@@ -80,6 +80,18 @@ public class AboutPage extends StackPane {
             zkitefly.setSubtitle(i18n("about.thanks_to.zkitefly.statement"));
             zkitefly.setExternalLink("https://github.com/zkitefly");
 
+            IconedTwoLineListItem burningtnt = new IconedTwoLineListItem();
+            burningtnt.setImage(FXUtils.newBuiltinImage("/assets/img/burningtnt.png"));
+            burningtnt.setTitle("Burning_TNT");
+            burningtnt.setSubtitle(i18n("about.thanks_to.burningtnt.statement"));
+            burningtnt.setExternalLink("https://github.com/burningtnt");
+
+            IconedTwoLineListItem shulkerSakura = new IconedTwoLineListItem();
+            shulkerSakura.setTitle("ShulkerSakura");
+            shulkerSakura.setImage(FXUtils.newBuiltinImage("/assets/img/ShulkerSakura.png"));
+            shulkerSakura.setSubtitle(i18n("about.thanks_to.shulkersakura.statement"));
+            shulkerSakura.setExternalLink("https://github.com/ShulkerSakura");
+
             IconedTwoLineListItem gamerteam = new IconedTwoLineListItem();
             gamerteam.setTitle("gamerteam");
             gamerteam.setImage(FXUtils.newBuiltinImage("/assets/img/gamerteam.png"));
@@ -90,12 +102,6 @@ public class AboutPage extends StackPane {
             redLnn.setTitle("Red_lnn");
             redLnn.setImage(FXUtils.newBuiltinImage("/assets/img/red_lnn.png"));
             redLnn.setSubtitle(i18n("about.thanks_to.red_lnn.statement"));
-
-            // IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
-            // mcbbs.setImage(FXUtils.newBuiltinImage("/assets/img/chest.png"));
-            // mcbbs.setTitle(i18n("about.thanks_to.mcbbs"));
-            // mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
-            // mcbbs.setExternalLink("https://www.mcbbs.net/");
 
             IconedTwoLineListItem mcmod = new IconedTwoLineListItem();
             mcmod.setImage(FXUtils.newBuiltinImage("/assets/img/mcmod.png"));
@@ -113,9 +119,9 @@ public class AboutPage extends StackPane {
             users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             users.setTitle(i18n("about.thanks_to.users"));
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
-            users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+            users.setExternalLink("https://docs.hmcl.net/groups.html");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, /* mcbbs, */ mcmod, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, burningtnt, mcmod, shulkerSakura, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();
