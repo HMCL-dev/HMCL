@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
@@ -80,6 +81,12 @@ public class AboutPage extends StackPane {
             zkitefly.setSubtitle(i18n("about.thanks_to.zkitefly.statement"));
             zkitefly.setExternalLink("https://github.com/zkitefly");
 
+            IconedTwoLineListItem burningtnt = new IconedTwoLineListItem();
+            burningtnt.setImage(new WritableImage(32, 32));
+            burningtnt.setTitle("Burning_TNT");
+            burningtnt.setSubtitle(i18n("about.thanks_to.burningtnt.statement"));
+            burningtnt.setExternalLink("https://github.com/burningtnt");
+
             IconedTwoLineListItem shulkerSakura = new IconedTwoLineListItem();
             shulkerSakura.setTitle("ShulkerSakura");
             shulkerSakura.setImage(FXUtils.newBuiltinImage("/assets/img/ShulkerSakura.png"));
@@ -115,7 +122,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://docs.hmcl.net/groups.html");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, mcmod, shulkerSakura, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, burningtnt, mcmod, shulkerSakura, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();
