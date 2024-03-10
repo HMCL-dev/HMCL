@@ -144,7 +144,7 @@ public final class SettingsPage extends SettingsView {
 
     @Override
     protected void onSponsor() {
-        FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+        FXUtils.openLink("https://github.com/HMCL-dev/HMCL");
     }
 
     @Override
