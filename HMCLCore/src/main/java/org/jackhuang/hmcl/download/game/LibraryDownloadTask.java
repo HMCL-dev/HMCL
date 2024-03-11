@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Pack200Utils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
@@ -51,10 +50,8 @@ public class LibraryDownloadTask extends Task<Void> {
     protected final File jar;
     protected final DefaultCacheRepository cacheRepository;
     protected final AbstractDependencyManager dependencyManager;
-    private final File xzFile;
     protected final Library library;
     protected final String url;
-    protected boolean xz;
     private final Library originalLibrary;
     private boolean cached = false;
 
@@ -72,8 +69,6 @@ public class LibraryDownloadTask extends Task<Void> {
 
         url = library.getDownload().getUrl();
         jar = file;
-
-        xzFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".pack.xz");
     }
 
     @Override
@@ -101,8 +96,6 @@ public class LibraryDownloadTask extends Task<Void> {
                 throw new CancellationException();
             else
                 throw new LibraryDownloadException(library, t);
-        } else {
-            if (xz) unpackLibrary(jar, Files.readAllBytes(xzFile.toPath()));
         }
     }
 
@@ -126,36 +119,13 @@ public class LibraryDownloadTask extends Task<Void> {
             }
         }
 
-        if (Pack200Utils.isSupported() && testURLExistence(url)) {
-            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url + ".pack.xz");
-            task = new FileDownloadTask(urls, xzFile, null);
-            task.setCacheRepository(cacheRepository);
-            task.setCaching(true);
-            xz = true;
-        } else {
-            List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
-            task = new FileDownloadTask(urls, jar,
-                    library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
-            task.setCacheRepository(cacheRepository);
-            task.setCaching(true);
-            task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
-            xz = false;
-        }
-    }
 
-    private boolean testURLExistence(String rawUrl) {
-        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(rawUrl);
-        for (URL url : urls) {
-            URL xzURL = NetworkUtils.toURL(url.toString() + ".pack.xz");
-            for (int retry = 0; retry < 3; retry++) {
-                try {
-                    return NetworkUtils.urlExists(xzURL);
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to test for url existence: " + url + ".pack.xz", e);
-                }
-            }
-        }
-        return false; // maybe some ugly implementation will give timeout for not existent url.
+        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
+        task = new FileDownloadTask(urls, jar,
+                library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
+        task.setCacheRepository(cacheRepository);
+        task.setCaching(true);
+        task.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
     }
 
     @Override
@@ -167,7 +137,7 @@ public class LibraryDownloadTask extends Task<Void> {
     public void postExecute() throws Exception {
         if (!cached) {
             try {
-                cacheRepository.cacheLibrary(library, jar.toPath(), xz);
+                cacheRepository.cacheLibrary(library, jar.toPath(), false);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to cache downloaded library " + library, e);
             }
