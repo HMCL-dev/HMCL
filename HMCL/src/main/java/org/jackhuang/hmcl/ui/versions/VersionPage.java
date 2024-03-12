@@ -164,7 +164,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearAssets() {
-        FileUtils.deleteDirectoryQuietly(new File(getProfile().getRepository().getBaseDirectory(), "assets"));
+        File baseDirectory = getProfile().getRepository().getBaseDirectory();
+        FileUtils.deleteDirectoryQuietly(new File(baseDirectory, "assets"));
+        FileUtils.deleteDirectoryQuietly(new File(baseDirectory, "resources"));
     }
 
     private void clearJunkFiles() {
