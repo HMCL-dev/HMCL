@@ -79,6 +79,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -943,7 +944,14 @@ public final class FXUtils {
                     if ("a".equals(element.getTagName())) {
                         String href = element.getAttribute("href");
                         JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
-                        hyperlink.setOnAction(e -> hyperlinkAction.accept(href));
+                        hyperlink.setOnAction(e -> {
+                            String link = href;
+                            try {
+                                link = new URI(href).toASCIIString();
+                            } catch (URISyntaxException ignored) {
+                            }
+                            hyperlinkAction.accept(link);
+                        });
                         texts.add(hyperlink);
                     } else if ("b".equals(element.getTagName())) {
                         Text text = new Text(element.getTextContent());

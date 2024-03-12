@@ -84,16 +84,20 @@ public class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || !service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
-            MicrosoftSession acquiredSession = service.refresh(session);
-            if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
-                throw new ServerResponseMalformedException("Selected profile changed");
+        if (!authenticated) {
+            if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
+                authenticated = true;
+            } else {
+                MicrosoftSession acquiredSession = service.refresh(session);
+                if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
+                    throw new ServerResponseMalformedException("Selected profile changed");
+                }
+
+                session = acquiredSession;
+
+                authenticated = true;
+                invalidate();
             }
-
-            session = acquiredSession;
-
-            authenticated = true;
-            invalidate();
         }
 
         return session.toAuthInfo();
