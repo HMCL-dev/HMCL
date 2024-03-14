@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.Pair;
 
 import java.io.*;
@@ -131,6 +130,10 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
+        return resolveConnection(conn, null);
+    }
+
     /**
      * This method is a work-around that aims to solve problem when "Location" in
      * stupid server's response is not encoded.
@@ -140,11 +143,9 @@ public final class NetworkUtils {
      * @return manually redirected http connection.
      * @throws IOException if an I/O error occurs.
      */
-    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
         int redirect = 0;
 
-        URL source = conn.getURL();
-        String target = null;
         while (true) {
             conn.setUseCaches(false);
             conn.setConnectTimeout(TIME_OUT);
@@ -161,7 +162,11 @@ public final class NetworkUtils {
                     throw new IOException("Too much redirects");
                 }
 
-                target = encodeLocation(newURL);
+                String target = encodeLocation(newURL);
+                if (redirects != null) {
+                    redirects.add(target);
+                }
+
                 URL targetURL = new URL(conn.getURL(), target);
                 HttpURLConnection redirected = (HttpURLConnection) targetURL.openConnection();
                 properties.forEach((key, value) -> value.forEach(element -> redirected.addRequestProperty(key, element)));
@@ -171,10 +176,6 @@ public final class NetworkUtils {
             } else {
                 break;
             }
-        }
-
-        if (target != null) {
-            Logging.LOG.info("Follow redirect location: '" + source + "' to '" + target + "'.");
         }
 
         return conn;
