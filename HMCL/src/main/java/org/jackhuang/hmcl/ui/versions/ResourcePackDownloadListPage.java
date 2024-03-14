@@ -67,9 +67,9 @@ public class ResourcePackDownloadListPage extends DownloadListPage {
     @Override
     protected String getLocalizedCategory(String category) {
         if ("mods.modrinth".equals(downloadSource.get())) {
-            return i18n("modrinth.category." + category);
+            return i18n("modrinth.category." + category, category);
         } else {
-            return i18n("curse.category." + category);
+            return i18n("curse.category." + category, category);
         }
     }
 
