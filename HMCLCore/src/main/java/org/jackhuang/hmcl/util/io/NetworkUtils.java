@@ -145,7 +145,6 @@ public final class NetworkUtils {
      */
     public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
         int redirect = 0;
-
         while (true) {
             conn.setUseCaches(false);
             conn.setConnectTimeout(TIME_OUT);
@@ -177,7 +176,6 @@ public final class NetworkUtils {
                 break;
             }
         }
-
         return conn;
     }
 
