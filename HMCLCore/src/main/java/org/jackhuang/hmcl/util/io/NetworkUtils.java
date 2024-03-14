@@ -156,12 +156,14 @@ public final class NetworkUtils {
             if (code >= 300 && code <= 307 && code != 306 && code != 304) {
                 String newURL = conn.getHeaderField("Location");
                 conn.disconnect();
+
                 if (redirects != null) {
                     redirects.add(newURL);
                 }
                 if (redirect > 20) {
                     throw new IOException("Too much redirects");
                 }
+
                 HttpURLConnection redirected = (HttpURLConnection) new URL(conn.getURL(), encodeLocation(newURL))
                         .openConnection();
                 properties
