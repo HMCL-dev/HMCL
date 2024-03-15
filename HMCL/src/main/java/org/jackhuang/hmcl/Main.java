@@ -55,8 +55,8 @@ public final class Main {
     }
 
     public static void main(String[] args) {
-        System.setProperty("java.net.useSystemProxies", "true");
-        System.setProperty("javafx.autoproxy.disable", "true");
+        System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
+        System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         checkDirectoryPath();

@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
@@ -66,7 +67,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -99,11 +99,11 @@ public class GameCrashWindow extends Stage {
         this.version = version;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = LibraryAnalyzer.analyze(version);
+        this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
 
-        total_memory = Optional.ofNullable(OperatingSystem.TOTAL_MEMORY).map(i -> i + " MB").orElse("-");
+        total_memory = OperatingSystem.TOTAL_MEMORY + " MB";
 
         this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
                 ? launchOptions.getJava().getVersion()
@@ -116,7 +116,7 @@ public class GameCrashWindow extends Stage {
         setScene(new Scene(view, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("game.crash.title"));
-        getIcons().add(newBuiltinImage("/assets/img/icon.png"));
+        FXUtils.setIcon(this);
 
         analyzeCrashReport();
     }
@@ -170,56 +170,51 @@ public class GameCrashWindow extends Stage {
                     keywords.addAll(pair.getValue());
                 }
 
-                List<Node> segments = new ArrayList<>();
+                List<Node> segments = new ArrayList<>(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
-                boolean hasMultipleRules = results.keySet().stream().distinct().count() > 1;
-                if (hasMultipleRules) {
-                    segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
+                LOG.log(Level.INFO, "Number of reasons: " + results.size());
+                if (results.size() > 1) {
                     segments.add(new Text("\n"));
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
-                    LOG.log(Level.INFO, "Multiple reasons detected");
+                } else {
+                    segments.add(new Text("\n\n"));
                 }
 
                 for (CrashReportAnalyzer.Result result : results.values()) {
+                    String message;
                     switch (result.getRule()) {
                         case TOO_OLD_JAVA:
-                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.too_old_java",
-                                    CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected")))), Controllers::onHyperlinkAction));
+                            message = i18n("game.crash.reason.too_old_java", CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected"))));
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
                         case MOD_RESOLUTION_COLLECTION:
-                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("sourcemod")),
                                     parseFabricModId(result.getMatcher().group("destmod")),
-                                    parseFabricModId(result.getMatcher().group("destmod"))), Controllers::onHyperlinkAction));
+                                    parseFabricModId(result.getMatcher().group("destmod")));
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
-                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     translateFabricModId(result.getMatcher().group("mod")),
-                                    result.getMatcher().group("version")), Controllers::onHyperlinkAction));
+                                    result.getMatcher().group("version"));
                             break;
                         case MOD_FOREST_OPTIFINE:
                         case TWILIGHT_FOREST_OPTIFINE:
                         case PERFORMANT_FOREST_OPTIFINE:
                         case JADE_FOREST_OPTIFINE:
-                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.mod", "OptiFine"), Controllers::onHyperlinkAction));
+                            message = i18n("game.crash.reason.mod", "OptiFine");
+                            LOG.log(Level.INFO, "Crash cause: " + result.getRule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
                             break;
                         default:
-                            segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
+                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
                                     Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
-                                            .toArray()), Controllers::onHyperlinkAction));
+                                            .toArray());
                             break;
                     }
-                    segments.add(new Text("\n"));
-                    if (hasMultipleRules) {
-                        segments.add(new Text("\n"));
-                    } else {
-                        segments.add(new Text("\n"));
-                        segments.addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
-                        segments.add(new Text("\n"));
-                    }
-                    LOG.log(Level.INFO, "Crash cause: " + result.getRule());
+                    LOG.log(Level.INFO, "Crash cause: " + result.getRule() + ": " + message);
+                    segments.addAll(FXUtils.parseSegment(message, Controllers::onHyperlinkAction));
+                    segments.add(new Text("\n\n"));
                 }
                 if (results.isEmpty()) {
                     if (!keywords.isEmpty()) {
@@ -285,15 +280,20 @@ public class GameCrashWindow extends Stage {
                         logs.stream().map(Pair::getKey).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
                 .thenComposeAsync(logs ->
                         LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
-                .thenRunAsync(() -> {
-                    FXUtils.showFileInExplorer(logFile);
+                .handleAsync((result, exception) -> {
+                    Alert alert;
 
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    if (exception == null) {
+                        FXUtils.showFileInExplorer(logFile);
+                        alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    } else {
+                        LOG.log(Level.WARNING, "Failed to export game crash info", exception);
+                        alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception));
+                    }
+
                     alert.setTitle(i18n("settings.launcher.launcher_log.export"));
                     alert.showAndWait();
-                }, Schedulers.javafx())
-                .exceptionally(e -> {
-                    LOG.log(Level.WARNING, "Failed to export game crash info", e);
+
                     return null;
                 });
     }

@@ -78,9 +78,9 @@ public class ServerModpackExportTask extends Task<Void> {
                 }
             });
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId));
             String gameVersion = repository.getGameVersion(versionId)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId), gameVersion);
             List<ServerModpackManifest.Addon> addons = new ArrayList<>();
             addons.add(new ServerModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->

@@ -226,7 +226,7 @@ public enum JavaVersionConstraint {
     public static VersionRanges findSuitableJavaVersionRange(GameVersionNumber gameVersion, Version version) {
         VersionRange<VersionNumber> mandatoryJavaRange = VersionRange.all();
         VersionRange<VersionNumber> suggestedJavaRange = VersionRange.all();
-        LibraryAnalyzer analyzer = version != null ? LibraryAnalyzer.analyze(version) : null;
+        LibraryAnalyzer analyzer = version != null ? LibraryAnalyzer.analyze(version, gameVersion != null ? gameVersion.toString() : null) : null;
         for (JavaVersionConstraint java : ALL) {
             if (java.appliesToVersion(gameVersion, version, null, analyzer)) {
                 VersionRange<VersionNumber> javaVersionRange = java.getJavaVersionRange(version);

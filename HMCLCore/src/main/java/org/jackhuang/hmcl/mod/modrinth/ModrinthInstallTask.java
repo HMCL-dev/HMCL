@@ -68,6 +68,9 @@ public class ModrinthInstallTask extends Task<Void> {
                 case "forge":
                     builder.version("forge", modLoader.getValue());
                     break;
+                case "neoforge":
+                    builder.version("neoforge", modLoader.getValue());
+                    break;
                 case "fabric-loader":
                     builder.version("fabric", modLoader.getValue());
                     break;

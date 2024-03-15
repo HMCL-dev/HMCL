@@ -24,20 +24,15 @@ import com.jfoenix.controls.JFXProgressBar;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 
 import java.util.function.Consumer;
@@ -84,20 +79,6 @@ public class ClassicAccountLoginDialog extends StackPane {
             txtPassword.setPromptText(i18n("account.password"));
 
             body.getChildren().setAll(usernameLabel, txtPassword);
-
-            if (oldAccount instanceof YggdrasilAccount && !(oldAccount instanceof AuthlibInjectorAccount)) {
-                HBox linkPane = new HBox(8);
-                body.getChildren().add(linkPane);
-
-                JFXHyperlink migrationLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration"));
-                migrationLink.setExternalLink(YggdrasilService.PROFILE_URL);
-
-                JFXHyperlink migrationHowLink = new JFXHyperlink(i18n("account.methods.yggdrasil.migration.how"));
-                migrationHowLink.setExternalLink(YggdrasilService.MIGRATION_FAQ_URL);
-
-                linkPane.getChildren().setAll(migrationLink, migrationHowLink);
-            }
-
             dialogLayout.setBody(body);
         }
 

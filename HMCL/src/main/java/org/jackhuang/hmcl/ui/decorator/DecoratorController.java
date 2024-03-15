@@ -50,6 +50,10 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -168,8 +172,23 @@ public class DecoratorController {
                 break;
             case NETWORK:
                 String backgroundImageUrl = config().getBackgroundImageUrl();
-                if (backgroundImageUrl != null && NetworkUtils.isURL(backgroundImageUrl))
-                    image = tryLoadImage(backgroundImageUrl).orElse(null);
+                if (backgroundImageUrl != null) {
+                    try {
+                        URLConnection connection = NetworkUtils.createConnection(new URL(backgroundImageUrl));
+                        if (connection instanceof HttpURLConnection) {
+                            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+                        }
+
+                        try (InputStream input = connection.getInputStream()) {
+                            image = new Image(input);
+                            if (image.isError()) {
+                                throw image.getException();
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOG.log(WARNING, "Couldn't load background image", e);
+                    }
+                }
                 break;
             case CLASSIC:
                 image = newBuiltinImage("/assets/img/background-classic.jpg");

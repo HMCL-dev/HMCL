@@ -130,11 +130,15 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return version;
     }
 
-    public static LibraryAnalyzer analyze(Version version) {
+    public static LibraryAnalyzer analyze(Version version, String gameVersion) {
         if (version.getInheritsFrom() != null)
             throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
 
         Map<String, Pair<Library, String>> libraries = new HashMap<>();
+
+        if (gameVersion != null) {
+            libraries.put(LibraryType.MINECRAFT.getPatchId(), pair(null, gameVersion));
+        }
 
         List<Library> rawLibraries = version.resolve(null).getLibraries();
         for (Library library : rawLibraries) {

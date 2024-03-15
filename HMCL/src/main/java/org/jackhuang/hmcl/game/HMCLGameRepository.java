@@ -282,7 +282,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             }
 
             if (LibraryAnalyzer.isModded(this, version)) {
-                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))

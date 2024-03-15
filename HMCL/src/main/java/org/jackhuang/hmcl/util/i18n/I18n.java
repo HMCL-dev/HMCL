@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.time.Instant;
@@ -34,14 +33,14 @@ public final class I18n {
     private I18n() {
     }
 
+    private static volatile SupportedLocale locale = Locales.DEFAULT;
+
+    public static void setLocale(SupportedLocale locale) {
+        I18n.locale = locale;
+    }
+
     public static SupportedLocale getCurrentLocale() {
-        try {
-            return ConfigHolder.config().getLocalization();
-        } catch (IllegalStateException e) {
-            // e is thrown by ConfigHolder.config(), indicating the config hasn't been loaded
-            // fallback to use default locale
-            return Locales.DEFAULT;
-        }
+        return locale;
     }
 
     public static ResourceBundle getResourceBundle() {
