@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -44,14 +43,15 @@ import org.jackhuang.hmcl.ui.nbt.NBTHelper;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
+import java.time.Instant;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -118,8 +118,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 List<Version> children = repository.getVersions().parallelStream()
                         .filter(version -> !version.isHidden())
                         .sorted(Comparator
-                                .comparing((Version version) -> version.getReleaseTime() == null ? new Date(0L)
-                                        : version.getReleaseTime())
+                                .comparing((Version version) -> Lang.requireNonNullElse(version.getReleaseTime(), Instant.EPOCH))
                                 .thenComparing(version -> VersionNumber.asVersion(repository.getGameVersion(version).orElse(version.getId()))))
                         .collect(Collectors.toList());
                 runInFX(() -> {
@@ -170,24 +169,18 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             runInFX(() -> FXUtils.installFastTooltip(downloadItem, i18n("download.hint")));
 
             // fifth item in left sidebar
-            AdvancedListItem multiplayerItem = new AdvancedListItem();
-            multiplayerItem.setLeftGraphic(wrap(SVG.LAN));
-            multiplayerItem.setActionButtonVisible(false);
-            multiplayerItem.setTitle(i18n("multiplayer"));
-            JFXHyperlink link = new JFXHyperlink(i18n("multiplayer.hint.details"));
-            link.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/multiplayer-migrate");
-            multiplayerItem.setOnAction(e -> Controllers.dialog(
-                    new MessageDialogPane.Builder(i18n("multiplayer.hint"), null, MessageDialogPane.MessageType.INFO)
-                            .addAction(link)
-                            .ok(null)
-                            .build()));
-
-            // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem.setLeftGraphic(wrap(SVG.GEAR_OUTLINE));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
+
+            // sixth item in left sidebar
+            AdvancedListItem chatItem = new AdvancedListItem();
+            chatItem.setLeftGraphic(wrap(SVG.CHAT));
+            chatItem.setActionButtonVisible(false);
+            chatItem.setTitle(i18n("chat"));
+            chatItem.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/groups.html"));
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
@@ -198,8 +191,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(gameItem)
                     .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
-                    .add(multiplayerItem)
-                    .add(launcherSettingsItem);
+                    .add(launcherSettingsItem)
+                    .add(chatItem)
+                    ;
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);

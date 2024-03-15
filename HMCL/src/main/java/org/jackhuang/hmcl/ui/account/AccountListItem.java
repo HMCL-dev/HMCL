@@ -120,19 +120,15 @@ public class AccountListItem extends RadioButton {
     }
 
     public ObservableBooleanValue canUploadSkin() {
-        if (account instanceof YggdrasilAccount) {
-            if (account instanceof AuthlibInjectorAccount) {
-                AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
-                ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
-                return createBooleanBinding(() -> {
-                    Set<TextureType> uploadableTextures = profile.get()
-                            .map(AuthlibInjectorAccount::getUploadableTextures)
-                            .orElse(emptySet());
-                    return uploadableTextures.contains(TextureType.SKIN);
-                }, profile);
-            } else {
-                return createBooleanBinding(() -> true);
-            }
+        if (account instanceof AuthlibInjectorAccount) {
+            AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
+            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
+            return createBooleanBinding(() -> {
+                Set<TextureType> uploadableTextures = profile.get()
+                        .map(AuthlibInjectorAccount::getUploadableTextures)
+                        .orElse(emptySet());
+                return uploadableTextures.contains(TextureType.SKIN);
+            }, profile);
         } else if (account instanceof OfflineAccount || account instanceof MicrosoftAccount) {
             return createBooleanBinding(() -> true);
         } else {

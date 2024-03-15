@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -283,6 +284,32 @@ public final class FileUtils {
         });
     }
 
+    public static boolean hasKnownDesktop() {
+        if (!OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+            return true;
+
+        String desktops = System.getenv("XDG_CURRENT_DESKTOP");
+        if (desktops == null) {
+            desktops = System.getenv("XDG_SESSION_DESKTOP");
+        }
+
+        if (desktops == null) {
+            return false;
+        }
+        for (String desktop : desktops.split(":")) {
+            switch (desktop.toLowerCase(Locale.ROOT)) {
+                case "gnome":
+                case "xfce":
+                case "kde":
+                case "mate":
+                case "deepin":
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Move file to trash.
      * <p>
@@ -299,7 +326,7 @@ public final class FileUtils {
      * @see FileUtils#isMovingToTrashSupported()
      */
     public static boolean moveToTrash(File file) {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
             if (!file.exists()) {
                 return false;
             }
@@ -365,7 +392,7 @@ public final class FileUtils {
      * @return true if the method exists.
      */
     public static boolean isMovingToTrashSupported() {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
             return true;
         }
 

@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -103,7 +104,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public Stream<Version> getDisplayVersions() {
         return getVersions().stream()
                 .filter(v -> !v.isHidden())
-                .sorted(Comparator.comparing((Version v) -> v.getReleaseTime() == null ? new Date(0L) : v.getReleaseTime())
+                .sorted(Comparator.comparing((Version v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
                         .thenComparing(v -> VersionNumber.asVersion(v.getId())));
     }
 
@@ -281,7 +282,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             }
 
             if (LibraryAnalyzer.isModded(this, version)) {
-                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))

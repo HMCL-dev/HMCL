@@ -84,7 +84,8 @@ class AdditionalInstallersPage extends InstallersPage {
 
     @Override
     protected void reload() {
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version.resolvePreservingPatches(repository));
+        Version resolved = version.resolvePreservingPatches(repository);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
         String game = analyzer.getVersion(MINECRAFT).orElse(null);
         String currentGameVersion = Lang.nonNull(getVersion("game"), game);
 
