@@ -53,8 +53,6 @@ public class YggdrasilService {
 
     private static final ThreadPoolExecutor POOL = threadPool("YggdrasilProfileProperties", true, 2, 10, TimeUnit.SECONDS);
 
-    public static final YggdrasilService MOJANG = new YggdrasilService(new MojangYggdrasilProvider());
-
     private final YggdrasilProvider provider;
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
@@ -272,7 +270,5 @@ public class YggdrasilService {
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 
-    public static final String PROFILE_URL = "https://aka.ms/MinecraftMigration";
-    public static final String MIGRATION_FAQ_URL = "https://help.minecraft.net/articles/360050865492";
     public static final String PURCHASE_URL = "https://www.microsoft.com/store/productId/9NXP44L49SHJ";
 }

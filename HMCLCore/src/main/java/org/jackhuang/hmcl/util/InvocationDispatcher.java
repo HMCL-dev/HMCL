@@ -20,36 +20,37 @@ package org.jackhuang.hmcl.util;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
- * When {@link #accept(ARG)} is called, this class invokes the handler on another thread.
- * If {@link #accept(ARG)} is called more than one time before the handler starts processing,
+ * When {@link #accept(T)} is called, this class invokes the handler on another thread.
+ * If {@link #accept(T)} is called more than one time before the handler starts processing,
  * the handler will only be invoked once, taking the latest argument as its input.
  *
  * @author yushijinhun
  */
-public final class InvocationDispatcher<ARG> implements Consumer<ARG> {
+public final class InvocationDispatcher<T> implements Consumer<T> {
 
-    public static <ARG> InvocationDispatcher<ARG> runOn(Executor executor, Consumer<ARG> action) {
-        return new InvocationDispatcher<>(arg -> executor.execute(() -> {
-            synchronized (action) {
-                action.accept(arg.get());
-            }
-        }));
+    public static <T> InvocationDispatcher<T> runOn(Executor executor, Consumer<T> action) {
+        return new InvocationDispatcher<>(executor, action);
     }
 
-    private final Consumer<Supplier<ARG>> handler;
-    private final AtomicReference<Holder<ARG>> pendingArg = new AtomicReference<>();
+    private final Executor executor;
+    private final Consumer<T> action;
+    private final AtomicReference<Holder<T>> pendingArg = new AtomicReference<>();
 
-    public InvocationDispatcher(Consumer<Supplier<ARG>> handler) {
-        this.handler = handler;
+    private InvocationDispatcher(Executor executor, Consumer<T> action) {
+        this.executor = executor;
+        this.action = action;
     }
 
     @Override
-    public void accept(ARG arg) {
-        if (pendingArg.getAndSet(new Holder<>(arg)) == null) {
-            handler.accept(() -> pendingArg.getAndSet(null).value);
+    public void accept(T t) {
+        if (pendingArg.getAndSet(new Holder<>(t)) == null) {
+            executor.execute(() -> {
+                synchronized (InvocationDispatcher.this) {
+                    action.accept(pendingArg.getAndSet(null).value);
+                }
+            });
         }
     }
 }

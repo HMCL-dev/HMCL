@@ -459,6 +459,8 @@ public class DefaultGameRepository implements GameRepository {
             return assetsDir;
 
         if (index.isVirtual()) {
+            Path resourcesDir = getBaseDirectory().toPath().resolve("resources");
+
             int cnt = 0;
             int tot = index.getObjects().entrySet().size();
             for (Map.Entry<String, AssetObject> entry : index.getObjects().entrySet()) {
@@ -468,6 +470,12 @@ public class DefaultGameRepository implements GameRepository {
                     cnt++;
                     if (!Files.isRegularFile(target))
                         FileUtils.copyFile(original, target);
+
+                    if (index.needMapToResources()) {
+                        target = resourcesDir.resolve(entry.getKey());
+                        if (!Files.isRegularFile(target))
+                            FileUtils.copyFile(original, target);
+                    }
                 }
             }
 

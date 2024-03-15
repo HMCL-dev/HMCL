@@ -413,7 +413,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         searchAction.handle(event);
                     });
                     lastPageButton.setDisable(true);
-                    control.pageCount.addListener((observable, oldValue, newValue) -> lastPageButton.setDisable(control.pageCount.get() == -1));
+                    control.pageCount.addListener((observable, oldValue, newValue) -> lastPageButton.setDisable(control.pageCount.get() == -1 || control.pageOffset.get() >= control.pageCount.get() - 1));
 
                     Pane placeholder = new Pane();
                     HBox.setHgrow(placeholder, Priority.SOMETIMES);

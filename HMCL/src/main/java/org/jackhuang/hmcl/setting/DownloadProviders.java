@@ -55,10 +55,9 @@ public final class DownloadProviders {
 
     private static final MojangDownloadProvider MOJANG;
     private static final BMCLAPIDownloadProvider BMCLAPI;
-    private static final BMCLAPIDownloadProvider MCBBS;
 
     public static final String DEFAULT_PROVIDER_ID = "balanced";
-    public static final String DEFAULT_RAW_PROVIDER_ID = "mcbbs";
+    public static final String DEFAULT_RAW_PROVIDER_ID = "bmclapi";
 
     private static final InvalidationListener observer;
 
@@ -69,21 +68,19 @@ public final class DownloadProviders {
 
         MOJANG = new MojangDownloadProvider();
         BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
-        MCBBS = new BMCLAPIDownloadProvider("https://download.mcbbs.net");
         rawProviders = mapOf(
                 pair("mojang", MOJANG),
-                pair("bmclapi", BMCLAPI),
-                pair("mcbbs", MCBBS)
+                pair("bmclapi", BMCLAPI)
         );
 
         AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider();
-        fileProvider.setDownloadProviderCandidates(Arrays.asList(MCBBS, BMCLAPI, MOJANG));
-        BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, MCBBS, BMCLAPI);
+        fileProvider.setDownloadProviderCandidates(Arrays.asList(BMCLAPI, MOJANG));
+        BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, BMCLAPI);
 
         providersById = mapOf(
                 pair("official", new AutoDownloadProvider(MOJANG, fileProvider)),
                 pair("balanced", new AutoDownloadProvider(balanced, fileProvider)),
-                pair("mirror", new AutoDownloadProvider(MCBBS, fileProvider)));
+                pair("mirror", new AutoDownloadProvider(BMCLAPI, fileProvider)));
 
         observer = FXUtils.observeWeak(() -> {
             FetchTask.setDownloadExecutorConcurrency(
@@ -102,12 +99,11 @@ public final class DownloadProviders {
                     .orElse(providersById.get(DEFAULT_PROVIDER_ID));
         });
 
-        FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-            if (!rawProviders.containsKey(downloadType)) {
-                config().setDownloadType(DEFAULT_RAW_PROVIDER_ID);
-                return;
-            }
+        if (!rawProviders.containsKey(config().getDownloadType())) {
+            config().setDownloadType(DEFAULT_RAW_PROVIDER_ID);
+        }
 
+        FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
             DownloadProvider primary = Optional.ofNullable(rawProviders.get(downloadType))
                     .orElse(rawProviders.get(DEFAULT_RAW_PROVIDER_ID));
             fileDownloadProvider.setDownloadProviderCandidates(

@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,12 +46,12 @@ public class TLauncherVersion implements Validation {
     private final JsonMap<DownloadType, DownloadInfo> downloads;
     private final JsonMap<DownloadType, LoggingInfo> logging;
     private final ReleaseType type;
-    private final Date time;
-    private final Date releaseTime;
+    private final Instant time;
+    private final Instant releaseTime;
     private final Integer minimumLauncherVersion;
     private final Integer tlauncherVersion;
 
-    public TLauncherVersion(String id, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, @Nullable GameJavaVersion javaVersion, List<TLauncherLibrary> libraries, List<CompatibilityRule> compatibilityRules, JsonMap<DownloadType, DownloadInfo> downloads, JsonMap<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, Integer minimumLauncherVersion, Integer tlauncherVersion) {
+    public TLauncherVersion(String id, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, @Nullable GameJavaVersion javaVersion, List<TLauncherLibrary> libraries, List<CompatibilityRule> compatibilityRules, JsonMap<DownloadType, DownloadInfo> downloads, JsonMap<DownloadType, LoggingInfo> logging, ReleaseType type, Instant time, Instant releaseTime, Integer minimumLauncherVersion, Integer tlauncherVersion) {
         this.id = id;
         this.minecraftArguments = minecraftArguments;
         this.arguments = arguments;

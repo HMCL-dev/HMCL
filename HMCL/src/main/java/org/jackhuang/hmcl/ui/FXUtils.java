@@ -43,6 +43,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -78,6 +79,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -676,6 +678,16 @@ public final class FXUtils {
             comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }
 
+    public static void setIcon(Stage stage) {
+        String icon;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            icon = "/assets/img/icon.png";
+        } else {
+            icon = "/assets/img/icon@4x.png";
+        }
+        stage.getIcons().add(newBuiltinImage(icon));
+    }
+
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
@@ -769,8 +781,8 @@ public final class FXUtils {
                 Task.runAsync(() -> {
                     Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
                     try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
-                            OutputStream outputStream = Files.newOutputStream(newPath);
-                            PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
+                          OutputStream outputStream = Files.newOutputStream(newPath);
+                          PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
                     ) {
                         writer.write(PNGJavaFXUtils.asArgbImage(image));
                     } catch (IOException e) {
@@ -907,7 +919,9 @@ public final class FXUtils {
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        Controllers.showToast(i18n("message.copied"));
+        if (!Controllers.isStopped()) {
+            Controllers.showToast(i18n("message.copied"));
+        }
     }
 
     public static List<Node> parseSegment(String segment, Consumer<String> hyperlinkAction) {
@@ -930,7 +944,14 @@ public final class FXUtils {
                     if ("a".equals(element.getTagName())) {
                         String href = element.getAttribute("href");
                         JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
-                        hyperlink.setOnAction(e -> hyperlinkAction.accept(href));
+                        hyperlink.setOnAction(e -> {
+                            String link = href;
+                            try {
+                                link = new URI(href).toASCIIString();
+                            } catch (URISyntaxException ignored) {
+                            }
+                            hyperlinkAction.accept(link);
+                        });
                         texts.add(hyperlink);
                     } else if ("b".equals(element.getTagName())) {
                         Text text = new Text(element.getTextContent());

@@ -22,12 +22,12 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -86,7 +86,7 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
                             versions.put(gameVersion, new NeoForgeRemoteVersion(
                                     neoForgeVersion.mcVersion,
                                     nf,
-                                    Lang.immutableListOf(
+                                    Collections.singletonList(
                                             apiRoot + "/neoforge/version/" + neoForgeVersion.version + "/download/installer.jar"
                                     )
                             ));
