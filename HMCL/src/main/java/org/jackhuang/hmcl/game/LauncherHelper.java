@@ -333,7 +333,8 @@ public final class LauncherHelper {
     }
 
     private static Task<JavaVersion> checkGameState(Profile profile, VersionSetting setting, Version version) {
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(version));
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, profile.getRepository().getGameVersion(version).orElse(null));
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
 
         if (setting.isNotCheckJVM()) {
             return Task.composeAsync(() -> setting.getJavaVersion(gameVersion, version))
@@ -417,7 +418,6 @@ public final class LauncherHelper {
             JavaVersionConstraint violatedMandatoryConstraint = null;
             List<JavaVersionConstraint> violatedSuggestedConstraints = null;
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, gameVersion.toString());
             for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
                 if (constraint.appliesToVersion(gameVersion, version, javaVersion, analyzer)) {
                     if (!constraint.checkJava(gameVersion, version, javaVersion)) {
