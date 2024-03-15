@@ -21,12 +21,7 @@ import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.util.i18n.I18n;
 
-import java.util.MissingResourceException;
-import java.util.logging.Level;
-
-import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
