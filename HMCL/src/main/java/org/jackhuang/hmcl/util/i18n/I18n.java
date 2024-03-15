@@ -60,15 +60,11 @@ public final class I18n {
     }
 
     public static String i18n(String key) {
-        return i18n(key, key);
-    }
-
-    public static String i18n(String key, String defaultValue) {
         try {
             return getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
             LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
-            return defaultValue;
+            return key;
         }
     }
 
