@@ -92,7 +92,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleNode.setPadding(new Insets(0, 0, 0, 2));
         titleNode.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
+        ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.webp"));
         Label titleLabel = new Label(Metadata.FULL_TITLE);
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleNode.getChildren().setAll(titleIcon, titleLabel);
