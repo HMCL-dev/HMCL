@@ -102,7 +102,7 @@ public class DefaultLauncher extends Launcher {
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars()));
 
         res.add(options.getJava().getBinary().toString());
 
@@ -429,9 +429,6 @@ public class DefaultLauncher extends Launcher {
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
-        if (StringUtils.isNotBlank(options.getWrapper())) {
-            rawCommandLine.addAll(0, StringUtils.tokenize(options.getWrapper(), getEnvVars()));
-        }
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
