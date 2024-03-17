@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,20 +73,19 @@ public class VersionIconDialog extends DialogPane {
 
     private void exploreIcon() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png", "*.jpg", "*.bmp", "*.gif"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
-            File iconFile = profile.getRepository().getVersionIconFile(versionId);
             try {
-                FileUtils.copyFile(selectedFile, iconFile);
+                profile.getRepository().setVersionIconFile(versionId, selectedFile);
 
                 if (vs != null) {
                     vs.setVersionIcon(VersionIconType.DEFAULT);
                 }
 
                 onAccept();
-            } catch (IOException e) {
-                Logging.LOG.log(Level.SEVERE, "Failed to copy icon file from " + selectedFile + " to " + iconFile, e);
+            } catch (IOException | IllegalArgumentException e) {
+                Logging.LOG.log(Level.SEVERE, "Failed to set icon file: " + selectedFile, e);
             }
         }
     }

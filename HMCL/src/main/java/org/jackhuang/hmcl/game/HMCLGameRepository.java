@@ -259,8 +259,50 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return vs;
     }
 
-    public File getVersionIconFile(String id) {
-        return new File(getVersionRoot(id), "icon.png");
+    public Optional<File> getVersionIconFile(String id) {
+        File root = getVersionRoot(id);
+
+        File iconFile = new File(root, "icon.png");
+        if (iconFile.exists()) {
+            return Optional.of(iconFile);
+        }
+
+        iconFile = new File(root, "icon.jpg");
+        if (iconFile.exists()) {
+            return Optional.of(iconFile);
+        }
+
+        iconFile = new File(root, "icon.bmp");
+        if (iconFile.exists()) {
+            return Optional.of(iconFile);
+        }
+
+        iconFile = new File(root, "icon.gif");
+        if (iconFile.exists()) {
+            return Optional.of(iconFile);
+        }
+
+        return Optional.empty();
+    }
+
+    public void setVersionIconFile(String id, File iconFile) throws IOException {
+        String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
+        if (!ext.equals("png") && !ext.equals("jpg") && !ext.equals("bmp") && !ext.equals("gif")) {
+            throw new IllegalArgumentException("Unsupported icon file: " + ext);
+        }
+
+        deleteIconFile(id);
+
+        FileUtils.copyFile(iconFile, new File(getVersionRoot(id), "icon." + ext));
+    }
+
+    public void deleteIconFile(String id) {
+        File root = getVersionRoot(id);
+
+        new File(root, "icon.png").delete();
+        new File(root, "icon.jpg").delete();
+        new File(root, "icon.bmp").delete();
+        new File(root, "icon.gif").delete();
     }
 
     public Image getVersionIconImage(String id) {
@@ -272,9 +314,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
-            File iconFile = getVersionIconFile(id);
-            if (iconFile.exists()) {
-                try (InputStream inputStream = new FileInputStream(iconFile)) {
+            Optional<File> iconFile = getVersionIconFile(id);
+            if (iconFile.isPresent()) {
+                try (InputStream inputStream = new FileInputStream(iconFile.get())) {
                     return new Image(inputStream);
                 } catch (IOException e) {
                     LOG.log(Level.WARNING, "Failed to load version icon of " + id, e);
