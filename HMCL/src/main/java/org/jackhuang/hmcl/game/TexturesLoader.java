@@ -140,23 +140,48 @@ public final class TexturesLoader {
     // ====
 
     // ==== Skins ====
-    private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
+    private static final LoadedTexture[] DEFAULT_SKINS = {
+            loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/ari.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/efe.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/kai.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/makena.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/noor.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/sunny.png", TextureModel.ALEX),
+            loadDefaultSkin("/assets/img/skin/zuri.png", TextureModel.ALEX),
 
-    static {
-        loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.STEVE);
-        loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.ALEX);
+            loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/ari.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/efe.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/kai.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/makena.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/noor.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/sunny.png", TextureModel.STEVE),
+            loadDefaultSkin("/assets/img/skin/zuri.png", TextureModel.STEVE)
+    };
+
+    private static LoadedTexture loadDefaultSkin(String path, TextureModel model) {
+        return new LoadedTexture(FXUtils.newBuiltinImage(path), singletonMap("model", model.modelName));
     }
 
-    private static void loadDefaultSkin(String path, TextureModel model) {
-        DEFAULT_SKINS.put(model, new LoadedTexture(FXUtils.newBuiltinImage(path), singletonMap("model", model.modelName)));
+    public static Image getDefaultSkinImage() {
+        return FXUtils.newBuiltinImage("/assets/img/skin/steve.png");
     }
 
-    public static LoadedTexture getDefaultSkin(TextureModel model) {
-        return DEFAULT_SKINS.get(model);
+    public static LoadedTexture getDefaultSkin(UUID uuid) {
+        return DEFAULT_SKINS[Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.length)];
+    }
+
+    public static TextureModel getDefaultModel(UUID uuid) {
+        return TextureModel.STEVE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
+                ? TextureModel.STEVE
+                : TextureModel.ALEX;
     }
 
     public static ObjectBinding<LoadedTexture> skinBinding(YggdrasilService service, UUID uuid) {
-        LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(uuid));
+        LoadedTexture uuidFallback = getDefaultSkin(uuid);
         return BindingMapping.of(service.getProfileRepository().binding(uuid))
                 .map(profile -> profile
                         .flatMap(it -> {
@@ -187,7 +212,7 @@ public final class TexturesLoader {
     }
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
-        LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(account.getUUID()));
+        LoadedTexture uuidFallback = getDefaultSkin(account.getUUID());
         if (account instanceof OfflineAccount) {
             OfflineAccount offlineAccount = (OfflineAccount) account;
 
@@ -348,7 +373,7 @@ public final class TexturesLoader {
             fxAvatarBinding(canvas, skinBinding(account));
         else {
             unbindAvatar(canvas);
-            drawAvatar(canvas, getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image);
+            drawAvatar(canvas, getDefaultSkin(account.getUUID()).image);
         }
     }
 

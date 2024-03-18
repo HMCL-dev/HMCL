@@ -27,7 +27,6 @@ import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -58,7 +57,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
                 tooltip.setText(i18n("account.create"));
 
                 TexturesLoader.unbindAvatar(canvas);
-                TexturesLoader.drawAvatar(canvas, TexturesLoader.getDefaultSkin(TextureModel.STEVE).getImage());
+                TexturesLoader.drawAvatar(canvas, TexturesLoader.getDefaultSkinImage());
 
             } else {
                 titleProperty().bind(BindingMapping.of(account, Account::getCharacter));
