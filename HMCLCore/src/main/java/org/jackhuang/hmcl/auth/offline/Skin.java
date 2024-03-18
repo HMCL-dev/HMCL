@@ -40,7 +40,6 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -100,9 +99,6 @@ public class Skin {
         }
     }
 
-    public static void registerDefaultSkinLoader(BiFunction<String, TextureModel, Image> loader) {
-    }
-
     private final Type type;
     private final String cslApi;
     private final TextureModel textureModel;
@@ -156,8 +152,8 @@ public class Skin {
                 return Task.supplyAsync(() -> new LoadedSkin(
                         model,
                         Texture.loadTexture(new Image(resource)),
-                        null)
-                );
+                        null
+                ));
 
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
