@@ -8,6 +8,7 @@ import moe.mickey.minecraft.skin.fx.SkinCanvas;
 import moe.mickey.minecraft.skin.fx.SkinCanvasSupport;
 import moe.mickey.minecraft.skin.fx.animation.SkinAniRunning;
 import moe.mickey.minecraft.skin.fx.animation.SkinAniWavingArms;
+import org.jackhuang.hmcl.game.TexturesLoader;
 
 import java.util.function.Consumer;
 
@@ -16,7 +17,7 @@ public class Test extends Application {
     public static final String TITLE = "FX - Minecraft skin preview";
 
     public static SkinCanvas createSkinCanvas() {
-        SkinCanvas canvas = new SkinCanvas(SkinCanvas.STEVE, 400, 400, true);
+        SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 400, 400, true);
         canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
         FunctionHelper.alwaysB(Consumer<SkinCanvas>::accept, canvas, new SkinCanvasSupport.Mouse(.5), new SkinCanvasSupport.Drag(TITLE));
         return canvas;

@@ -72,7 +72,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
         BorderPane pane = new BorderPane();
 
-        SkinCanvas canvas = new SkinCanvas(SkinCanvas.STEVE, 300, 300, true);
+        SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 300, 300, true);
         StackPane canvasPane = new StackPane(canvas);
         canvasPane.setPrefWidth(300);
         canvasPane.setPrefHeight(300);

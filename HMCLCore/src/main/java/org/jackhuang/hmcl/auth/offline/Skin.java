@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.auth.offline;
 
 import com.google.gson.annotations.SerializedName;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -39,7 +40,7 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -99,10 +100,7 @@ public class Skin {
         }
     }
 
-    private static Function<Type, InputStream> defaultSkinLoader = null;
-
-    public static void registerDefaultSkinLoader(Function<Type, InputStream> defaultSkinLoader0) {
-        defaultSkinLoader = defaultSkinLoader0;
+    public static void registerDefaultSkinLoader(BiFunction<String, TextureModel, Image> loader) {
     }
 
     private final Type type;
@@ -152,11 +150,15 @@ public class Skin {
             case STEVE:
             case SUNNY:
             case ZURI:
-                if (defaultSkinLoader == null) {
-                    return Task.supplyAsync(() -> null);
-                }
-                TextureModel model = type == Type.ALEX ? TextureModel.ALEX : TextureModel.STEVE;
-                return Task.supplyAsync(() -> new LoadedSkin(model, Texture.loadTexture(defaultSkinLoader.apply(type)), null));
+                TextureModel model = this.textureModel != null ? this.textureModel : type == Type.ALEX ? TextureModel.ALEX : TextureModel.STEVE;
+                String resource = (model == TextureModel.ALEX ? "/assets/img/skin/slim/" : "/assets/img/skin/wide/") + type.name().toLowerCase(Locale.ROOT) + ".png";
+
+                return Task.supplyAsync(() -> new LoadedSkin(
+                        model,
+                        Texture.loadTexture(new Image(resource)),
+                        null)
+                );
+
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
                     Texture skin = null, cape = null;

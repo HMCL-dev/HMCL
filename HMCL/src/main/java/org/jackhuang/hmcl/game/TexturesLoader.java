@@ -140,38 +140,25 @@ public final class TexturesLoader {
     // ====
 
     // ==== Skins ====
-    private static final LoadedTexture[] DEFAULT_SKINS = {
-            loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/ari.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/efe.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/kai.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/makena.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/noor.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/sunny.png", TextureModel.ALEX),
-            loadDefaultSkin("/assets/img/skin/zuri.png", TextureModel.ALEX),
-
-            loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/ari.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/efe.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/kai.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/makena.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/noor.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/sunny.png", TextureModel.STEVE),
-            loadDefaultSkin("/assets/img/skin/zuri.png", TextureModel.STEVE)
-    };
-
-    private static LoadedTexture loadDefaultSkin(String path, TextureModel model) {
-        return new LoadedTexture(FXUtils.newBuiltinImage(path), singletonMap("model", model.modelName));
-    }
+    private static final String[] DEFAULT_SKINS = {"alex", "ari", "efe", "kai", "makena", "noor", "steve", "sunny", "zuri"};
 
     public static Image getDefaultSkinImage() {
-        return FXUtils.newBuiltinImage("/assets/img/skin/steve.png");
+        return FXUtils.newBuiltinImage("/assets/img/skin/wide/steve.png");
     }
 
     public static LoadedTexture getDefaultSkin(UUID uuid) {
-        return DEFAULT_SKINS[Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.length)];
+        int idx = Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.length * 2);
+        TextureModel model;
+        Image skin;
+        if (idx < DEFAULT_SKINS.length) {
+            model = TextureModel.ALEX;
+            skin = FXUtils.newBuiltinImage("/assets/img/skin/slim/" + DEFAULT_SKINS[idx] + ".png");
+        } else {
+            model = TextureModel.STEVE;
+            skin = FXUtils.newBuiltinImage("/assets/img/skin/wide/" + DEFAULT_SKINS[idx - DEFAULT_SKINS.length] + ".png");
+        }
+
+        return new LoadedTexture(skin, singletonMap("model", model.modelName));
     }
 
     public static TextureModel getDefaultModel(UUID uuid) {
