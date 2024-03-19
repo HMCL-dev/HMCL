@@ -122,7 +122,7 @@ public class Skin {
     }
 
     public TextureModel getTextureModel() {
-        return textureModel == null ? TextureModel.STEVE : textureModel;
+        return textureModel == null ? TextureModel.WIDE : textureModel;
     }
 
     public String getLocalSkinPath() {
@@ -146,8 +146,8 @@ public class Skin {
             case STEVE:
             case SUNNY:
             case ZURI:
-                TextureModel model = this.textureModel != null ? this.textureModel : type == Type.ALEX ? TextureModel.ALEX : TextureModel.STEVE;
-                String resource = (model == TextureModel.ALEX ? "/assets/img/skin/slim/" : "/assets/img/skin/wide/") + type.name().toLowerCase(Locale.ROOT) + ".png";
+                TextureModel model = this.textureModel != null ? this.textureModel : type == Type.ALEX ? TextureModel.SLIM : TextureModel.WIDE;
+                String resource = (model == TextureModel.SLIM ? "/assets/img/skin/slim/" : "/assets/img/skin/wide/") + type.name().toLowerCase(Locale.ROOT) + ".png";
 
                 return Task.supplyAsync(() -> new LoadedSkin(
                         model,
@@ -224,16 +224,7 @@ public class Skin {
         String localSkinPath = tryCast(storage.get("localSkinPath"), String.class).orElse(null);
         String localCapePath = tryCast(storage.get("localCapePath"), String.class).orElse(null);
 
-        TextureModel model;
-        if ("default".equals(textureModel)) {
-            model = TextureModel.STEVE;
-        } else if ("slim".equals(textureModel)) {
-            model = TextureModel.ALEX;
-        } else {
-            model = TextureModel.STEVE;
-        }
-
-        return new Skin(type, cslApi, model, localSkinPath, localCapePath);
+        return new Skin(type, cslApi, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
     }
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
@@ -324,9 +315,9 @@ public class Skin {
         @Nullable
         public TextureModel getModel() {
             if (textures != null && textures.slim != null) {
-                return TextureModel.ALEX;
+                return TextureModel.SLIM;
             } else if (textures != null && textures.defaultSkin != null) {
-                return TextureModel.STEVE;
+                return TextureModel.WIDE;
             } else {
                 return null;
             }
@@ -348,9 +339,9 @@ public class Skin {
 
         public String getHash() {
             TextureModel model = getModel();
-            if (model == TextureModel.ALEX)
+            if (model == TextureModel.SLIM)
                 return getAlexModelHash();
-            else if (model == TextureModel.STEVE)
+            else if (model == TextureModel.WIDE)
                 return getSteveModelHash();
             else
                 return null;

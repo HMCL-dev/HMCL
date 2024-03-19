@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.auth.yggdrasil;
 
 public enum TextureModel {
-    STEVE("default"), ALEX("slim");
+    WIDE("default"), SLIM("slim");
 
     public final String modelName;
 

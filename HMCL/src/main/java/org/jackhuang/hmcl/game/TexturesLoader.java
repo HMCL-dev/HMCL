@@ -151,10 +151,10 @@ public final class TexturesLoader {
         TextureModel model;
         Image skin;
         if (idx < DEFAULT_SKINS.length) {
-            model = TextureModel.ALEX;
+            model = TextureModel.SLIM;
             skin = FXUtils.newBuiltinImage("/assets/img/skin/slim/" + DEFAULT_SKINS[idx] + ".png");
         } else {
-            model = TextureModel.STEVE;
+            model = TextureModel.WIDE;
             skin = FXUtils.newBuiltinImage("/assets/img/skin/wide/" + DEFAULT_SKINS[idx - DEFAULT_SKINS.length] + ".png");
         }
 
@@ -162,9 +162,9 @@ public final class TexturesLoader {
     }
 
     public static TextureModel getDefaultModel(UUID uuid) {
-        return TextureModel.STEVE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
-                ? TextureModel.STEVE
-                : TextureModel.ALEX;
+        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
+                ? TextureModel.WIDE
+                : TextureModel.SLIM;
     }
 
     public static ObjectBinding<LoadedTexture> skinBinding(YggdrasilService service, UUID uuid) {
