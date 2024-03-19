@@ -154,7 +154,6 @@ public class Skin {
                         Texture.loadTexture(new Image(resource)),
                         null
                 ));
-
             case LOCAL_FILE:
                 return Task.supplyAsync(() -> {
                     Texture skin = null, cape = null;
