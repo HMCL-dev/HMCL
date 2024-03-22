@@ -25,7 +25,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.ConfigHolder;
@@ -129,31 +128,6 @@ public final class Launcher extends Application {
     }
 
     private static void register() {
-        Skin.registerDefaultSkinLoader((type) -> {
-            switch (type) {
-                case ALEX:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
-                case ARI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
-                case EFE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
-                case KAI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
-                case MAKENA:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
-                case NOOR:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
-                case STEVE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
-                case SUNNY:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
-                case ZURI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
-                default:
-                    return null;
-            }
-        });
-
         RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon@8x.png", new RemoteMod.IMod() {
             @Override
             public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
