@@ -60,8 +60,7 @@ public class AuthlibInjectorServer implements Observable {
         try {
             url = addHttpsIfMissing(url);
             HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-            Locale locale = Locale.getDefault();
-            conn.setRequestProperty("Accept-Language", locale.getLanguage() + "-" + locale.getCountry());
+            conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
 
             String ali = conn.getHeaderField("x-authlib-injector-api-location");
             if (ali != null) {
@@ -70,7 +69,7 @@ public class AuthlibInjectorServer implements Observable {
                     conn.disconnect();
                     url = absoluteAli.toString();
                     conn = (HttpURLConnection) absoluteAli.openConnection();
-                    conn.setRequestProperty("Accept-Language", locale.getLanguage() + "-" + locale.getCountry());
+                    conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
                 }
             }
 
