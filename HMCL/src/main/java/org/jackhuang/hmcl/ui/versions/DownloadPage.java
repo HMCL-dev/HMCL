@@ -240,7 +240,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
                 ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
-                content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : getSkinnable().addon.getTitle());
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
                 content.getTags().setAll(getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
@@ -354,7 +354,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             if (addon != RemoteMod.BROKEN) {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
-                content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : addon.getTitle());
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.getTitle());
                 content.setSubtitle(addon.getDescription());
                 content.getTags().setAll(addon.getCategories().stream()
                         .map(page::getLocalizedCategory)

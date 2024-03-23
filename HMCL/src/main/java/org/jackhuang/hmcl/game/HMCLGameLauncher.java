@@ -72,7 +72,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
         }
 
-        if (I18n.getCurrentLocale().getLocale() != Locale.CHINA) {
+        if (!I18n.isUseChinese()) {
             return;
         }
 
