@@ -352,15 +352,21 @@ public class DownloadPage extends Control implements DecoratorPage {
             container.setOnMouseClicked(e -> Controllers.navigate(new DownloadPage(page, addon, version, callback)));
             getChildren().setAll(container);
 
-            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
-            content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : addon.getTitle());
-            content.setSubtitle(addon.getDescription());
-            content.getTags().setAll(addon.getCategories().stream()
-                    .map(page::getLocalizedCategory)
-                    .collect(Collectors.toList()));
+            if (addon != RemoteMod.BROKEN) {
+                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
+                content.setTitle(mod != null && I18n.getCurrentLocale().getLocale() == Locale.CHINA ? mod.getDisplayName() : addon.getTitle());
+                content.setSubtitle(addon.getDescription());
+                content.getTags().setAll(addon.getCategories().stream()
+                        .map(page::getLocalizedCategory)
+                        .collect(Collectors.toList()));
 
-            if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                imageView.setImage(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true, true));
+                if (StringUtils.isNotBlank(addon.getIconUrl())) {
+                    imageView.setImage(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true, true));
+                }
+            } else {
+                content.setTitle(i18n("mods.broken_dependency.title"));
+                content.setSubtitle(i18n("mods.broken_dependency.desc"));
+                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", 40, 40, true, true));
             }
         }
     }
