@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -30,18 +31,18 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
 
 public class RemoteMod {
-    private static RemoteMod EMPTY = null;
 
-    public static void registerEmptyRemoteMod(RemoteMod empty) {
-        EMPTY = empty;
-    }
-
-    public static RemoteMod getEmptyRemoteMod() {
-        if (EMPTY == null) {
-            throw new NullPointerException();
+    public static final RemoteMod BROKEN = new RemoteMod("", "", "RemoteMod.BROKEN", "", Collections.emptyList(), "", "", new RemoteMod.IMod() {
+        @Override
+        public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
+            throw new IOException();
         }
-        return EMPTY;
-    }
+
+        @Override
+        public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
+            throw new IOException();
+        }
+    });
 
     private final String slug;
     private final String author;
@@ -158,7 +159,7 @@ public class RemoteMod {
         public RemoteMod load() throws IOException {
             if (this.remoteMod == null) {
                 if (this.type == DependencyType.BROKEN) {
-                    this.remoteMod = RemoteMod.getEmptyRemoteMod();
+                    this.remoteMod = RemoteMod.BROKEN;
                 } else {
                     this.remoteMod = this.remoteModRepository.getModById(this.id);
                 }

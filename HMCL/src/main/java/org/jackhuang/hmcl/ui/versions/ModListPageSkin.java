@@ -490,10 +490,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     content.getTags().add(i18n("install.installer.quilt"));
                     break;
             }
-            if (dataItem.getMod() != null) {
-                if (I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
-                    content.getTags().add(dataItem.getMod().getDisplayName());
-                }
+            if (dataItem.getMod() != null && I18n.isUseChinese()) {
+                content.getTags().add(dataItem.getMod().getDisplayName());
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {

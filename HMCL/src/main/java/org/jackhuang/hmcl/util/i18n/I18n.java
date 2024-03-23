@@ -20,10 +20,9 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.IllegalFormatException;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -34,17 +33,25 @@ public final class I18n {
     }
 
     private static volatile SupportedLocale locale = Locales.DEFAULT;
+    private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
+    private static volatile DateTimeFormatter dateTimeFormatter;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
+        resourceBundle = locale.getResourceBundle();
+        dateTimeFormatter = null;
     }
 
-    public static SupportedLocale getCurrentLocale() {
-        return locale;
+    public static boolean isUseChinese() {
+        return locale.getLocale() == Locale.CHINA;
     }
 
     public static ResourceBundle getResourceBundle() {
-        return getCurrentLocale().getResourceBundle();
+        return resourceBundle;
+    }
+
+    public static String getName(SupportedLocale locale) {
+        return locale == Locales.DEFAULT ? resourceBundle.getString("lang.default") : locale.getResourceBundle().getString("lang");
     }
 
     public static String i18n(String key, Object... formatArgs) {
@@ -69,7 +76,12 @@ public final class I18n {
     }
 
     public static String formatDateTime(Instant instant) {
-        return getCurrentLocale().getDateTimeFormatter().format(instant);
+        DateTimeFormatter formatter = dateTimeFormatter;
+        if (formatter == null) {
+            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("world.time")).withZone(ZoneId.systemDefault());
+        }
+
+        return formatter.format(instant);
     }
 
     public static boolean hasKey(String key) {
