@@ -116,10 +116,10 @@ public final class Locales {
             if (resourceBundle == null) {
                 if (this != DEFAULT && this.locale == DEFAULT.locale) {
                     bundle = DEFAULT.getResourceBundle();
-                } else if (JavaVersion.CURRENT_JAVA.getParsedVersion() == JavaVersion.JAVA_8) {
+                } else if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9) {
                     bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
                 } else {
-                    // UTF-8 is supported in Java 9+
+                    // Java 9+ uses UTF-8 as the default encoding for resource bundles
                     bundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
                 }
 
