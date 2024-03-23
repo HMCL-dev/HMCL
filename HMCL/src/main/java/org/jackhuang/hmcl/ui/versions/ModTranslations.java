@@ -208,8 +208,8 @@ public enum ModTranslations {
 
         public Mod(String line) {
             String[] items = line.split(";", -1);
-            if (items.length != 7) {
-                throw new IllegalArgumentException("Illegal mod data line, 7 items expected " + line);
+            if (items.length != 6) {
+                throw new IllegalArgumentException("Illegal mod data line, 6 items expected " + line);
             }
 
             curseforge = items[0];
