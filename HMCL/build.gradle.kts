@@ -12,14 +12,15 @@ plugins {
 }
 
 val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "huanghongxun" && System.getenv("GITHUB_BASE_REF").isNullOrEmpty())
+        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "HMCL-dev" && System.getenv("GITHUB_BASE_REF")
+    .isNullOrEmpty())
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
     val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
     if (number != null) {
         (number - offset).toString()
     } else {
-        val shortCommit = System.getenv("GITHUB_SHA")?.toLowerCase()?.substring(0, 7)
+        val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
         val prefix = if (isOfficial) "dev" else "unofficial"
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
@@ -38,7 +39,7 @@ dependencies {
     implementation("libs:JFoenix")
 }
 
-fun digest(algorithm: String, bytes: ByteArray) = MessageDigest.getInstance(algorithm).digest(bytes)
+fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
@@ -107,9 +108,11 @@ val jarPath = tasks.jar.get().archiveFile.get().asFile
 tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
     archiveClassifier.set(null as String?)
 
+    exclude("**/package-info.class")
+    exclude("META-INF/maven/**")
+
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
-        exclude(dependency("com.github.steveice10:.*:.*"))
         exclude(dependency("libs:JFoenix:.*"))
     }
 
@@ -136,7 +139,8 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.graphics/com.sun.prism",
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin"
+                "javafx.controls/javafx.scene.control.skin",
+                "jdk.attach/sun.tools.attach"
             ).joinToString(" ")
         )
 
@@ -187,7 +191,7 @@ tasks.processResources {
     dependsOn(tasks["java11Classes"])
 
     into("assets") {
-        from(project.buildDir.resolve("openjfx-dependencies.json"))
+        from(project.layout.buildDirectory.file("openjfx-dependencies.json"))
     }
     dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }

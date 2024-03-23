@@ -42,7 +42,7 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 /**
  * @author huangyuhui
  */
-public final class GameVersion {
+final class GameVersion {
     private GameVersion() {
     }
 
@@ -104,8 +104,13 @@ public final class GameVersion {
             if (minecraft != null) {
                 try (InputStream is = gameJar.getInputStream(minecraft)) {
                     Optional<String> result = getVersionOfClassMinecraft(is);
-                    if (result.isPresent())
+                    if (result.isPresent()) {
+                        String version = result.get();
+                        if (version.startsWith("Beta ")) {
+                            result = Optional.of("b" + version.substring("Beta ".length()));
+                        }
                         return result;
+                    }
                 }
             }
 

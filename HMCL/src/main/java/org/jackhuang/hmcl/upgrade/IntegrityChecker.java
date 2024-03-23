@@ -46,6 +46,8 @@ import static org.jackhuang.hmcl.util.Logging.LOG;
 public final class IntegrityChecker {
     private IntegrityChecker() {}
 
+    public static final boolean DISABLE_SELF_INTEGRITY_CHECK = "true".equals(System.getProperty("hmcl.self_integrity_check.disable"));
+
     private static final String SIGNATURE_FILE = "META-INF/hmcl_signature";
     private static final String PUBLIC_KEY_FILE = "assets/hmcl_signature_publickey.der";
 
@@ -60,7 +62,7 @@ public final class IntegrityChecker {
         }
     }
 
-    private static boolean verifyJar(Path jarPath) throws IOException {
+    static void verifyJar(Path jarPath) throws IOException {
         PublicKey publickey = getPublicKey();
         MessageDigest md = DigestUtils.getDigest("SHA-512");
 
@@ -96,15 +98,11 @@ public final class IntegrityChecker {
                 verifier.update(md.digest(entry.getKey().getBytes(UTF_8)));
                 verifier.update(entry.getValue());
             }
-            return verifier.verify(signature);
+            if (!verifier.verify(signature)) {
+                throw new IOException("Invalid signature: " + jarPath);
+            }
         } catch (GeneralSecurityException e) {
             throw new IOException("Failed to verify signature", e);
-        }
-    }
-
-    static void requireVerifiedJar(Path jar) throws IOException {
-        if (!verifyJar(jar)) {
-            throw new IOException("Invalid signature: " + jar);
         }
     }
 
@@ -125,7 +123,12 @@ public final class IntegrityChecker {
             }
 
             try {
-                verifySelf();
+                Path jarPath = JarUtils.thisJarPath();
+                if (jarPath == null) {
+                    throw new IOException("Failed to find current HMCL location");
+                }
+
+                verifyJar(jarPath);
                 LOG.info("Successfully verified current JAR");
                 selfVerified = true;
             } catch (IOException e) {
@@ -139,10 +142,5 @@ public final class IntegrityChecker {
 
     public static boolean isOfficial() {
         return isSelfVerified() || (Metadata.GITHUB_SHA != null && Metadata.BUILD_CHANNEL.equals("nightly"));
-    }
-
-    private static void verifySelf() throws IOException {
-        Path self = JarUtils.thisJar().orElseThrow(() -> new IOException("Failed to find current HMCL location"));
-        requireVerifiedJar(self);
     }
 }

@@ -23,14 +23,12 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -50,12 +48,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallersPage extends Control implements WizardPage {
     protected final WizardController controller;
 
-    protected InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup();
+    protected InstallerItem.InstallerItemGroup group;
     protected JFXTextField txtName = new JFXTextField();
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
+        this.group = new InstallerItem.InstallerItemGroup(gameVersion);
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
@@ -72,9 +71,9 @@ public class InstallersPage extends Control implements WizardPage {
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
-            if (libraryId.equals("game")) continue;
+            if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
             library.action.set(e -> {
-                if ("fabric-api".equals(libraryId)) {
+                if (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)) {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
                 }
 
@@ -154,11 +153,22 @@ public class InstallersPage extends Control implements WizardPage {
             }
 
             {
-                FlowPane libraryPane = new FlowPane(control.group.getLibraries());
-                BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
+                InstallerItem[] libraries = control.group.getLibraries();
+
+                FlowPane libraryPane = new FlowPane(libraries);
                 libraryPane.setVgap(16);
                 libraryPane.setHgap(16);
-                root.setCenter(libraryPane);
+
+                if (libraries.length <= 8) {
+                    BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(libraryPane);
+                } else {
+                    ScrollPane scrollPane = new ScrollPane(libraryPane);
+                    scrollPane.setFitToWidth(true);
+                    scrollPane.setFitToHeight(true);
+                    BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(scrollPane);
+                }
             }
 
 

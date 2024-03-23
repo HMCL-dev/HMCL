@@ -55,8 +55,8 @@ public final class Main {
     }
 
     public static void main(String[] args) {
-        System.setProperty("java.net.useSystemProxies", "true");
-        System.setProperty("javafx.autoproxy.disable", "true");
+        System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
+        System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         checkDirectoryPath();
@@ -163,7 +163,7 @@ public final class Main {
         SwingUtils.showWarningDialog(message);
     }
 
-    static void fixLetsEncrypt() {
+    private static void fixLetsEncrypt() {
         try {
             KeyStore defaultKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");

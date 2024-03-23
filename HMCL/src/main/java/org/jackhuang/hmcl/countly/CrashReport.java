@@ -7,8 +7,8 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -29,6 +29,10 @@ public class CrashReport {
         nonFatal = false;
     }
 
+    public Throwable getThrowable() {
+        return this.throwable;
+    }
+
     public CrashReport setNonFatal() {
         nonFatal = true;
         return this;
@@ -36,6 +40,9 @@ public class CrashReport {
 
     public boolean shouldBeReport() {
         if (!stackTrace.contains("org.jackhuang"))
+            return false;
+
+        if (throwable instanceof VirtualMachineError)
             return false;
 
         return true;
@@ -61,7 +68,7 @@ public class CrashReport {
     public String getDisplayText() {
         return "---- Hello Minecraft! Crash Report ----\n" +
                 "  Version: " + Metadata.VERSION + "\n" +
-                "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
+                "  Time: " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()) + "\n" +
                 "  Thread: " + thread + "\n" +
                 "\n  Content: \n    " +
                 stackTrace + "\n\n" +

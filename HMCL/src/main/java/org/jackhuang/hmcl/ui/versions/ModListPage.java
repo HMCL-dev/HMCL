@@ -24,6 +24,8 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -84,7 +86,9 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         this.profile = profile;
         this.versionId = id;
 
-        libraryAnalyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
+        HMCLGameRepository repository = profile.getRepository();
+        Version resolved = repository.getResolvedPreservingPatchesVersion(id);
+        libraryAnalyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
         modded.set(libraryAnalyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
     }
@@ -108,7 +112,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             else
                 getProperties().remove(ModListPage.class);
 
-            // https://github.com/huanghongxun/HMCL/issues/938
+            // https://github.com/HMCL-dev/HMCL/issues/938
             System.gc();
         }, Platform::runLater);
     }
@@ -210,7 +214,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void download() {
-        Controllers.getDownloadPage().showModDownloads();
+        Controllers.getDownloadPage().showModDownloads().selectVersion(versionId);
         Controllers.navigate(Controllers.getDownloadPage());
     }
 

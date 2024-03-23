@@ -172,7 +172,7 @@ public enum Architecture {
             case "loongarch32":
                 return LOONGARCH32;
             case "loongarch64": {
-                if (VersionNumber.VERSION_COMPARATOR.compare(System.getProperty("os.version"), "5.19") < 0)
+                if (VersionNumber.compare(System.getProperty("os.version"), "5.19") < 0)
                     return LOONGARCH64_OW;
                 return LOONGARCH64;
             }

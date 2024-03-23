@@ -24,6 +24,7 @@ import javafx.beans.property.Property;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import org.jackhuang.hmcl.util.Holder;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -116,7 +117,7 @@ public final class ExtendedProperties {
             }
         };
         toggleGroup.getToggles().addListener(new WeakInvalidationListener(onTogglesChanged));
-        property.addListener(new ReferenceHolder(onTogglesChanged));
+        property.addListener(new Holder<>(onTogglesChanged));
 
         return property;
     }

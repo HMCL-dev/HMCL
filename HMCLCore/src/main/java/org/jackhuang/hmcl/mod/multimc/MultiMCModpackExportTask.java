@@ -70,13 +70,15 @@ public class MultiMCModpackExportTask extends Task<Void> {
         try (Zipper zip = new Zipper(output.toPath())) {
             zip.putDirectory(repository.getRunDirectory(versionId).toPath(), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId));
             String gameVersion = repository.getGameVersion(versionId)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId), gameVersion);
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
             components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, "net.minecraft", gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
                     components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.minecraftforge", forgeVersion)));
+            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
+                    components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.neoforged", neoForgeVersion)));
             analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
                     components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "com.mumfrey.liteloader", liteLoaderVersion)));
             analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->

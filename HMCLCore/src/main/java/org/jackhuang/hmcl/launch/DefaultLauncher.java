@@ -26,8 +26,9 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -69,14 +70,14 @@ public class DefaultLauncher extends Launcher {
             case HIGH:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "-1");
                 }
                 break;
@@ -86,14 +87,14 @@ public class DefaultLauncher extends Launcher {
             case BELOW_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                     res.add("nice", "-n", "5");
                 }
                 break;
@@ -101,7 +102,7 @@ public class DefaultLauncher extends Launcher {
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars()));
 
         res.add(options.getJava().getBinary().toString());
 
@@ -149,8 +150,14 @@ public class DefaultLauncher extends Launcher {
                 LOG.log(Level.WARNING, "Bad file encoding", ex);
             }
         }
-        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+
+        if (options.getJava().getParsedVersion() < 19) {
+            res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+        } else {
+            res.addDefault("-Dstdout.encoding=", encoding.name());
+            res.addDefault("-Dstderr.encoding=", encoding.name());
+        }
 
         // Fix RCE vulnerability of log4j2
         res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
@@ -221,12 +228,15 @@ public class DefaultLauncher extends Launcher {
         configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
         configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
+        Optional<String> gameVersion = repository.getGameVersion(version);
+
         // lwjgl assumes path to native libraries encoded by ASCII.
-        // Here is a workaround for this issue: https://github.com/huanghongxun/HMCL/issues/1141.
+        // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
-                && !StringUtils.isASCII(nativeFolderPath)) {
+                && !StringUtils.isASCII(nativeFolderPath)
+                && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
             nativeFolderPath = tempNativeFolder + File.pathSeparator + nativeFolderPath;
         }
@@ -255,7 +265,7 @@ public class DefaultLauncher extends Launcher {
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
             String[] args = options.getServerIp().split(":");
-            if (version.compareTo(new Version("1.20")) < 0) {
+            if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
                 res.add("--server");
                 res.add(args[0]);
                 res.add("--port");
@@ -353,7 +363,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     private boolean isUsingLog4j() {
-        return VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
+        return GameVersionNumber.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
     }
 
     public File getLog4jConfigurationFile() {
@@ -363,7 +373,7 @@ public class DefaultLauncher extends Launcher {
     public void extractLog4jConfigurationFile() throws IOException {
         File targetFile = getLog4jConfigurationFile();
         InputStream source;
-        if (VersionNumber.VERSION_COMPARATOR.compare(repository.getGameVersion(version).orElse("0.0"), "1.12") < 0) {
+        if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
         } else {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
@@ -419,9 +429,6 @@ public class DefaultLauncher extends Launcher {
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
-        if (StringUtils.isNotBlank(options.getWrapper())) {
-            rawCommandLine.addAll(0, StringUtils.parseCommand(options.getWrapper(), getEnvVars()));
-        }
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
@@ -442,7 +449,7 @@ public class DefaultLauncher extends Launcher {
         File runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
             builder.environment().putAll(getEnvVars());
             SystemUtils.callExternalProcess(builder);
         }
@@ -495,9 +502,12 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
+            env.put("INST_NEOFORGE", "1");
         }
         if (analyzer.has(LibraryAnalyzer.LibraryType.LITELOADER)) {
             env.put("INST_LITELOADER", "1");
@@ -547,6 +557,7 @@ public class DefaultLauncher extends Launcher {
 
         final Command commandLine = generateCommandLine(nativeFolder);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
+        Map<String, String> envVars = getEnvVars();
 
         if (!usePowerShell && isWindows) {
             if (command.length() > 8192) { // maximum length of the command in cmd
@@ -557,91 +568,112 @@ public class DefaultLauncher extends Launcher {
         if (!FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
-        OutputStream outputStream = new FileOutputStream(scriptFile);
-        Charset charset = StandardCharsets.UTF_8;
+        try (OutputStream outputStream = Files.newOutputStream(scriptFile.toPath())) {
+            Charset charset = StandardCharsets.UTF_8;
 
-        if (isWindows) {
-            if (usePowerShell) {
-                // Write UTF-8 BOM
-                try {
-                    outputStream.write(0xEF);
-                    outputStream.write(0xBB);
-                    outputStream.write(0xBF);
-                } catch (IOException e) {
-                    outputStream.close();
-                    throw e;
+            if (isWindows) {
+                if (usePowerShell) {
+                    // Write UTF-8 BOM
+                    try {
+                        outputStream.write(0xEF);
+                        outputStream.write(0xBB);
+                        outputStream.write(0xBF);
+                    } catch (IOException e) {
+                        outputStream.close();
+                        throw e;
+                    }
+                } else {
+                    charset = OperatingSystem.NATIVE_CHARSET;
                 }
-            } else {
-                charset = OperatingSystem.NATIVE_CHARSET;
             }
-        }
 
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
-            if (usePowerShell) {
-                if (isWindows) {
-                    writer.write("$Env:APPDATA=");
-                    writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
-                    writer.newLine();
-                }
-                for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                    writer.write("$Env:" + entry.getKey() + "=");
-                    writer.write(CommandBuilder.pwshString(entry.getValue()));
-                    writer.newLine();
-                }
-                writer.write("Set-Location -Path ");
-                writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
-                writer.newLine();
-
-                writer.write('&');
-                for (String rawCommand : commandLine.commandLine.asList()) {
-                    writer.write(' ');
-                    writer.write(CommandBuilder.pwshString(rawCommand));
-                }
-                writer.newLine();
-            } else {
-                if (isWindows) {
-                    writer.write("@echo off");
-                    writer.newLine();
-                    writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
-                    writer.newLine();
-                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                        writer.write("set " + entry.getKey() + "=" + CommandBuilder.toBatchStringLiteral(entry.getValue()));
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
+                if (usePowerShell) {
+                    if (isWindows) {
+                        writer.write("$Env:APPDATA=");
+                        writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
                         writer.newLine();
                     }
+                    for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                        writer.write("$Env:" + entry.getKey() + "=");
+                        writer.write(CommandBuilder.pwshString(entry.getValue()));
+                        writer.newLine();
+                    }
+                    writer.write("Set-Location -Path ");
+                    writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
                     writer.newLine();
-                    writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+
+
+                    if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                        writer.write('&');
+                        for (String rawCommand : StringUtils.tokenize(options.getPreLaunchCommand(), envVars)) {
+                            writer.write(' ');
+                            writer.write(CommandBuilder.pwshString(rawCommand));
+                        }
+                        writer.newLine();
+                    }
+
+                    writer.write('&');
+                    for (String rawCommand : commandLine.commandLine.asList()) {
+                        writer.write(' ');
+                        writer.write(CommandBuilder.pwshString(rawCommand));
+                    }
+                    writer.newLine();
+
+                    if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                        writer.write('&');
+                        for (String rawCommand : StringUtils.tokenize(options.getPostExitCommand(), envVars)) {
+                            writer.write(' ');
+                            writer.write(CommandBuilder.pwshString(rawCommand));
+                        }
+                        writer.newLine();
+                    }
                 } else {
-                    writer.write("#!/usr/bin/env bash");
+                    if (isWindows) {
+                        writer.write("@echo off");
+                        writer.newLine();
+                        writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
+                        writer.newLine();
+                        for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                            writer.write("set " + entry.getKey() + "=" + CommandBuilder.toBatchStringLiteral(entry.getValue()));
+                            writer.newLine();
+                        }
+                        writer.newLine();
+                        writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                    } else {
+                        writer.write("#!/usr/bin/env bash");
+                        writer.newLine();
+                        for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                            writer.write("export " + entry.getKey() + "=" + CommandBuilder.toShellStringLiteral(entry.getValue()));
+                            writer.newLine();
+                        }
+                        if (commandLine.tempNativeFolder != null) {
+                            writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.getAbsolutePath(), commandLine.tempNativeFolder.toString()).toString());
+                            writer.newLine();
+                        }
+                        writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                    }
                     writer.newLine();
-                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
-                        writer.write("export " + entry.getKey() + "=" + CommandBuilder.toShellStringLiteral(entry.getValue()));
+                    if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                        writer.write(new CommandBuilder().addAll(StringUtils.tokenize(options.getPreLaunchCommand(), envVars)).toString());
+                        writer.newLine();
+                    }
+                    writer.write(command);
+                    writer.newLine();
+
+                    if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                        writer.write(new CommandBuilder().addAll(StringUtils.tokenize(options.getPostExitCommand(), envVars)).toString());
+                        writer.newLine();
+                    }
+
+                    if (isWindows) {
+                        writer.write("pause");
                         writer.newLine();
                     }
                     if (commandLine.tempNativeFolder != null) {
-                        writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.getAbsolutePath(), commandLine.tempNativeFolder.toString()).toString());
+                        writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
                         writer.newLine();
                     }
-                    writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
-                }
-                writer.newLine();
-                if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-                    writer.write(options.getPreLaunchCommand());
-                    writer.newLine();
-                }
-                writer.write(command);
-                writer.newLine();
-                if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                    writer.write(options.getPostExitCommand());
-                    writer.newLine();
-                }
-
-                if (isWindows) {
-                    writer.write("pause");
-                    writer.newLine();
-                }
-                if (commandLine.tempNativeFolder != null) {
-                    writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
-                    writer.newLine();
                 }
             }
         }
@@ -669,7 +701,7 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {

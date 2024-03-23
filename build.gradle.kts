@@ -20,6 +20,7 @@ subprojects {
         }
         mavenCentral()
         maven(url = "https://jitpack.io")
+        maven(url = "https://libraries.minecraft.net")
     }
 
     tasks.withType<JavaCompile> {
@@ -34,7 +35,7 @@ subprojects {
     }
 
     dependencies {
-        "testImplementation"("org.junit.jupiter:junit-jupiter:5.9.1")
+        "testImplementation"("org.junit.jupiter:junit-jupiter:5.10.2")
     }
 
     tasks.withType<Test> {

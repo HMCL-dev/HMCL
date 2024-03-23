@@ -23,6 +23,7 @@ import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
@@ -30,7 +31,6 @@ import org.jackhuang.hmcl.util.Pair;
 
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
@@ -72,7 +72,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
             Tooltip.uninstall(this,tooltip);
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
-            imageView.setImage(newImage("/assets/img/grass.png"));
+            imageView.setImage(VersionIconType.DEFAULT.getIcon());
             tooltip.setText("");
         }
     }

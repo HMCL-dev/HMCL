@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -105,7 +106,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             Version original = repository.getVersion(version.getId());
             Version resolved = original.resolvePreservingPatches(repository);
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved);
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
             for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
                 if (!analyzer.has(type))
                     continue;
@@ -180,6 +181,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return Task
                 .composeAsync(() -> {
                     try {
+                        return NeoForgeInstallTask.install(this, oldVersion, installer);
+                    } catch (IOException ignore) {
+                    }
+
+                    try {
                         return ForgeInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {
                     }
@@ -212,8 +218,9 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         if (version.isResolved())
             throw new IllegalArgumentException("removeLibraryWithoutSavingAsync requires non-resolved version");
         Version independentVersion = version.resolvePreservingPatches(repository);
+        String gameVersion = repository.getGameVersion(independentVersion).orElse(null);
 
-        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion).removeLibrary(libraryId).build());
+        return Task.supplyAsync(() -> LibraryAnalyzer.analyze(independentVersion, gameVersion).removeLibrary(libraryId).build());
     }
 
 }

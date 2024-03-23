@@ -68,7 +68,7 @@ public final class QuiltVersionList extends VersionList<QuiltRemoteVersion> {
     private static final String GAME_META_URL = "https://meta.quiltmc.org/v3/versions/game";
 
     private List<String> getGameVersions(String metaUrl) throws IOException {
-        String json = NetworkUtils.doGet(NetworkUtils.toURL(downloadProvider.injectURL(metaUrl)));
+        String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
         return JsonUtils.GSON.<ArrayList<GameVersion>>fromJson(json, new TypeToken<ArrayList<GameVersion>>() {
         }.getType()).stream().map(GameVersion::getVersion).collect(Collectors.toList());
     }

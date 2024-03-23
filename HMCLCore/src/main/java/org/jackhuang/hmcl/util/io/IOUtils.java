@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -42,6 +43,12 @@ public final class IOUtils {
         ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
         copyTo(stream, result);
         return result.toByteArray();
+    }
+
+    public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
+        copyTo(stream, result);
+        return result.toString("UTF-8");
     }
 
     /**
@@ -78,5 +85,9 @@ public final class IOUtils {
                 break;
             dest.write(buf, 0, len);
         }
+    }
+
+    public static InputStream wrapFromGZip(InputStream inputStream) throws IOException {
+        return new GZIPInputStream(inputStream);
     }
 }

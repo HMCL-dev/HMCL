@@ -94,6 +94,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     break download;
                 }
 
+                List<String> redirects = null;
                 try {
                     beforeDownload(url);
 
@@ -103,7 +104,9 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (checkETag) repository.injectConnection(conn);
 
                     if (conn instanceof HttpURLConnection) {
-                        conn = NetworkUtils.resolveConnection((HttpURLConnection) conn);
+                        redirects = new ArrayList<>();
+
+                        conn = NetworkUtils.resolveConnection((HttpURLConnection) conn, redirects);
                         int responseCode = ((HttpURLConnection) conn).getResponseCode();
 
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
@@ -164,13 +167,13 @@ public abstract class FetchTask<T> extends Task<T> {
                 } catch (FileNotFoundException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", not found", ex);
+                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
 
                     break; // we will not try this URL again
                 } catch (IOException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (++repeat), ex);
+                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
                 }
             }
         }
@@ -301,9 +304,16 @@ public abstract class FetchTask<T> extends Task<T> {
         concurrency = Math.max(concurrency, 1);
         synchronized (Schedulers.class) {
             downloadExecutorConcurrency = concurrency;
-            if (DOWNLOAD_EXECUTOR != null) {
-                DOWNLOAD_EXECUTOR.setCorePoolSize(concurrency);
-                DOWNLOAD_EXECUTOR.setMaximumPoolSize(concurrency);
+
+            ThreadPoolExecutor downloadExecutor = DOWNLOAD_EXECUTOR;
+            if (downloadExecutor != null) {
+                if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
+                    downloadExecutor.setMaximumPoolSize(concurrency);
+                    downloadExecutor.setCorePoolSize(concurrency);
+                } else {
+                    downloadExecutor.setCorePoolSize(concurrency);
+                    downloadExecutor.setMaximumPoolSize(concurrency);
+                }
             }
         }
     }

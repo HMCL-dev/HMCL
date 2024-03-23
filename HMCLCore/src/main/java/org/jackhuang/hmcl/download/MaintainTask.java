@@ -63,7 +63,7 @@ public class MaintainTask extends Task<Version> {
         String mainClass = version.resolve(null).getMainClass();
 
         if (mainClass != null && mainClass.equals(LibraryAnalyzer.LAUNCH_WRAPPER_MAIN)) {
-            version = maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(unique(version), true), false);
+            version = maintainOptiFineLibrary(repository, maintainGameWithLaunchWrapper(repository, unique(version), true), false);
         } else if (mainClass != null && mainClass.equals(LibraryAnalyzer.MOD_LAUNCHER_MAIN)) {
             // Forge 1.13 and OptiFine
             version = maintainOptiFineLibrary(repository, maintainGameWithCpwModLauncher(repository, unique(version)), true);
@@ -97,8 +97,8 @@ public class MaintainTask extends Task<Version> {
         return newVersion.setPatches(version.getPatches()).markAsUnresolved();
     }
 
-    private static Version maintainGameWithLaunchWrapper(Version version, boolean reorderTweakClass) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+    private static Version maintainGameWithLaunchWrapper(GameRepository repository, Version version, boolean reorderTweakClass) {
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
         String mainClass = null;
 
@@ -147,7 +147,7 @@ public class MaintainTask extends Task<Version> {
     }
 
     private static Version maintainGameWithCpwModLauncher(GameRepository repository, Version version) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
 
         if (!libraryAnalyzer.has(FORGE)) return version;
@@ -205,15 +205,15 @@ public class MaintainTask extends Task<Version> {
 
     // Fix wrong configurations when launching 1.17+ with Forge.
     private static Version maintainGameWithCpwBoostrapLauncher(GameRepository repository, Version version) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         VersionLibraryBuilder builder = new VersionLibraryBuilder(version);
 
-        if (!libraryAnalyzer.has(FORGE)) return version;
+        if (!libraryAnalyzer.has(FORGE) && !libraryAnalyzer.has(NEO_FORGE)) return version;
 
         Optional<String> bslVersion = libraryAnalyzer.getVersion(BOOTSTRAP_LAUNCHER);
 
         if (bslVersion.isPresent()) {
-            if (VersionNumber.VERSION_COMPARATOR.compare(bslVersion.get(), "0.1.17") < 0) {
+            if (VersionNumber.compare(bslVersion.get(), "0.1.17") < 0) {
                 // The default ignoreList will be applied to all components of libraries in classpath,
                 // so if game directory located in some directory like /Users/asm, all libraries will be ignored,
                 // which is not expected. We fix this here.
@@ -247,7 +247,7 @@ public class MaintainTask extends Task<Version> {
     }
 
     private static Version maintainOptiFineLibrary(GameRepository repository, Version version, boolean remove) {
-        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
         List<Library> libraries = new ArrayList<>(version.getLibraries());
 
         if (libraryAnalyzer.has(OPTIFINE)) {
@@ -293,7 +293,7 @@ public class MaintainTask extends Task<Version> {
     public static Version unique(Version version) {
         List<Library> libraries = new ArrayList<>();
 
-        SimpleMultimap<String, Integer> multimap = new SimpleMultimap<String, Integer>(HashMap::new, ArrayList::new);
+        SimpleMultimap<String, Integer, List<Integer>> multimap = new SimpleMultimap<>(HashMap::new, ArrayList::new);
 
         for (Library library : version.getLibraries()) {
             String id = library.getGroupId() + ":" + library.getArtifactId();

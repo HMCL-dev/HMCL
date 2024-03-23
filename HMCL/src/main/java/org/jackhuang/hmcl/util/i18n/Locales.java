@@ -21,24 +21,18 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Locales {
     private Locales() {
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault(), "lang.default");
+    public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault());
 
     /**
      * English
@@ -104,24 +98,12 @@ public final class Locales {
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
-    public static class SupportedLocale {
+    public static final class SupportedLocale {
         private final Locale locale;
-        private final String name;
-        private final ResourceBundle resourceBundle;
+        private ResourceBundle resourceBundle;
 
         SupportedLocale(Locale locale) {
-            this(locale, null);
-        }
-
-        SupportedLocale(Locale locale, String name) {
             this.locale = locale;
-            this.name = name;
-            if (JavaVersion.CURRENT_JAVA.getParsedVersion() == JavaVersion.JAVA_8) {
-                resourceBundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
-            } else {
-                // UTF-8 is supported in Java 9+
-                resourceBundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
-            }
         }
 
         public Locale getLocale() {
@@ -129,15 +111,25 @@ public final class Locales {
         }
 
         public ResourceBundle getResourceBundle() {
-            return resourceBundle;
+            ResourceBundle bundle = resourceBundle;
+
+            if (resourceBundle == null) {
+                if (this != DEFAULT && this.locale == DEFAULT.locale) {
+                    bundle = DEFAULT.getResourceBundle();
+                } else if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9) {
+                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
+                } else {
+                    // Java 9+ uses UTF-8 as the default encoding for resource bundles
+                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
+                }
+
+                resourceBundle = bundle;
+            }
+
+            return bundle;
         }
 
-        public String getName(ResourceBundle newResourceBundle) {
-            if (name == null) return resourceBundle.getString("lang");
-            else return newResourceBundle.getString(name);
-        }
-
-        public static class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
+        public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
             @Override
             public void write(JsonWriter out, SupportedLocale value) throws IOException {
                 out.value(getNameByLocale(value));
@@ -149,7 +141,4 @@ public final class Locales {
             }
         }
     }
-
-    public static final Lazy<SimpleDateFormat> SIMPLE_DATE_FORMAT = new Lazy<>(() -> new SimpleDateFormat(i18n("world.time")));
-    public static final Lazy<DateTimeFormatter> DATE_TIME_FORMATTER = new Lazy<>(() -> DateTimeFormatter.ofPattern(i18n("world.time")).withZone(ZoneId.systemDefault()));
 }
