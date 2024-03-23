@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
 
 public class RemoteMod {
 
-    public static final RemoteMod BROKEN = new RemoteMod("", "", "", "", Collections.emptyList(), "", "", new RemoteMod.IMod() {
+    public static final RemoteMod BROKEN = new RemoteMod("", "", "RemoteMod.BROKEN", "", Collections.emptyList(), "", "", new RemoteMod.IMod() {
         @Override
         public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
             throw new IOException();
