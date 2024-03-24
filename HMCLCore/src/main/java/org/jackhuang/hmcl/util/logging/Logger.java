@@ -40,6 +40,8 @@ public final class Logger {
 
     private Thread loggerThread;
 
+    private boolean shutdown = false;
+
     private String format(LogEvent.DoLog event) {
         StringBuilder builder = this.builder;
         builder.setLength(0);
@@ -81,6 +83,8 @@ public final class Logger {
             } finally {
                 exportEvent.latch.countDown();
             }
+        } else if (event instanceof LogEvent.Shutdown) {
+            shutdown = true;
         } else {
             throw new AssertionError("Unknown event: " + event);
         }
@@ -118,7 +122,7 @@ public final class Logger {
         loggerThread = new Thread(() -> {
             ArrayList<LogEvent> logs = new ArrayList<>();
             try {
-                while (true) {
+                while (!shutdown) {
                     if (queue.drainTo(logs) > 0) {
                         for (LogEvent log : logs) {
                             handle(log);
@@ -128,11 +132,15 @@ public final class Logger {
                         handle(queue.take());
                     }
                 }
-            } catch (InterruptedException e) {
-                queue.drainTo(logs);
-                for (LogEvent log : logs) {
-                    handle(log);
+
+                while (queue.drainTo(logs) > 0) {
+                    for (LogEvent log : logs) {
+                        handle(log);
+                    }
+                    logs.clear();
                 }
+            } catch (InterruptedException e) {
+                throw new AssertionError(e);
             }
         });
         loggerThread.setName("HMCL Logger Thread");
@@ -202,9 +210,7 @@ public final class Logger {
     }
 
     public void shutdown() {
-        if (loggerThread != null) {
-            loggerThread.interrupt();
-        }
+        queue.add(new LogEvent.Shutdown());
     }
 
     public void exportLogs(OutputStream output) throws IOException {
@@ -221,11 +227,7 @@ public final class Logger {
     }
 
     private void log(String level, String caller, String msg, Throwable exception) {
-        try {
-            queue.put(new LogEvent.DoLog(Instant.now(), caller, level, msg, exception));
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
+        queue.add(new LogEvent.DoLog(Instant.now(), caller, level, msg, exception));
     }
 
     // TODO: Remove dependency on java.logging

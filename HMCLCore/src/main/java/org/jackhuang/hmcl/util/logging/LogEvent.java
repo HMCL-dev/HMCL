@@ -39,4 +39,7 @@ abstract class LogEvent {
             latch.await();
         }
     }
+
+    static final class Shutdown extends LogEvent {
+    }
 }
