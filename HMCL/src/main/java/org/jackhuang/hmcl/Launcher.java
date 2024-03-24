@@ -165,7 +165,7 @@ public final class Launcher extends Application {
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
                 && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
-            System.exit(0);
+            Main.exit(0);
         }
     }
 
@@ -203,17 +203,18 @@ public final class Launcher extends Application {
             Clipboard.getSystemClipboard()
                     .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
         }
-        System.exit(1);
+        Main.exit(1);
     }
 
     @Override
     public void stop() throws Exception {
-        super.stop();
         Controllers.onApplicationStop();
+        LOG.shutdown();
     }
 
     public static void main(String[] args) {
         if (UpdateHandler.processArguments(args)) {
+            LOG.shutdown();
             return;
         }
 

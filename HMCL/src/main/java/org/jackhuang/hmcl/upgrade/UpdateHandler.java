@@ -127,7 +127,7 @@ public final class UpdateHandler {
                         }
 
                         requestUpdate(downloaded, getCurrentLocation());
-                        System.exit(0);
+                        Main.exit(0);
                     } catch (IOException e) {
                         LOG.log(Level.WARNING, "Failed to update to " + version, e);
                         Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));

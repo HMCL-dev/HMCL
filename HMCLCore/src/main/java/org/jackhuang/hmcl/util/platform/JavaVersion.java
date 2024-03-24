@@ -439,15 +439,4 @@ public final class JavaVersion {
         }
         return null;
     }
-    // ====
-
-    public static void main(String[] args) {
-        try {
-            LOG.setLevel(Level.ALL);
-            initialize();
-            LOG.info(JAVAS.toString());
-        } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Oops:", e);
-        }
-    }
 }

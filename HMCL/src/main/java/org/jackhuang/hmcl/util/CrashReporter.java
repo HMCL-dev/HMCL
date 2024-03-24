@@ -111,6 +111,8 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
         } catch (Throwable handlingException) {
             LOG.log(Level.SEVERE, "Unable to handle uncaught exception", handlingException);
         }
+
+        LOG.shutdown();
     }
 
     private void reportToServer(CrashReport crashReport) {

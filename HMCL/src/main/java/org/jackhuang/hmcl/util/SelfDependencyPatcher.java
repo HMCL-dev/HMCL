@@ -43,6 +43,7 @@ package org.jackhuang.hmcl.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -250,7 +251,7 @@ public final class SelfDependencyPatcher {
             }
         } else {
             LOG.info("User choose not to download JavaFX");
-            System.exit(0);
+            Main.exit(0);
         }
         throw new AssertionError();
     }

@@ -59,6 +59,8 @@ public final class Main {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
+        Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
+
         checkDirectoryPath();
 
         if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9)
@@ -68,13 +70,16 @@ public final class Main {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             initIcon();
 
-        Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
-
         checkJavaFX();
         verifyJavaFX();
         detectFractureiser();
 
         Launcher.main(args);
+    }
+
+    public static void exit(int exitCode) {
+        LOG.shutdown();
+        System.exit(exitCode);
     }
 
     private static void initIcon() {
@@ -109,7 +114,7 @@ public final class Main {
             showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
             LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
-            System.exit(0);
+            exit(0);
         }
     }
 
@@ -136,13 +141,13 @@ public final class Main {
         try {
             if (Platform.isFxApplicationThread()) {
                 new Alert(Alert.AlertType.ERROR, message).showAndWait();
-                System.exit(1);
+                exit(1);
             }
         } catch (Throwable ignored) {
         }
 
         SwingUtils.showErrorDialog(message);
-        System.exit(1);
+        exit(1);
     }
 
     /**
