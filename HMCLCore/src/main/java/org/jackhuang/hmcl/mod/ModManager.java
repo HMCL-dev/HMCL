@@ -322,10 +322,6 @@ public final class ModManager {
         return getModsDirectory().resolve(fileName);
     }
 
-    public static String getMcbbsUrl(String mcbbsId) {
-        return String.format("https://www.mcbbs.net/thread-%s-1-1.html", mcbbsId);
-    }
-
     public static final String DISABLED_EXTENSION = ".disabled";
     public static final String OLD_EXTENSION = ".old";
 }

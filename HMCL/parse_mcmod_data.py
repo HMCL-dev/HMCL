@@ -92,7 +92,6 @@ if __name__ == '__main__':
 
             curseforge_id = ''
             mcmod_id = ''
-            mcbbs_id = ''
             links = mod['links']['list']
             if 'curseforge' in links and links['curseforge'] and sub_name not in black_lists and chinese_name not in black_lists:
                 for link in links['curseforge']:
