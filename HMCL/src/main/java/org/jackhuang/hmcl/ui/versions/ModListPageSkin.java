@@ -391,15 +391,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 getActions().add(officialPageButton);
             }
 
-            // if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
-            //     JFXHyperlink mcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
-            //     mcbbsButton.setOnAction(e -> {
-            //         fireEvent(new DialogCloseEvent());
-            //         FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
-            //     });
-            //     getActions().add(mcbbsButton);
-            // }
-
             if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
