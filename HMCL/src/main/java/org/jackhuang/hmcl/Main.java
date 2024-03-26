@@ -58,6 +58,8 @@ public final class Main {
         System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
+        System.getProperties().putIfAbsent("jdk.http.dns.resolver", "doh");
+        System.getProperties().putIfAbsent("jdk.http.dns.doh.server", "https://223.5.5.5/dns-query");
 
         checkDirectoryPath();
 
