@@ -49,6 +49,8 @@ public final class GlobalConfig implements Cloneable, Observable {
 
     private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
 
+    private final IntegerProperty logRetention = new SimpleIntegerProperty();
+
     private final Map<String, Object> unknownFields = new HashMap<>();
 
     private final transient ObservableHelper helper = new ObservableHelper(this);
@@ -100,10 +102,23 @@ public final class GlobalConfig implements Cloneable, Observable {
         this.platformPromptVersion.set(platformPromptVersion);
     }
 
+    public int getLogRetention() {
+        return logRetention.get();
+    }
+
+    public IntegerProperty logRetentionProperty() {
+        return logRetention;
+    }
+
+    public void setLogRetention(int logRetention) {
+        this.logRetention.set(logRetention);
+    }
+
     public static final class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
         private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
                 "agreementVersion",
-                "platformPromptVersion"
+                "platformPromptVersion",
+                "logRetention"
         ));
 
         @Override
@@ -115,6 +130,7 @@ public final class GlobalConfig implements Cloneable, Observable {
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
             jsonObject.add("platformPromptVersion", context.serialize(src.getPlatformPromptVersion()));
+            jsonObject.add("logRetention", context.serialize(src.getLogRetention()));
             for (Map.Entry<String, Object> entry : src.unknownFields.entrySet()) {
                 jsonObject.add(entry.getKey(), context.serialize(entry.getValue()));
             }
@@ -131,6 +147,7 @@ public final class GlobalConfig implements Cloneable, Observable {
             GlobalConfig config = new GlobalConfig();
             config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setPlatformPromptVersion(Optional.ofNullable(obj.get("platformPromptVersion")).map(JsonElement::getAsInt).orElse(0));
+            config.setLogRetention(Optional.ofNullable(obj.get("logRetention")).map(JsonElement::getAsInt).orElse(20));
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                 if (!knownFields.contains(entry.getKey())) {

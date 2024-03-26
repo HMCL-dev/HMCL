@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.util.logging;
 
 import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
@@ -10,17 +11,17 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -40,6 +41,8 @@ public final class Logger {
     private Thread loggerThread;
 
     private boolean shutdown = false;
+
+    private int logRetention = 0;
 
     private String format(LogEvent.DoLog event) {
         StringBuilder builder = this.builder;
@@ -95,11 +98,15 @@ public final class Logger {
         }
     }
 
+    public void setLogRetention(int logRetention) {
+        this.logRetention = Math.max(0, logRetention);
+    }
+
     public void start(Path logFolder) {
         String time = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss").format(LocalDateTime.now());
         try {
             for (int n = 0; ; n++) {
-                Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log");
+                Path file = logFolder.resolve(time + (n == 0 ? "" : "-" + n) + ".log");
 
                 try {
                     logFileChannel = FileChannel.open(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
@@ -180,30 +187,63 @@ public final class Logger {
                     }
 
                     Files.delete(logFile);
+                    logFile = xzFile;
                 } catch (IOException e) {
                     System.err.println("An exception occurred while dumping log file to xz format");
                     e.printStackTrace(System.err);
                 } finally {
                     logWriter.close();
+                }
 
-                    Instant now = Instant.now();
-                    Duration duration = Duration.of(30, ChronoUnit.DAYS);
+                if (logRetention <= 0) {
+                    return;
+                }
 
-                    try (DirectoryStream<Path> stream = Files.newDirectoryStream(logFolder)) {
-                        Pattern fileNamePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}(.*)\\.log(\\.(gz|xz))?");
-                        for (Path path : stream) {
-                            if (!fileNamePattern.matcher(path.getFileName().toString()).matches())
-                                continue;
+                List<Pair<Path, int[]>> list = new ArrayList<>();
+                Pattern fileNamePattern = Pattern.compile("(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})(-(?<n>[0-9]+))?\\.log(\\.(gz|xz))?");
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(logFolder)) {
+                    for (Path path : stream) {
+                        Matcher matcher = fileNamePattern.matcher(path.getFileName().toString());
+                        if (matcher.matches() && Files.isRegularFile(path)) {
+                            int year = Integer.parseInt(matcher.group("year"));
+                            int month = Integer.parseInt(matcher.group("month"));
+                            int day = Integer.parseInt(matcher.group("day"));
+                            int n = Optional.ofNullable(matcher.group("n")).map(Integer::parseInt).orElse(0);
 
-                            try {
-                                BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
-                                if (attributes.isRegularFile() && Duration.between(attributes.lastModifiedTime().toInstant(), now).compareTo(duration) >= 0) {
-                                    Files.delete(path);
-                                }
-                            } catch (IOException e) {
-                                System.err.println("Failed to delete old file: " + path);
-                                e.printStackTrace(System.err);
-                            }
+                            list.add(Pair.pair(path, new int[]{year, month, day, n}));
+                        }
+                    }
+                } catch (IOException e) {
+                    System.err.println("An exception occurred while enumerating files");
+                    e.printStackTrace(System.err);
+                }
+
+                if (list.size() <= logRetention) {
+                    return;
+                }
+
+                list.sort((a, b) -> {
+                    int[] v1 = a.getValue();
+                    int[] v2 = b.getValue();
+
+                    assert v1.length == 4;
+                    assert v2.length == 4;
+
+                    for (int i = 0; i < v1.length; i++) {
+                        int c = Integer.compare(v1[i], v2[i]);
+                        if (c != 0)
+                            return c;
+                    }
+
+                    return 0;
+                });
+
+                for (int i = 0, end = list.size() - logRetention; i < end; i++) {
+                    Pair<Path, int[]> pair = list.get(i);
+
+                    try {
+                        if (!Files.isSameFile(pair.getKey(), logFile)) {
+                            Files.delete(pair.getKey());
                         }
                     } catch (IOException e) {
                         System.err.println("An exception occurred while deleting old logs");

@@ -92,6 +92,7 @@ public final class ConfigHolder {
         Locale.setDefault(config().getLocalization().getLocale());
         I18n.setLocale(configInstance.getLocalization());
         Settings.init();
+        LOG.setLogRetention(globalConfig().getLogRetention());
 
         if (newlyCreated) {
             saveConfigSync();
