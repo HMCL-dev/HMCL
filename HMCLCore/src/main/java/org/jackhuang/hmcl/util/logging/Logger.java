@@ -73,7 +73,13 @@ public final class Logger {
             logWriter.flush();
             try {
                 if (logFile != null) {
-                    Files.copy(logFile, exportEvent.output);
+                    long position = logFileChannel.position();
+                    try {
+                        logFileChannel.position(0);
+                        IOUtils.copyTo(Channels.newInputStream(logFileChannel), exportEvent.output);
+                    } finally {
+                        logFileChannel.position(position);
+                    }
                 } else {
                     rawLogs.writeTo(exportEvent.output);
                 }
