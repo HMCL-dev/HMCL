@@ -3,6 +3,7 @@ package org.jackhuang.hmcl.util.logging;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
 
 /**
  * @author Glavo
@@ -11,11 +12,11 @@ abstract class LogEvent {
     static final class DoLog extends LogEvent {
         final long time;
         final String caller;
-        final String level;
+        final Level level;
         final String message;
         final Throwable exception;
 
-        DoLog(long time, String caller, String level, String message, Throwable exception) {
+        DoLog(long time, String caller, Level level, String message, Throwable exception) {
             this.time = time;
             this.caller = caller;
             this.level = level;

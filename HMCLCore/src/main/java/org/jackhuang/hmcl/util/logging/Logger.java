@@ -27,9 +27,6 @@ import java.util.regex.Pattern;
  */
 public final class Logger {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
-    private static final String SEVERE = "SEVERE";
-    private static final String WARNING = "WARNING";
-    private static final String INFO = "INFO";
 
     private final BlockingQueue<LogEvent> queue = new LinkedBlockingQueue<>();
     private final StringBuilder builder = new StringBuilder(512);
@@ -226,28 +223,28 @@ public final class Logger {
         }
     }
 
-    private void log(String level, String caller, String msg, Throwable exception) {
+    private void log(Level level, String caller, String msg, Throwable exception) {
         queue.add(new LogEvent.DoLog(System.currentTimeMillis(), caller, level, msg, exception));
     }
 
     // TODO: Remove dependency on java.logging
     public void log(Level level, String msg) {
-        log(level.getName(), CallerFinder.getCaller(), msg, null);
+        log(level, CallerFinder.getCaller(), msg, null);
     }
 
     public void log(Level level, String msg, Throwable exception) {
-        log(level.getName(), CallerFinder.getCaller(), msg, exception);
+        log(level, CallerFinder.getCaller(), msg, exception);
     }
 
     public void severe(String msg) {
-        log(SEVERE, CallerFinder.getCaller(), msg, null);
+        log(Level.SEVERE, CallerFinder.getCaller(), msg, null);
     }
 
     public void warning(String msg) {
-        log(WARNING, CallerFinder.getCaller(), msg, null);
+        log(Level.WARNING, CallerFinder.getCaller(), msg, null);
     }
 
     public void info(String msg) {
-        log(INFO, CallerFinder.getCaller(), msg, null);
+        log(Level.INFO, CallerFinder.getCaller(), msg, null);
     }
 }
