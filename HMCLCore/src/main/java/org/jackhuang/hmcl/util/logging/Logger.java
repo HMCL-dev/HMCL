@@ -6,10 +6,11 @@ import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
 
 import java.io.*;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ public final class Logger {
 
     private Path logFile;
     private ByteArrayOutputStream rawLogs;
+    private FileChannel logFileChannel;
     private PrintWriter logWriter;
 
     private Thread loggerThread;
@@ -90,25 +92,31 @@ public final class Logger {
     public void start(Path logFolder) {
         String time = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss").format(LocalDateTime.now());
         try {
-            for (int n = 0; n < 10; n++) {
+            for (int n = 0; ; n++) {
                 Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log");
 
                 try {
-                    logWriter = new PrintWriter(new OutputStreamWriter(Files.newOutputStream(file, StandardOpenOption.CREATE_NEW), StandardCharsets.UTF_8));
+                    logFileChannel = FileChannel.open(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+                    logWriter = new PrintWriter(new OutputStreamWriter(Channels.newOutputStream(logFileChannel), StandardCharsets.UTF_8));
                     logFile = file;
                     break;
                 } catch (FileAlreadyExistsException ignored) {
                 }
-                n++;
-            }
-
-            if (logWriter == null) {
-                Path file = logFolder.resolve(String.format("%s.%016x.log", time, new SecureRandom().nextLong()));
-                logWriter = new PrintWriter(new OutputStreamWriter(Files.newOutputStream(file), StandardCharsets.UTF_8));
-                logFile = file;
             }
         } catch (IOException e) {
-            log(Level.WARNING, Logger.class.getName() + "." + "start", "An exception occurred while creating the log file", e);
+            String caller = Logger.class.getName() + "." + "start";
+            log(Level.WARNING, caller, "An exception occurred while creating the log file", e);
+            if (logFileChannel != null) {
+                try {
+                    logFileChannel.close();
+                } catch (IOException ex) {
+                    log(Level.WARNING, caller, "Failed to close channel", null);
+                } finally {
+                    logFileChannel = null;
+                    logWriter = null;
+                    logFile = null;
+                }
+            }
         }
 
         if (logWriter == null) {
@@ -154,51 +162,47 @@ public final class Logger {
             for (LogEvent log : logs) {
                 handle(log);
             }
-            logWriter.close();
 
             if (logFile != null) {
-                Path xzFile = logFile.resolveSibling(logFile.getFileName() + ".xz");
+                logWriter.flush();
+                try {
+                    logFileChannel.position(0);
+                    Path xzFile = logFile.resolveSibling(logFile.getFileName() + ".xz");
+                    try (InputStream input = Channels.newInputStream(logFileChannel);
+                         XZOutputStream output = new XZOutputStream(Files.newOutputStream(xzFile), new LZMA2Options())) {
+                        IOUtils.copyTo(input, output);
+                    }
 
-                boolean failed = false;
-                try (InputStream input = Files.newInputStream(logFile);
-                     XZOutputStream output = new XZOutputStream(Files.newOutputStream(xzFile), new LZMA2Options())) {
-                    IOUtils.copyTo(input, output);
+                    Files.delete(logFile);
                 } catch (IOException e) {
-                    failed = true;
                     System.err.println("An exception occurred while dumping log file to xz format");
                     e.printStackTrace(System.err);
-                }
+                } finally {
+                    logWriter.close();
 
-                if (!failed) {
-                    try {
-                        Files.delete(logFile);
+                    Instant now = Instant.now();
+                    Duration duration = Duration.of(30, ChronoUnit.DAYS);
+
+                    try (DirectoryStream<Path> stream = Files.newDirectoryStream(logFolder)) {
+                        Pattern fileNamePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}(.*)\\.log(\\.(gz|xz))?");
+                        for (Path path : stream) {
+                            if (!fileNamePattern.matcher(path.getFileName().toString()).matches())
+                                continue;
+
+                            try {
+                                BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+                                if (attributes.isRegularFile() && Duration.between(attributes.lastModifiedTime().toInstant(), now).compareTo(duration) >= 0) {
+                                    Files.delete(path);
+                                }
+                            } catch (IOException e) {
+                                System.err.println("Failed to delete old file: " + path);
+                                e.printStackTrace(System.err);
+                            }
+                        }
                     } catch (IOException e) {
-                        System.err.println("An exception occurred while deleting the raw log file");
+                        System.err.println("An exception occurred while deleting old logs");
                         e.printStackTrace(System.err);
                     }
-                }
-
-                Instant now = Instant.now();
-                Duration duration = Duration.of(30, ChronoUnit.DAYS);
-
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(logFolder)) {
-                    Pattern fileNamePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}(.*)\\.log(\\.(gz|xz))?");
-                    for (Path path : stream) {
-                        if (!fileNamePattern.matcher(path.getFileName().toString()).matches())
-                            continue;
-
-                        try {
-                            BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
-                            if (attributes.isRegularFile() && Duration.between(attributes.lastModifiedTime().toInstant(), now).compareTo(duration) >= 0) {
-                                Files.delete(path);
-                            }
-                        } catch (IOException e) {
-                            System.err.println("Failed to delete old file: " + path);
-                            e.printStackTrace(System.err);
-                        }
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }
         });
