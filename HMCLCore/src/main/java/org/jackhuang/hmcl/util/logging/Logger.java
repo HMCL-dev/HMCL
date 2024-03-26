@@ -49,8 +49,7 @@ public final class Logger {
         builder.setLength(0);
         builder.append('[');
         TIME_FORMATTER.formatTo(Instant.ofEpochMilli(event.time), builder);
-        builder.append(']');
-        builder.append(" [")
+        builder.append("] [")
                 .append(event.caller)
                 .append('/')
                 .append(event.level)
@@ -103,31 +102,33 @@ public final class Logger {
     }
 
     public void start(Path logFolder) {
-        String time = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss").format(LocalDateTime.now());
-        try {
-            for (int n = 0; ; n++) {
-                Path file = logFolder.resolve(time + (n == 0 ? "" : "-" + n) + ".log");
+        if (logFolder != null) {
+            String time = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss").format(LocalDateTime.now());
+            try {
+                for (int n = 0; ; n++) {
+                    Path file = logFolder.resolve(time + (n == 0 ? "" : "-" + n) + ".log");
 
-                try {
-                    logFileChannel = FileChannel.open(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                    logWriter = new PrintWriter(new OutputStreamWriter(Channels.newOutputStream(logFileChannel), StandardCharsets.UTF_8));
-                    logFile = file;
-                    break;
-                } catch (FileAlreadyExistsException ignored) {
+                    try {
+                        logFileChannel = FileChannel.open(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+                        logWriter = new PrintWriter(new OutputStreamWriter(Channels.newOutputStream(logFileChannel), StandardCharsets.UTF_8));
+                        logFile = file;
+                        break;
+                    } catch (FileAlreadyExistsException ignored) {
+                    }
                 }
-            }
-        } catch (IOException e) {
-            String caller = Logger.class.getName() + "." + "start";
-            log(Level.WARNING, caller, "An exception occurred while creating the log file", e);
-            if (logFileChannel != null) {
-                try {
-                    logFileChannel.close();
-                } catch (IOException ex) {
-                    log(Level.WARNING, caller, "Failed to close channel", null);
-                } finally {
-                    logFileChannel = null;
-                    logWriter = null;
-                    logFile = null;
+            } catch (IOException e) {
+                String caller = Logger.class.getName() + "." + "start";
+                log(Level.WARNING, caller, "An exception occurred while creating the log file", e);
+                if (logFileChannel != null) {
+                    try {
+                        logFileChannel.close();
+                    } catch (IOException ex) {
+                        log(Level.WARNING, caller, "Failed to close channel", null);
+                    } finally {
+                        logFileChannel = null;
+                        logWriter = null;
+                        logFile = null;
+                    }
                 }
             }
         }
