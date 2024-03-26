@@ -108,7 +108,7 @@ public final class Logger {
                 logFile = file;
             }
         } catch (IOException e) {
-            log(Level.WARNING.getName(), Logger.class.getName() + "." + "start", "An exception occurred while creating the log file", e);
+            log(Level.WARNING, Logger.class.getName() + "." + "start", "An exception occurred while creating the log file", e);
         }
 
         if (logWriter == null) {
