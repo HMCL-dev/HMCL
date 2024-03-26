@@ -46,7 +46,7 @@ public final class Logger {
         StringBuilder builder = this.builder;
         builder.setLength(0);
         builder.append('[');
-        TIME_FORMATTER.formatTo(event.instant, builder);
+        TIME_FORMATTER.formatTo(Instant.ofEpochMilli(event.time), builder);
         builder.append(']');
         builder.append(" [")
                 .append(event.caller)
@@ -227,7 +227,7 @@ public final class Logger {
     }
 
     private void log(String level, String caller, String msg, Throwable exception) {
-        queue.add(new LogEvent.DoLog(Instant.now(), caller, level, msg, exception));
+        queue.add(new LogEvent.DoLog(System.currentTimeMillis(), caller, level, msg, exception));
     }
 
     // TODO: Remove dependency on java.logging
