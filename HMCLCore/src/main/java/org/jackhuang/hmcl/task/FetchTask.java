@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
     protected final List<URL> urls;

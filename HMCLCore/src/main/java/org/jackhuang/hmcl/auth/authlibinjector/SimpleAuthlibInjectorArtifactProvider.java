@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 import java.io.IOException;
 import java.nio.file.Path;

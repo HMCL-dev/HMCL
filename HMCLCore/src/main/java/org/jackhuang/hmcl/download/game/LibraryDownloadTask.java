@@ -40,7 +40,7 @@ import java.util.concurrent.CancellationException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;

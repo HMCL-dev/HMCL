@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class World {
 

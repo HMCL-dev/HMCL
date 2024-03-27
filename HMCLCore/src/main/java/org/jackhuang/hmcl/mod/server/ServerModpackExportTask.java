@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ServerModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;

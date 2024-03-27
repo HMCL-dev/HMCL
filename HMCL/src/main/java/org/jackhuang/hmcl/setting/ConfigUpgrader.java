@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ConfigUpgrader {
     private ConfigUpgrader() {

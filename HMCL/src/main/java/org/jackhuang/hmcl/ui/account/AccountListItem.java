@@ -57,7 +57,7 @@ import java.util.concurrent.CancellationException;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountListItem extends RadioButton {

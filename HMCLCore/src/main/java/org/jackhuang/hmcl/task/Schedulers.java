@@ -22,7 +22,7 @@ import javafx.application.Platform;
 import java.util.concurrent.*;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *

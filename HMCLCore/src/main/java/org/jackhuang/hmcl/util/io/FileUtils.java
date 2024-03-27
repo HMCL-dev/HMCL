@@ -38,7 +38,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huang

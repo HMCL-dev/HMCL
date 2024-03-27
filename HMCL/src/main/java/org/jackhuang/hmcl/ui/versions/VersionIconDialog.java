@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import java.io.File;
 import java.io.IOException;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionIconDialog extends DialogPane {

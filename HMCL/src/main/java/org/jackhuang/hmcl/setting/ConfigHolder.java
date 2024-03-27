@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ConfigHolder {
 

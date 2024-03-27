@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class Datapack {
     private boolean isMultiple;

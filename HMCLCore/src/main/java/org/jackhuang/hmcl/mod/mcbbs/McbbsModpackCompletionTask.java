@@ -50,7 +50,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Lang.wrapConsumer;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 

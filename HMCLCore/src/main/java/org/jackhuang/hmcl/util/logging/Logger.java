@@ -10,10 +10,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
@@ -26,6 +23,26 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
  * @author Glavo
  */
 public final class Logger {
+    public static final Logger LOG = new Logger();
+
+    private static volatile String[] accessTokens = new String[0];
+
+    public static synchronized void registerAccessToken(String token) {
+        final String[] oldAccessTokens = accessTokens;
+        final String[] newAccessTokens = Arrays.copyOf(oldAccessTokens, oldAccessTokens.length + 1);
+
+        newAccessTokens[oldAccessTokens.length] = token;
+
+        accessTokens = newAccessTokens;
+    }
+
+    public static String filterForbiddenToken(String message) {
+        for (String token : accessTokens)
+            message = message.replace(token, "<access token>");
+        return message;
+    }
+
+
     static final String CLASS_NAME = Logger.class.getName();
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
@@ -57,7 +74,7 @@ public final class Logger {
                 .append('/')
                 .append(event.level)
                 .append("] ")
-                .append(Logging.filterForbiddenToken(event.message));
+                .append(filterForbiddenToken(event.message));
         return builder.toString();
     }
 

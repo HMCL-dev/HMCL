@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {

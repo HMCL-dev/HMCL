@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.concurrent.*;
 
 import static org.jackhuang.hmcl.util.Lang.*;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *

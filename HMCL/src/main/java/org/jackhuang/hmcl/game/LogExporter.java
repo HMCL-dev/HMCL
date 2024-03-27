@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.logging.Logging;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class LogExporter {
     private LogExporter() {
@@ -71,7 +71,7 @@ public final class LogExporter {
 
                 zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
-                zipper.putTextFile(Logging.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+                zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
@@ -94,7 +94,7 @@ public final class LogExporter {
                     FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
                         try {
-                            String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
+                            String crashLog = Logger.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
                             zipper.putTextFile(crashLog, file.getFileName().toString());
                         } catch (IOException e) {
                             LOG.warning("Failed to read log file: " + file, e);

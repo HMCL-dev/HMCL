@@ -26,7 +26,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class YggdrasilAccount extends ClassicAccount {
 

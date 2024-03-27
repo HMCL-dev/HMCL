@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftAccount extends OAuthAccount {
 

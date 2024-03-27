@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class McbbsModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;

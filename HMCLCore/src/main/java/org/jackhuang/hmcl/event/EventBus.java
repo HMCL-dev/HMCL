@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.event;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *

@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.IOException;
 import java.util.HashMap;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 

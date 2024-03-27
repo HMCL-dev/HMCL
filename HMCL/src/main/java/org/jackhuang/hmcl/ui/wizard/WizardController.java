@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.task.Task;
 
 import java.util.*;
 
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class WizardController implements Navigation {
     private final WizardDisplayer displayer;

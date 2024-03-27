@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class AuthlibInjectorServers implements Validation {
 

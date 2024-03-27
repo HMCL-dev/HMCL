@@ -44,7 +44,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Log4jLevel;
-import org.jackhuang.hmcl.util.logging.Logging;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.util.logging.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -263,7 +263,7 @@ public class GameCrashWindow extends Stage {
     private void showLogWindow() {
         LogWindow logWindow = new LogWindow(managedProcess);
 
-        logWindow.logLine(Logging.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO);
+        logWindow.logLine(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO);
         if (managedProcess.getClasspath() != null)
             logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
         for (Map.Entry<String, Log4jLevel> entry : logs)
