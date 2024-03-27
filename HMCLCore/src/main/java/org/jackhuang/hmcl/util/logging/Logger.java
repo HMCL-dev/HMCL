@@ -284,7 +284,7 @@ public final class Logger {
             exportLogs(output);
             return output.toString("UTF-8");
         } catch (IOException e) {
-            log(Level.WARNING, "Failed to export logs", e);
+            log(Level.WARNING, CLASS_NAME + ".getLogs", "Failed to export logs", e);
             return "";
         }
     }
