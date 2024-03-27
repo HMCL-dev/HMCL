@@ -3,7 +3,6 @@ package org.jackhuang.hmcl.util.logging;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
 
 /**
  * @author Glavo

@@ -54,7 +54,6 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -102,7 +101,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                             try {
                                 Controllers.navigate(new NBTEditorPage(file));
                             } catch (Throwable e) {
-                                LOG.log(Level.WARNING, "Fail to open nbt file", e);
+                                LOG.warning("Fail to open nbt file", e);
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
                                         i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                             }

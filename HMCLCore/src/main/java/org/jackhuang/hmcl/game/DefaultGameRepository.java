@@ -53,7 +53,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -232,7 +231,7 @@ public class DefaultGameRepository implements GameRepository {
             }
             return true;
         } catch (IOException | JsonParseException | VersionNotFoundException | InvalidPathException e) {
-            LOG.log(Level.WARNING, "Unable to rename version " + from + " to " + to, e);
+            LOG.warning("Unable to rename version " + from + " to " + to, e);
             return false;
         }
     }
@@ -267,7 +266,7 @@ public class DefaultGameRepository implements GameRepository {
             try {
                 FileUtils.deleteDirectory(removedFile);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Unable to remove version folder: " + file, e);
+                LOG.warning("Unable to remove version folder: " + file, e);
             }
             return true;
         } finally {
@@ -317,7 +316,7 @@ public class DefaultGameRepository implements GameRepository {
                 try {
                     version = readVersionJson(json);
                 } catch (Exception e) {
-                    LOG.log(Level.WARNING, "Malformed version json " + id, e);
+                    LOG.warning("Malformed version json " + id, e);
                     // JsonSyntaxException or IOException or NullPointerException(!!)
                     if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
                         return Stream.empty();
@@ -325,7 +324,7 @@ public class DefaultGameRepository implements GameRepository {
                     try {
                         version = readVersionJson(json);
                     } catch (Exception e2) {
-                        LOG.log(Level.SEVERE, "User corrected version json is still malformed", e2);
+                        LOG.error("User corrected version json is still malformed", e2);
                         return Stream.empty();
                     }
                 }
@@ -355,7 +354,7 @@ public class DefaultGameRepository implements GameRepository {
                             throw e;
                         }
                     } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
+                        LOG.warning("Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
                         return Stream.empty();
                     }
                 }
@@ -371,7 +370,7 @@ public class DefaultGameRepository implements GameRepository {
                         EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, resolved)) != Event.Result.DENY)
                     versions.put(version.getId(), version);
             } catch (VersionNotFoundException e) {
-                LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because it inherits from a nonexistent version.");
+                LOG.warning("Ignoring version " + version.getId() + " because it inherits from a nonexistent version.");
             }
         }
 
@@ -402,7 +401,7 @@ public class DefaultGameRepository implements GameRepository {
         try {
             return reconstructAssets(version, assetId);
         } catch (IOException | JsonParseException e) {
-            LOG.log(Level.SEVERE, "Unable to reconstruct asset directory", e);
+            LOG.error("Unable to reconstruct asset directory", e);
             return getAssetDirectory(version, assetId);
         }
     }

@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -56,7 +55,7 @@ public class UpgradeDialog extends JFXDialogLayout {
                 });
                 setBody(webView);
             } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-                LOG.log(Level.WARNING, "WebView is missing or initialization failed", e);
+                LOG.warning("WebView is missing or initialization failed", e);
                 FXUtils.openLink(url);
             }
         }

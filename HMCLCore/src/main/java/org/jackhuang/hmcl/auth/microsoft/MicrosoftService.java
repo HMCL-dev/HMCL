@@ -39,7 +39,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.Objects.requireNonNull;
@@ -62,7 +61,7 @@ public class MicrosoftService {
         this.profileRepository = new ObservableOptionalCache<>(uuid -> {
             LOG.info("Fetching properties of " + uuid);
             return getCompleteGameProfile(uuid);
-        }, (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid, e), POOL);
+        }, (uuid, e) -> LOG.warning("Failed to fetch properties of " + uuid, e), POOL);
     }
 
     public ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> getProfileRepository() {
@@ -97,7 +96,7 @@ public class MicrosoftService {
         }
 
         if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.size() == 0 || !response.displayClaims.xui.get(0).containsKey("uhs")) {
-            LOG.log(Level.WARNING, "Unrecognized xbox authorization response " + GSON.toJson(response));
+            LOG.warning("Unrecognized xbox authorization response " + GSON.toJson(response));
             throw new NoXuiException();
         }
 

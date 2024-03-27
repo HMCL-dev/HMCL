@@ -55,7 +55,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -210,7 +209,7 @@ public final class LogWindow extends Stage {
                 try {
                     Files.write(logFile, logs.stream().map(x -> x.log).collect(Collectors.toList()));
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to export logs", e);
+                    LOG.warning("Failed to export logs", e);
                     return;
                 }
 
@@ -238,7 +237,7 @@ public final class LogWindow extends Stage {
                                 FXUtils.showFileInExplorer(dumpFile);
                             }
                         } catch (Throwable e) {
-                            LOG.log(Level.WARNING, "Failed to create minecraft jstack dump", e);
+                            LOG.warning("Failed to create minecraft jstack dump", e);
 
                             Platform.runLater(() -> {
                                 Alert alert = new Alert(Alert.AlertType.ERROR, i18n("logwindow.export_dump.dependency_ok.button"));

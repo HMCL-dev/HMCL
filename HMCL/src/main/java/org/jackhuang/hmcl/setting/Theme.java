@@ -40,7 +40,6 @@ import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -183,7 +182,7 @@ public class Theme {
                 temp.deleteOnExit();
                 css = temp.toURI().toString();
             } catch (IOException | NullPointerException e) {
-                Logging.LOG.log(Level.SEVERE, "Unable to create theme stylesheet. Fallback to blue theme.", e);
+                Logging.LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
             }
         }
 

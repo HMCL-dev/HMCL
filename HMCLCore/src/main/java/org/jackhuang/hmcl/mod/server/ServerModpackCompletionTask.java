@@ -40,7 +40,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class ServerModpackCompletionTask extends Task<Void> {
@@ -70,7 +69,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
                     }.getType());
                 }
             } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Unable to read Server modpack manifest.json", e);
+                Logging.LOG.warning("Unable to read Server modpack manifest.json", e);
             }
         } else {
             this.manifest = manifest;

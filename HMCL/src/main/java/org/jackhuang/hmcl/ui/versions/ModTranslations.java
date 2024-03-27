@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -127,7 +126,7 @@ public enum ModTranslations {
             mods = Arrays.stream(modData.split("\n")).filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());
             return true;
         } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to load " + resourceName, e);
+            LOG.warning("Failed to load " + resourceName, e);
             return false;
         }
     }

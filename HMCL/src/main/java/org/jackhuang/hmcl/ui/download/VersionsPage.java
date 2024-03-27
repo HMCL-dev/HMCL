@@ -57,7 +57,6 @@ import org.jackhuang.hmcl.util.Holder;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
@@ -232,7 +231,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     }
                 });
             } else {
-                LOG.log(Level.WARNING, "Failed to fetch versions list", exception);
+                LOG.warning("Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
                     if (versionList != currentVersionList) return;
                     root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());

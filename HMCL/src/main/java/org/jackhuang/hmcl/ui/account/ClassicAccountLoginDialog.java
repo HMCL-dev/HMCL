@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -109,7 +108,7 @@ public class ClassicAccountLoginDialog extends StackPane {
                     fireEvent(new DialogCloseEvent());
                     progressBar.setVisible(false);
                 }, e -> {
-                    LOG.log(Level.INFO, "Failed to login with password: " + oldAccount, e);
+                    LOG.info("Failed to login with password: " + oldAccount, e);
                     if (e instanceof NoSelectedCharacterException) {
                         fireEvent(new DialogCloseEvent());
                     } else {

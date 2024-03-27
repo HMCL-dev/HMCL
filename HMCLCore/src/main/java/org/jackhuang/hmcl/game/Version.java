@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -287,7 +286,7 @@ public class Version implements Comparable<Version>, Validation {
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
-                Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
+                Logging.LOG.warning("Found circular dependency versions: " + resolvedSoFar);
                 thisVersion = this.jar == null ? this.setJar(id) : this;
             } else {
                 // It is supposed to auto install an version in getVersion.
@@ -331,7 +330,7 @@ public class Version implements Comparable<Version>, Validation {
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
-                Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
+                Logging.LOG.warning("Found circular dependency versions: " + resolvedSoFar);
                 // keep thisVersion
             } else {
                 // It is supposed to auto install an version in getVersion.

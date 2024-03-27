@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -197,7 +196,7 @@ public abstract class YggdrasilAccount extends ClassicAccount {
                     try {
                         return YggdrasilService.getTextures(it);
                     } catch (ServerResponseMalformedException e) {
-                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        LOG.warning("Failed to parse texture payload", e);
                         return Optional.empty();
                     }
                 }));

@@ -26,7 +26,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 /**
  * Pump the given input stream.
@@ -68,7 +67,7 @@ public final class StreamPump implements Runnable {
                 callback.accept(line);
             }
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "An error occurred when reading stream", e);
+            Logging.LOG.error("An error occurred when reading stream", e);
         }
     }
 

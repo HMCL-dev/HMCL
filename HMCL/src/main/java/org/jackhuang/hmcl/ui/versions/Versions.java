@@ -55,7 +55,6 @@ import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -184,7 +183,7 @@ public final class Versions {
         try {
             profile.getRepository().clean(id);
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to clean game directory", e);
+            Logging.LOG.warning("Unable to clean game directory", e);
         }
     }
 

@@ -54,7 +54,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.logging.Level;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
@@ -109,11 +108,11 @@ public class AccountListItem extends RadioButton {
                 } catch (CancellationException e1) {
                     // ignore cancellation
                 } catch (Exception e1) {
-                    LOG.log(Level.WARNING, "Failed to refresh " + account + " with password", e1);
+                    LOG.warning("Failed to refresh " + account + " with password", e1);
                     throw e1;
                 }
             } catch (AuthenticationException e) {
-                LOG.log(Level.WARNING, "Failed to refresh " + account + " with token", e);
+                LOG.warning("Failed to refresh " + account + " with token", e);
                 throw e;
             }
         });

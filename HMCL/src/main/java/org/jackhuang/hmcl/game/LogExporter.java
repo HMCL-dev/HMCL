@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -98,13 +97,13 @@ public final class LogExporter {
                             String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
                             zipper.putTextFile(crashLog, file.getFileName().toString());
                         } catch (IOException e) {
-                            LOG.log(Level.WARNING, "Failed to read log file: " + file, e);
+                            LOG.warning("Failed to read log file: " + file, e);
                         }
                     }
                 }
             }
         } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Failed to find any log on " + logDirectory, e);
+            LOG.warning("Failed to find any log on " + logDirectory, e);
         }
     }
 }

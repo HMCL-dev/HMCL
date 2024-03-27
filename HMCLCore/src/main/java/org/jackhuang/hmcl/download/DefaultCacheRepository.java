@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class DefaultCacheRepository extends CacheRepository {
@@ -67,7 +66,7 @@ public class DefaultCacheRepository extends CacheRepository {
             else
                 index = new Index();
         } catch (IOException | JsonParseException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to read index file", e);
+            Logging.LOG.warning("Unable to read index file", e);
             index = new Index();
         } finally {
             lock.writeLock().unlock();
@@ -105,7 +104,7 @@ public class DefaultCacheRepository extends CacheRepository {
                 // or we will not cache the library
             }
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + jar, e);
+            Logging.LOG.warning("Unable to calc hash value of file " + jar, e);
         }
     }
 
@@ -200,7 +199,7 @@ public class DefaultCacheRepository extends CacheRepository {
         try {
             FileUtils.writeText(indexFile, JsonUtils.GSON.toJson(index));
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "Unable to save index.json", e);
+            Logging.LOG.error("Unable to save index.json", e);
         }
     }
 

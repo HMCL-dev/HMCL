@@ -52,7 +52,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
@@ -116,7 +115,7 @@ public final class TexturesLoader {
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {
                     // concurrency conflict?
-                    LOG.log(Level.WARNING, "Failed to download texture " + texture.getUrl() + ", but the file is available", e);
+                    LOG.warning("Failed to download texture " + texture.getUrl() + ", but the file is available", e);
                 } else {
                     throw new IOException("Failed to download texture " + texture.getUrl());
                 }
@@ -175,7 +174,7 @@ public final class TexturesLoader {
                             try {
                                 return YggdrasilService.getTextures(it);
                             } catch (ServerResponseMalformedException e) {
-                                LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                                LOG.warning("Failed to parse texture payload", e);
                                 return Optional.empty();
                             }
                         })
@@ -188,7 +187,7 @@ public final class TexturesLoader {
                             try {
                                 return loadTexture(texture);
                             } catch (Throwable e) {
-                                LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
                                 return uuidFallback;
                             }
                         }, POOL);
@@ -212,7 +211,7 @@ public final class TexturesLoader {
                 if (skin != null) {
                     skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
-                            LOG.log(Level.WARNING, "Failed to load texture", exception);
+                            LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
                             Map<String, String> metadata;
                             if (result.getModel() != null) {
@@ -243,7 +242,7 @@ public final class TexturesLoader {
                                     try {
                                         return loadTexture(texture);
                                     } catch (Throwable e) {
-                                        LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                        LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
                                         return uuidFallback;
                                     }
                                 }, POOL);

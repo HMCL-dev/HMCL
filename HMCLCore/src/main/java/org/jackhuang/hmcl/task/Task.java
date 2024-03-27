@@ -39,7 +39,6 @@ import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -359,7 +358,7 @@ public abstract class Task<T> {
 
     public final T run() throws Exception {
         if (getSignificance().shouldLog())
-            Logging.LOG.log(Level.FINE, "Executing task: " + getName());
+            Logging.LOG.trace("Executing task: " + getName());
 
         for (Task<?> task : getDependents())
             doSubTask(task);
@@ -776,7 +775,7 @@ public abstract class Task<T> {
                     try {
                         success.run();
                     } catch (Exception e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to execute " + success, e);
+                        Logging.LOG.warning("Failed to execute " + success, e);
                         if (failure != null)
                             failure.accept(e);
                     }

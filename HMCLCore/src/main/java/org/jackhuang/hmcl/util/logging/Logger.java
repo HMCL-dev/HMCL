@@ -17,7 +17,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -265,7 +264,6 @@ public final class Logger {
         queue.add(new LogEvent.DoLog(System.currentTimeMillis(), caller, level, msg, exception));
     }
 
-    // TODO: Remove dependency on java.logging
     public void log(Level level, String msg) {
         log(level, CallerFinder.getCaller(), msg, null);
     }
@@ -274,15 +272,35 @@ public final class Logger {
         log(level, CallerFinder.getCaller(), msg, exception);
     }
 
-    public void severe(String msg) {
-        log(Level.SEVERE, CallerFinder.getCaller(), msg, null);
+    public void error(String msg) {
+        log(Level.ERROR, CallerFinder.getCaller(), msg, null);
+    }
+
+    public void error(String msg, Throwable exception) {
+        log(Level.ERROR, CallerFinder.getCaller(), msg, exception);
     }
 
     public void warning(String msg) {
         log(Level.WARNING, CallerFinder.getCaller(), msg, null);
     }
 
+    public void warning(String msg, Throwable exception) {
+        log(Level.WARNING, CallerFinder.getCaller(), msg, exception);
+    }
+
     public void info(String msg) {
         log(Level.INFO, CallerFinder.getCaller(), msg, null);
+    }
+
+    public void info(String msg, Throwable exception) {
+        log(Level.INFO, CallerFinder.getCaller(), msg, exception);
+    }
+
+    public void trace(String msg) {
+        log(Level.TRACE, CallerFinder.getCaller(), msg, null);
+    }
+
+    public void trace(String msg, Throwable exception) {
+        log(Level.TRACE, CallerFinder.getCaller(), msg, exception);
     }
 }

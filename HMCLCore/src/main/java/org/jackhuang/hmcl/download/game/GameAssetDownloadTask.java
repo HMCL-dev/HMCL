@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  *
@@ -100,7 +99,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))
                     download = true;
             } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file, e);
+                Logging.LOG.warning("Unable to calc hash value of file " + file, e);
             }
             if (download) {
                 List<URL> urls = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject.getLocation());

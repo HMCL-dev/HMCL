@@ -44,7 +44,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -134,7 +133,7 @@ public final class SettingsPage extends SettingsView {
                 LOG.exportLogs(output);
             } catch (IOException e) {
                 Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
-                LOG.log(Level.WARNING, "Failed to export logs", e);
+                LOG.warning("Failed to export logs", e);
                 return;
             }
 

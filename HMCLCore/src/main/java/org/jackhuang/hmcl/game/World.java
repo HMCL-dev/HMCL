@@ -33,7 +33,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -237,13 +236,13 @@ public class World {
                     try {
                         return Stream.of(new World(world));
                     } catch (IOException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
+                        Logging.LOG.warning("Failed to read world " + world, e);
                         return Stream.empty();
                     }
                 });
             }
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Failed to read saves", e);
+            Logging.LOG.warning("Failed to read saves", e);
         }
         return Stream.empty();
     }

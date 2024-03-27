@@ -63,7 +63,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
@@ -122,7 +121,7 @@ public final class SelfDependencyPatcher {
                 Class.forName("netscape.javascript.JSObject", false, classLoader);
                 Class.forName("org.w3c.dom.html.HTMLDocument", false, classLoader);
             } catch (Throwable e) {
-                LOG.log(Level.WARNING, "Disable javafx.web because JRE is incomplete", e);
+                LOG.warning("Disable javafx.web because JRE is incomplete", e);
                 dependencies.removeIf(it -> "javafx.web".equals(it.module) || "javafx.media".equals(it.module));
             }
 

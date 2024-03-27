@@ -61,7 +61,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -132,7 +131,7 @@ public class GameCrashWindow extends Stage {
             try {
                 crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to read crash report", e);
+                LOG.warning("Failed to read crash report", e);
             }
             if (crashReport == null) {
                 crashReport = CrashReportAnalyzer.extractCrashReport(rawLog);
@@ -149,7 +148,7 @@ public class GameCrashWindow extends Stage {
             try {
                 log = FileUtils.readText(latestLog);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to read logs/latest.log", e);
+                LOG.warning("Failed to read logs/latest.log", e);
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
 
@@ -158,7 +157,7 @@ public class GameCrashWindow extends Stage {
             loading.set(false);
 
             if (exception != null) {
-                LOG.log(Level.WARNING, "Failed to analyze crash report", exception);
+                LOG.warning("Failed to analyze crash report", exception);
                 reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
             } else {
                 EnumMap<CrashReportAnalyzer.Rule, CrashReportAnalyzer.Result> results = new EnumMap<>(CrashReportAnalyzer.Rule.class);
@@ -172,7 +171,7 @@ public class GameCrashWindow extends Stage {
 
                 List<Node> segments = new ArrayList<>(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
-                LOG.log(Level.INFO, "Number of reasons: " + results.size());
+                LOG.info("Number of reasons: " + results.size());
                 if (results.size() > 1) {
                     segments.add(new Text("\n"));
                     segments.addAll(FXUtils.parseSegment(i18n("game.crash.reason.multiple"), Controllers::onHyperlinkAction));
@@ -204,7 +203,7 @@ public class GameCrashWindow extends Stage {
                         case PERFORMANT_FOREST_OPTIFINE:
                         case JADE_FOREST_OPTIFINE:
                             message = i18n("game.crash.reason.mod", "OptiFine");
-                            LOG.log(Level.INFO, "Crash cause: " + result.getRule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
+                            LOG.info("Crash cause: " + result.getRule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
                             break;
                         default:
                             message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
@@ -212,17 +211,17 @@ public class GameCrashWindow extends Stage {
                                             .toArray());
                             break;
                     }
-                    LOG.log(Level.INFO, "Crash cause: " + result.getRule() + ": " + message);
+                    LOG.info("Crash cause: " + result.getRule() + ": " + message);
                     segments.addAll(FXUtils.parseSegment(message, Controllers::onHyperlinkAction));
                     segments.add(new Text("\n\n"));
                 }
                 if (results.isEmpty()) {
                     if (!keywords.isEmpty()) {
                         reasonTextFlow.getChildren().setAll(new Text(i18n("game.crash.reason.stacktrace", String.join(", ", keywords))));
-                        LOG.log(Level.INFO, "Crash reason unknown, but some log keywords have been found: " + String.join(", ", keywords));
+                        LOG.info("Crash reason unknown, but some log keywords have been found: " + String.join(", ", keywords));
                     } else {
                         reasonTextFlow.getChildren().setAll(FXUtils.parseSegment(i18n("game.crash.reason.unknown"), Controllers::onHyperlinkAction));
-                        LOG.log(Level.INFO, "Crash reason unknown");
+                        LOG.info("Crash reason unknown");
                     }
                 } else {
                     feedbackTextFlow.setVisible(false);
@@ -287,7 +286,7 @@ public class GameCrashWindow extends Stage {
                         FXUtils.showFileInExplorer(logFile);
                         alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
                     } else {
-                        LOG.log(Level.WARNING, "Failed to export game crash info", exception);
+                        LOG.warning("Failed to export game crash info", exception);
                         alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception));
                     }
 

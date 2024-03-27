@@ -34,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -82,7 +81,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
                     if (actualSum.equalsIgnoreCase(assetIndexInfo.getSha1()))
                         return;
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to calculate sha1sum of file " + assetIndexInfo, e);
+                    LOG.warning("Failed to calculate sha1sum of file " + assetIndexInfo, e);
                     // continue downloading
                 }
             } else {

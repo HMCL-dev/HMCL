@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.download;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -71,7 +70,7 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
                     return future;
                 }
 
-                LOG.log(Level.WARNING, "Failed to fetch versions list and try to fetch from other source", e);
+                LOG.warning("Failed to fetch versions list and try to fetch from other source", e);
                 return refreshAsync(gameVersion, sourceIndex + 1);
             }).thenCompose(it -> it);
         }

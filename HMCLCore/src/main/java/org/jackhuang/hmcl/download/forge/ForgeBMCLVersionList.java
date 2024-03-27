@@ -32,7 +32,6 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
@@ -104,7 +103,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                 try {
                                     releaseDate = Instant.parse(version.getModified());
                                 } catch (DateTimeParseException e) {
-                                    LOG.log(Level.WARNING, "Failed to parse instant " + version.getModified(), e);
+                                    LOG.warning("Failed to parse instant " + version.getModified(), e);
                                 }
                             }
 

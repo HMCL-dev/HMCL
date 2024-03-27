@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -131,7 +130,7 @@ public class HttpServer extends NanoHTTPD {
             } catch (JsonParseException e) {
                 return badRequest();
             } catch (Exception e) {
-                Logging.LOG.log(Level.SEVERE, "Error handling " + request.getSession().getUri(), e);
+                Logging.LOG.error("Error handling " + request.getSession().getUri(), e);
                 return internalError();
             }
         }

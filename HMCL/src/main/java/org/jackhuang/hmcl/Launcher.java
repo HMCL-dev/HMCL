@@ -51,7 +51,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -71,7 +70,7 @@ public final class Launcher extends Application {
             Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
             LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
         } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
+            LOG.warning("Failed to get prism pipeline", e);
         }
 
         try {
@@ -80,7 +79,7 @@ public final class Launcher extends Application {
             } catch (SambaException ignored) {
                 Main.showWarningAndContinue(i18n("fatal.samba"));
             } catch (IOException e) {
-                LOG.log(Level.SEVERE, "Failed to load config", e);
+                LOG.error("Failed to load config", e);
                 checkConfigInTempDir();
                 checkConfigOwner();
                 Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
@@ -178,7 +177,7 @@ public final class Launcher extends Application {
         try {
             owner = Files.getOwner(ConfigHolder.configLocation()).getName();
         } catch (IOException ioe) {
-            LOG.log(Level.WARNING, "Failed to get file owner", ioe);
+            LOG.warning("Failed to get file owner", ioe);
             return;
         }
 

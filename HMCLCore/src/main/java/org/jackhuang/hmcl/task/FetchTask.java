@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
@@ -116,7 +115,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 useCachedResult(cache);
                                 return;
                             } catch (IOException e) {
-                                Logging.LOG.log(Level.WARNING, "Unable to use cached file, redownload " + url, e);
+                                Logging.LOG.warning("Unable to use cached file, redownload " + url, e);
                                 repository.removeRemoteEntry(conn);
                                 // Now we must reconnect the server since 304 may result in empty content,
                                 // if we want to redownload the file, we must reconnect the server without etag settings.
@@ -167,13 +166,13 @@ public abstract class FetchTask<T> extends Task<T> {
                 } catch (FileNotFoundException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    Logging.LOG.warning("Failed to download " + url + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
 
                     break; // we will not try this URL again
                 } catch (IOException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.log(Level.WARNING, "Failed to download " + url + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    Logging.LOG.warning("Failed to download " + url + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
                 }
             }
         }

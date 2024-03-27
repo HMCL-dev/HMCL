@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * This task is to download game libraries.
@@ -98,7 +97,7 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + jar, e);
+            Logging.LOG.warning("Unable to calc hash value of file " + jar, e);
         }
 
         return false;

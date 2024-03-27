@@ -35,7 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 
 public class ModrinthCompletionTask extends Task<Void> {
 
@@ -78,7 +77,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                 if (manifestFile.exists())
                     this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModrinthManifest.class);
             } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Unable to read Modrinth modpack manifest.json", e);
+                Logging.LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
 
         setStage("hmcl.modpack.download");

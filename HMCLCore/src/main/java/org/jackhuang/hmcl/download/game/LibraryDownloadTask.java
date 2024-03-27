@@ -39,7 +39,6 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -111,7 +110,7 @@ public class LibraryDownloadTask extends Task<Void> {
                 cached = true;
                 return;
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to copy file from cache", e);
+                LOG.warning("Failed to copy file from cache", e);
                 // We cannot copy cached file to current location
                 // so we try to download a new one.
             }
@@ -137,7 +136,7 @@ public class LibraryDownloadTask extends Task<Void> {
             try {
                 cacheRepository.cacheLibrary(library, jar.toPath(), false);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to cache downloaded library " + library, e);
+                LOG.warning("Failed to cache downloaded library " + library, e);
             }
         }
     }

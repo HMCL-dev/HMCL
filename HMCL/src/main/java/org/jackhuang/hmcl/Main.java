@@ -42,7 +42,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.concurrent.CancellationException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -97,7 +96,7 @@ public final class Main {
 
     private static void detectFractureiser() {
         if (FractureiserDetector.detect()) {
-            LOG.log(Level.SEVERE, "Detected that this computer is infected by fractureiser");
+            LOG.error("Detected that this computer is infected by fractureiser");
             showErrorAndExit(i18n("fatal.fractureiser"));
         }
     }
@@ -106,13 +105,13 @@ public final class Main {
         try {
             SelfDependencyPatcher.patch();
         } catch (SelfDependencyPatcher.PatchException e) {
-            LOG.log(Level.SEVERE, "unable to patch JVM", e);
+            LOG.error("unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.missing"));
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
-            LOG.log(Level.SEVERE, "unable to patch JVM", e);
+            LOG.error("unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
-            LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
+            LOG.error("User cancels downloading JavaFX", e);
             exit(0);
         }
     }
@@ -196,7 +195,7 @@ public final class Main {
             LOG.info("Added Lets Encrypt root certificates as additional trust");
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException |
                  KeyManagementException e) {
-            LOG.log(Level.SEVERE, "Failed to load lets encrypt certificate. Expect problems", e);
+            LOG.error("Failed to load lets encrypt certificate. Expect problems", e);
         }
     }
 }

@@ -36,7 +36,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Logging.LOG;
@@ -369,7 +368,7 @@ public final class FileUtils {
                 FileUtils.writeText(infoFile, "[Trash Info]\nPath=" + file.getAbsolutePath() + "\nDeletionDate=" + time + "\n");
                 FileUtils.forceDelete(file);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to move " + file + " to trash", e);
+                LOG.warning("Failed to move " + file + " to trash", e);
                 return false;
             }
 

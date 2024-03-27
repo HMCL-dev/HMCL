@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -139,7 +138,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
                                 }).start();
                     }, world.getWorldName());
                 }, e -> {
-                    Logging.LOG.log(Level.WARNING, "Unable to parse world file " + zipFile, e);
+                    Logging.LOG.warning("Unable to parse world file " + zipFile, e);
                     Controllers.dialog(i18n("world.import.invalid"));
                 }).start();
     }

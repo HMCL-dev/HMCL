@@ -50,7 +50,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -124,7 +123,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             if (!file.exists() && !versions.isEmpty())
                 FileUtils.writeText(file, PROFILE);
         } catch (IOException ex) {
-            LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
+            LOG.warning("Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
 
         // https://github.com/HMCL-dev/HMCL/issues/938
@@ -319,7 +318,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 try (InputStream inputStream = new FileInputStream(iconFile.get())) {
                     return new Image(inputStream);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to load version icon of " + id, e);
+                    LOG.warning("Failed to load version icon of " + id, e);
                 }
             }
 
@@ -358,7 +357,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
         } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
+            LOG.error("Unable to save version setting of " + id, e);
             return false;
         }
     }

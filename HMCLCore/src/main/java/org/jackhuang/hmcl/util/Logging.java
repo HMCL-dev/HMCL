@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.logging.Logger;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.logging.Level;
 
 /**
  * @author huangyuhui
@@ -56,7 +55,7 @@ public final class Logging {
             LOG.exportLogs(output);
             return output.toString("UTF-8");
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to export logs", e);
+            LOG.warning("Failed to export logs", e);
             return "";
         }
     }

@@ -40,7 +40,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.unmodifiableList;
@@ -63,7 +62,7 @@ public class YggdrasilService {
                     LOG.info("Fetching properties of " + uuid + " from " + provider);
                     return getCompleteGameProfile(uuid);
                 },
-                (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid + " from " + provider, e),
+                (uuid, e) -> LOG.warning("Failed to fetch properties of " + uuid + " from " + provider, e),
                 POOL);
     }
 

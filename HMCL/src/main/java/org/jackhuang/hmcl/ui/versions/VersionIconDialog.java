@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.util.Logging;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -85,7 +84,7 @@ public class VersionIconDialog extends DialogPane {
 
                 onAccept();
             } catch (IOException | IllegalArgumentException e) {
-                Logging.LOG.log(Level.SEVERE, "Failed to set icon file: " + selectedFile, e);
+                Logging.LOG.error("Failed to set icon file: " + selectedFile, e);
             }
         }
     }

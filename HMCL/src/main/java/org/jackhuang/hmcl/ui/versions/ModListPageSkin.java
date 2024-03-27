@@ -61,7 +61,6 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -218,7 +217,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
                     predicate = s -> pattern.matcher(s).find();
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Illegal regular expression", e);
+                    LOG.warning("Illegal regular expression", e);
                     return;
                 }
             } else {

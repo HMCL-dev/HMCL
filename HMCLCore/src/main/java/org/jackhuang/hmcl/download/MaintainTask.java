@@ -33,7 +33,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -164,7 +163,7 @@ public class MaintainTask extends Task<Version> {
                     Files.createDirectories(libraryPath.getParent());
                     Files.copy(input, libraryPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to unpack HMCLTransformerDiscoveryService", e);
+                    Logging.LOG.warning("Unable to unpack HMCLTransformerDiscoveryService", e);
                 }
             });
         }

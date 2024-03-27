@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -112,7 +111,7 @@ public final class UpdateChecker {
                     result = checkUpdate(channel);
                     LOG.info("Latest version (" + channel + ") is " + result);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to check for update", e);
+                    LOG.warning("Failed to check for update", e);
                 }
 
                 RemoteVersion finalResult = result;

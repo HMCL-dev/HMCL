@@ -28,7 +28,6 @@ import java.io.*;
 import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Logging.LOG;
 
@@ -137,7 +136,7 @@ public final class GameDumpGenerator {
             try {
                 return VirtualMachine.attach(lvmid);
             } catch (Throwable e) {
-                LOG.log(Level.WARNING, "An exception encountered while attaching vm " + lvmid, e);
+                LOG.warning("An exception encountered while attaching vm " + lvmid, e);
                 writer.write(StringUtils.getStackTrace(e));
                 writer.write('\n');
                 Thread.sleep(3000);
@@ -158,7 +157,7 @@ public final class GameDumpGenerator {
                 target.append(cb, 0, len);
             }
         } catch (Throwable throwable) {
-            LOG.log(Level.WARNING, "An exception encountered while executing jcmd " + vm.id(), throwable);
+            LOG.warning("An exception encountered while executing jcmd " + vm.id(), throwable);
             target.append(StringUtils.getStackTrace(throwable));
             target.append('\n');
         }
