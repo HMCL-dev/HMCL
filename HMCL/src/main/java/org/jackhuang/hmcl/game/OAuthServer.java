@@ -105,7 +105,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"))
                     .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
-            LOG.error("Failed to load html");
+            LOG.error("Failed to load html", e);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
         }
         thread(() -> {
