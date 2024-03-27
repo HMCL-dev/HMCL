@@ -167,22 +167,25 @@ public final class Logger {
             return;
         }
 
+        boolean failed = false;
         Path xzFile = logFile.resolveSibling(logFile.getFileName() + ".xz");
         try (XZOutputStream output = new XZOutputStream(Files.newOutputStream(xzFile), new LZMA2Options())) {
             logWriter.flush();
             Files.copy(logFile, output);
         } catch (IOException e) {
+            failed = true;
             handle(new LogEvent.DoLog(System.currentTimeMillis(), caller, Level.WARNING, "Failed to dump log file to xz format", e));
         } finally {
             logWriter.close();
         }
 
-        try {
-            Files.delete(logFile);
-        } catch (IOException e) {
-            System.err.println("An exception occurred while deleting raw log file");
-            e.printStackTrace(System.err);
-        }
+        if (!failed)
+            try {
+                Files.delete(logFile);
+            } catch (IOException e) {
+                System.err.println("An exception occurred while deleting raw log file");
+                e.printStackTrace(System.err);
+            }
     }
 
     public void start(Path logFolder) {
