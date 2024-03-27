@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.game;
 
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.logging.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -29,7 +29,7 @@ import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 /**
  * Generate a JVM dump on a process.

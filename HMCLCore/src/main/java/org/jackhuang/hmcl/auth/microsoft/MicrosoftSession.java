@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.auth.microsoft;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.logging.Logging;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;

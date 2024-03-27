@@ -35,7 +35,7 @@ import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 /**
  * A task that can download a file online.

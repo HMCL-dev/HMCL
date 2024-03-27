@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.download;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
 

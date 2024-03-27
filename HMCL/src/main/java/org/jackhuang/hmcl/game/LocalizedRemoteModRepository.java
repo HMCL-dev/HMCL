@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 public abstract class LocalizedRemoteModRepository implements RemoteModRepository {
     private static final int CONTAIN_CHINESE_WEIGHT = 10;

@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.util.logging;
 
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.Pair;
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
@@ -27,6 +26,8 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
  * @author Glavo
  */
 public final class Logger {
+    static final String CLASS_NAME = Logger.class.getName();
+
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
 
     private final BlockingQueue<LogEvent> queue = new LinkedBlockingQueue<>();
@@ -99,7 +100,7 @@ public final class Logger {
         } catch (InterruptedException ignored) {
         }
 
-        String caller = Logger.class.getName() + ".onShutdown";
+        String caller = CLASS_NAME + ".onShutdown";
 
         if (logRetention > 0 && logFile != null) {
             List<Pair<Path, int[]>> list = new ArrayList<>();
@@ -201,7 +202,7 @@ public final class Logger {
                     }
                 }
             } catch (IOException e) {
-                log(Level.WARNING, Logger.class.getName() + ".start", "An exception occurred while creating the log file", e);
+                log(Level.WARNING, CLASS_NAME + ".start", "An exception occurred while creating the log file", e);
             }
         }
 
@@ -257,6 +258,17 @@ public final class Logger {
         }
         if (event.exception != null) {
             throw event.exception;
+        }
+    }
+
+    public String getLogs() {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            exportLogs(output);
+            return output.toString("UTF-8");
+        } catch (IOException e) {
+            log(Level.WARNING, "Failed to export logs", e);
+            return "";
         }
     }
 

@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**

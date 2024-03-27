@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ResourcePackDownloadListPage extends DownloadListPage {

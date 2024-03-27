@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -42,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
@@ -138,7 +138,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
                                 }).start();
                     }, world.getWorldName());
                 }, e -> {
-                    Logging.LOG.warning("Unable to parse world file " + zipFile, e);
+                    LOG.warning("Unable to parse world file " + zipFile, e);
                     Controllers.dialog(i18n("world.import.invalid"));
                 }).start();
     }

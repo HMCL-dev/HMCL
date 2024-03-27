@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import java.util.Optional;
 import java.util.Stack;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 public class Navigator extends TransitionPane {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = Navigator.class.getName() + ".closeListener";

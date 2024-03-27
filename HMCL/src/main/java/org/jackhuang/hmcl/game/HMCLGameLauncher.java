@@ -30,7 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 /**
  * @author huangyuhui

@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -39,6 +38,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 /**
  * Complete the CurseForge version.
@@ -88,7 +89,7 @@ public final class CurseCompletionTask extends Task<Void> {
                 if (manifestFile.exists())
                     this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), CurseManifest.class);
             } catch (Exception e) {
-                Logging.LOG.warning("Unable to read CurseForge modpack manifest.json", e);
+                LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
 
         setStage("hmcl.modpack.download");
@@ -122,11 +123,11 @@ public final class CurseCompletionTask extends Task<Void> {
                                     RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
                                     return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
                                 } catch (FileNotFoundException fof) {
-                                    Logging.LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
+                                    LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
                                     notFound.set(true);
                                     return file;
                                 } catch (IOException | JsonParseException e) {
-                                    Logging.LOG.warning("Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
+                                    LOG.warning("Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
                                     allNameKnown.set(false);
                                     return file;
                                 }
@@ -155,7 +156,7 @@ public final class CurseCompletionTask extends Task<Void> {
                         task.setCaching(true);
                         return Stream.of(task.withCounter("hmcl.modpack.download"));
                     } catch (IOException e) {
-                        Logging.LOG.warning("Could not query api.curseforge.com for mod: " + f.getProjectID() + ", " + f.getFileID(), e);
+                        LOG.warning("Could not query api.curseforge.com for mod: " + f.getProjectID() + ", " + f.getFileID(), e);
                         return Stream.empty(); // Ignore this file.
                     } finally {
                         updateProgress(finished.incrementAndGet(), newManifest.getFiles().size());

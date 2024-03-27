@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class UpgradeDialog extends JFXDialogLayout {

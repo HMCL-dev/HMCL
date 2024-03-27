@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -40,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
     protected final List<URL> urls;
@@ -115,7 +115,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 useCachedResult(cache);
                                 return;
                             } catch (IOException e) {
-                                Logging.LOG.warning("Unable to use cached file, redownload " + url, e);
+                                LOG.warning("Unable to use cached file, redownload " + url, e);
                                 repository.removeRemoteEntry(conn);
                                 // Now we must reconnect the server since 304 may result in empty content,
                                 // if we want to redownload the file, we must reconnect the server without etag settings.
@@ -166,13 +166,13 @@ public abstract class FetchTask<T> extends Task<T> {
                 } catch (FileNotFoundException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.warning("Failed to download " + url + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    LOG.warning("Failed to download " + url + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
 
                     break; // we will not try this URL again
                 } catch (IOException ex) {
                     failedURL = url;
                     exception = ex;
-                    Logging.LOG.warning("Failed to download " + url + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    LOG.warning("Failed to download " + url + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
                 }
             }
         }

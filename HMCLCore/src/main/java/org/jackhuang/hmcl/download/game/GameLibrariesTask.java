@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -31,6 +30,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 /**
  * This task is to download game libraries.
@@ -97,7 +98,7 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
         } catch (IOException e) {
-            Logging.LOG.warning("Unable to calc hash value of file " + jar, e);
+            LOG.warning("Unable to calc hash value of file " + jar, e);
         }
 
         return false;

@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -35,6 +34,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 public class ModrinthCompletionTask extends Task<Void> {
 
@@ -77,7 +78,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                 if (manifestFile.exists())
                     this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModrinthManifest.class);
             } catch (Exception e) {
-                Logging.LOG.warning("Unable to read Modrinth modpack manifest.json", e);
+                LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
 
         setStage("hmcl.modpack.download");

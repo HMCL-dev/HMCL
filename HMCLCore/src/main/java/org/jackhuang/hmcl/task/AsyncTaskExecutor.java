@@ -19,13 +19,13 @@ package org.jackhuang.hmcl.task;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.*;
 
 import static org.jackhuang.hmcl.util.Lang.*;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 /**
  *
@@ -48,7 +48,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
                     if (!success) {
                         // We log exception stacktrace because some of exceptions occurred because of bugs.
-                        Logging.LOG.warning("An exception occurred in task execution", exception);
+                        LOG.warning("An exception occurred in task execution", exception);
 
                         Throwable resolvedException = resolveException(exception);
                         if (resolvedException instanceof RuntimeException &&
@@ -81,7 +81,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
         } catch (ExecutionException ignore) {
             // We have dealt with ExecutionException in exception handling and uncaught exception handler.
         } catch (CancellationException e) {
-            Logging.LOG.info("Task " + firstTask + " has been cancelled.", e);
+            LOG.info("Task " + firstTask + " has been cancelled.", e);
         }
         return false;
     }
@@ -140,7 +140,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         task.setStage(parentTask.getStage());
 
                     if (task.getSignificance().shouldLog())
-                        Logging.LOG.trace("Executing task: " + task.getName());
+                        LOG.trace("Executing task: " + task.getName());
 
                     taskListeners.forEach(it -> it.onReady(task));
 
@@ -160,7 +160,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     checkCancellation();
 
                     if (task.getSignificance().shouldLog()) {
-                        Logging.LOG.trace("Task finished: " + task.getName());
+                        LOG.trace("Task finished: " + task.getName());
                     }
 
                     task.setResult(result);
@@ -178,7 +178,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         if (e instanceof InterruptedException || e instanceof CancellationException) {
                             task.setException(null);
                             if (task.getSignificance().shouldLog()) {
-                                Logging.LOG.trace("Task aborted: " + task.getName());
+                                LOG.trace("Task aborted: " + task.getName());
                             }
                             task.onDone().fireEvent(new TaskEvent(this, task, true));
                             taskListeners.forEach(it -> it.onFailed(task, e));
@@ -186,7 +186,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                             task.setException(e);
                             exception = e;
                             if (task.getSignificance().shouldLog()) {
-                                Logging.LOG.trace("Task failed: " + task.getName(), e);
+                                LOG.trace("Task failed: " + task.getName(), e);
                             }
                             task.onDone().fireEvent(new TaskEvent(this, task, true));
                             taskListeners.forEach(it -> it.onFailed(task, e));
@@ -214,7 +214,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     task.setNotifyPropertiesChanged(() -> taskListeners.forEach(it -> it.onPropertiesUpdate(task)));
 
                     if (task.getSignificance().shouldLog())
-                        Logging.LOG.trace("Executing task: " + task.getName());
+                        LOG.trace("Executing task: " + task.getName());
 
                     taskListeners.forEach(it -> it.onReady(task));
 
@@ -265,7 +265,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     boolean isDependenciesSucceeded = dependenciesException == null;
 
                     if (!isDependenciesSucceeded) {
-                        Logging.LOG.error("Subtasks failed for " + task.getName());
+                        LOG.error("Subtasks failed for " + task.getName());
                         task.setException(dependenciesException);
                         if (task.isRelyingOnDependencies()) {
                             rethrow(dependenciesException);
@@ -275,7 +275,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     checkCancellation();
 
                     if (task.getSignificance().shouldLog()) {
-                        Logging.LOG.trace("Task finished: " + task.getName());
+                        LOG.trace("Task finished: " + task.getName());
                     }
 
                     task.onDone().fireEvent(new TaskEvent(this, task, false));
@@ -293,11 +293,11 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         exception = e;
                         if (e instanceof CancellationException) {
                             if (task.getSignificance().shouldLog()) {
-                                Logging.LOG.trace("Task aborted: " + task.getName());
+                                LOG.trace("Task aborted: " + task.getName());
                             }
                         } else {
                             if (task.getSignificance().shouldLog()) {
-                                Logging.LOG.trace("Task failed: " + task.getName(), e);
+                                LOG.trace("Task failed: " + task.getName(), e);
                             }
                         }
                         task.onDone().fireEvent(new TaskEvent(this, task, true));

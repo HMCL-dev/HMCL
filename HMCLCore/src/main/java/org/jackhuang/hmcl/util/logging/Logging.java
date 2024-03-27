@@ -15,12 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.logging;
 
-import org.jackhuang.hmcl.util.logging.Logger;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -49,14 +45,4 @@ public final class Logging {
         return message;
     }
 
-    public static String getLogs() {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        try {
-            LOG.exportLogs(output);
-            return output.toString("UTF-8");
-        } catch (IOException e) {
-            LOG.warning("Failed to export logs", e);
-            return "";
-        }
-    }
 }

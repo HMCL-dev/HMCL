@@ -23,7 +23,7 @@ import javafx.scene.layout.StackPane;
 import java.util.Optional;
 import java.util.Stack;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 public class StackContainerPane extends StackPane {
     private final Stack<Node> stack = new Stack<>();

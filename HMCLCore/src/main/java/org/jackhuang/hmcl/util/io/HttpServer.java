@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.io;
 
 import com.google.gson.JsonParseException;
 import fi.iki.elonen.NanoHTTPD;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -31,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 public class HttpServer extends NanoHTTPD {
     private int traceId = 0;
@@ -53,7 +53,7 @@ public class HttpServer extends NanoHTTPD {
     }
 
     protected static Response ok(Object response) {
-        Logging.LOG.info(String.format("Response %s", JsonUtils.GSON.toJson(response)));
+        LOG.info(String.format("Response %s", JsonUtils.GSON.toJson(response)));
         return newFixedLengthResponse(Response.Status.OK, "text/json", JsonUtils.GSON.toJson(response));
     }
 
@@ -76,7 +76,7 @@ public class HttpServer extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         int currentId = traceId++;
-        Logging.LOG.info(String.format("[%d] %s --> %s", currentId, session.getMethod().name(),
+        LOG.info(String.format("[%d] %s --> %s", currentId, session.getMethod().name(),
                 session.getUri() + Optional.ofNullable(session.getQueryParameterString()).map(s -> "?" + s).orElse("")));
 
         Response response = null;
@@ -91,7 +91,7 @@ public class HttpServer extends NanoHTTPD {
         }
 
         if (response == null) response = notFound();
-        Logging.LOG.info(String.format("[%d] %s <--", currentId, response.getStatus()));
+        LOG.info(String.format("[%d] %s <--", currentId, response.getStatus()));
         return response;
     }
 
@@ -130,7 +130,7 @@ public class HttpServer extends NanoHTTPD {
             } catch (JsonParseException e) {
                 return badRequest();
             } catch (Exception e) {
-                Logging.LOG.error("Error handling " + request.getSession().getUri(), e);
+                LOG.error("Error handling " + request.getSession().getUri(), e);
                 return internalError();
             }
         }

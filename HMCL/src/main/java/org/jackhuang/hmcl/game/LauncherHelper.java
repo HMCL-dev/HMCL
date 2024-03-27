@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -111,7 +111,7 @@ public final class LauncherHelper {
     public void launch() {
         FXUtils.checkFxUserThread();
 
-        Logging.LOG.info("Launching game version: " + selectedVersion);
+        LOG.info("Launching game version: " + selectedVersion);
 
         Controllers.dialog(launchingStepsPane);
         launch0();

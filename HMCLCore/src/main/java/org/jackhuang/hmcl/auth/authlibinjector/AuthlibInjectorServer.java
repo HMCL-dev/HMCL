@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 
 import static java.util.Collections.emptyMap;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

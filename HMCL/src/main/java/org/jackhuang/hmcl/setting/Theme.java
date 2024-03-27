@@ -25,7 +25,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
@@ -44,6 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 @JsonAdapter(Theme.TypeAdapter.class)
 public class Theme {
@@ -182,7 +182,7 @@ public class Theme {
                 temp.deleteOnExit();
                 css = temp.toURI().toString();
             } catch (IOException | NullPointerException e) {
-                Logging.LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
+                LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
             }
         }
 

@@ -21,7 +21,6 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonMap;
@@ -39,6 +38,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 
 /**
  *
@@ -286,7 +287,7 @@ public class Version implements Comparable<Version>, Validation {
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
-                Logging.LOG.warning("Found circular dependency versions: " + resolvedSoFar);
+                LOG.warning("Found circular dependency versions: " + resolvedSoFar);
                 thisVersion = this.jar == null ? this.setJar(id) : this;
             } else {
                 // It is supposed to auto install an version in getVersion.
@@ -330,7 +331,7 @@ public class Version implements Comparable<Version>, Validation {
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
-                Logging.LOG.warning("Found circular dependency versions: " + resolvedSoFar);
+                LOG.warning("Found circular dependency versions: " + resolvedSoFar);
                 // keep thisVersion
             } else {
                 // It is supposed to auto install an version in getVersion.

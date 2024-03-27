@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logging.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class OAuthAccountLoginDialog extends DialogPane {
