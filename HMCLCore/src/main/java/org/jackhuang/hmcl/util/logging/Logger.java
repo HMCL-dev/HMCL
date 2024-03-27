@@ -122,7 +122,8 @@ public final class Logger {
         if (logRetention > 0 && logFile != null) {
             List<Pair<Path, int[]>> list = new ArrayList<>();
             Pattern fileNamePattern = Pattern.compile("(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})T(?<hour>\\d{2})-(?<minute>\\d{2})-(?<second>\\d{2})(\\.(?<n>\\d+))?\\.log(\\.(gz|xz))?");
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(logFile.getParent())) {
+            Path dir = logFile.getParent();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
                 for (Path path : stream) {
                     Matcher matcher = fileNamePattern.matcher(path.getFileName().toString());
                     if (matcher.matches() && Files.isRegularFile(path)) {
@@ -138,7 +139,7 @@ public final class Logger {
                     }
                 }
             } catch (IOException e) {
-                log(Level.WARNING, caller, "Failed to traverse log files", e);
+                log(Level.WARNING, caller, "Failed to list log files in " + dir, e);
             }
 
             if (list.size() <= logRetention) {
