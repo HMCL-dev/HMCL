@@ -296,6 +296,14 @@ public final class Logger {
         log(Level.INFO, CallerFinder.getCaller(), msg, exception);
     }
 
+    public void debug(String msg) {
+        log(Level.DEBUG, CallerFinder.getCaller(), msg, null);
+    }
+
+    public void debug(String msg, Throwable exception) {
+        log(Level.DEBUG, CallerFinder.getCaller(), msg, exception);
+    }
+
     public void trace(String msg) {
         log(Level.TRACE, CallerFinder.getCaller(), msg, null);
     }
