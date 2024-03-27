@@ -17,6 +17,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -103,10 +104,10 @@ public final class Logger {
 
     public void start(Path logFolder) {
         if (logFolder != null) {
-            String time = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss").format(LocalDateTime.now());
+            String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             try {
                 for (int n = 0; ; n++) {
-                    Path file = logFolder.resolve(time + (n == 0 ? "" : "-" + n) + ".log");
+                    Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log");
 
                     try {
                         logFileChannel = FileChannel.open(file, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
@@ -201,7 +202,7 @@ public final class Logger {
                 }
 
                 List<Pair<Path, int[]>> list = new ArrayList<>();
-                Pattern fileNamePattern = Pattern.compile("(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})(-(?<n>[0-9]+))?\\.log(\\.(gz|xz))?");
+                Pattern fileNamePattern = Pattern.compile("(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})T(?<hour>\\d{2})-(?<minute>\\d{2})-(?<second>\\d{2})(\\.(?<n>\\d+))?\\.log(\\.(gz|xz))?");
                 try (DirectoryStream<Path> stream = Files.newDirectoryStream(logFolder)) {
                     for (Path path : stream) {
                         Matcher matcher = fileNamePattern.matcher(path.getFileName().toString());
@@ -209,9 +210,12 @@ public final class Logger {
                             int year = Integer.parseInt(matcher.group("year"));
                             int month = Integer.parseInt(matcher.group("month"));
                             int day = Integer.parseInt(matcher.group("day"));
+                            int hour = Integer.parseInt(matcher.group("hour"));
+                            int minute = Integer.parseInt(matcher.group("minute"));
+                            int second = Integer.parseInt(matcher.group("second"));
                             int n = Optional.ofNullable(matcher.group("n")).map(Integer::parseInt).orElse(0);
 
-                            list.add(Pair.pair(path, new int[]{year, month, day, n}));
+                            list.add(Pair.pair(path, new int[]{year, month, day, hour, minute, second, n}));
                         }
                     }
                 } catch (IOException e) {
@@ -227,8 +231,7 @@ public final class Logger {
                     int[] v1 = a.getValue();
                     int[] v2 = b.getValue();
 
-                    assert v1.length == 4;
-                    assert v2.length == 4;
+                    assert v1.length == v2.length;
 
                     for (int i = 0; i < v1.length; i++) {
                         int c = Integer.compare(v1[i], v2[i]);
@@ -262,6 +265,7 @@ public final class Logger {
     }
 
     public void exportLogs(OutputStream output) throws IOException {
+        Objects.requireNonNull(output);
         LogEvent.ExportLog event = new LogEvent.ExportLog(output);
         try {
             queue.put(event);

@@ -21,9 +21,8 @@ import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.logging.Level;
 
 /**
  * @author huangyuhui
@@ -51,21 +50,14 @@ public final class Logging {
         return message;
     }
 
-    public static void start(Path logFolder) {
-        LOG.start(logFolder);
-    }
-
-    public static byte[] getRawLogs() {
+    public static String getLogs() {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         try {
             LOG.exportLogs(output);
+            return output.toString("UTF-8");
         } catch (IOException e) {
-            throw new AssertionError(e); // TODO: handle exception
+            LOG.log(Level.WARNING, "Failed to export logs", e);
+            return "";
         }
-        return output.toByteArray();
-    }
-
-    public static String getLogs() {
-        return new String(getRawLogs(), StandardCharsets.UTF_8);
     }
 }
