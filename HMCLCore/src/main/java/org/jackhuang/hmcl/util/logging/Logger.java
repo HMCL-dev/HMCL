@@ -213,7 +213,7 @@ public final class Logger {
                 for (int n = 0; ; n++) {
                     Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log");
                     try {
-                        logWriter = new PrintWriter(new OutputStreamWriter(Files.newOutputStream(file, CREATE_NEW), UTF_8));
+                        logWriter = new PrintWriter(Files.newBufferedWriter(file, UTF_8, CREATE_NEW));
                         logFile = file;
                         break;
                     } catch (FileAlreadyExistsException ignored) {
@@ -239,6 +239,7 @@ public final class Logger {
                         }
                         logs.clear();
                     } else {
+                        logWriter.flush();
                         handle(queue.take());
                     }
                 }
