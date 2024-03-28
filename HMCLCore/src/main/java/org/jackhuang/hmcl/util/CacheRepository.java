@@ -293,7 +293,7 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = JsonUtils.fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), ETagIndex.class);
+                ETagIndex indexOnDisk = JsonUtils.fromMaybeMalformedJson(IOUtils.readFullyAsStringWithoutClosing(Channels.newInputStream(channel)), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
                 ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
@@ -430,7 +430,7 @@ public class CacheRepository {
             try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 FileLock lock = channel.lock();
                 try {
-                    Map<String, Object> indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), new TypeToken<Map<String, Object>>() {
+                    Map<String, Object> indexOnDisk = JsonUtils.fromMaybeMalformedJson(IOUtils.readFullyAsStringWithoutClosing(Channels.newInputStream(channel)), new TypeToken<Map<String, Object>>() {
                     }.getType());
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);

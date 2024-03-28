@@ -292,7 +292,7 @@ public final class Logger {
         ByteArrayOutputBuffer output = new ByteArrayOutputBuffer();
         try {
             exportLogs(output);
-            return output.toString("UTF-8");
+            return output.toString(UTF_8);
         } catch (IOException e) {
             log(Level.WARNING, CLASS_NAME + ".getLogs", "Failed to export logs", e);
             return "";

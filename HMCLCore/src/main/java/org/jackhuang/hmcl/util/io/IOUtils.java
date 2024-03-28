@@ -43,13 +43,15 @@ public final class IOUtils {
      * @throws IOException if an I/O error occurs.
      */
     public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(Math.max(stream.available(), 32));
+        int available = stream.available();
+        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(available > 0 ? available : DEFAULT_BUFFER_SIZE);
         result.copyFrom(stream);
         return result.toByteArrayWithoutCopy();
     }
 
-    public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
-        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(Math.max(stream.available(), 32));
+    public static String readFullyAsStringWithoutClosing(InputStream stream) throws IOException {
+        int available = stream.available();
+        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(available > 0 ? available : DEFAULT_BUFFER_SIZE);
         result.copyFrom(stream);
         return result.toString(StandardCharsets.UTF_8);
     }
