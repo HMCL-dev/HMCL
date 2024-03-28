@@ -65,7 +65,8 @@ public final class IOUtils {
      */
     public static ByteArrayOutputBuffer readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
-            ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(Math.max(is.available(), 32));
+            int available = is.available();
+            ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(available > 0 ? available : DEFAULT_BUFFER_SIZE);
             result.copyFrom(is);
             return result;
         }
