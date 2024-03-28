@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.util;
 import java.nio.file.Path;
 import java.util.Set;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Utility for Adding JavaFX to module path.

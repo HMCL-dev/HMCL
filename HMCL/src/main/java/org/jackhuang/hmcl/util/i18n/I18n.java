@@ -23,9 +23,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class I18n {
 
@@ -58,9 +57,9 @@ public final class I18n {
         try {
             return String.format(getResourceBundle().getString(key), formatArgs);
         } catch (MissingResourceException e) {
-            LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
+            LOG.error("Cannot find key " + key + " in resource bundle", e);
         } catch (IllegalFormatException e) {
-            LOG.log(Level.SEVERE, "Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
+            LOG.error("Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
         }
 
         return key + Arrays.toString(formatArgs);
@@ -70,7 +69,7 @@ public final class I18n {
         try {
             return getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
-            LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
+            LOG.error("Cannot find key " + key + " in resource bundle", e);
             return key;
         }
     }

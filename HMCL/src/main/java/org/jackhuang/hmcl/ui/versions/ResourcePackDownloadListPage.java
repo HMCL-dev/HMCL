@@ -24,9 +24,8 @@ import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ResourcePackDownloadListPage extends DownloadListPage {
@@ -81,7 +80,7 @@ public class ResourcePackDownloadListPage extends DownloadListPage {
         try {
             return I18n.getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
-            LOG.log(Level.WARNING, "Cannot find key " + key + " in resource bundle", e);
+            LOG.warning("Cannot find key " + key + " in resource bundle", e);
             return category;
         }
     }

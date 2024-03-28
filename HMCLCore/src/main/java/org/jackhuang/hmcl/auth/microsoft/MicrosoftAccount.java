@@ -28,10 +28,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftAccount extends OAuthAccount {
 
@@ -142,7 +141,7 @@ public class MicrosoftAccount extends OAuthAccount {
                     try {
                         return YggdrasilService.getTextures(it);
                     } catch (ServerResponseMalformedException e) {
-                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        LOG.warning("Failed to parse texture payload", e);
                         return Optional.empty();
                     }
                 }));

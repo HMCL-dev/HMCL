@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.auth.microsoft;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.util.Map;
@@ -45,7 +45,7 @@ public class MicrosoftSession {
         this.user = user;
         this.profile = profile;
 
-        if (accessToken != null) Logging.registerAccessToken(accessToken);
+        if (accessToken != null) Logger.registerAccessToken(accessToken);
     }
 
     public String getTokenType() {

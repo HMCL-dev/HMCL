@@ -23,10 +23,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ConfigUpgrader {
     private ConfigUpgrader() {
@@ -48,12 +47,12 @@ final class ConfigUpgrader {
         }
 
         if (configVersion > CURRENT_VERSION) {
-            LOG.log(Level.WARNING, String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", CURRENT_VERSION, configVersion));
+            LOG.warning(String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", CURRENT_VERSION, configVersion));
             deserialized.setConfigVersion(CURRENT_VERSION);
             return;
         }
 
-        LOG.log(Level.INFO, String.format("Updating configuration from %d to %d.", configVersion, CURRENT_VERSION));
+        LOG.info(String.format("Updating configuration from %d to %d.", configVersion, CURRENT_VERSION));
         Map<?, ?> rawJson = Collections.unmodifiableMap(new Gson().<Map<?, ?>>fromJson(rawContent, Map.class));
 
         if (configVersion < 1) {

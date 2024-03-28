@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 
 import static java.util.Collections.emptyMap;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -29,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
 
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -254,7 +253,7 @@ public class AuthlibInjectorServer implements Observable {
                 try {
                     instance.setMetadataResponse(jsonObj.get("metadataResponse").getAsString(), jsonObj.get("metadataTimestamp").getAsLong());
                 } catch (JsonParseException e) {
-                    LOG.log(Level.WARNING, "Ignoring malformed metadata response cache: " + jsonObj.get("metadataResponse"), e);
+                    LOG.warning("Ignoring malformed metadata response cache: " + jsonObj.get("metadataResponse"), e);
                 }
             }
             return instance;

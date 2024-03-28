@@ -24,9 +24,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.jar.JarOutputStream;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -73,7 +72,7 @@ public final class Pack200Utils {
                 unpack = lookup.findVirtual(unpackerClass, "unpack", MethodType.methodType(void.class, InputStream.class, JarOutputStream.class));
                 unpackFile = lookup.findVirtual(unpackerClass, "unpack", MethodType.methodType(void.class, File.class, JarOutputStream.class));
             } catch (Throwable e) {
-                LOG.log(Level.WARNING, "Failed to find pack200 methods", e);
+                LOG.warning("Failed to find pack200 methods", e);
             }
 
             if (newUnpacker != null) {

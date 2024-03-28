@@ -34,10 +34,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class AuthlibInjectorServers implements Validation {
 
@@ -77,7 +76,7 @@ public final class AuthlibInjectorServers implements Validation {
                 String content = FileUtils.readText(configLocation);
                 configInstance = JsonUtils.GSON.fromJson(content, AuthlibInjectorServers.class);
             } catch (IOException | JsonParseException e) {
-                LOG.log(Level.WARNING, "Malformed authlib-injectors.json", e);
+                LOG.warning("Malformed authlib-injectors.json", e);
                 return;
             }
 

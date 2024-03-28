@@ -22,7 +22,6 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
@@ -33,11 +32,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class World {
 
@@ -237,13 +237,13 @@ public class World {
                     try {
                         return Stream.of(new World(world));
                     } catch (IOException e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to read world " + world, e);
+                        LOG.warning("Failed to read world " + world, e);
                         return Stream.empty();
                     }
                 });
             }
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Failed to read saves", e);
+            LOG.warning("Failed to read saves", e);
         }
         return Stream.empty();
     }

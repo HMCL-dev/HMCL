@@ -30,14 +30,13 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -51,7 +50,7 @@ final class GameVersion {
             Map<?, ?> version = JsonUtils.fromNonNullJsonFully(versionJson, Map.class);
             return tryCast(version.get("id"), String.class);
         } catch (IOException | JsonParseException e) {
-            LOG.log(Level.WARNING, "Failed to parse version.json", e);
+            LOG.warning("Failed to parse version.json", e);
             return Optional.empty();
         }
     }

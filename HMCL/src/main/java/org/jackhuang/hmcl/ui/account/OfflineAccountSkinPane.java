@@ -43,11 +43,10 @@ import org.jackhuang.hmcl.ui.construct.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class OfflineAccountSkinPane extends StackPane {
@@ -134,7 +133,7 @@ public class OfflineAccountSkinPane extends StackPane {
             getSkin().load(account.getUsername())
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
-                            LOG.log(Level.WARNING, "Failed to load skin", exception);
+                            LOG.warning("Failed to load skin", exception);
                             Controllers.showToast(i18n("message.failed"));
                         } else {
                             UUID uuid = this.account.getUUID();

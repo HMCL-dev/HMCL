@@ -24,7 +24,6 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ReflectionHelper;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -39,8 +38,9 @@ import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Disposable task.
@@ -359,7 +359,7 @@ public abstract class Task<T> {
 
     public final T run() throws Exception {
         if (getSignificance().shouldLog())
-            Logging.LOG.log(Level.FINE, "Executing task: " + getName());
+            LOG.trace("Executing task: " + getName());
 
         for (Task<?> task : getDependents())
             doSubTask(task);
@@ -776,7 +776,7 @@ public abstract class Task<T> {
                     try {
                         success.run();
                     } catch (Exception e) {
-                        Logging.LOG.log(Level.WARNING, "Failed to execute " + success, e);
+                        LOG.warning("Failed to execute " + success, e);
                         if (failure != null)
                             failure.accept(e);
                     }

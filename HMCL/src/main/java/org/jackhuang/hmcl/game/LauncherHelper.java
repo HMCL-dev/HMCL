@@ -60,13 +60,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -112,7 +111,7 @@ public final class LauncherHelper {
     public void launch() {
         FXUtils.checkFxUserThread();
 
-        Logging.LOG.info("Launching game version: " + selectedVersion);
+        LOG.info("Launching game version: " + selectedVersion);
 
         Controllers.dialog(launchingStepsPane);
         launch0();
@@ -389,7 +388,7 @@ public final class LauncherHelper {
                                     future.complete(downloadedJavaVersion);
                                 })
                                 .exceptionally(throwable -> {
-                                    LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                    LOG.warning("Failed to download java", throwable);
                                     Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction, () -> {
                                         future.completeExceptionally(new CancellationException("No accepted java"));
                                     });
@@ -452,7 +451,7 @@ public final class LauncherHelper {
                                         future.complete(downloadedJavaVersion);
                                     }, Schedulers.javafx())
                                     .whenCompleteAsync((result, throwable) -> {
-                                        LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                        LOG.warning("Failed to download java", throwable);
                                         breakAction.run();
                                     }, Schedulers.javafx());
                             return Task.fromCompletableFuture(future);
@@ -605,7 +604,7 @@ public final class LauncherHelper {
                             .thenAcceptAsync(future::complete)
                             .exceptionally(throwable -> {
                                 Throwable resolvedException = resolveException(throwable);
-                                LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                LOG.warning("Failed to download java", throwable);
                                 if (!(resolvedException instanceof CancellationException)) {
                                     Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
                                 }
@@ -644,11 +643,11 @@ public final class LauncherHelper {
             try {
                 return Task.completed(account.logIn());
             } catch (CredentialExpiredException e) {
-                LOG.log(Level.INFO, "Credential has expired", e);
+                LOG.info("Credential has expired", e);
 
                 return Task.completed(DialogController.logIn(account));
             } catch (AuthenticationException e) {
-                LOG.log(Level.WARNING, "Authentication failed, try skipping refresh", e);
+                LOG.warning("Authentication failed, try skipping refresh", e);
 
                 CompletableFuture<Task<AuthInfo>> future = new CompletableFuture<>();
                 runInFX(() -> {

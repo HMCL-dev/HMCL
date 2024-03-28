@@ -30,13 +30,12 @@ import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Represents a Java installation.
@@ -222,7 +221,7 @@ public final class JavaVersion {
         try {
             currentExecutable = currentExecutable.toRealPath();
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to resolve current Java path: " + currentExecutable, e);
+            LOG.warning("Failed to resolve current Java path: " + currentExecutable, e);
         }
         CURRENT_JAVA = new JavaVersion(
                 currentExecutable,
@@ -250,7 +249,7 @@ public final class JavaVersion {
         try (Stream<Path> stream = searchPotentialJavaExecutables()) {
             javaVersions = lookupJavas(stream);
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to search Java homes", e);
+            LOG.warning("Failed to search Java homes", e);
             javaVersions = new ArrayList<>();
         }
 
@@ -262,7 +261,7 @@ public final class JavaVersion {
         JAVAS = Collections.newSetFromMap(new ConcurrentHashMap<>());
         JAVAS.addAll(javaVersions);
 
-        LOG.log(Level.FINE, "Finished Java installation lookup, found " + JAVAS.size());
+        LOG.trace("Finished Java installation lookup, found " + JAVAS.size());
 
         LATCH.countDown();
     }
@@ -274,7 +273,7 @@ public final class JavaVersion {
                     try {
                         return Stream.of(executable.toRealPath());
                     } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Failed to lookup Java executable at " + executable, e);
+                        LOG.warning("Failed to lookup Java executable at " + executable, e);
                         return Stream.empty();
                     }
                 })
@@ -284,13 +283,13 @@ public final class JavaVersion {
                         return Stream.of(CURRENT_JAVA);
                     }
                     try {
-                        LOG.log(Level.FINER, "Looking for Java:" + executable);
+                        LOG.trace("Looking for Java:" + executable);
                         Future<JavaVersion> future = Schedulers.io().submit(() -> fromExecutable(executable));
                         JavaVersion javaVersion = future.get(5, TimeUnit.SECONDS);
-                        LOG.log(Level.FINE, "Found Java (" + javaVersion.getVersion() + ") " + javaVersion.getBinary().toString());
+                        LOG.trace("Found Java (" + javaVersion.getVersion() + ") " + javaVersion.getBinary().toString());
                         return Stream.of(javaVersion);
                     } catch (ExecutionException | InterruptedException | TimeoutException e) {
-                        LOG.log(Level.WARNING, "Failed to determine Java at " + executable, e);
+                        LOG.warning("Failed to determine Java at " + executable, e);
                         return Stream.empty();
                     }
                 })
@@ -393,7 +392,7 @@ public final class JavaVersion {
                 try {
                     homes.add(Paths.get(home));
                 } catch (InvalidPathException e) {
-                    LOG.log(Level.WARNING, "Invalid Java path in system registry: " + home);
+                    LOG.warning("Invalid Java path in system registry: " + home);
                 }
             }
         }
@@ -438,16 +437,5 @@ public final class JavaVersion {
             }
         }
         return null;
-    }
-    // ====
-
-    public static void main(String[] args) {
-        try {
-            LOG.setLevel(Level.ALL);
-            initialize();
-            LOG.info(JAVAS.toString());
-        } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Oops:", e);
-        }
     }
 }

@@ -15,10 +15,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class NativePatcher {
     private NativePatcher() {
@@ -37,7 +36,7 @@ public final class NativePatcher {
 
                 return natives.getOrDefault(p.toString(), Collections.emptyMap());
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to load native library list", e);
+                LOG.warning("Failed to load native library list", e);
                 return Collections.emptyMap();
             }
         });

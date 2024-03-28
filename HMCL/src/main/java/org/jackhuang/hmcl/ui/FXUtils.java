@@ -55,7 +55,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -88,12 +87,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class FXUtils {
@@ -110,7 +108,7 @@ public final class FXUtils {
             try {
                 Files.deleteIfExists(entry.getValue());
             } catch (IOException e) {
-                LOG.log(Level.WARNING, String.format("Failed to delete cache file %s.", entry.getValue()), e);
+                LOG.warning(String.format("Failed to delete cache file %s.", entry.getValue()), e);
             }
             remoteImageCache.remove(entry.getKey());
         }
@@ -337,7 +335,7 @@ public final class FXUtils {
                     Tooltip.class.getMethod("setHideDelay", Duration.class).invoke(tooltip, new Duration(closeDelay));
                 } catch (ReflectiveOperationException e2) {
                     e.addSuppressed(e2);
-                    Logging.LOG.log(Level.SEVERE, "Cannot install tooltip", e);
+                    LOG.error("Cannot install tooltip", e);
                 }
                 Tooltip.install(node, tooltip);
             }
@@ -370,7 +368,7 @@ public final class FXUtils {
 
     public static void openFolder(File file) {
         if (!FileUtils.makeDirectory(file)) {
-            LOG.log(Level.SEVERE, "Unable to make directory " + file);
+            LOG.error("Unable to make directory " + file);
             return;
         }
 
@@ -397,7 +395,7 @@ public final class FXUtils {
                     else
                         LOG.warning("Open " + path + " failed with code " + exitCode);
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Unable to open " + path + " by executing " + openCommand, e);
+                    LOG.warning("Unable to open " + path + " by executing " + openCommand, e);
                 }
             }
 
@@ -405,7 +403,7 @@ public final class FXUtils {
             try {
                 java.awt.Desktop.getDesktop().open(file);
             } catch (Throwable e) {
-                LOG.log(Level.SEVERE, "Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
+                LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
         });
     }
@@ -432,7 +430,7 @@ public final class FXUtils {
                     else
                         LOG.warning("Show " + path + " in explorer failed with code " + exitCode);
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Unable to show " + path + " in explorer", e);
+                    LOG.warning("Unable to show " + path + " in explorer", e);
                 }
 
                 // Fallback to open folder
@@ -469,7 +467,7 @@ public final class FXUtils {
                     Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", link});
                     return;
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "An exception occurred while calling rundll32", e);
+                    LOG.warning("An exception occurred while calling rundll32", e);
                 }
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
@@ -481,7 +479,7 @@ public final class FXUtils {
                         }
                     } catch (Throwable ignored) {
                     }
-                    Logging.LOG.log(Level.WARNING, "No known browser found");
+                    LOG.warning("No known browser found");
                 }
             }
             try {
@@ -491,9 +489,9 @@ public final class FXUtils {
                     try {
                         Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
                     } catch (IOException ex) {
-                        Logging.LOG.log(Level.WARNING, "Unable to open link: " + link, ex);
+                        LOG.warning("Unable to open link: " + link, ex);
                     }
-                Logging.LOG.log(Level.WARNING, "Failed to open link: " + link, e);
+                LOG.warning("Failed to open link: " + link, e);
             }
         });
     }
@@ -509,7 +507,7 @@ public final class FXUtils {
             stage.setTitle(title);
             stage.showAndWait();
         } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-            LOG.log(Level.WARNING, "WebView is missing or initialization failed, use JEditorPane replaced", e);
+            LOG.warning("WebView is missing or initialization failed, use JEditorPane replaced", e);
 
             SwingUtils.initLookAndFeel();
             SwingUtilities.invokeLater(() -> {
@@ -761,7 +759,7 @@ public final class FXUtils {
                 try (InputStream inputStream = Files.newInputStream(currentPath)) {
                     return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "An exception encountered while reading data from cached image file.", e);
+                    LOG.warning("An exception encountered while reading data from cached image file.", e);
                 }
             }
 
@@ -771,7 +769,7 @@ public final class FXUtils {
             try {
                 Files.deleteIfExists(currentPath);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "An exception encountered while deleting broken cached image file.", e);
+                LOG.warning("An exception encountered while deleting broken cached image file.", e);
             }
         }
 
@@ -968,7 +966,7 @@ public final class FXUtils {
             }
             return texts;
         } catch (SAXException | ParserConfigurationException | IOException e) {
-            LOG.log(Level.WARNING, "Failed to parse xml", e);
+            LOG.warning("Failed to parse xml", e);
             return Collections.singletonList(new Text(segment));
         }
     }
