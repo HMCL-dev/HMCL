@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,8 +78,8 @@ public class ForgeOldInstallTask extends Task<Version> {
                 throw new IOException("Cannot make directory " + forgeFile.getParent());
 
             ZipEntry forgeEntry = zipFile.getEntry(installProfile.getInstall().getFilePath());
-            try (InputStream is = zipFile.getInputStream(forgeEntry); OutputStream os = new FileOutputStream(forgeFile)) {
-                IOUtils.copyTo(is, os);
+            try (InputStream is = zipFile.getInputStream(forgeEntry)) {
+                Files.copy(is, forgeFile.toPath());
             }
 
             setResult(installProfile.getVersionInfo()
