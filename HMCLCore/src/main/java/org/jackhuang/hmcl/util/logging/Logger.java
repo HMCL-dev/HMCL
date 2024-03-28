@@ -207,8 +207,6 @@ public final class Logger {
     }
 
     public void start(Path logFolder) {
-        String caller = CLASS_NAME + ".start";
-
         if (logFolder != null) {
             String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             try {
@@ -222,7 +220,7 @@ public final class Logger {
                     }
                 }
             } catch (IOException e) {
-                log(Level.WARNING, caller, "Failed to create log file", e);
+                log(Level.WARNING, CLASS_NAME + ".start", "Failed to create log file", e);
             }
         }
 
