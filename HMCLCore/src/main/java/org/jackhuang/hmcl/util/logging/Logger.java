@@ -207,11 +207,13 @@ public final class Logger {
     }
 
     public void start(Path logFolder) {
+        String caller = CLASS_NAME + ".start";
+
         if (logFolder != null) {
             String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             try {
                 for (int n = 0; ; n++) {
-                    Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log");
+                    Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log").toAbsolutePath().normalize();
                     try {
                         logWriter = new PrintWriter(Files.newBufferedWriter(file, UTF_8, CREATE_NEW));
                         logFile = file;
@@ -220,7 +222,7 @@ public final class Logger {
                     }
                 }
             } catch (IOException e) {
-                log(Level.WARNING, CLASS_NAME + ".start", "An exception occurred while creating the log file", e);
+                log(Level.WARNING, caller, "Failed to create log file", e);
             }
         }
 
@@ -264,6 +266,10 @@ public final class Logger {
 
     public void shutdown() {
         queue.add(new LogEvent.Shutdown());
+    }
+
+    public Path getLogFile() {
+        return logFile;
     }
 
     public void exportLogs(OutputStream output) throws IOException {
