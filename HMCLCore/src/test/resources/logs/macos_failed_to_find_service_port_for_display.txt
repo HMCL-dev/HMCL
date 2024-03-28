@@ -1,0 +1,131 @@
+[16:28:06] [main/INFO]: ModLauncher running: args [--username, byc, --version, 1.16.5guangying, --gameDir, /Users/biwenbo/Library/Application Support/minecraft/versions/1.16.5guangying, --assetsDir, /Users/biwenbo/Library/Application Support/minecraft/assets, --assetIndex, 1.16, --uuid, 6b38b80450703b1b91dd32b6d78cb31c, --accessToken, ❄❄❄❄❄❄❄❄, --userType, msa, --versionType, HMCL 3.5.5, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker, --launchTarget, fmlclient, --fml.forgeVersion, 36.2.41, --fml.mcVersion, 1.16.5, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20210115.111550]
+[16:28:06] [main/INFO]: ModLauncher 8.1.3+8.1.3+main-8.1.x.c94d18ec starting: java version 1.8.0_381 by Oracle Corporation
+[16:28:07] [main/INFO]: OptiFineTransformationService.onLoad
+[16:28:07] [main/INFO]: OptiFine ZIP file: /Users/biwenbo/Library/Application Support/minecraft/libraries/optifine/OptiFine/1.16.5_HD_U_G8/OptiFine-1.16.5_HD_U_G8.jar
+[16:28:07] [main/INFO]: Target.PRE_CLASS is available
+[16:28:07] [main/INFO]: Added Lets Encrypt root certificates as additional trust
+[16:28:07] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.4 Source=file:/Users/biwenbo/Library/Application%20Support/minecraft/libraries/org/spongepowered/mixin/0.8.4/mixin-0.8.4.jar Service=ModLauncher Env=CLIENT
+[16:28:07] [main/INFO]: OptiFineTransformationService.initialize
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:105]: 	Description : Cocoa: Failed to find service port for display
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:106]: 	Stacktrace  :
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: org.lwjgl.glfw.GLFW.glfwInit(GLFW.java:827)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraftforge.fml.loading.progress.ClientVisualization.initWindow(ClientVisualization.java:58)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraftforge.fml.loading.progress.ClientVisualization.start(ClientVisualization.java:335)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraftforge.fml.loading.progress.EarlyProgressVisualization.accept(EarlyProgressVisualization.java:29)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraftforge.fml.loading.FMLLoader.setupLaunchHandler(FMLLoader.java:176)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraftforge.fml.loading.FMLServiceProvider.initialize(FMLServiceProvider.java:80)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.TransformationServiceDecorator.onInitialize(TransformationServiceDecorator.java:68)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.TransformationServicesHandler.lambda$initialiseTransformationServices$7(TransformationServicesHandler.java:107)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: java.util.HashMap$Values.forEach(HashMap.java:982)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.TransformationServicesHandler.initialiseTransformationServices(TransformationServicesHandler.java:107)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:59)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.Launcher.run(Launcher.java:76)
+[16:28:09] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.Launcher.main(Launcher.java:66)
+[16:28:09] [main/ERROR]: Suppressing Last GLFW error: [0x10008]Cocoa: Failed to find service port for display
+[16:28:10] [main/INFO]: OptiFineTransformationService.transformers
+[16:28:10] [main/INFO]: Targets: 311
+[16:28:11] [main/INFO]: additionalClassesLocator: [optifine., net.optifine.]
+[16:28:11] [main/INFO]: Launching target 'fmlclient' with arguments [--version, 1.16.5guangying, --gameDir, /Users/biwenbo/Library/Application Support/minecraft/versions/1.16.5guangying, --assetsDir, /Users/biwenbo/Library/Application Support/minecraft/assets, --uuid, 6b38b80450703b1b91dd32b6d78cb31c, --username, byc, --assetIndex, 1.16, --accessToken, ❄❄❄❄❄❄❄❄, --userType, msa, --versionType, HMCL 3.5.5, --width, 854, --height, 480, --tweakClass, optifine.OptiFineTweaker]
+[16:28:12] [main/INFO]: [net.minecraft.client.main.Main:main:80]: Completely ignored arguments: [--tweakClass, optifine.OptiFineTweaker]
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:105]: 	Description : Cocoa: Failed to find service port for display
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:106]: 	Stacktrace  :
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: org.lwjgl.glfw.GLFW.glfwPollEvents(GLFW.java:3050)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraftforge.fml.loading.BackgroundWaiter.runAndTick(BackgroundWaiter.java:19)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraft.client.main.Main.main(Main.java:123)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: java.lang.reflect.Method.invoke(Method.java:498)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:37)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.Launcher.run(Launcher.java:82)
+[16:28:14] [main/INFO]: [org.lwjgl.glfw.GLFWErrorCallback$1:invoke:110]: cpw.mods.modlauncher.Launcher.main(Launcher.java:66)
+[16:28:26] [Render thread/INFO]: Environment: authHost='http://localhost:58297/authserver', accountsHost='http://127.0.0.1:58307/https/api.mojang.com', sessionHost='http://127.0.0.1:58307/https/sessionserver.mojang.com', servicesHost='http://127.0.0.1:58307/https/api.minecraftservices.com', name='PROD'
+[16:28:27] [Render thread/INFO]: Setting user: byc
+[16:28:27] [Render thread/INFO]: [OptiFine] (Reflector) Class not present: net.minecraft.launchwrapper.Launch
+[16:28:27] [Render thread/INFO]: Backend library: LWJGL version 3.2.1 build 12
+[16:28:27] [Render thread/INFO]: [net.minecraft.util.registry.Bootstrap:func_179870_a:123]: ---- Minecraft Crash Report ----
+// I just don't know what went wrong :(
+
+Time: 24-2-1 下午4:28
+Description: Initializing game
+
+java.lang.IllegalStateException: GLFW error before init: [0x10008]Cocoa: Failed to find service port for display
+	at com.mojang.blaze3d.platform.GLX.lambda$_initGlfw$1(GLX.java:81) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.MainWindow.func_211162_a(MainWindow.java:178) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at com.mojang.blaze3d.platform.GLX._initGlfw(GLX.java:79) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at com.mojang.blaze3d.systems.RenderSystem.initBackendSystem(SourceFile:1060) ~[?:?] {re:classloading}
+	at net.minecraft.client.Minecraft.<init>(Minecraft.java:416) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:149) ~[1.16.5guangying.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_381] {}
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_381] {}
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_381] {}
+	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_381] {}
+	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:37) ~[forge-1.16.5-36.2.41.jar:36.2] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) [modlauncher-8.1.3.jar:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at com.mojang.blaze3d.platform.GLX.lambda$_initGlfw$1(GLX.java:81) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at net.minecraft.client.MainWindow.func_211162_a(MainWindow.java:178) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at com.mojang.blaze3d.platform.GLX._initGlfw(GLX.java:79) ~[?:?] {re:classloading,xf:OptiFine:default}
+	at com.mojang.blaze3d.systems.RenderSystem.initBackendSystem(SourceFile:1060) ~[?:?] {re:classloading}
+	at net.minecraft.client.Minecraft.<init>(Minecraft.java:416) ~[?:?] {re:classloading,pl:accesstransformer:B,pl:runtimedistcleaner:A}
+-- Initialization --
+Details:
+Stacktrace:
+	at net.minecraft.client.main.Main.main(Main.java:149) ~[1.16.5guangying.jar:?] {re:classloading,pl:runtimedistcleaner:A}
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_381] {}
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_381] {}
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_381] {}
+	at java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_381] {}
+	at net.minecraftforge.fml.loading.FMLClientLaunchProvider.lambda$launchService$0(FMLClientLaunchProvider.java:37) ~[forge-1.16.5-36.2.41.jar:36.2] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:37) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:54) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:72) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:82) [modlauncher-8.1.3.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:66) [modlauncher-8.1.3.jar:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.16.5
+	Minecraft Version ID: 1.16.5
+	Operating System: Mac OS X (x86_64) version 14.1.2
+	Java Version: 1.8.0_381, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode), Oracle Corporation
+	Memory: 2220089736 bytes (2117 MB) / 3355443200 bytes (3200 MB) up to 4294967296 bytes (4096 MB)
+	CPUs: 8
+	JVM Flags: 11 total; -Xmx4069m -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32m -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -XX:-DontCompileHugeMethods -XX:+IgnoreUnrecognizedVMOptions
+	Launched Version: 1.16.5guangying
+	Backend library: LWJGL version 3.2.1 build 12
+	Backend API: NO CONTEXT
+	GL Caps: 
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'forge'
+	Type: Client (map_client.txt)
+	CPU: <unknown>
+	OptiFine Version: OptiFine_1.16.5_HD_U_G8
+	OptiFine Build: 20210515-161946
+	Render Distance Chunks: 8
+	Mipmaps: 4
+	Anisotropic Filtering: 1
+	Antialiasing: 0
+	Multitexture: false
+	Shaders: null
+	OpenGlVersion: null
+	OpenGlRenderer: null
+	OpenGlVendor: null
+	CpuCount: 8
+[16:28:27] [Render thread/INFO]: [net.minecraft.util.registry.Bootstrap:func_179870_a:123]: #@!@# Game crashed! Crash report saved to: #@!@# /Users/biwenbo/Library/Application Support/minecraft/versions/1.16.5guangying/crash-reports/crash-2024-02-01_16.28.27-client.txt
