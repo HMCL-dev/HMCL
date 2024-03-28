@@ -24,11 +24,11 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.MurmurHash2;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.ByteArrayOutputBuffer;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -140,7 +140,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ByteArrayOutputBuffer buffer = new ByteArrayOutputBuffer();
         try (InputStream stream = Files.newInputStream(file)) {
             byte[] buf = new byte[1024];
             int len;
@@ -148,13 +148,13 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 for (int i = 0; i < len; i++) {
                     byte b = buf[i];
                     if (b != 0x9 && b != 0xa && b != 0xd && b != 0x20) {
-                        baos.write(b);
+                        buffer.write(b);
                     }
                 }
             }
         }
 
-        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
+        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(buffer.getBuffer(), buffer.size(), 1));
 
         Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints")
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))

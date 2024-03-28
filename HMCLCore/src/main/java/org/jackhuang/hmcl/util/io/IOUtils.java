@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -40,15 +43,15 @@ public final class IOUtils {
      * @throws IOException if an I/O error occurs.
      */
     public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
-        copyTo(stream, result);
-        return result.toByteArray();
+        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(Math.max(stream.available(), 32));
+        result.copyFrom(stream);
+        return result.toByteArrayWithoutCopy();
     }
 
     public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
-        copyTo(stream, result);
-        return result.toString("UTF-8");
+        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(Math.max(stream.available(), 32));
+        result.copyFrom(stream);
+        return result.toString(StandardCharsets.UTF_8);
     }
 
     /**
@@ -58,20 +61,20 @@ public final class IOUtils {
      * @return all bytes read from the stream
      * @throws IOException if an I/O error occurs.
      */
-    public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
+    public static ByteArrayOutputBuffer readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
-            ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(is.available(), 32));
-            copyTo(is, result);
+            ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(Math.max(is.available(), 32));
+            result.copyFrom(is);
             return result;
         }
     }
 
     public static byte[] readFullyAsByteArray(InputStream stream) throws IOException {
-        return readFully(stream).toByteArray();
+        return readFully(stream).toByteArrayWithoutCopy();
     }
 
     public static String readFullyAsString(InputStream stream) throws IOException {
-        return readFully(stream).toString("UTF-8");
+        return readFully(stream).toString(StandardCharsets.UTF_8);
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {

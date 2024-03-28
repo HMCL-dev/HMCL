@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
@@ -132,14 +131,11 @@ public abstract class FetchTask<T> extends Task<T> {
                     long contentLength = conn.getContentLength();
                     try (Context context = getContext(conn, checkETag); InputStream stream = conn.getInputStream()) {
                         int lastDownloaded = 0, downloaded = 0;
-                        byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                         while (true) {
                             if (isCancelled()) break;
 
-                            int len = stream.read(buffer);
+                            int len = context.read(stream);
                             if (len == -1) break;
-
-                            context.write(buffer, 0, len);
 
                             downloaded += len;
 
@@ -224,7 +220,7 @@ public abstract class FetchTask<T> extends Task<T> {
     protected static abstract class Context implements Closeable {
         private boolean success;
 
-        public abstract void write(byte[] buffer, int offset, int len) throws IOException;
+        public abstract int read(InputStream inputStream) throws IOException;
 
         public final void withResult(boolean success) {
             this.success = success;
