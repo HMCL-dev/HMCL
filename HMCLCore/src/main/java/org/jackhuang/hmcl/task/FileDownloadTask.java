@@ -21,10 +21,12 @@ import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.FileSystem;
@@ -189,39 +191,44 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     @Override
     protected Context getContext(URLConnection conn, boolean checkETag) throws IOException {
-        Path temp = Files.createTempFile(null, null);
-        RandomAccessFile rFile = new RandomAccessFile(temp.toFile(), "rw");
-        MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
-
         return new Context() {
-            @Override
-            public void write(byte[] buffer, int offset, int len) throws IOException {
-                if (digest != null) {
-                    digest.update(buffer, offset, len);
-                }
+            private final MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
+            private final byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+            private final Path tempFile = Files.createTempFile(null, null);
+            private final OutputStream outputStream = Files.newOutputStream(tempFile);
 
-                rFile.write(buffer, offset, len);
+            @Override
+            public int read(InputStream inputStream) throws IOException {
+                int read = inputStream.read(buffer);
+                if (read > 0) {
+                    if (digest != null) {
+                        digest.update(buffer, 0, read);
+                    }
+
+                    outputStream.write(buffer, 0, read);
+                }
+                return read;
             }
 
             @Override
             public void close() throws IOException {
                 try {
-                    rFile.close();
+                    outputStream.close();
                 } catch (IOException e) {
-                    LOG.warning("Failed to close file: " + rFile, e);
+                    LOG.warning("Failed to close file: " + tempFile, e);
                 }
 
                 if (!isSuccess()) {
                     try {
-                        Files.delete(temp);
+                        Files.delete(tempFile);
                     } catch (IOException e) {
-                        LOG.warning("Failed to delete file: " + rFile, e);
+                        LOG.warning("Failed to delete file: " + tempFile, e);
                     }
                     return;
                 }
 
                 for (IntegrityCheckHandler handler : integrityCheckHandlers) {
-                    handler.checkIntegrity(temp, file.toPath());
+                    handler.checkIntegrity(tempFile, file.toPath());
                 }
 
                 Files.deleteIfExists(file.toPath());
@@ -229,9 +236,9 @@ public class FileDownloadTask extends FetchTask<Void> {
                     throw new IOException("Unable to make parent directory " + file);
 
                 try {
-                    FileUtils.moveFile(temp.toFile(), file);
+                    FileUtils.moveFile(tempFile.toFile(), file);
                 } catch (Exception e) {
-                    throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
+                    throw new IOException("Unable to move temp file from " + tempFile + " to " + file, e);
                 }
 
                 // Integrity check
