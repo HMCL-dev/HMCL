@@ -4,31 +4,46 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
  * @author Glavo
  */
-public final class ByteArrayOutputBuffer extends ByteArrayOutputStream {
+public final class ByteArrayBuilder extends ByteArrayOutputStream {
 
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    public static int getRecommendedSize(long size) {
-        if (size < 0)
-            return IOUtils.DEFAULT_BUFFER_SIZE;
-        else if (size >= MAX_ARRAY_SIZE)
-            return MAX_ARRAY_SIZE;
+    public static ByteArrayBuilder createFor(URLConnection connection) {
+        long length = connection.getContentLengthLong();
+
+        if (length < 0)
+            return new ByteArrayBuilder();
+        else if (length >= MAX_ARRAY_SIZE)
+            return new ByteArrayBuilder(MAX_ARRAY_SIZE);
         else
-            return Math.max(32, (int) size);
+            return new ByteArrayBuilder((int) length, true);
     }
 
-    public ByteArrayOutputBuffer() {
-        this(IOUtils.DEFAULT_BUFFER_SIZE);
+    public static ByteArrayBuilder createFor(InputStream inputStream) throws IOException {
+        int available = inputStream.available();
+        return available > 0 ? new ByteArrayBuilder(available, true) : new ByteArrayBuilder();
     }
 
-    public ByteArrayOutputBuffer(int size) {
+    private final boolean knownSize;
+
+    public ByteArrayBuilder() {
+        this(IOUtils.DEFAULT_BUFFER_SIZE, false);
+    }
+
+    public ByteArrayBuilder(int size) {
+        this(size, false);
+    }
+
+    public ByteArrayBuilder(int size, boolean knownSize) {
         super(size);
+        this.knownSize = knownSize;
     }
 
     private void prepare(int next) {
@@ -61,12 +76,16 @@ public final class ByteArrayOutputBuffer extends ByteArrayOutputStream {
 
         int maxRead = buf.length - count;
         if (maxRead == 0) {
-            int b = input.read();
-            if (b < 0) {
-                return -1;
+            if (knownSize) {
+                int b = input.read();
+                if (b < 0) {
+                    return -1;
+                } else {
+                    write(b);
+                    return 1;
+                }
             } else {
-                write(b);
-                return 1;
+                prepare(1);
             }
         }
 

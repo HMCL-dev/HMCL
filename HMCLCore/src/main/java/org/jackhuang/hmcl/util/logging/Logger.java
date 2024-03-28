@@ -1,7 +1,7 @@
 package org.jackhuang.hmcl.util.logging;
 
 import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.io.ByteArrayOutputBuffer;
+import org.jackhuang.hmcl.util.io.ByteArrayBuilder;
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
 
@@ -55,7 +55,7 @@ public final class Logger {
     private final StringBuilder builder = new StringBuilder(512);
 
     private Path logFile;
-    private ByteArrayOutputBuffer rawLogs;
+    private ByteArrayBuilder rawLogs;
     private PrintWriter logWriter;
 
     private Thread loggerThread;
@@ -229,7 +229,7 @@ public final class Logger {
         }
 
         if (logWriter == null) {
-            rawLogs = new ByteArrayOutputBuffer(256 * 1024);
+            rawLogs = new ByteArrayBuilder(256 * 1024);
             logWriter = new PrintWriter(new OutputStreamWriter(rawLogs, UTF_8));
         }
 
@@ -289,7 +289,7 @@ public final class Logger {
     }
 
     public String getLogs() {
-        ByteArrayOutputBuffer output = new ByteArrayOutputBuffer();
+        ByteArrayBuilder output = new ByteArrayBuilder();
         try {
             exportLogs(output);
             return output.toString(UTF_8);

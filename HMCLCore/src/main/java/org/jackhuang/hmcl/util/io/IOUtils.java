@@ -43,15 +43,13 @@ public final class IOUtils {
      * @throws IOException if an I/O error occurs.
      */
     public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        int available = stream.available();
-        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(available > 0 ? available : DEFAULT_BUFFER_SIZE);
+        ByteArrayBuilder result = ByteArrayBuilder.createFor(stream);
         result.copyFrom(stream);
         return result.toByteArrayWithoutCopy();
     }
 
     public static String readFullyAsStringWithoutClosing(InputStream stream) throws IOException {
-        int available = stream.available();
-        ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(available > 0 ? available : DEFAULT_BUFFER_SIZE);
+        ByteArrayBuilder result = ByteArrayBuilder.createFor(stream);
         result.copyFrom(stream);
         return result.toString(StandardCharsets.UTF_8);
     }
@@ -63,10 +61,9 @@ public final class IOUtils {
      * @return all bytes read from the stream
      * @throws IOException if an I/O error occurs.
      */
-    public static ByteArrayOutputBuffer readFully(InputStream stream) throws IOException {
+    public static ByteArrayBuilder readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
-            int available = is.available();
-            ByteArrayOutputBuffer result = new ByteArrayOutputBuffer(available > 0 ? available : DEFAULT_BUFFER_SIZE);
+            ByteArrayBuilder result = ByteArrayBuilder.createFor(is);
             result.copyFrom(is);
             return result;
         }

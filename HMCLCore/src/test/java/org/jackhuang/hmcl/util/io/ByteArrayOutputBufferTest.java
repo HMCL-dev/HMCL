@@ -21,29 +21,29 @@ public final class ByteArrayOutputBufferTest {
         new Random(0).nextBytes(data);
 
 
-        ByteArrayOutputBuffer buffer = new ByteArrayOutputBuffer(16);
-        buffer.copyFrom(new ByteArrayInputStream(data));
-        assertArrayEquals(data, buffer.toByteArray());
-        assertArrayEquals(data, buffer.toByteArrayWithoutCopy());
+        ByteArrayBuilder builder = new ByteArrayBuilder(16);
+        builder.copyFrom(new ByteArrayInputStream(data));
+        assertArrayEquals(data, builder.toByteArray());
+        assertArrayEquals(data, builder.toByteArrayWithoutCopy());
 
-        buffer = new ByteArrayOutputBuffer(16);
-        buffer.copyFrom(new ByteArrayInputStream(data) {
+        builder = new ByteArrayBuilder(16);
+        builder.copyFrom(new ByteArrayInputStream(data) {
             @Override
             public int available() {
                 return 0;
             }
         });
-        assertArrayEquals(data, buffer.toByteArray());
-        assertArrayEquals(data, buffer.toByteArrayWithoutCopy());
+        assertArrayEquals(data, builder.toByteArray());
+        assertArrayEquals(data, builder.toByteArrayWithoutCopy());
 
-        buffer = new ByteArrayOutputBuffer(16);
-        buffer.copyFrom(new ByteArrayInputStream(data) {
+        builder = new ByteArrayBuilder(16);
+        builder.copyFrom(new ByteArrayInputStream(data) {
             @Override
             public int available() {
                 return data.length - 1;
             }
         });
-        assertArrayEquals(data, buffer.toByteArray());
-        assertArrayEquals(data, buffer.toByteArrayWithoutCopy());
+        assertArrayEquals(data, builder.toByteArray());
+        assertArrayEquals(data, builder.toByteArrayWithoutCopy());
     }
 }

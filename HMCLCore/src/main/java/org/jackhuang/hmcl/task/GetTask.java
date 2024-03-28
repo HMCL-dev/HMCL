@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.io.ByteArrayOutputBuffer;
+import org.jackhuang.hmcl.util.io.ByteArrayBuilder;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public final class GetTask extends FetchTask<String> {
 
     @Override
     protected Context getContext(URLConnection conn, boolean checkETag) {
-        ByteArrayOutputBuffer output = new ByteArrayOutputBuffer(ByteArrayOutputBuffer.getRecommendedSize(conn.getContentLengthLong()));
+        ByteArrayBuilder output = ByteArrayBuilder.createFor(conn);
         return new Context() {
             @Override
             public int read(InputStream inputStream) throws IOException {

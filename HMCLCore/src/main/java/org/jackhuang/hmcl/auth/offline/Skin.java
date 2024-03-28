@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.ByteArrayOutputBuffer;
+import org.jackhuang.hmcl.util.io.ByteArrayBuilder;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -244,7 +244,7 @@ public class Skin {
 
         @Override
         protected Context getContext(URLConnection conn, boolean checkETag) throws IOException {
-            ByteArrayOutputBuffer output = new ByteArrayOutputBuffer(ByteArrayOutputBuffer.getRecommendedSize(conn.getContentLengthLong()));
+            ByteArrayBuilder output = ByteArrayBuilder.createFor(conn);
             return new Context() {
                 @Override
                 public int read(InputStream inputStream) throws IOException {
