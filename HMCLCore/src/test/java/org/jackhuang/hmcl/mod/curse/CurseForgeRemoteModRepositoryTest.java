@@ -47,7 +47,7 @@ public class CurseForgeRemoteModRepositoryTest {
             }
 
         }
-        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(builder.getBuffer(), builder.size(), 1));
+        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(builder.getArray(), builder.size(), 1));
 
         assertEquals(hash, 3333498611L);
     }

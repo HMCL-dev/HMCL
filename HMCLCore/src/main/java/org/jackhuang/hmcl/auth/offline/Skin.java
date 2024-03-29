@@ -257,7 +257,7 @@ public class Skin {
 
                     setResult(output.toInputStream());
                     if (checkETag) {
-                        repository.cacheBytes(output.getBuffer(), output.size(), conn);
+                        repository.cacheBytes(output.getArray(), output.size(), conn);
                     }
                 }
             };

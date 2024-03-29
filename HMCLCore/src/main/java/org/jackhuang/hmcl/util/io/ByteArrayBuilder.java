@@ -64,7 +64,7 @@ public final class ByteArrayBuilder extends ByteArrayOutputStream {
         buf = Arrays.copyOf(buf, nextCapacity);
     }
 
-    public byte[] getBuffer() {
+    public byte[] getArray() {
         return this.buf;
     }
 

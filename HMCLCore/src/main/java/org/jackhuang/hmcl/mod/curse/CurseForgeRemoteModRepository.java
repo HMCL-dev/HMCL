@@ -140,8 +140,9 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
-        ByteArrayBuilder builder = new ByteArrayBuilder();
+        ByteArrayBuilder builder;
         try (InputStream stream = Files.newInputStream(file)) {
+            builder = ByteArrayBuilder.createFor(stream);
             byte[] buf = new byte[1024];
             int len;
             while ((len = stream.read(buf, 0, buf.length)) != -1) {
@@ -154,7 +155,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
         }
 
-        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(builder.getBuffer(), builder.size(), 1));
+        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(builder.getArray(), builder.size(), 1));
 
         Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints")
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))

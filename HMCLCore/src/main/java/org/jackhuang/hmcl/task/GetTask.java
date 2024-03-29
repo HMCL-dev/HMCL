@@ -89,7 +89,7 @@ public final class GetTask extends FetchTask<String> {
 
                 if (checkETag) {
                     if (charset == UTF_8) {
-                        repository.cacheBytes(output.getBuffer(), output.size(), conn);
+                        repository.cacheBytes(output.getArray(), output.size(), conn);
                     } else {
                         repository.cacheBytes(result.getBytes(UTF_8), conn);
                     }
