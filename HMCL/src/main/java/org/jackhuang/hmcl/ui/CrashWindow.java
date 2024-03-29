@@ -72,7 +72,7 @@ public class CrashWindow extends Stage {
         FXUtils.setIcon(this);
         setTitle(i18n("message.error"));
 
-        setOnCloseRequest(e -> System.exit(1));
+        setOnCloseRequest(e -> javafx.application.Platform.exit());
     }
 
 }

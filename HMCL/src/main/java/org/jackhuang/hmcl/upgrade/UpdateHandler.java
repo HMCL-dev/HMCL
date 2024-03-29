@@ -42,13 +42,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class UpdateHandler {
@@ -66,7 +65,7 @@ public final class UpdateHandler {
             try {
                 performMigration();
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to perform migration", e);
+                LOG.warning("Failed to perform migration", e);
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
@@ -81,7 +80,7 @@ public final class UpdateHandler {
             try {
                 applyUpdate(Paths.get(args[1]));
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to apply update", e);
+                LOG.warning("Failed to apply update", e);
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.PUBLISH_URL) + "\n" + StringUtils.getStackTrace(e));
             }
             return true;
@@ -108,7 +107,7 @@ public final class UpdateHandler {
             try {
                 downloaded = Files.createTempFile("hmcl-update-", ".jar");
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to create temp file", e);
+                LOG.warning("Failed to create temp file", e);
                 return;
             }
 
@@ -127,15 +126,15 @@ public final class UpdateHandler {
                         }
 
                         requestUpdate(downloaded, getCurrentLocation());
-                        System.exit(0);
+                        Main.exit(0);
                     } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                        LOG.warning("Failed to update to " + version, e);
                         Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
                     }
 
                 } else {
                     Exception e = executor.getException();
-                    LOG.log(Level.WARNING, "Failed to update to " + version, e);
+                    LOG.warning("Failed to update to " + version, e);
                     if (e instanceof CancellationException) {
                         Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
                     } else {
@@ -162,7 +161,7 @@ public final class UpdateHandler {
                 Files.move(target, newFilename.get());
                 target = newFilename.get();
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to move target", e);
+                LOG.warning("Failed to move target", e);
             }
         }
 
@@ -273,7 +272,7 @@ public final class UpdateHandler {
                     LOG.info("Successfully broke the force update feature");
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to break the force update feature", e);
+                LOG.warning("Failed to break the force update feature", e);
             } catch (JsonParseException e) {
                 hmclVersionJson.toFile().delete();
             }

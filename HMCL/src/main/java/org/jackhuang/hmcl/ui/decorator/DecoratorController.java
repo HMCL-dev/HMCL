@@ -62,15 +62,13 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
-import static java.util.logging.Level.WARNING;
 import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
 
 public class DecoratorController {
@@ -186,7 +184,7 @@ public class DecoratorController {
                             }
                         }
                     } catch (Exception e) {
-                        LOG.log(WARNING, "Couldn't load background image", e);
+                        LOG.warning("Couldn't load background image", e);
                     }
                 }
                 break;
@@ -234,7 +232,7 @@ public class DecoratorController {
                     })
                     .collect(toList());
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to list files in ./bg", e);
+            LOG.warning("Failed to list files in ./bg", e);
             return Optional.empty();
         }
 
@@ -263,12 +261,12 @@ public class DecoratorController {
         try {
             img = new Image(url);
         } catch (IllegalArgumentException e) {
-            LOG.log(WARNING, "Couldn't load background image", e);
+            LOG.warning("Couldn't load background image", e);
             return Optional.empty();
         }
 
         if (img.getException() != null) {
-            LOG.log(WARNING, "Couldn't load background image", img.getException());
+            LOG.warning("Couldn't load background image", img.getException());
             return Optional.empty();
         }
 

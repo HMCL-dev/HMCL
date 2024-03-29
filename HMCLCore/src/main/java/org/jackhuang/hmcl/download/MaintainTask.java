@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -33,11 +32,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MaintainTask extends Task<Version> {
     private final GameRepository repository;
@@ -164,7 +163,7 @@ public class MaintainTask extends Task<Version> {
                     Files.createDirectories(libraryPath.getParent());
                     Files.copy(input, libraryPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to unpack HMCLTransformerDiscoveryService", e);
+                    LOG.warning("Unable to unpack HMCLTransformerDiscoveryService", e);
                 }
             });
         }

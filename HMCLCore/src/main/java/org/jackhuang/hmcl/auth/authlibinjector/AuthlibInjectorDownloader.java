@@ -32,9 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvider {
 
@@ -139,7 +138,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         try {
             return Optional.of(AuthlibInjectorArtifactInfo.from(path));
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Bad authlib-injector artifact", e);
+            LOG.warning("Bad authlib-injector artifact", e);
             return Optional.empty();
         }
     }

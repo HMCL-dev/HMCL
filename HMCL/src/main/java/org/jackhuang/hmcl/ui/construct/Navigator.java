@@ -31,11 +31,11 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
-import org.jackhuang.hmcl.util.Logging;
 
 import java.util.Optional;
 import java.util.Stack;
-import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class Navigator extends TransitionPane {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = Navigator.class.getName() + ".closeListener";
@@ -65,7 +65,7 @@ public class Navigator extends TransitionPane {
         if (from == node)
             return;
 
-        Logging.LOG.info("Navigate to " + node);
+        LOG.info("Navigate to " + node);
 
         stack.push(node);
         backable.set(canGoBack());
@@ -104,11 +104,11 @@ public class Navigator extends TransitionPane {
 
         if (stack.peek() != from) {
             // Allow page to be closed multiple times.
-            Logging.LOG.log(Level.INFO, "Closing already closed page: " + from, new Throwable());
+            LOG.info("Closing already closed page: " + from, new Throwable());
             return;
         }
 
-        Logging.LOG.info("Closed page " + from);
+        LOG.info("Closed page " + from);
 
         Node poppedNode = stack.pop();
         NavigationEvent exited = new NavigationEvent(this, poppedNode, Navigation.NavigationDirection.PREVIOUS, NavigationEvent.EXITED);

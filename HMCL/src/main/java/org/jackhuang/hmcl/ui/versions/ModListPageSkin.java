@@ -61,14 +61,13 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -218,7 +217,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
                     predicate = s -> pattern.matcher(s).find();
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Illegal regular expression", e);
+                    LOG.warning("Illegal regular expression", e);
                     return;
                 }
             } else {
@@ -391,15 +390,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 getActions().add(officialPageButton);
             }
 
-            // if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
-            //     JFXHyperlink mcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
-            //     mcbbsButton.setOnAction(e -> {
-            //         fireEvent(new DialogCloseEvent());
-            //         FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
-            //     });
-            //     getActions().add(mcbbsButton);
-            // }
-
             if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
@@ -490,10 +480,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     content.getTags().add(i18n("install.installer.quilt"));
                     break;
             }
-            if (dataItem.getMod() != null) {
-                if (I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
-                    content.getTags().add(dataItem.getMod().getDisplayName());
-                }
+            if (dataItem.getMod() != null && I18n.isUseChinese()) {
+                content.getTags().add(dataItem.getMod().getDisplayName());
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {

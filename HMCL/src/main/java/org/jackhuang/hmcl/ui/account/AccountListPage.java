@@ -44,10 +44,9 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.net.URI;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
@@ -137,7 +136,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         try {
                             host = URI.create(server.getUrl()).getHost();
                         } catch (IllegalArgumentException e) {
-                            LOG.log(Level.WARNING, "Unparsable authlib-injector server url " + server.getUrl(), e);
+                            LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
                         }
                         item.subtitleProperty().set(host);
                         Tooltip tooltip = new Tooltip();

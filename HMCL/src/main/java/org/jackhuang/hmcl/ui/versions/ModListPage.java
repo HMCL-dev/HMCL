@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -45,10 +44,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
@@ -65,7 +64,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 try {
                     modManager.addMod(it.toPath());
                 } catch (IOException | IllegalArgumentException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to parse mod file " + it, e);
+                    LOG.warning("Unable to parse mod file " + it, e);
                 }
             });
             loadMods(modManager);
@@ -135,7 +134,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                     modManager.addMod(file.toPath());
                     succeeded.add(file.getName());
                 } catch (Exception e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to add mod " + file, e);
+                    LOG.warning("Unable to add mod " + file, e);
                     failed.add(file.getName());
 
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.

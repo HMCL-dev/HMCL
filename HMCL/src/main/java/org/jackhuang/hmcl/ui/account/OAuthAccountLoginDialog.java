@@ -21,9 +21,8 @@ import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class OAuthAccountLoginDialog extends DialogPane {
@@ -96,7 +95,7 @@ public class OAuthAccountLoginDialog extends DialogPane {
                         success.accept(authInfo);
                         onSuccess();
                     } else {
-                        LOG.log(Level.INFO, "Failed to login when credentials expired: " + account, exception);
+                        LOG.info("Failed to login when credentials expired: " + account, exception);
                         onFailure(Accounts.localizeErrorMessage(exception));
                     }
                 }).start();

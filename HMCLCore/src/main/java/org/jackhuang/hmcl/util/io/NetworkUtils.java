@@ -90,7 +90,7 @@ public final class NetworkUtils {
         connection.setUseCaches(false);
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
-        connection.setRequestProperty("Accept-Language", Locale.getDefault().toString());
+        connection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
         return connection;
     }
 
