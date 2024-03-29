@@ -42,4 +42,8 @@ public final class ByteArrayBuilderTest {
         });
         assertArrayEquals(data, builder.toByteArray());
     }
+
+    public void testReadFromInputStream() throws IOException {
+
+    }
 }

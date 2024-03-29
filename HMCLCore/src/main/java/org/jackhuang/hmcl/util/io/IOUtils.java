@@ -20,8 +20,9 @@ package org.jackhuang.hmcl.util.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -51,7 +52,7 @@ public final class IOUtils {
     public static String readFullyAsStringWithoutClosing(InputStream stream) throws IOException {
         ByteArrayBuilder result = ByteArrayBuilder.createFor(stream);
         result.copyFrom(stream);
-        return result.toString(StandardCharsets.UTF_8);
+        return result.toString(UTF_8);
     }
 
     /**
@@ -74,7 +75,7 @@ public final class IOUtils {
     }
 
     public static String readFullyAsString(InputStream stream) throws IOException {
-        return readFully(stream).toString(StandardCharsets.UTF_8);
+        return readFully(stream).toString(UTF_8);
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {
