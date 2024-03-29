@@ -44,7 +44,6 @@ public final class ByteArrayBuilderTest {
         assertArrayEquals(data, builder.toByteArray());
     }
 
-
     @ParameterizedTest
     @ValueSource(ints = {1, 8, 15, 16, 17, 32})
     public void testReadFromInputStream(int size) throws IOException {
