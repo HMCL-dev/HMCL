@@ -177,7 +177,7 @@ public abstract class SettingsView extends StackPane {
                     languagePane.setLeft(left);
 
                     cboLanguage = new JFXComboBox<>();
-                    cboLanguage.setConverter(stringConverter(locale -> locale.getName(I18n.getCurrentLocale().getResourceBundle())));
+                    cboLanguage.setConverter(stringConverter(I18n::getName));
                     FXUtils.setLimitWidth(cboLanguage, 300);
                     languagePane.setRight(cboLanguage);
 

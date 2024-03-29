@@ -52,13 +52,12 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author yushijinhun
@@ -116,7 +115,7 @@ public final class TexturesLoader {
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {
                     // concurrency conflict?
-                    LOG.log(Level.WARNING, "Failed to download texture " + texture.getUrl() + ", but the file is available", e);
+                    LOG.warning("Failed to download texture " + texture.getUrl() + ", but the file is available", e);
                 } else {
                     throw new IOException("Failed to download texture " + texture.getUrl());
                 }
@@ -140,30 +139,42 @@ public final class TexturesLoader {
     // ====
 
     // ==== Skins ====
-    private final static Map<TextureModel, LoadedTexture> DEFAULT_SKINS = new EnumMap<>(TextureModel.class);
+    private static final String[] DEFAULT_SKINS = {"alex", "ari", "efe", "kai", "makena", "noor", "steve", "sunny", "zuri"};
 
-    static {
-        loadDefaultSkin("/assets/img/skin/steve.png", TextureModel.STEVE);
-        loadDefaultSkin("/assets/img/skin/alex.png", TextureModel.ALEX);
+    public static Image getDefaultSkinImage() {
+        return FXUtils.newBuiltinImage("/assets/img/skin/wide/steve.png");
     }
 
-    private static void loadDefaultSkin(String path, TextureModel model) {
-        DEFAULT_SKINS.put(model, new LoadedTexture(FXUtils.newBuiltinImage(path), singletonMap("model", model.modelName)));
+    public static LoadedTexture getDefaultSkin(UUID uuid) {
+        int idx = Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.length * 2);
+        TextureModel model;
+        Image skin;
+        if (idx < DEFAULT_SKINS.length) {
+            model = TextureModel.SLIM;
+            skin = FXUtils.newBuiltinImage("/assets/img/skin/slim/" + DEFAULT_SKINS[idx] + ".png");
+        } else {
+            model = TextureModel.WIDE;
+            skin = FXUtils.newBuiltinImage("/assets/img/skin/wide/" + DEFAULT_SKINS[idx - DEFAULT_SKINS.length] + ".png");
+        }
+
+        return new LoadedTexture(skin, singletonMap("model", model.modelName));
     }
 
-    public static LoadedTexture getDefaultSkin(TextureModel model) {
-        return DEFAULT_SKINS.get(model);
+    public static TextureModel getDefaultModel(UUID uuid) {
+        return TextureModel.WIDE.modelName.equals(getDefaultSkin(uuid).getMetadata().get("model"))
+                ? TextureModel.WIDE
+                : TextureModel.SLIM;
     }
 
     public static ObjectBinding<LoadedTexture> skinBinding(YggdrasilService service, UUID uuid) {
-        LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(uuid));
+        LoadedTexture uuidFallback = getDefaultSkin(uuid);
         return BindingMapping.of(service.getProfileRepository().binding(uuid))
                 .map(profile -> profile
                         .flatMap(it -> {
                             try {
                                 return YggdrasilService.getTextures(it);
                             } catch (ServerResponseMalformedException e) {
-                                LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                                LOG.warning("Failed to parse texture payload", e);
                                 return Optional.empty();
                             }
                         })
@@ -176,7 +187,7 @@ public final class TexturesLoader {
                             try {
                                 return loadTexture(texture);
                             } catch (Throwable e) {
-                                LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
                                 return uuidFallback;
                             }
                         }, POOL);
@@ -187,7 +198,7 @@ public final class TexturesLoader {
     }
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
-        LoadedTexture uuidFallback = getDefaultSkin(TextureModel.detectUUID(account.getUUID()));
+        LoadedTexture uuidFallback = getDefaultSkin(account.getUUID());
         if (account instanceof OfflineAccount) {
             OfflineAccount offlineAccount = (OfflineAccount) account;
 
@@ -200,7 +211,7 @@ public final class TexturesLoader {
                 if (skin != null) {
                     skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
-                            LOG.log(Level.WARNING, "Failed to load texture", exception);
+                            LOG.warning("Failed to load texture", exception);
                         } else if (result != null && result.getSkin() != null && result.getSkin().getImage() != null) {
                             Map<String, String> metadata;
                             if (result.getModel() != null) {
@@ -231,7 +242,7 @@ public final class TexturesLoader {
                                     try {
                                         return loadTexture(texture);
                                     } catch (Throwable e) {
-                                        LOG.log(Level.WARNING, "Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                        LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
                                         return uuidFallback;
                                     }
                                 }, POOL);
@@ -348,7 +359,7 @@ public final class TexturesLoader {
             fxAvatarBinding(canvas, skinBinding(account));
         else {
             unbindAvatar(canvas);
-            drawAvatar(canvas, getDefaultSkin(TextureModel.detectUUID(account.getUUID())).image);
+            drawAvatar(canvas, getDefaultSkin(account.getUUID()).image);
         }
     }
 

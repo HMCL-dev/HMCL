@@ -24,8 +24,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.io.IOException;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -34,7 +32,7 @@ public final class Locales {
     private Locales() {
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault(), "lang.default");
+    public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault());
 
     /**
      * English
@@ -102,23 +100,10 @@ public final class Locales {
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
     public static final class SupportedLocale {
         private final Locale locale;
-        private final String name;
-        private final ResourceBundle resourceBundle;
-        private DateTimeFormatter dateTimeFormatter;
+        private ResourceBundle resourceBundle;
 
         SupportedLocale(Locale locale) {
-            this(locale, null);
-        }
-
-        SupportedLocale(Locale locale, String name) {
             this.locale = locale;
-            this.name = name;
-            if (JavaVersion.CURRENT_JAVA.getParsedVersion() == JavaVersion.JAVA_8) {
-                resourceBundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
-            } else {
-                // UTF-8 is supported in Java 9+
-                resourceBundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
-            }
         }
 
         public Locale getLocale() {
@@ -126,20 +111,22 @@ public final class Locales {
         }
 
         public ResourceBundle getResourceBundle() {
-            return resourceBundle;
-        }
+            ResourceBundle bundle = resourceBundle;
 
-        public DateTimeFormatter getDateTimeFormatter() {
-            if (dateTimeFormatter == null) {
-                dateTimeFormatter = DateTimeFormatter.ofPattern(resourceBundle.getString("world.time")).withZone(ZoneId.systemDefault());
+            if (resourceBundle == null) {
+                if (this != DEFAULT && this.locale == DEFAULT.locale) {
+                    bundle = DEFAULT.getResourceBundle();
+                } else if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9) {
+                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
+                } else {
+                    // Java 9+ uses UTF-8 as the default encoding for resource bundles
+                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
+                }
+
+                resourceBundle = bundle;
             }
 
-            return dateTimeFormatter;
-        }
-
-        public String getName(ResourceBundle newResourceBundle) {
-            if (name == null) return resourceBundle.getString("lang");
-            else return newResourceBundle.getString(name);
+            return bundle;
         }
 
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {

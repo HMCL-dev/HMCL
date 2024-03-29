@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -55,8 +54,8 @@ import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Versions {
@@ -184,7 +183,7 @@ public final class Versions {
         try {
             profile.getRepository().clean(id);
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Unable to clean game directory", e);
+            LOG.warning("Unable to clean game directory", e);
         }
     }
 

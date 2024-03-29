@@ -17,10 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class JavaRepository {
     private JavaRepository() {
@@ -80,7 +79,7 @@ public final class JavaRepository {
                     findJavaHomeInComponentDir(platform, component).ifPresent(javaHomes::add);
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to list java-runtime directory " + runtimeDir, e);
+                LOG.warning("Failed to list java-runtime directory " + runtimeDir, e);
             }
         };
         getSystemJavaPlatform().ifPresent(action);
@@ -124,7 +123,7 @@ public final class JavaRepository {
 
             return Optional.of(dir);
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to verify Java in " + component, e);
+            LOG.warning("Failed to verify Java in " + component, e);
             return Optional.empty();
         }
     }
