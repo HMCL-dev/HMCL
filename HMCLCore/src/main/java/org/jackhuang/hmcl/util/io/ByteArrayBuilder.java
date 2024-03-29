@@ -34,7 +34,7 @@ public final class ByteArrayBuilder extends ByteArrayOutputStream {
     private final boolean knownSize;
 
     public ByteArrayBuilder() {
-        this(IOUtils.DEFAULT_BUFFER_SIZE, false);
+        this(256, false);
     }
 
     public ByteArrayBuilder(int size) {
@@ -86,6 +86,7 @@ public final class ByteArrayBuilder extends ByteArrayOutputStream {
                 }
             } else {
                 prepare(1);
+                maxRead = buf.length - count;
             }
         }
 
@@ -126,7 +127,8 @@ public final class ByteArrayBuilder extends ByteArrayOutputStream {
         }
     }
 
-    public byte[] toByteArrayWithoutCopy() {
+    @Override
+    public byte[] toByteArray() {
         if (buf.length == count) {
             return buf;
         } else {

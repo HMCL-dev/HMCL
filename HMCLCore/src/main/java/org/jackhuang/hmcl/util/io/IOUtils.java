@@ -45,7 +45,7 @@ public final class IOUtils {
     public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
         ByteArrayBuilder result = ByteArrayBuilder.createFor(stream);
         result.copyFrom(stream);
-        return result.toByteArrayWithoutCopy();
+        return result.toByteArray();
     }
 
     public static String readFullyAsStringWithoutClosing(InputStream stream) throws IOException {
@@ -70,7 +70,7 @@ public final class IOUtils {
     }
 
     public static byte[] readFullyAsByteArray(InputStream stream) throws IOException {
-        return readFully(stream).toByteArrayWithoutCopy();
+        return readFully(stream).toByteArray();
     }
 
     public static String readFullyAsString(InputStream stream) throws IOException {

@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 /**
  * @author Glavo
  */
-public final class ByteArrayOutputBufferTest {
+public final class ByteArrayBuilderTest {
 
     @ParameterizedTest
     @ValueSource(ints = {0, 1, 8, 15, 16, 17, 32})
@@ -20,11 +20,9 @@ public final class ByteArrayOutputBufferTest {
         byte[] data = new byte[size];
         new Random(0).nextBytes(data);
 
-
         ByteArrayBuilder builder = new ByteArrayBuilder(16);
         builder.copyFrom(new ByteArrayInputStream(data));
         assertArrayEquals(data, builder.toByteArray());
-        assertArrayEquals(data, builder.toByteArrayWithoutCopy());
 
         builder = new ByteArrayBuilder(16);
         builder.copyFrom(new ByteArrayInputStream(data) {
@@ -34,7 +32,6 @@ public final class ByteArrayOutputBufferTest {
             }
         });
         assertArrayEquals(data, builder.toByteArray());
-        assertArrayEquals(data, builder.toByteArrayWithoutCopy());
 
         builder = new ByteArrayBuilder(16);
         builder.copyFrom(new ByteArrayInputStream(data) {
@@ -44,6 +41,5 @@ public final class ByteArrayOutputBufferTest {
             }
         });
         assertArrayEquals(data, builder.toByteArray());
-        assertArrayEquals(data, builder.toByteArrayWithoutCopy());
     }
 }
