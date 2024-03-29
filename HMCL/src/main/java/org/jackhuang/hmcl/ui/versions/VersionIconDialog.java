@@ -31,13 +31,11 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.util.Logging;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class VersionIconDialog extends DialogPane {
@@ -74,20 +72,19 @@ public class VersionIconDialog extends DialogPane {
 
     private void exploreIcon() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png", "*.jpg", "*.bmp", "*.gif"));
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
-            File iconFile = profile.getRepository().getVersionIconFile(versionId);
             try {
-                FileUtils.copyFile(selectedFile, iconFile);
+                profile.getRepository().setVersionIconFile(versionId, selectedFile);
 
                 if (vs != null) {
                     vs.setVersionIcon(VersionIconType.DEFAULT);
                 }
 
                 onAccept();
-            } catch (IOException e) {
-                Logging.LOG.log(Level.SEVERE, "Failed to copy icon file from " + selectedFile + " to " + iconFile, e);
+            } catch (IOException | IllegalArgumentException e) {
+                LOG.error("Failed to set icon file: " + selectedFile, e);
             }
         }
     }

@@ -19,9 +19,10 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 
 import java.util.*;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class WizardController implements Navigation {
     private final WizardDisplayer displayer;
@@ -71,7 +72,7 @@ public class WizardController implements Navigation {
 
         displayer.onStart();
 
-        Logging.LOG.info("Navigating to " + page + ", pages: " + pages);
+        LOG.info("Navigating to " + page + ", pages: " + pages);
         displayer.navigateTo(page, NavigationDirection.START);
     }
 
@@ -90,7 +91,7 @@ public class WizardController implements Navigation {
         if (page instanceof WizardPage)
             ((WizardPage) page).onNavigate(settings);
 
-        Logging.LOG.info("Navigating to " + page + ", pages: " + pages);
+        LOG.info("Navigating to " + page + ", pages: " + pages);
         displayer.navigateTo(page, NavigationDirection.NEXT);
     }
 
@@ -113,7 +114,7 @@ public class WizardController implements Navigation {
         if (prevPage instanceof WizardPage)
             ((WizardPage) prevPage).onNavigate(settings);
 
-        Logging.LOG.info("Navigating to " + prevPage + ", pages: " + pages);
+        LOG.info("Navigating to " + prevPage + ", pages: " + pages);
         displayer.navigateTo(prevPage, NavigationDirection.PREVIOUS);
     }
 

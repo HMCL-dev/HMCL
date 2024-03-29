@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.*;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
@@ -165,7 +166,7 @@ public final class Controllers {
     }
 
     public static void initialize(Stage stage) {
-        Logging.LOG.info("Start initializing application");
+        LOG.info("Start initializing application");
 
         Controllers.stage = stage;
 
@@ -298,7 +299,7 @@ public final class Controllers {
             });
             JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
             noButton.getStyleClass().add("dialog-cancel");
-            noButton.setOnAction(e -> System.exit(1));
+            noButton.setOnAction(e -> javafx.application.Platform.exit());
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
         }

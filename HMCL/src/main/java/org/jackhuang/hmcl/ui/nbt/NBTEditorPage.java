@@ -18,10 +18,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class NBTEditorPage extends BorderPane implements DecoratorPage {
@@ -53,7 +52,7 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
             try {
                 save();
             } catch (IOException ex) {
-                LOG.log(Level.WARNING, "Failed to save NBT file", ex);
+                LOG.warning("Failed to save NBT file", ex);
                 Controllers.dialog(i18n("nbt.save.failed") + "\n\n" + StringUtils.getStackTrace(ex));
             }
         });
@@ -73,7 +72,7 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
                 }, Schedulers.javafx())
                 .handleAsync((result, e) -> {
                     if (e != null) {
-                        LOG.log(Level.WARNING, "Fail to open nbt file", e);
+                        LOG.warning("Fail to open nbt file", e);
                         Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e), null, MessageDialogPane.MessageType.WARNING, cancelButton::fire);
                     }
                     return null;

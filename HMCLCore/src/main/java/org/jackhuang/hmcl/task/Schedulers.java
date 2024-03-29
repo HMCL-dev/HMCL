@@ -18,11 +18,11 @@
 package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
-import org.jackhuang.hmcl.util.Logging;
 
 import java.util.concurrent.*;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -65,7 +65,7 @@ public final class Schedulers {
     }
 
     public static synchronized void shutdown() {
-        Logging.LOG.info("Shutting down executor services.");
+        LOG.info("Shutting down executor services.");
 
         // shutdownNow will interrupt all threads.
         // So when we want to close the app, no threads need to be waited for finish.

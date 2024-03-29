@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import org.jackhuang.hmcl.util.Logging;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +24,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
-import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Pump the given input stream.
@@ -68,7 +67,7 @@ public final class StreamPump implements Runnable {
                 callback.accept(line);
             }
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "An error occurred when reading stream", e);
+            LOG.error("An error occurred when reading stream", e);
         }
     }
 
