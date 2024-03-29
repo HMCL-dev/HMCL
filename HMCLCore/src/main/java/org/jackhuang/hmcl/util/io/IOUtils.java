@@ -43,16 +43,14 @@ public final class IOUtils {
      * @return all bytes read from the stream
      * @throws IOException if an I/O error occurs.
      */
-    public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
+    public static ByteArrayBuilder readFullyWithoutClosing(InputStream stream) throws IOException {
         ByteArrayBuilder result = ByteArrayBuilder.createFor(stream);
         result.copyFrom(stream);
-        return result.toByteArray();
+        return result;
     }
 
     public static String readFullyAsStringWithoutClosing(InputStream stream) throws IOException {
-        ByteArrayBuilder result = ByteArrayBuilder.createFor(stream);
-        result.copyFrom(stream);
-        return result.toString(UTF_8);
+        return readFullyWithoutClosing(stream).toString(UTF_8);
     }
 
     /**
