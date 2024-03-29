@@ -8,6 +8,8 @@ import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * @author Glavo
  */
@@ -143,5 +145,10 @@ public final class ByteArrayBuilder extends ByteArrayOutputStream {
     @SuppressWarnings("Since15")
     public String toString(Charset charset) {
         return new String(buf, 0, count, charset);
+    }
+
+    @Override
+    public String toString() {
+        return new String(buf, 0, count, UTF_8);
     }
 }

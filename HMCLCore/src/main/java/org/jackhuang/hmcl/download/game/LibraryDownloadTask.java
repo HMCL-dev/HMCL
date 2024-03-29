@@ -40,7 +40,6 @@ import java.util.concurrent.CancellationException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class LibraryDownloadTask extends Task<Void> {
@@ -167,7 +166,7 @@ public class LibraryDownloadTask extends Task<Void> {
         while (entry != null) {
             ByteArrayBuilder eData = IOUtils.readFullyWithoutClosing(jar);
             if (entry.getName().equals("checksums.sha1")) {
-                hashes = eData.toString(UTF_8).split("\n");
+                hashes = eData.toString().split("\n");
             }
             if (!entry.isDirectory()) {
                 files.put(entry.getName(), DigestUtils.digestToString("SHA-1", eData.getArray(), eData.size()));

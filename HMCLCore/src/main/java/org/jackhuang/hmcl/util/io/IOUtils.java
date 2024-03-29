@@ -22,8 +22,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.zip.GZIPInputStream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
  *
@@ -50,7 +48,7 @@ public final class IOUtils {
     }
 
     public static String readFullyAsStringWithoutClosing(InputStream stream) throws IOException {
-        return readFullyWithoutClosing(stream).toString(UTF_8);
+        return readFullyWithoutClosing(stream).toString();
     }
 
     /**
@@ -73,7 +71,7 @@ public final class IOUtils {
     }
 
     public static String readFullyAsString(InputStream stream) throws IOException {
-        return readFully(stream).toString(UTF_8);
+        return readFully(stream).toString();
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {
