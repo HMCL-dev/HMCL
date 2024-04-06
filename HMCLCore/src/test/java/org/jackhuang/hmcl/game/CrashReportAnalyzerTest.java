@@ -449,6 +449,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void neoforgeForestOptiFineIncompatible() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/neoforgeforest_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.Rule.NEOFORGE_FOREST_OPTIFINE);
+    }
+
+    @Test
     public void fabricMissingMinecraft() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),
