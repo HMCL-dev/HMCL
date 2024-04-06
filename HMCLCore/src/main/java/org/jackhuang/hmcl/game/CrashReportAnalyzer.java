@@ -139,6 +139,8 @@ public final class CrashReportAnalyzer {
         TWILIGHT_FOREST_OPTIFINE(Pattern.compile("java\\.lang\\.IllegalArgumentException: (.*) outside of image bounds (.*)")),
         // Jade is not compatible with OptiFine on Minecraft 1.20+
         JADE_FOREST_OPTIFINE(Pattern.compile("Critical injection failure: LVT in net/minecraft/client/renderer/GameRenderer::m_109093_\\(FJZ\\)V has incompatible changes at opcode 760 in callback jade\\.mixins\\.json:GameRendererMixin-\\>@Inject::jade\\$runTick\\(FJZLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;IILcom/mojang/blaze3d/platform/Window;Lorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/GuiGraphics;\\)V\\.")),
+        // NeoForge 与 OptiFine 不兼容
+        NEOFORGE_FOREST_OPTIFINE(Pattern.compile("cpw\\.mods\\.modlauncher\\.InvalidLauncherSetupException: Invalid Services found OptiFine")),
 
         // 一些模组与 Sodium 不兼容
         // https://github.com/CaffeineMC/sodium-fabric/wiki/Known-Issues#rtss-incompatible
