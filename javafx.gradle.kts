@@ -26,6 +26,7 @@ data class Platform(
         java.net.URI(
             "$repo/${groupId.replace('.', '/')}/javafx-$module/$version/javafx-$module-$version-$classifier.$ext"
         ).toURL()
+hey dr a i changed this code
 }
 
 val jfxModules = listOf("base", "graphics", "controls", "media", "web")
