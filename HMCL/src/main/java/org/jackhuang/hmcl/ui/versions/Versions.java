@@ -75,16 +75,15 @@ public final class Versions {
     }
 
     public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
-        String url = file.getFile().getUrl();
         Path modpack;
         URL downloadURL;
         try {
             modpack = Files.createTempFile("modpack", ".zip");
-            downloadURL = new URL(url);
+            downloadURL = new URL(file.getFile().getUrl());
         } catch (IOException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
-                    i18n("download.failed.no_code", url), MessageDialogPane.MessageType.ERROR);
+                    i18n("download.failed.no_code", file.getFile().getUrl()), MessageDialogPane.MessageType.ERROR);
             return;
         }
         Controllers.taskDialog(
@@ -97,7 +96,7 @@ public final class Versions {
                             } else {
                                 Controllers.dialog(
                                         i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
-                                        i18n("download.failed", url), MessageDialogPane.MessageType.ERROR);
+                                        i18n("download.failed", file.getFile().getUrl()), MessageDialogPane.MessageType.ERROR);
                             }
                         }).executor(true),
                 i18n("message.downloading"),
