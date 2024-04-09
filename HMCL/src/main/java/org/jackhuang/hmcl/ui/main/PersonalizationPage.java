@@ -226,7 +226,7 @@ public class PersonalizationPage extends StackPane {
 
             {
                 OptionToggleButton fontSmoothingByGrayButton = new OptionToggleButton();
-                fontSmoothingByGrayButton.selectedProperty().bindBidirectional(config().isFontSmoothingByGrayProperty());
+                fontSmoothingByGrayButton.selectedProperty().bindBidirectional(config().fontSmoothingByGrayProperty());
                 fontSmoothingByGrayButton.setTitle(i18n("settings.launcher.font.fontSmoothingByGray"));
 
                 fontList.getContent().add(fontSmoothingByGrayButton);
