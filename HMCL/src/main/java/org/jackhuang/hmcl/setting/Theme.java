@@ -163,6 +163,7 @@ public class Theme {
                 fontCss += " -fx-font-style: \"" + fontStyle + "\";";
         }
 
+        // https://docs.oracle.com/javase/8/javafx/api/javafx/scene/doc-files/cssref.html#text
         String fontSmoothingTypeCss = "";
         if (config().isFontSmoothingByGray()) {
             fontSmoothingTypeCss = "-fx-font-smoothing-type: gray;";
