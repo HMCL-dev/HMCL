@@ -28,3 +28,7 @@
 
     %font%
 }
+
+.text {
+    %font-smoothing-type%
+}
