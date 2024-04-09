@@ -150,23 +150,26 @@ public class Theme {
 
         String fontFamily = System.getProperty("hmcl.font.override", overrideFontFamily);
         String fontStyle = null;
+        String fontCss = "";
         if (fontFamily == null) {
             Optional<Font> font = tryLoadFont();
             if (font.isPresent()) {
                 fontFamily = font.get().getFamily();
                 fontStyle = font.get().getStyle();
             }
+        } else {
+            fontCss = "-fx-font-family: \"" + fontFamily + "\";";
+            if (fontStyle != null && !fontStyle.isEmpty())
+                fontCss += " -fx-font-style: \"" + fontStyle + "\";";
         }
 
-        if (fontFamily != null || !this.color.equalsIgnoreCase(BLUE.color)) {
-            Color textFill = getForegroundColor();
-            String fontCss = "";
-            if (fontFamily != null) {
-                fontCss = "-fx-font-family: \"" + fontFamily + "\";";
-                if (fontStyle != null && !fontStyle.isEmpty())
-                    fontCss += " -fx-font-style: \"" + fontStyle + "\";";
-            }
+        String fontSmoothingTypeCss = "";
+        if (config().isFontSmoothingByGray()) {
+            fontSmoothingTypeCss = "-fx-font-smoothing-type: gray;";
+        }
 
+        if (!this.color.equalsIgnoreCase(BLUE.color)) {
+            Color textFill = getForegroundColor();
             try {
                 File temp = File.createTempFile("hmcl", ".css");
                 String themeText = IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
@@ -177,12 +180,32 @@ public class Theme {
                         .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
                         .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
                         .replace("%font-color%", getColorDisplayName(getForegroundColor()))
-                        .replace("%font%", fontCss);
+                        .replace("%font%", (fontFamily != null) ? fontCss : "")
+                        .replace("%font-smoothing-type%", (config().isFontSmoothingByGray()) ? fontSmoothingTypeCss : "");
                 FileUtils.writeText(temp, themeText, getCssCharset());
                 temp.deleteOnExit();
                 css = temp.toURI().toString();
             } catch (IOException | NullPointerException e) {
-                LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
+                LOG.error("Unable to create stylesheet: Theme & font family & font smoothing type. Fallback to blue theme. Discarded style: Font family & font smoothing type.", e);
+            }
+        } else {
+            try {
+                File temp = File.createTempFile("hmcl", ".css");
+                String themeText = IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
+                        .replace("%base-color%", "#5C6BC0")
+                        .replace("%base-red%", "92")
+                        .replace("%base-green%", "107")
+                        .replace("%base-blue%", "192")
+                        .replace("%base-rippler-color%", "rgba(92, 107, 192, 0.3)")
+                        .replace("%disabled-font-color%", "rgba(256, 256, 256, 0.7)")
+                        .replace("%font-color%", "white")
+                        .replace("%font%", (fontFamily != null) ? fontCss : "")
+                        .replace("%font-smoothing-type%", (config().isFontSmoothingByGray()) ? fontSmoothingTypeCss : "");
+                FileUtils.writeText(temp, themeText, getCssCharset());
+                temp.deleteOnExit();
+                css = temp.toURI().toString();
+            } catch (IOException | NullPointerException e) {
+                LOG.error("Unable to create stylesheet: Theme & font family & font smoothing type. Fallback to blue theme. Discarded style: Font family & font smoothing type.", e);
             }
         }
 
