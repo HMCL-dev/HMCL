@@ -177,8 +177,8 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentSublist fontPane = new ComponentSublist();
-            fontPane.setTitle(i18n("settings.launcher.font"));
+            ComponentSublist fontList = new ComponentSublist();
+            fontList.setTitle(i18n("settings.launcher.font"));
 
             {
                 VBox vbox = new VBox();
@@ -188,7 +188,7 @@ public class PersonalizationPage extends StackPane {
                     BorderPane borderPane = new BorderPane();
                     vbox.getChildren().add(borderPane);
                     {
-                        Label left = new Label(i18n("settings.launcher.font"));
+                        Label left = new Label(i18n("settings.launcher.font.globalFont"));
                         BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                         borderPane.setLeft(left);
                     }
@@ -221,10 +221,18 @@ public class PersonalizationPage extends StackPane {
 
                 vbox.getChildren().add(lblFontDisplay);
 
-                fontPane.getContent().add(vbox);
+                fontList.getContent().add(vbox);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.font")), fontPane);
+            {
+                OptionToggleButton fontSmoothingByGrayButton = new OptionToggleButton();
+                fontSmoothingByGrayButton.selectedProperty().bindBidirectional(config().isFontSmoothingByGrayProperty());
+                fontSmoothingByGrayButton.setTitle(i18n("settings.launcher.font.fontSmoothingByGray"));
+
+                fontList.getContent().add(fontSmoothingByGrayButton);
+            }
+
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.font")), fontList);
         }
     }
 }
