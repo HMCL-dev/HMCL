@@ -210,6 +210,7 @@ public final class Logger {
         if (logFolder != null) {
             String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             try {
+                Files.createDirectories(logFolder);
                 for (int n = 0; ; n++) {
                     Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log").toAbsolutePath().normalize();
                     try {
