@@ -153,7 +153,7 @@ public class MicrosoftService {
                 .accept("application/json").createConnection();
 
         if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/minecraft/profile"), request.getResponseCode());
+            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/entitlements/mcstore"), request.getResponseCode());
         }
 
         // Get Minecraft Account UUID
