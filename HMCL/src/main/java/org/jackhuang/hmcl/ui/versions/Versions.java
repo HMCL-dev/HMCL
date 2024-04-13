@@ -83,7 +83,7 @@ public final class Versions {
         } catch (IOException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
-                    i18n("download.failed"), MessageDialogPane.MessageType.ERROR);
+                    i18n("download.failed.no_code", file.getFile().getUrl()), MessageDialogPane.MessageType.ERROR);
             return;
         }
         Controllers.taskDialog(
@@ -96,7 +96,7 @@ public final class Versions {
                             } else {
                                 Controllers.dialog(
                                         i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
-                                        i18n("download.failed"), MessageDialogPane.MessageType.ERROR);
+                                        i18n("download.failed.no_code", file.getFile().getUrl()), MessageDialogPane.MessageType.ERROR);
                             }
                         }).executor(true),
                 i18n("message.downloading"),
