@@ -149,7 +149,7 @@ public class AboutPage extends StackPane {
             IconedTwoLineListItem xz = new IconedTwoLineListItem();
             xz.setTitle("XZ for Java");
             xz.setSubtitle("Lasse Collin, Igor Pavlov, and/or Brett Okken.\nPublic Domain.");
-            xz.setExternalLink("https://xz.tukaani.org/xz-for-java/");
+            xz.setExternalLink("https://tukaani.org/xz/java.html");
 
             IconedTwoLineListItem fxgson = new IconedTwoLineListItem();
             fxgson.setTitle("fx-gson");
