@@ -103,16 +103,16 @@ public class AboutPage extends StackPane {
             redLnn.setImage(FXUtils.newBuiltinImage("/assets/img/red_lnn.png"));
             redLnn.setSubtitle(i18n("about.thanks_to.red_lnn.statement"));
 
-            IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
-            mcbbs.setImage(FXUtils.newBuiltinImage("/assets/img/chest.png"));
-            mcbbs.setTitle(i18n("about.thanks_to.mcbbs"));
-            mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
-
             IconedTwoLineListItem mcmod = new IconedTwoLineListItem();
             mcmod.setImage(FXUtils.newBuiltinImage("/assets/img/mcmod.png"));
             mcmod.setTitle(i18n("about.thanks_to.mcmod"));
             mcmod.setSubtitle(i18n("about.thanks_to.mcmod.statement"));
             mcmod.setExternalLink("https://www.mcmod.cn/");
+
+            IconedTwoLineListItem mcbbs = new IconedTwoLineListItem();
+            mcbbs.setImage(FXUtils.newBuiltinImage("/assets/img/chest.png"));
+            mcbbs.setTitle(i18n("about.thanks_to.mcbbs"));
+            mcbbs.setSubtitle(i18n("about.thanks_to.mcbbs.statement"));
 
             IconedTwoLineListItem contributors = new IconedTwoLineListItem();
             contributors.setImage(FXUtils.newBuiltinImage("/assets/img/github.png"));
@@ -126,7 +126,7 @@ public class AboutPage extends StackPane {
             users.setSubtitle(i18n("about.thanks_to.users.statement"));
             users.setExternalLink("https://docs.hmcl.net/groups.html");
 
-            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, burningtnt, mcbbs, mcmod, shulkerSakura, gamerteam, redLnn, contributors, users);
+            thanks.getContent().setAll(yushijinhun, bangbang93, glavo, zekerzhayard, zkitefly, burningtnt, mcmod, mcbbs, shulkerSakura, gamerteam, redLnn, contributors, users);
         }
 
         ComponentList dep = new ComponentList();
