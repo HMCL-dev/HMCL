@@ -130,14 +130,16 @@ public abstract class VersionList<T extends RemoteVersion> {
     public Optional<T> getVersion(String gameVersion, String remoteVersion) {
         lock.readLock().lock();
         try {
+            T result = null;
             TreeSet<T> remoteVersions = versions.get(gameVersion);
             for (T it : remoteVersions)
                 if (remoteVersion.equals(it.getSelfVersion()))
-                    return Optional.of(it);
-            for (T it : remoteVersions)
-                if (remoteVersion.equals(it.getFullVersion()))
-                    return Optional.of(it);
-            return Optional.empty();
+                    result = it;
+            if (result == null)
+                for (T it : remoteVersions)
+                    if (remoteVersion.equals(it.getFullVersion()))
+                        result = it;
+            return Optional.ofNullable(result);
         } finally {
             lock.readLock().unlock();
         }
