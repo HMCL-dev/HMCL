@@ -27,7 +27,7 @@ S = ';'
 MOD_SEPARATOR = ','
 
 CURSEFORGE_PATTERN1 = re.compile(
-    r'^/minecraft/(mc-mods|modpacks|customization|mc-addons|customization/configuration)/+(?P<modid>[\w-]+)(/(.*?))?$')
+    r'^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons)/+(?P<modid>[\w-]+)(/(.*?))?$')
 CURSEFORGE_PATTERN2 = re.compile(
     r'^/projects/(?P<modid>[\w-]+)(/(.*?))?$')
 CURSEFORGE_PATTERN3 = re.compile(
@@ -58,30 +58,6 @@ def parseMcmod(url):
         return match.group('modid')
     return ''
 
-
-MCBBS_HTML_PATTERN = re.compile(r'/+thread-(?P<modid>\d+)-(\d+)-(\d+).html')
-MCBBS_PHP_PATTERN = re.compile(r'')
-
-
-def parseMcbbs(url):
-    res = urlparse(url)
-    if res.scheme not in ['http', 'https']:
-        return ''
-    if res.netloc != 'www.mcbbs.net':
-        return ''
-    match = MCBBS_HTML_PATTERN.match(res.path)
-    if match:
-        return match.group('modid')
-
-    query = parse_qs(res.query)
-
-    if res.path == '/forum.php':
-        if 'mod' in query and 'tid' in query and query['mod'] == ['viewthread']:
-            return query['tid']
-
-    return ''
-
-
 skip = [
     'Minecraft',
     'The Building Game'
@@ -111,12 +87,11 @@ if __name__ == '__main__':
                 exit(1)
 
             black_lists = [
-                'Master Chef'
+                'Wood Converter'
             ]
 
             curseforge_id = ''
             mcmod_id = ''
-            mcbbs_id = ''
             links = mod['links']['list']
             if 'curseforge' in links and links['curseforge'] and sub_name not in black_lists and chinese_name not in black_lists:
                 for link in links['curseforge']:
@@ -131,11 +106,6 @@ if __name__ == '__main__':
                 if mcmod_id == '':
                     print('Error mcmod ' + chinese_name)
                     exit(1)
-            if 'mcbbs' in links and links['mcbbs']:
-                mcbbs_id = parseMcbbs(links['mcbbs'][0]['url'])
-                if mcbbs_id == '':
-                    print('Error mcbbs ' + chinese_name)
-                    exit(1)
 
             mod_id = []
             if 'modid' in mod and 'list' in mod['modid']:
@@ -148,6 +118,6 @@ if __name__ == '__main__':
             mod_ids = MOD_SEPARATOR.join([str(id) for id in mod_id])
 
             outfile.write(
-                f'{curseforge_id}{S}{mcmod_id}{S}{mcbbs_id}{S}{mod_ids}{S}{chinese_name}{S}{sub_name}{S}{abbr}\n')
+                f'{curseforge_id}{S}{mcmod_id}{S}{mod_ids}{S}{chinese_name}{S}{sub_name}{S}{abbr}\n')
 
     print('Success!')

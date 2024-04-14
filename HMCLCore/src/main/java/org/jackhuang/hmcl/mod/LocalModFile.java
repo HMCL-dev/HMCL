@@ -19,14 +19,14 @@ package org.jackhuang.hmcl.mod;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -76,7 +76,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
                     else
                         LocalModFile.this.file = modManager.disableMod(path);
                 } catch (IOException e) {
-                    Logging.LOG.log(Level.SEVERE, "Unable to invert state of mod file " + path, e);
+                    LOG.error("Unable to invert state of mod file " + path, e);
                 }
             }
         };

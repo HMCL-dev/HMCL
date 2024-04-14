@@ -40,10 +40,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -102,7 +101,7 @@ public class DefaultLauncher extends Launcher {
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars()));
 
         res.add(options.getJava().getBinary().toString());
 
@@ -147,7 +146,7 @@ public class DefaultLauncher extends Launcher {
             try {
                 encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
             } catch (Throwable ex) {
-                LOG.log(Level.WARNING, "Bad file encoding", ex);
+                LOG.warning("Bad file encoding", ex);
             }
         }
 
@@ -429,9 +428,6 @@ public class DefaultLauncher extends Launcher {
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
-        if (StringUtils.isNotBlank(options.getWrapper())) {
-            rawCommandLine.addAll(0, StringUtils.tokenize(options.getWrapper(), getEnvVars()));
-        }
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
@@ -708,7 +704,7 @@ public class DefaultLauncher extends Launcher {
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "An Exception happened while running exit command.", e);
+                    LOG.warning("An Exception happened while running exit command.", e);
                 }
             }
         }), "exit-waiter", isDaemon));

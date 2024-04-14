@@ -35,11 +35,10 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AddAuthlibInjectorServerPane extends TransitionPane implements DialogAware {
@@ -201,7 +200,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
                 this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
             } else {
-                LOG.log(Level.WARNING, "Failed to resolve auth server: " + url, exception);
+                LOG.warning("Failed to resolve auth server: " + url, exception);
                 lblCreationWarning.setText(resolveFetchExceptionMessage(exception));
             }
         }).start();

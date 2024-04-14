@@ -48,7 +48,6 @@ import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -642,9 +641,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (versionId == null)
             return;
 
-        File iconFile = profile.getRepository().getVersionIconFile(versionId);
-        if (iconFile.exists())
-            iconFile.delete();
+        profile.getRepository().deleteIconFile(versionId);
         VersionSetting localVersionSetting = profile.getRepository().getLocalVersionSettingOrCreate(versionId);
         if (localVersionSetting != null) {
             localVersionSetting.setVersionIcon(VersionIconType.DEFAULT);

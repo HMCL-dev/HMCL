@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.curse.CurseMetaMod;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -46,12 +45,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Lang.wrapConsumer;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
@@ -211,7 +210,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                             CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                                             return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
                                                         } catch (FileNotFoundException fof) {
-                                                            Logging.LOG.log(Level.WARNING, "Could not query cursemeta for deleted mods: " + file.getUrl(), fof);
+                                                            LOG.warning("Could not query cursemeta for deleted mods: " + file.getUrl(), fof);
                                                             notFound.set(true);
                                                             return file;
                                                         } catch (IOException | JsonParseException e2) {
@@ -220,13 +219,13 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                                 CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                                                 return file.withFileName(mod.getFileName()).withURL(mod.getDownloadURL());
                                                             } catch (FileNotFoundException fof) {
-                                                                Logging.LOG.log(Level.WARNING, "Could not query forgesvc for deleted mods: " + file.getUrl(), fof);
+                                                                LOG.warning("Could not query forgesvc for deleted mods: " + file.getUrl(), fof);
                                                                 notFound.set(true);
                                                                 return file;
                                                             } catch (IOException | JsonParseException e3) {
-                                                                Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e);
-                                                                Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e2);
-                                                                Logging.LOG.log(Level.WARNING, "Unable to fetch the file name of URL: " + file.getUrl(), e3);
+                                                                LOG.warning("Unable to fetch the file name of URL: " + file.getUrl(), e);
+                                                                LOG.warning("Unable to fetch the file name of URL: " + file.getUrl(), e2);
+                                                                LOG.warning("Unable to fetch the file name of URL: " + file.getUrl(), e3);
                                                                 allNameKnown.set(false);
                                                                 return file;
                                                             }

@@ -17,9 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @Immutable
 public final class ForgeNewModMetadata {
@@ -129,7 +128,7 @@ public final class ForgeNewModMetadata {
                 Manifest manifest = new Manifest(is);
                 jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile);
+                LOG.warning("Failed to parse MANIFEST.MF in file " + modFile);
             }
         }
 

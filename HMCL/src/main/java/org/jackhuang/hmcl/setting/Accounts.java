@@ -47,7 +47,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
@@ -55,7 +54,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -72,7 +71,7 @@ public final class Accounts {
                 try {
                     ((AuthlibInjectorDownloader) AUTHLIB_INJECTOR_DOWNLOADER).checkUpdate();
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to check update for authlib-injector", e);
+                    LOG.warning("Failed to check update for authlib-injector", e);
                 }
             });
         }
@@ -178,7 +177,7 @@ public final class Accounts {
                         Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
                         }.getType()));
             } catch (Throwable e) {
-                LOG.log(Level.WARNING, "Failed to load global accounts", e);
+                LOG.warning("Failed to load global accounts", e);
             }
         }
 
@@ -190,7 +189,7 @@ public final class Accounts {
                         FileUtils.saveSafely(globalAccountsFile, json);
                     }
                 } catch (IOException e) {
-                    LOG.log(Level.SEVERE, "Failed to save global accounts", e);
+                    LOG.error("Failed to save global accounts", e);
                 }
             }
         });
@@ -209,7 +208,7 @@ public final class Accounts {
         try {
             return factory.fromStorage(storage);
         } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
+            LOG.warning("Failed to load account: " + storage, e);
             return null;
         }
     }
@@ -321,7 +320,7 @@ public final class Accounts {
                 try {
                     finalSelected.logIn();
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Failed to log " + finalSelected + " in", e);
+                    LOG.warning("Failed to log " + finalSelected + " in", e);
                 }
             });
         }
@@ -335,7 +334,7 @@ public final class Accounts {
                 try {
                     server.fetchMetadataResponse();
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to fetch authlib-injector server metdata: " + server, e);
+                    LOG.warning("Failed to fetch authlib-injector server metdata: " + server, e);
                 }
             });
         }
