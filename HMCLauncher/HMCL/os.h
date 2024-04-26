@@ -34,6 +34,8 @@ bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version);
 
 HRESULT MySHGetFolderPath(int csidl, std::wstring &out);
 
+void MyPathNormalize(std::wstring& path);
+
 void MyPathAppend(std::wstring &filePath, const std::wstring &more);
 
 void MyPathAddBackslash(std::wstring &filePath);
