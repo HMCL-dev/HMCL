@@ -73,9 +73,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   std::wstring path;
   int status;
 
-  JavaScanner::scan(path, status);
+  ScanJava(path, status);
 
-  if (status != JavaScanner::JAVA_STATUS_NOT_FOUND) {
+  if (status != JAVA_STATUS_NOT_FOUND) {
     MyPathAppend(path, std::wstring(L"bin\\javaw.exe"));
     LaunchHMCL(path, workdir, exeName, jvmOptions);
   }
