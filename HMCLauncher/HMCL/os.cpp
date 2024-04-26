@@ -106,19 +106,6 @@ bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version) {
   return true;
 }
 
-HRESULT MySHGetFolderPath(int csidl, std::wstring &out) {
-  out = std::wstring();
-  out.resize(MAX_PATH);
-
-  HRESULT res = SHGetFolderPath(NULL, csidl, NULL, 0, &out[0]);
-  if (SUCCEEDED(res)) {
-    out.resize(wcslen(&out[0]));
-  } else {
-    out.resize(0);
-  }
-  return res;
-}
-
 void MyPathNormalize(std::wstring &path) {
   int size = path.size();
   for (int i = 0; i < size; i++) {
