@@ -48,13 +48,13 @@ jobs:
           MICROSOFT_AUTH_SECRET: ${{ secrets.MICROSOFT_AUTH_SECRET }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
       - name: Get short SHA
-        run: |
-          export SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
-          export GITHUB_ENV=$(SHORT_SHA=$SHORT_SHA)
+        uses: benjlevesque/short-sha@v3.0
+        with:
+          length: 7
       - name: Copy HMCLauncher to libs
         run: cp ./HMCLauncher/HMCL/build/HMCLauncher.exe ./HMCL/build/libs/HMCLauncher.exe
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: HMCLauncher-${{ env.SHORT_SHA }}
+          name: HMCLauncher-${{ env.SHA }}
           path: HMCL/build/libs/*.exe
