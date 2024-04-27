@@ -48,7 +48,7 @@ jobs:
           MICROSOFT_AUTH_SECRET: ${{ secrets.MICROSOFT_AUTH_SECRET }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
       - name: Get short SHA
-        run: export SHORT_SHA=$(git rev-parse --short ${{ github.event.pull_request.base.sha }})
+        run: export SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
       - name: Copy HMCLauncher to libs
         run: cp ./HMCLauncher/HMCL/build/HMCLauncher.exe ./HMCL/build/libs/HMCLauncher.exe
       - name: Upload Artifacts
