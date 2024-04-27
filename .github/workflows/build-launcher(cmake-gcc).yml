@@ -30,8 +30,9 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: Build HMCLauncher
-        run: cmake -S ./HMCLauncher/HMCL -B ./HMCLauncher/HMCL/build -DCMAKE_BUILD_TYPE=Release
-        run: cmake --build ./HMCLauncher/HMCL/build
+        run: |
+          cmake -S ./HMCLauncher/HMCL -B ./HMCLauncher/HMCL/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build ./HMCLauncher/HMCL/build
       - name: Copy HMCLauncher to assets
         run: cp ./HMCLauncher/HMCL/build/HMCLauncher.exe ./HMCL/src/main/resources/assets/HMCLauncher.exe
       - name: Set up JDK 11
