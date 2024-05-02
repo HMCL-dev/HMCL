@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -27,12 +25,13 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class CurseModpackProvider implements ModpackProvider {
@@ -57,13 +56,14 @@ public final class CurseModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipFile zip, Path file, Charset encoding) throws IOException, JsonParseException {
-        CurseManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "manifest.json"), CurseManifest.class);
+    public Modpack readManifest(FileSystem fileSystem, Path file, Charset encoding) throws IOException, JsonParseException {
+        CurseManifest manifest = JsonUtils.fromNonNullJson(IOUtils.readFullyAsString(fileSystem.getPath("/manifest.json")), CurseManifest.class);
         String description = "No description";
         try {
-            ZipArchiveEntry modlist = zip.getEntry("modlist.html");
-            if (modlist != null)
-                description = IOUtils.readFullyAsString(zip.getInputStream(modlist));
+            Path modlist = fileSystem.getPath("/modlist.html");
+            if (Files.exists(modlist)) {
+                description = IOUtils.readFullyAsString(modlist);
+            }
         } catch (Throwable ignored) {
         }
 

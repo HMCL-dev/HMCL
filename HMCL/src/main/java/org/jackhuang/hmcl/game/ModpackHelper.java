@@ -22,6 +22,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
+import org.jackhuang.hmcl.mod.fullversion.FullVersionModpackProvider;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackProvider;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackProvider;
@@ -83,8 +84,8 @@ public final class ModpackHelper {
         return "zip".equals(ext) || "mrpack".equals(ext);
     }
 
-    public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {
-        try (ZipFile zipFile = CompressingUtils.openZipFile(file, charset)) {
+    public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file, charset)) {
             // Order for trying detecting manifest is necessary here.
             // Do not change to iterating providers.
             for (ModpackProvider provider : new ModpackProvider[]{
@@ -93,20 +94,15 @@ public final class ModpackHelper {
                     ModrinthModpackProvider.INSTANCE,
                     HMCLModpackProvider.INSTANCE,
                     MultiMCModpackProvider.INSTANCE,
-                    ServerModpackProvider.INSTANCE}) {
+                    ServerModpackProvider.INSTANCE,
+                    FullVersionModpackProvider.INSTANCE
+            }) {
                 try {
-                    return provider.readManifest(zipFile, file, charset);
+                    return provider.readManifest(fs, file, charset);
                 } catch (Exception ignored) {
                 }
             }
         } catch (IOException ignored) {
-        }
-
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file, charset)) {
-            findMinecraftDirectoryInManuallyCreatedModpack(file.toString(), fs);
-            throw new ManuallyCreatedModpackException(file);
-        } catch (IOException e) {
-            // ignore it
         }
 
         throw new UnsupportedModpackException(file.toString());
@@ -232,7 +228,7 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+    public static Task<?> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {

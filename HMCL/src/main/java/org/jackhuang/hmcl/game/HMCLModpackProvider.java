@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -28,11 +27,12 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 public final class HMCLModpackProvider implements ModpackProvider {
@@ -64,14 +64,14 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipFile file, Path path, Charset encoding) throws IOException, JsonParseException {
-        String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json");
+    public Modpack readManifest(FileSystem fileSystem, Path path, Charset encoding) throws IOException, JsonParseException {
+        String manifestJson = IOUtils.readFullyAsString(fileSystem.getPath("/modpack.json"));
         Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
-        String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
+        String gameJson = IOUtils.readFullyAsString(fileSystem.getPath("/minecraft/pack.json"));
         Version game = JsonUtils.fromNonNullJson(gameJson, Version.class);
         if (game.getJar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))
-                throw new JsonParseException("Cannot recognize the game version of modpack " + file + ".");
+                throw new JsonParseException("Cannot recognize the game version of modpack " + path + ".");
             else
                 manifest.setManifest(HMCLModpackManifest.INSTANCE);
         else

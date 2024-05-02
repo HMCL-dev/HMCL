@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -72,6 +74,10 @@ public final class IOUtils {
 
     public static String readFullyAsString(InputStream stream) throws IOException {
         return readFully(stream).toString("UTF-8");
+    }
+
+    public static String readFullyAsString(Path path) throws IOException {
+        return readFully(Files.newInputStream(path)).toString("UTF-8");
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {

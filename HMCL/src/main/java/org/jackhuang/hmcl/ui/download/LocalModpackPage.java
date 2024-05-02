@@ -22,7 +22,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.setting.Profile;
@@ -103,23 +102,7 @@ public final class LocalModpackPage extends ModpackPage {
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
-                    if (exception instanceof ManuallyCreatedModpackException) {
-                        hideSpinner();
-                        lblName.setText(selectedFile.getName());
-                        installAsVersion.set(false);
-                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
-
-                        if (!name.isPresent()) {
-                            // trim: https://github.com/HMCL-dev/HMCL/issues/962
-                            txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
-                        }
-
-                        Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
-                                () -> {},
-                                controller::onEnd);
-
-                        controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
-                    } else if (exception != null) {
+                    if (exception != null) {
                         LOG.warning("Failed to read modpack manifest", exception);
                         Controllers.dialog(i18n("modpack.task.install.error"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         Platform.runLater(controller::onEnd);

@@ -18,12 +18,12 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import com.google.gson.annotations.SerializedName;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @Immutable
@@ -50,16 +50,15 @@ public final class MultiMCManifest {
 
     /**
      * Read MultiMC modpack manifest from zip file
-     * @param zipFile the zip file
-     * @return the MultiMC modpack manifest.
-     * @throws IOException if zip file is malformed
+     *
+     * @throws IOException                        if zip file is malformed
      * @throws com.google.gson.JsonParseException if manifest is malformed.
      */
-    public static MultiMCManifest readMultiMCModpackManifest(ZipFile zipFile, String rootEntryName) throws IOException {
-        ZipArchiveEntry mmcPack = zipFile.getEntry(rootEntryName + "mmc-pack.json");
-        if (mmcPack == null)
+    public static MultiMCManifest readMultiMCModpackManifest(Path root) throws IOException {
+        Path mmcPack = root.resolve("mmc-pack.json");
+        if (!Files.exists(mmcPack))
             return null;
-        MultiMCManifest manifest = JsonUtils.fromNonNullJsonFully(zipFile.getInputStream(mmcPack), MultiMCManifest.class);
+        MultiMCManifest manifest = JsonUtils.fromNonNullJsonFully(Files.newInputStream(mmcPack), MultiMCManifest.class);
         if (manifest.getComponents() == null)
             throw new IOException("mmc-pack.json malformed.");
 
