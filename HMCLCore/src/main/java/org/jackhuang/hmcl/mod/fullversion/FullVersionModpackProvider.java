@@ -101,10 +101,9 @@ public class FullVersionModpackProvider implements ModpackProvider {
             for (Path path : Lang.toIterable(paths)) {
                 int currentI = 1;
                 switch (FileUtils.getExtension(path)) {
-                    case "jar": {
+                    case "jar":
                         currentI = 0;
                         // fallthrough
-                    }
                     case "json": {
                         // currentI: 0 -> JAR, 1 -> JSON
                         String versionName = FileUtils.getNameWithoutExtension(path);
@@ -116,8 +115,6 @@ public class FullVersionModpackProvider implements ModpackProvider {
                             return versionName;
                         }
                         break;
-                    }
-                    default: {
                     }
                 }
             }

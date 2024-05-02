@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +56,8 @@ public final class ServerModpackProvider implements ModpackProvider {
 
     @Override
     public Modpack readManifest(FileSystem fileSystem, Path file, Charset encoding) throws IOException, JsonParseException {
-        String json = IOUtils.readFullyAsString(fileSystem.getPath("/server-manifest.json"));
+        Path path = fileSystem.getPath("/server-manifest.json");
+        String json = FileUtils.readText(path);
         ServerModpackManifest manifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
         return manifest.toModpack(encoding);
     }

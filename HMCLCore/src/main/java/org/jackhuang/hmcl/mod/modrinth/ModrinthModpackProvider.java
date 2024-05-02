@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +56,8 @@ public final class ModrinthModpackProvider implements ModpackProvider {
 
     @Override
     public Modpack readManifest(FileSystem fileSystem, Path file, Charset encoding) throws IOException, JsonParseException {
-        ModrinthManifest manifest = JsonUtils.fromNonNullJson(IOUtils.readFullyAsString(fileSystem.getPath("/modrinth.index.json")), ModrinthManifest.class);
+        Path path = fileSystem.getPath("/modrinth.index.json");
+        ModrinthManifest manifest = JsonUtils.fromNonNullJson(FileUtils.readText(path), ModrinthManifest.class);
         return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), encoding, manifest) {
             @Override
             public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, java.io.File zipFile, String name) {

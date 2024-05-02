@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,12 +57,13 @@ public final class CurseModpackProvider implements ModpackProvider {
 
     @Override
     public Modpack readManifest(FileSystem fileSystem, Path file, Charset encoding) throws IOException, JsonParseException {
-        CurseManifest manifest = JsonUtils.fromNonNullJson(IOUtils.readFullyAsString(fileSystem.getPath("/manifest.json")), CurseManifest.class);
+        Path path = fileSystem.getPath("/manifest.json");
+        CurseManifest manifest = JsonUtils.fromNonNullJson(FileUtils.readText(path), CurseManifest.class);
         String description = "No description";
         try {
             Path modlist = fileSystem.getPath("/modlist.html");
             if (Files.exists(modlist)) {
-                description = IOUtils.readFullyAsString(modlist);
+                description = FileUtils.readText(modlist);
             }
         } catch (Throwable ignored) {
         }

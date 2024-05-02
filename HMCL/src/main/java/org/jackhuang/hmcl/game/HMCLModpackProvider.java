@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,9 +65,11 @@ public final class HMCLModpackProvider implements ModpackProvider {
 
     @Override
     public Modpack readManifest(FileSystem fileSystem, Path path, Charset encoding) throws IOException, JsonParseException {
-        String manifestJson = IOUtils.readFullyAsString(fileSystem.getPath("/modpack.json"));
+        Path path2 = fileSystem.getPath("/modpack.json");
+        String manifestJson = FileUtils.readText(path2);
         Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
-        String gameJson = IOUtils.readFullyAsString(fileSystem.getPath("/minecraft/pack.json"));
+        Path path1 = fileSystem.getPath("/minecraft/pack.json");
+        String gameJson = FileUtils.readText(path1);
         Version game = JsonUtils.fromNonNullJson(gameJson, Version.class);
         if (game.getJar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))
