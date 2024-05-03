@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -322,6 +323,15 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     public static final String LAUNCH_WRAPPER_MAIN = "net.minecraft.launchwrapper.Launch";
     public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
     public static final String BOOTSTRAP_LAUNCHER_MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher";
+    public static final String FORGE_BOOTSTRAP_MAIN = "net.minecraftforge.bootstrap.ForgeBootstrap";
+
+    public static final Set<String> FORGE_OPTIFINE_MAIN = new HashSet<>(Lang.immutableListOf(
+            LibraryAnalyzer.VANILLA_MAIN,
+            LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
+            LibraryAnalyzer.MOD_LAUNCHER_MAIN,
+            LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN,
+            LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN
+    ));
 
     public static final String[] FORGE_TWEAKERS = new String[]{
             "net.minecraftforge.legacy._1_5_2.LibraryFixerTweaker", // 1.5.2
