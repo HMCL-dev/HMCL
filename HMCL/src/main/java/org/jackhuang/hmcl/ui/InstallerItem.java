@@ -270,10 +270,12 @@ public class InstallerItem extends Control {
                     return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleWith));
                 } else if (version == null) {
                     return i18n("install.installer.not_installed");
-                } else {
+                } else if (control.id.equals(MINECRAFT.getPatchId()) || control.removable.get() || control.upgradable.get()) {
                     return i18n("install.installer.version", version);
+                } else {
+                    return i18n("install.installer.external_version", version);
                 }
-            }, control.incompatibleLibraryName, control.incompatibleWithGame, control.libraryVersion));
+            }, control.incompatibleLibraryName, control.incompatibleWithGame, control.libraryVersion, control.installable, control.removable, control.upgradable));
             BorderPane.setMargin(statusLabel, new Insets(0, 0, 0, 8));
             BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
 
@@ -297,8 +299,9 @@ public class InstallerItem extends Control {
                     control.upgradable));
             arrowButton.getStyleClass().add("toggle-icon4");
             arrowButton.visibleProperty().bind(Bindings.createBooleanBinding(
-                    () -> control.installable.get() && control.incompatibleLibraryName.get() == null,
-                    control.installable, control.incompatibleLibraryName));
+                    () -> control.installable.get() && control.libraryVersion.get() == null && control.incompatibleLibraryName.get() == null,
+                    control.installable, control.libraryVersion, control.incompatibleLibraryName
+            ));
             arrowButton.managedProperty().bind(arrowButton.visibleProperty());
             arrowButton.onMouseClickedProperty().bind(control.action);
             buttonsContainer.getChildren().add(arrowButton);

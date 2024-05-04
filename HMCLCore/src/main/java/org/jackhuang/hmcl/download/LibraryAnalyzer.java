@@ -52,6 +52,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return Optional.ofNullable(libraries.get(type.getPatchId())).map(Pair::getKey);
     }
 
+    public LibraryMark.LibraryStatus getLibraryStatus(String type) {
+        return version.hasPatch(type) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED;
+    }
+
     @NotNull
     @Override
     public Iterator<LibraryMark> iterator() {
@@ -66,7 +70,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             @Override
             public LibraryMark next() {
                 Map.Entry<String, Pair<Library, String>> entry = impl.next();
-                return new LibraryMark(entry.getKey(), entry.getValue().getValue());
+                return new LibraryMark(entry.getKey(), entry.getValue().getValue(), version.hasPatch(entry.getKey()) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED);
             }
         };
     }
@@ -86,13 +90,9 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public boolean hasModLauncher() {
-        final String modLauncher = "cpw.mods.modlauncher.Launcher";
-        return modLauncher.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(patch -> modLauncher.equals(patch.getMainClass()));
-    }
-
-    public boolean hasBootstrapLauncher() {
-        final String bootstrapLauncher = "cpw.mods.bootstraplauncher.BootstrapLauncher";
-        return bootstrapLauncher.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(patch -> bootstrapLauncher.equals(patch.getMainClass()));
+        return LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(version.getMainClass()) || version.getPatches().stream().anyMatch(
+                patch -> LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.getMainClass())
+        );
     }
 
     private Version removingMatchedLibrary(Version version, String libraryId) {
@@ -185,7 +185,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            public String patchVersion(Version gameVersion, String libraryVersion) {
+            protected String patchVersion(Version gameVersion, String libraryVersion) {
                 Matcher matcher = FORGE_VERSION_MATCHER.matcher(libraryVersion);
                 if (matcher.find()) {
                     return matcher.group("forge");
@@ -194,7 +194,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
 
             @Override
-            public boolean matchLibrary(Library library, List<Library> libraries) {
+            protected boolean matchLibrary(Library library, List<Library> libraries) {
                 for (Library l : libraries) {
                     if (NEO_FORGE.matchLibrary(l, libraries)) {
                         return false;
@@ -207,7 +207,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
-            public String patchVersion(Version gameVersion, String libraryVersion) {
+            protected String patchVersion(Version gameVersion, String libraryVersion) {
                 Matcher matcher = NEO_FORGE_VERSION_MATCHER.matcher(libraryVersion);
                 if (matcher.find()) {
                     return matcher.group("forge");
@@ -290,22 +290,32 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             return null;
         }
 
-        public boolean matchLibrary(Library library, List<Library> libraries) {
+        protected boolean matchLibrary(Library library, List<Library> libraries) {
             return group.matcher(library.getGroupId()).matches() && artifact.matcher(library.getArtifactId()).matches();
         }
 
-        public String patchVersion(Version gameVersion, String libraryVersion) {
+        protected String patchVersion(Version gameVersion, String libraryVersion) {
             return libraryVersion;
         }
     }
 
-    public static class LibraryMark {
+    public final static class LibraryMark {
+        public enum LibraryStatus {
+            CLEAR, UNSURE, JUST_EXISTED
+        }
+
         private final String libraryId;
         private final String libraryVersion;
+        /**
+         * If this version is installed by HMCL, instead of external process,
+         * which means $.patches contains this library, structureClear is true.
+         */
+        private final LibraryStatus status;
 
-        public LibraryMark(@NotNull String libraryId, @Nullable String libraryVersion) {
+        private LibraryMark(@NotNull String libraryId, @Nullable String libraryVersion, LibraryStatus status) {
             this.libraryId = libraryId;
             this.libraryVersion = libraryVersion;
+            this.status = status;
         }
 
         @NotNull
@@ -316,6 +326,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         @Nullable
         public String getLibraryVersion() {
             return libraryVersion;
+        }
+
+        public LibraryStatus getStatus() {
+            return status;
         }
     }
 
