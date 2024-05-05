@@ -52,6 +52,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return Optional.ofNullable(libraries.get(type.getPatchId())).map(Pair::getKey);
     }
 
+    /**
+     * If a library is provided in $.patches, it's structure is so clear that we can do any operation.
+     * Otherwise, we must guess how are these libraries mixed.
+     * Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST_EXISTED.
+     */
     public LibraryMark.LibraryStatus getLibraryStatus(String type) {
         return version.hasPatch(type) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED;
     }
@@ -70,7 +75,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             @Override
             public LibraryMark next() {
                 Map.Entry<String, Pair<Library, String>> entry = impl.next();
-                return new LibraryMark(entry.getKey(), entry.getValue().getValue(), version.hasPatch(entry.getKey()) ? LibraryMark.LibraryStatus.CLEAR : LibraryMark.LibraryStatus.JUST_EXISTED);
+                return new LibraryMark(entry.getKey(), entry.getValue().getValue(), getLibraryStatus(entry.getKey()));
             }
         };
     }
@@ -300,6 +305,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public final static class LibraryMark {
+        /**
+         * If a library is provided in $.patches, it's structure is so clear that we can do any operation.
+         * Otherwise, we must guess how are these libraries mixed.
+         * Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST_EXISTED.
+         */
         public enum LibraryStatus {
             CLEAR, UNSURE, JUST_EXISTED
         }
