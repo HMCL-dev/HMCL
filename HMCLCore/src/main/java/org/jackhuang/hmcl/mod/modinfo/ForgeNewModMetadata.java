@@ -112,11 +112,29 @@ public final class ForgeNewModMetadata {
         }
     }
 
+    private static final int ACC_FORGE = 0x01;
+
+    private static final int ACC_NEO_FORGED = 0x02;
+
     public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        Path modstoml = fs.getPath("META-INF/mods.toml");
-        if (Files.notExists(modstoml))
+        try {
+            return fromFile0("META-INF/mods.toml", ACC_FORGE | ACC_NEO_FORGED, modManager, modFile, fs);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            return fromFile0("META-INF/neoforge.mods.toml", ACC_NEO_FORGED, modManager, modFile, fs);
+        } catch (Exception ignored) {
+        }
+
+        throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
+    }
+
+    private static LocalModFile fromFile0(String tomlPath, int acc, ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+        Path modToml = fs.getPath(tomlPath);
+        if (Files.notExists(modToml))
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
-        Toml toml = new Toml().read(FileUtils.readText(modstoml));
+        Toml toml = new Toml().read(FileUtils.readText(modToml));
         ForgeNewModMetadata metadata = toml.to(ForgeNewModMetadata.class);
         if (metadata == null || metadata.getMods().isEmpty())
             throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
@@ -132,28 +150,33 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        ModLoaderType modLoaderType = analyzeModLoader(toml, mod.getModId());
-        if (modLoaderType == null) {
-            throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
-        }
+        ModLoaderType type = analyzeLoader(toml, mod.getModId(), acc);
 
-        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), modLoaderType), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
+        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());
     }
 
-    private static ModLoaderType analyzeModLoader(Toml toml, String modID) {
+    private static ModLoaderType analyzeLoader(Toml toml, String modID, int acc) throws IOException {
         List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
         if (dependencies != null) {
             for (HashMap<String, Object> dependency : dependencies) {
                 switch ((String) dependency.get("modId")) {
-                    case "forge": return ModLoaderType.FORGE;
-                    case "neoforge": return ModLoaderType.NEO_FORGED;
+                    case "forge": return checkACC(acc, ACC_FORGE, ModLoaderType.FORGE);
+                    case "neoforge": return checkACC(acc, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
                 }
             }
         }
 
-        return null;
+        throw new IOException("Mismatched loader.");
+    }
+
+    private static ModLoaderType checkACC(int current, int target, ModLoaderType res) throws IOException {
+        if ((target & current) == target) {
+            return res;
+        } else {
+            throw new IOException("Mismatched loader.");
+        }
     }
 }
