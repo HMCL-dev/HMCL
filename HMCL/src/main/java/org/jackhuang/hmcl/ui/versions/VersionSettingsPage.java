@@ -30,7 +30,9 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -184,7 +186,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             gameDirSublist = new ComponentSublist();
             gameDirSublist.getContent().add(gameDirItem);
             gameDirSublist.setTitle(i18n("settings.game.working_directory"));
-            gameDirSublist.setHasSubtitle(true);
+            gameDirSublist.setHasSubtitle(versionId != null);
             gameDirItem.disableProperty().bind(modpack);
             gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.game.working_directory.choose"))
