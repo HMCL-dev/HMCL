@@ -6,7 +6,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import java.util.List;
 import java.util.function.Consumer;
 
-public final class AllSelectedHandle {
+public final class AllSelectPolicy {
     private final BooleanProperty allSelected;
 
     private final List<BooleanProperty> children;
@@ -15,7 +15,7 @@ public final class AllSelectedHandle {
 
     private boolean updating = false;
 
-    public AllSelectedHandle(BooleanProperty allSelected, List<BooleanProperty> children) {
+    public AllSelectPolicy(BooleanProperty allSelected, List<BooleanProperty> children) {
         this.allSelected = allSelected;
         this.children = children;
         int itemCount = children.size();
