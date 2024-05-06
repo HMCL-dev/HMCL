@@ -1,12 +1,12 @@
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.javafx;
 
 import javafx.beans.property.BooleanProperty;
-import org.jackhuang.hmcl.ui.FXUtils;
+import javafx.beans.value.ObservableValue;
 
 import java.util.List;
 import java.util.function.Consumer;
 
-public final class AllSelectPolicy {
+public final class SelectionBinding {
     private final BooleanProperty allSelected;
 
     private final List<BooleanProperty> children;
@@ -15,7 +15,7 @@ public final class AllSelectPolicy {
 
     private boolean updating = false;
 
-    public AllSelectPolicy(BooleanProperty allSelected, List<BooleanProperty> children) {
+    public SelectionBinding(BooleanProperty allSelected, List<BooleanProperty> children) {
         this.allSelected = allSelected;
         this.children = children;
         int itemCount = children.size();
@@ -25,7 +25,7 @@ public final class AllSelectPolicy {
                 childSelectedCount++;
             }
 
-            FXUtils.onChange(child, wrap(value -> {
+            onChange(child, wrap(value -> {
                 if (value) {
                     childSelectedCount++;
                 } else {
@@ -38,7 +38,7 @@ public final class AllSelectPolicy {
 
         allSelected.set(childSelectedCount == itemCount);
 
-        FXUtils.onChange(allSelected, wrap(value -> {
+        onChange(allSelected, wrap(value -> {
             for (BooleanProperty child : children) {
                 child.setValue(value);
             }
@@ -48,6 +48,10 @@ public final class AllSelectPolicy {
                 childSelectedCount = 0;
             }
         }));
+    }
+
+    private static <T> void onChange(ObservableValue<T> value, Consumer<T> consumer) {
+        value.addListener((a, b, c) -> consumer.accept(c));
     }
 
     private <T> Consumer<T> wrap(Consumer<T> c) {

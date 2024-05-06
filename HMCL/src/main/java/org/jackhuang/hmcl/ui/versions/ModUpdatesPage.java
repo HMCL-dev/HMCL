@@ -41,7 +41,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.AllSelectPolicy;
+import org.jackhuang.hmcl.util.javafx.SelectionBinding;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
@@ -67,7 +67,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
     private final ModManager modManager;
     private final ObservableList<ModUpdateObject> objects;
-    private final AllSelectPolicy allEnabled; // Keep a reference.
+    private final SelectionBinding allEnabled; // Keep a reference.
 
     @SuppressWarnings("unchecked")
     public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
@@ -101,7 +101,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
 
-        allEnabled = new AllSelectPolicy(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).collect(Collectors.toList()));
+        allEnabled = new SelectionBinding(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).collect(Collectors.toList()));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
