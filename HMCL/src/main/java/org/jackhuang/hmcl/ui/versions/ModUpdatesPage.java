@@ -24,6 +24,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
@@ -40,6 +41,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.AllSelectedHandle;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
@@ -65,6 +67,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
     private final ModManager modManager;
     private final ObservableList<ModUpdateObject> objects;
+    private final AllSelectedHandle allEnabled; // Keep a reference.
 
     @SuppressWarnings("unchecked")
     public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
@@ -73,6 +76,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         getStyleClass().add("gray-background");
 
         TableColumn<ModUpdateObject, Boolean> enabledColumn = new TableColumn<>();
+        CheckBox allEnabledBox = new CheckBox();
+        enabledColumn.setGraphic(allEnabledBox);
         enabledColumn.setCellFactory(CheckBoxTableCell.forTableColumn(enabledColumn));
         setupCellValueFactory(enabledColumn, ModUpdateObject::enabledProperty);
         enabledColumn.setEditable(true);
@@ -95,6 +100,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
+
+        allEnabled = new AllSelectedHandle(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).collect(Collectors.toList()));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
@@ -170,7 +177,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             csvTable.write(Files.newOutputStream(path));
 
             FXUtils.showFileInExplorer(path);
-        }).whenComplete(Schedulers.javafx() ,exception -> {
+        }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
