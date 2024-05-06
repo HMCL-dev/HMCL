@@ -130,7 +130,7 @@ public final class ForgeNewModMetadata {
         throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
     }
 
-    private static LocalModFile fromFile0(String tomlPath, int acc, ModLoaderType defaultLoader, ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    private static LocalModFile fromFile0(String tomlPath, int loaderACC, ModLoaderType defaultLoader, ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
         Path modToml = fs.getPath(tomlPath);
         if (Files.notExists(modToml))
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
@@ -150,7 +150,7 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        ModLoaderType type = analyzeLoader(toml, mod.getModId(), acc, defaultLoader);
+        ModLoaderType type = analyzeLoader(toml, mod.getModId(), loaderACC, defaultLoader);
 
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
@@ -158,13 +158,13 @@ public final class ForgeNewModMetadata {
                 metadata.getLogoFile());
     }
 
-    private static ModLoaderType analyzeLoader(Toml toml, String modID, int acc, ModLoaderType defaultLoader) throws IOException {
+    private static ModLoaderType analyzeLoader(Toml toml, String modID, int loaderACC, ModLoaderType defaultLoader) throws IOException {
         List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
         if (dependencies != null) {
             for (HashMap<String, Object> dependency : dependencies) {
                 switch ((String) dependency.get("modId")) {
-                    case "forge": return checkACC(acc, ACC_FORGE, ModLoaderType.FORGE);
-                    case "neoforge": return checkACC(acc, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
+                    case "forge": return checkLoaderACC(loaderACC, ACC_FORGE, ModLoaderType.FORGE);
+                    case "neoforge": return checkLoaderACC(loaderACC, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
                 }
             }
         }
@@ -173,7 +173,7 @@ public final class ForgeNewModMetadata {
         return defaultLoader;
     }
 
-    private static ModLoaderType checkACC(int current, int target, ModLoaderType res) throws IOException {
+    private static ModLoaderType checkLoaderACC(int current, int target, ModLoaderType res) throws IOException {
         if ((target & current) == target) {
             return res;
         } else {
