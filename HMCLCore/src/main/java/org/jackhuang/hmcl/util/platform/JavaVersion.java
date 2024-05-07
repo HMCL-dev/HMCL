@@ -341,7 +341,7 @@ public final class JavaVersion {
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
                 // Homebrew
-                javaExecutables.add(Stream.of(Paths.get("/opt/homebrew/opt/java")));
+                javaExecutables.add(Stream.of(Paths.get("/opt/homebrew/opt/java/bin/java")));
                 javaExecutables.add(listDirectory(Paths.get("/opt/homebrew/Cellar/openjdk"))
                         .map(JavaVersion::getExecutable));
                 break;
