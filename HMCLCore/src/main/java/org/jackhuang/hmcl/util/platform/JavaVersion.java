@@ -335,6 +335,9 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("/Library/Java/JavaVirtualMachines"))
                         .flatMap(dir -> Stream.of(dir.resolve("Contents/Home"), dir.resolve("Contents/Home/jre")))
                         .map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get(System.getProperty("user.home"), "Library/Java/JavaVirtualMachines"))
+                        .flatMap(dir -> Stream.of(dir.resolve("Contents/Home"), dir.resolve("Contents/Home/jre")))
+                        .map(JavaVersion::getExecutable));
                 javaExecutables.add(listDirectory(Paths.get("/System/Library/Java/JavaVirtualMachines"))
                         .map(dir -> dir.resolve("Contents/Home"))
                         .map(JavaVersion::getExecutable));
