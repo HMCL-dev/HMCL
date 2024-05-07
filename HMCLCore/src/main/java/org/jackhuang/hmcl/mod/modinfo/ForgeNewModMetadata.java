@@ -174,7 +174,7 @@ public final class ForgeNewModMetadata {
     }
 
     private static ModLoaderType checkLoaderACC(int current, int target, ModLoaderType res) throws IOException {
-        if ((target & current) == target) {
+        if ((target & current) != 0) {
             return res;
         } else {
             throw new IOException("Mismatched loader.");
