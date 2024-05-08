@@ -15,7 +15,7 @@ jobs:
       - name: Rename the Issue or PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HMCL_TARGET_ID: ${{ github.event.comment.id }}
+          HMCL_TARGET_ID: ${{ github.event.comment.issue.number }}
           HMCL_TARGET_COMMAND: ${{ github.event.comment.body }}
         run: |
           gh issue edit $HMCL_TARGET_ID --title "${HMCL_TARGET_COMMAND:18}" --repo $GITHUB_REPOSITORY
