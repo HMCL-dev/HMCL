@@ -18,4 +18,5 @@ jobs:
           HMCL_TARGET_ID: ${{ github.event.comment.issue.number }}
           HMCL_TARGET_COMMAND: ${{ github.event.comment.body }}
         run: |
+          echo "Editing the title of issue $HMCL_TARGET_ID to ${HMCL_TARGET_COMMAND:18}"
           gh issue edit $HMCL_TARGET_ID --title "${HMCL_TARGET_COMMAND:18}" --repo $GITHUB_REPOSITORY
