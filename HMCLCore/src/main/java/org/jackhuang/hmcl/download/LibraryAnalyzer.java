@@ -21,6 +21,8 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -367,4 +369,6 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             "optifine.OptiFineForgeTweaker"
     };
     public static final String LITELOADER_TWEAKER = "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
+
+    public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");
 }
