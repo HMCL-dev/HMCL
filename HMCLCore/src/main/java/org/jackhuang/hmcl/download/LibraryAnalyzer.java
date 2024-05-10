@@ -359,6 +359,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN
     ));
 
+    public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");
+
     public static final String[] FORGE_TWEAKERS = new String[]{
             "net.minecraftforge.legacy._1_5_2.LibraryFixerTweaker", // 1.5.2
             "cpw.mods.fml.common.launcher.FMLTweaker", // 1.6.1 ~ 1.7.10
@@ -369,6 +371,4 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             "optifine.OptiFineForgeTweaker"
     };
     public static final String LITELOADER_TWEAKER = "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
-
-    public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");
 }
