@@ -354,7 +354,9 @@ public final class LauncherHelper {
 
                     if (org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java()) {
                         JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
-                        if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
+                        if (range.getMandatory().contains(VersionNumber.asVersion("21.0.3"))) {
+                            targetJavaVersion = GameJavaVersion.JAVA_21;
+                        } else if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
                             targetJavaVersion = GameJavaVersion.JAVA_17;
                         } else if (range.getMandatory().contains(VersionNumber.asVersion("16.0.1"))) {
                             targetJavaVersion = GameJavaVersion.JAVA_16;
@@ -462,6 +464,11 @@ public final class LauncherHelper {
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_17:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 17), i18n("message.warning"),
+                                    () -> FXUtils.openLink(OPENJDK_DOWNLOAD_LINK), null);
+                            breakAction.run();
+                            return Task.fromCompletableFuture(future);
+                        case VANILLA_JAVA_21:
+                            Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 21), i18n("message.warning"),
                                     () -> FXUtils.openLink(OPENJDK_DOWNLOAD_LINK), null);
                             breakAction.run();
                             return Task.fromCompletableFuture(future);
