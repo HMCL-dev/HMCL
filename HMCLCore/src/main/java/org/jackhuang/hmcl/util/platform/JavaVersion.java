@@ -335,11 +335,18 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("/Library/Java/JavaVirtualMachines"))
                         .flatMap(dir -> Stream.of(dir.resolve("Contents/Home"), dir.resolve("Contents/Home/jre")))
                         .map(JavaVersion::getExecutable));
+                javaExecutables.add(listDirectory(Paths.get(System.getProperty("user.home"), "Library/Java/JavaVirtualMachines"))
+                        .flatMap(dir -> Stream.of(dir.resolve("Contents/Home"), dir.resolve("Contents/Home/jre")))
+                        .map(JavaVersion::getExecutable));
                 javaExecutables.add(listDirectory(Paths.get("/System/Library/Java/JavaVirtualMachines"))
                         .map(dir -> dir.resolve("Contents/Home"))
                         .map(JavaVersion::getExecutable));
                 javaExecutables.add(Stream.of(Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java")));
                 javaExecutables.add(Stream.of(Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java")));
+                // Homebrew
+                javaExecutables.add(Stream.of(Paths.get("/opt/homebrew/opt/java/bin/java")));
+                javaExecutables.add(listDirectory(Paths.get("/opt/homebrew/Cellar/openjdk"))
+                        .map(JavaVersion::getExecutable));
                 break;
 
             default:
