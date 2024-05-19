@@ -10,6 +10,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Glavo
+ */
 public abstract class GameVersionNumber implements Comparable<GameVersionNumber> {
 
     public static String[] getDefaultGameVersions() {
@@ -22,11 +25,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 char ch = version.charAt(0);
                 switch (ch) {
                     case 'r':
-                        return Old.parsePreClassic(version);
                     case 'a':
                     case 'b':
                     case 'c':
-                        return Old.parseAlphaBetaClassic(version);
+                        return Old.parse(version);
                     case 'i':
                         return Old.parseInfdev(version);
                 }
@@ -110,27 +112,18 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     }
 
     static final class Old extends GameVersionNumber {
-
-        private static final Pattern PATTERN = Pattern.compile("[abc](?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?([^0-9]*(?<additional>[0-9]+).*)?");
-
-        static Old parsePreClassic(String value) {
-            int version;
-            try {
-                version = Integer.parseInt(value.substring("rd-".length()));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(e);
-            }
-            return new Old(value, Type.PRE_CLASSIC, version, 0, 0, 0);
-        }
-
-        static Old parseAlphaBetaClassic(String value) {
-            Matcher matcher = PATTERN.matcher(value);
-            if (!matcher.matches()) {
-                throw new IllegalArgumentException(value);
-            }
-
+        static Old parse(String value) {
             Type type;
+            int prefixLength = 1;
             switch (value.charAt(0)) {
+                case 'r':
+                    if (!value.startsWith("rd-")) {
+                        throw new IllegalArgumentException(value);
+                    }
+
+                    type = Type.PRE_CLASSIC;
+                    prefixLength = "rd-".length();
+                    break;
                 case 'a':
                     type = Type.ALPHA;
                     break;
@@ -141,60 +134,27 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     type = Type.CLASSIC;
                     break;
                 default:
-                    throw new AssertionError(value);
+                    throw new IllegalArgumentException(value);
             }
 
-            int major = Integer.parseInt(matcher.group("major"));
-            int minor = Integer.parseInt(matcher.group("minor"));
+            if (value.length() < prefixLength + 1 || !Character.isDigit(value.charAt(prefixLength))) {
+                throw new IllegalArgumentException(value);
+            }
 
-            String patchString = matcher.group("patch");
-            int patch = patchString != null ? Integer.parseInt(patchString) : 0;
-
-            String additionalString = matcher.group("additional");
-            int additional = additionalString != null ? Integer.parseInt(additionalString) : 0;
-
-            return new Old(value, type, major, minor, patch, additional);
+            return new Old(value, type, VersionNumber.asVersion(value.substring(prefixLength)));
         }
 
         static Old parseInfdev(String value) {
-            String version = value.substring("inf-".length());
-            int major;
-            int patch;
-
-            try {
-                major = Integer.parseInt(version);
-                patch = 0;
-            } catch (NumberFormatException e) {
-                int idx = version.indexOf('-');
-                if (idx >= 0) {
-                    try {
-                        major = Integer.parseInt(version.substring(0, idx));
-                        patch = Integer.parseInt(version.substring(idx + 1));
-                    } catch (NumberFormatException ignore) {
-                        throw new IllegalArgumentException(value);
-                    }
-                } else {
-                    throw new IllegalArgumentException(value);
-                }
-            }
-
-            return new Old(value, Type.INFDEV, major, 0, patch, 0);
+            return new Old(value, Type.INFDEV, VersionNumber.asVersion(value.substring("inf-".length())));
         }
 
-
         final Type type;
-        final int major;
-        final int minor;
-        final int patch;
-        final int additional;
+        final VersionNumber versionNumber;
 
-        private Old(String value, Type type, int major, int minor, int patch, int additional) {
+        private Old(String value, Type type, VersionNumber versionNumber) {
             super(value);
             this.type = type;
-            this.major = major;
-            this.minor = minor;
-            this.patch = patch;
-            this.additional = additional;
+            this.versionNumber = versionNumber;
         }
 
         @Override
@@ -204,42 +164,26 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
-            Old that = (Old) other;
-            int c = Integer.compare(this.major, that.major);
-            if (c != 0) {
-                return c;
-            }
-
-            c = Integer.compare(this.minor, that.minor);
-            if (c != 0) {
-                return c;
-            }
-
-            c = Integer.compare(this.patch, that.patch);
-            if (c != 0) {
-                return c;
-            }
-
-            return Integer.compare(this.additional, that.additional);
+            return this.versionNumber.compareTo(((Old) other).versionNumber);
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (!(o instanceof Old)) return false;
             Old other = (Old) o;
-            return major == other.major && minor == other.minor && patch == other.patch && additional == other.additional && type == other.type;
+            return type == other.type && this.versionNumber.compareTo(other.versionNumber) == 0;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(type, major, minor, patch, additional);
+            return Objects.hash(type, versionNumber.hashCode());
         }
     }
 
     static final class Release extends GameVersionNumber {
 
-        private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>[0-9]+))?");
+        private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>.+))?");
 
         static final int TYPE_GA = Integer.MAX_VALUE;
 
@@ -248,7 +192,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         static final int TYPE_PRE = 2;
         static final int TYPE_RC = 3;
 
-        static final Release ZERO = new Release("0.0", 0, 0, 0, TYPE_GA, 0);
+        static final Release ZERO = new Release("0.0", 0, 0, 0, TYPE_GA, VersionNumber.ZERO);
 
         static Release parse(String value) {
             Matcher matcher = PATTERN.matcher(value);
@@ -276,7 +220,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             String eaVersionString = matcher.group("eaVersion");
-            int eaVersion = eaVersionString == null ? 0 : Integer.parseInt(eaVersionString);
+            VersionNumber eaVersion = eaVersionString != null ? VersionNumber.asVersion(eaVersionString) : VersionNumber.ZERO;
 
             return new Release(value, 1, minor, patch, eaType, eaVersion);
         }
@@ -286,9 +230,9 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         private final int patch;
 
         private final int eaType;
-        private final int eaVersion;
+        private final VersionNumber eaVersion;
 
-        Release(String value, int major, int minor, int patch, int eaType, int eaVersion) {
+        Release(String value, int major, int minor, int patch, int eaType, VersionNumber eaVersion) {
             super(value);
             this.major = major;
             this.minor = minor;
@@ -323,7 +267,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 return c;
             }
 
-            return Integer.compare(this.eaVersion, other.eaVersion);
+            return this.eaVersion.compareTo(other.eaVersion);
         }
 
         int compareToSnapshot(Snapshot other) {
@@ -367,7 +311,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Release other = (Release) o;
-            return major == other.major && minor == other.minor && patch == other.patch && eaType == other.eaType && eaVersion == other.eaVersion;
+            return major == other.major && minor == other.minor && patch == other.patch && eaType == other.eaType && eaVersion.equals(other.eaVersion);
         }
     }
 
