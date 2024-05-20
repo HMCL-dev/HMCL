@@ -329,6 +329,9 @@ public final class JavaVersion {
                 javaExecutables.add(listDirectory(Paths.get("/usr/java")).map(JavaVersion::getExecutable)); // Oracle RPMs
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib/jvm")).map(JavaVersion::getExecutable)); // General locations
                 javaExecutables.add(listDirectory(Paths.get("/usr/lib32/jvm")).map(JavaVersion::getExecutable)); // General locations
+				// SDKMAN!
+				javaExecutables.add(listDirectory(Paths.get(System.getProperty("user.home"), ".sdkman/candidates/java"))
+				        .map(JavaVersion::getExecutable));
                 break;
 
             case OSX:
