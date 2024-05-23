@@ -427,7 +427,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         boolean disableNext = pageOffset == pageCount - 1;
                         nextPageButton.setDisable(disableNext);
-                        lastPageButton.setDisable(disableNext && pageCount == -1);
+                        lastPageButton.setDisable(disableNext || pageCount == -1);
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
