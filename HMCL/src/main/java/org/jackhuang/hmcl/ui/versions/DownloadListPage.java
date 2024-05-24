@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.FloatListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -57,7 +58,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -86,7 +86,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final ObservableList<Node> actions = FXCollections.observableArrayList();
     protected final ListProperty<String> downloadSources = new SimpleListProperty<>(this, "downloadSources", FXCollections.observableArrayList());
     protected final StringProperty downloadSource = new SimpleStringProperty();
-    protected final IntegerProperty searchID = new SimpleIntegerProperty(0);
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private int searchID = 0;
     protected RemoteModRepository repository;
 
     private Runnable retrySearch;
@@ -162,8 +163,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         setLoading(true);
         setFailed(false);
 
-        int currentSearchID = searchID.get() + 1;
-        searchID.set(currentSearchID);
+        int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
             Profile.ProfileVersion version = this.version.get();
             if (StringUtils.isBlank(version.getVersion())) {
@@ -173,13 +173,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         ? version.getProfile().getRepository().getGameVersion(version.getVersion()).orElse("")
                         : "";
             }
-        }).thenApplyAsync(gameVersion -> {
-            if (searchID.get() != currentSearchID) {
-                throw new IOException("Another search has already begun.");
-            }
-            return repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (searchID.get() != currentSearchID) {
+        }).thenApplyAsync(gameVersion -> repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (searchID != currentSearchID) {
                 return;
             }
 
@@ -348,13 +343,14 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortComboBox.getSelectionModel().select(0);
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
-                StringProperty previousSearchFilter = new SimpleStringProperty(this, "Previous Seach Filter", "");
+                IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
+                IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
                 EventHandler<ActionEvent> searchAction = e -> {
-                    if (!previousSearchFilter.get().equals(nameField.getText())) {
+                    if (currentFilterID.get() != filterID.get()) {
                         control.pageOffset.set(0);
                     }
+                    currentFilterID.set(filterID.get());
 
-                    previousSearchFilter.set(nameField.getText());
                     getSkinnable().search(gameVersionField.getSelectionModel().getSelectedItem(),
                             Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
                                     .map(CategoryIndented::getCategory)
@@ -363,6 +359,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             nameField.getText(),
                             sortComboBox.getSelectionModel().getSelectedItem());
                 };
+
+                control.listenerHolder.add(FXUtils.observeWeak(
+                        () -> filterID.set(filterID.get() + 1),
+
+                        control.downloadSource,
+                        gameVersionField.getSelectionModel().selectedItemProperty(),
+                        categoryComboBox.getSelectionModel().selectedItemProperty(),
+                        nameField.textProperty(),
+                        sortComboBox.getSelectionModel().selectedItemProperty()
+                ));
 
                 HBox actionsBox = new HBox(8);
                 GridPane.setColumnSpan(actionsBox, 4);
@@ -455,6 +461,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 searchPane.addRow(rowIndex++, actionsBox);
 
+                FXUtils.onChange(control.downloadSource, v -> searchAction.handle(null));
                 nameField.setOnAction(searchAction);
                 gameVersionField.setOnAction(searchAction);
                 categoryComboBox.setOnAction(searchAction);
