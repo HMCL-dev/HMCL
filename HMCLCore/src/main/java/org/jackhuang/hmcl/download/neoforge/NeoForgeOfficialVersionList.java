@@ -31,10 +31,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     @Override
     public Optional<NeoForgeRemoteVersion> getVersion(String gameVersion, String remoteVersion) {
         if (gameVersion.equals("1.20.1")) {
-            remoteVersion = NeoForgeRemoteVersion.fixInvalidVersion(remoteVersion);
-            if (!remoteVersion.equals("47.1.82")) {
-                remoteVersion = "1.20.1-" + remoteVersion;
-            }
+            remoteVersion = NeoForgeRemoteVersion.normalize(remoteVersion);
         }
         return super.getVersion(gameVersion, remoteVersion);
     }
