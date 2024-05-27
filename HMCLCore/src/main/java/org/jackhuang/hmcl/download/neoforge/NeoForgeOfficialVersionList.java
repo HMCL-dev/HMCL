@@ -49,7 +49,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
 
                 for (String version : results[0].versions) {
                     versions.put("1.20.1", new NeoForgeRemoteVersion(
-                            "1.20.1", StringUtils.removePrefix(version, "1.20.1-"),
+                            "1.20.1", NeoForgeRemoteVersion.normalize(version),
                             Collections.singletonList(
                                     "https://maven.neoforged.net/releases/net/neoforged/forge/" + version + "/forge-" + version + "-installer.jar"
                             )
@@ -59,7 +59,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                 for (String version : results[1].versions) {
                     String mcVersion = "1." + version.substring(0, version.indexOf('.', version.indexOf('.') + 1));
                     versions.put(mcVersion, new NeoForgeRemoteVersion(
-                            mcVersion, version,
+                            mcVersion, NeoForgeRemoteVersion.normalize(version),
                             Collections.singletonList(
                                     "https://maven.neoforged.net/releases/net/neoforged/neoforge/" + version + "/neoforge-" + version + "-installer.jar"
                             )
