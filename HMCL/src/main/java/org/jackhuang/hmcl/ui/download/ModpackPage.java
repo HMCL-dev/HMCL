@@ -36,7 +36,6 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
         ComponentList componentList = new ComponentList();
         {
-
             BorderPane archiveNamePane = new BorderPane();
             {
                 Label label = new Label(i18n("archive.name"));
