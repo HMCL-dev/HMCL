@@ -282,22 +282,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                             if (modVersions != null && !modVersions.isEmpty()) {
                                 Set<ModLoaderType> targetLoaders = LibraryAnalyzer.analyze(game, gameVersion).getModLoaders();
 
-                                // Find a suitable mod version by loader info. Otherwise, select the first one.
-                                RemoteMod.Version recommend = modVersions.get(0);
                                 resolve:
                                 for (RemoteMod.Version modVersion : modVersions) {
                                     for (ModLoaderType loader : modVersion.getLoaders()) {
                                         if (targetLoaders.contains(loader)) {
-                                            recommend = modVersion;
+                                            list.getContent().addAll(
+                                                    ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                    new ModItem(modVersion, control)
+                                            );
                                             break resolve;
                                         }
                                     }
                                 }
-
-                                list.getContent().addAll(
-                                        ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                        new ModItem(recommend, control)
-                                );
                             }
                         }
                     }
