@@ -43,7 +43,7 @@ public final class RemoteModpackPage extends ModpackPage {
 
         manifest = tryCast(controller.getSettings().get(MODPACK_SERVER_MANIFEST), ServerModpackManifest.class)
                 .orElseThrow(() -> new IllegalStateException("MODPACK_SERVER_MANIFEST should exist"));
-        lblModpackLocation.setText(manifest.getFileApi());
+        // lblModpackLocation.setText(manifest.getFileApi());
 
         try {
             controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));
