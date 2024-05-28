@@ -142,6 +142,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("autoChooseDownloadType")
     private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
 
+    @SerializedName("autoCopyCodeWhenLoginWithMicrosoft")
+    private BooleanProperty autoCopyCodeWhenLoginWithMicrosoft = new SimpleBooleanProperty(true);
+
     @SerializedName("versionListSource")
     private StringProperty versionListSource = new SimpleStringProperty("balanced");
 
@@ -495,6 +498,18 @@ public final class Config implements Cloneable, Observable {
 
     public boolean isAutoChooseDownloadType() {
         return autoChooseDownloadType.get();
+    }
+
+    public BooleanProperty autoCopyCodeWhenLoginWithMicrosoftProperty() {
+        return autoCopyCodeWhenLoginWithMicrosoft;
+    }
+
+    public void setAutoCopyCodeWhenLoginWithMicrosoft(boolean autoCopyCodeWhenLoginWithMicrosoft) {
+        this.autoCopyCodeWhenLoginWithMicrosoft.set(autoCopyCodeWhenLoginWithMicrosoft);
+    }
+
+    public boolean isAutoCopyCodeWhenLoginWithMicrosoft() {
+        return autoCopyCodeWhenLoginWithMicrosoft.get();
     }
 
     public BooleanProperty autoChooseDownloadTypeProperty() {

@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -46,7 +47,9 @@ public class OAuthAccountLoginDialog extends DialogPane {
         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
         FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
             if (deviceCode != null) {
-                FXUtils.copyText(deviceCode.getUserCode());
+                if(config().isAutoCopyCodeWhenLoginWithMicrosoft()){
+                    FXUtils.copyText(deviceCode.getUserCode());
+                }
                 hintPane.setSegment(
                         "<b>" + i18n("account.login.refresh.microsoft.hint") + "</b>\n"
                                 + i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri())

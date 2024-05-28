@@ -43,6 +43,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
     private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
     private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
+    private final TabHeader.Tab<AccountPage> accountTab = new TabHeader.Tab<>("accountPage");
     private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
     private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
     private final TabHeader.Tab<FeedbackPage> feedbackTab = new TabHeader.Tab<>("feedbackPage");
@@ -53,10 +54,11 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         settingsTab.setNodeSupplier(SettingsPage::new);
         personalizationTab.setNodeSupplier(PersonalizationPage::new);
         downloadTab.setNodeSupplier(DownloadSettingsPage::new);
+        accountTab.setNodeSupplier(AccountPage::new);
         helpTab.setNodeSupplier(HelpPage::new);
         feedbackTab.setNodeSupplier(FeedbackPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(gameTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
+        tab = new TabHeader(gameTab, settingsTab, personalizationTab, downloadTab, accountTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
         gameTab.initializeIfNeeded();
@@ -92,6 +94,12 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD_OUTLINE));
                         downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(downloadTab));
                         downloadItem.setOnAction(e -> tab.select(downloadTab));
+                    })
+                    .addNavigationDrawerItem(downloadItem -> {
+                        downloadItem.setTitle(i18n("account"));
+                        downloadItem.setLeftGraphic(wrap(SVG.ACCOUNT));
+                        downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(accountTab));
+                        downloadItem.setOnAction(e -> tab.select(accountTab));
                     })
                     .startCategory(i18n("help"))
                     .addNavigationDrawerItem(helpItem -> {
