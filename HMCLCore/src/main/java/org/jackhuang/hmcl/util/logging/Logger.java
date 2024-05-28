@@ -112,6 +112,7 @@ public final class Logger {
     }
 
     private void onShutdown() {
+        shutdown();
         try {
             loggerThread.join();
         } catch (InterruptedException ignored) {
