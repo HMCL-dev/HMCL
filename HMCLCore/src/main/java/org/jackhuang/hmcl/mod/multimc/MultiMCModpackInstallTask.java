@@ -28,7 +28,10 @@ import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -39,16 +42,19 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class MultiMCModpackInstallTask extends Task<Void> {
+    private static final Map<String, String> COMPONENT_ID_MAPPING = Lang.mapOf(
+            Pair.pair("net.minecraftforge", "forge"),
+            Pair.pair("net.neoforged", "neoforge"),
+            Pair.pair("com.mumfrey.liteloader", "liteloader"),
+            Pair.pair("net.fabricmc.fabric-loader", "fabric"),
+            Pair.pair("org.quiltmc.quilt-loader", "quilt")
+    );
 
     private final File zipFile;
     private final Modpack modpack;
@@ -72,35 +78,16 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion());
 
         if (manifest.getMmcPack() != null) {
-            Optional<MultiMCManifest.MultiMCManifestComponent> forge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.minecraftforge")).findAny();
-            forge.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("forge", c.getVersion());
-            });
-
-            Optional<MultiMCManifest.MultiMCManifestComponent> neoForge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.neoforged")).findAny();
-            neoForge.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("neoforge", c.getVersion());
-            });
-
-            Optional<MultiMCManifest.MultiMCManifestComponent> liteLoader = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("com.mumfrey.liteloader")).findAny();
-            liteLoader.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("liteloader", c.getVersion());
-            });
-
-            Optional<MultiMCManifest.MultiMCManifestComponent> fabric = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.fabricmc.fabric-loader")).findAny();
-            fabric.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("fabric", c.getVersion());
-            });
-
-            Optional<MultiMCManifest.MultiMCManifestComponent> quilt = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("org.quiltmc.quilt-loader")).findAny();
-            quilt.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("quilt", c.getVersion());
-            });
+            // The component UID of MultiMC modpack and HMCL patch ID is different. We need to remap them.
+            List<MultiMCManifest.MultiMCManifestComponent> components = manifest.getMmcPack().getComponents();
+            for (String componentID : COMPONENT_ID_MAPPING.keySet()) {
+                for (MultiMCManifest.MultiMCManifestComponent component : components) {
+                    if (component.getUid().equals(componentID)) {
+                        builder.version(COMPONENT_ID_MAPPING.get(componentID), component.getVersion());
+                        break;
+                    }
+                }
+            }
         }
 
         dependents.add(builder.buildAsync());
@@ -143,13 +130,13 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             // /.minecraft
             if (Files.exists(fs.getPath("/.minecraft"))) {
                 subDirectory = "/.minecraft";
-            // /minecraft
+                // /minecraft
             } else if (Files.exists(fs.getPath("/minecraft"))) {
                 subDirectory = "/minecraft";
-            // /[name]/.minecraft
+                // /[name]/.minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/.minecraft";
-            // /[name]/minecraft
+                // /[name]/minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/minecraft";
             } else {
