@@ -133,6 +133,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("autoDownloadThreads")
     private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
+    @SerializedName("autoSwitchGameLanguage")
+    private BooleanProperty autoSwitchGameLanguage = new SimpleBooleanProperty(true);
+
     @SerializedName("downloadThreads")
     private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
 
@@ -691,4 +694,17 @@ public final class Config implements Cloneable, Observable {
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
     }
+
+    public BooleanProperty autoSwitchGameLanguageProperty() {
+        return autoSwitchGameLanguage;
+    }
+
+    public void setAutoSwitchGameLanguage(boolean autoSwitchGameLanguage) {
+        this.autoSwitchGameLanguage.set(autoSwitchGameLanguage);
+    }
+
+    public boolean isAutoSwitchGameLanguage() {
+        return autoSwitchGameLanguage.get();
+    }
+
 }

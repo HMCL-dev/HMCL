@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.geometry.Insets;
@@ -55,6 +56,7 @@ public abstract class SettingsView extends StackPane {
     protected final JFXRadioButton chkUpdateStable;
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
+    protected final JFXCheckBox chkAutoSwitchGameLanguage;
     protected final ScrollPane scroll;
 
     public SettingsView() {
@@ -182,6 +184,23 @@ public abstract class SettingsView extends StackPane {
                     languagePane.setRight(cboLanguage);
 
                     settingsPane.getContent().add(languagePane);
+                }
+
+                {
+                    BorderPane autoSwitchLanguagePane = new BorderPane();
+
+                    // Label left = new Label(i18n("settings.launcher.language"));
+                    // BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    // autoSwitchLanguagePane.setLeft(left);
+
+                    chkAutoSwitchGameLanguage = new JFXCheckBox(i18n("settings.launcher.auto_switch_game_language"));
+                    chkAutoSwitchGameLanguage.selectedProperty().bindBidirectional(config().autoSwitchGameLanguageProperty());
+                    FXUtils.setLimitWidth(chkAutoSwitchGameLanguage, 300);
+                    autoSwitchLanguagePane.setLeft(chkAutoSwitchGameLanguage);
+
+                    if(I18n.isUseChinese()){
+                        settingsPane.getContent().add(autoSwitchLanguagePane);
+                    }
                 }
 
                 {

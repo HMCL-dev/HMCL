@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -72,6 +73,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         if (!I18n.isUseChinese()) {
+            return;
+        }
+
+        if (!config().isAutoSwitchGameLanguage()){
             return;
         }
 
