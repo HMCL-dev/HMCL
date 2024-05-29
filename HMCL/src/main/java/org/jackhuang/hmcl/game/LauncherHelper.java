@@ -115,13 +115,11 @@ public final class LauncherHelper {
         File modsDir = new File(profile.getGameDir(), "mods");
         if (modsDir.exists() && modsDir.isDirectory()) {
             List<File> files = new ArrayList<>();
-            // File[] files = modsDir.listFiles();
             listAllFiles(modsDir, files);
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile() && file.getName().endsWith(".jar")) {
-                        LOG.info("Found mod file: " + new File(file.getPath(), file.getName()));
-                    }
+
+            for (File file : files) {
+                if (file.isFile() && file.getName().endsWith(".jar")) {
+                    LOG.info("Found mod file: " + new File(file.getPath(), file.getName()));
                 }
             }
         }
