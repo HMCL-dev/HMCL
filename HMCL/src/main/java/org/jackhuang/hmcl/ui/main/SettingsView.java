@@ -189,13 +189,8 @@ public abstract class SettingsView extends StackPane {
                 {
                     BorderPane autoSwitchLanguagePane = new BorderPane();
 
-                    // Label left = new Label(i18n("settings.launcher.language"));
-                    // BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                    // autoSwitchLanguagePane.setLeft(left);
-
                     chkAutoSwitchGameLanguage = new JFXCheckBox(i18n("settings.launcher.auto_switch_game_language"));
                     chkAutoSwitchGameLanguage.selectedProperty().bindBidirectional(config().autoSwitchGameLanguageProperty());
-                    FXUtils.setLimitWidth(chkAutoSwitchGameLanguage, 300);
                     autoSwitchLanguagePane.setLeft(chkAutoSwitchGameLanguage);
 
                     if(I18n.isUseChinese()){
