@@ -112,9 +112,37 @@ public final class LauncherHelper {
         FXUtils.checkFxUserThread();
 
         LOG.info("Launching game version: " + selectedVersion);
+        File modsDir = new File(profile.getGameDir(), "mods");
+        if (modsDir.exists() && modsDir.isDirectory()) {
+            List<File> files = new ArrayList<>();
+            // File[] files = modsDir.listFiles();
+            listAllFiles(modsDir, files);
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().endsWith(".jar")) {
+                        LOG.info("Found mod file: " + new File(file.getPath(), file.getName()));
+                    }
+                }
+            }
+        }
 
         Controllers.dialog(launchingStepsPane);
         launch0();
+    }
+
+    private static void listAllFiles(File dir, List<File> fileList) {
+        if (dir != null && dir.exists() && dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        listAllFiles(file, fileList);
+                    } else {
+                        fileList.add(file);
+                    }
+                }
+            }
+        }
     }
 
     public void makeLaunchScript(File scriptFile) {
