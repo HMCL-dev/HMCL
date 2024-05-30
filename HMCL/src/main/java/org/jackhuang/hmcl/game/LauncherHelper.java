@@ -54,6 +54,9 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -112,8 +115,8 @@ public final class LauncherHelper {
         FXUtils.checkFxUserThread();
 
         LOG.info("Launching game version: " + selectedVersion);
-        File modsDir = new File(profile.getGameDir(), "mods");
-        if (modsDir.exists() && modsDir.isDirectory()) {
+        Path modsDir = Paths.get(profile.getGameDir().getAbsolutePath(), "mods");
+        if (Files.exists(modsDir) && Files.isDirectory(modsDir)) {
             List<String> files = new ArrayList<>();
             StringBuilder builder = new StringBuilder();
             ModFileLister.listFiles(modsDir, files);

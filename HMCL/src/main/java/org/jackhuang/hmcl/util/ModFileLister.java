@@ -3,6 +3,7 @@ package org.jackhuang.hmcl.util;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.*;
 
@@ -10,18 +11,18 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ModFileLister {
 
-    public static void listFiles(File dir, List<String> stringList) {
+    public static void listFiles(Path dir, List<String> stringList) {
         listFilesHelper(dir, "|", stringList);
     }
 
-    private static void listFilesHelper(File dir, String indent, List<String> stringList) {
-        if (dir.isDirectory()) {
-            File[] files = dir.listFiles();
+    private static void listFilesHelper(Path dir, String indent, List<String> stringList) {
+        if (Files.isDirectory(dir)) {
+            File[] files = dir.toFile().listFiles();
             if (files != null) {
                 for (File file : files) {
                     if (file.isDirectory()) {
                         stringList.add(indent + "=> " + file.getName());
-                        listFilesHelper(file, indent + " | ", stringList);
+                        listFilesHelper(file.toPath(), indent + " | ", stringList);
                     } else {
                         if (file.getName().toLowerCase().endsWith(".jar") || file.getName().toLowerCase().endsWith(".litemod")) {
                             stringList.add(indent + "-> " + file.getName());
@@ -41,7 +42,7 @@ public class ModFileLister {
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
                 if (!zipEntry.isDirectory() && (zipEntry.getName().endsWith(".jar") || zipEntry.getName().endsWith(".litemod"))) {
-                    stringList.add(indent + " -> " + zipEntry.getName());
+                    stringList.add(indent + "-> " + zipEntry.getName());
                 }
                 zipEntry = zis.getNextEntry();
             }
