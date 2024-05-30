@@ -114,33 +114,17 @@ public final class LauncherHelper {
         LOG.info("Launching game version: " + selectedVersion);
         File modsDir = new File(profile.getGameDir(), "mods");
         if (modsDir.exists() && modsDir.isDirectory()) {
-            List<File> files = new ArrayList<>();
-            listAllFiles(modsDir, files);
+            LOG.info("Found mod files: ");
 
-            for (File file : files) {
-                if (file.isFile() && file.getName().endsWith(".jar")) {
-                    LOG.info("Found mod file: " + new File(file.getPath(), file.getName()));
-                }
+            List<String> files = new ArrayList<>();
+            ModFileLister.listFiles(modsDir, files);
+            for (String file : files) {
+                System.out.println(file);
             }
         }
 
         Controllers.dialog(launchingStepsPane);
         launch0();
-    }
-
-    private static void listAllFiles(File dir, List<File> fileList) {
-        if (dir != null && dir.exists() && dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        listAllFiles(file, fileList);
-                    } else {
-                        fileList.add(file);
-                    }
-                }
-            }
-        }
     }
 
     public void makeLaunchScript(File scriptFile) {
