@@ -114,13 +114,14 @@ public final class LauncherHelper {
         LOG.info("Launching game version: " + selectedVersion);
         File modsDir = new File(profile.getGameDir(), "mods");
         if (modsDir.exists() && modsDir.isDirectory()) {
-            LOG.info("Found mod files: ");
-
             List<String> files = new ArrayList<>();
+            StringBuilder builder = new StringBuilder();
             ModFileLister.listFiles(modsDir, files);
             for (String file : files) {
-                System.out.println(file);
+                builder.append(file);
+                builder.append("\n");
             }
+            LOG.info("Found mod files: \n" + builder.substring(0, builder.length() - 1));
         }
 
         Controllers.dialog(launchingStepsPane);
