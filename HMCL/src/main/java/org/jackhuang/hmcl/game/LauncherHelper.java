@@ -119,12 +119,16 @@ public final class LauncherHelper {
         if (Files.exists(modsDir) && Files.isDirectory(modsDir)) {
             List<String> files = new ArrayList<>();
             StringBuilder builder = new StringBuilder();
-            ModFileLister.listFiles(modsDir, files);
-            for (String file : files) {
-                builder.append(file);
-                builder.append("\n");
+            try{
+                ModFileLister.listFiles(modsDir, files);
+                for (String file : files) {
+                    builder.append(file);
+                    builder.append("\n");
+                }
+                LOG.info("Files in the mods directory: \n" + builder.substring(0, builder.length() - 1));
+            } catch (IOException e) {
+                LOG.error("Failed to list files in the mods directory", e);
             }
-            LOG.info("Files in the mods directory: \n" + builder.substring(0, builder.length() - 1));
         }
 
         Controllers.dialog(launchingStepsPane);
