@@ -29,9 +29,6 @@ public class ModFileLister {
                         }
                     } else {
                         stringList.add(indent + "-> " + file.getFileName());
-                        if (file.getFileName().toString().toLowerCase().endsWith(".zip")) {
-                            listZipContents(file, indent + " | ", stringList);
-                       }
                    }
                });
            }
