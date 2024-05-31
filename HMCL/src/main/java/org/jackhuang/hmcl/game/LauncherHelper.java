@@ -124,7 +124,7 @@ public final class LauncherHelper {
                 builder.append(file);
                 builder.append("\n");
             }
-            LOG.info("Found mod files: \n" + builder.substring(0, builder.length() - 1));
+            LOG.info("Files in the mods directory: \n" + builder.substring(0, builder.length() - 1));
         }
 
         Controllers.dialog(launchingStepsPane);

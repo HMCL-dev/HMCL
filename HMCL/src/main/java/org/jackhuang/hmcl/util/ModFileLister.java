@@ -24,11 +24,8 @@ public class ModFileLister {
                         stringList.add(indent + "=> " + file.getName());
                         listFilesHelper(file.toPath(), indent + " | ", stringList);
                     } else {
-                        if (file.getName().toLowerCase().endsWith(".jar") || file.getName().toLowerCase().endsWith(".litemod")) {
-                            stringList.add(indent + "-> " + file.getName());
-                        }
+                        stringList.add(indent + "-> " + file.getName());
                         if (file.getName().toLowerCase().endsWith(".zip")) {
-                            stringList.add(indent + "-> " + file.getName());
                             listZipContents(file, indent + " | ", stringList);
                         }
                     }
@@ -41,7 +38,7 @@ public class ModFileLister {
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipFile.toPath()), StandardCharsets.UTF_8)) {
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
-                if (!zipEntry.isDirectory() && (zipEntry.getName().endsWith(".jar") || zipEntry.getName().endsWith(".litemod"))) {
+                if (!zipEntry.isDirectory()) {
                     stringList.add(indent + "-> " + zipEntry.getName());
                 }
                 zipEntry = zis.getNextEntry();
