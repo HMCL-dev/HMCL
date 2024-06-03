@@ -125,20 +125,23 @@ public final class OptiFineInstallTask extends Task<Version> {
     @Override
     public void execute() throws Exception {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
-        if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass) &&
-                !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass) &&
-                !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass) &&
-                !LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass))
+        if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
             throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
 
         List<Library> libraries = new ArrayList<>(4);
         libraries.add(optiFineLibrary);
 
-        FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineInstallerLibrary).toPath());
+        Path optiFineInstallerLibraryPath = gameRepository.getLibraryFile(version, optiFineInstallerLibrary).toPath();
+        FileUtils.copyFile(dest, optiFineInstallerLibraryPath);
+
+        try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineInstallerLibraryPath)) {
+            Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
+        }
 
         // Install launch wrapper modified by OptiFine
         boolean hasLaunchWrapper = false;
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dest)) {
+            Path optiFineLibraryPath = gameRepository.getLibraryFile(version, optiFineLibrary).toPath();
             if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
                 String[] command = {
                         JavaVersion.fromCurrentEnvironment().getBinary().toString(),
@@ -147,13 +150,17 @@ public final class OptiFineInstallTask extends Task<Version> {
                         "optifine.Patcher",
                         gameRepository.getVersionJar(version).getAbsolutePath(),
                         dest.toString(),
-                        gameRepository.getLibraryFile(version, optiFineLibrary).toString()
+                        optiFineLibraryPath.toString()
                 };
                 int exitCode = SystemUtils.callExternalProcess(command);
                 if (exitCode != 0)
                     throw new IOException("OptiFine patcher failed, command: " + new CommandBuilder().addAll(Arrays.asList(command)));
             } else {
-                FileUtils.copyFile(dest, gameRepository.getLibraryFile(version, optiFineLibrary).toPath());
+                FileUtils.copyFile(dest, optiFineLibraryPath);
+            }
+
+            try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineLibraryPath)) {
+                Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
             }
 
             Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
