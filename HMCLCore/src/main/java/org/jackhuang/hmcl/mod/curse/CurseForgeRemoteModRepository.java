@@ -44,7 +44,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
-    private static final int WORD_PERFECT_MATCH_WEIGHT = 50;
+    private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
     public static boolean isAvailable() {
         return !apiKey.isEmpty();
@@ -111,9 +111,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 .header("X-API-KEY", apiKey)
                 .getJson(new TypeToken<Response<List<CurseAddon>>>() {
                 }.getType());
-        Stream<RemoteMod> res = response.getData().stream().map(CurseAddon::toMod);
-        if (sortType != SortType.NAME || searchFilter.isEmpty()) {
-            return new SearchResult(res, (int)Math.ceil((double)response.pagination.totalCount / pageSize));
+        if (searchFilter.isEmpty()) {
+            return new SearchResult(response.getData().stream().map(CurseAddon::toMod), (int)Math.ceil((double)response.pagination.totalCount / pageSize));
         }
 
         // https://github.com/HMCL-dev/HMCL/issues/1549
@@ -125,7 +124,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-        return new SearchResult(res.map(remoteMod -> {
+        return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
             String lowerCaseResult = remoteMod.getTitle().toLowerCase();
             int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
@@ -136,7 +135,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
 
             return pair(remoteMod, diff);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), res, response.pagination.totalCount);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), response.pagination.totalCount);
     }
 
     @Override

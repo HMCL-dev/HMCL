@@ -21,15 +21,16 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.logging.Level;
+import java.util.Locale;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ConfigHolder {
 
@@ -79,7 +80,7 @@ public final class ConfigHolder {
 
         configLocation = locateConfig();
 
-        LOG.log(Level.INFO, "Config location: " + configLocation);
+        LOG.info("Config location: " + configLocation);
 
         configInstance = loadConfig();
         configInstance.addListener(source -> markConfigDirty());
@@ -87,6 +88,9 @@ public final class ConfigHolder {
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> markGlobalConfigDirty());
 
+        Locale.setDefault(config().getLocalization().getLocale());
+        I18n.setLocale(configInstance.getLocalization());
+        LOG.setLogRetention(globalConfig().getLogRetention());
         Settings.init();
 
         if (newlyCreated) {
@@ -97,7 +101,7 @@ public final class ConfigHolder {
                 try {
                     Files.setAttribute(configLocation, "dos:hidden", true);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to set hidden attribute of " + configLocation, e);
+                    LOG.warning("Failed to set hidden attribute of " + configLocation, e);
                 }
             }
         }
@@ -157,7 +161,7 @@ public final class ConfigHolder {
                     ownerChanged = true;
                 }
             } catch (IOException e1) {
-                LOG.log(Level.WARNING, "Failed to get owner");
+                LOG.warning("Failed to get owner");
             }
             try {
                 String content = FileUtils.readText(configLocation);
@@ -169,7 +173,7 @@ public final class ConfigHolder {
                     return deserialized;
                 }
             } catch (JsonParseException e) {
-                LOG.log(Level.WARNING, "Malformed config.", e);
+                LOG.warning("Malformed config.", e);
             }
         }
 
@@ -182,7 +186,7 @@ public final class ConfigHolder {
         try {
             writeToConfig(content);
         } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Failed to save config", e);
+            LOG.error("Failed to save config", e);
         }
     });
 
@@ -214,7 +218,7 @@ public final class ConfigHolder {
                     return deserialized;
                 }
             } catch (JsonParseException e) {
-                LOG.log(Level.WARNING, "Malformed config.", e);
+                LOG.warning("Malformed config.", e);
             }
         }
 
@@ -226,7 +230,7 @@ public final class ConfigHolder {
         try {
             writeToGlobalConfig(content);
         } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Failed to save config", e);
+            LOG.error("Failed to save config", e);
         }
     });
 

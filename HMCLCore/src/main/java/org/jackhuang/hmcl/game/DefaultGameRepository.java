@@ -21,14 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
-import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.GameJsonParseFailedEvent;
-import org.jackhuang.hmcl.event.LoadedOneVersionEvent;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
-import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
-import org.jackhuang.hmcl.event.RemoveVersionEvent;
-import org.jackhuang.hmcl.event.RenameVersionEvent;
+import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.tlauncher.TLauncherVersion;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
@@ -45,18 +38,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * An implementation of classic Minecraft game repository.
@@ -127,9 +113,12 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public File getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER: return getVersionRoot(id);
-            case ROOT_FOLDER: return getBaseDirectory();
-            default: throw new IllegalStateException();
+            case VERSION_FOLDER:
+                return getVersionRoot(id);
+            case ROOT_FOLDER:
+                return getBaseDirectory();
+            default:
+                throw new IllegalStateException();
         }
     }
 
@@ -232,7 +221,7 @@ public class DefaultGameRepository implements GameRepository {
             }
             return true;
         } catch (IOException | JsonParseException | VersionNotFoundException | InvalidPathException e) {
-            LOG.log(Level.WARNING, "Unable to rename version " + from + " to " + to, e);
+            LOG.warning("Unable to rename version " + from + " to " + to, e);
             return false;
         }
     }
@@ -267,7 +256,7 @@ public class DefaultGameRepository implements GameRepository {
             try {
                 FileUtils.deleteDirectory(removedFile);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Unable to remove version folder: " + file, e);
+                LOG.warning("Unable to remove version folder: " + file, e);
             }
             return true;
         } finally {
@@ -317,7 +306,7 @@ public class DefaultGameRepository implements GameRepository {
                 try {
                     version = readVersionJson(json);
                 } catch (Exception e) {
-                    LOG.log(Level.WARNING, "Malformed version json " + id, e);
+                    LOG.warning("Malformed version json " + id, e);
                     // JsonSyntaxException or IOException or NullPointerException(!!)
                     if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
                         return Stream.empty();
@@ -325,7 +314,7 @@ public class DefaultGameRepository implements GameRepository {
                     try {
                         version = readVersionJson(json);
                     } catch (Exception e2) {
-                        LOG.log(Level.SEVERE, "User corrected version json is still malformed", e2);
+                        LOG.error("User corrected version json is still malformed", e2);
                         return Stream.empty();
                     }
                 }
@@ -355,7 +344,7 @@ public class DefaultGameRepository implements GameRepository {
                             throw e;
                         }
                     } catch (IOException e) {
-                        LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
+                        LOG.warning("Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
                         return Stream.empty();
                     }
                 }
@@ -371,7 +360,7 @@ public class DefaultGameRepository implements GameRepository {
                         EventBus.EVENT_BUS.fireEvent(new LoadedOneVersionEvent(this, resolved)) != Event.Result.DENY)
                     versions.put(version.getId(), version);
             } catch (VersionNotFoundException e) {
-                LOG.log(Level.WARNING, "Ignoring version " + version.getId() + " because it inherits from a nonexistent version.");
+                LOG.warning("Ignoring version " + version.getId() + " because it inherits from a nonexistent version.");
             }
         }
 
@@ -402,7 +391,7 @@ public class DefaultGameRepository implements GameRepository {
         try {
             return reconstructAssets(version, assetId);
         } catch (IOException | JsonParseException e) {
-            LOG.log(Level.SEVERE, "Unable to reconstruct asset directory", e);
+            LOG.error("Unable to reconstruct asset directory", e);
             return getAssetDirectory(version, assetId);
         }
     }
@@ -459,6 +448,8 @@ public class DefaultGameRepository implements GameRepository {
             return assetsDir;
 
         if (index.isVirtual()) {
+            Path resourcesDir = getRunDirectory(version).toPath().resolve("resources");
+
             int cnt = 0;
             int tot = index.getObjects().entrySet().size();
             for (Map.Entry<String, AssetObject> entry : index.getObjects().entrySet()) {
@@ -468,6 +459,12 @@ public class DefaultGameRepository implements GameRepository {
                     cnt++;
                     if (!Files.isRegularFile(target))
                         FileUtils.copyFile(original, target);
+
+                    if (index.needMapToResources()) {
+                        target = resourcesDir.resolve(entry.getKey());
+                        if (!Files.isRegularFile(target))
+                            FileUtils.copyFile(original, target);
+                    }
                 }
             }
 
@@ -500,18 +497,20 @@ public class DefaultGameRepository implements GameRepository {
 
     /**
      * read modpack configuration for a version.
+     *
      * @param version version installed as modpack
-     * @param <M> manifest type of ModpackConfiguration
+     * @param <M>     manifest type of ModpackConfiguration
      * @return modpack configuration object, or null if this version is not a modpack.
      * @throws VersionNotFoundException if version does not exist.
-     * @throws IOException if an i/o error occurs.
+     * @throws IOException              if an i/o error occurs.
      */
     @Nullable
     public <M> ModpackConfiguration<M> readModpackConfiguration(String version) throws IOException, VersionNotFoundException {
         if (!hasVersion(version)) throw new VersionNotFoundException(version);
         File file = getModpackConfiguration(version);
         if (!file.exists()) return null;
-        return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<M>>(){}.getType());
+        return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<M>>() {
+        }.getType());
     }
 
     public boolean isModpack(String version) {

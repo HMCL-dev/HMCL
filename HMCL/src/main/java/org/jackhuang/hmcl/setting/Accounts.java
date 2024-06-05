@@ -33,8 +33,6 @@ import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccountFactory;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
@@ -49,7 +47,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Level;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
@@ -57,7 +54,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -74,7 +71,7 @@ public final class Accounts {
                 try {
                     ((AuthlibInjectorDownloader) AUTHLIB_INJECTOR_DOWNLOADER).checkUpdate();
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to check update for authlib-injector", e);
+                    LOG.warning("Failed to check update for authlib-injector", e);
                 }
             });
         }
@@ -83,17 +80,15 @@ public final class Accounts {
     public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
 
     public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
-    public static final YggdrasilAccountFactory FACTORY_MOJANG = YggdrasilAccountFactory.MOJANG;
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MOJANG, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
     private static final Map<AccountFactory<?>, String> factory2type = new HashMap<>();
     static {
         type2factory.put("offline", FACTORY_OFFLINE);
-        type2factory.put("yggdrasil", FACTORY_MOJANG);
         type2factory.put("authlibInjector", FACTORY_AUTHLIB_INJECTOR);
         type2factory.put("microsoft", FACTORY_MICROSOFT);
 
@@ -126,8 +121,6 @@ public final class Accounts {
             return FACTORY_OFFLINE;
         else if (account instanceof AuthlibInjectorAccount)
             return FACTORY_AUTHLIB_INJECTOR;
-        else if (account instanceof YggdrasilAccount)
-            return FACTORY_MOJANG;
         else if (account instanceof MicrosoftAccount)
             return FACTORY_MICROSOFT;
         else
@@ -184,7 +177,7 @@ public final class Accounts {
                         Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
                         }.getType()));
             } catch (Throwable e) {
-                LOG.log(Level.WARNING, "Failed to load global accounts", e);
+                LOG.warning("Failed to load global accounts", e);
             }
         }
 
@@ -196,7 +189,7 @@ public final class Accounts {
                         FileUtils.saveSafely(globalAccountsFile, json);
                     }
                 } catch (IOException e) {
-                    LOG.log(Level.SEVERE, "Failed to save global accounts", e);
+                    LOG.error("Failed to save global accounts", e);
                 }
             }
         });
@@ -215,7 +208,7 @@ public final class Accounts {
         try {
             return factory.fromStorage(storage);
         } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to load account: " + storage, e);
+            LOG.warning("Failed to load account: " + storage, e);
             return null;
         }
     }
@@ -327,7 +320,7 @@ public final class Accounts {
                 try {
                     finalSelected.logIn();
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Failed to log " + finalSelected + " in", e);
+                    LOG.warning("Failed to log " + finalSelected + " in", e);
                 }
             });
         }
@@ -341,7 +334,7 @@ public final class Accounts {
                 try {
                     server.fetchMetadataResponse();
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to fetch authlib-injector server metdata: " + server, e);
+                    LOG.warning("Failed to fetch authlib-injector server metdata: " + server, e);
                 }
             });
         }
@@ -414,7 +407,6 @@ public final class Accounts {
     // ==== Login type name i18n ===
     private static final Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
             pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
-            pair(Accounts.FACTORY_MOJANG, "account.methods.yggdrasil"),
             pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"),
             pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"));
 

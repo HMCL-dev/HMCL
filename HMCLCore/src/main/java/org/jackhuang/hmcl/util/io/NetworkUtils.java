@@ -29,7 +29,6 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class NetworkUtils {
@@ -91,7 +90,7 @@ public final class NetworkUtils {
         connection.setUseCaches(false);
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
-        connection.setRequestProperty("Accept-Language", Locale.getDefault().toString());
+        connection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
         return connection;
     }
 
@@ -131,16 +130,20 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
+        return resolveConnection(conn, null);
+    }
+
     /**
      * This method is a work-around that aims to solve problem when "Location" in
      * stupid server's response is not encoded.
-     * 
+     *
      * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      * @param conn the stupid http connection.
      * @return manually redirected http connection.
      * @throws IOException if an I/O error occurs.
      */
-    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
         int redirect = 0;
         while (true) {
             conn.setUseCaches(false);
@@ -154,6 +157,9 @@ public final class NetworkUtils {
                 String newURL = conn.getHeaderField("Location");
                 conn.disconnect();
 
+                if (redirects != null) {
+                    redirects.add(newURL);
+                }
                 if (redirect > 20) {
                     throw new IOException("Too much redirects");
                 }

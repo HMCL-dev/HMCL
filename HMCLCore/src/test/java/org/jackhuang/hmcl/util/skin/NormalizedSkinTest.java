@@ -9,22 +9,19 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NormalizedSkinTest {
-    private static NormalizedSkin getSkin(String name) throws InvalidSkinException {
-        String path = Paths.get("../HMCL/src/main/resources/assets/img/skin/" + name + ".png").normalize().toAbsolutePath().toUri().toString();
+    private static NormalizedSkin getSkin(String name, boolean slim) throws InvalidSkinException {
+        String path = Paths.get(String.format("../HMCLCore/src/main/resources/assets/img/skin/%s/%s.png", slim ? "slim" : "wide", name)).normalize().toAbsolutePath().toUri().toString();
         return new NormalizedSkin(new Image(path));
     }
 
     @Test
     @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
     public void testIsSlim() throws Exception {
-        assertFalse(getSkin("steve").isSlim());
-        assertTrue(getSkin("alex").isSlim());
-        assertTrue(getSkin("noor").isSlim());
-        assertFalse(getSkin("sunny").isSlim());
-        assertFalse(getSkin("ari").isSlim());
-        assertFalse(getSkin("zuri").isSlim());
-        assertTrue(getSkin("makena").isSlim());
-        assertFalse(getSkin("kai").isSlim());
-        assertTrue(getSkin("efe").isSlim());
+        String[] names = {"alex", "ari", "efe", "kai", "makena", "noor", "steve", "sunny", "zuri"};
+
+        for (String skin : names) {
+            assertTrue(getSkin(skin, true).isSlim());
+            assertFalse(getSkin(skin, false).isSlim());
+        }
     }
 }

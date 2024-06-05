@@ -21,9 +21,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
@@ -33,7 +31,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 @JsonAdapter(GlobalConfig.Serializer.class)
-public class GlobalConfig implements Cloneable, Observable {
+public final class GlobalConfig implements Cloneable, Observable {
 
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
@@ -47,17 +45,15 @@ public class GlobalConfig implements Cloneable, Observable {
         return instance;
     }
 
-    private IntegerProperty agreementVersion = new SimpleIntegerProperty();
+    private final IntegerProperty agreementVersion = new SimpleIntegerProperty();
 
-    private IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
+    private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
 
-    private BooleanProperty multiplayerRelay = new SimpleBooleanProperty();
-
-    private IntegerProperty multiplayerAgreementVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty logRetention = new SimpleIntegerProperty();
 
     private final Map<String, Object> unknownFields = new HashMap<>();
 
-    private transient ObservableHelper helper = new ObservableHelper(this);
+    private final transient ObservableHelper helper = new ObservableHelper(this);
 
     public GlobalConfig() {
         PropertyUtils.attachListener(this, helper);
@@ -106,37 +102,23 @@ public class GlobalConfig implements Cloneable, Observable {
         this.platformPromptVersion.set(platformPromptVersion);
     }
 
-    public boolean isMultiplayerRelay() {
-        return multiplayerRelay.get();
+    public int getLogRetention() {
+        return logRetention.get();
     }
 
-    public BooleanProperty multiplayerRelayProperty() {
-        return multiplayerRelay;
+    public IntegerProperty logRetentionProperty() {
+        return logRetention;
     }
 
-    public void setMultiplayerRelay(boolean multiplayerRelay) {
-        this.multiplayerRelay.set(multiplayerRelay);
+    public void setLogRetention(int logRetention) {
+        this.logRetention.set(logRetention);
     }
 
-    public int getMultiplayerAgreementVersion() {
-        return multiplayerAgreementVersion.get();
-    }
-
-    public IntegerProperty multiplayerAgreementVersionProperty() {
-        return multiplayerAgreementVersion;
-    }
-
-    public void setMultiplayerAgreementVersion(int multiplayerAgreementVersion) {
-        this.multiplayerAgreementVersion.set(multiplayerAgreementVersion);
-    }
-
-    public static class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
+    public static final class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
         private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
                 "agreementVersion",
                 "platformPromptVersion",
-                "multiplayerToken",
-                "multiplayerRelay",
-                "multiplayerAgreementVersion"
+                "logRetention"
         ));
 
         @Override
@@ -148,8 +130,7 @@ public class GlobalConfig implements Cloneable, Observable {
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
             jsonObject.add("platformPromptVersion", context.serialize(src.getPlatformPromptVersion()));
-            jsonObject.add("multiplayerRelay", context.serialize(src.isMultiplayerRelay()));
-            jsonObject.add("multiplayerAgreementVersion", context.serialize(src.getMultiplayerAgreementVersion()));
+            jsonObject.add("logRetention", context.serialize(src.getLogRetention()));
             for (Map.Entry<String, Object> entry : src.unknownFields.entrySet()) {
                 jsonObject.add(entry.getKey(), context.serialize(entry.getValue()));
             }
@@ -166,8 +147,7 @@ public class GlobalConfig implements Cloneable, Observable {
             GlobalConfig config = new GlobalConfig();
             config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setPlatformPromptVersion(Optional.ofNullable(obj.get("platformPromptVersion")).map(JsonElement::getAsInt).orElse(0));
-            config.setMultiplayerRelay(Optional.ofNullable(obj.get("multiplayerRelay")).map(JsonElement::getAsBoolean).orElse(false));
-            config.setMultiplayerAgreementVersion(Optional.ofNullable(obj.get("multiplayerAgreementVersion")).map(JsonElement::getAsInt).orElse(0));
+            config.setLogRetention(Optional.ofNullable(obj.get("logRetention")).map(JsonElement::getAsInt).orElse(20));
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                 if (!knownFields.contains(entry.getKey())) {

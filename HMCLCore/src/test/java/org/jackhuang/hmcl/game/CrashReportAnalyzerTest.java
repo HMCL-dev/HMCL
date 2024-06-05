@@ -282,6 +282,13 @@ public class CrashReportAnalyzerTest {
     }
 
     @Test
+    public void macosFailedToFindServicePortForDisplay() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/macos_failed_to_find_service_port_for_display.txt")),
+                CrashReportAnalyzer.Rule.MACOS_FAILED_TO_FIND_SERVICE_PORT_FOR_DISPLAY);
+    }
+
+    @Test
     public void modName() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/logs/mod_name.txt")),
@@ -446,6 +453,13 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/performant_optifine_incompatibility.txt")),
                 CrashReportAnalyzer.Rule.PERFORMANT_FOREST_OPTIFINE);
+    }
+
+    @Test
+    public void neoforgeForestOptiFineIncompatible() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/neoforgeforest_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.Rule.NEOFORGE_FOREST_OPTIFINE);
     }
 
     @Test

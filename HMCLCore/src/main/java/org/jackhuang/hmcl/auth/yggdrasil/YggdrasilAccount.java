@@ -24,12 +24,11 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class YggdrasilAccount extends ClassicAccount {
+public abstract class YggdrasilAccount extends ClassicAccount {
 
     protected final YggdrasilService service;
     protected final UUID characterUUID;
@@ -197,7 +196,7 @@ public class YggdrasilAccount extends ClassicAccount {
                     try {
                         return YggdrasilService.getTextures(it);
                     } catch (ServerResponseMalformedException e) {
-                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        LOG.warning("Failed to parse texture payload", e);
                         return Optional.empty();
                     }
                 }));

@@ -35,12 +35,11 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.Lang.handleUncaught;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameItem extends Control {
@@ -84,7 +83,7 @@ public class GameItem extends Control {
                 if (config == null) return;
                 tag.set(config.getVersion());
             } catch (IOException | JsonParseException e) {
-                LOG.log(Level.WARNING, "Failed to read modpack configuration from " + version, e);
+                LOG.warning("Failed to read modpack configuration from " + version, e);
             }
         }, Platform::runLater)
                 .exceptionally(handleUncaught);
