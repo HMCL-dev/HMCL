@@ -310,7 +310,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         break;
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
-                        content.setImage(VersionIconType.COMMAND.getIcon());
+                        content.setImage(VersionIconType.DIRT.getIcon());
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));

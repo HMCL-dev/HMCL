@@ -57,6 +57,7 @@ public class VersionIconDialog extends DialogPane {
         pane.getChildren().setAll(
                 createCustomIcon(),
                 createIcon(VersionIconType.GRASS),
+                createIcon(VersionIconType.DIRT),
                 createIcon(VersionIconType.CHEST),
                 createIcon(VersionIconType.CHICKEN),
                 createIcon(VersionIconType.COMMAND),
