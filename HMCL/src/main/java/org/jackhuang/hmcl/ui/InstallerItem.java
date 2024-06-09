@@ -299,7 +299,7 @@ public class InstallerItem extends Control {
                     control.upgradable));
             arrowButton.getStyleClass().add("toggle-icon4");
             arrowButton.visibleProperty().bind(Bindings.createBooleanBinding(
-                    () -> control.installable.get() && control.libraryVersion.get() == null && control.incompatibleLibraryName.get() == null,
+                    () -> control.installable.get() && control.incompatibleLibraryName.get() == null,
                     control.installable, control.libraryVersion, control.incompatibleLibraryName
             ));
             arrowButton.managedProperty().bind(arrowButton.visibleProperty());
