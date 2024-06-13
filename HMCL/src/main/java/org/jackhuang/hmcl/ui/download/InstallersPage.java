@@ -54,7 +54,7 @@ public class InstallersPage extends Control implements WizardPage {
 
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
-        this.group = new InstallerItem.InstallerItemGroup(gameVersion);
+        this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
@@ -63,28 +63,26 @@ public class InstallersPage extends Control implements WizardPage {
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
         txtName.setText(gameVersion);
 
-        group.game.installable.setValue(false);
-
-        for (InstallerItem item : group.getLibraries()) {
-            item.setStyleMode(InstallerItem.Style.CARD);
-        }
-
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
-            library.action.set(e -> {
+            library.installActionProperty().set(e -> {
                 if (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)) {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
                 }
 
-                if (library.incompatibleLibraryName.get() == null)
+                if (library.resolvedStatePropery().get() instanceof InstallerItem.InstallableState)
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
             });
-            library.removeAction.set(e -> {
+            library.removeActionProperty().set(e -> {
                 controller.getSettings().remove(libraryId);
                 reload();
             });
         }
+    }
+
+    protected InstallerItem.Style getInstallerItemStyle() {
+        return InstallerItem.Style.LIST_ITEM;
     }
 
     @Override
@@ -100,11 +98,9 @@ public class InstallersPage extends Control implements WizardPage {
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (controller.getSettings().containsKey(libraryId)) {
-                library.libraryVersion.set(getVersion(libraryId));
-                library.removable.set(true);
+                library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
             } else {
-                library.libraryVersion.set(null);
-                library.removable.set(false);
+                library.versionProperty().set(null);
             }
         }
     }
