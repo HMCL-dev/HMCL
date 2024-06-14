@@ -27,11 +27,11 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
@@ -39,12 +39,8 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.CircularArrayList;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
@@ -54,15 +50,14 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -86,10 +81,6 @@ public final class LogWindow extends Stage {
     private final LogWindowImpl impl = new LogWindowImpl();
     private final ChangeListener<Number> logLinesListener = FXUtils.onWeakChange(config().logLinesProperty(), logLines -> checkLogCount());
 
-    private Consumer<String> exportGameCrashInfoCallback;
-
-    private boolean stopCheckLogCount = false;
-
     private final ManagedProcess gameProcess;
 
     public LogWindow(ManagedProcess gameProcess) {
@@ -107,41 +98,25 @@ public final class LogWindow extends Stage {
         Log log = new Log(parseEscapeSequence(filteredLine), level);
         logs.add(log);
         if (levelShownMap.get(level).get())
-            impl.listView.getItems().add(log);
+            impl.items.add(log);
 
         levelCountMap.get(level).setValue(levelCountMap.get(level).getValue() + 1);
-        if (!stopCheckLogCount) checkLogCount();
-    }
-
-    public void showGameCrashReport(Consumer<String> exportGameCrashInfoCallback) {
-        this.exportGameCrashInfoCallback = exportGameCrashInfoCallback;
-        this.impl.showCrashReport.set(true);
-        stopCheckLogCount = true;
-        for (Log log : impl.listView.getItems()) {
-            if (log.log.contains("Minecraft Crash Report")) {
-                Platform.runLater(() -> {
-                    impl.listView.scrollTo(log);
-                });
-                break;
-            }
-        }
-        show();
+        checkLogCount();
     }
 
     public void showNormal() {
-        this.impl.showCrashReport.set(false);
         show();
     }
 
     private void shakeLogs() {
-        impl.listView.getItems().setAll(logs.stream().filter(log -> levelShownMap.get(log.level).get()).collect(Collectors.toList()));
+        impl.items.setAll(logs.stream().filter(log -> levelShownMap.get(log.level).get()).collect(Collectors.toList()));
     }
 
     private void checkLogCount() {
         while (logs.size() > config().getLogLines()) {
             Log removedLog = logs.removeFirst();
-            if (!impl.listView.getItems().isEmpty() && impl.listView.getItems().get(0) == removedLog) {
-                impl.listView.getItems().remove(0);
+            if (!impl.items.isEmpty() && impl.items.get(0) == removedLog) {
+                impl.items.remove(0);
             }
         }
     }
@@ -158,18 +133,19 @@ public final class LogWindow extends Stage {
     }
 
     public class LogWindowImpl extends Control {
-
+        private final ObservableList<Log> items = new DelayedObservableList<>(FXCollections.observableList(
+                new CircularArrayList<>(config().getLogLines() + 1)
+        ), 250);
         private final ListView<Log> listView = new JFXListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
         private final List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
         private final List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
         private final JFXComboBox<String> cboLines = new JFXComboBox<>();
-        private final BooleanProperty showCrashReport = new SimpleBooleanProperty();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
-            listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
+            listView.setItems(items);
 
             boolean flag = false;
             cboLines.getItems().setAll("500", "2000", "5000", "10000");
@@ -199,7 +175,7 @@ public final class LogWindow extends Stage {
         }
 
         private void onClear() {
-            impl.listView.getItems().clear();
+            impl.items.clear();
             logs.clear();
         }
 
@@ -250,11 +226,6 @@ public final class LogWindow extends Stage {
                     }
                 }
             });
-        }
-
-        private void onExportGameCrashInfo() {
-            if (exportGameCrashInfoCallback == null) return;
-            exportGameCrashInfoCallback.accept(logs.stream().map(x -> x.log).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
         }
 
         @Override
@@ -347,7 +318,7 @@ public final class LogWindow extends Stage {
 
                         setOnMouseClicked(event -> {
                             if (!event.isControlDown()) {
-                                for (ListCell<Log> logListCell: selected) {
+                                for (ListCell<Log> logListCell : selected) {
                                     if (logListCell != this) {
                                         logListCell.pseudoClassStateChanged(SELECTED, false);
                                         if (logListCell.getItem() != null) {
@@ -416,11 +387,6 @@ public final class LogWindow extends Stage {
 
             {
                 BorderPane bottom = new BorderPane();
-
-                JFXButton exportGameCrashInfoButton = new JFXButton(i18n("logwindow.export_game_crash_logs"));
-                exportGameCrashInfoButton.setOnMouseClicked(e -> getSkinnable().onExportGameCrashInfo());
-                exportGameCrashInfoButton.visibleProperty().bind(getSkinnable().showCrashReport);
-                bottom.setLeft(exportGameCrashInfoButton);
 
                 HBox hBox = new HBox(3);
                 bottom.setRight(hBox);
