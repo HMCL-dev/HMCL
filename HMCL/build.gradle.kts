@@ -118,7 +118,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2023 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2024 huangyuhui.",
             "Main-Class" to "org.jackhuang.hmcl.Main",
             "Multi-Release" to "true",
             "Implementation-Version" to project.version,

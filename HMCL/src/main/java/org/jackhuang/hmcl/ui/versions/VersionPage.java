@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -164,9 +165,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearAssets() {
-        File baseDirectory = getProfile().getRepository().getBaseDirectory();
-        FileUtils.deleteDirectoryQuietly(new File(baseDirectory, "assets"));
-        FileUtils.deleteDirectoryQuietly(new File(baseDirectory, "resources"));
+        HMCLGameRepository baseDirectory = getProfile().getRepository();
+        FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getBaseDirectory(), "assets"));
+        if (version.get() != null) {
+            FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getRunDirectory(version.get().getVersion()), "resources"));
+        }
     }
 
     private void clearJunkFiles() {

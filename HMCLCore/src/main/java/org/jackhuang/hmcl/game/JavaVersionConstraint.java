@@ -39,6 +39,8 @@ public enum JavaVersionConstraint {
     VANILLA_JAVA_16(JavaVersionConstraint.RULE_MANDATORY, GameVersionNumber.atLeast("1.17"), VersionNumber.atLeast("16")),
     // Minecraft>=1.18 requires Java 17
     VANILLA_JAVA_17(JavaVersionConstraint.RULE_MANDATORY, GameVersionNumber.atLeast("1.18"), VersionNumber.atLeast("17")),
+    // Minecraft>=1.20.5 requires Java 21
+    VANILLA_JAVA_21(JavaVersionConstraint.RULE_MANDATORY, GameVersionNumber.atLeast("1.20.5"), VersionNumber.atLeast("21")),
     // Minecraft<=1.7.2+Forge requires Java<=7, But LegacyModFixer may fix that problem. So only suggest user using Java 7.
     MODDED_JAVA_7(JavaVersionConstraint.RULE_SUGGESTED, GameVersionNumber.atMost("1.7.2"), VersionNumber.atMost("1.7.999")) {
         @Override
