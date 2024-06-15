@@ -156,7 +156,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
 
-        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints")
+        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
                 .header("X-API-KEY", apiKey)
                 .getJson(new TypeToken<Response<FingerprintMatchesResult>>() {
