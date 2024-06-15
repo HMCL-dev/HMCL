@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends InstallersPage {
@@ -64,11 +64,6 @@ class AdditionalInstallersPage extends InstallersPage {
                 reload();
             });
         }
-    }
-
-    @Override
-    protected InstallerItem.Style getInstallerItemStyle() {
-        return InstallerItem.Style.CARD;
     }
 
     @Override

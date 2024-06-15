@@ -82,7 +82,7 @@ public class InstallersPage extends Control implements WizardPage {
     }
 
     protected InstallerItem.Style getInstallerItemStyle() {
-        return InstallerItem.Style.LIST_ITEM;
+        return InstallerItem.Style.CARD;
     }
 
     @Override
