@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -54,9 +55,6 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -68,9 +66,9 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class LauncherHelper {
 
@@ -115,21 +113,6 @@ public final class LauncherHelper {
         FXUtils.checkFxUserThread();
 
         LOG.info("Launching game version: " + selectedVersion);
-        Path modsDir = Paths.get(profile.getGameDir().getAbsolutePath(), "mods");
-        if (Files.exists(modsDir) && Files.isDirectory(modsDir)) {
-            List<String> files = new ArrayList<>();
-            StringBuilder builder = new StringBuilder();
-            try{
-                ModFileLister.listFiles(modsDir, files);
-                for (String file : files) {
-                    builder.append(file);
-                    builder.append("\n");
-                }
-                LOG.info("Files in the mods directory: \n" + builder.substring(0, builder.length() - 1));
-            } catch (IOException e) {
-                LOG.error("Failed to list files in the mods directory", e);
-            }
-        }
 
         Controllers.dialog(launchingStepsPane);
         launch0();
@@ -203,6 +186,9 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
+
+                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModManager(selectedVersion).getModsDirectory(), 10));
+
                     return new HMCLGameLauncher(
                             repository,
                             version.get(),
