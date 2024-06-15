@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import org.jackhuang.hmcl.util.MurmurHash2;
+import org.jackhuang.hmcl.util.io.ByteArrayBuilder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -33,7 +33,7 @@ public class CurseForgeRemoteModRepositoryTest {
     @Test
     @Disabled
     public void testMurmurHash() throws Exception {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ByteArrayBuilder builder = new ByteArrayBuilder();
         try (InputStream is = Files.newInputStream(Paths.get("C:\\Users\\huang\\Downloads\\JustEnoughCalculation-1.16.5-3.8.5.jar"))) {
             byte[] buf = new byte[1024];
             int len;
@@ -41,13 +41,13 @@ public class CurseForgeRemoteModRepositoryTest {
                 for (int i = 0; i < len; i++) {
                     byte b = buf[i];
                     if (b != 9 && b != 10 && b != 13 && b != 32) {
-                        baos.write(b);
+                        builder.write(b);
                     }
                 }
             }
 
         }
-        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
+        long hash = Integer.toUnsignedLong(MurmurHash2.hash32(builder.getArray(), builder.size(), 1));
 
         assertEquals(hash, 3333498611L);
     }

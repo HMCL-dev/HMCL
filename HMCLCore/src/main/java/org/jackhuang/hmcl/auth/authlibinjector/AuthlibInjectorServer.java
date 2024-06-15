@@ -77,7 +77,7 @@ public class AuthlibInjectorServer implements Observable {
 
             try {
                 AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                server.refreshMetadata(IOUtils.readFullyAsStringWithClosing(conn.getInputStream()));
+                server.refreshMetadata(IOUtils.readFullyAsStringWithoutClosing(conn.getInputStream()));
                 return server;
             } finally {
                 conn.disconnect();

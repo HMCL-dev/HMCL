@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -39,16 +41,14 @@ public final class IOUtils {
      * @return all bytes read from the stream
      * @throws IOException if an I/O error occurs.
      */
-    public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
-        copyTo(stream, result);
-        return result.toByteArray();
+    public static ByteArrayBuilder readFullyWithoutClosing(InputStream stream) throws IOException {
+        ByteArrayBuilder result = ByteArrayBuilder.createFor(stream);
+        result.copyFrom(stream);
+        return result;
     }
 
-    public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
-        copyTo(stream, result);
-        return result.toString("UTF-8");
+    public static String readFullyAsStringWithoutClosing(InputStream stream) throws IOException {
+        return readFullyWithoutClosing(stream).toString();
     }
 
     /**
@@ -58,10 +58,10 @@ public final class IOUtils {
      * @return all bytes read from the stream
      * @throws IOException if an I/O error occurs.
      */
-    public static ByteArrayOutputStream readFully(InputStream stream) throws IOException {
+    public static ByteArrayBuilder readFully(InputStream stream) throws IOException {
         try (InputStream is = stream) {
-            ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(is.available(), 32));
-            copyTo(is, result);
+            ByteArrayBuilder result = ByteArrayBuilder.createFor(is);
+            result.copyFrom(is);
             return result;
         }
     }
@@ -71,7 +71,7 @@ public final class IOUtils {
     }
 
     public static String readFullyAsString(InputStream stream) throws IOException {
-        return readFully(stream).toString("UTF-8");
+        return readFully(stream).toString();
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {
