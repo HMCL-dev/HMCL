@@ -7,7 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-class DirectoryStructurePrinter {
+final class DirectoryStructurePrinter {
+    private DirectoryStructurePrinter() {
+    }
+
     public static String list(Path path, int maxDepth) throws IOException {
         StringBuilder output = new StringBuilder(128);
         list(path, maxDepth, output);
