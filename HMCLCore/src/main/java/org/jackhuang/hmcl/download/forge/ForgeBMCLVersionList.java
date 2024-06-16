@@ -30,13 +30,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
     private final String apiRoot;
@@ -64,7 +67,9 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync(String gameVersion) {
+    public CompletableFuture<?> refreshAsync(String rawGameVersion) {
+        String gameVersion = "1.7.10-pre4".equals(rawGameVersion) ? "1.7.10_pre4" : rawGameVersion;
+
         return CompletableFuture.completedFuture(null)
                 .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/forge/minecraft/" + gameVersion).<List<ForgeVersion>>getJson(new TypeToken<List<ForgeVersion>>() {
                 }.getType())))
