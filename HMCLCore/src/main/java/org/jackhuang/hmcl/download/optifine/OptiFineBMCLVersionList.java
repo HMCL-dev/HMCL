@@ -73,31 +73,30 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     @Override
     public CompletableFuture<?> refreshAsync() {
         return HttpRequest.GET(apiRoot + "/optifine/versionlist").<List<OptiFineVersion>>getJsonAsync(new TypeToken<List<OptiFineVersion>>() {
-                }.getType())
-                .thenAcceptAsync(root -> {
-                    lock.writeLock().lock();
+        }.getType()).thenAcceptAsync(root -> {
+            lock.writeLock().lock();
 
-                    try {
-                        versions.clear();
-                        Set<String> duplicates = new HashSet<>();
-                        for (OptiFineVersion element : root) {
-                            String version = element.getType() + "_" + element.getPatch();
-                            String mirror = "https://bmclapi2.bangbang93.com/optifine/" + toLookupVersion(element.getGameVersion()) + "/" + element.getType() + "/" + element.getPatch();
-                            if (!duplicates.add(mirror))
-                                continue;
+            try {
+                versions.clear();
+                Set<String> duplicates = new HashSet<>();
+                for (OptiFineVersion element : root) {
+                    String version = element.getType() + "_" + element.getPatch();
+                    String mirror = "https://bmclapi2.bangbang93.com/optifine/" + toLookupVersion(element.getGameVersion()) + "/" + element.getType() + "/" + element.getPatch();
+                    if (!duplicates.add(mirror))
+                        continue;
 
-                            boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
+                    boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
 
-                            if (StringUtils.isBlank(element.getGameVersion()))
-                                continue;
+                    if (StringUtils.isBlank(element.getGameVersion()))
+                        continue;
 
-                            String gameVersion = VersionNumber.normalize(fromLookupVersion(element.getGameVersion()));
-                            versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
-                        }
-                    } finally {
-                        lock.writeLock().unlock();
-                    }
-                });
+                    String gameVersion = VersionNumber.normalize(fromLookupVersion(element.getGameVersion()));
+                    versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
+                }
+            } finally {
+                lock.writeLock().unlock();
+            }
+        });
     }
 
     /**
