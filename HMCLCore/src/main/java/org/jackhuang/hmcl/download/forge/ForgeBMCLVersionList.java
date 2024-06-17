@@ -30,13 +30,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
     private final String apiRoot;
@@ -63,10 +66,20 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
+    public String toLookupVersion(String version) {
+        return "1.7.10-pre4".equals(version) ? "1.7.10_pre4" : version;
+    }
+
+    public String fromLookupVersion(String version) {
+        return "1.7.10_pre4".equals(version) ? "1.7.10-pre4" : version;
+    }
+
     @Override
     public CompletableFuture<?> refreshAsync(String gameVersion) {
+        String lookupVersion = toLookupVersion(gameVersion);
+
         return CompletableFuture.completedFuture(null)
-                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/forge/minecraft/" + gameVersion).<List<ForgeVersion>>getJson(new TypeToken<List<ForgeVersion>>() {
+                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/forge/minecraft/" + lookupVersion).<List<ForgeVersion>>getJson(new TypeToken<List<ForgeVersion>>() {
                 }.getType())))
                 .thenAcceptAsync(forgeVersions -> {
                     lock.writeLock().lock();
@@ -80,12 +93,12 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                             List<String> urls = new ArrayList<>();
                             for (ForgeVersion.File file : version.getFiles())
                                 if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
-                                    String classifier = gameVersion + "-" + version.getVersion()
+                                    String classifier = lookupVersion + "-" + version.getVersion()
                                             + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
                                     String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
-                                    String fileName2 = "forge-" + classifier + "-" + gameVersion + "-" + file.getCategory() + "." + file.getFormat();
+                                    String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.getCategory() + "." + file.getFormat();
                                     urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
-                                    urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + gameVersion + "/" + fileName2);
+                                    urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + lookupVersion + "/" + fileName2);
                                     urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
                                             pair("mcversion", version.getGameVersion()),
                                             pair("version", version.getVersion()),
@@ -108,7 +121,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                             }
 
                             versions.put(gameVersion, new ForgeRemoteVersion(
-                                    version.getGameVersion(), version.getVersion(), releaseDate, urls));
+                                    fromLookupVersion(version.getGameVersion()), version.getVersion(), releaseDate, urls));
                         }
                     } finally {
                         lock.writeLock().unlock();
