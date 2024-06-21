@@ -22,11 +22,14 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -45,6 +48,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -188,15 +192,44 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             gameDirSublist.setTitle(i18n("settings.game.working_directory"));
             gameDirSublist.setHasSubtitle(versionId != null);
             gameDirItem.disableProperty().bind(modpack);
-            gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
-                    .setChooserTitle(i18n("settings.game.working_directory.choose"))
-                    .setDirectory(true);
+            gameDirCustomOption = new MultiFileItem.FileOption<GameDirectoryType>(i18n("settings.custom"), GameDirectoryType.CUSTOM) {
+                private final WeakListenerHolder holder = new WeakListenerHolder();
 
+                @Override
+                protected Region createItem(ToggleGroup group) {
+                    Region region = super.createItem(group);
+
+                    holder.add(FXUtils.observeWeak(() -> layout(region), valueProperty(), gameDirItem.selectedDataProperty()));
+                    layout(region);
+                    return region;
+                }
+
+                private void layout(Region region) {
+                    ObservableList<Node> children = gameDirItem.getChildren();
+                    int index = children.lastIndexOf(region);
+
+                    if (!"".equals(getValue()) || gameDirItem.getSelectedData() == data) {
+                        if (index >= 0) {
+                            Logger.LOG.warning("gameDirItem shouldn't contain gameDirCustomOption.");
+                            return;
+                        }
+                        children.add(region);
+                    } else {
+                        if (index < 0) {
+                            Logger.LOG.warning("gameDirItem should contain gameDirCustomOption.");
+                            return;
+                        }
+                        children.remove(index);
+                    }
+                }
+            }.setChooserTitle(i18n("settings.game.working_directory.choose")).setDirectory(true);
             gameDirItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
                     new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.independent"), GameDirectoryType.VERSION_FOLDER),
                     gameDirCustomOption
             ));
+
+            gameDirSublist.getContent().add(new Label(i18n("settings.game.working_directory.should_use_game_repo_feature")));
 
             VBox maxMemoryPane = new VBox(8);
             {
@@ -479,6 +512,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         this.listenerHolder = new WeakListenerHolder();
 
         if (versionId == null) {
+            gameDirSublist.setHasSubtitle(false);
             enableSpecificSettings.set(true);
             state.set(State.fromTitle(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage")));
 
@@ -494,6 +528,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 }
             }));
         } else {
+            gameDirSublist.setHasSubtitle(true);
             navigateToSpecificSettings.unbind();
             navigateToSpecificSettings.set(false);
         }
@@ -619,9 +654,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         profile.getRepository().getVersion(versionId));
             }
         }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
-                        .map(JavaVersion::getBinary).map(Path::toString).orElseGet(() ->
-                                autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"))))
-                .start();
+                .map(JavaVersion::getBinary).map(Path::toString).orElseGet(() ->
+                        autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid")))
+        ).start();
     }
 
     private void editSpecificSettings() {
