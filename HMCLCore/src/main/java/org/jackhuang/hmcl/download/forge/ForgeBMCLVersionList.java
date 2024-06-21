@@ -67,15 +67,15 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
-    private String toLookupVersion(String gameVersion) {
+    private static String toLookupVersion(String gameVersion) {
         return "1.7.10-pre4".equals(gameVersion) ? "1.7.10_pre4" : gameVersion;
     }
 
-    private String fromLookupVersion(String lookupVersion) {
+    private static String fromLookupVersion(String lookupVersion) {
         return "1.7.10_pre4".equals(lookupVersion) ? "1.7.10-pre4" : lookupVersion;
     }
 
-    private String toLookupBranch(String gameVersion, String branch) {
+    private static String toLookupBranch(String gameVersion, String branch) {
         if ("1.7.10-pre4".equals(gameVersion)) {
             return "prerelease";
         }
