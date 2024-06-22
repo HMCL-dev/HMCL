@@ -5,6 +5,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,6 +71,10 @@ public class GameLogUploader {
     }
 
     public static UploadResult upload(HostingPlatform platform, String content) {
+        return upload(platform, content.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static UploadResult upload(HostingPlatform platform, byte[] content) {
         Gson gson = new Gson();
         try {
             switch (platform) {
@@ -77,7 +82,8 @@ public class GameLogUploader {
                     HttpRequest.HttpPostRequest request = HttpRequest.POST("https://api.mclo.gs/1/log");
                     request.header("Content-Type", "application/x-www-form-urlencoded");
                     HashMap<String, String> payload = new HashMap<>();
-                    payload.put("content", content);
+                    //编码
+                    payload.put("content", new String(content, StandardCharsets.UTF_8));
                     request.form(payload);
 
                     String response = request.getString();

@@ -303,16 +303,17 @@ public class GameCrashWindow extends Stage {
     }
 
     private void uploadGameLog(JFXButton uploadButton) {
-        String defaultText = i18n("logwindow.upload_game_crash_logs");
+        Alert alert;
         uploadButton.setDisable(true);
         Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
         String log = null;
         try {
             log = FileUtils.readText(latestLog);
         } catch (IOException ex) {
-            LOG.warning("Failed to read latest.log", ex);
-            uploadButton.setText(i18n("logwindow.upload_game_crash_logs.failed"));
             uploadButton.setDisable(false);
+            alert = new Alert(Alert.AlertType.WARNING, i18n("logwindow.upload_game_crash_logs.failed") + "\n" + StringUtils.getStackTrace(ex));
+            alert.setTitle(i18n("logwindow.upload_game_crash_logs"));
+            alert.showAndWait();
             return;
         }
 
@@ -322,12 +323,16 @@ public class GameCrashWindow extends Stage {
             Clipboard.getSystemClipboard().setContent(new ClipboardContent() {{
                 putString(result.getUrl());
             }});
-            uploadButton.setText(i18n("logwindow.upload_game_crash_logs.copied") + " " + result.getUrl());
+            alert = new Alert(Alert.AlertType.INFORMATION, i18n("logwindow.upload_game_crash_logs.copied") + "\n" + result.getUrl());
+            alert.setTitle(i18n("logwindow.upload_game_crash_logs"));
+            alert.showAndWait();
             return;
         }else{
             LOG.warning("Failed to upload game logs");
-            uploadButton.setText(i18n("logwindow.upload_game_crash_logs.failed"));
             uploadButton.setDisable(false);
+            alert = new Alert(Alert.AlertType.WARNING, i18n("logwindow.upload_game_crash_logs.failed"));
+            alert.setTitle(i18n("logwindow.upload_game_crash_logs"));
+            alert.showAndWait();
             return;
         }
     }
@@ -465,13 +470,15 @@ public class GameCrashWindow extends Stage {
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
                 runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
 
-                JFXButton uploadButton = FXUtils.newRaisedButton(i18n("logwindow.upload_game_crash_logs"));
-                uploadButton.setOnMouseClicked(e -> uploadGameLog(uploadButton));
+                JFXButton uploadLogButton = FXUtils.newRaisedButton(i18n("logwindow.upload_game_crash_logs"));
+                uploadLogButton.setOnMouseClicked(e -> uploadGameLog(uploadLogButton));
+
+
 
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton, uploadButton);
+                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton, uploadLogButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
