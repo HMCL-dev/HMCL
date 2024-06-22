@@ -29,6 +29,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -42,7 +44,9 @@ import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.GameLogUploader;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.Pair;
@@ -298,6 +302,36 @@ public class GameCrashWindow extends Stage {
                 });
     }
 
+    private void uploadGameLog(JFXButton uploadButton) {
+        String defaultText = i18n("logwindow.upload_game_crash_logs");
+        uploadButton.setDisable(true);
+        Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
+        String log = null;
+        try {
+            log = FileUtils.readText(latestLog);
+        } catch (IOException ex) {
+            LOG.warning("Failed to read latest.log", ex);
+            uploadButton.setText(i18n("logwindow.upload_game_crash_logs.failed"));
+            uploadButton.setDisable(false);
+            return;
+        }
+
+        GameLogUploader.UploadResult result = GameLogUploader.upload(GameLogUploader.HostingPlatform.MCLOGS, log);
+        if (result != null) {
+            LOG.info("Uploaded game logs to " + result.getUrl());
+            Clipboard.getSystemClipboard().setContent(new ClipboardContent() {{
+                putString(result.getUrl());
+            }});
+            uploadButton.setText(i18n("logwindow.upload_game_crash_logs.copied") + " " + result.getUrl());
+            return;
+        }else{
+            LOG.warning("Failed to upload game logs");
+            uploadButton.setText(i18n("logwindow.upload_game_crash_logs.failed"));
+            uploadButton.setDisable(false);
+            return;
+        }
+    }
+
     private final class View extends VBox {
 
         View() {
@@ -431,11 +465,13 @@ public class GameCrashWindow extends Stage {
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
                 runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
 
+                JFXButton uploadButton = FXUtils.newRaisedButton(i18n("logwindow.upload_game_crash_logs"));
+                uploadButton.setOnMouseClicked(e -> uploadGameLog(uploadButton));
 
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton);
+                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton, uploadButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
