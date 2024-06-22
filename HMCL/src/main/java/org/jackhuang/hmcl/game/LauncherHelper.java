@@ -798,7 +798,7 @@ public final class LauncherHelper {
         public void onLog(String log, boolean isErrorStream) {
             String filteredLog = forbiddenAccessToken == null ? log : log.replace(forbiddenAccessToken, "<access token>");
 
-            if (isErrorStream)
+            if (isErrorStream && !(filteredLog.startsWith("[authlib-injector]")))
                 System.err.println(filteredLog);
             else
                 System.out.println(filteredLog);
