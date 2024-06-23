@@ -87,7 +87,7 @@ public class InstallersPage extends Control implements WizardPage {
 
     @Override
     public String getTitle() {
-        return i18n("game.version");
+        return group.getGame().versionProperty().get().getVersion();
     }
 
     private String getVersion(String id) {
