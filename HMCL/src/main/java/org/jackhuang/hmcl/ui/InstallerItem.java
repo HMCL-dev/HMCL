@@ -296,6 +296,7 @@ public class InstallerItem extends Control {
     public static class InstallerItemSkin extends SkinBase<InstallerItem> {
         private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
         private static final PseudoClass CARD = PseudoClass.getPseudoClass("card");
+        private static final WeakListenerHolder holder = new WeakListenerHolder();
 
         InstallerItemSkin(InstallerItem control) {
             super(control);
@@ -303,6 +304,7 @@ public class InstallerItem extends Control {
             Pane pane;
             if (control.style == Style.CARD) {
                 pane = new VBox();
+                holder.add(FXUtils.onWeakChangeAndOperate(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7)));
             } else {
                 pane = new HBox();
             }

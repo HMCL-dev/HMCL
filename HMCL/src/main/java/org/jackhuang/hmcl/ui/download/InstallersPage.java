@@ -71,7 +71,7 @@ public class InstallersPage extends Control implements WizardPage {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
                 }
 
-                if (library.resolvedStatePropery().get() instanceof InstallerItem.InstallableState)
+                if (!(library.resolvedStatePropery().get() instanceof InstallerItem.IncompatibleState))
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
             });
             library.removeActionProperty().set(e -> {
