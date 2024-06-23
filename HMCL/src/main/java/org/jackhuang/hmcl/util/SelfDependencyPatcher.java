@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
@@ -69,7 +70,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
 // From: https://github.com/Col-E/Recaf/blob/7378b397cee664ae81b7963b0355ef8ff013c3a7/src/main/java/me/coley/recaf/util/self/SelfDependencyPatcher.java
 public final class SelfDependencyPatcher {
@@ -188,7 +188,7 @@ public final class SelfDependencyPatcher {
         // So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
         // Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
         // So you're out of luck unless you change your JDK or update Java.
-        if (CURRENT_JAVA.getParsedVersion() < 11) {
+        if (JavaRuntime.CURRENT_VERSION < 11) {
             throw new IncompatibleVersionException();
         }
 

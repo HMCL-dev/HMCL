@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
-import org.jackhuang.hmcl.download.java.JavaDownloadTask;
+import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
@@ -159,7 +159,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
                     task.setName(i18n("modpack.scan"));
-                } else if (task instanceof JavaDownloadTask) {
+                } else if (task instanceof MojangJavaDownloadTask) {
                     task.setName(i18n("download.java"));
                 }
 
