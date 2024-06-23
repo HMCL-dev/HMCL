@@ -307,101 +307,37 @@ public class GameCrashWindow extends Stage {
         Alert alert;
         uploadButton.setDisable(true);
         Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
-        String log = null;
-        try {
-            log = FileUtils.readText(latestLog);
-        } catch (IOException ex) {
-            uploadButton.setDisable(false);
-            alert = new Alert(Alert.AlertType.WARNING, i18n("logwindow.upload_game_logs.failed") + "\n" + StringUtils.getStackTrace(ex));
-            alert.setTitle(i18n("logwindow.upload_game_logs"));
-            alert.showAndWait();
-            return;
-        }
+        try{
+            String logs = FileUtils.readText(latestLog);
+            StringBuilder logAllInOne = LogExporter.exportLogsText(repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString());
 
-        GameLogUploader.UploadResult result = GameLogUploader.upload(GameLogUploader.HostingPlatform.MCLOGS, latestLog, log);
-        if (result != null) {
-            LOG.info("Uploaded game logs to " + result.getUrl());
-            Clipboard.getSystemClipboard().setContent(new ClipboardContent() {{
-                putString(result.getUrl());
-            }});
-            alert = new Alert(Alert.AlertType.INFORMATION, i18n("logwindow.upload_game_logs.copied") + "\n" + result.getUrl());
-            alert.setTitle(i18n("logwindow.upload_game_logs"));
-            alert.showAndWait();
-            return;
-        }else{
-            LOG.warning("Failed to upload game logs");
+            GameLogUploader.UploadResult result = GameLogUploader.upload(GameLogUploader.HostingPlatform.MCLOGS, latestLog, logAllInOne.toString());
+            if (result != null) {
+                LOG.info("Uploaded game logs to " + result.getUrl());
+                Clipboard.getSystemClipboard().setContent(new ClipboardContent() {{
+                    putString(result.getUrl());
+                }});
+                alert = new Alert(Alert.AlertType.INFORMATION, i18n("logwindow.upload_game_logs.copied") + "\n" + result.getUrl());
+                alert.setTitle(i18n("logwindow.upload_game_logs"));
+                alert.showAndWait();
+                return;
+            }else{
+                LOG.warning("Failed to upload game logs");
+                uploadButton.setDisable(false);
+                alert = new Alert(Alert.AlertType.WARNING, i18n("logwindow.upload_game_logs.failed"));
+                alert.setTitle(i18n("logwindow.upload_game_logs"));
+                alert.showAndWait();
+                return;
+            }
+        }
+        catch (IOException ex){
+            LOG.warning("Failed to upload game logs", ex);
             uploadButton.setDisable(false);
             alert = new Alert(Alert.AlertType.WARNING, i18n("logwindow.upload_game_logs.failed"));
             alert.setTitle(i18n("logwindow.upload_game_logs"));
             alert.showAndWait();
             return;
         }
-    }
-
-    private void uploadGameCrashInfo(JFXButton uploadCrashButton) {
-        uploadCrashButton.setDisable(true);
-        Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
-
-        CompletableFuture.supplyAsync(() ->
-                        logs.stream().map(Pair::getKey).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
-                .thenComposeAsync(logs ->
-                        LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
-                .handleAsync((result, exception) -> {
-                    try {
-                        if (exception == null) {
-                            GameLogUploader.UploadResult uploadResult = GameLogUploader.upload(
-                                    GameLogUploader.HostingPlatform.FILE_IO,
-                                    logFile,
-                                    new byte[]{}
-                            );
-                            if (uploadResult == null) {
-                                LOG.warning("Failed to upload game crash info");
-                                Platform.runLater(() -> {
-                                    uploadCrashButton.setDisable(false);
-                                    Alert alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed"));
-                                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                                    alert.showAndWait();
-                                });
-                                return null;
-                            } else {
-                                LOG.info("Uploaded game crash info to " + uploadResult.getUrl());
-                                Platform.runLater(() -> {
-                                    Clipboard.getSystemClipboard().setContent(new ClipboardContent() {{
-                                        putString(uploadResult.getUrl());
-                                    }});
-
-                                    Alert alert = new Alert(
-                                            Alert.AlertType.INFORMATION,
-                                            i18n("logwindow.upload_game_logs.copied") + "\n" + uploadResult.getUrl() + "\n"
-                                                    + i18n("logwindow.upload_game_crash_logs.expires_time", uploadResult.getRaw())
-                                    );
-                                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                                    alert.showAndWait();
-                                });
-                                return null;
-                            }
-                        } else {
-                            LOG.warning("Failed to export game crash info", exception);
-                            Platform.runLater(() -> {
-                                uploadCrashButton.setDisable(false);
-                                Alert alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed"));
-                                alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                                alert.showAndWait();
-                            });
-                        }
-                        return null;
-                    }
-                    catch (Exception e) {
-                        LOG.warning("Failed to upload game crash info", e);
-                        Platform.runLater(() -> {
-                            uploadCrashButton.setDisable(false);
-                            Alert alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed"));
-                            alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                            alert.showAndWait();
-                        });
-                       return null;
-                   }
-                });
     }
 
     private final class View extends VBox {
@@ -537,9 +473,6 @@ public class GameCrashWindow extends Stage {
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
                 runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
 
-                JFXButton uploadCrashButton = FXUtils.newRaisedButton(i18n("logwindow.upload_game_crash_logs"));
-                uploadCrashButton.setOnMouseClicked(e -> uploadGameCrashInfo(uploadCrashButton));
-
                 JFXButton uploadLogButton = FXUtils.newRaisedButton(i18n("logwindow.upload_game_logs"));
                 uploadLogButton.setOnMouseClicked(e -> uploadGameLog(uploadLogButton));
 
@@ -548,7 +481,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton, uploadCrashButton, uploadLogButton);
+                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton, uploadLogButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
