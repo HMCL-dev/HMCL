@@ -144,7 +144,7 @@ public class InstallersPage extends Control implements WizardPage {
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
                 control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().setAll(new Label(i18n("archive.name")), control.txtName);
+                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
                 root.setTop(versionNamePane);
             }
 
