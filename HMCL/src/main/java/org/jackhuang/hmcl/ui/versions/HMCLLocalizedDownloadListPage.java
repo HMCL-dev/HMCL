@@ -21,14 +21,30 @@ import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
+import java.util.MissingResourceException;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModDownloadListPage extends DownloadListPage {
-    public ModDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
+    public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, ModrinthRemoteModRepository.MODS);
+    }
+
+    public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MODPACK, CurseForgeRemoteModRepository.MODPACKS, ModrinthRemoteModRepository.MODPACKS);
+    }
+
+    public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, ModrinthRemoteModRepository.RESOURCE_PACKS);
+    }
+
+    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteModRepository.Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
         super(null, callback, versionSelection);
 
-        repository = new Repository();
+        repository = new Repository(type, curseForge, modrinth);
 
         supportChinese.set(true);
         downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
@@ -39,13 +55,22 @@ public class ModDownloadListPage extends DownloadListPage {
     }
 
     private class Repository extends LocalizedRemoteModRepository {
+        private final RemoteModRepository.Type type;
+        private final CurseForgeRemoteModRepository curseForge;
+        private final ModrinthRemoteModRepository modrinth;
+
+        public Repository(Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
+            this.type = type;
+            this.curseForge = curseForge;
+            this.modrinth = modrinth;
+        }
 
         @Override
         protected RemoteModRepository getBackedRemoteModRepository() {
             if ("mods.modrinth".equals(downloadSource.get())) {
-                return ModrinthRemoteModRepository.MODS;
+                return modrinth;
             } else {
-                return CurseForgeRemoteModRepository.MODS;
+                return curseForge;
             }
         }
 
@@ -60,16 +85,22 @@ public class ModDownloadListPage extends DownloadListPage {
 
         @Override
         public Type getType() {
-            return Type.MOD;
+            return type;
         }
     }
 
     @Override
     protected String getLocalizedCategory(String category) {
-        if ("mods.modrinth".equals(downloadSource.get())) {
-            return i18n("modrinth.category." + category);
-        } else {
-            return i18n("curse.category." + category);
+        if (category.isEmpty()) {
+            return "";
+        }
+
+        String key = ("mods.modrinth".equals(downloadSource.get()) ? "modrinth" : "curse") + ".category." + category;
+        try {
+            return I18n.getResourceBundle().getString(key);
+        } catch (MissingResourceException e) {
+            LOG.warning("Cannot find key " + key + " in resource bundle", e);
+            return category;
         }
     }
 
