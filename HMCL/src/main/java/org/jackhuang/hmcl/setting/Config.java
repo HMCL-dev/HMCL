@@ -133,6 +133,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("autoDownloadThreads")
     private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
+    @SerializedName("autoSwitchGameLanguage")
+    private BooleanProperty autoSwitchGameLanguage = new SimpleBooleanProperty(true);
+
     @SerializedName("downloadThreads")
     private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
 
@@ -141,6 +144,9 @@ public final class Config implements Cloneable, Observable {
 
     @SerializedName("autoChooseDownloadType")
     private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
+
+    @SerializedName("autoCopyCodeWhenLoginWithMicrosoft")
+    private BooleanProperty autoCopyCodeWhenLoginWithMicrosoft = new SimpleBooleanProperty(true);
 
     @SerializedName("versionListSource")
     private StringProperty versionListSource = new SimpleStringProperty("balanced");
@@ -497,6 +503,18 @@ public final class Config implements Cloneable, Observable {
         return autoChooseDownloadType.get();
     }
 
+    public BooleanProperty autoCopyCodeWhenLoginWithMicrosoftProperty() {
+        return autoCopyCodeWhenLoginWithMicrosoft;
+    }
+
+    public void setAutoCopyCodeWhenLoginWithMicrosoft(boolean autoCopyCodeWhenLoginWithMicrosoft) {
+        this.autoCopyCodeWhenLoginWithMicrosoft.set(autoCopyCodeWhenLoginWithMicrosoft);
+    }
+
+    public boolean isAutoCopyCodeWhenLoginWithMicrosoft() {
+        return autoCopyCodeWhenLoginWithMicrosoft.get();
+    }
+
     public BooleanProperty autoChooseDownloadTypeProperty() {
         return autoChooseDownloadType;
     }
@@ -676,4 +694,17 @@ public final class Config implements Cloneable, Observable {
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
     }
+
+    public BooleanProperty autoSwitchGameLanguageProperty() {
+        return autoSwitchGameLanguage;
+    }
+
+    public void setAutoSwitchGameLanguage(boolean autoSwitchGameLanguage) {
+        this.autoSwitchGameLanguage.set(autoSwitchGameLanguage);
+    }
+
+    public boolean isAutoSwitchGameLanguage() {
+        return autoSwitchGameLanguage.get();
+    }
+
 }
