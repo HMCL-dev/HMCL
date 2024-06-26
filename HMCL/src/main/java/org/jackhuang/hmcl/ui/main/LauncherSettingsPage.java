@@ -74,7 +74,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         runInFX(() -> FXUtils.installFastTooltip(settingsItem, i18n("settings.type.global.manage")));
                         settingsItem.setOnAction(e -> tab.select(gameTab));
                     })
-                    .startCategory(i18n("launcher"))
+                    .startCategory(i18n("launcher").toUpperCase())
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("settings.launcher.general"));
                         settingsItem.setLeftGraphic(wrap(SVG.APPLICATION_OUTLINE));
@@ -93,7 +93,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(downloadTab));
                         downloadItem.setOnAction(e -> tab.select(downloadTab));
                     })
-                    .startCategory(i18n("help"))
+                    .startCategory(i18n("help").toUpperCase())
                     .addNavigationDrawerItem(helpItem -> {
                         helpItem.setTitle(i18n("help"));
                         helpItem.setLeftGraphic(wrap(SVG.HELP_CIRCLE_OUTLINE));
