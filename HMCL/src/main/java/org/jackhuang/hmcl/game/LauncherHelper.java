@@ -798,16 +798,14 @@ public final class LauncherHelper {
         public void onLog(String log, boolean isErrorStream) {
             String filteredLog = forbiddenAccessToken == null ? log : log.replace(forbiddenAccessToken, "<access token>");
 
-            if (isErrorStream && !(filteredLog.startsWith("[authlib-injector]")))
-                System.err.println(filteredLog);
-            else
-                System.out.println(filteredLog);
-
             Log4jLevel level;
-            if (isErrorStream && !(filteredLog.startsWith("[authlib-injector]")))
+            if (isErrorStream && !(filteredLog.startsWith("[authlib-injector]"))) {
+                System.err.println(filteredLog);
                 level = Log4jLevel.ERROR;
-            else
+            } else {
+                System.out.println(filteredLog);
                 level = showLogs ? Optional.ofNullable(Log4jLevel.guessLevel(filteredLog)).orElse(Log4jLevel.INFO) : null;
+            }
 
             synchronized (this) {
                 logs.add(filteredLog);
