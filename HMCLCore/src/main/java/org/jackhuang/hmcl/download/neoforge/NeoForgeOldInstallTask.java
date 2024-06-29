@@ -36,7 +36,7 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +125,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                 throw new Exception("Game processor jar does not have main class " + jar);
 
             List<String> command = new ArrayList<>();
-            command.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
+            command.add(JavaRuntime.getDefault().getBinary().toString());
             command.add("-cp");
 
             List<String> classpath = new ArrayList<>(processor.getClasspath().size() + 1);
