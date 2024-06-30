@@ -48,6 +48,10 @@ public class GameVersionNumberTest {
         assertTrue(GameVersionNumber.asGameVersion(version1).compareTo(version2) < 0, errorMessage(version1, version2));
     }
 
+    private static String toString(GameVersionNumber gameVersionNumber) {
+        return gameVersionNumber.getClass().getSimpleName();
+    }
+
     private static void assertOrder(String... versions) {
         for (int i = 0; i < versions.length - 1; i++) {
             GameVersionNumber version1 = GameVersionNumber.asGameVersion(versions[i]);
@@ -58,8 +62,8 @@ public class GameVersionNumberTest {
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = GameVersionNumber.asGameVersion(versions[j]);
 
-                assertEquals(-1, version1.compareTo(version2), String.format("version1=%s, version2=%s", versions[i], versions[j]));
-                assertEquals(1, version2.compareTo(version1), String.format("version1=%s, version2=%s", versions[i], versions[j]));
+                assertEquals(-1, version1.compareTo(version2), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
+                assertEquals(1, version2.compareTo(version1), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
             }
         }
 
@@ -73,10 +77,7 @@ public class GameVersionNumberTest {
             assertInstanceOf(GameVersionNumber.Old.class, version);
             GameVersionNumber.Old old = (GameVersionNumber.Old) version;
             assertEquals(GameVersionNumber.Type.BETA, old.type);
-            assertEquals(1, old.major);
-            assertEquals(0, old.minor);
-            assertEquals(0, old.patch);
-            assertEquals(0, old.additional);
+            assertEquals(VersionNumber.asVersion("1.0"), old.versionNumber);
         }
 
         {
@@ -84,10 +85,7 @@ public class GameVersionNumberTest {
             assertInstanceOf(GameVersionNumber.Old.class, version);
             GameVersionNumber.Old old = (GameVersionNumber.Old) version;
             assertEquals(GameVersionNumber.Type.BETA, old.type);
-            assertEquals(1, old.major);
-            assertEquals(0, old.minor);
-            assertEquals(0, old.patch);
-            assertEquals(1, old.additional);
+            assertEquals(VersionNumber.asVersion("1.0_01"), old.versionNumber);
         }
     }
 
@@ -138,15 +136,24 @@ public class GameVersionNumberTest {
                 "inf-20100330-2",
                 "inf-20100618",
                 "a1.0.4",
+                "a1.0.8_01",
+                "a1.0.10",
+                "a1.0.13_01-1",
                 "a1.0.17_02",
                 "a1.0.17_04",
                 "a1.1.0",
+                "a1.1.1",
                 "b1.0",
                 "b1.0_01",
                 "b1.1_02",
                 "b1.2",
+                "b1.8-pre1-2",
                 "b1.8.1",
                 "0.0",
+                "1.0.0-rc1",
+                "1.0.0-rc2-1",
+                "1.0.0-rc2-2",
+                "1.0.0-rc2-3",
                 "1.0",
                 "11w47a",
                 "1.1",
