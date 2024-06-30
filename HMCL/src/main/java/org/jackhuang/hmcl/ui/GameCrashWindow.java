@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -29,6 +30,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -43,6 +46,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.GameLogUploader;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.Pair;
@@ -58,6 +62,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -298,6 +303,43 @@ public class GameCrashWindow extends Stage {
                 });
     }
 
+    private void uploadGameLog(JFXButton uploadButton) {
+        Alert alert;
+        uploadButton.setDisable(true);
+        Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
+        try{
+            String logs = FileUtils.readText(latestLog);
+            StringBuilder logAllInOne = LogExporter.exportLogsText(repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString());
+
+            GameLogUploader.UploadResult result = GameLogUploader.upload(GameLogUploader.HostingPlatform.MCLOGS, latestLog, logAllInOne.toString());
+            if (result != null) {
+                LOG.info("Uploaded game logs to " + result.getUrl());
+                Clipboard.getSystemClipboard().setContent(new ClipboardContent() {{
+                    putString(result.getUrl());
+                }});
+                alert = new Alert(Alert.AlertType.INFORMATION, i18n("logwindow.upload_game_logs.copied") + "\n" + result.getUrl());
+                alert.setTitle(i18n("logwindow.upload_game_logs"));
+                alert.showAndWait();
+                return;
+            }else{
+                LOG.warning("Failed to upload game logs");
+                uploadButton.setDisable(false);
+                alert = new Alert(Alert.AlertType.WARNING, i18n("logwindow.upload_game_logs.failed"));
+                alert.setTitle(i18n("logwindow.upload_game_logs"));
+                alert.showAndWait();
+                return;
+            }
+        }
+        catch (IOException ex){
+            LOG.warning("Failed to upload game logs", ex);
+            uploadButton.setDisable(false);
+            alert = new Alert(Alert.AlertType.WARNING, i18n("logwindow.upload_game_logs.failed"));
+            alert.setTitle(i18n("logwindow.upload_game_logs"));
+            alert.showAndWait();
+            return;
+        }
+    }
+
     private final class View extends VBox {
 
         View() {
@@ -431,11 +473,15 @@ public class GameCrashWindow extends Stage {
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
                 runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
 
+                JFXButton uploadLogButton = FXUtils.newRaisedButton(i18n("logwindow.upload_game_logs"));
+                uploadLogButton.setOnMouseClicked(e -> uploadGameLog(uploadLogButton));
+
+
 
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton);
+                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton, uploadLogButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);

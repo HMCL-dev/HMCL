@@ -23,9 +23,11 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,6 +85,67 @@ public final class LogExporter {
                 throw new UncheckedIOException(e);
             }
         });
+    }
+
+    private static StringBuilder appendFileWithDivider(StringBuilder logsText, String fileName, String fileData) {
+        return logsText.append("\n")
+                .append("[00:00:00] $> FILE DATA START [ \"")
+                .append(fileName)
+                .append("\" ] ")
+                .append("=====================================================")
+                .append("=====================================================")
+                .append("\n\n\n\n\n")
+                .append(fileData)
+                .append("\n\n\n\n\n")
+                .append("[00:00:00] $> FILE DATA END [ \"")
+                .append(fileName)
+                .append("\" ] ")
+                .append("=====================================================")
+                .append("=====================================================")
+                .append("\n\n\n");
+    }
+
+    public static StringBuilder exportLogsText(DefaultGameRepository gameRepository, String versionId, String logs, String launchScript) {
+        Path runDirectory = gameRepository.getRunDirectory(versionId).toPath();
+        Path baseDirectory = gameRepository.getBaseDirectory().toPath();
+        List<String> versions = new ArrayList<>();
+
+        String currentVersionId = versionId;
+        HashSet<String> resolvedSoFar = new HashSet<>();
+        while (true) {
+            if (resolvedSoFar.contains(currentVersionId)) break;
+            resolvedSoFar.add(currentVersionId);
+            Version currentVersion = gameRepository.getVersion(currentVersionId);
+            versions.add(currentVersionId);
+
+            if (StringUtils.isNotBlank(currentVersion.getInheritsFrom())) {
+                currentVersionId = currentVersion.getInheritsFrom();
+            } else {
+                break;
+            }
+        }
+
+        StringBuilder logsText = new StringBuilder();
+        appendFileWithDivider(logsText, "hmcl.log", LOG.getLogs());
+        appendFileWithDivider(logsText, "minecraft.log", logs);
+        appendFileWithDivider(logsText,
+                OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh", Logger.filterForbiddenToken(launchScript)
+        );
+        try{
+            for (String id : versions) {
+                Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
+                if (Files.exists(versionJson)) {
+                    try(FileInputStream fis = new FileInputStream(versionJson.toFile())) {
+                        byte[] bytes = new byte[fis.available()];
+                        fis.read(bytes);
+                        appendFileWithDivider(logsText, id + ".json", new String(bytes, StandardCharsets.UTF_8));
+                    }
+                }
+            }
+        }catch (IOException e){
+            throw new UncheckedIOException(e);
+        }
+        return logsText;
     }
 
     private static void processLogs(Path directory, String fileExtension, String logDirectory, Zipper zipper) {
