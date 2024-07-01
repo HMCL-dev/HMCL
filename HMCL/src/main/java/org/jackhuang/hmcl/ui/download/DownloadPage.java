@@ -170,7 +170,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
 
-        Controllers.prompt(i18n("archive.name"), (result, resolve, reject) -> {
+        Controllers.prompt(i18n("archive.file.name"), (result, resolve, reject) -> {
             if (!OperatingSystem.isNameValid(result)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;

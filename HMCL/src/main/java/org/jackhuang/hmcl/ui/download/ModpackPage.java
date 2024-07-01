@@ -48,7 +48,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
             BorderPane archiveNamePane = new BorderPane();
             {
-                Label label = new Label(i18n("archive.name"));
+                Label label = new Label(i18n("archive.file.name"));
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                 archiveNamePane.setLeft(label);
 
