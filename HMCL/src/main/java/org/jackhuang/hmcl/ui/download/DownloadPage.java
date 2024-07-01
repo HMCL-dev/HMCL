@@ -103,10 +103,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         {
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("download.game"))
+                    .startCategory(i18n("download.game").toUpperCase())
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("game"));
-                        item.setLeftGraphic(wrap(SVG.GAMEPAD));
+                        item.setLeftGraphic(wrap(SVG.CUBE));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
                         item.setOnAction(e -> tab.select(newGameTab));
                     })
@@ -116,7 +116,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
                         settingsItem.setOnAction(e -> tab.select(modpackTab));
                     })
-                    .startCategory(i18n("download.content"))
+                    .startCategory(i18n("download.content").toUpperCase())
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
                         item.setLeftGraphic(wrap(SVG.PUZZLE));

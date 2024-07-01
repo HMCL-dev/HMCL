@@ -95,7 +95,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                 VBox boxMethods = new VBox();
                 {
                     boxMethods.getStyleClass().add("advanced-list-box-content");
-                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create")));
+                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create").toUpperCase()));
                     FXUtils.setLimitWidth(boxMethods, 200);
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
