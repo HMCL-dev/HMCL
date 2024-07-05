@@ -19,14 +19,29 @@ const LPCWSTR PROGRAM_DIRS[] = {L"ProgramFiles", L"ProgramFiles(x86)",
 
 /* Here we find the java from Environment Variable and Registry, which is fast,
  * and store the result to 'path'. */
-void ScanJava(std::wstring& result, int& status) {
+void ScanJava(SYSTEM_INFO& systemInfo, std::wstring& result, int& status) {
   status = JAVA_STATUS_NOT_FOUND;
 
-  // If 'HMCL_JAVA_HOME' is settled, this value MUST be used without any check.
+  // If 'HMCL_JAVA_HOME' is settled, this value MUST be used without any check as it can be used.
   if (ERROR_SUCCESS == MyGetEnvironmentVariable(L"HMCL_JAVA_HOME", result)) {
     MyPathNormalize(result);
     status = JAVA_STATUS_BEST;
     return;
+  }
+
+  {
+    std::wstring buffer;
+    if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, buffer)) ||
+        SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, buffer))) {
+      MyPathNormalize(buffer);
+      MyPathAppend(buffer, L".hmcl\\runtime");
+      MyPathAddBackslash(buffer);
+
+      if (DeterminJavaHome(buffer, result, status) &&
+        status != JAVA_STATUS_NOT_FOUND) {
+      return;
+    }
+    }
   }
 
   std::wstring currentResult;
@@ -61,7 +76,8 @@ void ScanJava(std::wstring& result, int& status) {
               part[partL2 - 3] == L'i' && part[partL2 - 2] == L'n' &&
               part[partL2 - 1] == L'\\') {
             part.resize(partL2 - 5);
-            if (DeterminJavaHome(part, result, status) && status == JAVA_STATUS_BEST) {
+            if (DeterminJavaHome(part, result, status) &&
+                status == JAVA_STATUS_BEST) {
               return;
             }
           }
@@ -92,7 +108,7 @@ void ScanJava(std::wstring& result, int& status) {
 }
 
 void ScanJavaRegistry(HKEY rootKey, LPCWSTR subKey, std::wstring& path,
-                  int& status) {
+                      int& status) {
   WCHAR javaVer[MAX_KEY_LENGTH];  // buffer for subkey name, special for
                                   // JavaVersion
   DWORD cbName;                   // size of name string
@@ -164,7 +180,8 @@ void ScanJavaFolder(std::wstring root, std::wstring& result, int& status) {
 
   if (hFind != INVALID_HANDLE_VALUE) {
     do {
-      if (DeterminJavaHome(root + data.cFileName, result, status) && status == JAVA_STATUS_BEST) {
+      if (DeterminJavaHome(root + data.cFileName, result, status) &&
+          status == JAVA_STATUS_BEST) {
         goto done;
       }
     } while (FindNextFile(hFind, &data));
@@ -174,7 +191,8 @@ void ScanJavaFolder(std::wstring root, std::wstring& result, int& status) {
   }
 }
 
-boolean DeterminJavaHome(std::wstring target, std::wstring& result, int& status) {
+boolean DeterminJavaHome(std::wstring target, std::wstring& result,
+                         int& status) {
   Version version(L"");
   std::wstring currentRoot = target + L"";
   MyPathAppend(currentRoot, std::wstring(L"bin\\javaw.exe"));

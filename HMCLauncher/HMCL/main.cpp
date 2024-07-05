@@ -78,7 +78,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   std::wstring path;
   int status;
 
-  ScanJava(path, status);
+  ScanJava(systemInfo, path, status);
 
   if (status != JAVA_STATUS_NOT_FOUND) {
     MyPathAppend(path, std::wstring(L"bin\\javaw.exe"));

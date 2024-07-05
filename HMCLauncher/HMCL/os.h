@@ -30,6 +30,8 @@ bool MyCreateProcess(const std::wstring &command, const std::wstring &workdir);
 // Check if file lpPath exists.
 bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter);
 
+HRESULT MySHGetFolderPath(int csidl, std::wstring &out);
+
 bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version);
 
 void MyPathNormalize(std::wstring& path);
