@@ -163,6 +163,11 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
         }
 
         String path = '/' + value.substring(start, end).replace('.', '/');
+        int ll = path.lastIndexOf('/');
+        if (ll == -1) {
+            return false;
+        }
+        path = path.substring(0, ll);
 
         ModManager mods = input.getRepository().getModManager(input.getVersion().getId());
 
