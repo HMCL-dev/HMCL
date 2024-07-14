@@ -25,7 +25,8 @@ public interface AnalyzableType<T> {
                 new CodePageAnalyzer(),
                 new JRE32BitAnalyzer(),
                 new JREVersionAnalyzer(),
-                new VirtualMemoryAnalyzer()
+                new VirtualMemoryAnalyzer(),
+                new BadModAnalyzer()
         );
 
         public List<Analyzer<LogAnalyzable>> getAnalyzers() {

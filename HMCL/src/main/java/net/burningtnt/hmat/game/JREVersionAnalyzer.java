@@ -86,12 +86,7 @@ public class JREVersionAnalyzer implements Analyzer<LogAnalyzable> {
                             }
                         }
                         return JavaManager.installJava(DownloadProviders.getDownloadProvider(), Platform.CURRENT_PLATFORM, javaVersion);
-                    }).thenAcceptAsync(Schedulers.javafx(), jre -> {
-                        VersionSetting vs = input.getRepository().getVersionSetting(input.getVersion().getId());
-                        vs.setJavaVersionType(JavaVersionType.DETECTED);
-                        vs.setJavaVersion(jre.getVersion());
-                        vs.setDefaultJavaPath(jre.getBinary().toString());
-                    }))));
+                    }).thenAcceptAsync(Schedulers.javafx(), SolverCollection.ofModifyJRE(input)))));
 
                     return ControlFlow.BREAK_OTHER;
                 }

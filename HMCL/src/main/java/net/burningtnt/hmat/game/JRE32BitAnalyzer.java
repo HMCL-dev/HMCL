@@ -3,7 +3,6 @@ package net.burningtnt.hmat.game;
 import net.burningtnt.hmat.AnalyzeResult;
 import net.burningtnt.hmat.Analyzer;
 import net.burningtnt.hmat.LogAnalyzable;
-import net.burningtnt.hmat.solver.Solver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -37,7 +36,7 @@ public class JRE32BitAnalyzer implements Analyzer<LogAnalyzable> {
 
     @NotNull
     private Analyzer.ControlFlow apply(LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) {
-        results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.LOG_GAME_JRE_32BIT, Solver.ofUninstallJRE(input)));
+        results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.LOG_GAME_JRE_32BIT, SolverCollection.ofReinstallJRE(input)));
         return ControlFlow.BREAK_OTHER;
     }
 }
