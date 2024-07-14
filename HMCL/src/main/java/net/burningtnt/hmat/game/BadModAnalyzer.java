@@ -35,7 +35,6 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
     private static final String C_CB_STRING = "Caused by: ";
     private static final int C_CB_LENGTH = C_CB_STRING.length();
 
-
     @Override
     public ControlFlow analyze(LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws Exception {
         List<String> logs = input.getLogs();
