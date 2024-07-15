@@ -35,6 +35,9 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
     private static final String C_CB_STRING = "Caused by: ";
     private static final int C_CB_LENGTH = C_CB_STRING.length();
 
+    /**
+     * It will be impossible to read these codes.
+     */
     @Override
     public ControlFlow analyze(LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws Exception {
         List<String> logs = input.getLogs();
@@ -64,15 +67,18 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
             }
         }
 
+        // If this line exists, we check the first errors after it.
         for (int l = headI + 1; l < length; l++) {
             String line = logs.get(l);
 
-            int start = line.startsWith(C_CB_STRING) ? C_CB_LENGTH : 0;
+            // Must be something like: [Caused by: ] xxx: xxx
+            int start = findErrorStart(line);
             int pl = line.indexOf(':', start);
             if (pl == -1 || line.charAt(pl + 1) != ' ' || line.indexOf(':', pl + 2) != -1 || checkInvalidCP(line, start, pl)) {
                 continue;
             }
 
+            // An error must have at least one stack.
             {
                 String next = logs.get(l + 1);
                 if (next.isEmpty() || next.charAt(0) != '\t') {
@@ -80,10 +86,12 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
                 }
             }
 
+            // Check whether the classpath of the error is invalid
             if (checkCP(line, start, pl, input, results)) {
                 return ControlFlow.CONTINUE;
             }
 
+            // check all the frames.
             for (int l2 = l + 1; l2 < length; l2++) {
                 String ls = logs.get(l2);
                 if (!ls.startsWith(C_AT_STRING)) {
@@ -109,12 +117,13 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
 
         out:
         for (int l = headI; l >= 0; l--) {
-            if (logs.get(l).startsWith(C_AT_STRING)) {
+            if (logs.get(l).startsWith(C_AT_STRING)) { // find a at string.
                 for (int l2 = l - 1; l2 >= 0; l2--) {
                     String line2 = logs.get(l2);
 
+                    // find the error line
                     if (!line2.startsWith(C_AT_STRING)) {
-                        int start2 = line2.startsWith(C_CB_STRING) ? C_CB_LENGTH : 0;
+                        int start2 = findErrorStart(line2);
 
                         int pl = line2.indexOf(':', start2);
                         if (pl == -1 || line2.charAt(pl + 1) != ' ' || line2.indexOf(':', pl + 2) != -1 || checkInvalidCP(line2, 0, pl)) {
@@ -126,6 +135,7 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
                             return ControlFlow.CONTINUE;
                         }
 
+                        // check each stack
                         for (int l3 = l2 + 1; l3 < l; l3++) {
                             String line3 = logs.get(l3);
                             int ce = line3.indexOf('(', C_AT_LENGTH);
@@ -144,6 +154,10 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
         }
 
         return ControlFlow.CONTINUE;
+    }
+
+    private int findErrorStart(String value) {
+        return value.startsWith(C_CB_STRING) ? C_CB_LENGTH : 0;
     }
 
     /**
