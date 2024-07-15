@@ -64,11 +64,12 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
             }
         }
 
-        for (int l = headI; l < length; l++) {
+        for (int l = headI + 1; l < length; l++) {
             String line = logs.get(l);
 
-            int pl = line.indexOf(':');
-            if (pl == -1 || line.charAt(pl + 1) != ' ' || line.indexOf(':', pl + 2) != -1 || checkInvalidCP(line, 0, pl)) {
+            int start = line.startsWith(C_CB_STRING) ? C_CB_LENGTH : 0;
+            int pl = line.indexOf(':', start);
+            if (pl == -1 || line.charAt(pl + 1) != ' ' || line.indexOf(':', pl + 2) != -1 || checkInvalidCP(line, start, pl)) {
                 continue;
             }
 
@@ -79,13 +80,14 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
                 }
             }
 
-            if (checkCP(line, 0, pl, input, results)) {
+            if (checkCP(line, start, pl, input, results)) {
                 return ControlFlow.CONTINUE;
             }
 
-            for (int i2 = l + 2; i2 < length; i2++) {
-                String ls = logs.get(i2);
+            for (int l2 = l + 1; l2 < length; l2++) {
+                String ls = logs.get(l2);
                 if (!ls.startsWith(C_AT_STRING)) {
+                    l = l2 - 1;
                     break;
                 }
 
@@ -95,6 +97,7 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
                 }
 
                 if (checkInvalidCP(ls, C_AT_LENGTH, ce)) {
+                    l = l2;
                     break;
                 }
 
@@ -156,7 +159,7 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
      */
     private boolean checkCP(String value, int start, int end, LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws IOException {
         for (String tep : TRUSTED_ERROR_PREFIX) {
-            if (start - end >= tep.length() && value.regionMatches(start, tep, 0, tep.length())) {
+            if (end - start >= tep.length() && value.regionMatches(start, tep, 0, tep.length())) {
                 return false;
             }
         }
@@ -166,7 +169,7 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
         if (ll == -1) {
             return false;
         }
-        path = path.substring(0, ll);
+        path = path.substring(0, ll) + ".class";
 
         ModManager mods = input.getRepository().getModManager(input.getVersion().getId());
 
