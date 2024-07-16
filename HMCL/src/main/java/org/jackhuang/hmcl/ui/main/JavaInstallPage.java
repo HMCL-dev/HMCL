@@ -20,136 +20,136 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.java.HMCLJavaRepository;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
-import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTreeSupplier;
 
-import java.util.concurrent.CancellationException;
+import java.io.File;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class JavaInstallPage extends StackPane implements DecoratorPage {
+public final class JavaInstallPage extends WizardSinglePage {
 
     private static final Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z0-9.\\-_]+");
 
-    private static void addInfo(ComponentList list, String name, String value) {
-        BorderPane pane = new BorderPane();
+    private final ArchiveFileTreeSupplier<?, ?> treeSupplier;
 
-        pane.setLeft(new Label(name));
-
-        Label valueLabel = new Label(value);
-        BorderPane.setAlignment(valueLabel, Pos.CENTER_RIGHT);
-        pane.setCenter(valueLabel);
-
-        list.getContent().add(pane);
-    }
-
-    private final ArchiveFileTreeSupplier<?, ?> fileSupplier;
-
-    private final HMCLJavaRepository repository;
     private final JavaInfo info;
+    private final File file;
+    private final StringProperty nameProperty = new SimpleStringProperty();
 
-    private final BooleanProperty valid = new SimpleBooleanProperty(true);
-    private final ReadOnlyObjectWrapper<State> state;
-
-    private final Label warningLabel = new Label();
-    private final JFXTextField nameField = new JFXTextField();
-    private final JFXButton installButton;
-
-    public JavaInstallPage(HMCLJavaRepository repository, JavaInfo info, String defaultName, ArchiveFileTreeSupplier<?, ?> fileSupplier) {
-        this.repository = repository;
+    public JavaInstallPage(Runnable onFinish, JavaInfo info, String defaultName, File file, ArchiveFileTreeSupplier<?, ?> treeSupplier) {
+        super(onFinish);
         this.info = info;
-        this.fileSupplier = fileSupplier;
-        this.state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("java.install")));
-
-        this.nameField.setText(defaultName);
-
-        FXUtils.onChangeAndOperate(nameField.textProperty(), text -> {
-            if (text == null || text.isEmpty()) {
-                warningLabel.setText("");
-                valid.set(false);
-                return;
-            }
-
-            if (text.startsWith(HMCLJavaRepository.MOJANG_JAVA_PREFIX) || !NAME_PATTERN.matcher(text).matches()) {
-                warningLabel.setText(i18n("java.install.warning.invalid_character"));
-                valid.set(false);
-                return;
-            }
-
-            warningLabel.setText("");
-            valid.set(true);
-        });
-
-        VBox borderPane = new VBox();
-        borderPane.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(borderPane, 500);
-
-        ComponentList componentList = new ComponentList();
-        {
-            addInfo(componentList, i18n("java.info.version"), info.getVersion());
-            addInfo(componentList, i18n("java.info.architecture"), info.getPlatform().getArchitecture().getDisplayName());
-
-            String vendor = JavaInfo.normalizeVendor(info.getVendor());
-            if (vendor != null)
-                addInfo(componentList, i18n("java.info.vendor"), vendor);
-
-            BorderPane installPane = new BorderPane();
-            {
-                this.installButton = FXUtils.newRaisedButton(i18n("button.install"));
-                installButton.setOnAction(e -> onInstall());
-                installButton.disableProperty().bind(valid.not());
-                installPane.setRight(installButton);
-
-                componentList.getContent().add(installPane);
-            }
-        }
-
-        borderPane.getChildren().setAll(componentList);
-        this.getChildren().setAll(borderPane);
-    }
-
-    private void onInstall() {
-        String name = nameField.getText();
-        if (repository.isInstalled(info.getPlatform(), name)) {
-            warningLabel.setText(i18n("java.install.failed.exists"));
-            valid.set(false);
-        } else {
-            Controllers.taskDialog(JavaManager.installJava(info.getPlatform(), name, null, fileSupplier)
-                            .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                                if (exception != null) {
-                                    Throwable resolvedException = resolveException(exception);
-                                    LOG.warning("Failed to install java", exception);
-                                    if (!(resolvedException instanceof CancellationException)) {
-                                        Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
-                                    }
-                                }
-                            }),
-                    i18n("java.install"), TaskCancellationAction.NORMAL);
-        }
+        this.file = file;
+        this.treeSupplier = treeSupplier;
+        this.nameProperty.set(defaultName);
     }
 
     @Override
-    public ReadOnlyObjectProperty<State> stateProperty() {
-        return state;
+    protected SkinBase<?> createDefaultSkin() {
+        return new Skin(this);
+    }
+
+    @Override
+    protected Object finish() {
+        return JavaManager.installJava(info.getPlatform(), nameProperty.getName(), null, treeSupplier);
+    }
+
+    @Override
+    public String getTitle() {
+        return i18n("java.install");
+    }
+
+    private static final class Skin extends SkinBase<JavaInstallPage> {
+
+        private static void addInfo(ComponentList list, String name, String value) {
+            BorderPane pane = new BorderPane();
+
+            pane.setLeft(new Label(name));
+
+            Label valueLabel = new Label(value);
+            BorderPane.setAlignment(valueLabel, Pos.CENTER_RIGHT);
+            pane.setCenter(valueLabel);
+
+            list.getContent().add(pane);
+        }
+
+        private final BooleanProperty valid = new SimpleBooleanProperty(true);
+
+        private final Label warningLabel = new Label();
+        private final JFXTextField nameField = new JFXTextField();
+        private final JFXButton installButton;
+
+        Skin(JavaInstallPage control) {
+            super(control);
+
+            nameField.textProperty().bindBidirectional(control.nameProperty);
+            FXUtils.onChangeAndOperate(control.nameProperty, text -> {
+                if (text == null || text.isEmpty()) {
+                    warningLabel.setText("");
+                    valid.set(false);
+                    return;
+                }
+
+                if (text.startsWith(HMCLJavaRepository.MOJANG_JAVA_PREFIX) || !NAME_PATTERN.matcher(text).matches()) {
+                    warningLabel.setText(i18n("java.install.warning.invalid_character"));
+                    valid.set(false);
+                    return;
+                }
+
+                warningLabel.setText("");
+                valid.set(true);
+            });
+
+            VBox borderPane = new VBox();
+            borderPane.setAlignment(Pos.CENTER);
+            FXUtils.setLimitWidth(borderPane, 500);
+
+            ComponentList componentList = new ComponentList();
+            {
+                addInfo(componentList, i18n("java.install.archive"), control.file.getAbsolutePath());
+                addInfo(componentList, i18n("java.info.version"), control.info.getVersion());
+                addInfo(componentList, i18n("java.info.architecture"), control.info.getPlatform().getArchitecture().getDisplayName());
+
+                String vendor = JavaInfo.normalizeVendor(control.info.getVendor());
+                if (vendor != null)
+                    addInfo(componentList, i18n("java.info.vendor"), vendor);
+
+
+
+                BorderPane installPane = new BorderPane();
+                {
+                    this.installButton = FXUtils.newRaisedButton(i18n("button.install"));
+                    installButton.setOnAction(e -> {
+                        if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), nameField.getText())) {
+                            warningLabel.setText(i18n("java.install.failed.exists"));
+                            valid.set(false);
+                        } else
+                            control.onFinish.run();
+                    });
+                    installButton.disableProperty().bind(valid.not());
+                    installPane.setRight(installButton);
+
+                    componentList.getContent().add(installPane);
+                }
+            }
+
+            borderPane.getChildren().setAll(componentList);
+            this.getChildren().setAll(borderPane);
+        }
     }
 }

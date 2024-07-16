@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
@@ -76,7 +77,7 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
             String fileName = file.getName();
 
             if (fileName.endsWith(".zip")) {
-                onInstallArchive(() -> new ZipFileTree(new ZipFile(file)));
+                onInstallArchive(file, () -> new ZipFileTree(new ZipFile(file)));
             } else if (fileName.endsWith(".tar.gz")) {
                 throw new UnsupportedOperationException("TODO");
             } else {
@@ -117,9 +118,9 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
         }
     }
 
-    private <F extends Closeable, E extends ArchiveEntry> void onInstallArchive(ArchiveFileTreeSupplier<F, E> fileSupplier) {
+    private <F extends Closeable, E extends ArchiveEntry> void onInstallArchive(File file, ArchiveFileTreeSupplier<F, E> treeSupplier) {
         Task.supplyAsync(() -> {
-            try (ArchiveFileTree<F, E> tree = fileSupplier.open()) {
+            try (ArchiveFileTree<F, E> tree = treeSupplier.open()) {
                 JavaInfo info = JavaInfo.fromArchive(tree);
 
                 if (!JavaManager.isCompatible(info.getPlatform()))
@@ -129,7 +130,8 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                Controllers.navigate(new JavaInstallPage(JavaManager.REPOSITORY, result.getValue(), result.getKey(), fileSupplier));
+                Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
+                        new JavaInstallPage(controller::onFinish, result.getValue(), result.getKey(), file, treeSupplier)));
             } else {
                 if (exception instanceof UnsupportedPlatformException) {
                     Controllers.dialog(i18n("java.install.failed.unsupported_platform"), null, MessageDialogPane.MessageType.WARNING);
