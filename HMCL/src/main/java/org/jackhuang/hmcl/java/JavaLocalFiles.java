@@ -118,7 +118,7 @@ public final class JavaLocalFiles {
                         return new LocalLink(target);
                     }
                     default:
-                        throw new AssertionError();
+                        throw new AssertionError("unknown type: " + type);
                 }
             } catch (Throwable e) {
                 throw new JsonParseException(json.toString());

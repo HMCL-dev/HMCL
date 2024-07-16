@@ -15,17 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.tree;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 /**
  * @author Glavo
  */
-public final class ArchiveFileTree<F, E extends ArchiveEntry> {
+public abstract class ArchiveFileTree<F extends Closeable, E extends ArchiveEntry> implements Closeable {
 
     private final F file;
     private final Dir<E> root = new Dir<>();
@@ -43,20 +45,16 @@ public final class ArchiveFileTree<F, E extends ArchiveEntry> {
     }
 
     public void addEntry(E entry) throws IOException {
-        addEntry(entry, Arrays.asList(entry.getName().split("/")));
-    }
-
-    public void addEntry(E entry, List<String> path) throws IOException {
-        for (String item : path) {
-            if (item.isEmpty() || item.equals(".") || item.equals("..")) {
-                throw new IOException("Invalid name: " + entry.getName());
-            }
-        }
+        String[] path = entry.getName().split("/");
 
         Dir<E> dir = root;
 
-        for (int i = 0, end = entry.isDirectory() ? path.size() : path.size() - 1; i < end; i++) {
-            String item = path.get(i);
+        for (int i = 0, end = entry.isDirectory() ? path.length : path.length - 1; i < end; i++) {
+            String item = path[i];
+            if (item.equals("."))
+                continue;
+            if (item.equals("..") || item.isEmpty())
+                throw new IOException("Invalid entry: " + entry.getName());
 
             if (dir.files.containsKey(item)) {
                 throw new IOException("A file and a directory have the same name: " + entry.getName());
@@ -71,7 +69,7 @@ public final class ArchiveFileTree<F, E extends ArchiveEntry> {
             }
             dir.entry = entry;
         } else {
-            String fileName = path.get(path.size() - 1);
+            String fileName = path[path.length - 1];
 
             if (dir.subDirs.containsKey(fileName)) {
                 throw new IOException("A file and a directory have the same name: " + entry.getName());
@@ -85,10 +83,31 @@ public final class ArchiveFileTree<F, E extends ArchiveEntry> {
         }
     }
 
+    public abstract InputStream getInputStream(E entry) throws IOException;
+
+    public abstract boolean isLink(E entry);
+
+    public abstract String getLink(E entry) throws IOException;
+
+    public abstract boolean isExecutable(E entry);
+
+    @Override
+    public void close() throws IOException {
+        file.close();
+    }
+
     public static final class Dir<E extends ArchiveEntry> {
         E entry;
 
         final Map<String, Dir<E>> subDirs = new HashMap<>();
         final Map<String, E> files = new HashMap<>();
+
+        public Map<String, Dir<E>> getSubDirs() {
+            return subDirs;
+        }
+
+        public Map<String, E> getFiles() {
+            return files;
+        }
     }
 }

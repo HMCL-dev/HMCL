@@ -17,16 +17,20 @@
  */
 package org.jackhuang.hmcl.java;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -61,50 +65,101 @@ public final class JavaInfo {
 
     // load
 
-    private static Map<String, String> readReleaseFile(Path releaseFile) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(releaseFile)) {
-            Map<String, String> res = new HashMap<>();
+    private static Map<String, String> readReleaseFile(BufferedReader reader) throws IOException {
+        Map<String, String> res = new HashMap<>();
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                int idx = line.indexOf('=');
-                if (idx <= 0) {
-                    continue;
-                }
-
-                String name = line.substring(0, idx);
-                String value;
-
-                if (line.length() > idx + 2 && line.charAt(idx + 1) == '"' && line.charAt(line.length() - 1) == '"') {
-                    value = line.substring(idx + 2, line.length() - 1);
-                } else {
-                    value = line.substring(idx + 1);
-                }
-
-                res.put(name, value);
+        String line;
+        while ((line = reader.readLine()) != null) {
+            int idx = line.indexOf('=');
+            if (idx <= 0) {
+                continue;
             }
-            return res;
+
+            String name = line.substring(0, idx);
+            String value;
+
+            if (line.length() > idx + 2 && line.charAt(idx + 1) == '"' && line.charAt(line.length() - 1) == '"') {
+                value = line.substring(idx + 2, line.length() - 1);
+            } else {
+                value = line.substring(idx + 1);
+            }
+
+            res.put(name, value);
         }
+        return res;
     }
 
-    public static JavaInfo fromReleaseFile(Path releaseFile) throws IOException {
-        Map<String, String> properties = readReleaseFile(releaseFile);
+    public static JavaInfo fromReleaseFile(BufferedReader reader) throws IOException {
+        Map<String, String> properties = readReleaseFile(reader);
         String osName = properties.get("OS_NAME");
         String osArch = properties.get("OS_ARCH");
         String vendor = properties.get("IMPLEMENTOR");
-        if ("".equals(osName) && "OpenJDK BSD Porting Team".equals(vendor)) {
-            osName = "FreeBSD";
-        }
 
-        OperatingSystem os = OperatingSystem.parseOSName(osName);
+        OperatingSystem os = "".equals(osName) && "OpenJDK BSD Porting Team".equals(vendor)
+                ? OperatingSystem.FREEBSD
+                : OperatingSystem.parseOSName(osName);
+
         Architecture arch = Architecture.parseArchName(osArch);
         String javaVersion = properties.get("JAVA_VERSION");
 
-        if (os == OperatingSystem.UNKNOWN || arch == Architecture.UNKNOWN || javaVersion == null) {
-            return null;
-        }
+        if (os == OperatingSystem.UNKNOWN)
+            throw new IOException("Unknown operating system: " + osName);
+
+        if (arch == Architecture.UNKNOWN)
+            throw new IOException("Unknown architecture: " + osArch);
+
+        if (javaVersion == null)
+            throw new IOException("Missing Java version");
 
         return new JavaInfo(Platform.getPlatform(os, arch), javaVersion, vendor);
+    }
+
+    public static JavaInfo fromReleaseFile(Path releaseFile) throws IOException {
+        try (BufferedReader reader = Files.newBufferedReader(releaseFile)) {
+            return fromReleaseFile(reader);
+        }
+    }
+
+    public static <F extends Closeable, E extends ArchiveEntry> JavaInfo fromArchive(ArchiveFileTree<F, E> tree) throws IOException {
+        if (tree.getRoot().getSubDirs().size() != 1 || !tree.getRoot().getFiles().isEmpty())
+            throw new IOException();
+
+        ArchiveFileTree.Dir<E> jdkRoot = tree.getRoot().getSubDirs().values().iterator().next();
+        E releaseEntry = jdkRoot.getFiles().get("release");
+        if (releaseEntry == null)
+            throw new IOException("Missing release file");
+
+        JavaInfo info;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(tree.getInputStream(releaseEntry), StandardCharsets.UTF_8))) {
+            info = JavaInfo.fromReleaseFile(reader);
+        }
+
+        ArchiveFileTree.Dir<E> binDir = jdkRoot.getSubDirs().get("bin");
+        if (binDir == null || binDir.getFiles().get(info.getPlatform().getOperatingSystem().getJavaExecutable()) == null)
+            throw new IOException("Missing java executable file");
+
+        return info;
+    }
+
+    public static String normalizeVendor(String vendor) {
+        if (vendor == null)
+            return null;
+
+        switch (vendor) {
+            case "N/A":
+                return null;
+            case "Oracle Corporation":
+                return "Oracle";
+            case "Azul Systems, Inc.":
+                return "Azul";
+            case "IBM Corporation":
+            case "International Business Machines Corporation":
+                return "IBM";
+            case "Eclipse Adoptium":
+                return "Adoptium";
+            default:
+                return vendor;
+        }
     }
 
     private static final String OS_ARCH = "os.arch = ";
@@ -126,9 +181,7 @@ public final class JavaInfo {
                 String javaHomeName = javaHome.getFileName().toString();
                 if ((javaHomeName.contains("jre") || javaHomeName.contains("jdk") || javaHomeName.contains("openj9")) && Files.isRegularFile(releaseFile)) {
                     try {
-                        JavaInfo info = fromReleaseFile(releaseFile);
-                        if (info != null)
-                            return info;
+                        return fromReleaseFile(releaseFile);
                     } catch (IOException ignored) {
                     }
                 }
@@ -149,39 +202,35 @@ public final class JavaInfo {
                 int idx = line.indexOf(OS_ARCH);
                 if (idx >= 0) {
                     osArch = line.substring(idx + OS_ARCH.length()).trim();
-                    if (version != null && vendor != null) {
+                    if (version != null && vendor != null)
                         break;
-                    } else {
+                    else
                         continue;
-                    }
                 }
 
                 idx = line.indexOf(JAVA_VERSION);
                 if (idx >= 0) {
                     version = line.substring(idx + JAVA_VERSION.length()).trim();
-                    if (osArch != null && vendor != null) {
+                    if (osArch != null && vendor != null)
                         break;
-                    } else {
+                    else
                         continue;
-                    }
                 }
 
                 idx = line.indexOf(JAVA_VENDOR);
                 if (idx >= 0) {
                     vendor = line.substring(idx + JAVA_VENDOR.length()).trim();
-                    if (osArch != null && version != null) {
+                    if (osArch != null && version != null)
                         break;
-                    } else {
+                    else
                         //noinspection UnnecessaryContinue
                         continue;
-                    }
                 }
             }
         }
 
-        if (osArch != null) {
+        if (osArch != null)
             platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.parseArchName(osArch));
-        }
 
         // Java 6
         if (version == null) {
@@ -205,13 +254,11 @@ public final class JavaInfo {
                 }
             }
 
-            if (platform == null) {
+            if (platform == null)
                 platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, is64Bit ? Architecture.X86_64 : Architecture.X86);
-            }
 
-            if (version == null) {
-                return null;
-            }
+            if (version == null)
+                throw new IOException("Cannot determine version");
         }
 
         return new JavaInfo(platform, version, vendor);

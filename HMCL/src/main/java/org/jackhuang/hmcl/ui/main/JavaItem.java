@@ -8,6 +8,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.ConfigHolder;
@@ -70,31 +71,11 @@ public final class JavaItem extends Control {
     }
 
     private static final class JavaRuntimeItemSkin extends SkinBase<JavaItem> {
-        private static String normalizeVendor(String vendor) {
-            if (vendor == null)
-                return null;
-
-            switch (vendor) {
-                case "N/A":
-                    return null;
-                case "Oracle Corporation":
-                    return "Oracle";
-                case "Azul Systems, Inc.":
-                    return "Azul";
-                case "IBM Corporation":
-                case "International Business Machines Corporation":
-                    return "IBM";
-                case "Eclipse Adoptium":
-                    return "Adoptium";
-                default:
-                    return vendor;
-            }
-        }
 
         JavaRuntimeItemSkin(JavaItem skinnable) {
             super(skinnable);
             JavaRuntime java = skinnable.getJava();
-            String vendor = normalizeVendor(java.getVendor());
+            String vendor = JavaInfo.normalizeVendor(java.getVendor());
 
             BorderPane root = new BorderPane();
 
@@ -106,9 +87,9 @@ public final class JavaItem extends Control {
             TwoLineListItem item = new TwoLineListItem();
             item.setTitle((java.isJDK() ? "JDK" : "JRE") + " " + java.getVersion());
             item.setSubtitle(java.getBinary().toString());
-            item.getTags().add(i18n("java.info.architecture", java.getArchitecture().getDisplayName()));
+            item.getTags().add(i18n("java.info.architecture") + ": " + java.getArchitecture().getDisplayName());
             if (vendor != null)
-                item.getTags().add(i18n("java.info.vendor", vendor));
+                item.getTags().add(i18n("java.info.vendor") + ": " + vendor);
             BorderPane.setAlignment(item, Pos.CENTER);
             center.getChildren().setAll(item);
             root.setCenter(center);
