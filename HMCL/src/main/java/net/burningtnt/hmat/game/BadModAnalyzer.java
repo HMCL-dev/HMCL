@@ -71,84 +71,48 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
         for (int l = headI + 1; l < length; l++) {
             String line = logs.get(l);
 
-            // Must be something like: [Caused by: ] xxx: xxx
-            int start = findErrorStart(line);
-            int pl = line.indexOf(':', start);
-            if (pl == -1 || line.charAt(pl + 1) != ' ' || line.indexOf(':', pl + 2) != -1 || checkInvalidCP(line, start, pl)) {
+            if (!line.startsWith(C_AT_STRING)) {
                 continue;
             }
 
-            // An error must have at least one stack.
-            {
-                String next = logs.get(l + 1);
-                if (next.isEmpty() || next.charAt(0) != '\t') {
-                    continue;
-                }
+            // Move l to previous line.
+            line = logs.get(--l);
+
+            // Must be something like: [Caused by: ] xxx: xxx
+            int start = findErrorStart(line);
+            int pl = calcPL(line, start);
+            if (checkPL(line, start, pl)) {
+                l++; // Avoid scanning the same line.
+                continue;
             }
 
-            // Check whether the classpath of the error is invalid
-            if (checkCP(line, start, pl, input, results)) {
+            int cr = checkERROR(logs, l, start, pl, input, results);
+            if (cr < 0) {
                 return ControlFlow.CONTINUE;
             }
-
-            // check all the frames.
-            for (int l2 = l + 1; l2 < length; l2++) {
-                String ls = logs.get(l2);
-                if (!ls.startsWith(C_AT_STRING)) {
-                    l = l2 - 1;
-                    break;
-                }
-
-                int ce = ls.indexOf('(');
-                if (ce == -1) {
-                    ce = ls.length() - 1;
-                }
-
-                if (checkInvalidCP(ls, C_AT_LENGTH, ce)) {
-                    l = l2;
-                    break;
-                }
-
-                if (checkCP(ls, C_AT_LENGTH, ce, input, results)) {
-                    return ControlFlow.CONTINUE;
-                }
-            }
+            l = cr; // cr points to a non at-string line. However, the previous line is always a at-string line.
         }
 
-        out:
         for (int l = headI; l >= 0; l--) {
-            if (logs.get(l).startsWith(C_AT_STRING)) { // find a at string.
-                for (int l2 = l - 1; l2 >= 0; l2--) {
-                    String line2 = logs.get(l2);
+            if (!logs.get(l).startsWith(C_AT_STRING)) {
+                continue; // find an 'at ...'.
+            }
 
-                    // find the error line
-                    if (!line2.startsWith(C_AT_STRING)) {
-                        int start2 = findErrorStart(line2);
+            for (l--; l >= 0; l--) {
+                String line = logs.get(l);
 
-                        int pl = line2.indexOf(':', start2);
-                        if (pl == -1 || line2.charAt(pl + 1) != ' ' || line2.indexOf(':', pl + 2) != -1 || checkInvalidCP(line2, 0, pl)) {
-                            l = l2;
-                            continue out;
-                        }
+                if (line.startsWith(C_AT_STRING)) {
+                    continue; // find the error line
+                }
 
-                        if (checkCP(line2, start2, pl, input, results)) {
-                            return ControlFlow.CONTINUE;
-                        }
+                int start = findErrorStart(line);
+                int pl = calcPL(line, start);
+                if (checkPL(line, start, pl)) {
+                    break;
+                }
 
-                        // check each stack
-                        for (int l3 = l2 + 1; l3 < l; l3++) {
-                            String line3 = logs.get(l3);
-                            int ce = line3.indexOf('(', C_AT_LENGTH);
-                            if (ce == -1) {
-                                ce = line3.length() - 1;
-                            }
-
-
-                            if (checkCP(line3, C_AT_LENGTH, ce, input, results)) {
-                                return ControlFlow.CONTINUE;
-                            }
-                        }
-                    }
+                if (checkERROR(logs, l, start, pl, input, results) < 0) {
+                    return ControlFlow.CONTINUE;
                 }
             }
         }
@@ -158,6 +122,56 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
 
     private int findErrorStart(String value) {
         return value.startsWith(C_CB_STRING) ? C_CB_LENGTH : 0;
+    }
+
+    private int calcPL(String line, int start) {
+        int i = line.indexOf(':', start);
+        if (i == -1) {
+            return line.length();
+        }
+        return i;
+    }
+
+    private boolean checkPL(String line, int start, int pl) {
+        int l = line.length();
+        if (pl == l) {
+            return checkInvalidCP(line, start, pl);
+        }
+
+        int n = pl + 1;
+        return l <= n || line.charAt(n) != ' ' || checkInvalidCP(line, start, pl);
+    }
+
+    /**
+     * @return >= 0 indicates further scanning should start from this index. -1 if all logs have been consumed. -2 if a potential bad mod has been settled.
+     */
+    private int checkERROR(List<String> logs, int errIndex, int errStart, int errPL, LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws IOException {
+        String errLine = logs.get(errIndex);
+        if (checkCP(errLine, errStart, errPL, input, results)) {
+            return -2;
+        }
+
+        for (int l = logs.size(), i = errIndex + 1; i < l; i++) {
+            String ls = logs.get(i);
+            if (!ls.startsWith(C_AT_STRING)) {
+                return i;
+            }
+
+            int ce = ls.indexOf('(');
+            if (ce == -1) {
+                ce = ls.length() - 1;
+            }
+
+            if (checkInvalidCP(ls, C_AT_LENGTH, ce)) {
+                continue;
+            }
+
+            if (checkCP(ls, C_AT_LENGTH, ce, input, results)) {
+                return -2;
+            }
+        }
+
+        return -1;
     }
 
     /**
