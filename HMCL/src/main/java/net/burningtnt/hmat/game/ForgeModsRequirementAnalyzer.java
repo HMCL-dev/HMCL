@@ -38,7 +38,7 @@ public final class ForgeModsRequirementAnalyzer implements Analyzer<LogAnalyzabl
             for (i++; i < l; i++) {
                 Matcher matcher = LINE.matcher(logs.get(i));
                 if (!matcher.matches()) {
-                    results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.MOD_REQUIREMENT, Solver.ofTask(Task.runAsync(() -> {
+                    results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.LOG_GAME_MOD_REQUIREMENT, Solver.ofTask(Task.runAsync(() -> {
                         for (ExceptionalRunnable<IOException> task : tasks) {
                             task.run();
                         }

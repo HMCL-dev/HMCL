@@ -33,7 +33,7 @@ public final class AnalyzeResult<T> {
         LOG_GAME_JRE_32BIT,
         LOG_GAME_JRE_INVALID,
         LOG_GAME_JRE_VERSION,
-        MOD_REQUIREMENT,
-        BAD_MOD
+        LOG_GAME_MOD_REQUIREMENT,
+        LOG_GAME_BAD_MOD
     }
 }

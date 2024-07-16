@@ -4,9 +4,9 @@ import net.burningtnt.hmat.AnalyzeResult;
 import net.burningtnt.hmat.Analyzer;
 import net.burningtnt.hmat.LogAnalyzable;
 import net.burningtnt.hmat.solver.Solver;
+import net.burningtnt.hmat.solver.SolverConfigurator;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
@@ -15,7 +15,12 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
     private static final String HEAD = "---- Minecraft Crash Report ----";
@@ -35,11 +40,42 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
     private static final String C_CB_STRING = "Caused by: ";
     private static final int C_CB_LENGTH = C_CB_STRING.length();
 
+    @Override
+    public ControlFlow analyze(LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws Exception {
+        Set<LocalModFile> mods = new HashSet<>();
+        analyze0(input, mods);
+
+        if (!mods.isEmpty()) {
+            results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.LOG_GAME_BAD_MOD, new Solver() {
+                @Override
+                public void configure(SolverConfigurator configurator) {
+                    configurator.setDescription(i18n("analyzer.result.log_game_bad_mod.disabling", mods.stream().map(LocalModFile::getName).collect(Collectors.joining(", ", "[", "]"))));
+                }
+
+                @Override
+                public void callbackSelection(SolverConfigurator configurator, int selectionID) {
+                    if (selectionID == BTN_NEXT) {
+                        for (LocalModFile mod : mods) {
+                            try {
+                                input.getRepository().getModManager(input.getVersion().getId()).disableMod(mod.getFile());
+                            } catch (IOException e) {
+                                Logger.LOG.warning("Cannot disable local mod: " + mod, e);
+                            }
+                        }
+
+                        configurator.transferTo(null);
+                    }
+                }
+            }));
+        }
+
+        return ControlFlow.CONTINUE;
+    }
+
     /**
      * It will be impossible to read these codes.
      */
-    @Override
-    public ControlFlow analyze(LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws Exception {
+    private void analyze0(LogAnalyzable input, Set<LocalModFile> results) throws Exception {
         List<String> logs = input.getLogs();
         int length = logs.size();
 
@@ -88,7 +124,7 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
 
             int cr = checkERROR(logs, l, start, pl, input, results);
             if (cr < 0) {
-                return ControlFlow.CONTINUE;
+                return;
             }
             l = cr; // cr points to a non at-string line. However, the previous line is always a at-string line.
         }
@@ -112,12 +148,12 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
                 }
 
                 if (checkERROR(logs, l, start, pl, input, results) < 0) {
-                    return ControlFlow.CONTINUE;
+                    return;
                 }
             }
         }
 
-        return ControlFlow.CONTINUE;
+        return;
     }
 
     private int findErrorStart(String value) {
@@ -145,7 +181,7 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
     /**
      * @return >= 0 indicates further scanning should start from this index. -1 if all logs have been consumed. -2 if a potential bad mod has been settled.
      */
-    private int checkERROR(List<String> logs, int errIndex, int errStart, int errPL, LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws IOException {
+    private int checkERROR(List<String> logs, int errIndex, int errStart, int errPL, LogAnalyzable input, Set<LocalModFile> results) throws IOException {
         String errLine = logs.get(errIndex);
         if (checkCP(errLine, errStart, errPL, input, results)) {
             return -2;
@@ -185,22 +221,20 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
     /**
      * @return True if any information has been concluded.
      */
-    private boolean checkCP(String value, int start, int end, LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws IOException {
+    private boolean checkCP(String value, int start, int end, LogAnalyzable input, Set<LocalModFile> results) throws IOException {
+        int valueL = end - start;
         for (String tep : TRUSTED_ERROR_PREFIX) {
-            if (end - start >= tep.length() && value.regionMatches(start, tep, 0, tep.length())) {
+            if (valueL >= tep.length() && value.regionMatches(start, tep, 0, tep.length())) {
                 return false;
             }
         }
 
-        String path = '/' + value.substring(start, end).replace('.', '/');
-        int ll = path.lastIndexOf('/');
-        if (ll == -1) {
+        String path = computePath(value, start, end);
+        if (path == null) {
             return false;
         }
-        path = path.substring(0, ll) + ".class";
 
         ModManager mods = input.getRepository().getModManager(input.getVersion().getId());
-
         for (LocalModFile mod : mods.getMods()) {
             Path file = mod.getFile();
             if (!"jar".equals(FileUtils.getExtension(file))) {
@@ -210,9 +244,7 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
             try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
                 Path clazz = fs.getPath(path);
                 if (Files.exists(clazz)) {
-                    results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.BAD_MOD, Solver.ofTask(Task.runAsync(() -> {
-                        mods.disableMod(file);
-                    }))));
+                    results.add(mod);
                     return true;
                 }
             } catch (Throwable t) {
@@ -221,5 +253,26 @@ public final class BadModAnalyzer implements Analyzer<LogAnalyzable> {
         }
 
         return false;
+    }
+
+    private String computePath(String value, int start, int end) {
+        int length = end - start;
+        StringBuilder sb = new StringBuilder(length + 7).append('/').append(value, start, end);
+
+        int ll = -1;
+        for (int i = 1; i <= length; i++) {
+            if (sb.charAt(i) == '.') {
+                sb.setCharAt(i, '/');
+                ll = i;
+            }
+        }
+        if (ll == -1) {
+            return null;
+        }
+        sb.setLength(ll);
+
+        sb.append(".class");
+
+        return sb.toString();
     }
 }
