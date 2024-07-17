@@ -39,7 +39,7 @@ final class SolverCollection {
                 gameJavaVersion = GameJavaVersion.JAVA_8;
             }
 
-            return JavaManager.installJava(DownloadProviders.getDownloadProvider(), Platform.CURRENT_PLATFORM, gameJavaVersion);
+            return JavaManager.downloadJava(DownloadProviders.getDownloadProvider(), Platform.CURRENT_PLATFORM, gameJavaVersion);
         }).thenAcceptAsync(Schedulers.javafx(), ofModifyJRE(input)));
     }
 }

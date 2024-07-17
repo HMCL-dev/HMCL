@@ -83,7 +83,7 @@ public class JREVersionAnalyzer implements Analyzer<LogAnalyzable> {
                                 return Task.supplyAsync(() -> jre);
                             }
                         }
-                        return JavaManager.installJava(DownloadProviders.getDownloadProvider(), Platform.CURRENT_PLATFORM, javaVersion);
+                        return JavaManager.downloadJava(DownloadProviders.getDownloadProvider(), Platform.CURRENT_PLATFORM, javaVersion);
                     }).thenAcceptAsync(Schedulers.javafx(), SolverCollection.ofModifyJRE(input)))));
 
                     return ControlFlow.BREAK_OTHER;
