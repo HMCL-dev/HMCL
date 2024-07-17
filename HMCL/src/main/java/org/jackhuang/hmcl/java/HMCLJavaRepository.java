@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.java;
 
-import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
 import org.jackhuang.hmcl.download.java.mojang.MojangJavaRemoteFiles;
@@ -28,13 +27,12 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTreeSupplier;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -144,7 +142,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     @Override
-    public Task<JavaRuntime> getInstallJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
+    public Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
         Path javaDir = getJavaDir(platform, gameJavaVersion);
 
         return new MojangJavaDownloadTask(downloadProvider, javaDir, gameJavaVersion, JavaManager.getMojangJavaPlatform(platform)).thenApplyAsync(result -> {
@@ -159,11 +157,9 @@ public final class HMCLJavaRepository implements JavaRepository {
             }
 
             JavaInfo info;
-            if (JavaManager.isCompatible(platform)) {
+            if (JavaManager.isCompatible(platform))
                 info = JavaInfo.fromExecutable(executable, false);
-                if (info == null)
-                    throw new ArtifactMalformedException("Unable to read Java information");
-            } else
+            else
                 info = new JavaInfo(platform, result.download.getVersion().getName(), null);
 
             Map<String, Object> update = new LinkedHashMap<>();
@@ -187,6 +183,18 @@ public final class HMCLJavaRepository implements JavaRepository {
             JavaManifest manifest = new JavaManifest(info, update, files);
             FileUtils.writeText(getManifestFile(platform, gameJavaVersion), JsonUtils.GSON.toJson(manifest));
             return JavaRuntime.of(executable, info, true);
+        });
+    }
+
+    public Task<JavaRuntime> getInstallJavaTask(Platform platform, String name, Map<String, Object> update, ArchiveFileTreeSupplier<?, ?> fileSupplier) {
+        Path javaDir = getJavaDir(platform, name);
+        return new JavaInstallTask<>(javaDir, update, fileSupplier).thenApplyAsync(result -> {
+            if (!result.getInfo().getPlatform().equals(platform))
+                throw new IOException("Platform is mismatch: expected " + platform + " but got " + result.getInfo().getPlatform());
+
+            Path executable = javaDir.resolve("bin").resolve(platform.getOperatingSystem().getJavaExecutable()).toRealPath();
+            FileUtils.writeText(getManifestFile(platform, name), JsonUtils.GSON.toJson(result));
+            return JavaRuntime.of(executable, result.getInfo(), true);
         });
     }
 

@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.tukaani.xz.LZMAInputStream;
 
 import java.io.File;
@@ -162,12 +163,6 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
         public Result(MojangJavaDownloads.JavaDownload download, MojangJavaRemoteFiles remoteFiles) {
             this.download = download;
             this.remoteFiles = remoteFiles;
-        }
-    }
-
-    public static final class UnsupportedPlatformException extends Exception {
-        public UnsupportedPlatformException(String message) {
-            super(message);
         }
     }
 }

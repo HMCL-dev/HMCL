@@ -15,30 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.java;
+package org.jackhuang.hmcl.util.tree;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.GameJavaVersion;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.platform.Platform;
+import org.apache.commons.compress.archivers.ArchiveEntry;
 
-import java.nio.file.Path;
-import java.util.Collection;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * @author Glavo
  */
-public interface JavaRepository {
-
-    Path getJavaDir(Platform platform, String name);
-
-    Path getManifestFile(Platform platform, String name);
-
-    Collection<JavaRuntime> getAllJava(Platform platform);
-
-    Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion);
-
-    Task<Void> getUninstallJavaTask(Platform platform, String name);
-
-    Task<Void> getUninstallJavaTask(JavaRuntime java);
+public interface ArchiveFileTreeSupplier<F extends Closeable, E extends ArchiveEntry> {
+    ArchiveFileTree<F, E> open() throws IOException;
 }

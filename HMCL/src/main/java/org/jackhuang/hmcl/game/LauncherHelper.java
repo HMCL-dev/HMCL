@@ -602,7 +602,7 @@ public final class LauncherHelper {
                 MessageType.QUESTION)
                 .yesOrNo(() -> {
                     DownloadProvider downloadProvider = profile.getDependency().getDownloadProvider();
-                    Controllers.taskDialog(JavaManager.installJava(downloadProvider, SYSTEM_PLATFORM, javaVersion)
+                    Controllers.taskDialog(JavaManager.downloadJava(downloadProvider, SYSTEM_PLATFORM, javaVersion)
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
                                     future.complete(result);

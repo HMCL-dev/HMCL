@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
+import org.jackhuang.hmcl.java.JavaInstallTask;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
@@ -161,6 +162,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("modpack.scan"));
                 } else if (task instanceof MojangJavaDownloadTask) {
                     task.setName(i18n("download.java"));
+                } else if (task instanceof JavaInstallTask) {
+                    task.setName(i18n("java.install"));
                 }
 
                 Platform.runLater(() -> {

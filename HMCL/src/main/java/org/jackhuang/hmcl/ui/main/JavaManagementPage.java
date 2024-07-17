@@ -22,7 +22,9 @@ import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.apache.commons.compress.archivers.tar.TarFile;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.ConfigHolder;
@@ -31,19 +33,19 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTreeSupplier;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
+import java.io.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.zip.GZIPInputStream;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -75,9 +77,9 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
             String fileName = file.getName();
 
             if (fileName.endsWith(".zip")) {
-                onInstallZip(file);
+                onInstallArchive(file, () -> new ZipFileTree(new ZipFile(file)));
             } else if (fileName.endsWith(".tar.gz")) {
-                onInstallTar(file);
+                throw new UnsupportedOperationException("TODO");
             } else {
                 throw new AssertionError("Unreachable code");
             }
@@ -116,34 +118,28 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
         }
     }
 
-    public void onInstallZip(File zipFile) {
-        throw new UnsupportedOperationException("TODO");
-    }
+    private <F extends Closeable, E extends ArchiveEntry> void onInstallArchive(File file, ArchiveFileTreeSupplier<F, E> treeSupplier) {
+        Task.supplyAsync(() -> {
+            try (ArchiveFileTree<F, E> tree = treeSupplier.open()) {
+                JavaInfo info = JavaInfo.fromArchive(tree);
 
-    public void onInstallTar(File compressedTarFile) {
-        Path tempFile = null;
-        try {
-            tempFile = Files.createTempFile("java-", ".tar");
+                if (!JavaManager.isCompatible(info.getPlatform()))
+                    throw new UnsupportedPlatformException(info.getPlatform().toString());
 
-            try (GZIPInputStream gzipInputStream = new GZIPInputStream(Files.newInputStream(compressedTarFile.toPath()))) {
-                Files.copy(gzipInputStream, tempFile);
+                return Pair.pair(tree.getRoot().getSubDirs().keySet().iterator().next(), info);
             }
-
-            try (TarFile tarFile = new TarFile(tempFile)) {
-
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e); // TODO
-        } finally {
-            if (tempFile != null) {
-                try {
-                    Files.deleteIfExists(tempFile);
-                } catch (IOException ignored) {
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
+                        new JavaInstallPage(controller::onFinish, result.getValue(), result.getKey(), file, treeSupplier)));
+            } else {
+                if (exception instanceof UnsupportedPlatformException) {
+                    Controllers.dialog(i18n("java.install.failed.unsupported_platform"), null, MessageDialogPane.MessageType.WARNING);
+                } else {
+                    Controllers.dialog(i18n("java.install.failed.invalid"), null, MessageDialogPane.MessageType.WARNING);
                 }
             }
-        }
-
-        throw new UnsupportedOperationException("TODO");
+        }).start();
     }
 
     // FXThread
@@ -174,6 +170,7 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD_OUTLINE, skinnable.onInstallJava));
             }
             res.add(createToolbarButton2(i18n("java.add"), SVG.PLUS, skinnable::onAddJava));
+
             return res;
         }
     }

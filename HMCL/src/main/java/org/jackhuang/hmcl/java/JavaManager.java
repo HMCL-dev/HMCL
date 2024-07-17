@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTreeSupplier;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,7 +164,7 @@ public final class JavaManager {
         }
 
         JavaInfo info = JavaInfo.fromExecutable(executable);
-        return info != null ? JavaRuntime.of(executable, info, false) : null;
+        return JavaRuntime.of(executable, info, false);
     }
 
     public static void refresh() {
@@ -176,8 +177,16 @@ public final class JavaManager {
         }).start();
     }
 
-    public static Task<JavaRuntime> installJava(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
-        return REPOSITORY.getInstallJavaTask(downloadProvider, platform, gameJavaVersion)
+    public static Task<JavaRuntime> downloadJava(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
+        return REPOSITORY.getDownloadJavaTask(downloadProvider, platform, gameJavaVersion)
+                .thenApplyAsync(Schedulers.javafx(), java -> {
+                    addJava(java);
+                    return java;
+                });
+    }
+
+    public static Task<JavaRuntime> installJava(Platform platform, String name, Map<String, Object> update, ArchiveFileTreeSupplier<?, ?> fileSupplier) {
+        return REPOSITORY.getInstallJavaTask(platform, name, update, fileSupplier)
                 .thenApplyAsync(Schedulers.javafx(), java -> {
                     addJava(java);
                     return java;
@@ -449,14 +458,6 @@ public final class JavaManager {
                 info = JavaInfo.fromReleaseFile(releaseFile);
             } catch (IOException e) {
                 LOG.warning("Failed to parse release file " + releaseFile, e);
-            }
-        }
-
-        if (info == null) {
-            try {
-                info = JavaInfo.fromExecutable(executable, false);
-            } catch (IOException e) {
-                LOG.warning("Failed to lookup Java executable at " + executable, e);
             }
         }
 
