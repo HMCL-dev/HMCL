@@ -91,13 +91,12 @@ public final class JavaInstallPage extends WizardSinglePage {
         private final BooleanProperty valid = new SimpleBooleanProperty(true);
 
         private final Label warningLabel = new Label();
-        private final JFXTextField nameField = new JFXTextField();
+        private final JFXTextField nameField;
         private final JFXButton installButton;
 
         Skin(JavaInstallPage control) {
             super(control);
 
-            nameField.textProperty().bindBidirectional(control.nameProperty);
             FXUtils.onChangeAndOperate(control.nameProperty, text -> {
                 if (text == null || text.isEmpty()) {
                     warningLabel.setText("");
@@ -129,7 +128,20 @@ public final class JavaInstallPage extends WizardSinglePage {
                 if (vendor != null)
                     addInfo(componentList, i18n("java.info.vendor"), vendor);
 
+                BorderPane namePane = new BorderPane();
+                {
+                    Label label = new Label(i18n("java.install.name"));
+                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                    namePane.setLeft(label);
 
+                    nameField = new JFXTextField();
+                    nameField.textProperty().bindBidirectional(control.nameProperty);
+                    nameField.setMaxWidth(200);
+                    BorderPane.setAlignment(namePane, Pos.CENTER_RIGHT);
+                    namePane.setRight(nameField);
+
+                    componentList.getContent().add(namePane);
+                }
 
                 BorderPane installPane = new BorderPane();
                 {
