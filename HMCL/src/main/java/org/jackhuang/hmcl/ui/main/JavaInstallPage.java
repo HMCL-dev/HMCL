@@ -19,10 +19,9 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
@@ -31,12 +30,18 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.java.HMCLJavaRepository;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RequiredValidator;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTreeSupplier;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -66,7 +71,7 @@ public final class JavaInstallPage extends WizardSinglePage {
 
     @Override
     protected Object finish() {
-        return JavaManager.installJava(info.getPlatform(), nameProperty.getName(), null, treeSupplier);
+        return JavaManager.installJava(info.getPlatform(), nameProperty.get(), null, treeSupplier);
     }
 
     @Override
@@ -88,31 +93,12 @@ public final class JavaInstallPage extends WizardSinglePage {
             list.getContent().add(pane);
         }
 
-        private final BooleanProperty valid = new SimpleBooleanProperty(true);
-
-        private final Label warningLabel = new Label();
         private final JFXTextField nameField;
-        private final JFXButton installButton;
+
+        private final Set<String> usedNames = new HashSet<>();
 
         Skin(JavaInstallPage control) {
             super(control);
-
-            FXUtils.onChangeAndOperate(control.nameProperty, text -> {
-                if (text == null || text.isEmpty()) {
-                    warningLabel.setText("");
-                    valid.set(false);
-                    return;
-                }
-
-                if (text.startsWith(HMCLJavaRepository.MOJANG_JAVA_PREFIX) || !NAME_PATTERN.matcher(text).matches()) {
-                    warningLabel.setText(i18n("java.install.warning.invalid_character"));
-                    valid.set(false);
-                    return;
-                }
-
-                warningLabel.setText("");
-                valid.set(true);
-            });
 
             VBox borderPane = new VBox();
             borderPane.setAlignment(Pos.CENTER);
@@ -120,14 +106,6 @@ public final class JavaInstallPage extends WizardSinglePage {
 
             ComponentList componentList = new ComponentList();
             {
-                addInfo(componentList, i18n("java.install.archive"), control.file.getAbsolutePath());
-                addInfo(componentList, i18n("java.info.version"), control.info.getVersion());
-                addInfo(componentList, i18n("java.info.architecture"), control.info.getPlatform().getArchitecture().getDisplayName());
-
-                String vendor = JavaInfo.normalizeVendor(control.info.getVendor());
-                if (vendor != null)
-                    addInfo(componentList, i18n("java.info.vendor"), vendor);
-
                 BorderPane namePane = new BorderPane();
                 {
                     Label label = new Label(i18n("java.install.name"));
@@ -136,24 +114,43 @@ public final class JavaInstallPage extends WizardSinglePage {
 
                     nameField = new JFXTextField();
                     nameField.textProperty().bindBidirectional(control.nameProperty);
-                    nameField.setMaxWidth(200);
-                    BorderPane.setAlignment(namePane, Pos.CENTER_RIGHT);
+                    FXUtils.setLimitWidth(nameField, 200);
+                    BorderPane.setAlignment(nameField, Pos.CENTER_RIGHT);
+                    BorderPane.setMargin(nameField, new Insets(0, 0, 12, 0));
                     namePane.setRight(nameField);
+                    nameField.setValidators(
+                            new RequiredValidator(),
+                            new Validator(i18n("java.install.warning.invalid_character"),
+                                    text -> !text.startsWith(HMCLJavaRepository.MOJANG_JAVA_PREFIX) && NAME_PATTERN.matcher(text).matches()),
+                            new Validator(i18n("java.install.failed.exists"), text -> !usedNames.contains(text))
+                    );
+                    nameField.textProperty().addListener(o -> nameField.validate());
+                    nameField.validate();
 
                     componentList.getContent().add(namePane);
                 }
 
+                addInfo(componentList, i18n("java.install.archive"), control.file.getAbsolutePath());
+                addInfo(componentList, i18n("java.info.version"), control.info.getVersion());
+                addInfo(componentList, i18n("java.info.architecture"), control.info.getPlatform().getArchitecture().getDisplayName());
+
+                String vendor = JavaInfo.normalizeVendor(control.info.getVendor());
+                if (vendor != null)
+                    addInfo(componentList, i18n("java.info.vendor"), vendor);
+
                 BorderPane installPane = new BorderPane();
                 {
-                    this.installButton = FXUtils.newRaisedButton(i18n("button.install"));
+                    JFXButton installButton = FXUtils.newRaisedButton(i18n("button.install"));
                     installButton.setOnAction(e -> {
-                        if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), nameField.getText())) {
-                            warningLabel.setText(i18n("java.install.failed.exists"));
-                            valid.set(false);
+                        String name = control.nameProperty.get();
+                        if (JavaManager.REPOSITORY.isInstalled(control.info.getPlatform(), name)) {
+                            Controllers.dialog(i18n("java.install.failed.exists"), null, MessageDialogPane.MessageType.WARNING);
+                            usedNames.add(name);
+                            nameField.validate();
                         } else
                             control.onFinish.run();
                     });
-                    installButton.disableProperty().bind(valid.not());
+                    installButton.disableProperty().bind(nameField.activeValidatorProperty().isNotNull());
                     installPane.setRight(installButton);
 
                     componentList.getContent().add(installPane);
