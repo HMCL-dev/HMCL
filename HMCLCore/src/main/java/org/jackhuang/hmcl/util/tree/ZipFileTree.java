@@ -46,6 +46,11 @@ public final class ZipFileTree extends ArchiveFileTree<ZipFile, ZipArchiveEntry>
     }
 
     @Override
+    public void close() throws IOException {
+        file.close();
+    }
+
+    @Override
     public InputStream getInputStream(ZipArchiveEntry entry) throws IOException {
         return getFile().getInputStream(entry);
     }

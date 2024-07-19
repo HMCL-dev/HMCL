@@ -118,7 +118,7 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
         }
     }
 
-    private <F extends Closeable, E extends ArchiveEntry> void onInstallArchive(File file, ArchiveFileTreeSupplier<F, E> treeSupplier) {
+    private <F, E extends ArchiveEntry> void onInstallArchive(File file, ArchiveFileTreeSupplier<F, E> treeSupplier) {
         Task.supplyAsync(() -> {
             try (ArchiveFileTree<F, E> tree = treeSupplier.open()) {
                 JavaInfo info = JavaInfo.fromArchive(tree);
