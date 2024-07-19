@@ -457,13 +457,17 @@ public final class JavaManager {
             try {
                 info = JavaInfo.fromReleaseFile(releaseFile);
             } catch (IOException e) {
-                LOG.warning("Failed to parse release file " + releaseFile, e);
+                try {
+                    info = JavaInfo.fromExecutable(executable, false);
+                } catch (IOException e2) {
+                    e2.addSuppressed(e);
+                    LOG.warning("Failed to lookup Java executable at " + executable, e2);
+                }
             }
         }
 
-        if (info != null && isCompatible(info.getPlatform())) {
+        if (info != null && isCompatible(info.getPlatform()))
             javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
-        }
     }
 
     private static void tryAddJavaExecutable(Map<Path, JavaRuntime> javaRuntimes, Path executable) {
