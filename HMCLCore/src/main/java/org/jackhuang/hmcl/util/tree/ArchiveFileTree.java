@@ -29,8 +29,8 @@ import java.util.*;
  */
 public abstract class ArchiveFileTree<F extends Closeable, E extends ArchiveEntry> implements Closeable {
 
-    private final F file;
-    private final Dir<E> root = new Dir<>();
+    protected final F file;
+    protected final Dir<E> root = new Dir<>();
 
     public ArchiveFileTree(F file) {
         this.file = file;
