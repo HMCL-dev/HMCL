@@ -324,7 +324,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                for (int i = 0;i < 2;i ++) {
+                for (int i = 0; i < 2; i++) {
                     String text;
                     RemoteModRepository repository;
                     if (i == 0) {
