@@ -48,7 +48,7 @@ public final class GameVersionNumberTest {
     }
 
     @Test
-    public void testSortVersions() throws IOException {
+    public void testSortVersions() {
         List<String> versions = readVersions();
         List<String> copied = new ArrayList<>(versions);
         Collections.shuffle(copied, new Random(0));
