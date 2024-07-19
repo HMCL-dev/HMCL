@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.util.versioning;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +27,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Glavo
+ */
 public abstract class GameVersionNumber implements Comparable<GameVersionNumber> {
 
     public static String[] getDefaultGameVersions() {
@@ -22,26 +42,21 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 char ch = version.charAt(0);
                 switch (ch) {
                     case 'r':
-                        return Old.parsePreClassic(version);
                     case 'a':
                     case 'b':
                     case 'c':
-                        return Old.parseAlphaBetaClassic(version);
                     case 'i':
-                        return Old.parseInfdev(version);
+                        return Old.parse(version);
                 }
 
-                if (version.equals("0.0")) {
+                if (version.equals("0.0"))
                     return Release.ZERO;
-                }
 
-                if (version.startsWith("1.")) {
+                if (version.startsWith("1."))
                     return Release.parse(version);
-                }
 
-                if (version.length() == 6 && version.charAt(2) == 'w') {
+                if (version.length() == 6 && version.charAt(2) == 'w')
                     return Snapshot.parse(version);
-                }
             }
         } catch (IllegalArgumentException ignore) {
         }
@@ -97,9 +112,8 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
     @Override
     public int compareTo(@NotNull GameVersionNumber other) {
-        if (this.getType() != other.getType()) {
+        if (this.getType() != other.getType())
             return Integer.compare(this.getType().ordinal(), other.getType().ordinal());
-        }
 
         return compareToImpl(other);
     }
@@ -110,27 +124,25 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     }
 
     static final class Old extends GameVersionNumber {
-
-        private static final Pattern PATTERN = Pattern.compile("[abc](?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?([^0-9]*(?<additional>[0-9]+).*)?");
-
-        static Old parsePreClassic(String value) {
-            int version;
-            try {
-                version = Integer.parseInt(value.substring("rd-".length()));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(e);
-            }
-            return new Old(value, Type.PRE_CLASSIC, version, 0, 0, 0);
-        }
-
-        static Old parseAlphaBetaClassic(String value) {
-            Matcher matcher = PATTERN.matcher(value);
-            if (!matcher.matches()) {
-                throw new IllegalArgumentException(value);
-            }
-
+        static Old parse(String value) {
             Type type;
+            int prefixLength = 1;
             switch (value.charAt(0)) {
+                case 'r':
+                    if (!value.startsWith("rd-")) {
+                        throw new IllegalArgumentException(value);
+                    }
+
+                    type = Type.PRE_CLASSIC;
+                    prefixLength = "rd-".length();
+                    break;
+                case 'i':
+                    if (!value.startsWith("inf-")) {
+                        throw new IllegalArgumentException(value);
+                    }
+                    type = Type.INFDEV;
+                    prefixLength = "inf-".length();
+                    break;
                 case 'a':
                     type = Type.ALPHA;
                     break;
@@ -141,60 +153,22 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     type = Type.CLASSIC;
                     break;
                 default:
-                    throw new AssertionError(value);
-            }
-
-            int major = Integer.parseInt(matcher.group("major"));
-            int minor = Integer.parseInt(matcher.group("minor"));
-
-            String patchString = matcher.group("patch");
-            int patch = patchString != null ? Integer.parseInt(patchString) : 0;
-
-            String additionalString = matcher.group("additional");
-            int additional = additionalString != null ? Integer.parseInt(additionalString) : 0;
-
-            return new Old(value, type, major, minor, patch, additional);
-        }
-
-        static Old parseInfdev(String value) {
-            String version = value.substring("inf-".length());
-            int major;
-            int patch;
-
-            try {
-                major = Integer.parseInt(version);
-                patch = 0;
-            } catch (NumberFormatException e) {
-                int idx = version.indexOf('-');
-                if (idx >= 0) {
-                    try {
-                        major = Integer.parseInt(version.substring(0, idx));
-                        patch = Integer.parseInt(version.substring(idx + 1));
-                    } catch (NumberFormatException ignore) {
-                        throw new IllegalArgumentException(value);
-                    }
-                } else {
                     throw new IllegalArgumentException(value);
-                }
             }
 
-            return new Old(value, Type.INFDEV, major, 0, patch, 0);
-        }
+            if (value.length() < prefixLength + 1 || !Character.isDigit(value.charAt(prefixLength)))
+                throw new IllegalArgumentException(value);
 
+            return new Old(value, type, VersionNumber.asVersion(value.substring(prefixLength)));
+        }
 
         final Type type;
-        final int major;
-        final int minor;
-        final int patch;
-        final int additional;
+        final VersionNumber versionNumber;
 
-        private Old(String value, Type type, int major, int minor, int patch, int additional) {
+        private Old(String value, Type type, VersionNumber versionNumber) {
             super(value);
             this.type = type;
-            this.major = major;
-            this.minor = minor;
-            this.patch = patch;
-            this.additional = additional;
+            this.versionNumber = versionNumber;
         }
 
         @Override
@@ -204,42 +178,26 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
-            Old that = (Old) other;
-            int c = Integer.compare(this.major, that.major);
-            if (c != 0) {
-                return c;
-            }
-
-            c = Integer.compare(this.minor, that.minor);
-            if (c != 0) {
-                return c;
-            }
-
-            c = Integer.compare(this.patch, that.patch);
-            if (c != 0) {
-                return c;
-            }
-
-            return Integer.compare(this.additional, that.additional);
+            return this.versionNumber.compareTo(((Old) other).versionNumber);
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (!(o instanceof Old)) return false;
             Old other = (Old) o;
-            return major == other.major && minor == other.minor && patch == other.patch && additional == other.additional && type == other.type;
+            return type == other.type && this.versionNumber.compareTo(other.versionNumber) == 0;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(type, major, minor, patch, additional);
+            return Objects.hash(type, versionNumber.hashCode());
         }
     }
 
     static final class Release extends GameVersionNumber {
 
-        private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>[0-9]+))?");
+        private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>.+))?");
 
         static final int TYPE_GA = Integer.MAX_VALUE;
 
@@ -248,7 +206,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         static final int TYPE_PRE = 2;
         static final int TYPE_RC = 3;
 
-        static final Release ZERO = new Release("0.0", 0, 0, 0, TYPE_GA, 0);
+        static final Release ZERO = new Release("0.0", 0, 0, 0, TYPE_GA, VersionNumber.ZERO);
 
         static Release parse(String value) {
             Matcher matcher = PATTERN.matcher(value);
@@ -276,7 +234,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             String eaVersionString = matcher.group("eaVersion");
-            int eaVersion = eaVersionString == null ? 0 : Integer.parseInt(eaVersionString);
+            VersionNumber eaVersion = eaVersionString != null ? VersionNumber.asVersion(eaVersionString) : VersionNumber.ZERO;
 
             return new Release(value, 1, minor, patch, eaType, eaVersion);
         }
@@ -286,9 +244,9 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         private final int patch;
 
         private final int eaType;
-        private final int eaVersion;
+        private final VersionNumber eaVersion;
 
-        Release(String value, int major, int minor, int patch, int eaType, int eaVersion) {
+        Release(String value, int major, int minor, int patch, int eaType, VersionNumber eaVersion) {
             super(value);
             this.major = major;
             this.minor = minor;
@@ -323,36 +281,31 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 return c;
             }
 
-            return Integer.compare(this.eaVersion, other.eaVersion);
+            return this.eaVersion.compareTo(other.eaVersion);
         }
 
         int compareToSnapshot(Snapshot other) {
             int idx = Arrays.binarySearch(Versions.SNAPSHOT_INTS, other.intValue);
-            if (idx >= 0) {
+            if (idx >= 0)
                 return this.compareToRelease(Versions.SNAPSHOT_PREV[idx]) <= 0 ? -1 : 1;
-            }
 
             idx = -(idx + 1);
-            if (idx == Versions.SNAPSHOT_INTS.length) {
+            if (idx == Versions.SNAPSHOT_INTS.length)
                 return -1;
-            }
 
             return this.compareToRelease(Versions.SNAPSHOT_PREV[idx]) <= 0 ? -1 : 1;
         }
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
-            if (other instanceof Release) {
+            if (other instanceof Release)
                 return compareToRelease((Release) other);
-            }
 
-            if (other instanceof Snapshot) {
+            if (other instanceof Snapshot)
                 return compareToSnapshot((Snapshot) other);
-            }
 
-            if (other instanceof Special) {
+            if (other instanceof Special)
                 return -((Special) other).compareToReleaseOrSnapshot(this);
-            }
 
             throw new AssertionError(other.getClass());
         }
@@ -367,15 +320,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Release other = (Release) o;
-            return major == other.major && minor == other.minor && patch == other.patch && eaType == other.eaType && eaVersion == other.eaVersion;
+            return major == other.major && minor == other.minor && patch == other.patch && eaType == other.eaType && eaVersion.equals(other.eaVersion);
         }
     }
 
     static final class Snapshot extends GameVersionNumber {
         static Snapshot parse(String value) {
-            if (value.length() != 6 || value.charAt(2) != 'w') {
+            if (value.length() != 6 || value.charAt(2) != 'w')
                 throw new IllegalArgumentException(value);
-            }
 
             int year;
             int week;
@@ -387,9 +339,8 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             }
 
             char suffix = value.charAt(5);
-            if ((suffix < 'a' || suffix > 'z') && suffix != '~') {
+            if ((suffix < 'a' || suffix > 'z') && suffix != '~')
                 throw new IllegalArgumentException(value);
-            }
 
             return new Snapshot(value, year, week, suffix);
         }
@@ -412,17 +363,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
-            if (other instanceof Release) {
+            if (other instanceof Release)
                 return -((Release) other).compareToSnapshot(this);
-            }
 
-            if (other instanceof Snapshot) {
+            if (other instanceof Snapshot)
                 return Integer.compare(this.intValue, ((Snapshot) other).intValue);
-            }
 
-            if (other instanceof Special) {
+            if (other instanceof Special)
                 return -((Special) other).compareToReleaseOrSnapshot(this);
-            }
 
             throw new AssertionError(other.getClass());
         }
@@ -460,9 +408,8 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
 
         VersionNumber asVersionNumber() {
-            if (versionNumber != null) {
+            if (versionNumber != null)
                 return versionNumber;
-            }
 
             return versionNumber = VersionNumber.asVersion(value);
         }
@@ -473,9 +420,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 v = ((Special) v).prev;
             }
 
-            if (v == null) {
-                throw new AssertionError("version: " + value);
-            }
+            if (v == null) throw new AssertionError("version: " + value);
 
             return v;
         }
@@ -493,28 +438,23 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
 
         int compareToSpecial(Special other) {
-            if (this.isUnknown()) {
+            if (this.isUnknown())
                 return other.isUnknown() ? this.asVersionNumber().compareTo(other.asVersionNumber()) : 1;
-            }
 
-            if (other.isUnknown()) {
+            if (other.isUnknown())
                 return -1;
-            }
 
-            if (this.value.equals(other.value)) {
+            if (this.value.equals(other.value))
                 return 0;
-            }
 
             int c = this.getPrevNormalVersion().compareTo(other.getPrevNormalVersion());
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             GameVersionNumber v = prev;
             while (v instanceof Special) {
-                if (v == other) {
+                if (v == other)
                     return 1;
-                }
 
                 v = ((Special) v).prev;
             }
@@ -524,17 +464,14 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber o) {
-            if (o instanceof Release) {
+            if (o instanceof Release)
                 return compareToReleaseOrSnapshot(o);
-            }
 
-            if (o instanceof Snapshot) {
+            if (o instanceof Snapshot)
                 return compareToReleaseOrSnapshot(o);
-            }
 
-            if (o instanceof Special) {
+            if (o instanceof Special)
                 return compareToSpecial((Special) o);
-            }
 
             throw new AssertionError(o.getClass());
         }
@@ -566,7 +503,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             List<Snapshot> snapshots = new ArrayList<>(1024);
             List<Release> snapshotPrev = new ArrayList<>(1024);
 
-            // Convert it to dynamic resource after the website is repaired?
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
                 Release currentRelease = null;
                 GameVersionNumber prev = null;
