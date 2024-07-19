@@ -111,13 +111,14 @@ public final class Logger {
         }
     }
 
-    private void onShutdown() {
+    private void onExit() {
+        shutdown();
         try {
             loggerThread.join();
         } catch (InterruptedException ignored) {
         }
 
-        String caller = CLASS_NAME + ".onShutdown";
+        String caller = CLASS_NAME + ".onExit";
 
         if (logRetention > 0 && logFile != null) {
             List<Pair<Path, int[]>> list = new ArrayList<>();
@@ -210,6 +211,7 @@ public final class Logger {
         if (logFolder != null) {
             String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             try {
+                Files.createDirectories(logFolder);
                 for (int n = 0; ; n++) {
                     Path file = logFolder.resolve(time + (n == 0 ? "" : "." + n) + ".log").toAbsolutePath().normalize();
                     try {
@@ -257,7 +259,7 @@ public final class Logger {
         loggerThread.setName("HMCL Logger Thread");
         loggerThread.start();
 
-        Thread cleanerThread = new Thread(this::onShutdown);
+        Thread cleanerThread = new Thread(this::onExit);
         cleanerThread.setName("HMCL Logger Shutdown Hook");
         Runtime.getRuntime().addShutdownHook(cleanerThread);
     }

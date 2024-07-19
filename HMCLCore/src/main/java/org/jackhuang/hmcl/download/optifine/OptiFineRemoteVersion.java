@@ -32,6 +32,11 @@ public class OptiFineRemoteVersion extends RemoteVersion {
     }
 
     @Override
+    public String getFullVersion() {
+        return getGameVersion() + "_" + getSelfVersion();
+    }
+
+    @Override
     public Task<Version> getInstallTask(DefaultDependencyManager dependencyManager, Version baseVersion) {
         return new OptiFineInstallTask(dependencyManager, baseVersion, this);
     }

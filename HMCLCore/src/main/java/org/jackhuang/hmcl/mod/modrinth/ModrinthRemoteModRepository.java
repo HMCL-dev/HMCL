@@ -95,7 +95,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         Response<ProjectSearchResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/v2/search", query))
                 .getJson(new TypeToken<Response<ProjectSearchResult>>() {
                 }.getType());
-        return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int)Math.ceil((double)response.totalHits / pageSize));
+        return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
     }
 
     @Override

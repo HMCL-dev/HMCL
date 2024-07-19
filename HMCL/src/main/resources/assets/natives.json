@@ -539,6 +539,94 @@
         }
       }
     },
+    "org.lwjgl:lwjgl:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.3.3/lwjgl-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.3.3/lwjgl-3.3.3-natives-linux-arm64.jar",
+          "sha1": "f35d8b6ffe1ac1e3a5eb1d4e33de80f044ad5fd8",
+          "size": 91294
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.3.3/lwjgl-jemalloc-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.3.3/lwjgl-jemalloc-3.3.3-natives-linux-arm64.jar",
+          "sha1": "eff8b86798191192fe2cba2dc2776109f30c239d",
+          "size": 209315
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-openal:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.3.3/lwjgl-openal-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.3.3/lwjgl-openal-3.3.3-natives-linux-arm64.jar",
+          "sha1": "ad8f302118a65bb8d615f8a2a680db58fb8f835e",
+          "size": 592963
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-opengl:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.3.3/lwjgl-opengl-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.3.3/lwjgl-opengl-3.3.3-natives-linux-arm64.jar",
+          "sha1": "2096f6b94b2d68745d858fbfe53aacf5f0c8074c",
+          "size": 58625
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-glfw:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.3.3/lwjgl-glfw-3.3.3-natives-linux-arm64.jar",
+          "sha1": "492a0f11f85b85899a6568f07511160c1b87cd38",
+          "size": 122159
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-stb:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.3.3/lwjgl-stb-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.3.3/lwjgl-stb-3.3.3-natives-linux-arm64.jar",
+          "sha1": "ddc177afc2be1ee8d93684b11363b80589a13fe1",
+          "size": 207418
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.3.3/lwjgl-tinyfd-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.3.3/lwjgl-tinyfd-3.3.3-natives-linux-arm64.jar",
+          "sha1": "2823a8c955c758d0954d282888075019ef99cec7",
+          "size": 43864
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.3.3:natives-linux-arm64",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.3.3/lwjgl-freetype-3.3.3-natives-linux-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.3.3/lwjgl-freetype-3.3.3-natives-linux-arm64.jar",
+          "sha1": "498965aac06c4a0d42df1fbef6bacd05bde7f974",
+          "size": 1093516
+        }
+      }
+    },
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.0:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3",
       "downloads": {

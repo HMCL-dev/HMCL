@@ -21,14 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
-import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.GameJsonParseFailedEvent;
-import org.jackhuang.hmcl.event.LoadedOneVersionEvent;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
-import org.jackhuang.hmcl.event.RefreshingVersionsEvent;
-import org.jackhuang.hmcl.event.RemoveVersionEvent;
-import org.jackhuang.hmcl.event.RenameVersionEvent;
+import org.jackhuang.hmcl.event.*;
 import org.jackhuang.hmcl.game.tlauncher.TLauncherVersion;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
@@ -45,13 +38,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -126,9 +113,12 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public File getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER: return getVersionRoot(id);
-            case ROOT_FOLDER: return getBaseDirectory();
-            default: throw new IllegalStateException();
+            case VERSION_FOLDER:
+                return getVersionRoot(id);
+            case ROOT_FOLDER:
+                return getBaseDirectory();
+            default:
+                throw new IllegalStateException();
         }
     }
 
@@ -458,7 +448,7 @@ public class DefaultGameRepository implements GameRepository {
             return assetsDir;
 
         if (index.isVirtual()) {
-            Path resourcesDir = getBaseDirectory().toPath().resolve("resources");
+            Path resourcesDir = getRunDirectory(version).toPath().resolve("resources");
 
             int cnt = 0;
             int tot = index.getObjects().entrySet().size();
@@ -507,18 +497,20 @@ public class DefaultGameRepository implements GameRepository {
 
     /**
      * read modpack configuration for a version.
+     *
      * @param version version installed as modpack
-     * @param <M> manifest type of ModpackConfiguration
+     * @param <M>     manifest type of ModpackConfiguration
      * @return modpack configuration object, or null if this version is not a modpack.
      * @throws VersionNotFoundException if version does not exist.
-     * @throws IOException if an i/o error occurs.
+     * @throws IOException              if an i/o error occurs.
      */
     @Nullable
     public <M> ModpackConfiguration<M> readModpackConfiguration(String version) throws IOException, VersionNotFoundException {
         if (!hasVersion(version)) throw new VersionNotFoundException(version);
         File file = getModpackConfiguration(version);
         if (!file.exists()) return null;
-        return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<M>>(){}.getType());
+        return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<M>>() {
+        }.getType());
     }
 
     public boolean isModpack(String version) {
