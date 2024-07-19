@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTreeSupplier;
+import org.jackhuang.hmcl.util.tree.TarFileTree;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.*;
@@ -79,7 +80,7 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
             if (fileName.endsWith(".zip")) {
                 onInstallArchive(file, () -> new ZipFileTree(new ZipFile(file)));
             } else if (fileName.endsWith(".tar.gz")) {
-                throw new UnsupportedOperationException("TODO");
+                onInstallArchive(file, () -> TarFileTree.open(file.toPath()));
             } else {
                 throw new AssertionError("Unreachable code");
             }

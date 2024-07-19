@@ -100,12 +100,12 @@ public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry>
 
     @Override
     public InputStream getInputStream(TarArchiveEntry entry) throws IOException {
-        return null;
+        return file.getInputStream(entry);
     }
 
     @Override
     public boolean isLink(TarArchiveEntry entry) {
-        return entry.isLink();
+        return false; // TODO
     }
 
     @Override
@@ -115,7 +115,7 @@ public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry>
 
     @Override
     public boolean isExecutable(TarArchiveEntry entry) {
-        return true;
+        return entry.isFile() && (entry.getMode() & 0b1000000) != 0;
     }
 
     @Override
