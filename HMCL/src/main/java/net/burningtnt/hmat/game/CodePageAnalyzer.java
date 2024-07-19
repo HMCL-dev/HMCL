@@ -24,6 +24,11 @@ public class CodePageAnalyzer implements Analyzer<LogAnalyzable> {
             "[LWJGL] Failed to load a library. Possible solutions:"
     };
 
+    private static final VersionNumber[] ORACLE_INVALID_VERSIONS = {
+            VersionNumber.asVersion("1.8.0_411"),
+            VersionNumber.asVersion("1.8.0_421")
+    };
+
     @Override
     public ControlFlow analyze(LogAnalyzable input, List<AnalyzeResult<LogAnalyzable>> results) throws Exception {
         // Non-Windows OperatingSystem and ascii path should NOT encounter this problem.
@@ -38,8 +43,13 @@ public class CodePageAnalyzer implements Analyzer<LogAnalyzable> {
 
         if (StringUtils.containsOne(logs, KEYS)) {
             // Oracle Java 8u411 has an unfixable bug.
-            if ("oracle".equalsIgnoreCase(input.getLaunchOptions().getJava().getVendor()) && VersionNumber.asVersion("1.8.0_411").equals(input.getLaunchOptions().getJava().getVersionNumber())) {
-                results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.LOG_GAME_JRE_INVALID, SolverCollection.ofReinstallJRE(input)));
+            if ("oracle".equalsIgnoreCase(input.getLaunchOptions().getJava().getVendor())) {
+                VersionNumber v = input.getLaunchOptions().getJava().getVersionNumber();
+                for (VersionNumber vv : ORACLE_INVALID_VERSIONS) {
+                    if (vv.equals(v)) {
+                        results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.LOG_GAME_JRE_INVALID, SolverCollection.ofReinstallJRE(input)));
+                    }
+                }
             }
 
             results.add(new AnalyzeResult<>(this, AnalyzeResult.ResultID.LOG_GAME_CODE_PAGE, new Solver() {
