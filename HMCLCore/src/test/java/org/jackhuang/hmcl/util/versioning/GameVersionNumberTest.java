@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.util.versioning;
 
 import org.junit.jupiter.api.Test;
@@ -42,10 +59,7 @@ public class GameVersionNumberTest {
 
     private static void assertGameVersionEquals(String version1, String version2) {
         assertEquals(0, GameVersionNumber.asGameVersion(version1).compareTo(version2), errorMessage(version1, version2));
-    }
-
-    private static void assertLessThan(String version1, String version2) {
-        assertTrue(GameVersionNumber.asGameVersion(version1).compareTo(version2) < 0, errorMessage(version1, version2));
+        assertEquals(GameVersionNumber.asGameVersion(version1), GameVersionNumber.asGameVersion(version2), errorMessage(version1, version2));
     }
 
     private static String toString(GameVersionNumber gameVersionNumber) {
@@ -56,8 +70,7 @@ public class GameVersionNumberTest {
         for (int i = 0; i < versions.length - 1; i++) {
             GameVersionNumber version1 = GameVersionNumber.asGameVersion(versions[i]);
 
-            //noinspection EqualsWithItself
-            assertEquals(0, version1.compareTo(version1), "version=" + versions[i]);
+            assertGameVersionEquals(versions[i]);
 
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = GameVersionNumber.asGameVersion(versions[j]);
@@ -70,23 +83,24 @@ public class GameVersionNumberTest {
         assertGameVersionEquals(versions[versions.length - 1]);
     }
 
+    private void assertOldVersion(String oldVersion, GameVersionNumber.Type type, String versionNumber) {
+        GameVersionNumber version = GameVersionNumber.asGameVersion(oldVersion);
+        assertInstanceOf(GameVersionNumber.Old.class, version);
+        GameVersionNumber.Old old = (GameVersionNumber.Old) version;
+        assertSame(type, old.type);
+        assertEquals(VersionNumber.asVersion(versionNumber), old.versionNumber);
+    }
+
     @Test
     public void testParseOld() {
-        {
-            GameVersionNumber version = GameVersionNumber.asGameVersion("b1.0");
-            assertInstanceOf(GameVersionNumber.Old.class, version);
-            GameVersionNumber.Old old = (GameVersionNumber.Old) version;
-            assertEquals(GameVersionNumber.Type.BETA, old.type);
-            assertEquals(VersionNumber.asVersion("1.0"), old.versionNumber);
-        }
-
-        {
-            GameVersionNumber version = GameVersionNumber.asGameVersion("b1.0_01");
-            assertInstanceOf(GameVersionNumber.Old.class, version);
-            GameVersionNumber.Old old = (GameVersionNumber.Old) version;
-            assertEquals(GameVersionNumber.Type.BETA, old.type);
-            assertEquals(VersionNumber.asVersion("1.0_01"), old.versionNumber);
-        }
+        assertOldVersion("rd-132211", GameVersionNumber.Type.PRE_CLASSIC, "132211");
+        assertOldVersion("a1.0.6", GameVersionNumber.Type.ALPHA, "1.0.6");
+        assertOldVersion("a1.0.8_01", GameVersionNumber.Type.ALPHA, "1.0.8_01");
+        assertOldVersion("a1.0.13_01-1", GameVersionNumber.Type.ALPHA, "1.0.13_01-1");
+        assertOldVersion("b1.0", GameVersionNumber.Type.BETA, "1.0");
+        assertOldVersion("b1.0_01", GameVersionNumber.Type.BETA, "1.0_01");
+        assertOldVersion("b1.8-pre1-2", GameVersionNumber.Type.BETA, "1.8-pre1-2");
+        assertOldVersion("b1.9-pre1", GameVersionNumber.Type.BETA, "1.9-pre1");
     }
 
     @Test
