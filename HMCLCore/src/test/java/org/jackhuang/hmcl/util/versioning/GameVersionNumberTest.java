@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -32,16 +33,23 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public final class GameVersionNumberTest {
 
-    @Test
-    public void testSortVersions() throws IOException {
+    private static List<String> readVersions() {
         List<String> versions = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.UTF_8))) {
             for (String line; (line = reader.readLine()) != null && !line.isEmpty(); ) {
                 versions.add(line);
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
 
+        return versions;
+    }
+
+    @Test
+    public void testSortVersions() throws IOException {
+        List<String> versions = readVersions();
         List<String> copied = new ArrayList<>(versions);
         Collections.shuffle(copied, new Random(0));
         copied.sort(Comparator.comparing(GameVersionNumber::asGameVersion));
@@ -103,6 +111,14 @@ public final class GameVersionNumberTest {
         assertOldVersion("b1.0_01", GameVersionNumber.Type.BETA, "1.0_01");
         assertOldVersion("b1.8-pre1-2", GameVersionNumber.Type.BETA, "1.8-pre1-2");
         assertOldVersion("b1.9-pre1", GameVersionNumber.Type.BETA, "1.9-pre1");
+    }
+
+    @Test
+    public void testParseNew() {
+        List<String> versions = readVersions();
+        for (String version : versions) {
+            assertFalse(GameVersionNumber.asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
+        }
     }
 
     @Test
