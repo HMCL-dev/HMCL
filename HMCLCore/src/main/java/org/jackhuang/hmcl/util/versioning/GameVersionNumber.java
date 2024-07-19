@@ -45,9 +45,8 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     case 'a':
                     case 'b':
                     case 'c':
-                        return Old.parse(version);
                     case 'i':
-                        return Old.parseInfdev(version);
+                        return Old.parse(version);
                 }
 
                 if (version.equals("0.0"))
@@ -137,6 +136,13 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     type = Type.PRE_CLASSIC;
                     prefixLength = "rd-".length();
                     break;
+                case 'i':
+                    if (!value.startsWith("inf-")) {
+                        throw new IllegalArgumentException(value);
+                    }
+                    type = Type.INFDEV;
+                    prefixLength = "inf-".length();
+                    break;
                 case 'a':
                     type = Type.ALPHA;
                     break;
@@ -154,13 +160,6 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                 throw new IllegalArgumentException(value);
 
             return new Old(value, type, VersionNumber.asVersion(value.substring(prefixLength)));
-        }
-
-        static Old parseInfdev(String value) {
-            if (!value.startsWith("inf-"))
-                throw new IllegalArgumentException(value);
-
-            return new Old(value, Type.INFDEV, VersionNumber.asVersion(value.substring("inf-".length())));
         }
 
         final Type type;
