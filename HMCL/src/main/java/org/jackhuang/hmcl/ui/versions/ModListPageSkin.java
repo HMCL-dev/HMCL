@@ -331,12 +331,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                for (Pair<String, ? extends RemoteModRepository> pair : Arrays.asList(
+                for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
                         pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
                         pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
                 )) {
-                    RemoteModRepository repository = pair.getValue();
-                    JFXHyperlink button = new JFXHyperlink(i18n(pair.getKey()));
+                    RemoteModRepository repository = item.getValue();
+                    JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
                         Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
