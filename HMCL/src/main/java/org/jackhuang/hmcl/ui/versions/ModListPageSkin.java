@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -63,6 +64,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -329,18 +331,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                for (int i = 0; i < 2; i++) {
-                    String text;
-                    RemoteModRepository repository;
-                    if (i == 0) {
-                        text = "mods.curseforge";
-                        repository = CurseForgeRemoteModRepository.MODS;
-                    } else {
-                        text = "mods.modrinth";
-                        repository = ModrinthRemoteModRepository.MODS;
-                    }
-
-                    JFXHyperlink button = new JFXHyperlink(i18n(text));
+                for (Pair<String, ? extends RemoteModRepository> pair : Arrays.asList(
+                        pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
+                        pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
+                )) {
+                    RemoteModRepository repository = pair.getValue();
+                    JFXHyperlink button = new JFXHyperlink(i18n(pair.getKey()));
                     Task.runAsync(() -> {
                         Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
