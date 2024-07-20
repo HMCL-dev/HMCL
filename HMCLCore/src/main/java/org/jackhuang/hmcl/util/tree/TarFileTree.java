@@ -20,16 +20,50 @@ package org.jackhuang.hmcl.util.tree;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarFile;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @author Glavo
  */
 public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry> {
-    public TarFileTree(TarFile file) throws IOException {
+
+    public static TarFileTree open(Path file) throws IOException {
+        String fileName = file.getFileName().toString();
+
+        if (fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz")) {
+            Path tempFile = Files.createTempFile("hmcl-", ".tar");
+
+            try (GZIPInputStream input = new GZIPInputStream(Files.newInputStream(file));
+                 OutputStream output = Files.newOutputStream(tempFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
+            ) {
+                IOUtils.copyTo(input, output);
+            } catch (Throwable e) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (Throwable e2) {
+                    e.addSuppressed(e2);
+                }
+                throw e;
+            }
+
+            return new TarFileTree(new TarFile(tempFile), tempFile);
+        } else {
+            return new TarFileTree(new TarFile(file), null);
+        }
+    }
+
+    private final Path tempFile;
+    private final Thread shutdownHook;
+
+    public TarFileTree(TarFile file, Path tempFile) throws IOException {
         super(file);
+        this.tempFile = tempFile;
         try {
             for (TarArchiveEntry entry : file.getEntries()) {
                 addEntry(entry);
@@ -40,18 +74,38 @@ public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry>
             } catch (Throwable e2) {
                 e.addSuppressed(e2);
             }
+
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (Throwable e2) {
+                    e.addSuppressed(e2);
+                }
+            }
+
             throw e;
         }
+
+        if (tempFile != null) {
+            this.shutdownHook = new Thread(() -> {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (Throwable ignored) {
+                }
+            });
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
+        } else
+            this.shutdownHook = null;
     }
 
     @Override
     public InputStream getInputStream(TarArchiveEntry entry) throws IOException {
-        return null;
+        return file.getInputStream(entry);
     }
 
     @Override
     public boolean isLink(TarArchiveEntry entry) {
-        return entry.isLink();
+        return false; // TODO
     }
 
     @Override
@@ -61,6 +115,18 @@ public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry>
 
     @Override
     public boolean isExecutable(TarArchiveEntry entry) {
-        return true;
+        return entry.isFile() && (entry.getMode() & 0b1000000) != 0;
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            file.close();
+        } finally {
+            if (tempFile != null) {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+                Files.deleteIfExists(tempFile);
+            }
+        }
     }
 }

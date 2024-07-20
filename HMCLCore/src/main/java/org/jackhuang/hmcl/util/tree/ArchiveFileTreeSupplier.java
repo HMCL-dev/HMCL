@@ -19,12 +19,11 @@ package org.jackhuang.hmcl.util.tree;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * @author Glavo
  */
-public interface ArchiveFileTreeSupplier<F extends Closeable, E extends ArchiveEntry> {
+public interface ArchiveFileTreeSupplier<F, E extends ArchiveEntry> {
     ArchiveFileTree<F, E> open() throws IOException;
 }

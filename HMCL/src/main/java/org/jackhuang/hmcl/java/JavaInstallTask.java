@@ -38,7 +38,7 @@ import java.util.Map;
 /**
  * @author Glavo
  */
-public final class JavaInstallTask<F extends Closeable, E extends ArchiveEntry> extends Task<JavaManifest> {
+public final class JavaInstallTask<F, E extends ArchiveEntry> extends Task<JavaManifest> {
 
     private final Path targetDir;
     private final Map<String, Object> update;

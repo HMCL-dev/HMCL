@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Glavo
  */
-public abstract class ArchiveFileTree<F extends Closeable, E extends ArchiveEntry> implements Closeable {
+public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Closeable {
 
     protected final F file;
     protected final Dir<E> root = new Dir<>();
@@ -92,9 +92,7 @@ public abstract class ArchiveFileTree<F extends Closeable, E extends ArchiveEntr
     public abstract boolean isExecutable(E entry);
 
     @Override
-    public void close() throws IOException {
-        file.close();
-    }
+    public abstract void close() throws IOException;
 
     public static final class Dir<E extends ArchiveEntry> {
         E entry;
