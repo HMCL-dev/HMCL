@@ -302,6 +302,7 @@ public final class FileUtils {
                 case "kde":
                 case "mate":
                 case "deepin":
+                case "x-cinnamon":
                     return true;
             }
         }

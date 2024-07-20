@@ -1,0 +1,55 @@
+[14:42:15] [main/INFO]: ModLauncher running: args [--username, Zkitefly, --version, 1.20.4-of, --gameDir, /home/zkitefly/.minecraft, --assetsDir, /home/zkitefly/.minecraft/assets, --assetIndex, 12, --uuid, 4453d157b2b8488c8be610fe8d34ef8c, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, ${clientid}, --xuid, ${auth_xuid}, --userType, msa, --versionType, HMCL (PR Collection) 3.5.unofficial-eb0b16b (PR Collection), --width, 854, --height, 480, --fml.neoForgeVersion, 20.4.223, --fml.fmlVersion, 2.0.17, --fml.mcVersion, 1.20.4, --fml.neoFormVersion, 20231207.154220, --launchTarget, forgeclient]
+[14:42:15] [main/INFO]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 17.0.10 by BellSoft; OS Linux arch amd64 version 5.10.0-amd64-desktop
+[14:42:15] [main/INFO]: Loading ImmediateWindowProvider fmlearlywindow
+[14:42:15] [main/INFO]: Trying GL version 4.6
+[14:42:15] [main/INFO]: Requested GL version 4.6 got version 4.6
+[14:42:15] [main/INFO]: OptiFineTransformationService.onLoad
+[14:42:15] [main/INFO]: OptiFine ZIP file URL: union:/home/zkitefly/.minecraft/mods/preview_OptiFine_1.20.4_HD_U_I8_pre4.jar%23167!/
+[14:42:15] [main/ERROR]: Error loading OptiFine ZIP file: union:/home/zkitefly/.minecraft/mods/preview_OptiFine_1.20.4_HD_U_I8_pre4.jar%23167!/
+java.nio.file.NoSuchFileException: /home/zkitefly/.minecraft/mods/preview_OptiFine_1.20.4_HD_U_I8_pre4.jar#167
+	at sun.nio.fs.UnixException.translateToIOException(UnixException.java:92) ~[?:?]
+	at sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:106) ~[?:?]
+	at sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:111) ~[?:?]
+	at sun.nio.fs.UnixFileAttributeViews$Basic.readAttributes(UnixFileAttributeViews.java:55) ~[?:?]
+	at sun.nio.fs.UnixFileSystemProvider.readAttributes(UnixFileSystemProvider.java:148) ~[?:?]
+	at sun.nio.fs.LinuxFileSystemProvider.readAttributes(LinuxFileSystemProvider.java:99) ~[?:?]
+	at java.nio.file.Files.readAttributes(Files.java:1851) ~[?:?]
+	at java.util.zip.ZipFile$Source.get(ZipFile.java:1428) ~[?:?]
+	at java.util.zip.ZipFile$CleanableResource.<init>(ZipFile.java:718) ~[?:?]
+	at java.util.zip.ZipFile.<init>(ZipFile.java:252) ~[?:?]
+	at java.util.zip.ZipFile.<init>(ZipFile.java:181) ~[?:?]
+	at java.util.zip.ZipFile.<init>(ZipFile.java:195) ~[?:?]
+	at optifine.OptiFineTransformationService.onLoad(OptiFineTransformationService.java:109) ~[?:?]
+	at cpw.mods.modlauncher.TransformationServiceDecorator.onLoad(TransformationServiceDecorator.java:53) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.lambda$loadTransformationServices$11(TransformationServicesHandler.java:116) ~[modlauncher-10.0.9.jar:?]
+	at java.util.HashMap$Values.forEach(HashMap.java:1065) ~[?:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.loadTransformationServices(TransformationServicesHandler.java:116) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:48) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:88) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?]
+[14:42:15] [main/ERROR]: Service failed to load OptiFine
+cpw.mods.modlauncher.api.IncompatibleEnvironmentException: Error loading OptiFine ZIP file: union:/home/zkitefly/.minecraft/mods/preview_OptiFine_1.20.4_HD_U_I8_pre4.jar%23167!/
+	at optifine.OptiFineTransformationService.onLoad(OptiFineTransformationService.java:122) ~[?:?]
+	at cpw.mods.modlauncher.TransformationServiceDecorator.onLoad(TransformationServiceDecorator.java:53) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.lambda$loadTransformationServices$11(TransformationServicesHandler.java:116) ~[modlauncher-10.0.9.jar:?]
+	at java.util.HashMap$Values.forEach(HashMap.java:1065) ~[?:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.loadTransformationServices(TransformationServicesHandler.java:116) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:48) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:88) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?]
+[14:42:15] [main/ERROR]: Found 1 services that failed to load : [OptiFine]
+Exception in thread "main" cpw.mods.modlauncher.InvalidLauncherSetupException: Invalid Services found OptiFine
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.TransformationServicesHandler.validateTransformationServices(TransformationServicesHandler.java:110)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.TransformationServicesHandler.initializeTransformationServices(TransformationServicesHandler.java:49)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.run(Launcher.java:88)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.main(Launcher.java:78)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.1.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141)
+[HMCL ProcessListener] Minecraft exit with code 1(0x1), type is APPLICATION_ERROR.

@@ -202,6 +202,7 @@ public class GameCrashWindow extends Stage {
                         case TWILIGHT_FOREST_OPTIFINE:
                         case PERFORMANT_FOREST_OPTIFINE:
                         case JADE_FOREST_OPTIFINE:
+                        case NEOFORGE_FOREST_OPTIFINE:
                             message = i18n("game.crash.reason.mod", "OptiFine");
                             LOG.info("Crash cause: " + result.getRule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
                             break;
