@@ -33,7 +33,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
@@ -46,7 +49,9 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -68,10 +73,10 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
 
@@ -324,7 +329,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                for (int i = 0;i < 2;i ++) {
+                for (int i = 0; i < 2; i++) {
                     String text;
                     RemoteModRepository repository;
                     if (i == 0) {
@@ -363,10 +368,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                             continue;
                                     }
                                     List<String> tags = title.getTags();
-                                    synchronized (tags) {
-                                        if (!tags.contains(loaderName)) {
-                                            tags.add(loaderName);
-                                        }
+                                    if (!tags.contains(loaderName)) {
+                                        tags.add(loaderName);
                                     }
                                 }
 
