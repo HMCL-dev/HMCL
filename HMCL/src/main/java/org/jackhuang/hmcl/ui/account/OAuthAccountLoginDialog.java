@@ -67,11 +67,9 @@ public class OAuthAccountLoginDialog extends DialogPane {
         HBox box = new HBox(8);
         JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
         birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/how-to-change-a-birth-date-on-a-microsoft-account-837badbc-999e-54d2-2617-d19206b9540a"));
-        JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
-        profileLink.setOnAction(e -> FXUtils.openLink("https://account.live.com/editprof.aspx"));
         JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
         purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
-        box.getChildren().setAll(profileLink, birthLink, purchaseLink);
+        box.getChildren().setAll(birthLink, purchaseLink);
         GridPane.setColumnSpan(box, 2);
 
         vbox.getChildren().setAll(usernameLabel, hintPane, box);
