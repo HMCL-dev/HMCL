@@ -75,7 +75,6 @@ public class InstallerItem extends Control {
 
     public static final class IncompatibleState implements State {
         private final String incompatibleItemName;
-
         private final String incompatibleItemVersion;
 
         public IncompatibleState(String incompatibleItemName, String incompatibleItemVersion) {
@@ -94,9 +93,7 @@ public class InstallerItem extends Control {
 
     public static final class InstalledState implements State {
         private final String version;
-
         private final boolean external;
-
         private final boolean incompatibleWithGame;
 
         public InstalledState(String version, boolean external, boolean incompatibleWithGame) {
@@ -169,7 +166,7 @@ public class InstallerItem extends Control {
         return versionProperty;
     }
 
-    public ObjectProperty<State> resolvedStatePropery() {
+    public ObjectProperty<State> resolvedStateProperty() {
         return resolvedStateProperty;
     }
 
@@ -290,7 +287,7 @@ public class InstallerItem extends Control {
         }
     }
 
-    public static class InstallerItemSkin extends SkinBase<InstallerItem> {
+    private static final class InstallerItemSkin extends SkinBase<InstallerItem> {
         private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
         private static final PseudoClass CARD = PseudoClass.getPseudoClass("card");
         private static final WeakListenerHolder holder = new WeakListenerHolder();
