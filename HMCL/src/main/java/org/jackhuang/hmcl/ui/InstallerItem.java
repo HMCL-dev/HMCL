@@ -64,9 +64,6 @@ public class InstallerItem extends Control {
     private final ObjectProperty<EventHandler<? super MouseEvent>> removeActionProperty = new SimpleObjectProperty<>(this, "removeAction");
 
     public interface State {
-        IllegalStateException SEALED = new IllegalStateException(
-                "Interface org.jackhuang.hmcl.ui.InstallerItem.State is sealed, whose implementations should ONLY be: org.jackhuang.hmcl.ui.InstallerItem.InstallableState, org.jackhuang.hmcl.ui.InstallerItem.IncompatibleState and org.jackhuang.hmcl.ui.InstallerItem.InstalledState. Are you adding more implementation?"
-        );
     }
 
     public static final class InstallableState implements State {
@@ -356,7 +353,7 @@ public class InstallerItem extends Control {
                 } else if (state instanceof IncompatibleState) {
                     return i18n("install.installer.incompatible", i18n("install.installer." + ((IncompatibleState) state).incompatibleItemName));
                 } else {
-                    throw State.SEALED;
+                    throw new AssertionError("Unknown state type: " + state.getClass());
                 }
             }, control.resolvedStateProperty));
             BorderPane.setMargin(statusLabel, new Insets(0, 0, 0, 8));
