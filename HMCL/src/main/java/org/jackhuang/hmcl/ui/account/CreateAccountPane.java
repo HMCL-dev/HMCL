@@ -307,19 +307,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 }));
                 FlowPane box = new FlowPane();
                 box.setHgap(8);
-                JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-                birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
-                JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
-                profileLink.setExternalLink("https://account.live.com/editprof.aspx");
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
                 purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
+                JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
+                birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
                 deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
-                JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
-                forgotpasswordLink.setExternalLink("https://www.minecraft.net/password/forgot");
+                JFXHyperlink usepasswordloginLink = new JFXHyperlink(i18n("account.methods.use_password_login"));
+                usepasswordloginLink.setExternalLink("https://docs.hmcl.net/launcher/use-password-login-microsoft-account.html");
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
+                box.getChildren().setAll(purchaseLink, birthLink, deauthorizeLink, usepasswordloginLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
                 if (!IntegrityChecker.isOfficial()) {
