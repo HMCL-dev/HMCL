@@ -33,6 +33,9 @@
     <ClInclude Include="java.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="install.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="os.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -51,6 +54,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="java.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="install.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="os.cpp">

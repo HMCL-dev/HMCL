@@ -160,6 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="java.h" />
+    <ClInclude Include="install.h" />
     <ClInclude Include="lang.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="os.h" />
@@ -170,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="java.cpp" />
+    <ClCompile Include="install.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="os.cpp" />
     <ClCompile Include="stdafx.cpp">

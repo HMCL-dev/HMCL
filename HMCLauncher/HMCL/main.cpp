@@ -3,6 +3,7 @@
 #include "os.h"
 #include "java.h"
 #include "lang.h"
+#include "install.h"
 #include <windows.h>
 
 Version J8(TEXT("8"));
@@ -18,13 +19,29 @@ __attribute__ ((dllexport)) DWORD AmdPowerXpressRequestHighPerformance = 0x00000
 }
 
 void LaunchHMCLDirect(const std::wstring &javaPath, const std::wstring &workdir,
-                  const std::wstring &jarPath, const std::wstring &jvmOptions) {
-  if (MyCreateProcess(L"\"" + javaPath + L"\" " + jvmOptions + L" -jar \"" + jarPath + L"\"", workdir))
+                      const std::wstring &jarPath,
+                      const std::wstring &jvmOptions) {
+  HANDLE hProcess = MyCreateProcess(L"\"" + javaPath + L"\" " + jvmOptions + L" -jar \"" +
+                                              jarPath + L"\"", workdir);
+  if (hProcess == INVALID_HANDLE_VALUE) {
+    return;
+  }
+
+  Sleep(5000);
+  DWORD exitCode;
+  if (!GetExitCodeProcess(hProcess, &exitCode)) {
+    GetLastError();
+    CloseHandle(hProcess);
+    return;
+  }
+  CloseHandle(hProcess);
+  if (exitCode == STILL_ACTIVE || exitCode == 0) {
     exit(EXIT_SUCCESS);
+  }
 }
 
 void LaunchHMCL(const std::wstring &javaPath, const std::wstring &workdir,
-               const std::wstring &jarPath, const std::wstring &jvmOptions) {
+                const std::wstring &jarPath, const std::wstring &jvmOptions) {
   Version javaVersion(L"");
   if (!MyGetFileVersionInfo(javaPath, javaVersion)) return;
 
@@ -34,11 +51,13 @@ void LaunchHMCL(const std::wstring &javaPath, const std::wstring &workdir,
 }
 
 void OpenHelpPage() {
-    ShellExecute(0, 0, L"https://docs.hmcl.net/help.html", 0, 0, SW_SHOW);
+  ShellExecute(0, 0, L"https://docs.hmcl.net/help.html", 0, 0, SW_SHOW);
 }
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPWSTR lpCmdLine, int nCmdShow) {
+  srand(GetTickCount64());
+
   std::wstring exeName, jvmOptions;
 
   // Since Jar file is appended to this executable, we should first get the
@@ -52,54 +71,65 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     exeName = exeName.substr(last_slash + 1);
   }
 
-  if (ERROR_SUCCESS != MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
-    jvmOptions = L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"; // Default Options
+  if (ERROR_SUCCESS !=
+      MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
+    jvmOptions =
+        L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15";  // Default Options
   }
 
-  bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
+  bool useChinese = GetUserDefaultUILanguage() == 2052;  // zh-CN
 
   SYSTEM_INFO systemInfo;
   GetNativeSystemInfo(&systemInfo);
   // TODO: check whether the bundled JRE is valid.
 
   // First, try the Java packaged together.
-  bool isX64   = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-  bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+  bool isX64 =
+      (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+  bool isARM64 =
+      (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
 
   if (isARM64) {
-    LaunchHMCLDirect(L"jre-arm64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+    LaunchHMCLDirect(L"jre-arm64\\bin\\java.exe", workdir, exeName,
+                     jvmOptions);
   }
   if (isX64) {
-    LaunchHMCLDirect(L"jre-x64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+    LaunchHMCLDirect(L"jre-x64\\bin\\java.exe", workdir, exeName, jvmOptions);
   }
-  LaunchHMCLDirect(L"jre-x86\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+  LaunchHMCLDirect(L"jre-x86\\bin\\java.exe", workdir, exeName, jvmOptions);
 
-  // Next, try the Java installed on thi computer.
+  // Next, try the Java installed on this computer.
   std::wstring path;
   int status;
 
   ScanJava(systemInfo, path, status);
 
   if (status != JAVA_STATUS_NOT_FOUND) {
-    MyPathAppend(path, std::wstring(L"bin\\javaw.exe"));
+    MyPathAppend(path, std::wstring(L"bin\\java.exe"));
     LaunchHMCL(path, workdir, exeName, jvmOptions);
   }
 
   // Try java in PATH
-  LaunchHMCLDirect(L"javaw", workdir, exeName, jvmOptions);
+  LaunchHMCLDirect(L"java", workdir, exeName, jvmOptions);
 
-  LPCWSTR downloadLink;
+  std::wstring home;
+  if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, home)) ||
+      SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, home))) {
+    MyPathNormalize(home);
+    MyPathAppend(home, L".hmcl\\");
 
-  if (isARM64) {
-    downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
-  } if (isX64) {
-    downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
-  } else {
-    downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
+    std::wstring file = L"";
+    if (isARM64) {
+      file = L"/java/11.0.24+9/bellsoft-jre11.0.24+9-windows-aarch64-full.zip";
+    } else if (isX64) {
+      file = L"/java/11.0.24+9/bellsoft-jre11.0.24+9-windows-i586-full.zip";
+    } else {
+      file = L"/java/11.0.24+9/bellsoft-jre11.0.24+9-windows-amd64-full.zip";
+    }
+    InstallHMCLJRE(home, L"download.bell-sw.com", file);
+
+    LaunchHMCLDirect(home + L"runtime\\bin\\java.exe", workdir, exeName, jvmOptions);
   }
 
-  if (IDOK == MessageBox(NULL, useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT, useChinese ? ERROR_TITLE_ZH : ERROR_TITLE, MB_ICONWARNING | MB_OKCANCEL)) {
-    ShellExecute(0, 0, downloadLink, 0, 0, SW_SHOW);
-  }
-  return 1;
+  return 0;
 }
