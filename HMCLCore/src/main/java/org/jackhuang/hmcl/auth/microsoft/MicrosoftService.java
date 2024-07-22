@@ -112,21 +112,23 @@ public class MicrosoftService {
     }
 
     private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
-        // Authenticate with XBox Live
-        XBoxLiveAuthenticationResponse xboxResponse = HttpRequest
-                .POST("https://user.auth.xboxlive.com/user/authenticate")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
-                                        pair("RpsTicket", "d=" + liveAccessToken))),
-                        pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
-                .retry(5)
-                .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
-
-        String uhs = getUhs(xboxResponse, null);
-
-        XBoxLiveAuthenticationResponse minecraftXstsResponse;
+        String uhs;
+        XBoxLiveAuthenticationResponse xboxResponse, minecraftXstsResponse;
         try {
+            // Authenticate with XBox Live
+            xboxResponse = HttpRequest
+                    .POST("https://user.auth.xboxlive.com/user/authenticate")
+                    .json(mapOf(
+                            pair("Properties",
+                                    mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
+                                            pair("RpsTicket", "d=" + liveAccessToken))),
+                            pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
+                    .retry(5)
+                    .accept("application/json")
+                    .getJson(XBoxLiveAuthenticationResponse.class);
+
+            uhs = getUhs(xboxResponse, null);
+
             minecraftXstsResponse = HttpRequest
                     .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
                     .json(mapOf(
