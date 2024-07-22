@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "install.h"
 
 int InstallHMCLJRE(const std::wstring &home, const std::wstring &domain,
