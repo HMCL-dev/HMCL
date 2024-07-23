@@ -313,11 +313,11 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
                 deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
-                JFXHyperlink usepasswordloginLink = new JFXHyperlink(i18n("account.methods.use_password_login"));
-                usepasswordloginLink.setExternalLink("https://docs.hmcl.net/launcher/use-password-login-microsoft-account.html");
+                JFXHyperlink loginwithpasswordLink = new JFXHyperlink(i18n("account.methods.login_with_password"));
+                loginwithpasswordLink.setExternalLink("https://docs.hmcl.net/launcher/use-password-login-microsoft-account.html");
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                box.getChildren().setAll(purchaseLink, birthLink, deauthorizeLink, usepasswordloginLink, createProfileLink);
+                box.getChildren().setAll(purchaseLink, birthLink, deauthorizeLink, loginwithpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
                 if (!IntegrityChecker.isOfficial()) {
