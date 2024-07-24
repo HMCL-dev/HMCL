@@ -4,20 +4,15 @@
 int InstallHMCLJRE(const std::wstring &home, const std::wstring &domain,
                    const std::wstring &file) {
       WIN32_FIND_DATA ffd;
-  std::wstring runtime, jreDownloadedFile, jreDownloadedDirectory, command;
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
+  std::wstring runtimeDirectory, jreDownloadedFile, jreDownloadedDirectory;
 
-  runtime = home + L"runtime";
+  runtimeDirectory = home + L"runtime";
   jreDownloadedFile = home + L".hmclauncher-jre-";
   jreDownloadedFile.append(std::to_wstring(rand()));
   jreDownloadedDirectory = jreDownloadedFile + L"";
   jreDownloadedFile.append(L".zip");
 
-  HANDLE hFind = INVALID_HANDLE_VALUE, hCleanable[8];
-  for (int i = 0;i < 8;i ++) {
-    hCleanable[i] = INVALID_HANDLE_VALUE;
-  }
+  HANDLE hFind = INVALID_HANDLE_VALUE;
 
   int err = 0;
 
@@ -31,38 +26,7 @@ int InstallHMCLJRE(const std::wstring &home, const std::wstring &domain,
     goto cleanup;
   }
 
-  command = L"tar.exe -xf \"" + jreDownloadedFile + L"\"";
-  si.cb = sizeof(si);
-  ZeroMemory(&si, sizeof(si));
-  ZeroMemory(&pi, sizeof(pi));
-
-  if (!CreateProcess(NULL, &command[0], NULL, NULL, false,
-                           NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, NULL, jreDownloadedDirectory.c_str(), &si,
-                           &pi)) {
-    err = GetLastError();
-    goto cleanup;
-  }
-  hCleanable[0] = si.hStdInput;
-  hCleanable[1] = si.hStdOutput;
-  hCleanable[2] = si.hStdError;
-  hCleanable[3] = pi.hProcess;
-  hCleanable[4] = pi.hThread;
-
-  while (true) {
-    DWORD exitCode;
-    if (!GetExitCodeProcess(pi.hProcess, &exitCode)) {
-      err = GetLastError();
-      goto cleanup;
-    }
-
-    if (exitCode != STILL_ACTIVE) {
-      if (exitCode != 0) {
-        err = exitCode;
-        goto cleanup;
-      }
-      break;
-    }
-  }
+  UncompressHMCLJRE(jreDownloadedFile, jreDownloadedDirectory);
 
   hFind = FindFirstFile((jreDownloadedDirectory + L"\\*").c_str(), &ffd);
   if (hFind == INVALID_HANDLE_VALUE) {
@@ -97,7 +61,7 @@ int InstallHMCLJRE(const std::wstring &home, const std::wstring &domain,
       goto cleanup;
     }
 
-    if (!MoveFile((jreDownloadedDirectory + L'\\' + targetFile).c_str(), runtime.c_str())) {
+    if (!MoveFile((jreDownloadedDirectory + L'\\' + targetFile).c_str(), runtimeDirectory.c_str())) {
       err = GetLastError();
       goto cleanup;
     }
@@ -106,12 +70,6 @@ int InstallHMCLJRE(const std::wstring &home, const std::wstring &domain,
   cleanup:
   if (hFind != INVALID_HANDLE_VALUE) {
     CloseHandle(hFind);
-  }
-  for (int i = 0;i < 8;i ++) {
-    HANDLE hCH = hCleanable[i];
-    if (hCH != INVALID_HANDLE_VALUE) {
-      CloseHandle(hCH);
-    }
   }
   RemoveDirectory(jreDownloadedDirectory.c_str());
   DeleteFile(jreDownloadedFile.c_str());
@@ -186,5 +144,46 @@ cleanup:
   if (fd != NULL) {
     CloseHandle(fd);
   }
+  return err;
+}
+
+int UncompressHMCLJRE(std::wstring jreDownloadedFile, std::wstring jreDownloadedDirectory) {
+  std::wstring command = L"tar.exe -xf \"" + jreDownloadedFile + L"\"";
+  int err = 0;
+
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+
+  si.cb = sizeof(si);
+  ZeroMemory(&si, sizeof(si));
+  ZeroMemory(&pi, sizeof(pi));
+  if (!CreateProcess(NULL, &command[0], NULL, NULL, false,
+                           NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, NULL, jreDownloadedDirectory.c_str(), &si,
+                           &pi)) {
+    return GetLastError();
+  }
+
+  while (true) {
+    DWORD exitCode;
+    if (!GetExitCodeProcess(pi.hProcess, &exitCode)) {
+      err = GetLastError();
+      goto cleanup;
+    }
+    if (exitCode != STILL_ACTIVE) {
+      if (exitCode != 0) {
+        err = exitCode;
+        goto cleanup;
+      }
+      break;
+    }
+  }
+
+  cleanup:
+  CloseHandle(si.hStdInput);
+  CloseHandle(si.hStdOutput);
+  CloseHandle(si.hStdError);
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+
   return err;
 }
