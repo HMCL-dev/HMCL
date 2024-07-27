@@ -260,7 +260,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             StringBuilder message = new StringBuilder(localModFile.getFileName());
             if (isNotBlank(localModFile.getGameVersion()))
-                message.append(", ").append(i18n("archive.game_version")).append(": ").append(localModFile.getGameVersion());
+                message.append(", ").append(i18n("game.version")).append(": ").append(localModFile.getGameVersion());
             if (isNotBlank(localModFile.getAuthors()))
                 message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
             this.message = message.toString();

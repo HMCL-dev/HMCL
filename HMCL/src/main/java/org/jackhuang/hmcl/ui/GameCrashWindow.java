@@ -337,7 +337,7 @@ public class GameCrashWindow extends Stage {
 
                 TwoLineListItem version = new TwoLineListItem();
                 version.getStyleClass().setAll("two-line-item-second-large");
-                version.setTitle(i18n("archive.game_version"));
+                version.setTitle(i18n("game.version"));
                 version.setSubtitle(GameCrashWindow.this.version.getId());
 
                 TwoLineListItem total_memory = new TwoLineListItem();
