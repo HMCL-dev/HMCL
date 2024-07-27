@@ -137,7 +137,7 @@ public final class NativePatcher {
                     LOG.warning("No alternative native library " + library.getName() + ":natives provided for platform " + javaVersion.getPlatform());
                     newLibraries.add(library);
                 } else if (replacement != null) {
-                    LOG.info("Replace native library " + library.getName() + ":natives with " + replacement.getName());
+                    LOG.info("Replace " + library.getName() + ":natives with " + replacement.getName());
                     newLibraries.add(replacement);
                 }
             } else {
