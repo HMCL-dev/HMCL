@@ -224,7 +224,8 @@ public class InstallerItem extends Control {
             InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
-            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, liteLoader);
+            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge);
+            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge);
             addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge);
             addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine);
             addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine);
