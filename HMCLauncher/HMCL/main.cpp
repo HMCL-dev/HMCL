@@ -50,10 +50,6 @@ void LaunchHMCL(const std::wstring &javaPath, const std::wstring &workdir,
   }
 }
 
-void OpenHelpPage() {
-  ShellExecute(0, 0, L"https://docs.hmcl.net/help.html", 0, 0, SW_SHOW);
-}
-
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPWSTR lpCmdLine, int nCmdShow) {
   srand(GetTickCount64());
