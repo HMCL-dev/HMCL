@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.util.versioning;
 
 import org.junit.jupiter.api.Test;
@@ -5,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -13,18 +31,25 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Glavo
  */
-public class GameVersionNumberTest {
+public final class GameVersionNumberTest {
 
-    @Test
-    public void testSortVersions() throws IOException {
+    private static List<String> readVersions() {
         List<String> versions = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.UTF_8))) {
             for (String line; (line = reader.readLine()) != null && !line.isEmpty(); ) {
                 versions.add(line);
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
 
+        return versions;
+    }
+
+    @Test
+    public void testSortVersions() {
+        List<String> versions = readVersions();
         List<String> copied = new ArrayList<>(versions);
         Collections.shuffle(copied, new Random(0));
         copied.sort(Comparator.comparing(GameVersionNumber::asGameVersion));
@@ -42,52 +67,57 @@ public class GameVersionNumberTest {
 
     private static void assertGameVersionEquals(String version1, String version2) {
         assertEquals(0, GameVersionNumber.asGameVersion(version1).compareTo(version2), errorMessage(version1, version2));
+        assertEquals(GameVersionNumber.asGameVersion(version1), GameVersionNumber.asGameVersion(version2), errorMessage(version1, version2));
     }
 
-    private static void assertLessThan(String version1, String version2) {
-        assertTrue(GameVersionNumber.asGameVersion(version1).compareTo(version2) < 0, errorMessage(version1, version2));
+    private static String toString(GameVersionNumber gameVersionNumber) {
+        return gameVersionNumber.getClass().getSimpleName();
     }
 
     private static void assertOrder(String... versions) {
         for (int i = 0; i < versions.length - 1; i++) {
             GameVersionNumber version1 = GameVersionNumber.asGameVersion(versions[i]);
 
-            //noinspection EqualsWithItself
-            assertEquals(0, version1.compareTo(version1), "version=" + versions[i]);
+            assertGameVersionEquals(versions[i]);
 
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = GameVersionNumber.asGameVersion(versions[j]);
 
-                assertEquals(-1, version1.compareTo(version2), String.format("version1=%s, version2=%s", versions[i], versions[j]));
-                assertEquals(1, version2.compareTo(version1), String.format("version1=%s, version2=%s", versions[i], versions[j]));
+                assertEquals(-1, version1.compareTo(version2), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
+                assertEquals(1, version2.compareTo(version1), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
             }
         }
 
         assertGameVersionEquals(versions[versions.length - 1]);
     }
 
+    private void assertOldVersion(String oldVersion, GameVersionNumber.Type type, String versionNumber) {
+        GameVersionNumber version = GameVersionNumber.asGameVersion(oldVersion);
+        assertInstanceOf(GameVersionNumber.Old.class, version);
+        GameVersionNumber.Old old = (GameVersionNumber.Old) version;
+        assertSame(type, old.type);
+        assertEquals(VersionNumber.asVersion(versionNumber), old.versionNumber);
+    }
+
     @Test
     public void testParseOld() {
-        {
-            GameVersionNumber version = GameVersionNumber.asGameVersion("b1.0");
-            assertInstanceOf(GameVersionNumber.Old.class, version);
-            GameVersionNumber.Old old = (GameVersionNumber.Old) version;
-            assertEquals(GameVersionNumber.Type.BETA, old.type);
-            assertEquals(1, old.major);
-            assertEquals(0, old.minor);
-            assertEquals(0, old.patch);
-            assertEquals(0, old.additional);
-        }
+        assertOldVersion("rd-132211", GameVersionNumber.Type.PRE_CLASSIC, "132211");
+        assertOldVersion("inf-20100618", GameVersionNumber.Type.INFDEV, "20100618");
+        assertOldVersion("inf-20100330-1", GameVersionNumber.Type.INFDEV, "20100330-1");
+        assertOldVersion("a1.0.6", GameVersionNumber.Type.ALPHA, "1.0.6");
+        assertOldVersion("a1.0.8_01", GameVersionNumber.Type.ALPHA, "1.0.8_01");
+        assertOldVersion("a1.0.13_01-1", GameVersionNumber.Type.ALPHA, "1.0.13_01-1");
+        assertOldVersion("b1.0", GameVersionNumber.Type.BETA, "1.0");
+        assertOldVersion("b1.0_01", GameVersionNumber.Type.BETA, "1.0_01");
+        assertOldVersion("b1.8-pre1-2", GameVersionNumber.Type.BETA, "1.8-pre1-2");
+        assertOldVersion("b1.9-pre1", GameVersionNumber.Type.BETA, "1.9-pre1");
+    }
 
-        {
-            GameVersionNumber version = GameVersionNumber.asGameVersion("b1.0_01");
-            assertInstanceOf(GameVersionNumber.Old.class, version);
-            GameVersionNumber.Old old = (GameVersionNumber.Old) version;
-            assertEquals(GameVersionNumber.Type.BETA, old.type);
-            assertEquals(1, old.major);
-            assertEquals(0, old.minor);
-            assertEquals(0, old.patch);
-            assertEquals(1, old.additional);
+    @Test
+    public void testParseNew() {
+        List<String> versions = readVersions();
+        for (String version : versions) {
+            assertFalse(GameVersionNumber.asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
         }
     }
 
@@ -138,15 +168,24 @@ public class GameVersionNumberTest {
                 "inf-20100330-2",
                 "inf-20100618",
                 "a1.0.4",
+                "a1.0.8_01",
+                "a1.0.10",
+                "a1.0.13_01-1",
                 "a1.0.17_02",
                 "a1.0.17_04",
                 "a1.1.0",
+                "a1.1.1",
                 "b1.0",
                 "b1.0_01",
                 "b1.1_02",
                 "b1.2",
+                "b1.8-pre1-2",
                 "b1.8.1",
                 "0.0",
+                "1.0.0-rc1",
+                "1.0.0-rc2-1",
+                "1.0.0-rc2-2",
+                "1.0.0-rc2-3",
                 "1.0",
                 "11w47a",
                 "1.1",

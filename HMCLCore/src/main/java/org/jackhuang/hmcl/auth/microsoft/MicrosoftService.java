@@ -21,8 +21,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
+import org.jackhuang.hmcl.auth.ServerDisconnectException;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
@@ -44,8 +46,8 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftService {
     private static final String SCOPE = "XboxLive.signin offline_access";
@@ -110,30 +112,40 @@ public class MicrosoftService {
     }
 
     private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
-        // Authenticate with XBox Live
-        XBoxLiveAuthenticationResponse xboxResponse = HttpRequest
-                .POST("https://user.auth.xboxlive.com/user/authenticate")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
-                                        pair("RpsTicket", "d=" + liveAccessToken))),
-                        pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
-                .retry(5)
-                .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
+        String uhs;
+        XBoxLiveAuthenticationResponse xboxResponse, minecraftXstsResponse;
+        try {
+            // Authenticate with XBox Live
+            xboxResponse = HttpRequest
+                    .POST("https://user.auth.xboxlive.com/user/authenticate")
+                    .json(mapOf(
+                            pair("Properties",
+                                    mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
+                                            pair("RpsTicket", "d=" + liveAccessToken))),
+                            pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
+                    .retry(5)
+                    .accept("application/json")
+                    .getJson(XBoxLiveAuthenticationResponse.class);
 
-        String uhs = getUhs(xboxResponse, null);
+            uhs = getUhs(xboxResponse, null);
 
-        // Authenticate Minecraft with XSTS
-        XBoxLiveAuthenticationResponse minecraftXstsResponse = HttpRequest
-                .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("SandboxId", "RETAIL"),
-                                        pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
-                        pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
-                .ignoreHttpErrorCode(401)
-                .retry(5)
-                .getJson(XBoxLiveAuthenticationResponse.class);
+            minecraftXstsResponse = HttpRequest
+                    .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
+                    .json(mapOf(
+                            pair("Properties",
+                                    mapOf(pair("SandboxId", "RETAIL"),
+                                            pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
+                            pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
+                    .ignoreHttpErrorCode(401)
+                    .retry(5)
+                    .getJson(XBoxLiveAuthenticationResponse.class);
+        } catch (ResponseCodeException e) {
+            if (e.getResponseCode() == 400) {
+                throw new XBox400Exception();
+            }
+
+            throw e;
+        }
 
         getUhs(minecraftXstsResponse, uhs);
 
@@ -288,6 +300,9 @@ public class MicrosoftService {
         public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
         public static final long COUNTRY_UNAVAILABLE = 2148916235L;
         public static final long ADD_FAMILY = 2148916238L;
+    }
+
+    public static class XBox400Exception extends AuthenticationException {
     }
 
     public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {

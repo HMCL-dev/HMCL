@@ -94,6 +94,10 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         return "asc";
     }
 
+    private int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
+        return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
+    }
+
     @Override
     public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
@@ -112,7 +116,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 .getJson(new TypeToken<Response<List<CurseAddon>>>() {
                 }.getType());
         if (searchFilter.isEmpty()) {
-            return new SearchResult(response.getData().stream().map(CurseAddon::toMod), (int)Math.ceil((double)response.pagination.totalCount / pageSize));
+            return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
         }
 
         // https://github.com/HMCL-dev/HMCL/issues/1549
@@ -135,7 +139,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
 
             return pair(remoteMod, diff);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), response.pagination.totalCount);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
     }
 
     @Override
@@ -156,7 +160,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
 
-        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints")
+        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
                 .header("X-API-KEY", apiKey)
                 .getJson(new TypeToken<Response<FingerprintMatchesResult>>() {

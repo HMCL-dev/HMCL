@@ -301,10 +301,18 @@ public class DownloadPage extends Control implements DecoratorPage {
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
                             .collect(Collectors.toList())) {
-                        ComponentList sublist = new ComponentList(() ->
-                                control.versions.get(gameVersion).stream()
-                                        .map(version -> new ModItem(version, control))
-                                        .collect(Collectors.toList()));
+                        List<RemoteMod.Version> versions = control.versions.get(gameVersion);
+                        if (versions == null || versions.isEmpty()) {
+                            continue;
+                        }
+
+                        ComponentList sublist = new ComponentList(() -> {
+                            ArrayList<ModItem> items = new ArrayList<>(versions.size());
+                            for (RemoteMod.Version v: versions) {
+                                items.add(new ModItem(v, control));
+                            }
+                            return items;
+                        });
                         sublist.getStyleClass().add("no-padding");
                         sublist.setTitle("Minecraft " + gameVersion);
 

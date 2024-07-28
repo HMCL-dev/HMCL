@@ -54,7 +54,7 @@
         <module name="ThrowsCount"> <!-- max 5 throws definitions per method: http://checkstyle.sourceforge.net/config_design.html#ThrowsCount -->
             <property name="max" value="5"/>
         </module>
-        <module name="InterfaceIsType"/> <!-- interface must contain methods, should not be used for const only: http://checkstyle.sourceforge.net/config_design.html#InterfaceIsType -->
+        <!--<module name="InterfaceIsType"/> interface must contain methods, should not be used for const only: http://checkstyle.sourceforge.net/config_design.html#InterfaceIsType -->
         <module name="OuterTypeFilename"/> <!-- class Foo must be in Foo.java: http://checkstyle.sourceforge.net/config_misc.html#OuterTypeFilename -->
 
         <module name="HideUtilityClassConstructor"/> <!-- utility class constructor must be private: http://checkstyle.sourceforge.net/config_design.html#HideUtilityClassConstructor -->

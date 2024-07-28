@@ -33,6 +33,8 @@ import java.util.Objects;
  */
 public final class VersionNumber implements Comparable<VersionNumber> {
 
+    public static final VersionNumber ZERO = asVersion("0");
+
     public static VersionNumber asVersion(String version) {
         Objects.requireNonNull(version);
         return new VersionNumber(version);
