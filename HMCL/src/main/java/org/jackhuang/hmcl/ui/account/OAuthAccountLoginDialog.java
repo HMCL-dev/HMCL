@@ -65,11 +65,17 @@ public class OAuthAccountLoginDialog extends DialogPane {
         });
 
         HBox box = new HBox(8);
-        JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-        birthLink.setOnAction(e -> FXUtils.openLink("https://support.microsoft.com/account-billing/how-to-change-a-birth-date-on-a-microsoft-account-837badbc-999e-54d2-2617-d19206b9540a"));
         JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
-        purchaseLink.setOnAction(e -> FXUtils.openLink(YggdrasilService.PURCHASE_URL));
-        box.getChildren().setAll(birthLink, purchaseLink);
+        purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
+        JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
+        birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
+        JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
+        deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
+        JFXHyperlink loginwithpasswordLink = new JFXHyperlink(i18n("account.methods.login_with_password"));
+        loginwithpasswordLink.setExternalLink("https://docs.hmcl.net/launcher/use-password-login-microsoft-account.html");
+        JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
+        createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
+        box.getChildren().setAll(purchaseLink, birthLink, deauthorizeLink, loginwithpasswordLink, createProfileLink);
         GridPane.setColumnSpan(box, 2);
 
         vbox.getChildren().setAll(usernameLabel, hintPane, box);
