@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.util.Lang;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends InstallersPage {
@@ -59,7 +59,7 @@ class AdditionalInstallersPage extends InstallersPage {
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals("game")) continue;
-            library.removeAction.set(e -> {
+            library.removeActionProperty().set(e -> {
                 controller.getSettings().put(libraryId, new UpdateInstallerWizardProvider.RemoveVersionAction(libraryId));
                 reload();
             });
@@ -99,12 +99,12 @@ class AdditionalInstallersPage extends InstallersPage {
             if (!"game".equals(libraryId) && currentGameVersion != null && !currentGameVersion.equals(game) && getVersion(libraryId) == null && alreadyInstalled) {
                 // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
                 // warns the user that we should update the library.
-                library.setState(libraryVersion, /* incompatibleWithGame */ true, /* removable */ true);
+                library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
                 compatible = false;
             } else if (alreadyInstalled || getVersion(libraryId) != null) {
-                library.setState(libraryVersion, /* incompatibleWithGame */ false, /* removable */ true);
+                library.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
             } else {
-                library.setState(/* libraryVersion */ null, /* incompatibleWithGame */ false, /* removable */ false);
+                library.versionProperty().set(null);
             }
         }
 
