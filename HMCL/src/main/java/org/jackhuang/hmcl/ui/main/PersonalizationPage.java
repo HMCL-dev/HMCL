@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
@@ -28,10 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
@@ -43,6 +41,8 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -124,6 +124,31 @@ public class PersonalizationPage extends StackPane {
 
             componentList.getContent().add(backgroundItem);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
+        }
+
+        {
+            VBox bgsettings = new VBox(16);
+            {
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
+                hbox.setPadding(new Insets(0, 0, 0, 10));
+
+                double opa = config().getBackgroundImageOpacity();
+                Label label = new Label("Opacity:"+new BigDecimal(opa).setScale(2, RoundingMode.HALF_UP));
+                JFXSlider slider = new JFXSlider(0, 1, opa);
+                HBox.setHgrow(slider, Priority.ALWAYS);
+
+                slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+                    double opacity = newValue.doubleValue();
+                    label.setText(String.format("Opacity: %.2f", opacity));
+                    config().setBackgroundImageOpacity(opacity);
+                });
+
+                hbox.getChildren().setAll(label, slider);
+                bgsettings.getChildren().add(hbox);
+            }
+
+            content.getChildren().add(bgsettings);
         }
 
         {
