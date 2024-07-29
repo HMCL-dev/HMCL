@@ -3,60 +3,58 @@
 #include "os.h"
 #include "java.h"
 #include "lang.h"
+#include "install.h"
 #include <windows.h>
 
 Version J8(TEXT("8"));
 
 extern "C" {
+#ifdef _MSC_VER
 _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 _declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
+#else
+__attribute__ ((dllexport)) DWORD NvOptimusEnablement = 0x00000001;
+__attribute__ ((dllexport)) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
+#endif
 }
 
-LPCWSTR VENDOR_DIRS[] = {
-  L"Java", L"Microsoft", L"BellSoft", L"Zulu", L"Eclipse Foundation", L"AdoptOpenJDK", L"Semeru"
-};
+void LaunchHMCLDirect(const std::wstring &javaPath, const std::wstring &workdir,
+                      const std::wstring &jarPath,
+                      const std::wstring &jvmOptions) {
+  HANDLE hProcess = MyCreateProcess(L"\"" + javaPath + L"\" " + jvmOptions + L" -jar \"" +
+                                              jarPath + L"\"", workdir);
+  if (hProcess == INVALID_HANDLE_VALUE) {
+    return;
+  }
 
-void RawLaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
-                  const std::wstring &jarPath, const std::wstring &jvmOptions) {
-  if (MyCreateProcess(L"\"" + javaPath + L"\" " + jvmOptions + L" -jar \"" + jarPath + L"\"", workdir))
+  Sleep(5000);
+  DWORD exitCode;
+  if (!GetExitCodeProcess(hProcess, &exitCode)) {
+    GetLastError();
+    CloseHandle(hProcess);
+    return;
+  }
+  CloseHandle(hProcess);
+  if (exitCode == STILL_ACTIVE || exitCode == 0) {
     exit(EXIT_SUCCESS);
+  }
 }
 
-void LaunchJVM(const std::wstring &javaPath, const std::wstring &workdir,
-               const std::wstring &jarPath, const std::wstring &jvmOptions) {
+void LaunchHMCL(const std::wstring &javaPath, const std::wstring &workdir,
+                const std::wstring &jarPath, const std::wstring &jvmOptions) {
   Version javaVersion(L"");
   if (!MyGetFileVersionInfo(javaPath, javaVersion)) return;
 
   if (J8 <= javaVersion) {
-    RawLaunchJVM(javaPath, workdir, jarPath, jvmOptions);
+    LaunchHMCLDirect(javaPath, workdir, jarPath, jvmOptions);
   }
-}
-
-void FindJavaInDirAndLaunchJVM(const std::wstring &baseDir, const std::wstring &workdir,
-                               const std::wstring &jarPath, const std::wstring &jvmOptions) {
-  std::wstring pattern = baseDir + L"*";
-
-  WIN32_FIND_DATA data;
-  HANDLE hFind = FindFirstFile(pattern.c_str(), &data);  // Search all subdirectory
-
-  if (hFind != INVALID_HANDLE_VALUE) {
-    do {
-      std::wstring javaw = baseDir + data.cFileName + std::wstring(L"\\bin\\javaw.exe");
-      if (FindFirstFileExists(javaw.c_str(), 0)) {
-        LaunchJVM(javaw, workdir, jarPath, jvmOptions);
-      }
-    } while (FindNextFile(hFind, &data));
-    FindClose(hFind);
-  }
-}
-
-void OpenHelpPage() {
-    ShellExecute(0, 0, L"https://docs.hmcl.net/help.html", 0, 0, SW_SHOW);
 }
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPWSTR lpCmdLine, int nCmdShow) {
-  std::wstring path, exeName, jvmOptions;
+  srand(GetTickCount64());
+
+  std::wstring exeName, jvmOptions;
 
   // Since Jar file is appended to this executable, we should first get the
   // location of JAR file.
@@ -69,88 +67,65 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     exeName = exeName.substr(last_slash + 1);
   }
 
-  if (ERROR_SUCCESS != MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
-    jvmOptions = L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"; // Default Options
+  if (ERROR_SUCCESS !=
+      MyGetEnvironmentVariable(L"HMCL_JAVA_OPTS", jvmOptions)) {
+    jvmOptions =
+        L"-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15";  // Default Options
   }
 
-  bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
+  bool useChinese = GetUserDefaultUILanguage() == 2052;  // zh-CN
 
   SYSTEM_INFO systemInfo;
   GetNativeSystemInfo(&systemInfo);
   // TODO: check whether the bundled JRE is valid.
-  // First try the Java packaged together.
-  bool isX64   = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-  bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+
+  // First, try the Java packaged together.
+  bool isX64 =
+      (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
+  bool isARM64 =
+      (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
 
   if (isARM64) {
-    RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+    LaunchHMCLDirect(L"jre-arm64\\bin\\java.exe", workdir, exeName,
+                     jvmOptions);
   }
   if (isX64) {
-    RawLaunchJVM(L"jre-x64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+    LaunchHMCLDirect(L"jre-x64\\bin\\java.exe", workdir, exeName, jvmOptions);
   }
-  RawLaunchJVM(L"jre-x86\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+  LaunchHMCLDirect(L"jre-x86\\bin\\java.exe", workdir, exeName, jvmOptions);
 
-  if (FindJava(path)) LaunchJVM(path + L"\\bin\\javaw.exe", workdir, exeName, jvmOptions);
+  // Next, try the Java installed on this computer.
+  std::wstring path;
+  int status;
 
-  std::wstring programFiles;
+  ScanJava(systemInfo, path, status);
 
-  // Or we try to search Java in C:\Program Files
-  if (!SUCCEEDED(MySHGetFolderPath(CSIDL_PROGRAM_FILES, programFiles))) programFiles = L"C:\\Program Files\\";
-  for (LPCWSTR vendorDir : VENDOR_DIRS) {
-    std::wstring dir = programFiles;
-    MyPathAppend(dir, vendorDir);
-    MyPathAddBackslash(dir);
-
-    FindJavaInDirAndLaunchJVM(dir, workdir, exeName, jvmOptions);
-  }
-
-  // Consider C:\Program Files (x86)
-  if (!SUCCEEDED(MySHGetFolderPath(CSIDL_PROGRAM_FILESX86, programFiles))) programFiles = L"C:\\Program Files (x86)\\";
-  for (LPCWSTR vendorDir : VENDOR_DIRS) {
-    std::wstring dir = programFiles;
-    MyPathAppend(dir, vendorDir);
-    MyPathAddBackslash(dir);
-
-    FindJavaInDirAndLaunchJVM(dir, workdir, exeName, jvmOptions);
+  if (status != JAVA_STATUS_NOT_FOUND) {
+    MyPathAppend(path, std::wstring(L"bin\\java.exe"));
+    LaunchHMCL(path, workdir, exeName, jvmOptions);
   }
 
   // Try java in PATH
-  RawLaunchJVM(L"javaw", workdir, exeName, jvmOptions);
+  LaunchHMCLDirect(L"java", workdir, exeName, jvmOptions);
 
-  std::wstring hmclJavaDir;
-  {
-    std::wstring buffer;
-    if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, buffer)) || SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, buffer))) {
-      MyPathAppend(buffer, L".hmcl");
-      MyPathAppend(buffer, L"java");
-      if (isARM64) {
-        MyPathAppend(buffer, L"windows-arm64");
-      } else if (isX64) {
-        MyPathAppend(buffer, L"windows-x86_64");
-      } else {
-        MyPathAppend(buffer, L"windows-x86");
-      }
-      MyPathAddBackslash(buffer);
-      hmclJavaDir = buffer;
+  std::wstring home;
+  if (SUCCEEDED(MySHGetFolderPath(CSIDL_APPDATA, home)) ||
+      SUCCEEDED(MySHGetFolderPath(CSIDL_PROFILE, home))) {
+    MyPathNormalize(home);
+    MyPathAppend(home, L".hmcl\\");
+
+    std::wstring file = L"";
+    if (isARM64) {
+      file = L"/java/11.0.24+9/bellsoft-jre11.0.24+9-windows-aarch64-full.zip";
+    } else if (isX64) {
+      file = L"/java/11.0.24+9/bellsoft-jre11.0.24+9-windows-i586-full.zip";
+    } else {
+      file = L"/java/11.0.24+9/bellsoft-jre11.0.24+9-windows-amd64-full.zip";
     }
+    InstallHMCLJRE(home, L"download.bell-sw.com", file);
+
+    LaunchHMCLDirect(home + L"runtime\\bin\\java.exe", workdir, exeName, jvmOptions);
   }
 
-  if (!hmclJavaDir.empty()) {
-    FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName, jvmOptions);
-  }
-
-  LPCWSTR downloadLink;
-
-  if (isARM64) {
-    downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
-  } if (isX64) {
-    downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
-  } else {
-    downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
-  }
-
-  if (IDOK == MessageBox(NULL, useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT, useChinese ? ERROR_TITLE_ZH : ERROR_TITLE, MB_ICONWARNING | MB_OKCANCEL)) {
-    ShellExecute(0, 0, downloadLink, 0, 0, SW_SHOW);
-  }
-  return 1;
+  return 0;
 }

@@ -28,4 +28,10 @@ class Version {
       if (ver[i] != other.ver[i]) return ver[i] < other.ver[i];
     return true;
   }
+
+  bool operator>=(const Version &other) const {
+    for (int i = 0; i < 4; ++i)
+      if (ver[i] != other.ver[i]) return ver[i] > other.ver[i];
+    return true;
+  }
 };

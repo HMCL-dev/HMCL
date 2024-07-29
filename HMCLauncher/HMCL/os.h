@@ -25,14 +25,16 @@ LSTATUS MyGetModuleFileName(HMODULE hModule, std::wstring &out);
 LSTATUS MyGetEnvironmentVariable(LPCWSTR name, std::wstring &out);
 
 // Create process by invoking CreateProcess, only pass command.
-bool MyCreateProcess(const std::wstring &command, const std::wstring &workdir);
+HANDLE MyCreateProcess(const std::wstring &command, const std::wstring &workdir);
 
 // Check if file lpPath exists.
 bool FindFirstFileExists(LPCWSTR lpPath, DWORD dwFilter);
 
+HRESULT MySHGetFolderPath(int csidl, std::wstring &out);
+
 bool MyGetFileVersionInfo(const std::wstring &filePath, Version &version);
 
-HRESULT MySHGetFolderPath(int csidl, std::wstring &out);
+void MyPathNormalize(std::wstring& path);
 
 void MyPathAppend(std::wstring &filePath, const std::wstring &more);
 
