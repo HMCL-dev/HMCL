@@ -90,4 +90,21 @@ public final class IOUtils {
     public static InputStream wrapFromGZip(InputStream inputStream) throws IOException {
         return new GZIPInputStream(inputStream);
     }
+
+    public static void closeQuietly(AutoCloseable closeable) {
+        try {
+            if (closeable != null)
+                closeable.close();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void closeQuietly(AutoCloseable closeable, Throwable exception) {
+        try {
+            if (closeable != null)
+                closeable.close();
+        } catch (Throwable e) {
+            exception.addSuppressed(e);
+        }
+    }
 }

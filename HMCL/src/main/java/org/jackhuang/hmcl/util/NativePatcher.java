@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -62,7 +62,7 @@ public final class NativePatcher {
         });
     }
 
-    public static Version patchNative(Version version, String gameVersion, JavaVersion javaVersion, VersionSetting settings) {
+    public static Version patchNative(Version version, String gameVersion, JavaRuntime javaVersion, VersionSetting settings) {
         if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
@@ -154,7 +154,7 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static Library getMesaLoader(JavaVersion javaVersion, Renderer renderer) {
+    public static Library getMesaLoader(JavaRuntime javaVersion, Renderer renderer) {
         return getNatives(javaVersion.getPlatform()).get(renderer == Renderer.LLVMPIPE ? "software-renderer-loader" : "mesa-loader");
     }
 }

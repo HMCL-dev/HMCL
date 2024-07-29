@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.java.JavaRuntime;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -42,8 +44,7 @@ public final class SystemUtils {
     }
 
     public static boolean supportJVMAttachment() {
-        return JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9
-                && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
+        return JavaRuntime.CURRENT_VERSION >= 9 && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
     }
 
     private static void onLogLine(String log) {
