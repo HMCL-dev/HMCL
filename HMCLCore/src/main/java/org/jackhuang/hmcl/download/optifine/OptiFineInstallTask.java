@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
@@ -144,7 +144,7 @@ public final class OptiFineInstallTask extends Task<Version> {
             Path optiFineLibraryPath = gameRepository.getLibraryFile(version, optiFineLibrary).toPath();
             if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
                 String[] command = {
-                        JavaVersion.fromCurrentEnvironment().getBinary().toString(),
+                        JavaRuntime.getDefault().getBinary().toString(),
                         "-cp",
                         dest.toString(),
                         "optifine.Patcher",

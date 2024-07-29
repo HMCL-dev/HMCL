@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.java;
+package org.jackhuang.hmcl.download.java.mojang;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
@@ -27,12 +27,12 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-@JsonAdapter(JavaDownloads.Adapter.class)
-public class JavaDownloads {
+@JsonAdapter(MojangJavaDownloads.Adapter.class)
+public class MojangJavaDownloads {
 
     private final Map<String, Map<String, List<JavaDownload>>> downloads;
 
-    public JavaDownloads(Map<String, Map<String, List<JavaDownload>>> downloads) {
+    public MojangJavaDownloads(Map<String, Map<String, List<JavaDownload>>> downloads) {
         this.downloads = downloads;
     }
 
@@ -40,16 +40,16 @@ public class JavaDownloads {
         return downloads;
     }
 
-    public static class Adapter implements JsonSerializer<JavaDownloads>, JsonDeserializer<JavaDownloads> {
+    public static class Adapter implements JsonSerializer<MojangJavaDownloads>, JsonDeserializer<MojangJavaDownloads> {
 
         @Override
-        public JsonElement serialize(JavaDownloads src, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(MojangJavaDownloads src, Type typeOfSrc, JsonSerializationContext context) {
             return context.serialize(src.downloads);
         }
 
         @Override
-        public JavaDownloads deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return new JavaDownloads(context.deserialize(json, new TypeToken<Map<String, Map<String, List<JavaDownload>>>>() {
+        public MojangJavaDownloads deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            return new MojangJavaDownloads(context.deserialize(json, new TypeToken<Map<String, Map<String, List<JavaDownload>>>>() {
             }.getType()));
         }
     }

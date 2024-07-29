@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
 
@@ -90,7 +91,7 @@ public final class ManagedProcess {
      * @return PID
      */
     public long getPID() throws UnsupportedOperationException {
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9) {
+        if (JavaRuntime.CURRENT_VERSION >= 9) {
             // Method Process.pid() is provided (Java 9 or later). Invoke it to get the pid.
             try {
                 return (long) MethodHandles.publicLookup()

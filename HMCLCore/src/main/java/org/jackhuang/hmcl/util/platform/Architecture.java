@@ -176,6 +176,9 @@ public enum Architecture {
                     return LOONGARCH64_OW;
                 return LOONGARCH64;
             }
+            case "loongarch64_ow": {
+                return LOONGARCH64_OW;
+            }
             default:
                 if (value.startsWith("armv7")) {
                     return ARM32;

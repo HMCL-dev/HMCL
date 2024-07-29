@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.download.java;
 
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
-import org.junit.jupiter.api.Test;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+/**
+ * @author Glavo
+ */
+public enum JavaPackageType {
+    JDK,
+    JRE,
+    JDKFX,
+    JREFX;
 
-public class JavaVersionConstraintTest {
-
-    @Test
-    public void vanillaJava16() {
-        JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(
-                GameVersionNumber.asGameVersion("1.17"),
-                null
-        );
-
-        assertEquals(VersionNumber.atLeast("16"), range.getMandatory());
-    }
+    public static final Set<JavaPackageType> ONLY_JDK = Collections.singleton(JDK);
+    public static final Set<JavaPackageType> ONLY_JRE = Collections.singleton(JRE);
+    public static final Set<JavaPackageType> FULL = Collections.unmodifiableSet(EnumSet.of(JDK, JRE));
+    public static final Set<JavaPackageType> FULLFX = Collections.unmodifiableSet(EnumSet.of(JDK, JRE, JDKFX, JREFX));
 }

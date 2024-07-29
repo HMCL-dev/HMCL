@@ -57,7 +57,7 @@ public final class MultiFileItem<T> extends VBox {
             if (toggleSelectedListener != null)
                 toggleSelectedListener.accept(newValue);
 
-            selectedData.set((T) newValue.getUserData());
+            selectedData.set(newValue != null ? (T) newValue.getUserData() : null);
         });
         selectedData.addListener((a, b, newValue) -> {
             Optional<Toggle> selecting = group.getToggles().stream()
@@ -181,6 +181,10 @@ public final class MultiFileItem<T> extends VBox {
 
         public StringOption(String title, T data) {
             super(title, data);
+        }
+
+        public JFXTextField getCustomField() {
+            return customField;
         }
 
         public String getValue() {

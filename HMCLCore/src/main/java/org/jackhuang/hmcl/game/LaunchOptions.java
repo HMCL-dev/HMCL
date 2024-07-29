@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -32,7 +32,7 @@ import java.util.*;
 public class LaunchOptions implements Serializable {
 
     private File gameDir;
-    private JavaVersion java;
+    private JavaRuntime java;
     private String versionName;
     private String versionType;
     private String profileName;
@@ -73,7 +73,7 @@ public class LaunchOptions implements Serializable {
     /**
      * The Java Environment that Minecraft runs on.
      */
-    public JavaVersion getJava() {
+    public JavaRuntime getJava() {
         return java;
     }
 
@@ -312,7 +312,7 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setJava(JavaVersion java) {
+        public Builder setJava(JavaRuntime java) {
             options.java = java;
             return this;
         }
