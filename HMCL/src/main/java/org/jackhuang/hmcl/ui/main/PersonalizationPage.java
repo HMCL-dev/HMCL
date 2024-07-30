@@ -150,16 +150,15 @@ public class PersonalizationPage extends StackPane {
                     textOpacity.setText(new BigDecimal(opacity * 100).setScale(2, RoundingMode.HALF_UP).toString());
                     config().setBackgroundImageOpacity(opacity);
                 });
-                textOpacity.textProperty().addListener((observable, oldValue, newValue) -> {
-                    try {
-                        double opacity = Double.parseDouble(newValue) / 100;
-                        if (opacity >= 0 && opacity <= 1) {
-                            slider.setValue(opacity);
-                        } else {
-                            textOpacity.setText(oldValue);
+                textOpacity.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue){
+                        try {
+                            double opacity = Double.parseDouble(textOpacity.getText()) / 100;
+                            if (opacity >= 0 && opacity <= 1) {
+                                slider.setValue(opacity);
+                            }
+                        } catch (NumberFormatException ignored) {
                         }
-                    } catch (NumberFormatException ignored) {
-                        textOpacity.setText(oldValue);
                     }
                 });
 
