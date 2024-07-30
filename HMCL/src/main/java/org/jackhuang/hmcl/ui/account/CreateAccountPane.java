@@ -290,7 +290,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                 FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
                     if (deviceCode != null) {
-                        FXUtils.copyText(deviceCode.getUserCode());
+                        // FXUtils.copyText(deviceCode.getUserCode());
                         hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
                     } else {
                         hintPane.setSegment(i18n("account.methods.microsoft.hint"));

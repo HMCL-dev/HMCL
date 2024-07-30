@@ -46,7 +46,7 @@ public class OAuthAccountLoginDialog extends DialogPane {
         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
         FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
             if (deviceCode != null) {
-                FXUtils.copyText(deviceCode.getUserCode());
+                // FXUtils.copyText(deviceCode.getUserCode());
                 hintPane.setSegment(
                         "<b>" + i18n("account.login.refresh.microsoft.hint") + "</b>\n"
                                 + i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri())
