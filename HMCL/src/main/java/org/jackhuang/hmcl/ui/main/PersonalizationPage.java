@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -142,22 +143,33 @@ public class PersonalizationPage extends StackPane {
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
                 JFXTextField textOpacity = new JFXTextField();
-                textOpacity.setText(new BigDecimal(opa * 100).setScale(2, RoundingMode.HALF_UP).toString());
+                textOpacity.setText(BigDecimal.valueOf(opa * 100).setScale(2, RoundingMode.HALF_UP).toString());
                 textOpacity.setPrefWidth(60);
 
+                AtomicReference<Double> lastValidOpacity = new AtomicReference<>(slider.getValue());
                 slider.valueProperty().addListener((observable, oldValue, newValue) -> {
                     double opacity = newValue.doubleValue();
-                    textOpacity.setText(new BigDecimal(opacity * 100).setScale(2, RoundingMode.HALF_UP).toString());
+                    textOpacity.setText(BigDecimal.valueOf(opacity * 100).setScale(2, RoundingMode.HALF_UP).toString());
+                    lastValidOpacity.set(opacity);
                     config().setBackgroundImageOpacity(opacity);
                 });
                 textOpacity.focusedProperty().addListener((observable, oldValue, newValue) -> {
                     if (!newValue){
                         try {
-                            double opacity = Double.parseDouble(textOpacity.getText()) / 100;
+                            String text = textOpacity.getText().trim();
+                            double opacity = Double.parseDouble(text) / 100;
                             if (opacity >= 0 && opacity <= 1) {
                                 slider.setValue(opacity);
+                            } else if (opacity < 0) {
+                                slider.setValue(0);
+                                textOpacity.setText("0.00");
+                            } else if (opacity > 1) {
+                                slider.setValue(1);
+                                textOpacity.setText("100.00");
                             }
                         } catch (NumberFormatException ignored) {
+                            slider.setValue(lastValidOpacity.get());
+                            textOpacity.setText(BigDecimal.valueOf(lastValidOpacity.get() * 100).setScale(2, RoundingMode.HALF_UP).toString());
                         }
                     }
                 });
@@ -169,8 +181,11 @@ public class PersonalizationPage extends StackPane {
                 hbox.getChildren().setAll(label1, slider, textOpacity, label2);
                 bgSettings.getChildren().add(hbox);
             }
+            //hide the opacity setting when selecting a translucency type
+            config().backgroundImageTypeProperty().addListener((observable, oldValue, newValue) -> bgSettings.setVisible(newValue != EnumBackgroundImage.TRANSLUCENT));
             content.getChildren().add(bgSettings);
         }
+
 
         {
             ComponentList logPane = new ComponentSublist();

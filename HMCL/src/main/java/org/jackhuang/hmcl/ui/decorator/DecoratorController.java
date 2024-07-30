@@ -107,6 +107,8 @@ public class DecoratorController {
             if (Double.isNaN(lastValue) || Math.abs(newValueDouble - lastValue) > threshold) {
                 updateBackground();
                 lastValue = newValueDouble;
+            } else if (config().getBackgroundImageOpacity() == 0 || config().getBackgroundImageOpacity() == 1) {
+                updateBackground();
             }
         };
         config().backgroundImageOpacityProperty().addListener(changeSettingsListener);
@@ -169,6 +171,7 @@ public class DecoratorController {
     private final ChangeListener<Number> changeSettingsListener;
 
     private void updateBackground() {
+        LOG.info("updateBackground");
         final int currentCount = ++this.changeBackgroundCount;
         CompletableFuture.supplyAsync(this::getBackground, Schedulers.io())
                 .thenAcceptAsync(background -> {
@@ -220,10 +223,28 @@ public class DecoratorController {
     }
 
     private Background createBackgroundWithOpacity(Image image, double opacity) {
+        if (opacity == 0){
+            return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
+        }
+        if (opacity == 1) {
+            return new Background(new BackgroundImage(
+                    image,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundPosition.DEFAULT,
+                    new BackgroundSize(800, 480, false, false, true, true)
+            ));
+        }
+        LOG.info(String.valueOf(opacity));
+        BackgroundImage backgroundImage = getImageWithOpacity(image, opacity);
+
+        return new Background(backgroundImage);
+    }
+
+    private static BackgroundImage getImageWithOpacity(Image image, double opacity) {
         WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
         PixelReader pixelReader = image.getPixelReader();
         PixelWriter pixelWriter = tempImage.getPixelWriter();
-
         for (int y = 0; y < image.getHeight(); y++) {
             for (int x = 0; x < image.getWidth(); x++) {
                 Color color = pixelReader.getColor(x, y);
@@ -232,15 +253,13 @@ public class DecoratorController {
             }
         }
 
-        BackgroundImage backgroundImage = new BackgroundImage(
+        return new BackgroundImage(
                 tempImage,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.DEFAULT,
                 new BackgroundSize(800, 480, false, false, true, true)
         );
-
-        return new Background(backgroundImage);
     }
 
     /**
