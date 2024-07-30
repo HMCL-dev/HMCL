@@ -107,7 +107,7 @@ public class OAuth {
 
         // Microsoft OAuth Flow
         String url = deviceTokenResponse.verificationURI;
-        if (url != null && "https://www.microsoft.com/link".equals(url)) {
+        if ("https://www.microsoft.com/link".equals(url)) {
             url += "?otc=" + deviceTokenResponse.userCode;
         }
         options.callback.openBrowser(url);
