@@ -127,28 +127,50 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            VBox bgsettings = new VBox(16);
+            VBox bgSettings = new VBox(16);
+            bgSettings.getStyleClass().add("card-non-transparent");
             {
                 HBox hbox = new HBox(8);
                 hbox.setAlignment(Pos.CENTER);
                 hbox.setPadding(new Insets(0, 0, 0, 10));
 
+                Label label1 = new Label(i18n("settings.launcher.background.settings.opacity"));
+                Label label2 = new Label("%");
+
                 double opa = config().getBackgroundImageOpacity();
-                Label label = new Label("Opacity:"+new BigDecimal(opa).setScale(2, RoundingMode.HALF_UP));
                 JFXSlider slider = new JFXSlider(0, 1, opa);
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
+                JFXTextField textOpacity = new JFXTextField();
+                textOpacity.setText(new BigDecimal(opa * 100).setScale(2, RoundingMode.HALF_UP).toString());
+                textOpacity.setPrefWidth(60);
+
                 slider.valueProperty().addListener((observable, oldValue, newValue) -> {
                     double opacity = newValue.doubleValue();
-                    label.setText(String.format("Opacity: %.2f", opacity));
+                    textOpacity.setText(new BigDecimal(opacity * 100).setScale(2, RoundingMode.HALF_UP).toString());
                     config().setBackgroundImageOpacity(opacity);
                 });
+                textOpacity.textProperty().addListener((observable, oldValue, newValue) -> {
+                    try {
+                        double opacity = Double.parseDouble(newValue) / 100;
+                        if (opacity >= 0 && opacity <= 1) {
+                            slider.setValue(opacity);
+                        } else {
+                            textOpacity.setText(oldValue);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        textOpacity.setText(oldValue);
+                    }
+                });
 
-                hbox.getChildren().setAll(label, slider);
-                bgsettings.getChildren().add(hbox);
+                slider.setValueFactory(slider1 -> Bindings.createStringBinding(() -> String.format("%.2f", slider1.getValue()), slider1.valueProperty()));
+
+                HBox.setMargin(label2, new Insets(0, 10, 0, 0));
+
+                hbox.getChildren().setAll(label1, slider, textOpacity, label2);
+                bgSettings.getChildren().add(hbox);
             }
-
-            content.getChildren().add(bgsettings);
+            content.getChildren().add(bgSettings);
         }
 
         {

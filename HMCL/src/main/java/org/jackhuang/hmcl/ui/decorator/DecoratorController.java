@@ -160,7 +160,7 @@ public class DecoratorController {
     private int changeBackgroundCount = 0;
 
     private double lastValue = Double.NaN;
-    private final double threshold = 0.05;
+    private final double threshold = 0.05;//Determine how often the background is refreshed when the opacity is modified
 
 
     @SuppressWarnings("FieldCanBeLocal") // Strong reference
