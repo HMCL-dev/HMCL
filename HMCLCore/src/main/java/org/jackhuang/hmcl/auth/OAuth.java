@@ -24,6 +24,8 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +108,14 @@ public class OAuth {
         options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
 
         // Microsoft OAuth Flow
-        options.callback.openBrowser(deviceTokenResponse.verificationURI);
+        String url = deviceTokenResponse.verificationURI;
+        if (url != null && url.equals("https://www.microsoft.com/link")) {
+            String userCode = deviceTokenResponse.userCode;
+            if (userCode != null) {
+                url += "?otc=" + URLEncoder.encode(userCode, StandardCharsets.UTF_8.toString());
+            }
+        }
+        options.callback.openBrowser(url);
 
         long startTime = System.nanoTime();
         int interval = deviceTokenResponse.interval;
