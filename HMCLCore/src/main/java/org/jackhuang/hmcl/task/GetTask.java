@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.io.ByteArrayBuilder;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
@@ -72,23 +73,26 @@ public final class GetTask extends FetchTask<String> {
 
     @Override
     protected Context getContext(URLConnection conn, boolean checkETag) {
+        ByteArrayBuilder output = ByteArrayBuilder.createFor(conn);
         return new Context() {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
             @Override
-            public void write(byte[] buffer, int offset, int len) {
-                baos.write(buffer, offset, len);
+            public int read(InputStream inputStream) throws IOException {
+                return output.read(inputStream);
             }
 
             @Override
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(charset.name());
+                String result = output.toString(charset);
                 setResult(result);
 
                 if (checkETag) {
-                    repository.cacheText(result, conn);
+                    if (charset == UTF_8) {
+                        repository.cacheBytes(output.getArray(), output.size(), conn);
+                    } else {
+                        repository.cacheBytes(result.getBytes(UTF_8), conn);
+                    }
                 }
             }
         };

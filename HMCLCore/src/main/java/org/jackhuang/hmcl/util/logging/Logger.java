@@ -1,10 +1,14 @@
 package org.jackhuang.hmcl.util.logging;
 
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.io.ByteArrayBuilder;
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.file.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -51,7 +55,7 @@ public final class Logger {
     private final StringBuilder builder = new StringBuilder(512);
 
     private Path logFile;
-    private ByteArrayOutputStream rawLogs;
+    private ByteArrayBuilder rawLogs;
     private PrintWriter logWriter;
 
     private Thread loggerThread;
@@ -227,7 +231,7 @@ public final class Logger {
         }
 
         if (logWriter == null) {
-            rawLogs = new ByteArrayOutputStream(256 * 1024);
+            rawLogs = new ByteArrayBuilder(256 * 1024);
             logWriter = new PrintWriter(new OutputStreamWriter(rawLogs, UTF_8));
         }
 
@@ -287,10 +291,10 @@ public final class Logger {
     }
 
     public String getLogs() {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ByteArrayBuilder output = new ByteArrayBuilder();
         try {
             exportLogs(output);
-            return output.toString("UTF-8");
+            return output.toString();
         } catch (IOException e) {
             log(Level.WARNING, CLASS_NAME + ".getLogs", "Failed to export logs", e);
             return "";

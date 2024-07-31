@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -213,20 +214,23 @@ public class CacheRepository {
         }, conn);
     }
 
-    public void cacheText(String text, URLConnection conn) throws IOException {
-        cacheBytes(text.getBytes(UTF_8), conn);
+    public void cacheBytes(byte[] bytes, URLConnection conn) throws IOException {
+        cacheBytes(bytes, bytes.length, conn);
     }
 
-    public void cacheBytes(byte[] bytes, URLConnection conn) throws IOException {
+    public void cacheBytes(byte[] bytes, int length, URLConnection conn) throws IOException {
         cacheData(() -> {
-            String hash = DigestUtils.digestToString(SHA1, bytes);
+            String hash = DigestUtils.digestToString(SHA1, bytes, length);
             Path cached = getFile(SHA1, hash);
-            FileUtils.writeBytes(cached, bytes);
+            Files.createDirectories(cached.getParent());
+            try (OutputStream out = Files.newOutputStream(cached)) {
+                out.write(bytes, 0, length);
+            }
             return new CacheResult(hash, cached);
         }, conn);
     }
 
-    public synchronized void cacheData(ExceptionalSupplier<CacheResult, IOException> cacheSupplier, URLConnection conn) throws IOException {
+    private synchronized void cacheData(ExceptionalSupplier<CacheResult, IOException> cacheSupplier, URLConnection conn) throws IOException {
         String eTag = conn.getHeaderField("ETag");
         if (eTag == null) return;
         String url = conn.getURL().toString();
@@ -243,11 +247,11 @@ public class CacheRepository {
         }
     }
 
-    private static class CacheResult {
+    private static final class CacheResult {
         public String hash;
         public Path cachedFile;
 
-        public CacheResult(String hash, Path cachedFile) {
+        CacheResult(String hash, Path cachedFile) {
             this.hash = hash;
             this.cachedFile = cachedFile;
         }
@@ -289,7 +293,7 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), ETagIndex.class);
+                ETagIndex indexOnDisk = JsonUtils.fromMaybeMalformedJson(IOUtils.readFullyAsStringWithoutClosing(Channels.newInputStream(channel)), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
                 ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
@@ -426,7 +430,7 @@ public class CacheRepository {
             try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 FileLock lock = channel.lock();
                 try {
-                    Map<String, Object> indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), new TypeToken<Map<String, Object>>() {
+                    Map<String, Object> indexOnDisk = JsonUtils.fromMaybeMalformedJson(IOUtils.readFullyAsStringWithoutClosing(Channels.newInputStream(channel)), new TypeToken<Map<String, Object>>() {
                     }.getType());
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);

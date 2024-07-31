@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +30,7 @@ public final class HttpMultipartRequest implements Closeable {
 
     private final String boundary = "*****" + System.currentTimeMillis() + "*****";
     private final HttpURLConnection urlConnection;
-    private final ByteArrayOutputStream stream;
+    private final ByteArrayBuilder builder;
 
     public HttpMultipartRequest(HttpURLConnection urlConnection) throws IOException {
         this.urlConnection = urlConnection;
@@ -39,12 +38,12 @@ public final class HttpMultipartRequest implements Closeable {
         urlConnection.setUseCaches(false);
         urlConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
-        stream = new ByteArrayOutputStream();
+        builder = new ByteArrayBuilder();
     }
 
     private void addLine(String content) throws IOException {
-        stream.write(content.getBytes(UTF_8));
-        stream.write(ENDL);
+        builder.write(content.getBytes(UTF_8));
+        builder.write(ENDL);
     }
 
     public HttpMultipartRequest file(String name, String filename, String contentType, InputStream inputStream) throws IOException {
@@ -52,7 +51,7 @@ public final class HttpMultipartRequest implements Closeable {
         addLine(String.format("Content-Disposition: form-data; name=\"%s\"; filename=\"%s\"", name, filename));
         addLine("Content-Type: " + contentType);
         addLine("");
-        IOUtils.copyTo(inputStream, stream);
+        builder.copyFrom(inputStream);
         addLine("");
         return this;
     }
@@ -68,9 +67,9 @@ public final class HttpMultipartRequest implements Closeable {
     @Override
     public void close() throws IOException {
         addLine("--" + boundary + "--");
-        urlConnection.setRequestProperty("Content-Length", "" + stream.size());
+        urlConnection.setRequestProperty("Content-Length", "" + builder.size());
         try (OutputStream os = urlConnection.getOutputStream()) {
-            stream.writeTo(os);
+            builder.writeTo(os);
         }
     }
 }

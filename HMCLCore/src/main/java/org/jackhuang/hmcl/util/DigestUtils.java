@@ -47,6 +47,12 @@ public final class DigestUtils {
         return getDigest(algorithm).digest(data);
     }
 
+    public static byte[] digest(String algorithm, byte[] data, int length) {
+        MessageDigest digest = getDigest(algorithm);
+        digest.update(data, 0, length);
+        return digest.digest();
+    }
+
     public static byte[] digest(String algorithm, Path path) throws IOException {
         try (InputStream is = Files.newInputStream(path)) {
             return digest(algorithm, is);
@@ -63,6 +69,10 @@ public final class DigestUtils {
 
     public static String digestToString(String algorithm, byte[] data) throws IOException {
         return Hex.encodeHex(digest(algorithm, data));
+    }
+
+    public static String digestToString(String algorithm, byte[] data, int length) throws IOException {
+        return Hex.encodeHex(digest(algorithm, data, length));
     }
 
     public static String digestToString(String algorithm, Path path) throws IOException {

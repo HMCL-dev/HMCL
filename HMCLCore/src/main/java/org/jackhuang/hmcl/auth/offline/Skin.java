@@ -25,11 +25,10 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.ByteArrayBuilder;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -245,22 +244,20 @@ public class Skin {
 
         @Override
         protected Context getContext(URLConnection conn, boolean checkETag) throws IOException {
+            ByteArrayBuilder output = ByteArrayBuilder.createFor(conn);
             return new Context() {
-                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
                 @Override
-                public void write(byte[] buffer, int offset, int len) {
-                    baos.write(buffer, offset, len);
+                public int read(InputStream inputStream) throws IOException {
+                    return output.read(inputStream);
                 }
 
                 @Override
                 public void close() throws IOException {
                     if (!isSuccess()) return;
 
-                    setResult(new ByteArrayInputStream(baos.toByteArray()));
-
+                    setResult(output.toInputStream());
                     if (checkETag) {
-                        repository.cacheBytes(baos.toByteArray(), conn);
+                        repository.cacheBytes(output.getArray(), output.size(), conn);
                     }
                 }
             };
