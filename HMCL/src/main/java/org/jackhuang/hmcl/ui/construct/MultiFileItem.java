@@ -24,11 +24,11 @@ import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -152,7 +152,7 @@ public final class MultiFileItem<T> extends VBox {
             left.setSelected(selected);
         }
 
-        protected Node createItem(ToggleGroup group) {
+        protected Region createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
@@ -206,7 +206,7 @@ public final class MultiFileItem<T> extends VBox {
         }
 
         @Override
-        protected Node createItem(ToggleGroup group) {
+        protected Region createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
@@ -230,7 +230,7 @@ public final class MultiFileItem<T> extends VBox {
         }
     }
 
-    public static final class FileOption<T> extends Option<T> {
+    public static class FileOption<T> extends Option<T> {
         private final FileSelector selector = new FileSelector();
 
         public FileOption(String title, T data) {
@@ -269,7 +269,7 @@ public final class MultiFileItem<T> extends VBox {
         }
 
         @Override
-        protected Node createItem(ToggleGroup group) {
+        protected Region createItem(ToggleGroup group) {
             BorderPane pane = new BorderPane();
             pane.setPadding(new Insets(3));
             FXUtils.setLimitHeight(pane, 30);
