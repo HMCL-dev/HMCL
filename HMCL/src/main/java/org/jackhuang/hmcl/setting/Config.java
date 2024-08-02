@@ -163,6 +163,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("launcherFontFamily")
     private StringProperty launcherFontFamily = new SimpleStringProperty();
 
+    @SerializedName("fontSmoothingByGray")
+    private BooleanProperty fontSmoothingByGray = new SimpleBooleanProperty(false);
+
     @SerializedName("logLines")
     private IntegerProperty logLines = new SimpleIntegerProperty(1000);
 
@@ -571,6 +574,18 @@ public final class Config implements Cloneable, Observable {
 
     public void setLauncherFontFamily(String launcherFontFamily) {
         this.launcherFontFamily.set(launcherFontFamily);
+    }
+
+    public boolean isFontSmoothingByGray() {
+        return fontSmoothingByGray.get();
+    }
+
+    public BooleanProperty fontSmoothingByGrayProperty() {
+        return fontSmoothingByGray;
+    }
+
+    public void setFontSmoothingByGray(boolean fontSmoothingByGray) {
+        this.fontSmoothingByGray.set(fontSmoothingByGray);
     }
 
     public int getLogLines() {
