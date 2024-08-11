@@ -117,7 +117,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            searchField.setOnAction(e -> search());
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> search());
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
