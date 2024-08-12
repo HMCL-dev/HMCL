@@ -48,7 +48,11 @@ final class GameVersion {
     private static Optional<String> getVersionFromJson(InputStream versionJson) {
         try {
             Map<?, ?> version = JsonUtils.fromNonNullJsonFully(versionJson, Map.class);
-            return tryCast(version.get("id"), String.class);
+            String id = (String) version.get("id");
+            if (id.contains(" / ")) {
+                id = id.split(" / ")[0];
+            }
+            return tryCast(id, String.class);
         } catch (IOException | JsonParseException e) {
             LOG.warning("Failed to parse version.json", e);
             return Optional.empty();
