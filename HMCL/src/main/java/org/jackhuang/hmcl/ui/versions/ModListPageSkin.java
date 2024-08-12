@@ -241,15 +241,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         item.getModInfo().getAuthors() +
                         item.getModInfo().getGameVersion() +
                         item.getModInfo().getId() +
-                        item.getModInfo().getMod() +
-                        item.getModInfo().getUrl() +
                         item.getModInfo().getModLoaderType() +
-                        (item.getMod() != null ? item.getMod().getDisplayName() : "") +
-                        (item.getMod() != null ? item.getMod().getAbbr() : "") +
-                        (item.getMod() != null ? item.getMod().getModIds() : "") +
-                        (item.getMod() != null ? item.getMod().getDisplayName() : "") +
-                        (item.getMod() != null ? item.getMod().getSubname() : "") +
-                        (item.getMod() != null ? item.getMod().getMcmod() : ""))) {
+                        (item.getMod() != null ? item.getMod().getDisplayName() : ""))) {
                     listView.getItems().add(item);
                 }
             }
