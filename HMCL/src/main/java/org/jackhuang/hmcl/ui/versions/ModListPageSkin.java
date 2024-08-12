@@ -308,9 +308,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                 Image image = new Image(checkStream);
                                 if (image.getWidth() == image.getHeight() && image.getWidth() > 0 && image.getHeight() > 0) {
                                     return new ByteArrayInputStream(stream.toByteArray());
-                                } else {
-                                    return null;
                                 }
+                            } catch (Exception ignored) {
                             }
                         }
                     }
