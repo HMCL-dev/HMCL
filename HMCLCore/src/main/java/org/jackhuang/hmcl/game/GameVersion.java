@@ -49,8 +49,8 @@ final class GameVersion {
         try {
             Map<?, ?> version = JsonUtils.fromNonNullJsonFully(versionJson, Map.class);
             String id = (String) version.get("id");
-            if (id.contains(" / ")) {
-                id = id.split(" / ")[0];
+            if (id != null) {
+                id = id.replaceAll(" / [a-z0-9]+.*", "");
             }
             return tryCast(id, String.class);
         } catch (IOException | JsonParseException e) {
