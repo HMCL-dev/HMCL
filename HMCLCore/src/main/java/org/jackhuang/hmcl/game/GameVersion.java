@@ -51,6 +51,7 @@ final class GameVersion {
             String id = (String) version.get("id");
             if (id != null) {
                 id = id.replaceAll(" / [a-z0-9]+.*", "");
+                LOG.info("Removed hash values from the id field in version.json." + " New id: " + id);
             }
             return tryCast(id, String.class);
         } catch (IOException | JsonParseException e) {
