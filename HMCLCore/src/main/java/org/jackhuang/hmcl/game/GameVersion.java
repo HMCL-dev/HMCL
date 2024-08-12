@@ -49,8 +49,8 @@ final class GameVersion {
         try {
             Map<?, ?> version = JsonUtils.fromNonNullJsonFully(versionJson, Map.class);
             String id = (String) version.get("id");
-            if (id != null) {
-                id = id.replaceAll(" / [a-z0-9]+.*", "");
+            if (id.contains(" / ")) {
+                id = id.split(" / ")[0];
                 LOG.info("Removed hash values from the id field in version.json." + " New id: " + id);
             }
             return tryCast(id, String.class);
