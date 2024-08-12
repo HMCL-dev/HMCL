@@ -304,7 +304,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         if (Files.exists(iconPath)) {
                             ByteArrayOutputStream stream = new ByteArrayOutputStream();
                             Files.copy(iconPath, stream);
-                            return new ByteArrayInputStream(stream.toByteArray());
+                            try (ByteArrayInputStream checkStream = new ByteArrayInputStream(stream.toByteArray())) {
+                                Image image = new Image(checkStream);
+                                if (image.getWidth() == image.getHeight() && image.getWidth() > 0 && image.getHeight() > 0) {
+                                    return new ByteArrayInputStream(stream.toByteArray());
+                                } else {
+                                    return null;
+                                }
+                            }
                         }
                     }
                     return null;
