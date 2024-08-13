@@ -411,18 +411,59 @@ public final class FXUtils {
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
-        String[] openCommands;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        String[] openCommands = new String[0];
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else
+        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            // Determine the appropriate file manager based on the desktop environment
+            String desktops = System.getenv("XDG_CURRENT_DESKTOP");
+            if (desktops == null) {
+                desktops = System.getenv("XDG_SESSION_DESKTOP");
+            }
+
+            if (desktops != null) {
+                for (String desktop : desktops.split(":")) {
+                    switch (desktop.toLowerCase(Locale.ROOT)) {
+                        case "gnome":
+                            openCommands = new String[]{"nautilus", "--no-desktop", "--browser", "--select", path};
+                            break;
+                        case "kde":
+                            openCommands = new String[]{"dolphin", "--select", path};
+                            break;
+                        case "xfce":
+                            openCommands = new String[]{"thunar", path};
+                            break;
+                        case "mate":
+                            openCommands = new String[]{"caja", "--no-desktop", "--browser", "--select", path};
+                            break;
+                        case "deepin":
+                            openCommands = new String[]{"dde-file-manager", "--show-item", path};
+                            break;
+                        case "x-cinnamon":
+                            openCommands = new String[]{"nemo", "--no-desktop", "--browser", "--select", path};
+                            break;
+                        default:
+                            openCommands = null;
+                            break;
+                    }
+                    if (openCommands != null) {
+                        break;
+                    }
+                }
+            } else {
+                openCommands = null;
+            }
+        } else {
             openCommands = null;
+        }
 
         if (openCommands != null) {
+            String[] finalOpenCommands = openCommands;
             thread(() -> {
                 try {
-                    int exitCode = SystemUtils.callExternalProcess(openCommands);
+                    int exitCode = SystemUtils.callExternalProcess(finalOpenCommands);
 
                     // explorer.exe always return 1
                     if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
