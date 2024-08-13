@@ -238,7 +238,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 if (predicate.test(item.getModInfo().getFileName() +
                         item.getModInfo().getName() +
                         item.getModInfo().getVersion() +
-                        item.getModInfo().getAuthors() +
                         item.getModInfo().getGameVersion() +
                         item.getModInfo().getId() +
                         item.getModInfo().getModLoaderType() +
