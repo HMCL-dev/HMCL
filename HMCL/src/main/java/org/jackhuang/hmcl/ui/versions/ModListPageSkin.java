@@ -63,6 +63,7 @@ import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -296,29 +297,52 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
 
             ImageView imageView = new ImageView();
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getLogoPath())) {
-                Task.supplyAsync(() -> {
+            Task.supplyAsync(() -> {
+                Image image = null;
+                String logoPath = modInfo.getModInfo().getLogoPath();
+
+                if (StringUtils.isNotBlank(logoPath)) {
                     try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
-                        Path iconPath = fs.getPath(modInfo.getModInfo().getLogoPath());
+                        Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
                             try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (image.getWidth() == image.getHeight() && image.getWidth() > 0 && image.getHeight() > 0) {
-                                    return image;
-                                }
-                            } catch (Exception ignored) {
+                                image = new Image(stream, 40, 40, true, true);
+                                System.out.println("Logo Path Image - Width: " + image.getWidth() + ", Height: " + image.getHeight());
                             }
                         }
+                    } catch (Exception ignored) {
                     }
-                    return null;
-                }).whenComplete(Schedulers.javafx(), (image, exception) -> {
-                    if (image != null) {
-                        imageView.setImage(image);
-                    } else {
-                        imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
+                }
+
+                if (image == null) {
+                    String[] defaultPaths = {
+                            "icon.png",
+                            "assets/" + modInfo.getModInfo().getId() + "/icon.png",
+                            "logoFile.png"
+                    };
+
+                    for (String path : defaultPaths) {
+                        try (InputStream stream = Files.newInputStream(Paths.get(path))) {
+                            image = new Image(stream, 40, 40, true, true);
+                            System.out.println("Default Path Image (" + path + ") - Width: " + image.getWidth() + ", Height: " + image.getHeight());
+                            if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
+                                break;
+                            } else {
+                                image = null;  // Reset image if it doesn't meet criteria
+                            }
+                        } catch (Exception ignored) {
+                        }
                     }
-                }).start();
-            }
+                }
+
+                return (image != null && image.getWidth() == image.getHeight() && image.getWidth() > 0) ? image : null;
+            }).whenComplete(Schedulers.javafx(), (image, exception) -> {
+                if (image != null) {
+                    imageView.setImage(image);
+                } else {
+                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
+                }
+            }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
