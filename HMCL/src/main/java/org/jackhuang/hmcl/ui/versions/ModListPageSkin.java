@@ -158,8 +158,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
             );
-            toolbarSelecting.setSpacing(10);
-            toolbarSelecting.setAlignment(Pos.CENTER);
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                     selectedItem -> {
