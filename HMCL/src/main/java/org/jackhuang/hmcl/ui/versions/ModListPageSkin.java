@@ -139,6 +139,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar))
             );
+            toolbarNormal.setSpacing(10);
+            toolbarNormal.setAlignment(Pos.CENTER);
 
             // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
@@ -156,6 +158,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
             );
+            toolbarSelecting.setSpacing(10);
+            toolbarSelecting.setAlignment(Pos.CENTER);
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
                     selectedItem -> {
