@@ -307,7 +307,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         if (Files.exists(iconPath)) {
                             try (InputStream stream = Files.newInputStream(iconPath)) {
                                 image = new Image(stream, 40, 40, true, true);
-                                System.out.println("Logo Path Image - Width: " + image.getWidth() + ", Height: " + image.getHeight());
                             }
                         }
                     } catch (Exception ignored) {
@@ -318,17 +317,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     String[] defaultPaths = {
                             "icon.png",
                             "assets/" + modInfo.getModInfo().getId() + "/icon.png",
-                            "logoFile.png"
+                            "logoFile.png",
+                            "logo.png"
                     };
 
                     for (String path : defaultPaths) {
                         try (InputStream stream = Files.newInputStream(Paths.get(path))) {
                             image = new Image(stream, 40, 40, true, true);
-                            System.out.println("Default Path Image (" + path + ") - Width: " + image.getWidth() + ", Height: " + image.getHeight());
                             if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
                                 break;
                             } else {
-                                image = null;  // Reset image if it doesn't meet criteria
+                                image = null;
                             }
                         } catch (Exception ignored) {
                         }
