@@ -188,7 +188,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 if (selectedItem != null) {
                     Controllers.dialog(new ModInfoDialog(selectedItem));
                 }
-                event.consume();
             });
 
             center.setContent(listView);
