@@ -186,6 +186,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             listView.setOnContextMenuRequested(event -> {
                 ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                 if (selectedItem != null) {
+                        listView.getSelectionModel().clearSelection();
+                    }
                     Controllers.dialog(new ModInfoDialog(selectedItem));
                 }
             });
