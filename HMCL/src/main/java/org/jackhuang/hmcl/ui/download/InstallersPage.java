@@ -52,6 +52,8 @@ public class InstallersPage extends Control implements WizardPage {
     protected JFXTextField txtName = new JFXTextField();
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
+    private boolean isNameModifiedByUser = false;
+
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
         this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
@@ -61,7 +63,9 @@ public class InstallersPage extends Control implements WizardPage {
                 new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
-        txtName.setText(gameVersion);
+        setTxtNameWithLoaders(gameVersion);
+
+        txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
@@ -103,6 +107,9 @@ public class InstallersPage extends Control implements WizardPage {
                 library.versionProperty().set(null);
             }
         }
+        if (!isNameModifiedByUser) {
+            setTxtNameWithLoaders(txtName.getText().split("-")[0]);
+        }
     }
 
     @Override
@@ -122,6 +129,25 @@ public class InstallersPage extends Control implements WizardPage {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new InstallersPageSkin(this);
+    }
+
+    private void setTxtNameWithLoaders(String baseName) {
+        StringBuilder nameBuilder = new StringBuilder(baseName);
+
+        for (InstallerItem library : group.getLibraries()) {
+            String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
+            if (!controller.getSettings().containsKey(libraryId)) {
+                continue;
+            }
+            if (!libraryId.equals(LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId()) &&
+                    !libraryId.equals(LibraryAnalyzer.LibraryType.QUILT_API.getPatchId())) {
+                String capitalizedLibraryId = Character.toUpperCase(libraryId.charAt(0)) + libraryId.substring(1);
+                nameBuilder.append("-").append(capitalizedLibraryId);
+            }
+        }
+
+        txtName.setText(nameBuilder.toString());
+        isNameModifiedByUser = false;
     }
 
     protected static class InstallersPageSkin extends SkinBase<InstallersPage> {
