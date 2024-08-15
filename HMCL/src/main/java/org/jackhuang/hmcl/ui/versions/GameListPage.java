@@ -75,8 +75,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         gameList = new GameList();
 
-        HBox searchBar;
-        searchBar = new HBox();
+        HBox searchBar = new HBox();
         searchBar.setPadding(new Insets(12, 10, 0, 10));
         searchField = new JFXTextField();
         searchField.setPromptText(i18n("search.hint.versionlist.regex"));
@@ -88,6 +87,21 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             pause.playFromStart();
         });
         searchBar.getChildren().setAll(searchField);
+
+        VBox centerBox = new VBox();
+        centerBox.getChildren().setAll(searchBar, gameList);
+        setCenter(centerBox);
+
+        if (searchField.getText().isEmpty()) {
+            gameList.itemsProperty().addListener((obs, oldItems, newItems) -> {
+                if (newItems.isEmpty()) {
+                    setCenter(gameList);
+                } else {
+                    centerBox.getChildren().setAll(searchBar, gameList);
+                    setCenter(centerBox);
+                }
+            });
+        }
 
         {
             ScrollPane pane = new ScrollPane();
@@ -137,10 +151,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
         }
-
-        VBox centerBox = new VBox();
-        centerBox.getChildren().addAll(searchBar, gameList);
-        setCenter(centerBox);
     }
 
     public ObjectProperty<Profile> selectedProfileProperty() {
