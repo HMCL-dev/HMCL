@@ -46,6 +46,8 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -77,7 +79,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         searchBar = new HBox();
         searchBar.setPadding(new Insets(12, 10, 0, 10));
         searchField = new JFXTextField();
-        searchField.setPromptText(i18n("search"));
+        searchField.setPromptText(i18n("search.hint.versionlist.regex"));
         HBox.setHgrow(searchField, Priority.ALWAYS);
         PauseTransition pause = new PauseTransition(Duration.millis(100));
         pause.setOnFinished(e -> gameList.filter(searchField.getText()));
@@ -229,14 +231,29 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         private void applyFilter(String filterText) {
-            String lowerCaseFilterText = filterText.toLowerCase();
-            if (filterText.isEmpty()) {
-                itemsProperty().setAll(originalItems);
+            if (filterText.startsWith("regex:")) {
+                try {
+                    String regex = filterText.substring("regex:".length());
+                    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+
+                    List<GameListItem> filteredItems = originalItems.stream()
+                            .filter(item -> pattern.matcher(item.getVersion()).find())
+                            .collect(Collectors.toList());
+
+                    itemsProperty().setAll(filteredItems);
+                } catch (PatternSyntaxException e) {
+                    System.err.println("Invalid regex pattern: " + e.getMessage());
+                }
             } else {
-                List<GameListItem> filteredItems = originalItems.stream()
-                        .filter(item -> item.getVersion().toLowerCase().contains(lowerCaseFilterText))
-                        .collect(Collectors.toList());
-                itemsProperty().setAll(filteredItems);
+                String lowerCaseFilterText = filterText.toLowerCase();
+                if (filterText.isEmpty()) {
+                    itemsProperty().setAll(originalItems);
+                } else {
+                    List<GameListItem> filteredItems = originalItems.stream()
+                            .filter(item -> item.getVersion().toLowerCase().contains(lowerCaseFilterText))
+                            .collect(Collectors.toList());
+                    itemsProperty().setAll(filteredItems);
+                }
             }
         }
 
