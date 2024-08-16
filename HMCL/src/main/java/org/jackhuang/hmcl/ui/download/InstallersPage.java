@@ -63,7 +63,7 @@ public class InstallersPage extends Control implements WizardPage {
                 new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
-        setTxtNameWithLoaders(gameVersion);
+        setTxtNameWithLoaders();
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
 
@@ -108,7 +108,7 @@ public class InstallersPage extends Control implements WizardPage {
             }
         }
         if (!isNameModifiedByUser) {
-            setTxtNameWithLoaders(txtName.getText().split("-")[0]);
+            setTxtNameWithLoaders();
         }
     }
 
@@ -131,8 +131,8 @@ public class InstallersPage extends Control implements WizardPage {
         return new InstallersPageSkin(this);
     }
 
-    private void setTxtNameWithLoaders(String baseName) {
-        StringBuilder nameBuilder = new StringBuilder(baseName);
+    private void setTxtNameWithLoaders() {
+        StringBuilder nameBuilder = new StringBuilder(group.getGame().versionProperty().get().getVersion());
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
