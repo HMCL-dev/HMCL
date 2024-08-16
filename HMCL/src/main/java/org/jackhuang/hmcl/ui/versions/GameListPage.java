@@ -92,16 +92,14 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         centerBox.getChildren().setAll(searchBar, gameList);
         setCenter(centerBox);
 
-        if (searchField.getText().isEmpty()) {
-            gameList.itemsProperty().addListener((obs, oldItems, newItems) -> {
-                if (newItems.isEmpty()) {
-                    setCenter(gameList);
-                } else {
-                    centerBox.getChildren().setAll(searchBar, gameList);
-                    setCenter(centerBox);
-                }
-            });
-        }
+        gameList.itemsProperty().addListener((obs, oldItems, newItems) -> {
+            if (newItems.isEmpty() && searchField.getText().isEmpty()) {
+                setCenter(gameList);
+            } else {
+                centerBox.getChildren().setAll(searchBar, gameList);
+                setCenter(centerBox);
+            }
+        });
 
         {
             ScrollPane pane = new ScrollPane();
@@ -212,6 +210,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     children.forEach(GameListItem::checkSelection);
 
                     if (children.isEmpty()) {
+                        if (!center.getChildren().isEmpty()) {
+                            setCenter(gameList);
+                            searchField.setText("");
+                        }
                         setFailedReason(i18n("version.empty.hint"));
                     }
 
