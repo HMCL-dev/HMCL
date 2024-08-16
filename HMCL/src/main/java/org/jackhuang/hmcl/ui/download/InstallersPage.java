@@ -58,12 +58,13 @@ public class InstallersPage extends Control implements WizardPage {
         this.controller = controller;
         this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
 
+        setTxtNameWithLoaders();
+
         txtName.getValidators().addAll(
                 new RequiredValidator(),
                 new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
-        setTxtNameWithLoaders();
 
         txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
 
