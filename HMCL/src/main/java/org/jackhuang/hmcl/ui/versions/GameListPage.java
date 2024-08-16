@@ -78,7 +78,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         HBox searchBar = new HBox();
         searchBar.setPadding(new Insets(12, 10, 0, 10));
         searchField = new JFXTextField();
-        searchField.setPromptText(i18n("search.hint.versionlist.regex"));
+        searchField.setPromptText(i18n("search.hint.regex"));
         HBox.setHgrow(searchField, Priority.ALWAYS);
         PauseTransition pause = new PauseTransition(Duration.millis(100));
         pause.setOnFinished(e -> gameList.filter(searchField.getText()));
