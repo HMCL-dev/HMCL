@@ -321,15 +321,34 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             "logo.png"
                     };
 
-                    for (String path : defaultPaths) {
-                        try (InputStream stream = Files.newInputStream(Paths.get(path))) {
-                            image = new Image(stream, 40, 40, true, true);
-                            if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
-                                break;
-                            } else {
-                                image = null;
+                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                        for (String path : defaultPaths) {
+                            Path iconPath = fs.getPath(path);
+                            if (Files.exists(iconPath)) {
+                                try (InputStream stream = Files.newInputStream(iconPath)) {
+                                    image = new Image(stream, 40, 40, true, true);
+                                    if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
+                                        break;
+                                    } else {
+                                        image = null;
+                                    }
+                                }
                             }
-                        } catch (Exception ignored) {
+                        }
+                    } catch (Exception ignored) {
+                    }
+
+                    if (image == null) {
+                        for (String path : defaultPaths) {
+                            try (InputStream stream = Files.newInputStream(Paths.get(path))) {
+                                image = new Image(stream, 40, 40, true, true);
+                                if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
+                                    break;
+                                } else {
+                                    image = null;
+                                }
+                            } catch (Exception ignored) {
+                            }
                         }
                     }
                 }
