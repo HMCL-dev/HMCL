@@ -316,9 +316,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 if (image == null) {
                     String[] defaultPaths = {
                             "icon.png",
-                            "assets/" + modInfo.getModInfo().getId() + "/icon.png",
+                            "logo.png",
+                            "mod_logo.png",
+                            "pack.png",
                             "logoFile.png",
-                            "logo.png"
+                            "assets/" + modInfo.getModInfo().getId() + "/icon.png",
+                            "assets/" + modInfo.getModInfo().getId().replace("-", "") + "/icon.png",
+                            modInfo.getModInfo().getId() + ".png",
+                            modInfo.getModInfo().getId() + "-logo.png",
+                            modInfo.getModInfo().getId() + "-icon.png",
+                            modInfo.getModInfo().getId() + "_logo.png",
+                            modInfo.getModInfo().getId() + "_icon.png"
                     };
 
                     try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
@@ -338,22 +346,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     } catch (Exception ignored) {
                     }
 
-                    if (image == null) {
-                        for (String path : defaultPaths) {
-                            Path localPath = Paths.get(path);
-                            if (Files.exists(localPath)) {
-                                try (InputStream stream = Files.newInputStream(localPath)) {
-                                    image = new Image(stream, 40, 40, true, true);
-                                    if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
-                                        break;
-                                    } else {
-                                        image = null;
-                                    }
-                                } catch (Exception ignored) {
-                                }
-                            }
-                        }
-                    }
                 }
 
                 return (image != null && image.getWidth() == image.getHeight() && image.getWidth() > 0) ? image : null;
