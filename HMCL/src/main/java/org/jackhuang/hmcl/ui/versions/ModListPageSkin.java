@@ -300,56 +300,54 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 Image image = null;
                 String logoPath = modInfo.getModInfo().getLogoPath();
 
-                if (StringUtils.isNotBlank(logoPath)) {
-                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                    if (StringUtils.isNotBlank(logoPath)) {
                         Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
                             try (InputStream stream = Files.newInputStream(iconPath)) {
                                 image = new Image(stream, 40, 40, true, true);
+                            } catch (Throwable e) {
+                                LOG.warning("Failed to load image " + logoPath, e);
                             }
                         }
-                    } catch (Exception ignored) {
                     }
-                }
 
-                if (image == null) {
-                    String[] defaultPaths = {
-                            "icon.png",
-                            "logo.png",
-                            "mod_logo.png",
-                            "pack.png",
-                            "logoFile.png",
-                            "assets/" + modInfo.getModInfo().getId() + "/icon.png",
-                            "assets/" + modInfo.getModInfo().getId().replace("-", "") + "/icon.png",
-                            modInfo.getModInfo().getId() + ".png",
-                            modInfo.getModInfo().getId() + "-logo.png",
-                            modInfo.getModInfo().getId() + "-icon.png",
-                            modInfo.getModInfo().getId() + "_logo.png",
-                            modInfo.getModInfo().getId() + "_icon.png"
-                    };
+                    if (image == null) {
+                        String[] defaultPaths = {
+                                "icon.png",
+                                "logo.png",
+                                "mod_logo.png",
+                                "pack.png",
+                                "logoFile.png",
+                                "assets/" + modInfo.getModInfo().getId() + "/icon.png",
+                                "assets/" + modInfo.getModInfo().getId().replace("-", "") + "/icon.png",
+                                modInfo.getModInfo().getId() + ".png",
+                                modInfo.getModInfo().getId() + "-logo.png",
+                                modInfo.getModInfo().getId() + "-icon.png",
+                                modInfo.getModInfo().getId() + "_logo.png",
+                                modInfo.getModInfo().getId() + "_icon.png"
+                        };
 
-                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
                         for (String path : defaultPaths) {
                             Path iconPath = fs.getPath(path);
                             if (Files.exists(iconPath)) {
                                 try (InputStream stream = Files.newInputStream(iconPath)) {
                                     image = new Image(stream, 40, 40, true, true);
-                                    if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
+                                    if (!image.isError() && image.getWidth() == image.getHeight())
                                         break;
-                                    } else {
+                                    else
                                         image = null;
-                                    }
                                 }
                             }
                         }
-                    } catch (Exception ignored) {
                     }
-
+                } catch (Exception e) {
+                    LOG.warning("Failed to load icon", e);
                 }
 
-                return (image != null && image.getWidth() == image.getHeight() && image.getWidth() > 0) ? image : null;
+                return image;
             }).whenComplete(Schedulers.javafx(), (image, exception) -> {
-                if (image != null) {
+                if (image != null && !image.isError() && image.getWidth() == image.getHeight()) {
                     imageView.setImage(image);
                 } else {
                     imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
