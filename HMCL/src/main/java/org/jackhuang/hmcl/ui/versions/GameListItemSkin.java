@@ -121,10 +121,10 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         container.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
                 if (e.getClickCount() == 1) {
-                    chkSelected.setSelected(true);
+                    skinnable.modifyGameSettings();
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                skinnable.modifyGameSettings();
+                chkSelected.setSelected(true);
             }
         });
     }
