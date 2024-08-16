@@ -219,7 +219,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     if (children.isEmpty()) {
                         if (!center.getChildren().isEmpty()) {
                             setCenter(gameList);
-                            searchField.setText("");
                         }
                         setFailedReason(i18n("version.empty.hint"));
                     }
