@@ -340,14 +340,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
                     if (image == null) {
                         for (String path : defaultPaths) {
-                            try (InputStream stream = Files.newInputStream(Paths.get(path))) {
-                                image = new Image(stream, 40, 40, true, true);
-                                if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
-                                    break;
-                                } else {
-                                    image = null;
+                            Path localPath = Paths.get(path);
+                            if (Files.exists(localPath)) {
+                                try (InputStream stream = Files.newInputStream(localPath)) {
+                                    image = new Image(stream, 40, 40, true, true);
+                                    if (image.getWidth() == image.getHeight() && image.getWidth() > 0) {
+                                        break;
+                                    } else {
+                                        image = null;
+                                    }
+                                } catch (Exception ignored) {
                                 }
-                            } catch (Exception ignored) {
                             }
                         }
                     }
