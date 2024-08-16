@@ -335,9 +335,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
                 title.getTags().add(modInfo.getModInfo().getVersion());
             }
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
-                title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
-            }
+//            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
+//                title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
+//            }
             title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
