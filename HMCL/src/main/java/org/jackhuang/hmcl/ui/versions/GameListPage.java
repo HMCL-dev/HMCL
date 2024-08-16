@@ -89,9 +89,12 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         searchBar.getChildren().setAll(searchField);
 
         VBox centerBox = new VBox();
-        centerBox.getChildren().setAll(searchBar, gameList);
-        setCenter(centerBox);
-
+        if (gameList.getItems().isEmpty() && searchField.getText().isEmpty()) {
+            setCenter(gameList);
+        } else {
+            centerBox.getChildren().setAll(searchBar, gameList);
+            setCenter(centerBox);
+        }
         gameList.itemsProperty().addListener((obs, oldItems, newItems) -> {
             if (newItems.isEmpty() && searchField.getText().isEmpty()) {
                 setCenter(gameList);
