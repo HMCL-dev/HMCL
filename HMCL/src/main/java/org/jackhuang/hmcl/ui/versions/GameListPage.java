@@ -209,6 +209,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     itemsProperty().setAll(children);
                     children.forEach(GameListItem::checkSelection);
 
+                    if (!center.getChildren().isEmpty()) {
+                        searchField.setText("");
+                    }
+
                     if (children.isEmpty()) {
                         if (!center.getChildren().isEmpty()) {
                             setCenter(gameList);
