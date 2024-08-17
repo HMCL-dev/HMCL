@@ -33,6 +33,13 @@ public final class ResponseCodeException extends IOException {
         this.data = null;
     }
 
+    public ResponseCodeException(URL url, int responseCode, Throwable cause) {
+        super("Unable to request url " + url + ", response code: " + responseCode, cause);
+        this.url = url;
+        this.responseCode = responseCode;
+        this.data = null;
+    }
+
     public ResponseCodeException(URL url, int responseCode, String data) {
         super("Unable to request url " + url + ", response code: " + responseCode + ", data: " + data);
         this.url = url;

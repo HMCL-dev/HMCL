@@ -241,7 +241,7 @@ public final class LauncherHelper {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (!success) {
                             Exception ex = executor.getException();
-                            if (!(ex instanceof CancellationException)) {
+                            if (ex != null && !(ex instanceof CancellationException)) {
                                 String message;
                                 if (ex instanceof ModpackCompletionException) {
                                     if (ex.getCause() instanceof FileNotFoundException)

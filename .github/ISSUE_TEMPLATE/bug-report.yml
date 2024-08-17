@@ -9,7 +9,7 @@ body:
       value: |
         提交前请确认：
         * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
-        * 你的启动器版本是**最新的快照版本**，可以点击 [此处](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) 下载最新快照版本。
+        * 你的启动器版本是**最新的快照版本**，可以点击 [此处](https://zkitefly.github.io/HMCL-Snapshot-Update/) 下载最新快照版本。
     
         如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
         
