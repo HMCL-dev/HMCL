@@ -423,7 +423,7 @@ public final class FXUtils {
                 "--dest=org.freedesktop.FileManager1",
                 "/org/freedesktop/FileManager1",
                 "org.freedesktop.FileManager1.ShowItems",
-                "array:string:" + path,
+                "array:string:file://" + path,
                 "string:"
             };
         else
