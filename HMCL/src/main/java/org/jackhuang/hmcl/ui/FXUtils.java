@@ -412,11 +412,11 @@ public final class FXUtils {
         String path = file.toAbsolutePath().toString();
 
         String[] openCommands;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD())
             openCommands = new String[]{
                 "dbus-send",
                 "--print-reply",
@@ -426,9 +426,8 @@ public final class FXUtils {
                 "array:string:" + path,
                 "string:"
             };
-        } else {
+        else
             openCommands = null;
-        }
 
         if (openCommands != null) {
             thread(() -> {
