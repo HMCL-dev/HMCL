@@ -298,14 +298,18 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             ImageView imageView = new ImageView();
             Task.supplyAsync(() -> {
                 Image image = null;
-                String logoPath = modInfo.getModInfo().getLogoPath();
 
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                    String logoPath = modInfo.getModInfo().getLogoPath();
                     if (StringUtils.isNotBlank(logoPath)) {
                         Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
                             try (InputStream stream = Files.newInputStream(iconPath)) {
                                 image = new Image(stream, 40, 40, true, true);
+                                if (!image.isError() && image.getWidth() == image.getHeight())
+                                    return image;
+                                else
+                                    image = null;
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load image " + logoPath, e);
                             }
@@ -347,7 +351,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
                 return image;
             }).whenComplete(Schedulers.javafx(), (image, exception) -> {
-                if (image != null && !image.isError() && image.getWidth() == image.getHeight()) {
+                if (image != null) {
                     imageView.setImage(image);
                 } else {
                     imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
