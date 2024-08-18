@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
@@ -57,8 +58,6 @@ public class InstallersPage extends Control implements WizardPage {
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
         this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
-
-        setTxtNameWithLoaders();
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
