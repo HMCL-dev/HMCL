@@ -138,8 +138,7 @@ public class InstallersPage extends Control implements WizardPage {
             if (!controller.getSettings().containsKey(libraryId)) {
                 continue;
             }
-            if (!libraryId.equals(LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId()) &&
-                    !libraryId.equals(LibraryAnalyzer.LibraryType.QUILT_API.getPatchId())) {
+            if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId).getModLoaderType() != null) {
                 String capitalizedLibraryId = Character.toUpperCase(libraryId.charAt(0)) + libraryId.substring(1);
                 nameBuilder.append("-").append(capitalizedLibraryId);
             }
