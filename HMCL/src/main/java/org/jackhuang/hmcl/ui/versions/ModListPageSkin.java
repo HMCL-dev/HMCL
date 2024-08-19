@@ -219,10 +219,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             csvTable.set(10, 0, "Mcmod");
             csvTable.set(11, 0, "Subname");
             csvTable.set(12, 0, "Curseforge");
+            csvTable.set(13, 0, "Status");
+            csvTable.set(14, 0, "File Path");
 
             for (int i = 0; i < listView.getItems().size(); i++) {
                 ModInfoObject modInfo = listView.getItems().get(i);
-                csvTable.set(0, i + 1, modInfo.getModInfo().getFileName());
+                csvTable.set(0, i + 1, FileUtils.getName(modInfo.getModInfo().getFile()));
                 csvTable.set(1, i + 1, modInfo.getModInfo().getName());
                 csvTable.set(2, i + 1, modInfo.getModInfo().getId());
                 csvTable.set(3, i + 1, modInfo.getModInfo().getVersion());
@@ -237,6 +239,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     csvTable.set(11, i + 1, modInfo.getMod().getSubname());
                     csvTable.set(12, i + 1, modInfo.getMod().getCurseforge());
                 }
+                csvTable.set(13, i + 1, modInfo.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
+                csvTable.set(14, i + 1, modInfo.getModInfo().getFile().toString());
             }
 
             csvTable.write(Files.newOutputStream(path));
