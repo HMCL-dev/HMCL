@@ -77,7 +77,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("https://meta.fabricmc.net", apiRoot + "/fabric-meta"),
                 pair("https://maven.fabricmc.net", apiRoot + "/maven"),
                 pair("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector"),
-                pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
+                pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+                pair("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://gitee.com/bleaker/unlisted-versions-of-minecraft/raw/main")
         );
     }
 
@@ -88,6 +89,11 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     @Override
     public String getVersionListURL() {
         return apiRoot + "/mc/game/version_manifest.json";
+    }
+
+    @Override
+    public String getUvmcListURL() {
+        return "https://gitee.com/bleaker/unlisted-versions-of-minecraft/raw/main/version_manifest.json";
     }
 
     @Override

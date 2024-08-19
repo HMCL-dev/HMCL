@@ -49,6 +49,11 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     }
 
     @Override
+    public String getUvmcListURL() {
+        return getPreferredDownloadProvider().getUvmcListURL();
+    }
+
+    @Override
     public String getAssetBaseURL() {
         return getPreferredDownloadProvider().getAssetBaseURL();
     }

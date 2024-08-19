@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 /**
  *
@@ -48,19 +49,30 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
 
     @Override
     public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(downloadProvider.getVersionListURL()).getJsonAsync(GameRemoteVersions.class)
-                .thenAcceptAsync(root -> {
+        CompletableFuture<GameRemoteVersions> primaryFuture = HttpRequest.GET(downloadProvider.getVersionListURL())
+                .getJsonAsync(GameRemoteVersions.class);
+
+        CompletableFuture<GameRemoteVersions> uvmcFuture = HttpRequest.GET(downloadProvider.getUvmcListURL())
+                .getJsonAsync(GameRemoteVersions.class);
+
+        return CompletableFuture.allOf(primaryFuture, uvmcFuture)
+                .thenAcceptAsync(ignored -> {
                     lock.writeLock().lock();
                     try {
                         versions.clear();
 
-                        for (GameRemoteVersionInfo remoteVersion : root.getVersions()) {
-                            versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
-                                    remoteVersion.getGameVersion(),
-                                    remoteVersion.getGameVersion(),
-                                    Collections.singletonList(remoteVersion.getUrl()),
-                                    remoteVersion.getType(), remoteVersion.getReleaseTime()));
-                        }
+                        Stream.of(primaryFuture.join(), uvmcFuture.join())
+                                .flatMap(gameRemoteVersions -> gameRemoteVersions.getVersions().stream())
+                                .forEach(remoteVersion -> versions.put(
+                                        remoteVersion.getGameVersion(),
+                                        new GameRemoteVersion(
+                                                remoteVersion.getGameVersion(),
+                                                remoteVersion.getGameVersion(),
+                                                Collections.singletonList(remoteVersion.getUrl()),
+                                                remoteVersion.getType(),
+                                                remoteVersion.getReleaseTime()
+                                        )
+                                ));
                     } finally {
                         lock.writeLock().unlock();
                     }

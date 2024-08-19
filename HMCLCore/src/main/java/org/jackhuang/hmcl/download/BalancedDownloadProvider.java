@@ -40,6 +40,11 @@ public final class BalancedDownloadProvider implements DownloadProvider {
     }
 
     @Override
+    public String getUvmcListURL() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String getAssetBaseURL() {
         throw new UnsupportedOperationException();
     }
