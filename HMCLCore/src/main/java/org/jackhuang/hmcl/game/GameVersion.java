@@ -49,10 +49,8 @@ final class GameVersion {
         try {
             Map<?, ?> version = JsonUtils.fromNonNullJsonFully(versionJson, Map.class);
             String id = (String) version.get("id");
-            if (id != null && id.contains(" / ")) {
-                id = id.split(" / ")[0];
-                LOG.info("Removed hash values from the id field in version.json. New id: " + id);
-            }
+            if (id != null && id.contains(" / "))
+                id = id.substring(0, id.indexOf(" / "));
             return tryCast(id, String.class);
         } catch (IOException | JsonParseException e) {
             LOG.warning("Failed to parse version.json", e);
