@@ -51,8 +51,8 @@ final class GameVersion {
             String id = (String) version.get("id");
             if (id != null && id.contains(" / "))
                 id = id.substring(0, id.indexOf(" / "));
-            return tryCast(id, String.class);
-        } catch (IOException | JsonParseException e) {
+            return Optional.ofNullable(id);
+        } catch (IOException | JsonParseException | ClassCastException e) {
             LOG.warning("Failed to parse version.json", e);
             return Optional.empty();
         }
