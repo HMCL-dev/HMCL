@@ -268,7 +268,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     })
                     .collect(Collectors.toList());
 
-            for (int i = 0; i < sha1Results.size(); i++) {
+            int size = sha1Results.size();
+            for (int i = 0; i < size; i++) {
                 csvTable.set(15, i + 1, sha1Results.get(i));
             }
 
