@@ -265,7 +265,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             FXUtils.showFileInExplorer(path);
-        }).whenComplete(Schedulers.javafx(), (exception, result) -> {
+        }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
