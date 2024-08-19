@@ -49,11 +49,9 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -64,6 +62,9 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -137,7 +138,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
-                    createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar))
+                    createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar)),
+                    createToolbarButton2(i18n("button.export"), SVG.EXPORT, this::exportList)
             );
 
             // Toolbar Selecting
@@ -197,6 +199,58 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
         getChildren().setAll(pane);
     }
+
+    private void exportList() {
+        Path path = Paths.get("hmcl-mod-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
+
+        Controllers.taskDialog(Task.runAsync(() -> {
+            CSVTable csvTable = CSVTable.createEmpty();
+
+            csvTable.set(0, 0, "File Name");
+            csvTable.set(1, 0, "Name");
+            csvTable.set(2, 0, "ID");
+            csvTable.set(3, 0, "Version");
+            csvTable.set(4, 0, "Mod Loader");
+            csvTable.set(5, 0, "Logo Path");
+            csvTable.set(6, 0, "URL");
+            csvTable.set(7, 0, "Authors");
+            csvTable.set(8, 0, "Display Name");
+            csvTable.set(9, 0, "Abbr");
+            csvTable.set(10, 0, "Mcmod");
+            csvTable.set(11, 0, "Subname");
+            csvTable.set(12, 0, "Curseforge");
+
+            for (int i = 0; i < listView.getItems().size(); i++) {
+                ModInfoObject modInfo = listView.getItems().get(i);
+                csvTable.set(0, i + 1, modInfo.getModInfo().getFileName());
+                csvTable.set(1, i + 1, modInfo.getModInfo().getName());
+                csvTable.set(2, i + 1, modInfo.getModInfo().getId());
+                csvTable.set(3, i + 1, modInfo.getModInfo().getVersion());
+                csvTable.set(4, i + 1, modInfo.getModInfo().getModLoaderType().name());
+                csvTable.set(5, i + 1, modInfo.getModInfo().getLogoPath());
+                csvTable.set(6, i + 1, modInfo.getModInfo().getUrl());
+                csvTable.set(7, i + 1, modInfo.getModInfo().getAuthors());
+                if (modInfo.getMod() != null) {
+                    csvTable.set(8, i + 1, modInfo.getMod().getDisplayName());
+                    csvTable.set(9, i + 1, modInfo.getMod().getAbbr());
+                    csvTable.set(10, i + 1, modInfo.getMod().getMcmod());
+                    csvTable.set(11, i + 1, modInfo.getMod().getSubname());
+                    csvTable.set(12, i + 1, modInfo.getMod().getCurseforge());
+                }
+            }
+
+            csvTable.write(Files.newOutputStream(path));
+
+            FXUtils.showFileInExplorer(path);
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception == null) {
+                Controllers.dialog(path.toString(), i18n("message.success"));
+            } else {
+                Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }), i18n("button.export"), TaskCancellationAction.NORMAL);
+    }
+
 
     private void changeToolbar(HBox newToolbar) {
         Node oldToolbar = toolbarPane.getCurrentNode();
