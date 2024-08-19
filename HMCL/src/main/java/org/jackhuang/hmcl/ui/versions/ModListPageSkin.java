@@ -55,20 +55,21 @@ import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.logging.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -223,6 +224,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             csvTable.set(14, 0, "File Path");
             csvTable.set(15, 0, "File SHA-1");
 
+            List<CompletableFuture<String>> sha1Futures = new ArrayList<>();
+
             for (int i = 0; i < listView.getItems().size(); i++) {
                 ModInfoObject modInfo = listView.getItems().get(i);
                 csvTable.set(0, i + 1, FileUtils.getName(modInfo.getModInfo().getFile()));
@@ -242,7 +245,31 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
                 csvTable.set(13, i + 1, modInfo.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
                 csvTable.set(14, i + 1, modInfo.getModInfo().getFile().toString());
-                csvTable.set(15, i + 1, DigestUtils.digestToString("SHA-1", modInfo.getModInfo().getFile()));
+
+                CompletableFuture<String> sha1Future = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return DigestUtils.digestToString("SHA-1", modInfo.getModInfo().getFile());
+                    } catch (IOException e) {
+                        LOG.log(Level.INFO, "Failed to get SHA-1", e);
+                        return "Error";
+                    }
+                });
+                sha1Futures.add(sha1Future);
+            }
+
+            List<String> sha1Results = sha1Futures.stream()
+                    .map(future -> {
+                        try {
+                            return future.get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            LOG.log(Level.INFO, "Failed to get SHA-1", e);
+                            return "Error";
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            for (int i = 0; i < sha1Results.size(); i++) {
+                csvTable.set(15, i + 1, sha1Results.get(i));
             }
 
             csvTable.write(Files.newOutputStream(path));
