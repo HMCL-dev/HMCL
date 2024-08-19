@@ -251,7 +251,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }), i18n("button.export"), TaskCancellationAction.NORMAL);
     }
 
-
     private void changeToolbar(HBox newToolbar) {
         Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
