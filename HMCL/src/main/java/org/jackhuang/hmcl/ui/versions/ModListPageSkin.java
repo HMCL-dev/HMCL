@@ -61,6 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -207,27 +208,21 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         Controllers.taskDialog(Task.runAsync(() -> {
             CSVTable csvTable = CSVTable.createEmpty();
 
-            csvTable.set(0, 0, "File Name");
-            csvTable.set(1, 0, "Name");
-            csvTable.set(2, 0, "ID");
-            csvTable.set(3, 0, "Version");
-            csvTable.set(4, 0, "Mod Loader");
-            csvTable.set(5, 0, "URL");
-            csvTable.set(6, 0, "Authors");
-            csvTable.set(7, 0, "Logo Path");
-            csvTable.set(8, 0, "Display Name");
-            csvTable.set(9, 0, "Abbr");
-            csvTable.set(10, 0, "Mcmod");
-            csvTable.set(11, 0, "Subname");
-            csvTable.set(12, 0, "Curseforge");
-            csvTable.set(13, 0, "Status");
-            csvTable.set(14, 0, "File Path");
-            csvTable.set(15, 0, "File SHA-1");
+            String[] headers = {
+                    "File Name", "Name", "ID", "Version", "Mod Loader", "URL", "Authors",
+                    "Logo Path", "Display Name", "Abbr", "Mcmod", "Subname", "Curseforge",
+                    "Status", "File Path", "File SHA-1"
+            };
+
+            for (int j = 0; j < headers.length; j++) {
+                csvTable.set(j, 0, headers[j]);
+            }
 
             List<CompletableFuture<String>> sha1Futures = new ArrayList<>();
+            List<ModInfoObject> modInfoList = listView.getItems();
 
-            for (int i = 0; i < listView.getItems().size(); i++) {
-                ModInfoObject modInfo = listView.getItems().get(i);
+            for (int i = 0; i < modInfoList.size(); i++) {
+                ModInfoObject modInfo = modInfoList.get(i);
                 csvTable.set(0, i + 1, FileUtils.getName(modInfo.getModInfo().getFile()));
                 csvTable.set(1, i + 1, modInfo.getModInfo().getName());
                 csvTable.set(2, i + 1, modInfo.getModInfo().getId());
@@ -246,37 +241,31 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 csvTable.set(13, i + 1, modInfo.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
                 csvTable.set(14, i + 1, modInfo.getModInfo().getFile().toString());
 
-                CompletableFuture<String> sha1Future = CompletableFuture.supplyAsync(() -> {
+                sha1Futures.add(CompletableFuture.supplyAsync(() -> {
                     try {
                         return DigestUtils.digestToString("SHA-1", modInfo.getModInfo().getFile());
                     } catch (IOException e) {
-                        LOG.log(Level.INFO, "Failed to get SHA-1", e);
                         return "Error";
                     }
-                });
-                sha1Futures.add(sha1Future);
+                }));
             }
 
             List<String> sha1Results = sha1Futures.stream()
-                    .map(future -> {
-                        try {
-                            return future.get();
-                        } catch (InterruptedException | ExecutionException e) {
-                            LOG.log(Level.INFO, "Failed to get SHA-1", e);
-                            return "Error";
-                        }
-                    })
+                    .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            int size = sha1Results.size();
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < sha1Results.size(); i++) {
                 csvTable.set(15, i + 1, sha1Results.get(i));
             }
 
-            csvTable.write(Files.newOutputStream(path));
+            try (OutputStream os = Files.newOutputStream(path)) {
+                csvTable.write(os);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to write CSV file", e);
+            }
 
             FXUtils.showFileInExplorer(path);
-        }).whenComplete(Schedulers.javafx(), exception -> {
+        }).whenComplete(Schedulers.javafx(), (exception, result) -> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
