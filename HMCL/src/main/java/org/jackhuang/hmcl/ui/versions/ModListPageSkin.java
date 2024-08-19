@@ -211,9 +211,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             csvTable.set(2, 0, "ID");
             csvTable.set(3, 0, "Version");
             csvTable.set(4, 0, "Mod Loader");
-            csvTable.set(5, 0, "Logo Path");
-            csvTable.set(6, 0, "URL");
-            csvTable.set(7, 0, "Authors");
+            csvTable.set(5, 0, "URL");
+            csvTable.set(6, 0, "Authors");
+            csvTable.set(7, 0, "Logo Path");
             csvTable.set(8, 0, "Display Name");
             csvTable.set(9, 0, "Abbr");
             csvTable.set(10, 0, "Mcmod");
@@ -227,9 +227,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 csvTable.set(2, i + 1, modInfo.getModInfo().getId());
                 csvTable.set(3, i + 1, modInfo.getModInfo().getVersion());
                 csvTable.set(4, i + 1, modInfo.getModInfo().getModLoaderType().name());
-                csvTable.set(5, i + 1, modInfo.getModInfo().getLogoPath());
-                csvTable.set(6, i + 1, modInfo.getModInfo().getUrl());
-                csvTable.set(7, i + 1, modInfo.getModInfo().getAuthors());
+                csvTable.set(5, i + 1, modInfo.getModInfo().getUrl());
+                csvTable.set(6, i + 1, modInfo.getModInfo().getAuthors());
+                csvTable.set(7, i + 1, modInfo.getModInfo().getLogoPath());
                 if (modInfo.getMod() != null) {
                     csvTable.set(8, i + 1, modInfo.getMod().getDisplayName());
                     csvTable.set(9, i + 1, modInfo.getMod().getAbbr());
