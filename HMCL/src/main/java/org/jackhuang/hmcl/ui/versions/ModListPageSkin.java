@@ -139,8 +139,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar))
             );
-            toolbarNormal.setSpacing(10);
-            toolbarNormal.setAlignment(Pos.CENTER);
 
             // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
