@@ -225,7 +225,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             chkRelease.setSelected(true);
                             chkSnapshot.setSelected(true);
                             chkOld.setSelected(true);
-                            chkUvmc.setSelected(true);
                         } else {
                             list.getItems().setAll(items);
                         }
