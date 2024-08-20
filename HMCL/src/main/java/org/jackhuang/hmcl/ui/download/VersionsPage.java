@@ -225,6 +225,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             chkRelease.setSelected(true);
                             chkSnapshot.setSelected(true);
                             chkOld.setSelected(true);
+                            chkUvmc.setSelected(true);
                         } else {
                             list.getItems().setAll(items);
                         }
@@ -318,6 +319,9 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         content.getTags().setAll(i18n("version.game.old"));
                         content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         break;
+                }
+                if (remoteVersion.getUrls().stream().anyMatch(url -> url.contains("unlisted-versions-of-minecraft"))) {
+                    content.getTags().add("UVMC");
                 }
             } else {
                 VersionIconType iconType;
