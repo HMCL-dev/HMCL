@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -67,6 +68,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MainPage extends StackPane implements DecoratorPage {
     private static final String ANNOUNCEMENT = "announcement";
@@ -217,6 +219,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setGraphic(graphic);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
+
+            if (Objects.equals(System.getProperty("hmcl.autolaunch"), "true")) {
+                LOG.info("Enable auto-launch games!");
+                Platform.runLater(launchButton::fire);
+            }
         }
 
         getChildren().addAll(updatePane, launchPane);
