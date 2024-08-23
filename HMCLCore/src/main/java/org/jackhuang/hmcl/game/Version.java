@@ -18,25 +18,13 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -228,8 +216,29 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public AssetIndexInfo getAssetIndex() {
+        Map<String, String> versionHashMap = new HashMap<>();
+        versionHashMap.put("1.8", "f6ad102bcaa53b1a58358f16e376d548d44933ec");
+        versionHashMap.put("14w31a", "10a2a0e75b03cfb5a7196abbdf43b54f7fa61deb");
+        versionHashMap.put("14w25a", "32ff354a3be1c4dd83027111e6d79ee4d701d2c0");
+        versionHashMap.put("1.7.4", "545510a60f526b9aa8a38f9c0bc7a74235d21675");
+        versionHashMap.put("1.7.10", "1863782e33ce7b584fc45b037325a1964e095d3e");
+        versionHashMap.put("1.7.3", "f6cf726f4747128d13887010c2cbc44ba83504d9");
+        versionHashMap.put("legacy", "770572e819335b6c0a053f8378ad88eda189fc14");
+        versionHashMap.put("pre-1.6", "3d8e55480977e32acd9844e545177e69a52f594b");
+
         String assetsId = assets == null ? "legacy" : assets;
-        return assetIndex == null ? new AssetIndexInfo(assetsId, Constants.DEFAULT_INDEX_URL + assetsId + ".json") : assetIndex;
+
+        if (assetIndex == null) {
+            String hash = versionHashMap.get(assetsId);
+            if (hash == null) {
+                hash = versionHashMap.get("legacy");
+                assetsId = "legacy";
+            }
+            String url = Constants.DEFAULT_INDEX_URL + hash + "/" + assetsId + ".json";
+            return new AssetIndexInfo(assetsId, url);
+        } else {
+            return assetIndex;
+        }
     }
 
     public boolean appliesToCurrentEnvironment() {
