@@ -53,7 +53,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
 
     @Override
     public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(FORGE_LIST).getJsonAsync(ForgeVersionRoot.class)
+        return HttpRequest.GET(downloadProvider.injectURL(FORGE_LIST)).getJsonAsync(ForgeVersionRoot.class)
                 .thenAcceptAsync(root -> {
                     lock.writeLock().lock();
 
