@@ -24,7 +24,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -34,7 +33,8 @@ import org.jackhuang.hmcl.util.io.Unzipper;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
-import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class Datapack {
     private boolean isMultiple;
@@ -133,7 +133,7 @@ public class Datapack {
                     PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
                     Platform.runLater(() -> info.add(new Pack(path, FileUtils.getNameWithoutExtension(path), pack.getPackInfo().getDescription(), this)));
                 } catch (IOException | JsonParseException e) {
-                    Logging.LOG.log(Level.WARNING, "Failed to read datapack " + path, e);
+                    LOG.warning("Failed to read datapack " + path, e);
                 }
             } else {
                 throw new IOException("Malformed datapack zip");
@@ -145,7 +145,7 @@ public class Datapack {
         try {
             loadFromDir(path);
         } catch (IOException e) {
-            Logging.LOG.log(Level.WARNING, "Failed to read datapacks " + path, e);
+            LOG.warning("Failed to read datapacks " + path, e);
         }
     }
 
@@ -169,7 +169,7 @@ public class Datapack {
                                     : JsonUtils.fromNonNullJson(FileUtils.readText(mcmetaDisabled), PackMcMeta.class);
                             info.add(new Pack(enabled ? mcmeta : mcmetaDisabled, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
-                            Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
+                            LOG.warning("Failed to read datapack " + subDir, e);
                         }
                     } else if (Files.isRegularFile(subDir)) {
                         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(subDir)) {
@@ -189,7 +189,7 @@ public class Datapack {
                             PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
                             info.add(new Pack(subDir, name, pack.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
-                            Logging.LOG.log(Level.WARNING, "Failed to read datapack " + subDir, e);
+                            LOG.warning("Failed to read datapack " + subDir, e);
                         }
                     }
                 }
@@ -226,7 +226,7 @@ public class Datapack {
                         Pack.this.file = newF;
                     } catch (IOException e) {
                         // Mod file is occupied.
-                        Logging.LOG.warning("Unable to rename file " + f + " to " + newF);
+                        LOG.warning("Unable to rename file " + f + " to " + newF);
                     }
                 }
             };

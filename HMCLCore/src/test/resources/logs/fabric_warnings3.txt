@@ -1,0 +1,18 @@
+[01:27:16] [main/INFO]: Loading Minecraft 1.20.4 with Fabric Loader 0.15.6
+[01:27:16] [main/WARN]: Mod resolution failed
+[01:27:16] [main/INFO]: Immediate reason: [HARD_DEP_NO_CANDIDATE sodium-extra 0.5.4+mc1.20.4-build.116 {depends fabric-api @ [*]}, ROOT_FORCELOAD_SINGLE sodium-extra 0.5.4+mc1.20.4-build.116]
+[01:27:16] [main/INFO]: Reason: [HARD_DEP sodium-extra 0.5.4+mc1.20.4-build.116 {depends fabric-api @ [*]}, HARD_DEP sodium-extra 0.5.4+mc1.20.4-build.116 {depends sodium @ [>=0.5.6]}]
+[01:27:16] [main/INFO]: Fix: add [add:fabric-api 1 ([(-∞,∞)]), add:sodium 0.5.6 ([[0.5.6,∞)])], remove [], replace []
+[01:27:17] [main/ERROR]: Incompatible mods found!
+net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!
+确定了一种可能的解决方法，这样做可能会解决你的问题：
+	 - 安装 fabric-api，任意版本。
+	 - 安装 sodium，0.5.6 及以上版本。
+更多信息：
+	 - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 fabric-api 的 任意版本，但没有安装它！
+	 - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 sodium 的 0.5.6 及以上版本，但没有安装它！
+	at net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:51) ~[fabric-loader-0.15.6.jar:?]
+	at net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:195) ~[fabric-loader-0.15.6.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.Knot.init(Knot.java:146) ~[fabric-loader-0.15.6.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:68) ~[fabric-loader-0.15.6.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) ~[fabric-loader-0.15.6.jar:?]

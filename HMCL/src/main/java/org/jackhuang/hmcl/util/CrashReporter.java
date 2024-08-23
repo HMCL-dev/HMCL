@@ -23,15 +23,14 @@ import javafx.scene.control.Alert.AlertType;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
 import org.jackhuang.hmcl.ui.CrashWindow;
-import org.jackhuang.hmcl.upgrade.hmcl.IntegrityChecker;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.IntegrityChecker;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -67,14 +66,14 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
             if (s.contains(entry.getKey())) {
                 if (StringUtils.isNotBlank(entry.getValue())) {
                     String info = entry.getValue();
-                    LOG.severe(info);
+                    LOG.error(info);
                     try {
                         Alert alert = new Alert(AlertType.INFORMATION, info);
                         alert.setTitle(i18n("message.info"));
                         alert.setHeaderText(i18n("message.info"));
                         alert.showAndWait();
                     } catch (Throwable t) {
-                        LOG.log(Level.SEVERE, "Unable to show message", t);
+                        LOG.error("Unable to show message", t);
                     }
                 }
                 return false;
@@ -90,14 +89,14 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        LOG.log(Level.SEVERE, "Uncaught exception in thread " + t.getName(), e);
+        LOG.error("Uncaught exception in thread " + t.getName(), e);
 
         try {
             CrashReport report = new CrashReport(t, e);
             if (!report.shouldBeReport())
                 return;
 
-            LOG.log(Level.SEVERE, report.getDisplayText());
+            LOG.error(report.getDisplayText());
             Platform.runLater(() -> {
                 if (checkThrowable(e)) {
                     if (showCrashWindow) {
@@ -109,8 +108,10 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
                 }
             });
         } catch (Throwable handlingException) {
-            LOG.log(Level.SEVERE, "Unable to handle uncaught exception", handlingException);
+            LOG.error("Unable to handle uncaught exception", handlingException);
         }
+
+        LOG.shutdown();
     }
 
     private void reportToServer(CrashReport crashReport) {
@@ -118,13 +119,13 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
             HashMap<String, String> map = new HashMap<>();
             map.put("crash_report", crashReport.getDisplayText());
             map.put("version", Metadata.VERSION);
-            map.put("log", Logging.getLogs());
+            map.put("log", LOG.getLogs());
             try {
                 String response = NetworkUtils.doPost(NetworkUtils.toURL("https://hmcl.huangyuhui.net/hmcl/crash.php"), map);
                 if (StringUtils.isNotBlank(response))
-                    LOG.log(Level.SEVERE, "Crash server response: " + response);
+                    LOG.error("Crash server response: " + response);
             } catch (IOException ex) {
-                LOG.log(Level.SEVERE, "Unable to post HMCL server.", ex);
+                LOG.error("Unable to post HMCL server.", ex);
             }
         });
         t.setDaemon(true);

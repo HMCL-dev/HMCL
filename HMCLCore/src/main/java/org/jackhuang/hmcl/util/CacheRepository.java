@@ -43,11 +43,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CacheRepository {
     private Path commonDirectory;
@@ -77,7 +76,7 @@ public class CacheRepository {
             } else
                 index = new HashMap<>();
         } catch (IOException | JsonParseException e) {
-            LOG.log(Level.WARNING, "Unable to read index file", e);
+            LOG.warning("Unable to read index file", e);
             index = new HashMap<>();
         } finally {
             lock.writeLock().unlock();
@@ -263,7 +262,7 @@ public class CacheRepository {
                 try {
                     Files.deleteIfExists(cached);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Cannot delete old file");
+                    LOG.warning("Cannot delete old file");
                 }
                 return newItem;
             } else {
@@ -287,14 +286,18 @@ public class CacheRepository {
     }
 
     public void saveETagIndex() throws IOException {
-        try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+        try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
                 ETagIndex indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
-                ETagIndex writeTo = new ETagIndex(newIndex.values());
-                channel.write(ByteBuffer.wrap(JsonUtils.GSON.toJson(writeTo).getBytes(UTF_8)));
+                ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
+                while (writeTo.hasRemaining()) {
+                    if (channel.write(writeTo) == 0) {
+                        throw new IOException("No value is written");
+                    }
+                }
                 this.index = newIndex;
             } finally {
                 lock.release();
@@ -413,7 +416,7 @@ public class CacheRepository {
                     }.getType()));
                 }
             } catch (IOException | JsonParseException e) {
-                LOG.log(Level.WARNING, "Unable to read storage {" + name + "} file");
+                LOG.warning("Unable to read storage {" + name + "} file");
             } finally {
                 lock.writeLock().unlock();
             }
@@ -434,7 +437,7 @@ public class CacheRepository {
                     lock.release();
                 }
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Unable to write storage {" + name + "} file");
+                LOG.warning("Unable to write storage {" + name + "} file");
             }
         }
     }

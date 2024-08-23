@@ -12,13 +12,9 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class SkinCanvas extends Group {
-
-    public static final Image ALEX = FXUtils.newBuiltinImage("/assets/img/skin/alex.png");
-    public static final Image STEVE = FXUtils.newBuiltinImage("/assets/img/skin/steve.png");
 
     public static final SkinCube ALEX_LARM = new SkinCube(3, 12, 4, 14F / 64F, 16F / 64F, 32F / 64F, 48F / 64F, 0F, true);
     public static final SkinCube ALEX_RARM = new SkinCube(3, 12, 4, 14F / 64F, 16F / 64F, 40F / 64F, 16F / 64F, 0F, true);
@@ -150,10 +146,6 @@ public class SkinCanvas extends Group {
         rarm.getZRotate().setPivotX(+rarmInside.getWidth() / 2);
 
         capeGroup.setVisible(hasCape);
-    }
-
-    public SkinCanvas(double preW, double preH) {
-        this(STEVE, preW, preH, true);
     }
 
     public SkinCanvas(Image skin, double preW, double preH, boolean msaa) {

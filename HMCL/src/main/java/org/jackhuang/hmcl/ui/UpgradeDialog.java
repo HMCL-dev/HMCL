@@ -25,13 +25,12 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.upgrade.hmcl.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
 
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class UpgradeDialog extends JFXDialogLayout {
@@ -56,7 +55,7 @@ public class UpgradeDialog extends JFXDialogLayout {
                 });
                 setBody(webView);
             } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-                LOG.log(Level.WARNING, "WebView is missing or initialization failed", e);
+                LOG.warning("WebView is missing or initialization failed", e);
                 FXUtils.openLink(url);
             }
         }

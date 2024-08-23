@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
@@ -59,13 +60,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -111,7 +111,7 @@ public final class LauncherHelper {
     public void launch() {
         FXUtils.checkFxUserThread();
 
-        Logging.LOG.info("Launching game version: " + selectedVersion);
+        LOG.info("Launching game version: " + selectedVersion);
 
         Controllers.dialog(launchingStepsPane);
         launch0();
@@ -241,7 +241,7 @@ public final class LauncherHelper {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (!success) {
                             Exception ex = executor.getException();
-                            if (!(ex instanceof CancellationException)) {
+                            if (ex != null && !(ex instanceof CancellationException)) {
                                 String message;
                                 if (ex instanceof ModpackCompletionException) {
                                     if (ex.getCause() instanceof FileNotFoundException)
@@ -332,7 +332,8 @@ public final class LauncherHelper {
     }
 
     private static Task<JavaVersion> checkGameState(Profile profile, VersionSetting setting, Version version) {
-        VersionNumber gameVersion = VersionNumber.asVersion(profile.getRepository().getGameVersion(version).orElse("Unknown"));
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, profile.getRepository().getGameVersion(version).orElse(null));
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(analyzer.getVersion(LibraryAnalyzer.LibraryType.MINECRAFT));
 
         if (setting.isNotCheckJVM()) {
             return Task.composeAsync(() -> setting.getJavaVersion(gameVersion, version))
@@ -353,7 +354,9 @@ public final class LauncherHelper {
 
                     if (org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java()) {
                         JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(gameVersion, version);
-                        if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
+                        if (range.getMandatory().contains(VersionNumber.asVersion("21.0.3"))) {
+                            targetJavaVersion = GameJavaVersion.JAVA_21;
+                        } else if (range.getMandatory().contains(VersionNumber.asVersion("17.0.1"))) {
                             targetJavaVersion = GameJavaVersion.JAVA_17;
                         } else if (range.getMandatory().contains(VersionNumber.asVersion("16.0.1"))) {
                             targetJavaVersion = GameJavaVersion.JAVA_16;
@@ -387,7 +390,7 @@ public final class LauncherHelper {
                                     future.complete(downloadedJavaVersion);
                                 })
                                 .exceptionally(throwable -> {
-                                    LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                    LOG.warning("Failed to download java", throwable);
                                     Controllers.confirm(i18n("launch.failed.no_accepted_java"), i18n("message.warning"), MessageType.WARNING, continueAction, () -> {
                                         future.completeExceptionally(new CancellationException("No accepted java"));
                                     });
@@ -416,7 +419,6 @@ public final class LauncherHelper {
             JavaVersionConstraint violatedMandatoryConstraint = null;
             List<JavaVersionConstraint> violatedSuggestedConstraints = null;
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
             for (JavaVersionConstraint constraint : JavaVersionConstraint.ALL) {
                 if (constraint.appliesToVersion(gameVersion, version, javaVersion, analyzer)) {
                     if (!constraint.checkJava(gameVersion, version, javaVersion)) {
@@ -451,7 +453,7 @@ public final class LauncherHelper {
                                         future.complete(downloadedJavaVersion);
                                     }, Schedulers.javafx())
                                     .whenCompleteAsync((result, throwable) -> {
-                                        LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                        LOG.warning("Failed to download java", throwable);
                                         breakAction.run();
                                     }, Schedulers.javafx());
                             return Task.fromCompletableFuture(future);
@@ -462,6 +464,11 @@ public final class LauncherHelper {
                             return Task.fromCompletableFuture(future);
                         case VANILLA_JAVA_17:
                             Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 17), i18n("message.warning"),
+                                    () -> FXUtils.openLink(OPENJDK_DOWNLOAD_LINK), null);
+                            breakAction.run();
+                            return Task.fromCompletableFuture(future);
+                        case VANILLA_JAVA_21:
+                            Controllers.confirm(i18n("launch.advice.require_newer_java_version", gameVersion.toString(), 21), i18n("message.warning"),
                                     () -> FXUtils.openLink(OPENJDK_DOWNLOAD_LINK), null);
                             breakAction.run();
                             return Task.fromCompletableFuture(future);
@@ -549,14 +556,14 @@ public final class LauncherHelper {
             // Forge 2760~2773 will crash game with LiteLoader.
             boolean hasForge2760 = forgeVersion != null && (forgeVersion.compareTo("1.12.2-14.23.5.2760") >= 0) && (forgeVersion.compareTo("1.12.2-14.23.5.2773") < 0);
             boolean hasLiteLoader = version.getLibraries().stream().anyMatch(it -> it.is("com.mumfrey", "liteloader"));
-            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo(VersionNumber.asVersion("1.12.2")) == 0) {
+            if (hasForge2760 && hasLiteLoader && gameVersion.compareTo("1.12.2") == 0) {
                 suggestions.add(i18n("launch.advice.forge2760_liteloader"));
             }
 
             // OptiFine 1.14.4 is not compatible with Forge 28.2.2 and later versions.
             boolean hasForge28_2_2 = forgeVersion != null && (forgeVersion.compareTo("1.14.4-28.2.2") >= 0);
             boolean hasOptiFine = version.getLibraries().stream().anyMatch(it -> it.is("optifine", "OptiFine"));
-            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo(VersionNumber.asVersion("1.14.4")) == 0) {
+            if (hasForge28_2_2 && hasOptiFine && gameVersion.compareTo("1.14.4") == 0) {
                 suggestions.add(i18n("launch.advice.forge28_2_2_optifine"));
             }
 
@@ -604,7 +611,7 @@ public final class LauncherHelper {
                             .thenAcceptAsync(future::complete)
                             .exceptionally(throwable -> {
                                 Throwable resolvedException = resolveException(throwable);
-                                LOG.log(Level.WARNING, "Failed to download java", throwable);
+                                LOG.warning("Failed to download java", throwable);
                                 if (!(resolvedException instanceof CancellationException)) {
                                     Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
                                 }
@@ -643,11 +650,11 @@ public final class LauncherHelper {
             try {
                 return Task.completed(account.logIn());
             } catch (CredentialExpiredException e) {
-                LOG.log(Level.INFO, "Credential has expired", e);
+                LOG.info("Credential has expired", e);
 
                 return Task.completed(DialogController.logIn(account));
             } catch (AuthenticationException e) {
-                LOG.log(Level.WARNING, "Authentication failed, try skipping refresh", e);
+                LOG.warning("Authentication failed, try skipping refresh", e);
 
                 CompletableFuture<Task<AuthInfo>> future = new CompletableFuture<>();
                 runInFX(() -> {
@@ -834,7 +841,7 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x).", exitCode, exitCode), Log4jLevel.INFO));
+                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", exitCode, exitCode, exitType), Log4jLevel.INFO));
             }
 
             launchingLatch.countDown();

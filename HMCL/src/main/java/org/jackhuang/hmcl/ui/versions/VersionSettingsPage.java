@@ -30,7 +30,9 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -46,9 +48,8 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -185,7 +186,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             gameDirSublist = new ComponentSublist();
             gameDirSublist.getContent().add(gameDirItem);
             gameDirSublist.setTitle(i18n("settings.game.working_directory"));
-            gameDirSublist.setHasSubtitle(true);
+            gameDirSublist.setHasSubtitle(versionId != null);
             gameDirItem.disableProperty().bind(modpack);
             gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
                     .setChooserTitle(i18n("settings.game.working_directory.choose"))
@@ -611,10 +612,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         Task.composeAsync(Schedulers.javafx(), () -> {
             if (versionId == null) {
-                return versionSetting.getJavaVersion(VersionNumber.asVersion("Unknown"), null);
+                return versionSetting.getJavaVersion(GameVersionNumber.unknown(), null);
             } else {
                 return versionSetting.getJavaVersion(
-                        VersionNumber.asVersion(GameVersion.minecraftVersion(profile.getRepository().getVersionJar(versionId)).orElse("Unknown")),
+                        GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId)),
                         profile.getRepository().getVersion(versionId));
             }
         }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
@@ -642,9 +643,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (versionId == null)
             return;
 
-        File iconFile = profile.getRepository().getVersionIconFile(versionId);
-        if (iconFile.exists())
-            iconFile.delete();
+        profile.getRepository().deleteIconFile(versionId);
         VersionSetting localVersionSetting = profile.getRepository().getLocalVersionSettingOrCreate(versionId);
         if (localVersionSetting != null) {
             localVersionSetting.setVersionIcon(VersionIconType.DEFAULT);

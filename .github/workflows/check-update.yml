@@ -5,12 +5,15 @@ on:
   schedule:
     - cron: '30 * * * *'
 
+permissions:
+  contents: write
+
 jobs:
   dev-check-update:
-    if: ${{ github.repository_owner == 'huanghongxun' }}
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Fetch tags
         run: git fetch --all --tags
       - name: Install tools
@@ -36,20 +39,24 @@ jobs:
         if: ${{ env.continue == 'true' }}
         run: |
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha256"
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha256"
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh.sha256"
         env:
           DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/artifact/HMCL/build/libs
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
-          echo "HMCL v$HMCL_VERSION" >> RELEASE_NOTE
-          echo "" >> RELEASE_NOTE
           echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/dev.html" >> RELEASE_NOTE
           echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
+          echo "" >> RELEASE_NOTE
+          echo "| File Name | SHA-256 Checksum |"  >> RELEASE_NOTE
+          echo "| ---  | --- |" >> RELEASE_NOTE
+          echo "| HMCL-$HMCL_VERSION.exe | $(cat HMCL-$HMCL_VERSION.exe.sha256) |" >> RELEASE_NOTE
+          echo "| HMCL-$HMCL_VERSION.jar | $(cat HMCL-$HMCL_VERSION.jar.sha256) |" >> RELEASE_NOTE
+          echo "| HMCL-$HMCL_VERSION.sh  | $(cat HMCL-$HMCL_VERSION.sh.sha256) |"  >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
         uses: softprops/action-gh-release@v1
@@ -57,16 +64,13 @@ jobs:
           body_path: RELEASE_NOTE
           files: |
             HMCL-${{ env.HMCL_VERSION }}.exe
-            HMCL-${{ env.HMCL_VERSION }}.exe.sha1
             HMCL-${{ env.HMCL_VERSION }}.jar
-            HMCL-${{ env.HMCL_VERSION }}.jar.sha1
             HMCL-${{ env.HMCL_VERSION }}.sh
-            HMCL-${{ env.HMCL_VERSION }}.sh.sha1
           target_commitish: ${{ env.HMCL_COMMIT_SHA }}
           name: ${{ env.HMCL_TAG_NAME }}
           tag_name: ${{ env.HMCL_TAG_NAME }}
   stable-check-update:
-    if: ${{ github.repository_owner == 'huanghongxun' }}
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
     needs: dev-check-update
     runs-on: ubuntu-latest
     steps:
@@ -96,21 +100,27 @@ jobs:
         if: ${{ env.continue == 'true' }}
         run: |
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha256"
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha256"
           wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh.sha1"
+          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh.sha256"
         env:
           DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL-stable/lastSuccessfulBuild/artifact/HMCL/build/libs
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
-          echo " === **Stable Version** === " >> RELEASE_NOTE
-          echo "HMCL v$HMCL_VERSION" >> RELEASE_NOTE
+          echo "**This version is a stable version.**" >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
           echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/stable.html" >> RELEASE_NOTE
+          echo "" >> RELEASE_NOTE
           echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
+          echo "" >> RELEASE_NOTE
+          echo "| File Name | SHA-256 Checksum |"  >> RELEASE_NOTE
+          echo "| ---  | --- |" >> RELEASE_NOTE
+          echo "| HMCL-$HMCL_VERSION.exe | $(cat HMCL-$HMCL_VERSION.exe.sha256) |" >> RELEASE_NOTE
+          echo "| HMCL-$HMCL_VERSION.jar | $(cat HMCL-$HMCL_VERSION.jar.sha256) |" >> RELEASE_NOTE
+          echo "| HMCL-$HMCL_VERSION.sh  | $(cat HMCL-$HMCL_VERSION.sh.sha256) |"  >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
         uses: softprops/action-gh-release@v1
@@ -118,11 +128,8 @@ jobs:
           body_path: RELEASE_NOTE
           files: |
             HMCL-${{ env.HMCL_VERSION }}.exe
-            HMCL-${{ env.HMCL_VERSION }}.exe.sha1
             HMCL-${{ env.HMCL_VERSION }}.jar
-            HMCL-${{ env.HMCL_VERSION }}.jar.sha1
             HMCL-${{ env.HMCL_VERSION }}.sh
-            HMCL-${{ env.HMCL_VERSION }}.sh.sha1
           target_commitish: ${{ env.HMCL_COMMIT_SHA }}
           name: ${{ env.HMCL_TAG_NAME }}
           tag_name: ${{ env.HMCL_TAG_NAME }}

@@ -40,20 +40,17 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.unmodifiableList;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class YggdrasilService {
 
     private static final ThreadPoolExecutor POOL = threadPool("YggdrasilProfileProperties", true, 2, 10, TimeUnit.SECONDS);
-
-    public static final YggdrasilService MOJANG = new YggdrasilService(new MojangYggdrasilProvider());
 
     private final YggdrasilProvider provider;
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
@@ -65,7 +62,7 @@ public class YggdrasilService {
                     LOG.info("Fetching properties of " + uuid + " from " + provider);
                     return getCompleteGameProfile(uuid);
                 },
-                (uuid, e) -> LOG.log(Level.WARNING, "Failed to fetch properties of " + uuid + " from " + provider, e),
+                (uuid, e) -> LOG.warning("Failed to fetch properties of " + uuid + " from " + provider, e),
                 POOL);
     }
 
@@ -272,7 +269,5 @@ public class YggdrasilService {
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 
-    public static final String PROFILE_URL = "https://aka.ms/MinecraftMigration";
-    public static final String MIGRATION_FAQ_URL = "https://help.minecraft.net/articles/360050865492";
     public static final String PURCHASE_URL = "https://www.microsoft.com/store/productId/9NXP44L49SHJ";
 }

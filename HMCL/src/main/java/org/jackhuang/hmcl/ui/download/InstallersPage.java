@@ -48,12 +48,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallersPage extends Control implements WizardPage {
     protected final WizardController controller;
 
-    protected InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup();
+    protected InstallerItem.InstallerItemGroup group;
     protected JFXTextField txtName = new JFXTextField();
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
+        this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
@@ -62,33 +63,31 @@ public class InstallersPage extends Control implements WizardPage {
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
         txtName.setText(gameVersion);
 
-        group.game.installable.setValue(false);
-
-        for (InstallerItem item : group.getLibraries()) {
-            item.setStyleMode(InstallerItem.Style.CARD);
-        }
-
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
-            library.action.set(e -> {
+            library.installActionProperty().set(e -> {
                 if (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)) {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
                 }
 
-                if (library.incompatibleLibraryName.get() == null)
+                if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
             });
-            library.removeAction.set(e -> {
+            library.removeActionProperty().set(e -> {
                 controller.getSettings().remove(libraryId);
                 reload();
             });
         }
     }
 
+    protected InstallerItem.Style getInstallerItemStyle() {
+        return InstallerItem.Style.CARD;
+    }
+
     @Override
     public String getTitle() {
-        return i18n("install.new_game");
+        return group.getGame().versionProperty().get().getVersion();
     }
 
     private String getVersion(String id) {
@@ -99,11 +98,9 @@ public class InstallersPage extends Control implements WizardPage {
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (controller.getSettings().containsKey(libraryId)) {
-                library.libraryVersion.set(getVersion(libraryId));
-                library.removable.set(true);
+                library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
             } else {
-                library.libraryVersion.set(null);
-                library.removable.set(false);
+                library.versionProperty().set(null);
             }
         }
     }
@@ -147,19 +144,27 @@ public class InstallersPage extends Control implements WizardPage {
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
                 control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().setAll(new Label(i18n("archive.name")), control.txtName);
+                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
                 root.setTop(versionNamePane);
             }
 
             {
-                FlowPane libraryPane = new FlowPane(control.group.getLibraries());
+                InstallerItem[] libraries = control.group.getLibraries();
+
+                FlowPane libraryPane = new FlowPane(libraries);
                 libraryPane.setVgap(16);
                 libraryPane.setHgap(16);
-                ScrollPane scrollPane = new ScrollPane(libraryPane);
-                scrollPane.setFitToWidth(true);
-                scrollPane.setFitToHeight(true);
-                BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
-                root.setCenter(scrollPane);
+
+                if (libraries.length <= 8) {
+                    BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(libraryPane);
+                } else {
+                    ScrollPane scrollPane = new ScrollPane(libraryPane);
+                    scrollPane.setFitToWidth(true);
+                    scrollPane.setFitToHeight(true);
+                    BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(scrollPane);
+                }
             }
 
 

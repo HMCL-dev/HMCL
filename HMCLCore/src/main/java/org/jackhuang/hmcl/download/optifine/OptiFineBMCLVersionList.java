@@ -48,6 +48,28 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
         return true;
     }
 
+    private String fromLookupVersion(String version) {
+        switch (version) {
+            case "1.8.0":
+                return "1.8";
+            case "1.9.0":
+                return "1.9";
+            default:
+                return version;
+        }
+    }
+
+    private String toLookupVersion(String version) {
+        switch (version) {
+            case "1.8":
+                return "1.8.0";
+            case "1.9":
+                return "1.9.0";
+            default:
+                return version;
+        }
+    }
+
     @Override
     public CompletableFuture<?> refreshAsync() {
         return HttpRequest.GET(apiRoot + "/optifine/versionlist").<List<OptiFineVersion>>getJsonAsync(new TypeToken<List<OptiFineVersion>>() {
@@ -59,7 +81,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                 Set<String> duplicates = new HashSet<>();
                 for (OptiFineVersion element : root) {
                     String version = element.type + "_" + element.patch;
-                    String mirror = apiRoot + "/optifine/" + element.gameVersion + "/" + element.type + "/" + element.patch;
+                    String mirror = apiRoot + "/optifine/" + toLookupVersion(element.gameVersion) + "/" + element.type + "/" + element.patch;
                     if (!duplicates.add(mirror))
                         continue;
 
@@ -68,7 +90,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                     if (StringUtils.isBlank(element.gameVersion))
                         continue;
 
-                    String gameVersion = VersionNumber.normalize(element.gameVersion);
+                    String gameVersion = VersionNumber.normalize(fromLookupVersion(element.gameVersion));
                     versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
                 }
             } finally {

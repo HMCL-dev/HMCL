@@ -1,18 +1,18 @@
 package org.jackhuang.hmcl.countly;
 
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CrashReport {
 
@@ -59,7 +59,7 @@ public class CrashReport {
                 pair("_ram_current", getMemoryAvailable()),
                 pair("_ram_total", Runtime.getRuntime().maxMemory() / BYTES_IN_MB),
                 pair("_error", stackTrace),
-                pair("_logs", Logging.getLogs()),
+                pair("_logs", LOG.getLogs()),
                 pair("_name", throwable.getLocalizedMessage()),
                 pair("_nonfatal", nonFatal)
         );
@@ -68,7 +68,7 @@ public class CrashReport {
     public String getDisplayText() {
         return "---- Hello Minecraft! Crash Report ----\n" +
                 "  Version: " + Metadata.VERSION + "\n" +
-                "  Time: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "\n" +
+                "  Time: " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()) + "\n" +
                 "  Thread: " + thread + "\n" +
                 "\n  Content: \n    " +
                 stackTrace + "\n\n" +

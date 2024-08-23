@@ -33,7 +33,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
@@ -46,7 +49,10 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -58,20 +64,21 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
 
@@ -218,12 +225,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
                     predicate = s -> pattern.matcher(s).find();
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "Illegal regular expression", e);
+                    LOG.warning("Illegal regular expression", e);
                     return;
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.contains(lowerQueryString);
+                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
@@ -253,7 +260,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             StringBuilder message = new StringBuilder(localModFile.getFileName());
             if (isNotBlank(localModFile.getGameVersion()))
-                message.append(", ").append(i18n("archive.game_version")).append(": ").append(localModFile.getGameVersion());
+                message.append(", ").append(i18n("game.version")).append(": ").append(localModFile.getGameVersion());
             if (isNotBlank(localModFile.getAuthors()))
                 message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
             this.message = message.toString();
@@ -324,18 +331,16 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
-                Lang.<Pair<String, RemoteModRepository>>immutableListOf(
+                for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
                         pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
                         pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
-                ).forEach(item -> {
-                    String text = item.getKey();
-                    RemoteModRepository remoteModRepository = item.getValue();
-
-                    JFXHyperlink button = new JFXHyperlink(i18n(text));
+                )) {
+                    RemoteModRepository repository = item.getValue();
+                    JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = remoteModRepository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
-                            RemoteMod remoteMod = remoteModRepository.getModById(versionOptional.get().getModid());
+                            RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
                                     String loaderName;
@@ -358,15 +363,16 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                         default:
                                             continue;
                                     }
-                                    if (!title.getTags().contains(loaderName)) {
-                                        title.getTags().add(loaderName);
+                                    List<String> tags = title.getTags();
+                                    if (!tags.contains(loaderName)) {
+                                        tags.add(loaderName);
                                     }
                                 }
 
                                 button.setOnAction(e -> {
                                     fireEvent(new DialogCloseEvent());
                                     Controllers.navigate(new DownloadPage(
-                                            new DownloadListPage(remoteModRepository),
+                                            repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
                                             null
@@ -378,7 +384,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     }).start();
                     button.setDisable(true);
                     getActions().add(button);
-                });
+                }
             }
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getUrl())) {
@@ -389,15 +395,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 });
 
                 getActions().add(officialPageButton);
-            }
-
-            if (modInfo.getMod() != null && StringUtils.isNotBlank(modInfo.getMod().getMcbbs())) {
-                JFXHyperlink mcbbsButton = new JFXHyperlink(i18n("mods.mcbbs"));
-                mcbbsButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(ModManager.getMcbbsUrl(modInfo.getMod().getMcbbs()));
-                });
-                getActions().add(mcbbsButton);
             }
 
             if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
@@ -490,10 +487,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     content.getTags().add(i18n("install.installer.quilt"));
                     break;
             }
-            if (dataItem.getMod() != null) {
-                if (I18n.getCurrentLocale().getLocale() == Locale.CHINA) {
-                    content.getTags().add(dataItem.getMod().getDisplayName());
-                }
+            if (dataItem.getMod() != null && I18n.isUseChinese()) {
+                content.getTags().add(dataItem.getMod().getDisplayName());
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {

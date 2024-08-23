@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -51,17 +52,15 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.HMCLService;
 import org.jackhuang.hmcl.util.Holder;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -232,7 +231,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     }
                 });
             } else {
-                LOG.log(Level.WARNING, "Failed to fetch versions list", exception);
+                LOG.warning("Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
                     if (versionList != currentVersionList) return;
                     root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
@@ -263,7 +262,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private void onBack() { navigation.onPrev(true); }
 
     private void onSponsor() {
-        HMCLService.openRedirectLink("bmclapi_sponsor");
+        FXUtils.openLink("https://bmclapidoc.bangbang93.com");
     }
 
     private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
@@ -298,7 +297,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
             content.setTitle(remoteVersion.getSelfVersion());
             if (remoteVersion.getReleaseDate() != null) {
-                content.setSubtitle(formatDateTime(remoteVersion.getReleaseDate().toInstant()));
+                content.setSubtitle(formatDateTime(remoteVersion.getReleaseDate()));
             } else {
                 content.setSubtitle(null);
             }

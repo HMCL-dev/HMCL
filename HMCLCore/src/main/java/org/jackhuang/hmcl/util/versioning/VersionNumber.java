@@ -33,6 +33,8 @@ import java.util.Objects;
  */
 public final class VersionNumber implements Comparable<VersionNumber> {
 
+    public static final VersionNumber ZERO = asVersion("0");
+
     public static VersionNumber asVersion(String version) {
         Objects.requireNonNull(version);
         return new VersionNumber(version);
@@ -81,6 +83,18 @@ public final class VersionNumber implements Comparable<VersionNumber> {
         } while (cont);
 
         return true;
+    }
+
+    public static VersionRange<VersionNumber> between(String minimum, String maximum) {
+        return VersionRange.between(asVersion(minimum), asVersion(maximum));
+    }
+
+    public static VersionRange<VersionNumber> atLeast(String minimum) {
+        return VersionRange.atLeast(asVersion(minimum));
+    }
+
+    public static VersionRange<VersionNumber> atMost(String maximum) {
+        return VersionRange.atMost(asVersion(maximum));
     }
 
     private interface Item {
@@ -473,14 +487,6 @@ public final class VersionNumber implements Comparable<VersionNumber> {
 
     public String getCanonical() {
         return canonical;
-    }
-
-    public VersionNumber min(VersionNumber that) {
-        return this.compareTo(that) <= 0 ? this : that;
-    }
-
-    public VersionNumber max(VersionNumber that) {
-        return this.compareTo(that) >= 0 ? this : that;
     }
 
     @Override

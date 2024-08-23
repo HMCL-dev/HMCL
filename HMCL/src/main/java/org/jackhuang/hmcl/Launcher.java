@@ -25,20 +25,15 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.auth.offline.Skin;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
-import org.jackhuang.hmcl.upgrade.resource.RemoteResourceManager;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -55,13 +50,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Launcher extends Application {
@@ -73,14 +65,12 @@ public final class Launcher extends Application {
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
-        register();
-
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
         try {
             Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
             LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
         } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Failed to get prism pipeline", e);
+            LOG.warning("Failed to get prism pipeline", e);
         }
 
         try {
@@ -89,7 +79,7 @@ public final class Launcher extends Application {
             } catch (SambaException ignored) {
                 Main.showWarningAndContinue(i18n("fatal.samba"));
             } catch (IOException e) {
-                LOG.log(Level.SEVERE, "Failed to load config", e);
+                LOG.error("Failed to load config", e);
                 checkConfigInTempDir();
                 checkConfigOwner();
                 Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
@@ -123,54 +113,11 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
-                RemoteResourceManager.init();
-
-                RemoteResourceManager.register();
-
                 primaryStage.show();
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
-    }
-
-    private static void register() {
-        Skin.registerDefaultSkinLoader((type) -> {
-            switch (type) {
-                case ALEX:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/alex.png");
-                case ARI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/ari.png");
-                case EFE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/efe.png");
-                case KAI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/kai.png");
-                case MAKENA:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/makena.png");
-                case NOOR:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/noor.png");
-                case STEVE:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/steve.png");
-                case SUNNY:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/sunny.png");
-                case ZURI:
-                    return Skin.class.getResourceAsStream("/assets/img/skin/zuri.png");
-                default:
-                    return null;
-            }
-        });
-
-        RemoteMod.registerEmptyRemoteMod(new RemoteMod("", "", i18n("mods.broken_dependency.title"), i18n("mods.broken_dependency.desc"), new ArrayList<>(), "", "/assets/img/icon@8x.png", new RemoteMod.IMod() {
-            @Override
-            public List<RemoteMod> loadDependencies(RemoteModRepository modRepository) throws IOException {
-                throw new IOException();
-            }
-
-            @Override
-            public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
-                throw new IOException();
-            }
-        }));
     }
 
     private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
@@ -217,7 +164,7 @@ public final class Launcher extends Application {
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
                 && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
-            System.exit(0);
+            Main.exit(0);
         }
     }
 
@@ -230,7 +177,7 @@ public final class Launcher extends Application {
         try {
             owner = Files.getOwner(ConfigHolder.configLocation()).getName();
         } catch (IOException ioe) {
-            LOG.log(Level.WARNING, "Failed to get file owner", ioe);
+            LOG.warning("Failed to get file owner", ioe);
             return;
         }
 
@@ -255,17 +202,18 @@ public final class Launcher extends Application {
             Clipboard.getSystemClipboard()
                     .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
         }
-        System.exit(1);
+        Main.exit(1);
     }
 
     @Override
     public void stop() throws Exception {
-        super.stop();
         Controllers.onApplicationStop();
+        LOG.shutdown();
     }
 
     public static void main(String[] args) {
         if (UpdateHandler.processArguments(args)) {
+            LOG.shutdown();
             return;
         }
 
@@ -283,6 +231,7 @@ public final class Launcher extends Application {
             LOG.info("Current Directory: " + System.getProperty("user.dir"));
             LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
+            LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
             LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
             LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
@@ -290,11 +239,9 @@ public final class Launcher extends Application {
                     .findAny()
                     .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
                     .orElse("Unknown"));
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
-
-            if (System.getProperty("hmcl.update_source.override") != null) {
-                Logging.LOG.log(Level.WARNING, "'hmcl.update_source.override' is deprecated! Please use 'hmcl.hmcl_update_source.override' instead");
+                LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
 
             launch(Launcher.class, args);

@@ -27,10 +27,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class LocalizedRemoteModRepository implements RemoteModRepository {
     private static final int CONTAIN_CHINESE_WEIGHT = 10;
@@ -69,7 +68,7 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
             SearchResult searchResult = getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), getBackedRemoteModRepositorySortOrder(), sortOrder);
             for (Iterator<RemoteMod> iterator = searchResult.getUnsortedResults().iterator(); iterator.hasNext(); ) {
                 if (chineseIndex > englishIndex) {
-                    LOG.log(Level.WARNING, "Too many search results! Are the backed remote mod repository broken? Or are the API broken?");
+                    LOG.warning("Too many search results! Are the backed remote mod repository broken? Or are the API broken?");
                     continue;
                 }
 

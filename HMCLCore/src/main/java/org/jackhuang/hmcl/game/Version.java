@@ -21,25 +21,25 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -66,8 +66,8 @@ public class Version implements Comparable<Version>, Validation {
     private final JsonMap<DownloadType, DownloadInfo> downloads;
     private final JsonMap<DownloadType, LoggingInfo> logging;
     private final ReleaseType type;
-    private final Date time;
-    private final Date releaseTime;
+    private final Instant time;
+    private final Instant releaseTime;
     private final Integer minimumLauncherVersion;
     private final Boolean root;
     private final Boolean hidden;
@@ -93,7 +93,7 @@ public class Version implements Comparable<Version>, Validation {
         this(false, id, version, priority, null, arguments, mainClass, null, null, null, null, null, null, libraries, null, null, null, null, null, null, null, null, null, null);
     }
 
-    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, GameJavaVersion javaVersion, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Date time, Date releaseTime, Integer minimumLauncherVersion, Boolean hidden, Boolean root, List<Version> patches) {
+    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, GameJavaVersion javaVersion, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Instant time, Instant releaseTime, Integer minimumLauncherVersion, Boolean hidden, Boolean root, List<Version> patches) {
         this.resolved = resolved;
         this.id = id;
         this.version = version;
@@ -112,8 +112,8 @@ public class Version implements Comparable<Version>, Validation {
         this.downloads = downloads == null ? null : new JsonMap<>(downloads);
         this.logging = logging == null ? null : new JsonMap<>(logging);
         this.type = type;
-        this.time = time == null ? null : (Date) time.clone();
-        this.releaseTime = releaseTime == null ? null : (Date) releaseTime.clone();
+        this.time = time;
+        this.releaseTime = releaseTime;
         this.minimumLauncherVersion = minimumLauncherVersion;
         this.hidden = hidden;
         this.root = root;
@@ -132,7 +132,7 @@ public class Version implements Comparable<Version>, Validation {
         return mainClass;
     }
 
-    public Date getTime() {
+    public Instant getTime() {
         return time;
     }
 
@@ -158,7 +158,7 @@ public class Version implements Comparable<Version>, Validation {
         return type == null ? ReleaseType.UNKNOWN : type;
     }
 
-    public Date getReleaseTime() {
+    public Instant getReleaseTime() {
         return releaseTime;
     }
 
@@ -287,7 +287,7 @@ public class Version implements Comparable<Version>, Validation {
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
-                Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
+                LOG.warning("Found circular dependency versions: " + resolvedSoFar);
                 thisVersion = this.jar == null ? this.setJar(id) : this;
             } else {
                 // It is supposed to auto install an version in getVersion.
@@ -295,7 +295,10 @@ public class Version implements Comparable<Version>, Validation {
             }
         }
 
-        if (patches != null && !patches.isEmpty()) {
+        if (patches == null) {
+            // This is a version from external launcher. NO need to resolve the patches.
+            return thisVersion;
+        } else if (!patches.isEmpty()) {
             // Assume patches themselves do not have patches recursively.
             List<Version> sortedPatches = patches.stream()
                     .sorted(Comparator.comparing(Version::getPriority))
@@ -331,7 +334,7 @@ public class Version implements Comparable<Version>, Validation {
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(id)) {
-                Logging.LOG.log(Level.WARNING, "Found circular dependency versions: " + resolvedSoFar);
+                LOG.warning("Found circular dependency versions: " + resolvedSoFar);
                 // keep thisVersion
             } else {
                 // It is supposed to auto install an version in getVersion.

@@ -28,10 +28,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftAccount extends OAuthAccount {
 
@@ -84,16 +83,20 @@ public class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || !service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
-            MicrosoftSession acquiredSession = service.refresh(session);
-            if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
-                throw new ServerResponseMalformedException("Selected profile changed");
+        if (!authenticated) {
+            if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
+                authenticated = true;
+            } else {
+                MicrosoftSession acquiredSession = service.refresh(session);
+                if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
+                    throw new ServerResponseMalformedException("Selected profile changed");
+                }
+
+                session = acquiredSession;
+
+                authenticated = true;
+                invalidate();
             }
-
-            session = acquiredSession;
-
-            authenticated = true;
-            invalidate();
         }
 
         return session.toAuthInfo();
@@ -138,7 +141,7 @@ public class MicrosoftAccount extends OAuthAccount {
                     try {
                         return YggdrasilService.getTextures(it);
                     } catch (ServerResponseMalformedException e) {
-                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        LOG.warning("Failed to parse texture payload", e);
                         return Optional.empty();
                     }
                 }));

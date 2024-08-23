@@ -17,44 +17,49 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.IllegalFormatException;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.logging.Level;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class I18n {
 
     private I18n() {
     }
 
-    public static SupportedLocale getCurrentLocale() {
-        try {
-            return ConfigHolder.config().getLocalization();
-        } catch (IllegalStateException e) {
-            // e is thrown by ConfigHolder.config(), indicating the config hasn't been loaded
-            // fallback to use default locale
-            return Locales.DEFAULT;
-        }
+    private static volatile SupportedLocale locale = Locales.DEFAULT;
+    private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
+    private static volatile DateTimeFormatter dateTimeFormatter;
+
+    public static void setLocale(SupportedLocale locale) {
+        I18n.locale = locale;
+        resourceBundle = locale.getResourceBundle();
+        dateTimeFormatter = null;
+    }
+
+    public static boolean isUseChinese() {
+        return locale.getLocale() == Locale.CHINA;
     }
 
     public static ResourceBundle getResourceBundle() {
-        return getCurrentLocale().getResourceBundle();
+        return resourceBundle;
+    }
+
+    public static String getName(SupportedLocale locale) {
+        return locale == Locales.DEFAULT ? resourceBundle.getString("lang.default") : locale.getResourceBundle().getString("lang");
     }
 
     public static String i18n(String key, Object... formatArgs) {
         try {
             return String.format(getResourceBundle().getString(key), formatArgs);
         } catch (MissingResourceException e) {
-            LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
+            LOG.error("Cannot find key " + key + " in resource bundle", e);
         } catch (IllegalFormatException e) {
-            LOG.log(Level.SEVERE, "Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
+            LOG.error("Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
         }
 
         return key + Arrays.toString(formatArgs);
@@ -64,13 +69,18 @@ public final class I18n {
         try {
             return getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
-            LOG.log(Level.SEVERE, "Cannot find key " + key + " in resource bundle", e);
+            LOG.error("Cannot find key " + key + " in resource bundle", e);
             return key;
         }
     }
 
     public static String formatDateTime(Instant instant) {
-        return getCurrentLocale().getDateTimeFormatter().format(instant);
+        DateTimeFormatter formatter = dateTimeFormatter;
+        if (formatter == null) {
+            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("world.time")).withZone(ZoneId.systemDefault());
+        }
+
+        return formatter.format(instant);
     }
 
     public static boolean hasKey(String key) {

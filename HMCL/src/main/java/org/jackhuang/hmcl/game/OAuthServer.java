@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -34,10 +33,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
@@ -80,7 +79,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             try {
                 session.parseBody(files);
             } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Failed to read post data", e);
+                LOG.warning("Failed to read post data", e);
                 return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
             } catch (ResponseException re) {
                 return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
@@ -97,7 +96,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             idToken = query.get("id_token");
             future.complete(query.get("code"));
         } else {
-            Logging.LOG.warning("Error: " + parameters);
+            LOG.warning("Error: " + parameters);
             future.completeExceptionally(new AuthenticationException("failed to authenticate"));
         }
 
@@ -106,7 +105,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"))
                     .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
-            Logging.LOG.log(Level.SEVERE, "Failed to load html");
+            LOG.error("Failed to load html", e);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
         }
         thread(() -> {
@@ -114,7 +113,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
                 Thread.sleep(1000);
                 stop();
             } catch (InterruptedException e) {
-                Logging.LOG.log(Level.SEVERE, "Failed to sleep for 1 second");
+                LOG.error("Failed to sleep for 1 second");
             }
         });
         return newFixedLengthResponse(Response.Status.OK, "text/html; charset=UTF-8", html);
