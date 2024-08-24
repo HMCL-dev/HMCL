@@ -43,17 +43,9 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
         return false;
     }
 
-    private static String toLookupVersion(String gameVersion) {
-        return "1.7.10-pre4".equals(gameVersion) ? "1.7.10_pre4" : gameVersion;
-    }
-
-    private static String fromLookupVersion(String lookupVersion) {
-        return "1.7.10_pre4".equals(lookupVersion) ? "1.7.10-pre4" : lookupVersion;
-    }
-
     @Override
     public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(FORGE_LIST).getJsonAsync(ForgeVersionRoot.class)
+        return HttpRequest.GET(downloadProvider.injectURL(FORGE_LIST)).getJsonAsync(ForgeVersionRoot.class)
                 .thenAcceptAsync(root -> {
                     lock.writeLock().lock();
 
@@ -63,7 +55,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                         versions.clear();
 
                         for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
-                            String gameVersion = fromLookupVersion(VersionNumber.normalize(entry.getKey()));
+                            String gameVersion = VersionNumber.normalize(entry.getKey());
                             for (int v : entry.getValue()) {
                                 ForgeVersion version = root.getNumber().get(v);
                                 if (version == null)
@@ -80,7 +72,7 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                                 if (jar == null)
                                     continue;
                                 versions.put(gameVersion, new ForgeRemoteVersion(
-                                        toLookupVersion(version.getGameVersion()), version.getVersion(), null, Collections.singletonList(jar)
+                                        version.getGameVersion(), version.getVersion(), null, Collections.singletonList(jar)
                                 ));
                             }
                         }
@@ -90,5 +82,5 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                 });
     }
 
-    public static final String FORGE_LIST = "https://zkitefly.github.io/forge-maven-metadata/list.json";
+    public static final String FORGE_LIST = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/json";
 }
