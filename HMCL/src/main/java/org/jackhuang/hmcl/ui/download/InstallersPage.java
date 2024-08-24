@@ -162,7 +162,7 @@ public class InstallersPage extends Control implements WizardPage {
                         loaderName = i18n("install.installer.optifine");
                         break;
                     default:
-                        loaderName = String.valueOf(libraryType);
+                        continue;
                 }
 
                 nameBuilder.append("-").append(loaderName);
