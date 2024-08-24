@@ -23,9 +23,13 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -79,8 +83,19 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
 
                                 if (jar == null)
                                     continue;
+
+                                Instant releaseDate = null;
+                                if (version.getModified() != null) {
+                                    try {
+                                        long timestamp = Long.parseLong(version.getModified());
+                                        releaseDate = Instant.ofEpochSecond(timestamp);
+                                    } catch (NumberFormatException e) {
+                                        LOG.warning("Failed to parse timestamp " + version.getModified(), e);
+                                    }
+                                }
+
                                 versions.put(gameVersion, new ForgeRemoteVersion(
-                                        toLookupVersion(version.getGameVersion()), version.getVersion(), null, Collections.singletonList(jar)
+                                        toLookupVersion(version.getGameVersion()), version.getVersion(), releaseDate, Collections.singletonList(jar)
                                 ));
                             }
                         }
