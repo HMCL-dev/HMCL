@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
