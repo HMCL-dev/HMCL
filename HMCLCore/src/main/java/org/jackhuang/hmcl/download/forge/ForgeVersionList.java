@@ -90,5 +90,5 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                 });
     }
 
-    public static final String FORGE_LIST = "https://zkitefly.github.io/forge-maven-metadata/list.json";
+    public static final String FORGE_LIST = "https://hmcl-dev.github.io/metadata/forge/";
 }
