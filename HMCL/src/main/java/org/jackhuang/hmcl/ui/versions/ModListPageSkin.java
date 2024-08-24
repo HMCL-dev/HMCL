@@ -297,51 +297,43 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             ImageView imageView = new ImageView();
             Task.supplyAsync(() -> {
-                Image image = null;
-
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
                     String logoPath = modInfo.getModInfo().getLogoPath();
                     if (StringUtils.isNotBlank(logoPath)) {
                         Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
                             try (InputStream stream = Files.newInputStream(iconPath)) {
-                                image = new Image(stream, 40, 40, true, true);
+                                Image image = new Image(stream, 40, 40, true, true);
                                 if (!image.isError() && image.getWidth() == image.getHeight())
                                     return image;
-                                else
-                                    image = null;
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load image " + logoPath, e);
                             }
                         }
                     }
 
-                    if (image == null) {
-                        String[] defaultPaths = {
-                                "icon.png",
-                                "logo.png",
-                                "mod_logo.png",
-                                "pack.png",
-                                "logoFile.png",
-                                "assets/" + modInfo.getModInfo().getId() + "/icon.png",
-                                "assets/" + modInfo.getModInfo().getId().replace("-", "") + "/icon.png",
-                                modInfo.getModInfo().getId() + ".png",
-                                modInfo.getModInfo().getId() + "-logo.png",
-                                modInfo.getModInfo().getId() + "-icon.png",
-                                modInfo.getModInfo().getId() + "_logo.png",
-                                modInfo.getModInfo().getId() + "_icon.png"
-                        };
+                    String[] defaultPaths = {
+                            "icon.png",
+                            "logo.png",
+                            "mod_logo.png",
+                            "pack.png",
+                            "logoFile.png",
+                            "assets/" + modInfo.getModInfo().getId() + "/icon.png",
+                            "assets/" + modInfo.getModInfo().getId().replace("-", "") + "/icon.png",
+                            modInfo.getModInfo().getId() + ".png",
+                            modInfo.getModInfo().getId() + "-logo.png",
+                            modInfo.getModInfo().getId() + "-icon.png",
+                            modInfo.getModInfo().getId() + "_logo.png",
+                            modInfo.getModInfo().getId() + "_icon.png"
+                    };
 
-                        for (String path : defaultPaths) {
-                            Path iconPath = fs.getPath(path);
-                            if (Files.exists(iconPath)) {
-                                try (InputStream stream = Files.newInputStream(iconPath)) {
-                                    image = new Image(stream, 40, 40, true, true);
-                                    if (!image.isError() && image.getWidth() == image.getHeight())
-                                        break;
-                                    else
-                                        image = null;
-                                }
+                    for (String path : defaultPaths) {
+                        Path iconPath = fs.getPath(path);
+                        if (Files.exists(iconPath)) {
+                            try (InputStream stream = Files.newInputStream(iconPath)) {
+                                Image image = new Image(stream, 40, 40, true, true);
+                                if (!image.isError() && image.getWidth() == image.getHeight())
+                                    return image;
                             }
                         }
                     }
@@ -349,7 +341,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     LOG.warning("Failed to load icon", e);
                 }
 
-                return image;
+                return null;
             }).whenComplete(Schedulers.javafx(), (image, exception) -> {
                 if (image != null) {
                     imageView.setImage(image);
