@@ -59,15 +59,11 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -297,25 +293,65 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
 
             ImageView imageView = new ImageView();
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getLogoPath())) {
-                Task.supplyAsync(() -> {
-                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
-                        Path iconPath = fs.getPath(modInfo.getModInfo().getLogoPath());
+            Task.supplyAsync(() -> {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                    String logoPath = modInfo.getModInfo().getLogoPath();
+                    if (StringUtils.isNotBlank(logoPath)) {
+                        Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            Files.copy(iconPath, stream);
-                            return new ByteArrayInputStream(stream.toByteArray());
+                            try (InputStream stream = Files.newInputStream(iconPath)) {
+                                Image image = new Image(stream, 40, 40, true, true);
+                                if (!image.isError() && image.getWidth() == image.getHeight())
+                                    return image;
+                            } catch (Throwable e) {
+                                LOG.warning("Failed to load image " + logoPath, e);
+                            }
                         }
                     }
-                    return null;
-                }).whenComplete(Schedulers.javafx(), (stream, exception) -> {
-                    if (stream != null) {
-                        imageView.setImage(new Image(stream, 40, 40, true, true));
-                    } else {
-                        imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
+
+                    List<String> defaultPaths = new ArrayList<>(Arrays.asList(
+                            "icon.png",
+                            "logo.png",
+                            "mod_logo.png",
+                            "pack.png",
+                            "logoFile.png"
+                    ));
+
+                    String id = modInfo.getModInfo().getId();
+                    if (StringUtils.isNotBlank(id)) {
+                        defaultPaths.addAll(Arrays.asList(
+                                "assets/" + id + "/icon.png",
+                                "assets/" + id.replace("-", "") + "/icon.png",
+                                id + ".png",
+                                id + "-logo.png",
+                                id + "-icon.png",
+                                id + "_logo.png",
+                                id + "_icon.png"
+                        ));
                     }
-                }).start();
-            }
+
+                    for (String path : defaultPaths) {
+                        Path iconPath = fs.getPath(path);
+                        if (Files.exists(iconPath)) {
+                            try (InputStream stream = Files.newInputStream(iconPath)) {
+                                Image image = new Image(stream, 40, 40, true, true);
+                                if (!image.isError() && image.getWidth() == image.getHeight())
+                                    return image;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to load icon", e);
+                }
+
+                return null;
+            }).whenComplete(Schedulers.javafx(), (image, exception) -> {
+                if (image != null) {
+                    imageView.setImage(image);
+                } else {
+                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
+                }
+            }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
