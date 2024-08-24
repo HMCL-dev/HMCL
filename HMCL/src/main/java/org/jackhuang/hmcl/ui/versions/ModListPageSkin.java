@@ -63,10 +63,7 @@ import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -312,20 +309,26 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         }
                     }
 
-                    String[] defaultPaths = {
+                    List<String> defaultPaths = new ArrayList<>(Arrays.asList(
                             "icon.png",
                             "logo.png",
                             "mod_logo.png",
                             "pack.png",
-                            "logoFile.png",
-                            "assets/" + modInfo.getModInfo().getId() + "/icon.png",
-                            "assets/" + modInfo.getModInfo().getId().replace("-", "") + "/icon.png",
-                            modInfo.getModInfo().getId() + ".png",
-                            modInfo.getModInfo().getId() + "-logo.png",
-                            modInfo.getModInfo().getId() + "-icon.png",
-                            modInfo.getModInfo().getId() + "_logo.png",
-                            modInfo.getModInfo().getId() + "_icon.png"
-                    };
+                            "logoFile.png"
+                    ));
+
+                    String id = modInfo.getModInfo().getId();
+                    if (StringUtils.isNotBlank(id)) {
+                        defaultPaths.addAll(Arrays.asList(
+                                "assets/" + id + "/icon.png",
+                                "assets/" + id.replace("-", "") + "/icon.png",
+                                id + ".png",
+                                id + "-logo.png",
+                                id + "-icon.png",
+                                id + "_logo.png",
+                                id + "_icon.png"
+                        ));
+                    }
 
                     for (String path : defaultPaths) {
                         Path iconPath = fs.getPath(path);
