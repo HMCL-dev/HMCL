@@ -138,9 +138,34 @@ public class InstallersPage extends Control implements WizardPage {
             if (!controller.getSettings().containsKey(libraryId)) {
                 continue;
             }
-            if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId).getModLoaderType() != null) {
-                String capitalizedLibraryId = Character.toUpperCase(libraryId.charAt(0)) + libraryId.substring(1);
-                nameBuilder.append("-").append(capitalizedLibraryId);
+
+            LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
+            if (libraryType != null) {
+                String loaderName;
+                switch (libraryType) {
+                    case FORGE:
+                        loaderName = i18n("install.installer.forge");
+                        break;
+                    case NEO_FORGE:
+                        loaderName = i18n("install.installer.neoforge");
+                        break;
+                    case FABRIC:
+                        loaderName = i18n("install.installer.fabric");
+                        break;
+                    case LITELOADER:
+                        loaderName = i18n("install.installer.liteloader");
+                        break;
+                    case QUILT:
+                        loaderName = i18n("install.installer.quilt");
+                        break;
+                    case OPTIFINE:
+                        loaderName = i18n("install.installer.optifine");
+                        break;
+                    default:
+                        loaderName = String.valueOf(libraryType);
+                }
+
+                nameBuilder.append("-").append(loaderName);
             }
         }
 
