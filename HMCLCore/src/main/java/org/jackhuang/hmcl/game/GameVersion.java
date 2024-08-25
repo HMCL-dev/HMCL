@@ -35,7 +35,6 @@ import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -48,8 +47,11 @@ final class GameVersion {
     private static Optional<String> getVersionFromJson(InputStream versionJson) {
         try {
             Map<?, ?> version = JsonUtils.fromNonNullJsonFully(versionJson, Map.class);
-            return tryCast(version.get("id"), String.class);
-        } catch (IOException | JsonParseException e) {
+            String id = (String) version.get("id");
+            if (id != null && id.contains(" / "))
+                id = id.substring(0, id.indexOf(" / "));
+            return Optional.ofNullable(id);
+        } catch (IOException | JsonParseException | ClassCastException e) {
             LOG.warning("Failed to parse version.json", e);
             return Optional.empty();
         }
