@@ -52,7 +52,7 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.neoforge = new NeoForgeOfficialVersionList(this);
         this.liteLoader = new LiteLoaderVersionList(this);
-        this.optifine = new OptiFine302VersionList("https://zkitefly.github.io/optifine-download-list/index.json");
+        this.optifine = new OptiFine302VersionList("https://hmcl-dev.github.io/metadata/optifine/");
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new QuiltAPIVersionList(this);
     }
