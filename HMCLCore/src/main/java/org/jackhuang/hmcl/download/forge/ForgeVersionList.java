@@ -84,9 +84,10 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                                     continue;
 
                                 Instant releaseDate = null;
-                                if (version.getModified() != null) {
+                                if (version.getModified() != 0) {
                                     try {
-                                        long timestamp = Long.parseLong(version.getModified());
+                                        long timestamp = Long.parseLong(String.valueOf(version.getModified()));
+                                        LOG.debug(String.valueOf(version.getModified()));
                                         releaseDate = Instant.ofEpochSecond(timestamp);
                                     } catch (NumberFormatException e) {
                                         LOG.warning("Failed to parse timestamp " + version.getModified(), e);
