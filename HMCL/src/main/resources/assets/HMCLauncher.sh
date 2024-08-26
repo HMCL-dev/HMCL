@@ -2,6 +2,18 @@
 
 set -e
 
+# Function to show GUI message
+show_message() {
+  local title="$1"
+  local message="$2"
+  echo -e "$title: ""$message"
+  if command -v zenity > /dev/null; then
+    zenisty --info --title="$title" --text="$message" --width=400 --height=200
+  elif command -v kdialog > /dev/null; then
+    kdialog --title "$title" --msgbox "$message"
+  fi
+}
+
 # Switch message language
 if [ -z "${LANG##zh_*}" ]; then
   _HMCL_USE_CHINESE=true
@@ -62,11 +74,9 @@ if [ -n "${HMCL_JAVA_HOME+x}" ]; then
     exec "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
   else
     if [ "$_HMCL_USE_CHINESE" == true ]; then
-      echo "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。" 1>&2
-      echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
+      show_message "错误" "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
     else
-      echo "The value of the environment variable HMCL_JAVA_HOME is invalid, please set it to a valid Java path." 1>&2
-      echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
+      show_message "Error" "The value of the environment variable HMCL_JAVA_HOME is invalid, please set it to a valid Java path.\nYou can visit the https://docs.hmcl.net/help.html page for help."
     fi
     exit 1
   fi
@@ -125,24 +135,16 @@ fi
 case "$_HMCL_OS-$_HMCL_ARCH" in
   windows-x86|windows-x86_64|windows-arm64|linux-x86|linux-x86_64|linux-arm32|linux-arm64|linux-loongarch64|macos-x86_64|macos-arm64)
     if [ "$_HMCL_USE_CHINESE" == true ]; then
-      echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
-      echo "https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_HMCL_ARCH.html" 1>&2
-      echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
+      show_message "错误" "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。\n\nhttps://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_ARCH.html\n\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
     else
-      echo "The Java runtime environment is required to run HMCL. " 1>&2
-      echo "Please install Java and set the environment variables and try again." 1>&2
-      echo "https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_HMCL_ARCH.html" 1>&2
-      echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
+      show_message "Error" "The Java runtime environment is required to run HMCL.\nPlease install Java and set the environment variables and try again.\nhttps://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_ARCH.html\nYou can visit the https://docs.hmcl.net/help.html page for help."
     fi
     ;;
   *)
     if [ "$_HMCL_USE_CHINESE" == true ]; then
-      echo "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。" 1>&2
-      echo "你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。" 1>&2
+      show_message "错误" "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
     else
-      echo "The Java runtime environment is required to run HMCL. " 1>&2
-      echo "Please install Java and set the environment variables and try again." 1>&2
-      echo "You can visit the https://docs.hmcl.net/help.html page for help." 1>&2
+      show_message "Error" "The Java runtime environment is required to run HMCL.\nPlease install Java and set the environment variables and try again.\nYou can visit the https://docs.hmcl.net/help.html page for help."
     fi
     ;;
 esac
