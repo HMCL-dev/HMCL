@@ -67,8 +67,7 @@ public class HelpPage extends SpinnerPane {
 
         String url = getHelpUrlForLocale(Locale.getDefault());
 
-        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET(url).getJson(new TypeToken<List<HelpCategory>>() {
-                }.getType()))
+        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET(url).getJson(new TypeToken<List<HelpCategory>>() {}.getType()))
                 .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();
