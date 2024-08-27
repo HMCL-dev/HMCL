@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -63,8 +64,11 @@ public class HelpPage extends SpinnerPane {
 
     private void loadHelp() {
         showSpinner();
-        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET("https://docs.hmcl.net/index.json").getJson(new TypeToken<List<HelpCategory>>() {
-        }.getType()))
+
+        String url = getHelpUrlForLocale(Locale.getDefault());
+
+        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET(url).getJson(new TypeToken<List<HelpCategory>>() {
+                }.getType()))
                 .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();
@@ -78,11 +82,23 @@ public class HelpPage extends SpinnerPane {
                             categoryPane.getContent().add(item);
                         }
 
-                        content.getChildren().add(ComponentList.createComponentListTitle(category.title));
+                        content.getChildren().add(ComponentList.createComponentListTitle(category.getTitle()));
                         content.getChildren().add(categoryPane);
                     }
                     hideSpinner();
                 }).start();
+    }
+
+    private String getHelpUrlForLocale(Locale locale) {
+        if (locale.toString().equals("zh_TW")) {
+            return "https://docs.hmcl.net/index_zh_TW.json";
+        }
+        else if (locale.toString().equals("zh_CN")) {
+            return "https://docs.hmcl.net/index.json";
+        }
+        else {
+            return "https://docs.hmcl.net/index-en_US.json";
+        }
     }
 
     private static class HelpCategory {
