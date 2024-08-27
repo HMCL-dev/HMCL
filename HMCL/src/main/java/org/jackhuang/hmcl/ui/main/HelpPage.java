@@ -90,7 +90,7 @@ public class HelpPage extends SpinnerPane {
 
     private String getHelpUrlForLocale(Locale locale) {
         if (locale.toString().equals("zh_TW")) {
-            return "https://docs.hmcl.net/index_zh_TW.json";
+            return "https://docs.hmcl.net/index-zh_TW.json";
         }
         else if (locale.toString().equals("zh_CN")) {
             return "https://docs.hmcl.net/index.json";
