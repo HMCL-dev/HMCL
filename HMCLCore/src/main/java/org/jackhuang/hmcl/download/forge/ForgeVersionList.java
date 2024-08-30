@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -79,8 +80,12 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
 
                                 if (jar == null)
                                     continue;
+
                                 versions.put(gameVersion, new ForgeRemoteVersion(
-                                        toLookupVersion(version.getGameVersion()), version.getVersion(), null, Collections.singletonList(jar)
+                                        toLookupVersion(version.getGameVersion()),
+                                        version.getVersion(),
+                                        version.getModified() > 0 ? Instant.ofEpochSecond(version.getModified()) : null,
+                                        Collections.singletonList(jar)
                                 ));
                             }
                         }
