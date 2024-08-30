@@ -28,8 +28,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 /**
  *
  * @author huangyuhui
@@ -83,19 +81,11 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                                 if (jar == null)
                                     continue;
 
-                                Instant releaseDate = null;
-                                if (version.getModified() != 0) {
-                                    try {
-                                        long timestamp = Long.parseLong(String.valueOf(version.getModified()));
-                                        LOG.debug(String.valueOf(version.getModified()));
-                                        releaseDate = Instant.ofEpochSecond(timestamp);
-                                    } catch (NumberFormatException e) {
-                                        LOG.warning("Failed to parse timestamp " + version.getModified(), e);
-                                    }
-                                }
-
                                 versions.put(gameVersion, new ForgeRemoteVersion(
-                                        toLookupVersion(version.getGameVersion()), version.getVersion(), releaseDate, Collections.singletonList(jar)
+                                        toLookupVersion(version.getGameVersion()),
+                                        version.getVersion(),
+                                        version.getModified() > 0 ? Instant.ofEpochSecond(version.getModified()) : null,
+                                        Collections.singletonList(jar)
                                 ));
                             }
                         }
