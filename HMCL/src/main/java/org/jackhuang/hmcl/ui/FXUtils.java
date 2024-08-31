@@ -408,6 +408,17 @@ public final class FXUtils {
         });
     }
 
+    private static boolean testLinuxCommand(String command) {
+        try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", command}).getInputStream()) {
+            if (is.read() != -1) {
+                return true;
+            }
+        } catch (Throwable ignored) {
+        }
+
+        return false;
+    }
+
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
@@ -416,15 +427,15 @@ public final class FXUtils {
             openCommands = new String[]{"explorer.exe", "/select,", path};
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && testLinuxCommand("dbus-send"))
             openCommands = new String[]{
-                "dbus-send",
-                "--print-reply",
-                "--dest=org.freedesktop.FileManager1",
-                "/org/freedesktop/FileManager1",
-                "org.freedesktop.FileManager1.ShowItems",
-                "array:string:file://" + path,
-                "string:"
+                    "dbus-send",
+                    "--print-reply",
+                    "--dest=org.freedesktop.FileManager1",
+                    "/org/freedesktop/FileManager1",
+                    "org.freedesktop.FileManager1.ShowItems",
+                    "array:string:file://" + path,
+                    "string:"
             };
         else
             openCommands = null;
