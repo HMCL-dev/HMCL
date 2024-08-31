@@ -38,10 +38,11 @@ public class RemoteVersion {
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
             String packXZUrl = Optional.ofNullable(response.get("packxz")).map(JsonElement::getAsString).orElse(null);
             String packXZHash = Optional.ofNullable(response.get("packxzsha1")).map(JsonElement::getAsString).orElse(null);
+            boolean force = Optional.ofNullable(response.get("force")).map(JsonElement::getAsBoolean).orElse(false);
             if (Pack200Utils.isSupported() && packXZUrl != null && packXZHash != null) {
-                return new RemoteVersion(channel, version, packXZUrl, Type.PACK_XZ, new IntegrityCheck("SHA-1", packXZHash));
+                return new RemoteVersion(channel, version, packXZUrl, Type.PACK_XZ, new IntegrityCheck("SHA-1", packXZHash), force);
             } else if (jarUrl != null && jarHash != null) {
-                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash));
+                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), force);
             } else {
                 throw new IOException("No download url is available");
             }
@@ -55,13 +56,15 @@ public class RemoteVersion {
     private final String url;
     private final Type type;
     private final IntegrityCheck integrityCheck;
+    private final boolean force;
 
-    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck) {
+    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck, boolean force) {
         this.channel = channel;
         this.version = version;
         this.url = url;
         this.type = type;
         this.integrityCheck = integrityCheck;
+        this.force = force;
     }
 
     public UpdateChannel getChannel() {
@@ -82,6 +85,10 @@ public class RemoteVersion {
 
     public IntegrityCheck getIntegrityCheck() {
         return integrityCheck;
+    }
+
+    public boolean isForce() {
+        return force;
     }
 
     @Override

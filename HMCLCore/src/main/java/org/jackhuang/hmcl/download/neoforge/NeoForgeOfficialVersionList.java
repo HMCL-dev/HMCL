@@ -2,10 +2,9 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -31,10 +30,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     @Override
     public Optional<NeoForgeRemoteVersion> getVersion(String gameVersion, String remoteVersion) {
         if (gameVersion.equals("1.20.1")) {
-            remoteVersion = NeoForgeRemoteVersion.fixInvalidVersion(remoteVersion);
-            if (!remoteVersion.equals("47.1.82")) {
-                remoteVersion = "1.20.1-" + remoteVersion;
-            }
+            remoteVersion = NeoForgeRemoteVersion.normalize(remoteVersion);
         }
         return super.getVersion(gameVersion, remoteVersion);
     }
@@ -52,19 +48,21 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
 
                 for (String version : results[0].versions) {
                     versions.put("1.20.1", new NeoForgeRemoteVersion(
-                            "1.20.1", StringUtils.removePrefix(version, "1.20.1-"),
-                            Lang.immutableListOf(
-                                    downloadProvider.injectURL("https://maven.neoforged.net/releases/net/neoforged/forge/" + version + "/forge-" + version + "-installer.jar")
+                            "1.20.1", NeoForgeRemoteVersion.normalize(version),
+                            Collections.singletonList(
+                                    "https://maven.neoforged.net/releases/net/neoforged/forge/" + version + "/forge-" + version + "-installer.jar"
                             )
                     ));
                 }
 
                 for (String version : results[1].versions) {
-                    String mcVersion = "1." + version.substring(0, version.indexOf('.', version.indexOf('.') + 1));
+                    int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+                    String mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+
                     versions.put(mcVersion, new NeoForgeRemoteVersion(
-                            mcVersion, version,
-                            Lang.immutableListOf(
-                                    downloadProvider.injectURL("https://maven.neoforged.net/releases/net/neoforged/neoforge/" + version + "/neoforge-" + version + "-installer.jar")
+                            mcVersion, NeoForgeRemoteVersion.normalize(version),
+                            Collections.singletonList(
+                                    "https://maven.neoforged.net/releases/net/neoforged/neoforge/" + version + "/neoforge-" + version + "-installer.jar"
                             )
                     ));
                 }

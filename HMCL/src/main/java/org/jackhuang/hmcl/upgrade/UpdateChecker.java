@@ -24,13 +24,13 @@ import javafx.beans.property.*;
 import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class UpdateChecker {
@@ -42,10 +42,13 @@ public final class UpdateChecker {
                 RemoteVersion latest = latestVersion.get();
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
                     return false;
-                } else {
-                    // We can update from development version to stable version,
-                    // which can be downgrading.
+                } else if (latest.isForce()
+                        || Metadata.isNightly()
+                        || latest.getChannel() == UpdateChannel.NIGHTLY
+                        || latest.getChannel() != UpdateChannel.getChannel()) {
                     return !latest.getVersion().equals(Metadata.VERSION);
+                } else {
+                    return VersionNumber.compare(Metadata.VERSION, latest.getVersion()) < 0;
                 }
             },
             latestVersion);
@@ -108,7 +111,7 @@ public final class UpdateChecker {
                     result = checkUpdate(channel);
                     LOG.info("Latest version (" + channel + ") is " + result);
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to check for update", e);
+                    LOG.warning("Failed to check for update", e);
                 }
 
                 RemoteVersion finalResult = result;

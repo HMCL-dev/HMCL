@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -35,9 +35,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class LogExporter {
     private LogExporter() {
@@ -70,9 +69,9 @@ public final class LogExporter {
                 processLogs(runDirectory, "*.log", "runDirectory", zipper);
                 processLogs(runDirectory.resolve("crash-reports"), "*.txt", "crash-reports", zipper);
 
-                zipper.putTextFile(Logging.getLogs(), "hmcl.log");
+                zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
-                zipper.putTextFile(Logging.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+                zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
@@ -94,13 +93,17 @@ public final class LogExporter {
                 if (Files.isRegularFile(file)) {
                     FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
-                        String crashLog = Logging.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
-                        zipper.putTextFile(crashLog, file.getFileName().toString());
+                        try {
+                            String crashLog = Logger.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
+                            zipper.putTextFile(crashLog, file.getFileName().toString());
+                        } catch (IOException e) {
+                            LOG.warning("Failed to read log file: " + file, e);
+                        }
                     }
                 }
             }
         } catch (Throwable e) {
-            LOG.log(Level.WARNING, "Failed to find any log on " + logDirectory, e);
+            LOG.warning("Failed to find any log on " + logDirectory, e);
         }
     }
 }

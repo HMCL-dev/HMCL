@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.tukaani.xz.LZMAInputStream;
@@ -43,7 +42,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class JavaDownloadTask extends Task<Void> {
     private final GameJavaVersion javaVersion;
@@ -58,8 +57,8 @@ public class JavaDownloadTask extends Task<Void> {
         this.javaVersion = javaVersion;
         this.rootDir = rootDir;
         this.downloadProvider = downloadProvider;
-        this.javaDownloadsTask = new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(
-                "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json")))
+        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(
+                "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"))
         .thenComposeAsync(javaDownloadsJson -> {
             JavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, JavaDownloads.class);
             if (!allDownloads.getDownloads().containsKey(platform)) throw new UnsupportedPlatformException();
@@ -69,7 +68,7 @@ public class JavaDownloadTask extends Task<Void> {
             for (JavaDownloads.JavaDownload download : candidates) {
                 if (VersionNumber.compare(download.getVersion().getName(), Integer.toString(javaVersion.getMajorVersion())) >= 0) {
                     this.download = download;
-                    return new GetTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getManifest().getUrl())));
+                    return new GetTask(downloadProvider.injectURLWithCandidates(download.getManifest().getUrl()));
                 }
             }
             throw new UnsupportedPlatformException();
@@ -117,7 +116,7 @@ public class JavaDownloadTask extends Task<Void> {
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
                     File tempFile = jvmDir.resolve(entry.getKey() + ".lzma").toFile();
-                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getUrl())), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = jvmDir.resolve(entry.getKey() + ".tmp");
@@ -135,7 +134,7 @@ public class JavaDownloadTask extends Task<Void> {
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
-                    FileDownloadTask task = new FileDownloadTask(NetworkUtils.toURL(downloadProvider.injectURL(download.getUrl())), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     if (file.isExecutable()) {
                         dependencies.add(task.thenRunAsync(() -> dest.toFile().setExecutable(true)));

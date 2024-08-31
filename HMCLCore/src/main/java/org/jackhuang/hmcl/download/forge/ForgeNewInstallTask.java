@@ -60,7 +60,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.zip.ZipException;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
 public class ForgeNewInstallTask extends Task<Version> {

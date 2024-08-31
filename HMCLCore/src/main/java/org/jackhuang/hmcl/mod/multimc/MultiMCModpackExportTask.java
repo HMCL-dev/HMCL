@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
@@ -34,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Export the game to a mod pack file.
@@ -66,13 +66,13 @@ public class MultiMCModpackExportTask extends Task<Void> {
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(versionId + ".jar");
         blackList.add(versionId + ".json");
-        Logging.LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
+        LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(output.toPath())) {
             zip.putDirectory(repository.getRunDirectory(versionId).toPath(), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
 
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId));
             String gameVersion = repository.getGameVersion(versionId)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId), gameVersion);
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
             components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, "net.minecraft", gameVersion));
             analyzer.getVersion(FORGE).ifPresent(forgeVersion ->

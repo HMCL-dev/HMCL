@@ -54,11 +54,10 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.logging.Level;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountListItem extends RadioButton {
@@ -109,30 +108,26 @@ public class AccountListItem extends RadioButton {
                 } catch (CancellationException e1) {
                     // ignore cancellation
                 } catch (Exception e1) {
-                    LOG.log(Level.WARNING, "Failed to refresh " + account + " with password", e1);
+                    LOG.warning("Failed to refresh " + account + " with password", e1);
                     throw e1;
                 }
             } catch (AuthenticationException e) {
-                LOG.log(Level.WARNING, "Failed to refresh " + account + " with token", e);
+                LOG.warning("Failed to refresh " + account + " with token", e);
                 throw e;
             }
         });
     }
 
     public ObservableBooleanValue canUploadSkin() {
-        if (account instanceof YggdrasilAccount) {
-            if (account instanceof AuthlibInjectorAccount) {
-                AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
-                ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
-                return createBooleanBinding(() -> {
-                    Set<TextureType> uploadableTextures = profile.get()
-                            .map(AuthlibInjectorAccount::getUploadableTextures)
-                            .orElse(emptySet());
-                    return uploadableTextures.contains(TextureType.SKIN);
-                }, profile);
-            } else {
-                return createBooleanBinding(() -> true);
-            }
+        if (account instanceof AuthlibInjectorAccount) {
+            AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
+            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
+            return createBooleanBinding(() -> {
+                Set<TextureType> uploadableTextures = profile.get()
+                        .map(AuthlibInjectorAccount::getUploadableTextures)
+                        .orElse(emptySet());
+                return uploadableTextures.contains(TextureType.SKIN);
+            }, profile);
         } else if (account instanceof OfflineAccount || account instanceof MicrosoftAccount) {
             return createBooleanBinding(() -> true);
         } else {

@@ -13,13 +13,12 @@ import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @Immutable
 public final class ForgeNewModMetadata {
@@ -32,10 +31,6 @@ public final class ForgeNewModMetadata {
     private final String license;
 
     private final List<Mod> mods;
-
-    public ForgeNewModMetadata() {
-        this("", "", "", "", Collections.emptyList());
-    }
 
     public ForgeNewModMetadata(String modLoader, String loaderVersion, String logoFile, String license, List<Mod> mods) {
         this.modLoader = modLoader;
@@ -117,11 +112,30 @@ public final class ForgeNewModMetadata {
         }
     }
 
+    private static final int ACC_FORGE = 0x01;
+
+    private static final int ACC_NEO_FORGED = 0x02;
+
     public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        Path modstoml = fs.getPath("META-INF/mods.toml");
-        if (Files.notExists(modstoml))
-            throw new IOException("File " + modFile + " is not a Forge 1.13+ mod.");
-        ForgeNewModMetadata metadata = new Toml().read(FileUtils.readText(modstoml)).to(ForgeNewModMetadata.class);
+        try {
+            return fromFile0("META-INF/mods.toml", ACC_FORGE | ACC_NEO_FORGED, ModLoaderType.FORGE, modManager, modFile, fs);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            return fromFile0("META-INF/neoforge.mods.toml", ACC_NEO_FORGED, ModLoaderType.NEO_FORGED, modManager, modFile, fs);
+        } catch (Exception ignored) {
+        }
+
+        throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
+    }
+
+    private static LocalModFile fromFile0(String tomlPath, int loaderACC, ModLoaderType defaultLoader, ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+        Path modToml = fs.getPath(tomlPath);
+        if (Files.notExists(modToml))
+            throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
+        Toml toml = new Toml().read(FileUtils.readText(modToml));
+        ForgeNewModMetadata metadata = toml.to(ForgeNewModMetadata.class);
         if (metadata == null || metadata.getMods().isEmpty())
             throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");
         Mod mod = metadata.getMods().get(0);
@@ -132,12 +146,38 @@ public final class ForgeNewModMetadata {
                 Manifest manifest = new Manifest(is);
                 jarVersion = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to parse MANIFEST.MF in file " + modFile);
+                LOG.warning("Failed to parse MANIFEST.MF in file " + modFile);
             }
         }
-        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), ModLoaderType.FORGE), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
+
+        ModLoaderType type = analyzeLoader(toml, mod.getModId(), loaderACC, defaultLoader);
+
+        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());
+    }
+
+    private static ModLoaderType analyzeLoader(Toml toml, String modID, int loaderACC, ModLoaderType defaultLoader) throws IOException {
+        List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
+        if (dependencies != null) {
+            for (HashMap<String, Object> dependency : dependencies) {
+                switch ((String) dependency.get("modId")) {
+                    case "forge": return checkLoaderACC(loaderACC, ACC_FORGE, ModLoaderType.FORGE);
+                    case "neoforge": return checkLoaderACC(loaderACC, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
+                }
+            }
+        }
+
+        // ??? I have no idea why some of the Forge mods doesn't provide this key.
+        return defaultLoader;
+    }
+
+    private static ModLoaderType checkLoaderACC(int current, int target, ModLoaderType res) throws IOException {
+        if ((target & current) != 0) {
+            return res;
+        } else {
+            throw new IOException("Mismatched loader.");
+        }
     }
 }

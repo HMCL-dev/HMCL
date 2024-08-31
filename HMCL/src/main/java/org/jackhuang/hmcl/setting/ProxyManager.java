@@ -29,7 +29,7 @@ import java.net.Proxy;
 import java.net.Proxy.Type;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ProxyManager {
     private ProxyManager() {

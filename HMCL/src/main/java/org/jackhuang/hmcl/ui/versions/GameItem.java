@@ -35,12 +35,11 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.Lang.handleUncaught;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameItem extends Control {
@@ -59,10 +58,10 @@ public class GameItem extends Control {
         this.version = id;
 
         // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-        CompletableFuture.supplyAsync(() -> profile.getRepository().getGameVersion(id).orElse(i18n("message.unknown")), POOL_VERSION_RESOLVE)
+        CompletableFuture.supplyAsync(() -> profile.getRepository().getGameVersion(id), POOL_VERSION_RESOLVE)
                 .thenAcceptAsync(game -> {
-                    StringBuilder libraries = new StringBuilder(game);
-                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id));
+                    StringBuilder libraries = new StringBuilder(game.orElse(i18n("message.unknown")));
+                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id), game.orElse(null));
                     for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                         String libraryId = mark.getLibraryId();
                         String libraryVersion = mark.getLibraryVersion();
@@ -84,7 +83,7 @@ public class GameItem extends Control {
                 if (config == null) return;
                 tag.set(config.getVersion());
             } catch (IOException | JsonParseException e) {
-                LOG.log(Level.WARNING, "Failed to read modpack configuration from " + version, e);
+                LOG.warning("Failed to read modpack configuration from " + version, e);
             }
         }, Platform::runLater)
                 .exceptionally(handleUncaught);

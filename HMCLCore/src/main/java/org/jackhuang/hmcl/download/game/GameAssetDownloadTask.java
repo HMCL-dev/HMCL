@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -37,7 +36,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -100,7 +100,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))
                     download = true;
             } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Unable to calc hash value of file " + file, e);
+                LOG.warning("Unable to calc hash value of file " + file, e);
             }
             if (download) {
                 List<URL> urls = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject.getLocation());

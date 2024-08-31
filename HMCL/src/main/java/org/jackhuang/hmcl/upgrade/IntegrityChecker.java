@@ -31,12 +31,11 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * A class that checks the integrity of HMCL.
@@ -132,7 +131,7 @@ public final class IntegrityChecker {
                 LOG.info("Successfully verified current JAR");
                 selfVerified = true;
             } catch (IOException e) {
-                LOG.log(Level.WARNING, "Failed to verify myself, is the JAR corrupt?", e);
+                LOG.warning("Failed to verify myself, is the JAR corrupt?", e);
                 selfVerified = false;
             }
 

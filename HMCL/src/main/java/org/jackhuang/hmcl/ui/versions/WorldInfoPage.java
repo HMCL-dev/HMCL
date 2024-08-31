@@ -27,9 +27,8 @@ import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -421,7 +420,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
         try {
             this.world.writeLevelDat(levelDat);
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to save level.dat of world " + world.getWorldName(), e);
+            LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
         }
     }
 

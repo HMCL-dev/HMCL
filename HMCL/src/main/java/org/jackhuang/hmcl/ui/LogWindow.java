@@ -55,14 +55,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -98,7 +96,7 @@ public final class LogWindow extends Stage {
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
-        getIcons().add(newBuiltinImage("/assets/img/icon.png"));
+        FXUtils.setIcon(this);
 
         levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
 
@@ -211,7 +209,7 @@ public final class LogWindow extends Stage {
                 try {
                     Files.write(logFile, logs.stream().map(x -> x.log).collect(Collectors.toList()));
                 } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to export logs", e);
+                    LOG.warning("Failed to export logs", e);
                     return;
                 }
 
@@ -239,7 +237,7 @@ public final class LogWindow extends Stage {
                                 FXUtils.showFileInExplorer(dumpFile);
                             }
                         } catch (Throwable e) {
-                            LOG.log(Level.WARNING, "Failed to create minecraft jstack dump", e);
+                            LOG.warning("Failed to create minecraft jstack dump", e);
 
                             Platform.runLater(() -> {
                                 Alert alert = new Alert(Alert.AlertType.ERROR, i18n("logwindow.export_dump.dependency_ok.button"));

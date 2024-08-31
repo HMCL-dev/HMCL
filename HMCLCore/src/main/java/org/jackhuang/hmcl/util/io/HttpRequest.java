@@ -187,13 +187,18 @@ public abstract class HttpRequest {
                     os.write(bytes);
                 }
 
+                URL url = new URL(this.url);
+
                 if (responseCodeTester != null) {
-                    responseCodeTester.accept(new URL(url), con.getResponseCode());
+                    responseCodeTester.accept(url, con.getResponseCode());
                 } else {
                     if (con.getResponseCode() / 100 != 2) {
                         if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
-                            String data = NetworkUtils.readData(con);
-                            throw new ResponseCodeException(new URL(url), con.getResponseCode(), data);
+                            try {
+                                throw new ResponseCodeException(url, con.getResponseCode(), NetworkUtils.readData(con));
+                            } catch (IOException e) {
+                                throw new ResponseCodeException(url, con.getResponseCode(), e);
+                            }
                         }
                     }
                 }

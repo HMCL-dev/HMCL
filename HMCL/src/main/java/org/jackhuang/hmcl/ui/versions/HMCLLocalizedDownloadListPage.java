@@ -21,12 +21,24 @@ import org.jackhuang.hmcl.game.LocalizedRemoteModRepository;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
+import java.util.MissingResourceException;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, ModrinthRemoteModRepository.MODS);
+    }
+
+    public static DownloadListPage ofCurseForgeMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, CurseForgeRemoteModRepository.MODS, null);
+    }
+
+    public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, null, ModrinthRemoteModRepository.MODS);
     }
 
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
@@ -44,10 +56,13 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
         supportChinese.set(true);
         downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
-        if (CurseForgeRemoteModRepository.isAvailable())
+        if (curseForge != null) {
             downloadSource.set("mods.curseforge");
-        else
+        } else if (modrinth != null) {
             downloadSource.set("mods.modrinth");
+        } else {
+            throw new AssertionError("Should not be here.");
+        }
     }
 
     private class Repository extends LocalizedRemoteModRepository {
@@ -87,10 +102,16 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
     @Override
     protected String getLocalizedCategory(String category) {
-        if ("mods.modrinth".equals(downloadSource.get())) {
-            return i18n("modrinth.category." + category);
-        } else {
-            return i18n("curse.category." + category);
+        if (category.isEmpty()) {
+            return "";
+        }
+
+        String key = ("mods.modrinth".equals(downloadSource.get()) ? "modrinth" : "curse") + ".category." + category;
+        try {
+            return I18n.getResourceBundle().getString(key);
+        } catch (MissingResourceException e) {
+            LOG.warning("Cannot find key " + key + " in resource bundle", e);
+            return category;
         }
     }
 

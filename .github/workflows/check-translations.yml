@@ -1,19 +1,23 @@
 name: Check Translations
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - '**.properties'
+  pull_request:
+    paths:
+      - '**.properties'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '11'
           java-package: 'jdk+fx'
       - name: Check style test
-        run: ./gradlew checkTranslations
+        run: ./gradlew checkTranslations --no-daemon

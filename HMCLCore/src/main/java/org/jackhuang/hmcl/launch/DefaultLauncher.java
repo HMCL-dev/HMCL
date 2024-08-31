@@ -40,10 +40,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -102,7 +101,7 @@ public class DefaultLauncher extends Launcher {
 
         // Executable
         if (StringUtils.isNotBlank(options.getWrapper()))
-            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper()));
+            res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars()));
 
         res.add(options.getJava().getBinary().toString());
 
@@ -147,11 +146,17 @@ public class DefaultLauncher extends Launcher {
             try {
                 encoding = Charset.forName(fileEncoding.substring("-Dfile.encoding=".length()));
             } catch (Throwable ex) {
-                LOG.log(Level.WARNING, "Bad file encoding", ex);
+                LOG.warning("Bad file encoding", ex);
             }
         }
-        res.addDefault("-Dsun.stdout.encoding=", encoding.name());
-        res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+
+        if (options.getJava().getParsedVersion() < 19) {
+            res.addDefault("-Dsun.stdout.encoding=", encoding.name());
+            res.addDefault("-Dsun.stderr.encoding=", encoding.name());
+        } else {
+            res.addDefault("-Dstdout.encoding=", encoding.name());
+            res.addDefault("-Dstderr.encoding=", encoding.name());
+        }
 
         // Fix RCE vulnerability of log4j2
         res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
@@ -423,9 +428,6 @@ public class DefaultLauncher extends Launcher {
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
-        if (StringUtils.isNotBlank(options.getWrapper())) {
-            rawCommandLine.addAll(0, StringUtils.parseCommand(options.getWrapper(), getEnvVars()));
-        }
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
@@ -446,7 +448,7 @@ public class DefaultLauncher extends Launcher {
         File runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
             builder.environment().putAll(getEnvVars());
             SystemUtils.callExternalProcess(builder);
         }
@@ -499,7 +501,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
         }
@@ -554,6 +556,7 @@ public class DefaultLauncher extends Launcher {
 
         final Command commandLine = generateCommandLine(nativeFolder);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
+        Map<String, String> envVars = getEnvVars();
 
         if (!usePowerShell && isWindows) {
             if (command.length() > 8192) { // maximum length of the command in cmd
@@ -590,7 +593,7 @@ public class DefaultLauncher extends Launcher {
                         writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
                         writer.newLine();
                     }
-                    for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                    for (Map.Entry<String, String> entry : envVars.entrySet()) {
                         writer.write("$Env:" + entry.getKey() + "=");
                         writer.write(CommandBuilder.pwshString(entry.getValue()));
                         writer.newLine();
@@ -599,19 +602,38 @@ public class DefaultLauncher extends Launcher {
                     writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
                     writer.newLine();
 
+
+                    if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
+                        writer.write('&');
+                        for (String rawCommand : StringUtils.tokenize(options.getPreLaunchCommand(), envVars)) {
+                            writer.write(' ');
+                            writer.write(CommandBuilder.pwshString(rawCommand));
+                        }
+                        writer.newLine();
+                    }
+
                     writer.write('&');
                     for (String rawCommand : commandLine.commandLine.asList()) {
                         writer.write(' ');
                         writer.write(CommandBuilder.pwshString(rawCommand));
                     }
                     writer.newLine();
+
+                    if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                        writer.write('&');
+                        for (String rawCommand : StringUtils.tokenize(options.getPostExitCommand(), envVars)) {
+                            writer.write(' ');
+                            writer.write(CommandBuilder.pwshString(rawCommand));
+                        }
+                        writer.newLine();
+                    }
                 } else {
                     if (isWindows) {
                         writer.write("@echo off");
                         writer.newLine();
                         writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
                         writer.newLine();
-                        for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                        for (Map.Entry<String, String> entry : envVars.entrySet()) {
                             writer.write("set " + entry.getKey() + "=" + CommandBuilder.toBatchStringLiteral(entry.getValue()));
                             writer.newLine();
                         }
@@ -620,7 +642,7 @@ public class DefaultLauncher extends Launcher {
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
-                        for (Map.Entry<String, String> entry : getEnvVars().entrySet()) {
+                        for (Map.Entry<String, String> entry : envVars.entrySet()) {
                             writer.write("export " + entry.getKey() + "=" + CommandBuilder.toShellStringLiteral(entry.getValue()));
                             writer.newLine();
                         }
@@ -632,13 +654,14 @@ public class DefaultLauncher extends Launcher {
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-                        writer.write(options.getPreLaunchCommand());
+                        writer.write(new CommandBuilder().addAll(StringUtils.tokenize(options.getPreLaunchCommand(), envVars)).toString());
                         writer.newLine();
                     }
                     writer.write(command);
                     writer.newLine();
+
                     if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                        writer.write(options.getPostExitCommand());
+                        writer.write(new CommandBuilder().addAll(StringUtils.tokenize(options.getPostExitCommand(), envVars)).toString());
                         writer.newLine();
                     }
 
@@ -677,11 +700,11 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.parseCommand(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
-                    LOG.log(Level.WARNING, "An Exception happened while running exit command.", e);
+                    LOG.warning("An Exception happened while running exit command.", e);
                 }
             }
         }), "exit-waiter", isDaemon));

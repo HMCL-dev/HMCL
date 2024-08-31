@@ -24,10 +24,9 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -127,7 +126,7 @@ public enum ModTranslations {
             mods = Arrays.stream(modData.split("\n")).filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());
             return true;
         } catch (Exception e) {
-            LOG.log(Level.WARNING, "Failed to load " + resourceName, e);
+            LOG.warning("Failed to load " + resourceName, e);
             return false;
         }
     }
@@ -198,10 +197,9 @@ public enum ModTranslations {
         return true;
     }
 
-    public static class Mod {
+    public static final class Mod {
         private final String curseforge;
         private final String mcmod;
-        private final String mcbbs;
         private final List<String> modIds;
         private final String name;
         private final String subname;
@@ -209,23 +207,21 @@ public enum ModTranslations {
 
         public Mod(String line) {
             String[] items = line.split(";", -1);
-            if (items.length != 7) {
-                throw new IllegalArgumentException("Illegal mod data line, 7 items expected " + line);
+            if (items.length != 6) {
+                throw new IllegalArgumentException("Illegal mod data line, 6 items expected " + line);
             }
 
             curseforge = items[0];
             mcmod = items[1];
-            mcbbs = items[2];
-            modIds = Collections.unmodifiableList(Arrays.asList(items[3].split(",")));
-            name = items[4];
-            subname = items[5];
-            abbr = items[6];
+            modIds = Collections.unmodifiableList(Arrays.asList(items[2].split(",")));
+            name = items[3];
+            subname = items[4];
+            abbr = items[5];
         }
 
-        public Mod(String curseforge, String mcmod, String mcbbs, List<String> modIds, String name, String subname, String abbr) {
+        public Mod(String curseforge, String mcmod, List<String> modIds, String name, String subname, String abbr) {
             this.curseforge = curseforge;
             this.mcmod = mcmod;
-            this.mcbbs = mcbbs;
             this.modIds = modIds;
             this.name = name;
             this.subname = subname;
@@ -250,10 +246,6 @@ public enum ModTranslations {
 
         public String getMcmod() {
             return mcmod;
-        }
-
-        public String getMcbbs() {
-            return mcbbs;
         }
 
         public List<String> getModIds() {
