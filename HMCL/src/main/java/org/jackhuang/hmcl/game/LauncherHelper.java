@@ -804,7 +804,7 @@ public final class LauncherHelper {
                 System.out.println(filteredLog);
 
             Log4jLevel level;
-            if (isErrorStream)
+            if (isErrorStream && !filteredLog.startsWith("[authlib-injector]"))
                 level = Log4jLevel.ERROR;
             else
                 level = showLogs ? Optional.ofNullable(Log4jLevel.guessLevel(filteredLog)).orElse(Log4jLevel.INFO) : null;
