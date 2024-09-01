@@ -799,7 +799,7 @@ public final class LauncherHelper {
             String filteredLog = forbiddenAccessToken == null ? log : log.replace(forbiddenAccessToken, "<access token>");
 
             Log4jLevel level;
-            if (isErrorStream && !(filteredLog.startsWith("[authlib-injector]"))) {
+            if (isErrorStream && !filteredLog.startsWith("[authlib-injector]")) {
                 System.err.println(filteredLog);
                 level = Log4jLevel.ERROR;
             } else {
