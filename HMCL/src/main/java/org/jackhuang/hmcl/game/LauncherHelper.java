@@ -728,9 +728,7 @@ public final class LauncherHelper {
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
             this.forbiddenAccessToken = authInfo != null ? authInfo.getAccessToken() : null;
-
-            final int numLogs = Log.getLogLines() + 1;
-            this.logs = new CircularArrayList<>(numLogs);
+            this.logs = new CircularArrayList<>(Log.getLogLines() + 1);
         }
 
         @Override
