@@ -80,8 +80,7 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private final LogWindowImpl impl = new LogWindowImpl();
-
+    private final LogWindowImpl impl;
     private final ManagedProcess gameProcess;
 
     public LogWindow(ManagedProcess gameProcess) {
@@ -90,6 +89,7 @@ public final class LogWindow extends Stage {
 
     public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
         this.logs = logs;
+        this.impl = new LogWindowImpl();
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));

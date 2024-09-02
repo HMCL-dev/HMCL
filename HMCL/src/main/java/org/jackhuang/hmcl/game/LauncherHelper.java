@@ -780,7 +780,7 @@ public final class LauncherHelper {
                             try {
                                 currentLogs.add(logBuffer.take());
                                 //noinspection BusyWait
-                                Thread.sleep(250); // Wait for more logs
+                                Thread.sleep(200); // Wait for more logs
                             } catch (InterruptedException e) {
                                 break;
                             }
