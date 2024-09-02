@@ -164,7 +164,7 @@ public final class Config implements Cloneable, Observable {
     private StringProperty launcherFontFamily = new SimpleStringProperty();
 
     @SerializedName("logLines")
-    private IntegerProperty logLines = new SimpleIntegerProperty(2000);
+    private ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
 
     @SerializedName("titleTransparent")
     private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
@@ -573,15 +573,15 @@ public final class Config implements Cloneable, Observable {
         this.launcherFontFamily.set(launcherFontFamily);
     }
 
-    public int getLogLines() {
+    public Integer getLogLines() {
         return logLines.get();
     }
 
-    public void setLogLines(int logLines) {
+    public void setLogLines(Integer logLines) {
         this.logLines.set(logLines);
     }
 
-    public IntegerProperty logLinesProperty() {
+    public ObjectProperty<Integer> logLinesProperty() {
         return logLines;
     }
 

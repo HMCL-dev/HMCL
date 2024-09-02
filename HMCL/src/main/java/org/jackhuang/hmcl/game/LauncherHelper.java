@@ -730,7 +730,7 @@ public final class LauncherHelper {
             this.detectWindow = detectWindow;
             this.forbiddenAccessToken = authInfo != null ? authInfo.getAccessToken() : null;
 
-            final int numLogs = config().getLogLines() + 1;
+            final int numLogs = Log.getLogLines() + 1;
             this.logs = new CircularArrayList<>(numLogs);
         }
 
@@ -856,7 +856,7 @@ public final class LauncherHelper {
             } else {
                 synchronized (this) {
                     logs.addLast(new Log(log, level));
-                    if (logs.size() > config().getLogLines())
+                    if (logs.size() > Log.getLogLines())
                         logs.removeFirst();
                 }
             }

@@ -19,7 +19,16 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.util.Log4jLevel;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+
 public final class Log {
+    public static final int DEFAULT_LOG_LINES = 2000;
+
+    public static int getLogLines() {
+        Integer lines = config().getLogLines();
+        return lines != null && lines > 0 ? lines : DEFAULT_LOG_LINES;
+    }
+
     private final String log;
     private Log4jLevel level;
     private boolean selected = false;

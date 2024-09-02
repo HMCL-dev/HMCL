@@ -134,7 +134,7 @@ public final class LogWindow extends Stage {
     }
 
     private void checkLogCount() {
-        int nRemove = logs.size() - config().getLogLines();
+        int nRemove = logs.size() - Log.getLogLines();
         if (nRemove <= 0)
             return;
 
@@ -162,7 +162,7 @@ public final class LogWindow extends Stage {
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
-        private final JFXComboBox<String> cboLines = new JFXComboBox<>();
+        private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
@@ -174,20 +174,9 @@ public final class LogWindow extends Stage {
                 showLevel[i] = new SimpleBooleanProperty(true);
             }
 
-            boolean flag = false;
-            cboLines.getItems().setAll("500", "2000", "5000", "10000");
-            for (String i : cboLines.getItems())
-                if (Integer.toString(config().getLogLines()).equals(i)) {
-                    cboLines.getSelectionModel().select(i);
-                    flag = true;
-                }
-
-            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-                config().setLogLines(newValue == null ? 2000 : Integer.parseInt(newValue));
-            });
-
-            if (!flag)
-                cboLines.getSelectionModel().select(2);
+            cboLines.getItems().setAll(500, 2000, 5000, 10000);
+            cboLines.setValue(Log.getLogLines());
+            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> config().setLogLines(newValue));
 
             for (int i = 0; i < LEVELS.length; ++i) {
                 buttonText[i].bind(Bindings.concat(levelCountMap.get(LEVELS[i]), " " + LEVELS[i].name().toLowerCase(Locale.ROOT) + "s"));
