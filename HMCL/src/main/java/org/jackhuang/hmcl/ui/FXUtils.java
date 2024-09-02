@@ -40,6 +40,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -998,4 +999,11 @@ public final class FXUtils {
         return tf;
     }
 
+    public static String toWeb(Color color) {
+        int r = (int) Math.round(color.getRed() * 255.0);
+        int g = (int) Math.round(color.getGreen() * 255.0);
+        int b = (int) Math.round(color.getBlue() * 255.0);
+
+        return String.format("#%02x%02x%02x", r, g, b);
+    }
 }
