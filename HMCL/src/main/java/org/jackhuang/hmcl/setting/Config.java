@@ -164,7 +164,7 @@ public final class Config implements Cloneable, Observable {
     private StringProperty launcherFontFamily = new SimpleStringProperty();
 
     @SerializedName("logLines")
-    private IntegerProperty logLines = new SimpleIntegerProperty(1000);
+    private IntegerProperty logLines = new SimpleIntegerProperty(2000);
 
     @SerializedName("titleTransparent")
     private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);

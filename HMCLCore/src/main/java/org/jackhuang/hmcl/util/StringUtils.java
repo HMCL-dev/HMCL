@@ -346,9 +346,15 @@ public final class StringUtils {
     }
 
     public static String parseEscapeSequence(String str) {
-        StringBuilder builder = new StringBuilder();
+        int idx = str.indexOf('\033');
+        if (idx < 0)
+            return str;
+
+        StringBuilder builder = new StringBuilder(str.length());
         boolean inEscape = false;
-        for (int i = 0; i < str.length(); i++) {
+
+        builder.append(str, 0, idx);
+        for (int i = idx; i < str.length(); i++) {
             char ch = str.charAt(i);
             if (ch == '\033') {
                 inEscape = true;
