@@ -67,6 +67,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
 
         {
             AdvancedListBox sideBar = new AdvancedListBox()
+                    .startCategory(i18n("game"))
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("settings.type.global.manage"));
                         settingsItem.setLeftGraphic(wrap(SVG.GAMEPAD));
