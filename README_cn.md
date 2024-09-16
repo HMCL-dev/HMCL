@@ -4,7 +4,7 @@
 ![Downloads](https://img.shields.io/github/downloads/huanghongxun/HMCL/total?style=flat)
 ![Stars](https://img.shields.io/github/stars/huanghongxun/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![QQ Group](https://img.shields.io/badge/QQ-HMCL-brightgreen)](https://docs.hmcl.net/groups.html)
+[![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=tencentqq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 
 [English](README.md) | **简体中文**
 
