@@ -4,15 +4,15 @@
 ![Downloads](https://img.shields.io/github/downloads/huanghongxun/HMCL/total?style=flat)
 ![Stars](https://img.shields.io/github/stars/huanghongxun/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![QQ Group](https://img.shields.io/badge/QQ-HMCL-brightgreen?label=&logo=tencentqq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+[![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=tencentqq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 
-**English** | [简体中文](README_cn.md)
+**English** | [简体中文](README_cn.md) | [繁體中文](README_tw.md)
 
 ## Introduction
 
-HMCL is a cross-platform Minecraft launcher which supports Mod Management, Game Customizing, Auto Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL is a cross-platform Minecraft launcher which supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
 
-HMCL has amazing cross-platform capabilities. It can not only run on different operating systems such as Windows, Linux, and macOS, but also supports multiple CPU architectures such as x86, arm, mips, and loongarch. You can easily play Minecraft on different platforms through HMCL.
+HMCL has amazing cross-platform capabilities. It can not only run on different operating systems such as Windows, Linux, and macOS, but also supports multiple CPU architectures such as x86, ARM, MIPS, and LoongArch. You can easily play Minecraft on different platforms through HMCL.
 
 For systems and CPU architectures supported by HMCL, see [this table](PLATFORM.md).
 
@@ -41,7 +41,7 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 If you want to submit a pull request, there are some requirements:
 
 * IDE: IntelliJ IDEA
-* Compiler: Java 1.8 or Java 11+
+* Compiler: Java 11+
 * Do NOT modify `gradle` files
 
 ### Compilation
@@ -52,7 +52,7 @@ Simply execute the following command in project root directory:
 ./gradlew clean build
 ```
 
-Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or later is recommended.
+Make sure you have Java installed with JavaFX 11 at least. Liberica Full JDK 11 or later is recommended.
 
 ## JVM Options (for debugging)
 

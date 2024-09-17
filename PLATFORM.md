@@ -1,6 +1,6 @@
 # Platform Support Status
 
-**English** | [简体中文](PLATFORM_cn.md)
+**English** | [简体中文](PLATFORM_cn.md) | [繁體中文](PLATFORM_tw.md)
 
 |                            | Windows                                           | Linux                     | macOS                                                                  | FreeBSD                  |
 |----------------------------|:--------------------------------------------------|:--------------------------|:------------------------------------------------------------------------|:-------------------------|
@@ -34,4 +34,4 @@ Legend:
 * ／ Not applicable.
 
   We have no plans to support these platforms at this time, mainly because we do not have the equipment to test them.  
-  If you can help us adapt, please file a support request via Issues.
+  If you can help us adapt, please file a support request via GitHub Issue.
