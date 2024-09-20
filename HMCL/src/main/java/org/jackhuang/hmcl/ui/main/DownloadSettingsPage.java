@@ -158,7 +158,7 @@ public class DownloadSettingsPage extends StackPane {
                 }
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download.threads")), downloadThreads);
         }
 
         {
