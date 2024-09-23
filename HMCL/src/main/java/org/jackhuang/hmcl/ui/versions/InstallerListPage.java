@@ -79,6 +79,12 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
             // Conventional libraries: game, fabric, forge, neoforge, liteloader, optifine
             for (InstallerItem item : group.getLibraries()) {
                 String libraryId = item.getLibraryId();
+
+                // Skip fabric-api and quilt-api
+                if (libraryId.contains("fabric-api") || libraryId.contains("quilt-api")) {
+                    continue;
+                }
+
                 String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
 
                 if (libraryVersion != null) {
