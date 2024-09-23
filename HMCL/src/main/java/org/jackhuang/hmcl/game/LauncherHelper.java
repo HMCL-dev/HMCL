@@ -246,9 +246,9 @@ public final class LauncherHelper {
                                 } else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {
-                                    message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage() + "\n";
+                                    message = i18n("launch.failed.creating_process") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof NotDecompressingNativesException) {
-                                    message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage() + "\n";
+                                    message = i18n("launch.failed.decompressing_natives") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof LibraryDownloadException) {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n";
                                     if (ex.getCause() instanceof ResponseCodeException) {
