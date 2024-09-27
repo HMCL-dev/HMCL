@@ -143,11 +143,9 @@ public final class JavaInstallPage extends WizardSinglePage {
                     addInfo(i18n("java.info.vendor"), vendor);
 
                 if (control.remoteVersion instanceof DiscoJavaRemoteVersion) {
-                    DiscoJavaRemoteVersion discoVersion = (DiscoJavaRemoteVersion) control.remoteVersion;
-                    DiscoJavaDistribution distribution = DiscoJavaDistribution.of(discoVersion.getDistribution());
-
-                    addInfo(i18n("java.info.disco.distribution"), distribution != null ? distribution.getDisplayName() : discoVersion.getDistribution());
-                    addInfo(i18n("java.info.disco.distribution_version"), discoVersion.getDistributionVersion());
+                    String distributionName = ((DiscoJavaRemoteVersion) control.remoteVersion).getDistribution();
+                    DiscoJavaDistribution distribution = DiscoJavaDistribution.of(distributionName);
+                    addInfo(i18n("java.info.disco.distribution"), distribution != null ? distribution.getDisplayName() : distributionName);
                 } else
                     addInfo(i18n("java.install.archive"), control.file.toAbsolutePath().toString());
 
