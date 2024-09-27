@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.java;
+package org.jackhuang.hmcl.download.java.mojang;
 
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.util.gson.JsonSubtype;
@@ -24,10 +24,10 @@ import org.jackhuang.hmcl.util.gson.JsonType;
 import java.util.Collections;
 import java.util.Map;
 
-public class RemoteFiles {
+public final class MojangJavaRemoteFiles {
     private final Map<String, Remote> files;
 
-    public RemoteFiles(Map<String, Remote> files) {
+    public MojangJavaRemoteFiles(Map<String, Remote> files) {
         this.files = files;
     }
 

@@ -74,6 +74,10 @@ public enum OperatingSystem {
         return this == LINUX || this == FREEBSD;
     }
 
+    public String getJavaExecutable() {
+        return this == WINDOWS ? "java.exe" : "java";
+    }
+
     /**
      * The current operating system.
      */
@@ -215,10 +219,10 @@ public enum OperatingSystem {
 
         name = name.trim().toLowerCase(Locale.ROOT);
 
-        if (name.contains("win"))
-            return WINDOWS;
-        else if (name.contains("mac"))
+        if (name.contains("mac") || name.contains("darwin") || name.contains("osx"))
             return OSX;
+        else if (name.contains("win"))
+            return WINDOWS;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
             return LINUX;
         else if (name.equals("freebsd"))

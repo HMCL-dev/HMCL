@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -61,7 +61,7 @@ public final class Main {
 
         checkDirectoryPath();
 
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9)
+        if (JavaRuntime.CURRENT_VERSION < 9)
             // This environment check will take ~300ms
             thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 

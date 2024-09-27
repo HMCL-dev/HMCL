@@ -31,6 +31,7 @@ import javafx.beans.value.WritableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -57,6 +58,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -835,6 +837,17 @@ public final class FXUtils {
         button.getStyleClass().add("jfx-button-border");
         button.setButtonType(JFXButton.ButtonType.RAISED);
         return button;
+    }
+
+    public static Label truncatedLabel(String text, int limit) {
+        Label label = new Label();
+        if (text.length() <= limit) {
+            label.setText(text);
+        } else {
+            label.setText(StringUtils.truncate(text, limit));
+            installFastTooltip(label, text);
+        }
+        return label;
     }
 
     public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
