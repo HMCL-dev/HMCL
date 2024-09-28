@@ -192,7 +192,7 @@ public abstract class SettingsView extends StackPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     debugPane.setLeft(left);
 
-                    JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.open_log_folder"));
+                    JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
                     openLogFolderButton.setOnMouseClicked(e -> openLogFolder());
                     openLogFolderButton.getStyleClass().add("jfx-button-border");
 
