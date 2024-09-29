@@ -17,22 +17,33 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -41,6 +52,7 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -49,7 +61,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public final class JavaManagementPage extends ListPageBase<JavaItem> {
+public final class JavaManagementPage extends ListPageBase<JavaManagementPage.JavaItem> {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final ChangeListener<Collection<JavaRuntime>> listener;
@@ -85,7 +97,7 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
         return new JavaPageSkin(this);
     }
 
-    public void onAddJava() {
+    void onAddJava() {
         FileChooser chooser = new FileChooser();
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
@@ -110,6 +122,10 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
             } catch (IOException ignored) {
             }
         }
+    }
+
+    void onShowRestoreJavaPage() {
+        Controllers.navigate(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
     }
 
     private void onInstallArchive(Path file) {
@@ -149,6 +165,116 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
             this.setLoading(true);
     }
 
+    static final class JavaItem extends Control {
+        private final JavaRuntime java;
+
+        public JavaItem(JavaRuntime java) {
+            this.java = java;
+        }
+
+        public JavaRuntime getJava() {
+            return java;
+        }
+
+        public void onReveal() {
+            Path target;
+            Path parent = java.getBinary().getParent();
+            if (parent != null
+                    && parent.getParent() != null
+                    && parent.getFileName() != null
+                    && parent.getFileName().toString().equals("bin")
+                    && Files.exists(parent.getParent().resolve("release"))) {
+                target = parent.getParent();
+            } else {
+                target = java.getBinary();
+            }
+
+            FXUtils.showFileInExplorer(target);
+        }
+
+        public void onRemove() {
+            if (java.isManaged()) {
+                Controllers.taskDialog(JavaManager.uninstallJava(java), i18n("java.uninstall"), TaskCancellationAction.NORMAL);
+            } else {
+                String path = java.getBinary().toString();
+                ConfigHolder.globalConfig().getUserJava().remove(path);
+                ConfigHolder.globalConfig().getDisabledJava().add(path);
+                try {
+                    JavaManager.removeJava(java);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        }
+
+        @Override
+        protected Skin<?> createDefaultSkin() {
+            return new JavaRuntimeItemSkin(this);
+        }
+
+    }
+
+    private static final class JavaRuntimeItemSkin extends SkinBase<JavaItem> {
+
+        JavaRuntimeItemSkin(JavaItem control) {
+            super(control);
+            JavaRuntime java = control.getJava();
+            String vendor = JavaInfo.normalizeVendor(java.getVendor());
+
+            BorderPane root = new BorderPane();
+
+            HBox center = new HBox();
+            center.setMouseTransparent(true);
+            center.setSpacing(8);
+            center.setAlignment(Pos.CENTER_LEFT);
+
+            TwoLineListItem item = new TwoLineListItem();
+            item.setTitle((java.isJDK() ? "JDK" : "JRE") + " " + java.getVersion());
+            item.setSubtitle(java.getBinary().toString());
+            item.getTags().add(i18n("java.info.architecture") + ": " + java.getArchitecture().getDisplayName());
+            if (vendor != null)
+                item.getTags().add(i18n("java.info.vendor") + ": " + vendor);
+            BorderPane.setAlignment(item, Pos.CENTER);
+            center.getChildren().setAll(item);
+            root.setCenter(center);
+
+            HBox right = new HBox();
+            right.setAlignment(Pos.CENTER_RIGHT);
+            {
+                JFXButton revealButton = new JFXButton();
+                revealButton.getStyleClass().add("toggle-icon4");
+                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                revealButton.setOnAction(e -> control.onReveal());
+                FXUtils.installFastTooltip(revealButton, i18n("java.reveal"));
+
+                JFXButton removeButton = new JFXButton();
+                removeButton.getStyleClass().add("toggle-icon4");
+                removeButton.setOnAction(e -> Controllers.confirm(
+                        java.isManaged() ? i18n("java.uninstall.confirm") : i18n("java.disable.confirm"),
+                        i18n("message.warning"),
+                        control::onRemove,
+                        null
+                ));
+                if (java.isManaged()) {
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.LAN.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                    FXUtils.installFastTooltip(removeButton, i18n("java.uninstall"));
+                    if (JavaRuntime.CURRENT_JAVA != null && java.getBinary().equals(JavaRuntime.CURRENT_JAVA.getBinary()))
+                        removeButton.setDisable(true);
+                } else {
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.CLOSE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                    FXUtils.installFastTooltip(removeButton, i18n("java.disable"));
+                }
+
+                right.getChildren().setAll(revealButton, removeButton);
+            }
+            root.setRight(right);
+
+            root.getStyleClass().add("md-list-cell");
+            root.setPadding(new Insets(8));
+
+            getChildren().setAll(new RipplerContainer(root));
+        }
+    }
+
     private static final class JavaPageSkin extends ToolbarListPageSkin<JavaManagementPage> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
@@ -164,6 +290,7 @@ public final class JavaManagementPage extends ListPageBase<JavaItem> {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD_OUTLINE, skinnable.onInstallJava));
             }
             res.add(createToolbarButton2(i18n("java.add"), SVG.PLUS, skinnable::onAddJava));
+            res.add(createToolbarButton2(i18n("java.disabled.management"), SVG.VIEW_LIST, skinnable::onShowRestoreJavaPage));
 
             return res;
         }
