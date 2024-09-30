@@ -34,6 +34,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
@@ -290,14 +291,28 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                 FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
                     if (deviceCode != null) {
-                        FXUtils.copyText(deviceCode.getUserCode());
                         hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
+
+                        String qrUrl = "https://api.pwmqr.com/qrcode/create/?url=" + deviceCode.getVerificationUri();
+                        ImageView qrImageView = new ImageView(qrUrl);
+                        qrImageView.setFitHeight(150);
+                        qrImageView.setFitWidth(150);
+                        qrImageView.setCache(true);
+                        HBox qrContainer = new HBox(qrImageView);
+                        qrContainer.setAlignment(Pos.CENTER);
+                        vbox.getChildren().add(1, qrContainer);
+                        runInFX(() -> FXUtils.installFastTooltip(qrContainer, qrUrl));
+
+                        qrContainer.setOnMouseClicked(e -> {
+                            FXUtils.openLink(qrUrl);
+                        });
                     } else {
                         hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                     }
                 });
                 hintPane.setOnMouseClicked(e -> {
                     if (deviceCode.get() != null) {
+                        FXUtils.openLink(deviceCode.get().getVerificationUri());
                         FXUtils.copyText(deviceCode.get().getUserCode());
                     }
                 });
@@ -321,6 +336,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 GridPane.setColumnSpan(box, 2);
 
                 if (!IntegrityChecker.isOfficial()) {
+                    box.getChildren().remove(deauthorizeLink);
                     HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
                     unofficialHint.setText(i18n("unofficial.hint"));
                     vbox.getChildren().add(unofficialHint);
