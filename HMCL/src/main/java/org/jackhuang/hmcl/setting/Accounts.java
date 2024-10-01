@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -364,10 +365,10 @@ public final class Accounts {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
         if (authlibinjectorLocation == null) {
             Path authlibinjectorPath = Metadata.HMCL_DIRECTORY.resolve("authlib-injector.jar");
-            if (authlibinjectorPath.toString().contains("!")) {
+            if (authlibinjectorPath.toString().contains("!") && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 String programFiles = System.getenv("ProgramFiles");
                 if (programFiles != null) {
-                    authlibinjectorPath = Paths.get(programFiles, "authlib-injector.jar").toAbsolutePath();
+                    authlibinjectorPath = Paths.get(programFiles,".hmcl" , "authlib-injector.jar").toAbsolutePath();
                 }
             }
             return new AuthlibInjectorDownloader(authlibinjectorPath, DownloadProviders::getDownloadProvider) {
