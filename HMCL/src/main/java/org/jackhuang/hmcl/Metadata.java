@@ -61,7 +61,14 @@ public final class Metadata {
                     HMCL_DIRECTORY = Paths.get(System.getProperty("user.home", "."), ".local", "share", "hmcl").toAbsolutePath();
                 }
             } else {
-                HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
+                Path path = OperatingSystem.getWorkingDirectory("hmcl");
+                if (path.toString().contains("!")) {
+                    String programFiles = System.getenv("ProgramFiles");
+                    if (programFiles != null) {
+                        path = Paths.get(programFiles, "." + "hmcl");
+                    }
+                }
+                HMCL_DIRECTORY = path.toAbsolutePath();
             }
         } else {
             HMCL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
