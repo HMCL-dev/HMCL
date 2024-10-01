@@ -79,26 +79,18 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         }
 
         FXUtils.applyDragListener(this, it -> {
-            if (it.isDirectory())
-                return true;
-
             String name = it.getName();
-            return name.endsWith(".zip") || name.endsWith(".tar.gz")
-                    || name.equals(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java");
+            return name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
         }, files -> {
             for (File file : files) {
-                if (file.isDirectory()) {
-                    // TODO
-                } else {
-                    String fileName = file.getName();
+                String fileName = file.getName();
 
-                    if (fileName.equals(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java")) {
-                        // TODO
-                    } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
-                        onInstallArchive(file.toPath());
-                    } else {
-                        throw new AssertionError("Unreachable code");
-                    }
+                if (fileName.equals(OperatingSystem.CURRENT_OS.getJavaExecutable())) {
+                    onAddJavaBinary(file.toPath());
+                } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
+                    onInstallArchive(file.toPath());
+                } else {
+                    throw new AssertionError("Unreachable code");
                 }
             }
         });
@@ -127,6 +119,15 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
 
     void onShowRestoreJavaPage() {
         Controllers.navigate(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
+    }
+
+    private void onAddJavaBinary(Path file) {
+        JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception != null) {
+                LOG.warning("Failed to add java", exception);
+                Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
     }
 
     private void onInstallArchive(Path file) {
