@@ -363,14 +363,14 @@ public final class Accounts {
     private static AuthlibInjectorArtifactProvider createAuthlibInjectorArtifactProvider() {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
         if (authlibinjectorLocation == null) {
-            Path authlibPath = Metadata.HMCL_DIRECTORY.resolve("authlib-injector.jar");
-            if (authlibPath.toString().contains("!")) {
+            Path authlibinjectorPath = Metadata.HMCL_DIRECTORY.resolve("authlib-injector.jar");
+            if (authlibinjectorPath.toString().contains("!")) {
                 String programFiles = System.getenv("ProgramFiles");
                 if (programFiles != null) {
-                    authlibPath = Paths.get(programFiles, "authlib-injector.jar").toAbsolutePath();
+                    authlibinjectorPath = Paths.get(programFiles, "authlib-injector.jar").toAbsolutePath();
                 }
             }
-            return new AuthlibInjectorDownloader(authlibPath, DownloadProviders::getDownloadProvider) {
+            return new AuthlibInjectorDownloader(authlibinjectorPath, DownloadProviders::getDownloadProvider) {
                 @Override
                 public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {
                     Optional<AuthlibInjectorArtifactInfo> local = super.getArtifactInfoImmediately();
