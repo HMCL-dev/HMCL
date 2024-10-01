@@ -188,7 +188,7 @@ public final class JavaManager {
 
                     ConfigHolder.globalConfig().getDisabledJava().remove(pathString);
                     if (ConfigHolder.globalConfig().getUserJava().add(pathString)) {
-                        JavaManager.addJava(javaRuntime);
+                        addJava(javaRuntime);
                     }
                     return javaRuntime;
                 });

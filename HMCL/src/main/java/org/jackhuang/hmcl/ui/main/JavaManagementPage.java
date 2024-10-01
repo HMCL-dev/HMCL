@@ -57,6 +57,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -115,23 +116,12 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
         File file = chooser.showOpenDialog(Controllers.getStage());
         if (file != null) {
-            try {
-                Path path = file.toPath().toRealPath();
-                Task.supplyAsync("Get Java", () -> JavaManager.getJava(path))
-                        .whenComplete(Schedulers.javafx(), ((result, exception) -> {
-                            if (result != null && JavaManager.isCompatible(result.getPlatform())) {
-                                String pathString = path.toString();
-
-                                ConfigHolder.globalConfig().getDisabledJava().remove(pathString);
-                                if (ConfigHolder.globalConfig().getUserJava().add(pathString)) {
-                                    JavaManager.addJava(result);
-                                }
-                            } else {
-                                Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-                            }
-                        })).start();
-            } catch (IOException ignored) {
-            }
+            JavaManager.getAddJavaTask(file.toPath()).whenComplete(Schedulers.javafx(), exception -> {
+                if (exception != null) {
+                    LOG.warning("Failed to add java", exception);
+                    Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                }
+            }).start();
         }
     }
 

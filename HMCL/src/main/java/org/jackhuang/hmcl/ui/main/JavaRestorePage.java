@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -133,14 +134,12 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
 
         void onRestore() {
             disabledJava.remove(path);
-            Task.supplyAsync(() -> JavaManager.getJava(realPath))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (result != null && JavaManager.isCompatible(result.getPlatform())) {
-                            if (ConfigHolder.globalConfig().getUserJava().add(path))
-                                JavaManager.addJava(result);
-                        } else
-                            Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-                    }).start();
+            JavaManager.getAddJavaTask(realPath).whenComplete(Schedulers.javafx(), exception -> {
+                if (exception != null) {
+                    LOG.warning("Failed to add java", exception);
+                    Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                }
+            }).start();
         }
 
         void onRemove() {
