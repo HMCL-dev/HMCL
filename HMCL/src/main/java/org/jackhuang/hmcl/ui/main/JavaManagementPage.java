@@ -78,16 +78,27 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         }
 
         FXUtils.applyDragListener(this, it -> {
-            String name = it.getName();
-            return name.endsWith(".zip") || name.endsWith(".tar.gz");
-        }, files -> {
-            File file = files.get(0);
-            String fileName = file.getName();
+            if (it.isDirectory())
+                return true;
 
-            if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
-                onInstallArchive(file.toPath());
-            } else {
-                throw new AssertionError("Unreachable code");
+            String name = it.getName();
+            return name.endsWith(".zip") || name.endsWith(".tar.gz")
+                    || name.equals(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java");
+        }, files -> {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    // TODO
+                } else {
+                    String fileName = file.getName();
+
+                    if (fileName.equals(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "java.exe" : "java")) {
+                        // TODO
+                    } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
+                        onInstallArchive(file.toPath());
+                    } else {
+                        throw new AssertionError("Unreachable code");
+                    }
+                }
             }
         });
     }
@@ -194,7 +205,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
 
         public void onRemove() {
             if (java.isManaged()) {
-                Controllers.taskDialog(JavaManager.uninstallJava(java), i18n("java.uninstall"), TaskCancellationAction.NORMAL);
+                Controllers.taskDialog(JavaManager.getUninstallJavaTask(java), i18n("java.uninstall"), TaskCancellationAction.NORMAL);
             } else {
                 String path = java.getBinary().toString();
                 ConfigHolder.globalConfig().getUserJava().remove(path);
@@ -255,7 +266,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
                         null
                 ));
                 if (java.isManaged()) {
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.LAN.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
                     FXUtils.installFastTooltip(removeButton, i18n("java.uninstall"));
                     if (JavaRuntime.CURRENT_JAVA != null && java.getBinary().equals(JavaRuntime.CURRENT_JAVA.getBinary()))
                         removeButton.setDisable(true);

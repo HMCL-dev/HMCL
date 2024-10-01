@@ -17,19 +17,14 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+/**
+ * @author Glavo
+ */
 public final class UnsupportedPlatformException extends Exception {
     public UnsupportedPlatformException() {
     }
 
     public UnsupportedPlatformException(String message) {
         super(message);
-    }
-
-    public UnsupportedPlatformException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public UnsupportedPlatformException(Throwable cause) {
-        super(cause);
     }
 }

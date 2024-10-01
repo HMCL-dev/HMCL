@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,7 +177,24 @@ public final class JavaManager {
         }).start();
     }
 
-    public static Task<JavaRuntime> downloadJava(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
+    public static Task<JavaRuntime> getAddJavaTask(Path binary) {
+        return Task.supplyAsync("Get Java", () -> JavaManager.getJava(binary))
+                .thenApplyAsync(javaRuntime -> {
+                    if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {
+                        throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform());
+                    }
+
+                    String pathString = javaRuntime.getBinary().toString();
+
+                    ConfigHolder.globalConfig().getDisabledJava().remove(pathString);
+                    if (ConfigHolder.globalConfig().getUserJava().add(pathString)) {
+                        JavaManager.addJava(javaRuntime);
+                    }
+                    return javaRuntime;
+                });
+    }
+
+    public static Task<JavaRuntime> getDownloadJavaTask(DownloadProvider downloadProvider, Platform platform, GameJavaVersion gameJavaVersion) {
         return REPOSITORY.getDownloadJavaTask(downloadProvider, platform, gameJavaVersion)
                 .thenApplyAsync(Schedulers.javafx(), java -> {
                     addJava(java);
@@ -184,7 +202,7 @@ public final class JavaManager {
                 });
     }
 
-    public static Task<JavaRuntime> installJava(Platform platform, String name, Map<String, Object> update, Path archiveFile) {
+    public static Task<JavaRuntime> getInstallJavaTask(Platform platform, String name, Map<String, Object> update, Path archiveFile) {
         return REPOSITORY.getInstallJavaTask(platform, name, update, archiveFile)
                 .thenApplyAsync(Schedulers.javafx(), java -> {
                     addJava(java);
@@ -192,7 +210,7 @@ public final class JavaManager {
                 });
     }
 
-    public static Task<Void> uninstallJava(JavaRuntime java) {
+    public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
         Path root = REPOSITORY.getPlatformRoot(java.getPlatform());
         Path relativized = root.relativize(java.getBinary());

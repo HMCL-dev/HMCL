@@ -131,7 +131,7 @@ public final class JavaDownloadDialog extends StackPane {
         }
 
         private Task<Void> downloadTask(GameJavaVersion javaVersion) {
-            return JavaManager.downloadJava(downloadProvider, platform, javaVersion).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            return JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception != null) {
                     Throwable resolvedException = resolveException(exception);
                     LOG.warning("Failed to download java", exception);
