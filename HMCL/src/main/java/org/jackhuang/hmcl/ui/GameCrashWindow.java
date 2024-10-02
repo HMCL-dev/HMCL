@@ -89,9 +89,9 @@ public class GameCrashWindow extends Stage {
     private final LaunchOptions launchOptions;
     private final View view;
 
-    private final Collection<Pair<String, Log4jLevel>> logs;
+    private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, Collection<Pair<String, Log4jLevel>> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Log> logs) {
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.repository = repository;
@@ -124,7 +124,7 @@ public class GameCrashWindow extends Stage {
     private void analyzeCrashReport() {
         loading.set(true);
         Task.allOf(Task.supplyAsync(() -> {
-            String rawLog = logs.stream().map(Pair::getKey).collect(Collectors.joining("\n"));
+            String rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
 
             // Get the crash-report from the crash-reports/xxx, or the output of console.
             String crashReport = null;
@@ -264,20 +264,18 @@ public class GameCrashWindow extends Stage {
     private void showLogWindow() {
         LogWindow logWindow = new LogWindow(managedProcess);
 
-        logWindow.logLine(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO);
+        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO));
         if (managedProcess.getClasspath() != null)
-            logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
-        for (Map.Entry<String, Log4jLevel> entry : logs)
-            logWindow.logLine(entry.getKey(), entry.getValue());
-
-        logWindow.showNormal();
+            logWindow.logLine(new Log("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO));
+        logWindow.logLines(logs);
+        logWindow.show();
     }
 
     private void exportGameCrashInfo() {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
         CompletableFuture.supplyAsync(() ->
-                        logs.stream().map(Pair::getKey).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
+                        logs.stream().map(Log::getLog).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
                 .thenComposeAsync(logs ->
                         LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
                 .handleAsync((result, exception) -> {

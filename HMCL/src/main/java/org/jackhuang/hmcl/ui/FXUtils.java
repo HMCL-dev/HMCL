@@ -40,6 +40,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -408,6 +409,17 @@ public final class FXUtils {
         });
     }
 
+    private static boolean testLinuxCommand(String command) {
+        try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", command}).getInputStream()) {
+            if (is.read() != -1) {
+                return true;
+            }
+        } catch (Throwable ignored) {
+        }
+
+        return false;
+    }
+
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
@@ -416,6 +428,16 @@ public final class FXUtils {
             openCommands = new String[]{"explorer.exe", "/select,", path};
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && testLinuxCommand("dbus-send"))
+            openCommands = new String[]{
+                    "dbus-send",
+                    "--print-reply",
+                    "--dest=org.freedesktop.FileManager1",
+                    "/org/freedesktop/FileManager1",
+                    "org.freedesktop.FileManager1.ShowItems",
+                    "array:string:" + file.toAbsolutePath().toUri(),
+                    "string:"
+            };
         else
             openCommands = null;
 
@@ -977,4 +999,11 @@ public final class FXUtils {
         return tf;
     }
 
+    public static String toWeb(Color color) {
+        int r = (int) Math.round(color.getRed() * 255.0);
+        int g = (int) Math.round(color.getGreen() * 255.0);
+        int b = (int) Math.round(color.getBlue() * 255.0);
+
+        return String.format("#%02x%02x%02x", r, g, b);
+    }
 }
