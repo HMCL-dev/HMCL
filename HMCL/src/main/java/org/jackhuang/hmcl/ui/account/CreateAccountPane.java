@@ -81,6 +81,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
+    private static final String LOGIN_URL = "https://www.microsoft.com/link";
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
     private boolean showMethodSwitcher;
@@ -293,18 +294,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     if (deviceCode != null) {
                         FXUtils.copyText(deviceCode.getUserCode());
                         hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
-                        String loginUrl = "https://www.microsoft.com/link";
-                        if (loginUrl.equals(deviceCode.getVerificationUri())) {
+                        if (LOGIN_URL.equals(deviceCode.getVerificationUri())) {
                             ImageView qrImageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft-login-qr.png"));
                             qrImageView.setFitHeight(150);
                             qrImageView.setFitWidth(150);
                             qrImageView.setCache(true);
                             HBox qrContainer = new HBox(qrImageView);
                             qrContainer.setAlignment(Pos.CENTER);
-                            runInFX(() -> FXUtils.installFastTooltip(qrContainer, loginUrl));
+                            runInFX(() -> FXUtils.installFastTooltip(qrContainer, LOGIN_URL));
                             vbox.getChildren().add(1, qrContainer);
                             qrContainer.setOnMouseClicked(e -> {
-                                FXUtils.openLink(loginUrl);
+                                FXUtils.openLink(LOGIN_URL);
                             });
                         }
                     } else {
