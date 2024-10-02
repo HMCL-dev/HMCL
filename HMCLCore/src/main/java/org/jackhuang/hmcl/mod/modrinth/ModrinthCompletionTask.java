@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -107,7 +108,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
                 continue;
             Path filePath = runDirectory.resolve(file.getPath());
-            if (!modManager.hasSimpleMod(filePath.toFile().toString())) {
+            if (!Files.exists(filePath) && !file.getDownloads().isEmpty() && !modManager.hasSimpleMod(filePath.toFile().toString())) {
                 FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
                 task.setCacheRepository(dependency.getCacheRepository());
                 task.setCaching(true);
