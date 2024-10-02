@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -30,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * @author huangyuhui
  */
 public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVersion> {
@@ -48,34 +48,123 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
         return true;
     }
 
+    private String fromLookupVersion(String version) {
+        switch (version) {
+            case "1.8.0":
+                return "1.8";
+            case "1.9.0":
+                return "1.9";
+            default:
+                return version;
+        }
+    }
+
+    private String toLookupVersion(String version) {
+        switch (version) {
+            case "1.8":
+                return "1.8.0";
+            case "1.9":
+                return "1.9.0";
+            default:
+                return version;
+        }
+    }
+
     @Override
     public CompletableFuture<?> refreshAsync() {
         return HttpRequest.GET(apiRoot + "/optifine/versionlist").<List<OptiFineVersion>>getJsonAsync(new TypeToken<List<OptiFineVersion>>() {
-        }.getType())
-                .thenAcceptAsync(root -> {
-                    lock.writeLock().lock();
+        }.getType()).thenAcceptAsync(root -> {
+            lock.writeLock().lock();
 
-                    try {
-                        versions.clear();
-                        Set<String> duplicates = new HashSet<>();
-                        for (OptiFineVersion element : root) {
-                            String version = element.getType() + "_" + element.getPatch();
-                            String mirror = "https://bmclapi2.bangbang93.com/optifine/" + element.getGameVersion() + "/" + element.getType() + "/" + element.getPatch();
-                            if (!duplicates.add(mirror))
-                                continue;
+            try {
+                versions.clear();
+                Set<String> duplicates = new HashSet<>();
+                for (OptiFineVersion element : root) {
+                    String version = element.getType() + "_" + element.getPatch();
+                    String mirror = "https://bmclapi2.bangbang93.com/optifine/" + toLookupVersion(element.getGameVersion()) + "/" + element.getType() + "/" + element.getPatch();
+                    if (!duplicates.add(mirror))
+                        continue;
 
-                            boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
+                    boolean isPre = element.getPatch() != null && (element.getPatch().startsWith("pre") || element.getPatch().startsWith("alpha"));
 
-                            if (StringUtils.isBlank(element.getGameVersion()))
-                                continue;
+                    if (StringUtils.isBlank(element.getGameVersion()))
+                        continue;
 
-                            String gameVersion = VersionNumber.normalize(element.getGameVersion());
-                            versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
-                        }
-                    } finally {
-                        lock.writeLock().unlock();
-                    }
-                });
+                    String gameVersion = VersionNumber.normalize(fromLookupVersion(element.getGameVersion()));
+                    versions.put(gameVersion, new OptiFineRemoteVersion(gameVersion, version, Collections.singletonList(mirror), isPre));
+                }
+            } finally {
+                lock.writeLock().unlock();
+            }
+        });
     }
 
+    /**
+     * @author huangyuhui
+     */
+    private static final class OptiFineVersion {
+
+        @SerializedName("dl")
+        private final String downloadLink;
+
+        @SerializedName("ver")
+        private final String version;
+
+        @SerializedName("date")
+        private final String date;
+
+        @SerializedName("type")
+        private final String type;
+
+        @SerializedName("patch")
+        private final String patch;
+
+        @SerializedName("mirror")
+        private final String mirror;
+
+        @SerializedName("mcversion")
+        private final String gameVersion;
+
+        public OptiFineVersion() {
+            this(null, null, null, null, null, null, null);
+        }
+
+        public OptiFineVersion(String downloadLink, String version, String date, String type, String patch, String mirror, String gameVersion) {
+            this.downloadLink = downloadLink;
+            this.version = version;
+            this.date = date;
+            this.type = type;
+            this.patch = patch;
+            this.mirror = mirror;
+            this.gameVersion = gameVersion;
+        }
+
+        public String getDownloadLink() {
+            return downloadLink;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public String getDate() {
+            return date;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getPatch() {
+            return patch;
+        }
+
+        public String getMirror() {
+            return mirror;
+        }
+
+        public String getGameVersion() {
+            return gameVersion;
+        }
+    }
 }
