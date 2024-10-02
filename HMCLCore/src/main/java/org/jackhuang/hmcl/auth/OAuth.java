@@ -106,7 +106,8 @@ public class OAuth {
         options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
 
         // Microsoft OAuth Flow
-//        options.callback.openBrowser(deviceTokenResponse.verificationURI);
+        Thread.sleep(1000);
+        options.callback.openBrowser(deviceTokenResponse.verificationURI);
 
         long startTime = System.nanoTime();
         int interval = deviceTokenResponse.interval;

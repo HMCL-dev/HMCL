@@ -291,21 +291,22 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                 FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
                     if (deviceCode != null) {
+                        FXUtils.copyText(deviceCode.getUserCode());
                         hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
-
-                        String qrUrl = "https://api.pwmqr.com/qrcode/create/?url=" + deviceCode.getVerificationUri();
-                        ImageView qrImageView = new ImageView(qrUrl);
-                        qrImageView.setFitHeight(150);
-                        qrImageView.setFitWidth(150);
-                        qrImageView.setCache(true);
-                        HBox qrContainer = new HBox(qrImageView);
-                        qrContainer.setAlignment(Pos.CENTER);
-                        vbox.getChildren().add(1, qrContainer);
-                        runInFX(() -> FXUtils.installFastTooltip(qrContainer, qrUrl));
-
-                        qrContainer.setOnMouseClicked(e -> {
-                            FXUtils.openLink(qrUrl);
-                        });
+                        String loginUrl = "https://www.microsoft.com/link";
+                        if (loginUrl.equals(deviceCode.getVerificationUri())) {
+                            ImageView qrImageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft-login-qr.png"));
+                            qrImageView.setFitHeight(150);
+                            qrImageView.setFitWidth(150);
+                            qrImageView.setCache(true);
+                            HBox qrContainer = new HBox(qrImageView);
+                            qrContainer.setAlignment(Pos.CENTER);
+                            runInFX(() -> FXUtils.installFastTooltip(qrContainer, loginUrl));
+                            vbox.getChildren().add(1, qrContainer);
+                            qrContainer.setOnMouseClicked(e -> {
+                                FXUtils.openLink(loginUrl);
+                            });
+                        }
                     } else {
                         hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                     }
