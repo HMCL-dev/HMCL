@@ -55,18 +55,13 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class LauncherHelper {
@@ -241,7 +236,7 @@ public final class LauncherHelper {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (!success) {
                             Exception ex = executor.getException();
-                            if (!(ex instanceof CancellationException)) {
+                            if (ex != null && !(ex instanceof CancellationException)) {
                                 String message;
                                 if (ex instanceof ModpackCompletionException) {
                                     if (ex.getCause() instanceof FileNotFoundException)
@@ -717,14 +712,14 @@ public final class LauncherHelper {
         private final Version version;
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
-        private boolean lwjgl;
+        private volatile boolean lwjgl;
         private LogWindow logWindow;
         private final boolean detectWindow;
-        private final ArrayDeque<String> logs;
-        private final ArrayDeque</*Log4jLevel*/Object> levels;
-        private final CountDownLatch logWindowLatch = new CountDownLatch(1);
+        private final CircularArrayList<Log> logs;
         private final CountDownLatch launchingLatch;
         private final String forbiddenAccessToken;
+        private Thread submitLogThread;
+        private LinkedBlockingQueue<Log> logBuffer;
 
         public HMCLProcessListener(HMCLGameRepository repository, Version version, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
             this.repository = repository;
@@ -733,10 +728,7 @@ public final class LauncherHelper {
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
             this.forbiddenAccessToken = authInfo != null ? authInfo.getAccessToken() : null;
-
-            final int numLogs = config().getLogLines() + 1;
-            this.logs = new ArrayDeque<>(numLogs);
-            this.levels = new ArrayDeque<>(numLogs);
+            this.logs = new CircularArrayList<>(Log.getLogLines() + 1);
         }
 
         @Override
@@ -752,12 +744,60 @@ public final class LauncherHelper {
                 LOG.info("Process ClassPath: " + classpath);
             }
 
-            if (showLogs)
+            if (showLogs) {
+                CountDownLatch logWindowLatch = new CountDownLatch(1);
                 Platform.runLater(() -> {
-                    logWindow = new LogWindow(process);
-                    logWindow.showNormal();
+                    logWindow = new LogWindow(process, logs);
+                    logWindow.show();
                     logWindowLatch.countDown();
                 });
+
+                logBuffer = new LinkedBlockingQueue<>();
+                submitLogThread = Lang.thread(new Runnable() {
+                    private final ArrayList<Log> currentLogs = new ArrayList<>();
+                    private final Semaphore semaphore = new Semaphore(0);
+
+                    private void submitLogs() {
+                        if (currentLogs.size() == 1) {
+                            Log log = currentLogs.get(0);
+                            Platform.runLater(() -> logWindow.logLine(log));
+                        } else {
+                            Platform.runLater(() -> {
+                                logWindow.logLines(currentLogs);
+                                semaphore.release();
+                            });
+                            semaphore.acquireUninterruptibly();
+                        }
+                        currentLogs.clear();
+                    }
+
+                    @Override
+                    public void run() {
+                        while (true) {
+                            try {
+                                currentLogs.add(logBuffer.take());
+                                //noinspection BusyWait
+                                Thread.sleep(200); // Wait for more logs
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+
+                            logBuffer.drainTo(currentLogs);
+                            submitLogs();
+                        }
+
+                        do {
+                            submitLogs();
+                        } while (logBuffer.drainTo(currentLogs) > 0);
+                    }
+                }, "Game Log Submitter", true);
+
+                try {
+                    logWindowLatch.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
 
         private void finishLaunch() {
@@ -796,44 +836,37 @@ public final class LauncherHelper {
 
         @Override
         public void onLog(String log, boolean isErrorStream) {
-            String filteredLog = forbiddenAccessToken == null ? log : log.replace(forbiddenAccessToken, "<access token>");
-
             if (isErrorStream)
-                System.err.println(filteredLog);
+                System.err.println(log);
             else
-                System.out.println(filteredLog);
+                System.out.println(log);
 
-            Log4jLevel level;
-            if (isErrorStream)
-                level = Log4jLevel.ERROR;
-            else
-                level = showLogs ? Optional.ofNullable(Log4jLevel.guessLevel(filteredLog)).orElse(Log4jLevel.INFO) : null;
+            log = StringUtils.parseEscapeSequence(log);
+            if (forbiddenAccessToken != null)
+                log = log.replace(forbiddenAccessToken, "<access token>");
 
-            synchronized (this) {
-                logs.add(filteredLog);
-                levels.add(level != null ? level : Optional.empty()); // Use 'Optional.empty()' as hole
-                if (logs.size() > config().getLogLines()) {
-                    logs.removeFirst();
-                    levels.removeFirst();
-                }
-            }
-
+            Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
             if (showLogs) {
-                try {
-                    logWindowLatch.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
+                if (level == null)
+                    level = Lang.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
+                logBuffer.add(new Log(log, level));
+            } else {
+                synchronized (this) {
+                    logs.addLast(new Log(log, level));
+                    if (logs.size() > Log.getLogLines())
+                        logs.removeFirst();
                 }
-
-                Platform.runLater(() -> logWindow.logLine(filteredLog, level));
             }
 
             if (!lwjgl) {
-                String lowerCaseLog = filteredLog.toLowerCase(Locale.ROOT);
+                String lowerCaseLog = log.toLowerCase(Locale.ROOT);
                 if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal")) {
-                    lwjgl = true;
-                    finishLaunch();
+                    synchronized (this) {
+                        if (!lwjgl) {
+                            lwjgl = true;
+                            finishLaunch();
+                        }
+                    }
                 }
             }
         }
@@ -841,7 +874,13 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                Platform.runLater(() -> logWindow.logLine(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", exitCode, exitCode, exitType), Log4jLevel.INFO));
+                logBuffer.add(new Log(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", exitCode, exitCode, exitType), Log4jLevel.INFO));
+                submitLogThread.interrupt();
+                try {
+                    submitLogThread.join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
 
             launchingLatch.countDown();
@@ -850,14 +889,16 @@ public final class LauncherHelper {
                 return;
 
             // Game crashed before opening the game window.
-            if (!lwjgl) finishLaunch();
+            if (!lwjgl) {
+                synchronized (this) {
+                    if (!lwjgl)
+                        finishLaunch();
+                }
+            }
 
             if (exitType != ExitType.NORMAL) {
-                ArrayList<Pair<String, Log4jLevel>> pairs = new ArrayList<>(logs.size());
-                Lang.forEachZipped(logs, levels,
-                        (log, l) -> pairs.add(pair(log, l instanceof Log4jLevel ? ((Log4jLevel) l) : Optional.ofNullable(Log4jLevel.guessLevel(log)).orElse(Log4jLevel.INFO))));
                 repository.markVersionLaunchedAbnormally(version.getId());
-                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, pairs).show());
+                Platform.runLater(() -> new GameCrashWindow(process, exitType, repository, version, launchOptions, logs).show());
             }
 
             checkExit();

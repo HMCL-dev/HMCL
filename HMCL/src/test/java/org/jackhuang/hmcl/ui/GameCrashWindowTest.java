@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.ui;
 import org.jackhuang.hmcl.JavaFXLauncher;
 import org.jackhuang.hmcl.game.ClassicVersion;
 import org.jackhuang.hmcl.game.LaunchOptions;
+import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
@@ -34,8 +34,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
-
-import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class GameCrashWindowTest {
 
@@ -57,7 +55,7 @@ public class GameCrashWindowTest {
                             .setGameDir(new File("."))
                             .create(),
                     Arrays.stream(logs.split("\\n"))
-                            .map(log -> pair(log, Log4jLevel.guessLevel(log)))
+                            .map(Log::new)
                             .collect(Collectors.toList()));
 
             window.showAndWait();

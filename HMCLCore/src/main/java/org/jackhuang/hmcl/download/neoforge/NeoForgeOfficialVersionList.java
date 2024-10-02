@@ -56,7 +56,9 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                 }
 
                 for (String version : results[1].versions) {
-                    String mcVersion = "1." + version.substring(0, version.indexOf('.', version.indexOf('.') + 1));
+                    int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+                    String mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+
                     versions.put(mcVersion, new NeoForgeRemoteVersion(
                             mcVersion, NeoForgeRemoteVersion.normalize(version),
                             Collections.singletonList(
