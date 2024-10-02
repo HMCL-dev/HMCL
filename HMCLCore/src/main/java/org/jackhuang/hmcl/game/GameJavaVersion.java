@@ -44,6 +44,16 @@ public final class GameJavaVersion {
         return null;
     }
 
+    public static GameJavaVersion normalize(int javaVersion) {
+        if (javaVersion > 17) {
+            return JAVA_21;
+        }
+        if (javaVersion > 11) {
+            return JAVA_17;
+        }
+        return JAVA_8;
+    }
+
     public static GameJavaVersion get(int major) {
         switch (major) {
             case 8:

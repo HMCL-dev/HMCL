@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -53,8 +54,8 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
@@ -274,6 +275,26 @@ public final class Launcher extends Application {
             Controllers.shutdown();
             Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
         });
+    }
+
+    public static void rebootComputer() {
+        Alert alert = new Alert(
+                Alert.AlertType.WARNING,
+                i18n("launcher.reboot_computer"),
+                ButtonType.OK,
+                ButtonType.CANCEL
+        );
+        if (alert.showAndWait().orElse(null) == ButtonType.OK) {
+            Launcher.stopApplication();
+            Lang.thread(() -> {
+                try {
+                    Thread.sleep(4000);
+                    Runtime.getRuntime().exec(new String[]{"shutdown", "/sg", "/d", "4:1"});
+                } catch (IOException | InterruptedException e) {
+                    Logger.LOG.warning("Cannot reboot this computer.", e);
+                }
+            }, "Rebooting Computer Thread", false);
+        }
     }
 
     public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
