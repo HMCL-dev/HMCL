@@ -243,7 +243,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     try {
                         return DigestUtils.digestToString("SHA-1", modInfo.getModInfo().getFile());
                     } catch (IOException e) {
-                        return "Error";
+                        LOG.log(Level.WARNING, "Failed to calculate SHA-1", e);
+                        return "";
                     }
                 }));
             }
