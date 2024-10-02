@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -292,7 +293,10 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD_OUTLINE, skinnable.onInstallJava));
             }
             res.add(createToolbarButton2(i18n("java.add"), SVG.PLUS, skinnable::onAddJava));
-            res.add(createToolbarButton2(i18n("java.disabled.management"), SVG.VIEW_LIST, skinnable::onShowRestoreJavaPage));
+
+            JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.VIEW_LIST, skinnable::onShowRestoreJavaPage);
+            disableJava.disableProperty().bind(Bindings.isEmpty(ConfigHolder.globalConfig().getDisabledJava()));
+            res.add(disableJava);
 
             return res;
         }
