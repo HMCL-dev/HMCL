@@ -290,37 +290,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             VBox vbox = new VBox(8);
             if (!Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
-                    if (deviceCode != null) {
-                        FXUtils.copyText(deviceCode.getUserCode());
-                        hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
-                        if (LOGIN_URL.equals(deviceCode.getVerificationUri())) {
-                            ImageView qrImageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft-login-qr.png"));
-                            qrImageView.setFitHeight(150);
-                            qrImageView.setFitWidth(150);
-                            qrImageView.setCache(true);
-                            HBox qrContainer = new HBox(qrImageView);
-                            qrContainer.setAlignment(Pos.CENTER);
-                            runInFX(() -> FXUtils.installFastTooltip(qrContainer, LOGIN_URL));
-                            vbox.getChildren().add(1, qrContainer);
-                            qrContainer.setOnMouseClicked(e -> {
-                                FXUtils.openLink(LOGIN_URL);
-                            });
-                        }
-                    } else {
-                        hintPane.setSegment(i18n("account.methods.microsoft.hint"));
-                    }
-                });
-                hintPane.setOnMouseClicked(e -> {
-                    if (deviceCode.get() != null) {
-                        FXUtils.openLink(deviceCode.get().getVerificationUri());
-                        FXUtils.copyText(deviceCode.get().getUserCode());
-                    }
-                });
-
-                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
-                    runInFX(() -> deviceCode.set(value));
-                }));
                 FlowPane box = new FlowPane();
                 box.setHgap(8);
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
@@ -335,6 +304,29 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
                 box.getChildren().setAll(purchaseLink, birthLink, deauthorizeLink, loginwithpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
+
+                FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
+                    if (deviceCode != null) {
+                        FXUtils.copyText(deviceCode.getUserCode());
+                        hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
+                        JFXHyperlink qrCodeLoginLink = new JFXHyperlink(i18n("account.methods.qrcodelogin"));
+                        qrCodeLoginLink.setExternalLink("https://docs.hmcl.net/qr-login.html?verificationUri=" + deviceCode.getVerificationUri() + "&userCode=" + deviceCode.getUserCode());
+                        box.getChildren().setAll(purchaseLink, birthLink, deauthorizeLink, loginwithpasswordLink, createProfileLink, qrCodeLoginLink);
+                        if (!IntegrityChecker.isOfficial())
+                            box.getChildren().remove(deauthorizeLink);
+                    } else {
+                        hintPane.setSegment(i18n("account.methods.microsoft.hint"));
+                    }
+                });
+                hintPane.setOnMouseClicked(e -> {
+                    if (deviceCode.get() != null) {
+                        FXUtils.openLink(deviceCode.get().getVerificationUri());
+                        FXUtils.copyText(deviceCode.get().getUserCode());
+                    }
+                });
+                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
+                    runInFX(() -> deviceCode.set(value));
+                }));
 
                 if (!IntegrityChecker.isOfficial()) {
                     box.getChildren().remove(deauthorizeLink);
