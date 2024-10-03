@@ -81,17 +81,21 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
 
         FXUtils.applyDragListener(this, it -> {
             String name = it.getName();
-            return name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
+            return it.isDirectory() || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
         }, files -> {
             for (File file : files) {
-                String fileName = file.getName();
-
-                if (fileName.equals(OperatingSystem.CURRENT_OS.getJavaExecutable())) {
-                    onAddJavaBinary(file.toPath());
-                } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
-                    onInstallArchive(file.toPath());
+                if (file.isDirectory()) {
+                    onAddJavaHome(file.toPath());
                 } else {
-                    throw new AssertionError("Unreachable code");
+                    String fileName = file.getName();
+
+                    if (fileName.equals(OperatingSystem.CURRENT_OS.getJavaExecutable())) {
+                        onAddJavaBinary(file.toPath());
+                    } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
+                        onInstallArchive(file.toPath());
+                    } else {
+                        throw new AssertionError("Unreachable code");
+                    }
                 }
             }
         });
@@ -124,6 +128,20 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
 
     private void onAddJavaBinary(Path file) {
         JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception != null) {
+                LOG.warning("Failed to add java", exception);
+                Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }).start();
+    }
+
+    private void onAddJavaHome(Path file) {
+        Task.composeAsync(() -> {
+            Path releaseFile = file.resolve("release");
+            if (Files.notExists(releaseFile))
+                throw new IOException("Missing release file " + releaseFile);
+            return JavaManager.getAddJavaTask(file.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable()));
+        }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);
                 Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);

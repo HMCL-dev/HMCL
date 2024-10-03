@@ -178,7 +178,7 @@ public final class JavaManager {
 
     public static Task<JavaRuntime> getAddJavaTask(Path binary) {
         return Task.supplyAsync("Get Java", () -> JavaManager.getJava(binary))
-                .thenApplyAsync(javaRuntime -> {
+                .thenApplyAsync(Schedulers.javafx(), javaRuntime -> {
                     if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {
                         throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform());
                     }
