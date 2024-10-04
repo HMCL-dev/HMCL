@@ -236,6 +236,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .collect(Collectors.toList()));
                 descriptionPane.getChildren().add(content);
 
+                JFXHyperlink copyNameButton = new JFXHyperlink(i18n("mods.name.copy"));
+                copyNameButton.setOnAction(e -> {
+                    FXUtils.copyText(content.getTitle());
+                });
+                copyNameButton.setMinWidth(Region.USE_PREF_SIZE);
+                descriptionPane.getChildren().add(copyNameButton);
+
                 if (getSkinnable().mod != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
