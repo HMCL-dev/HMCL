@@ -381,8 +381,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 {
                     StackPane graphicPane = new StackPane();
-                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
-
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.getName());
@@ -391,12 +389,15 @@ public class DownloadPage extends Control implements DecoratorPage {
                     switch (dataItem.getVersionType()) {
                         case Alpha:
                             content.getTags().add(i18n("mods.channel.alpha"));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                         case Beta:
                             content.getTags().add(i18n("mods.channel.beta"));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                         case Release:
                             content.getTags().add(i18n("mods.channel.release"));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                     }
 
