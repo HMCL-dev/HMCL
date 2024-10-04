@@ -17,15 +17,21 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -40,6 +46,8 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -54,6 +62,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private final ObjectProperty<Profile> selectedProfile;
 
     private ToggleGroup toggleGroup;
+    private final TextField searchField;
+    private final GameList gameList;
 
     public GameListPage() {
         profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
@@ -63,7 +73,36 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         });
         selectedProfile = createSelectedItemPropertyFor(profileListItems, Profile.class);
 
-        GameList gameList = new GameList();
+        gameList = new GameList();
+
+        HBox searchBar = new HBox();
+        searchBar.setPadding(new Insets(12, 10, 0, 10));
+        searchField = new JFXTextField();
+        searchField.setPromptText(i18n("search.hint.regex"));
+        HBox.setHgrow(searchField, Priority.ALWAYS);
+        PauseTransition pause = new PauseTransition(Duration.millis(100));
+        pause.setOnFinished(e -> gameList.filter(searchField.getText()));
+        searchField.textProperty().addListener((obs, oldText, newText) -> {
+            pause.setRate(1);
+            pause.playFromStart();
+        });
+        searchBar.getChildren().setAll(searchField);
+
+        VBox centerBox = new VBox();
+        if (gameList.getItems().isEmpty() && searchField.getText().isEmpty()) {
+            setCenter(gameList);
+        } else {
+            centerBox.getChildren().setAll(searchBar, gameList);
+            setCenter(centerBox);
+        }
+        gameList.itemsProperty().addListener((obs, oldItems, newItems) -> {
+            if (newItems.isEmpty() && searchField.getText().isEmpty()) {
+                setCenter(gameList);
+            } else {
+                centerBox.getChildren().setAll(searchBar, gameList);
+                setCenter(centerBox);
+            }
+        });
 
         {
             ScrollPane pane = new ScrollPane();
@@ -113,8 +152,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
         }
-
-        setCenter(gameList);
     }
 
     public ObjectProperty<Profile> selectedProfileProperty() {
@@ -143,12 +180,17 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private class GameList extends ListPageBase<GameListItem> {
+        private final ObjectProperty<String> filter = new SimpleObjectProperty<>("");
+        private final ObservableList<GameListItem> originalItems = FXCollections.observableArrayList();
+
         public GameList() {
             super();
 
             Profiles.registerVersionsListener(this::loadVersions);
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+
+            filter.addListener((obs, oldFilter, newFilter) -> applyFilter(newFilter));
         }
 
         private void loadVersions(Profile profile) {
@@ -164,10 +206,20 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     List<GameListItem> children = repository.getDisplayVersions()
                             .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
                             .collect(Collectors.toList());
+
+                    originalItems.setAll(children);
+
                     itemsProperty().setAll(children);
                     children.forEach(GameListItem::checkSelection);
 
+                    if (!center.getChildren().isEmpty()) {
+                        searchField.clear();
+                    }
+
                     if (children.isEmpty()) {
+                        if (!center.getChildren().isEmpty()) {
+                            setCenter(gameList);
+                        }
                         setFailedReason(i18n("version.empty.hint"));
                     }
 
@@ -190,6 +242,37 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         public void refreshList() {
             Profiles.getSelectedProfile().getRepository().refreshVersionsAsync().start();
+        }
+
+        public void filter(String searchText) {
+            filter.set(searchText);
+        }
+
+        private void applyFilter(String filterText) {
+            if (filterText.startsWith("regex:")) {
+                try {
+                    String regex = filterText.substring("regex:".length());
+                    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+
+                    List<GameListItem> filteredItems = originalItems.stream()
+                            .filter(item -> pattern.matcher(item.getVersion()).find())
+                            .collect(Collectors.toList());
+
+                    itemsProperty().setAll(filteredItems);
+                } catch (PatternSyntaxException e) {
+                    System.err.println("Invalid regex pattern: " + e.getMessage());
+                }
+            } else {
+                String lowerCaseFilterText = filterText.toLowerCase();
+                if (filterText.isEmpty()) {
+                    itemsProperty().setAll(originalItems);
+                } else {
+                    List<GameListItem> filteredItems = originalItems.stream()
+                            .filter(item -> item.getVersion().toLowerCase().contains(lowerCaseFilterText))
+                            .collect(Collectors.toList());
+                    itemsProperty().setAll(filteredItems);
+                }
+            }
         }
 
         @Override
