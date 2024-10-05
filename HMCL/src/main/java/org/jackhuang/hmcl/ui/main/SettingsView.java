@@ -30,6 +30,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -191,10 +192,19 @@ public abstract class SettingsView extends StackPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     debugPane.setLeft(left);
 
+                    JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
+                    openLogFolderButton.setOnMouseClicked(e -> openLogFolder());
+                    openLogFolderButton.getStyleClass().add("jfx-button-border");
+
                     JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
                     logButton.setOnMouseClicked(e -> onExportLogs());
                     logButton.getStyleClass().add("jfx-button-border");
-                    debugPane.setRight(logButton);
+
+                    HBox buttonBox = new HBox();
+                    buttonBox.setSpacing(10);
+                    buttonBox.getChildren().addAll(openLogFolderButton, logButton);
+                    BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
+                    debugPane.setRight(buttonBox);
 
                     settingsPane.getContent().add(debugPane);
                 }
@@ -203,6 +213,10 @@ public abstract class SettingsView extends StackPane {
             }
             scroll.setContent(rootPane);
         }
+    }
+
+    public void openLogFolder() {
+        FXUtils.openFolder(Metadata.HMCL_DIRECTORY.resolve("logs").toFile());
     }
 
     protected abstract void onUpdate();
