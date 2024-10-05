@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.java;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import jdk.internal.org.jline.utils.Log;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -179,7 +178,7 @@ public final class JavaManager {
 
     public static Task<JavaRuntime> getAddJavaTask(Path binary) {
         return Task.supplyAsync("Get Java", () -> JavaManager.getJava(binary))
-                .thenApplyAsync(javaRuntime -> {
+                .thenApplyAsync(Schedulers.javafx(), javaRuntime -> {
                     if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {
                         throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform());
                     }
@@ -660,7 +659,7 @@ public final class JavaManager {
                 }
             }
         } catch (IOException e) {
-            Log.warn("Failed to query sub folders of " + location, e);
+            LOG.warning("Failed to query sub folders of " + location, e);
         }
         return res;
     }
