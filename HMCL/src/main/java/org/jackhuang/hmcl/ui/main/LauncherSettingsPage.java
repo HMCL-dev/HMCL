@@ -79,7 +79,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                     })
                     .addNavigationDrawerItem(javaItem -> {
                         javaItem.setTitle(i18n("java.management"));
-                        javaItem.setLeftGraphic(wrap(SVG.JAVA));
+                        javaItem.setLeftGraphic(wrap(SVG.WRENCH_OUTLINE));
                         javaItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(javaManagementTab));
                         javaItem.setOnAction(e -> tab.select(javaManagementTab));
                     })
