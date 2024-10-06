@@ -2,18 +2,6 @@
 
 set -e
 
-# Function to show GUI message
-show_message() {
-  local title="$1"
-  local message="$2"
-  echo -e "$title: ""$message"
-  if command -v zenity > /dev/null; then
-    zenisty --info --title="$title" --text="$message" --width=400 --height=200
-  elif command -v kdialog > /dev/null; then
-    kdialog --title "$title" --msgbox "$message"
-  fi
-}
-
 # Switch message language
 if [ -z "${LANG##zh_*}" ]; then
   _HMCL_USE_CHINESE=true
@@ -134,19 +122,42 @@ fi
 
 case "$_HMCL_OS-$_HMCL_ARCH" in
   windows-x86|windows-x86_64|windows-arm64|linux-x86|linux-x86_64|linux-arm32|linux-arm64|linux-loongarch64|macos-x86_64|macos-arm64)
-    if [ "$_HMCL_USE_CHINESE" == true ]; then
-      show_message "错误" "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。\n\nhttps://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_ARCH.html\n\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
-    else
-      show_message "Error" "The Java runtime environment is required to run HMCL.\nPlease install Java and set the environment variables and try again.\nhttps://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_ARCH.html\nYou can visit the https://docs.hmcl.net/help.html page for help."
-    fi
-    ;;
-  *)
-    if [ "$_HMCL_USE_CHINESE" == true ]; then
-      show_message "错误" "运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
-    else
-      show_message "Error" "The Java runtime environment is required to run HMCL.\nPlease install Java and set the environment variables and try again.\nYou can visit the https://docs.hmcl.net/help.html page for help."
-    fi
+    _HMCL_JAVA_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_ARCH.html"
     ;;
 esac
+
+if [ "$_HMCL_USE_CHINESE" == true ]; then
+  _HMCL_WARNING_TITLE="错误"
+  _HMCL_WARNING_MESSAGE_BASE="运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。"
+  _HMCL_WARNING_MESSAGE1="$_HMCL_WARNING_MESSAGE_BASE\n你可以前往此处下载:\n$_HMCL_JAVA_DOWNLOAD_PAGE"
+  _HMCL_WARNING_MESSAGE2="$_HMCL_WARNING_MESSAGE_BASE\n\n是否要前往 Java 下载页面？"
+  _HMCL_WARNING_MESSAGE3="$_HMCL_WARNING_MESSAGE_BASE\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
+else
+  _HMCL_WARNING_TITLE="Error"
+  _HMCL_WARNING_MESSAGE_BASE="The Java runtime environment is required to run HMCL.\nPlease install Java and set the environment variables and try again."
+  _HMCL_WARNING_MESSAGE1="$_HMCL_WARNING_MESSAGE_BASE\nYou can download it from here:\n$_HMCL_JAVA_DOWNLOAD_PAGE"
+  _HMCL_WARNING_MESSAGE2="$_HMCL_WARNING_MESSAGE_BASE\n\nDo you want to go to the Java download page?"
+  _HMCL_WARNING_MESSAGE3="$_HMCL_WARNING_MESSAGE_BASE\nYou can visit the https://docs.hmcl.net/help.html page for help."
+fi
+
+if [ -n "$_HMCL_JAVA_DOWNLOAD_PAGE" ]; then
+  echo -e "$_HMCL_WARNING_TITLE: $_HMCL_WARNING_MESSAGE1"
+
+  if [ -n "$(command -v xdg-open)" ]; then
+    if [ -n "$(command -v zenity)" ]; then
+      zenity --question --title="$_HMCL_WARNING_TITLE" --text="$_HMCL_WARNING_MESSAGE2"
+    elif [ -n "$(command -v kdialog)" ]; then
+      kdialog --title "$_HMCL_WARNING_TITLE" --warningyesno "$_HMCL_WARNING_MESSAGE2"
+    fi
+    xdg-open "$_HMCL_JAVA_DOWNLOAD_PAGE"
+  fi
+else
+  echo -e "$_HMCL_WARNING_TITLE: $_HMCL_WARNING_MESSAGE3"
+  if [ -n "$(command -v zenity)" ]; then
+    zenity --info --title="$_HMCL_WARNING_TITLE" --text="$_HMCL_WARNING_MESSAGE3"
+  elif [ -n "$(command -v kdialog)" ]; then
+    kdialog --title "$_HMCL_WARNING_TITLE" --msgbox "$_HMCL_WARNING_MESSAGE3"
+  fi
+fi
 
 exit 1
