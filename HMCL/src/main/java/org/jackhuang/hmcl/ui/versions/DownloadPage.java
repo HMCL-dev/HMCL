@@ -460,7 +460,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(i18n("download"));
+            JFXButton downloadButton = new JFXButton(i18n("mods.install"));
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.setOnAction(e -> {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
@@ -469,7 +469,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 selfPage.download(version);
             });
 
-            JFXButton saveAsButton = new JFXButton(i18n("button.save_as"));
+            JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
             saveAsButton.setOnAction(e -> {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
