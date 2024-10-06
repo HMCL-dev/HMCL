@@ -196,6 +196,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     switch (it.getVersionType()) {
                         case RELEASE:
                             return chkRelease.isSelected();
+                        case PENDING:
                         case SNAPSHOT:
                             return chkSnapshot.isSelected();
                         case OLD:
@@ -308,6 +309,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         content.getTags().setAll(i18n("version.game.release"));
                         content.setImage(VersionIconType.GRASS.getIcon());
                         break;
+                    case PENDING:
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
@@ -316,6 +318,9 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         content.getTags().setAll(i18n("version.game.old"));
                         content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         break;
+                }
+                if (remoteVersion.getUrls().stream().anyMatch(url -> url.contains("unlisted-versions-of-minecraft"))) {
+                    content.getTags().add("UVMC");
                 }
             } else {
                 VersionIconType iconType;

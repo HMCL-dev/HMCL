@@ -41,6 +41,11 @@ public class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
+    public String getUvmcListURL() {
+        return versionListProvider.getUvmcListURL();
+    }
+
+    @Override
     public String getAssetBaseURL() {
         return fileProvider.getAssetBaseURL();
     }
