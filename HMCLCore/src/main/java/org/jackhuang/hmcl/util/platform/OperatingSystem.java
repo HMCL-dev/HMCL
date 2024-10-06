@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.KeyValuePairProperties;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -117,6 +120,8 @@ public enum OperatingSystem {
      */
     public static final String SYSTEM_VERSION;
 
+    public static final Map<String, String> OS_RELEASE;
+
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
@@ -143,7 +148,7 @@ public enum OperatingSystem {
                 }
             }
         } catch (UnsupportedCharsetException e) {
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         }
         NATIVE_CHARSET = nativeCharset;
 
@@ -180,10 +185,24 @@ public enum OperatingSystem {
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = versionNumber;
             SYSTEM_BUILD_NUMBER = buildNumber;
+            OS_RELEASE = null;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
+
+            Map<String, String> osRelease = null;
+            if (CURRENT_OS == LINUX || CURRENT_OS == FREEBSD) {
+                Path osReleaseFile = Paths.get("/etc/os-release");
+                if (Files.exists(osReleaseFile)) {
+                    try {
+                        osRelease = KeyValuePairProperties.load(osReleaseFile);
+                    } catch (IOException e) {
+                        e.printStackTrace(System.err);
+                    }
+                }
+            }
+            OS_RELEASE = osRelease;
         }
 
         PhysicalMemoryStatus physicalMemoryStatus = getPhysicalMemoryStatus();
@@ -280,7 +299,7 @@ public enum OperatingSystem {
                     return new PhysicalMemoryStatus(total, available > 0 ? available : free);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
 
