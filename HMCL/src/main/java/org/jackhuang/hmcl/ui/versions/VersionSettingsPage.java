@@ -457,7 +457,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private void initialize() {
-        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
+        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
         enableSpecificSettings.addListener((a, b, newValue) -> {
             if (versionId == null) return;
 
