@@ -396,7 +396,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
                 .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
-                        OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
+                        OperatingSystem.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())

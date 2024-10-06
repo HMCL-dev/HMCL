@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -187,9 +186,10 @@ public enum OperatingSystem {
             SYSTEM_BUILD_NUMBER = -1;
         }
 
-        TOTAL_MEMORY = getPhysicalMemoryStatus()
-                .map(physicalMemoryStatus -> (int) (physicalMemoryStatus.getTotal() / 1024 / 1024))
-                .orElse(1024);
+        PhysicalMemoryStatus physicalMemoryStatus = getPhysicalMemoryStatus();
+        TOTAL_MEMORY = physicalMemoryStatus != PhysicalMemoryStatus.INVALID
+                ? (int) (physicalMemoryStatus.getTotal() / 1024 / 1024)
+                : 1024;
 
         SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
@@ -256,7 +256,7 @@ public enum OperatingSystem {
     }
 
     @SuppressWarnings("deprecation")
-    public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
+    public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
             try {
                 long free = 0, available = 0, total = 0;
@@ -277,7 +277,7 @@ public enum OperatingSystem {
                     }
                 }
                 if (total > 0) {
-                    return Optional.of(new PhysicalMemoryStatus(total, available > 0 ? available : free));
+                    return new PhysicalMemoryStatus(total, available > 0 ? available : free);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -290,11 +290,11 @@ public enum OperatingSystem {
                 com.sun.management.OperatingSystemMXBean sunBean =
                         (com.sun.management.OperatingSystemMXBean)
                                 java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-                return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize()));
+                return new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize());
             }
         } catch (NoClassDefFoundError ignored) {
         }
-        return Optional.empty();
+        return PhysicalMemoryStatus.INVALID;
     }
 
     @SuppressWarnings("removal")
