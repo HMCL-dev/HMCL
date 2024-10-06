@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,6 +68,13 @@ public final class JsonUtils {
     }
 
     public static <T> T fromNonNullJson(String json, Type type) throws JsonParseException {
+        T parsed = GSON.fromJson(json, type);
+        if (parsed == null)
+            throw new JsonParseException("Json object cannot be null.");
+        return parsed;
+    }
+
+    public static <T> T fromNonNullJson(String json, TypeToken<T> type) throws JsonParseException {
         T parsed = GSON.fromJson(json, type);
         if (parsed == null)
             throw new JsonParseException("Json object cannot be null.");
