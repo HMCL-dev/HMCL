@@ -207,7 +207,6 @@ public enum OperatingSystem {
         OS_RELEASE_NAME = osRelease.get("NAME");
         OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
 
-
         PhysicalMemoryStatus physicalMemoryStatus = getPhysicalMemoryStatus();
         TOTAL_MEMORY = physicalMemoryStatus != PhysicalMemoryStatus.INVALID
                 ? (int) (physicalMemoryStatus.getTotal() / 1024 / 1024)
