@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -120,7 +121,8 @@ public enum OperatingSystem {
      */
     public static final String SYSTEM_VERSION;
 
-    public static final Map<String, String> OS_RELEASE;
+    public static final String OS_RELEASE_NAME;
+    public static final String OS_RELEASE_PRETTY_NAME;
 
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
@@ -185,25 +187,26 @@ public enum OperatingSystem {
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = versionNumber;
             SYSTEM_BUILD_NUMBER = buildNumber;
-            OS_RELEASE = null;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
+        }
 
-            Map<String, String> osRelease = null;
-            if (CURRENT_OS == LINUX || CURRENT_OS == FREEBSD) {
-                Path osReleaseFile = Paths.get("/etc/os-release");
-                if (Files.exists(osReleaseFile)) {
-                    try {
-                        osRelease = KeyValuePairProperties.load(osReleaseFile);
-                    } catch (IOException e) {
-                        e.printStackTrace(System.err);
-                    }
+        Map<String, String> osRelease = Collections.emptyMap();
+        if (CURRENT_OS == LINUX || CURRENT_OS == FREEBSD) {
+            Path osReleaseFile = Paths.get("/etc/os-release");
+            if (Files.exists(osReleaseFile)) {
+                try {
+                    osRelease = KeyValuePairProperties.load(osReleaseFile);
+                } catch (IOException e) {
+                    e.printStackTrace(System.err);
                 }
             }
-            OS_RELEASE = osRelease;
         }
+        OS_RELEASE_NAME = osRelease.get("NAME");
+        OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
+
 
         PhysicalMemoryStatus physicalMemoryStatus = getPhysicalMemoryStatus();
         TOTAL_MEMORY = physicalMemoryStatus != PhysicalMemoryStatus.INVALID

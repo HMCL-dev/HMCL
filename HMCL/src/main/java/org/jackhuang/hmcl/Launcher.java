@@ -50,7 +50,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -222,16 +221,10 @@ public final class Launcher extends Application {
         AsyncTaskExecutor.setUncaughtExceptionHandler(new CrashReporter(false));
 
         try {
-            String osPrettyName = null;
-            Map<String, String> osRelease = OperatingSystem.OS_RELEASE;
-            if (osRelease != null) {
-                osPrettyName = osRelease.get("PRETTY_NAME");
-            }
-
             LOG.info("*** " + Metadata.TITLE + " ***");
-            LOG.info("Operating System: " + (osPrettyName == null
+            LOG.info("Operating System: " + (OperatingSystem.OS_RELEASE_PRETTY_NAME == null
                     ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION
-                    : osPrettyName + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')'));
+                    : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')'));
             LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH_NAME);
             LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH_NAME);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
