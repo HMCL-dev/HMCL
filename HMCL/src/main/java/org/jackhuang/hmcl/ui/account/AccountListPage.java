@@ -123,7 +123,9 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
 
                         JFXButton btnRemove = new JFXButton();
                         btnRemove.setOnAction(e -> {
-                            skinnable.authServersProperty().remove(server);
+                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                                skinnable.authServersProperty().remove(server);
+                            }, null);
                             e.consume();
                         });
                         btnRemove.getStyleClass().add("toggle-icon4");
