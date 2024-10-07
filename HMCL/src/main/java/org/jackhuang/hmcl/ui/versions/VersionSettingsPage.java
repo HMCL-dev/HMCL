@@ -23,12 +23,15 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -47,6 +50,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -212,13 +216,38 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             gameDirItem = new MultiFileItem<>();
             gameDirSublist = new ComponentSublist();
+            {
+                HintPane gameDirHint = new HintPane(MessageDialogPane.MessageType.INFO);
+                gameDirHint.setText(i18n("settings.game.working_directory.should_use_game_repo_feature"));
+                gameDirSublist.getContent().add(gameDirHint);
+            }
             gameDirSublist.getContent().add(gameDirItem);
             gameDirSublist.setTitle(i18n("settings.game.working_directory"));
             gameDirSublist.setHasSubtitle(versionId != null);
             gameDirItem.disableProperty().bind(modpack);
-            gameDirCustomOption = new MultiFileItem.FileOption<>(i18n("settings.custom"), GameDirectoryType.CUSTOM)
-                    .setChooserTitle(i18n("settings.game.working_directory.choose"))
-                    .setDirectory(true);
+            gameDirCustomOption = new MultiFileItem.FileOption<GameDirectoryType>(i18n("settings.custom"), GameDirectoryType.CUSTOM) {
+                private final WeakListenerHolder holder = new WeakListenerHolder();
+
+                @Override
+                protected Node createItem(ToggleGroup group) {
+                    Node node = super.createItem(group);
+
+                    ObservableList<Node> children = gameDirItem.getChildren();
+                    holder.add(FXUtils.observeWeak(() -> {
+                        boolean exist = children.contains(node);
+                        if (!"".equals(getValue()) || gameDirItem.getSelectedData() == GameDirectoryType.CUSTOM) {
+                            if (!exist) {
+                                children.add(node);
+                            }
+                        } else {
+                            if (exist) {
+                                children.remove(node);
+                            }
+                        }
+                    }, valueProperty(), gameDirItem.selectedDataProperty()));
+                    return node;
+                }
+            }.setChooserTitle(i18n("settings.game.working_directory.choose")).setDirectory(true);
 
             gameDirItem.loadChildren(Arrays.asList(
                     new MultiFileItem.Option<>(i18n("settings.advanced.game_dir.default"), GameDirectoryType.ROOT_FOLDER),
@@ -482,6 +511,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         this.listenerHolder = new WeakListenerHolder();
 
         if (versionId == null) {
+            gameDirSublist.setHasSubtitle(false);
             enableSpecificSettings.set(true);
             state.set(State.fromTitle(Profiles.getProfileDisplayName(profile) + " - " + i18n("settings.type.global.manage")));
 
@@ -497,6 +527,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 }
             }));
         } else {
+            gameDirSublist.setHasSubtitle(true);
             navigateToSpecificSettings.unbind();
             navigateToSpecificSettings.set(false);
         }
