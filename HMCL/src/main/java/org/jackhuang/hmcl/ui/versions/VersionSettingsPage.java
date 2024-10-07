@@ -35,8 +35,9 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ProcessPriority;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -48,7 +49,6 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
@@ -457,7 +457,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private void initialize() {
-        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
+        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
         enableSpecificSettings.addListener((a, b, newValue) -> {
             if (versionId == null) return;
 

@@ -177,7 +177,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         right.getChildren().add(spinnerCopyUUID);
 
         JFXButton btnRemove = new JFXButton();
-        btnRemove.setOnMouseClicked(e -> skinnable.remove());
+        btnRemove.setOnMouseClicked(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         btnRemove.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1, -1));
