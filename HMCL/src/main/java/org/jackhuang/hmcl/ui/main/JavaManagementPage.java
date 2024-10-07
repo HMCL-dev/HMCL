@@ -53,6 +53,7 @@ import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
