@@ -111,7 +111,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             searchBar.setAlignment(Pos.CENTER);
             searchBar.setPadding(new Insets(0, 5, 0, 5));
             searchField = new JFXTextField();
-            searchField.setPromptText(i18n("search"));
+            searchField.setPromptText(i18n("search.hint.regex"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
             searchField.setOnAction(e -> search());
 
