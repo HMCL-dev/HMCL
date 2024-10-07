@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.net.URI;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -95,7 +96,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                 VBox boxMethods = new VBox();
                 {
                     boxMethods.getStyleClass().add("advanced-list-box-content");
-                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create")));
+                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT)));
                     FXUtils.setLimitWidth(boxMethods, 200);
 
                     AdvancedListItem offlineItem = new AdvancedListItem();

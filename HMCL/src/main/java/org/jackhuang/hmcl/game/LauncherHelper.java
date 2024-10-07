@@ -244,9 +244,9 @@ public final class LauncherHelper {
                                 } else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {
-                                    message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
+                                    message = i18n("launch.failed.creating_process") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof NotDecompressingNativesException) {
-                                    message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
+                                    message = i18n("launch.failed.decompressing_natives") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof LibraryDownloadException) {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n";
                                     if (ex.getCause() instanceof ResponseCodeException) {
@@ -881,8 +881,8 @@ public final class LauncherHelper {
 
     }
 
-    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download";
-    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
+    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download/";
+    private static final String OPENJDK_DOWNLOAD_LINK = "https://learn.microsoft.com/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 
