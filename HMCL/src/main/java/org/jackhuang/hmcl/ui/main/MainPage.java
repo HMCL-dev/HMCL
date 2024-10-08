@@ -236,11 +236,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void showUpdate(boolean show) {
         doAnimation(show);
 
-        if (show && getLatestVersion() != null && !Objects.equals(config().getPromptedVersion(), getLatestVersion().getVersion())) {
-            Controllers.confirm("", i18n("update.bubble.title", getLatestVersion().getVersion()), MessageDialogPane.MessageType.INFO, () -> {
-                config().setPromptedVersion(getLatestVersion().getVersion());
-                onUpgrade();
-            }, null);
+        String version = getLatestVersion().getVersion();
+        if (show && getLatestVersion() != null && !Objects.equals(config().getPromptedVersion(), version)) {
+            Controllers.dialog(new MessageDialogPane.Builder("", i18n("update.bubble.title", version), MessageDialogPane.MessageType.INFO)
+                    .addAction(i18n("button.view"), () -> {
+                        config().setPromptedVersion(getLatestVersion().getVersion());
+                        onUpgrade();
+                    })
+                    .addCancel(null)
+                    .build());
         }
     }
 
