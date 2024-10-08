@@ -84,6 +84,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -411,15 +412,20 @@ public final class FXUtils {
         });
     }
 
-    private static boolean testLinuxCommand(String command) {
-        try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", command}).getInputStream()) {
-            if (is.read() != -1) {
-                return true;
-            }
-        } catch (Throwable ignored) {
-        }
+    private static String which(String command) {
+        String path = System.getenv("PATH");
+        if (path == null)
+            return null;
 
-        return false;
+        for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
+            try {
+                Path program = Paths.get(item, command);
+                if (Files.isExecutable(program))
+                    return program.toRealPath().toString();
+            } catch (Throwable ignored) {
+            }
+        }
+        return null;
     }
 
     public static void showFileInExplorer(Path file) {
@@ -430,7 +436,7 @@ public final class FXUtils {
             openCommands = new String[]{"explorer.exe", "/select,", path};
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && testLinuxCommand("dbus-send"))
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -496,12 +502,13 @@ public final class FXUtils {
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
-                    try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
-                        if (is.read() != -1) {
+                    String path = which(browser);
+                    if (path != null) {
+                        try {
                             Runtime.getRuntime().exec(new String[]{browser, link});
                             return;
+                        } catch (Throwable ignored) {
                         }
-                    } catch (Throwable ignored) {
                     }
                     LOG.warning("No known browser found");
                 }
