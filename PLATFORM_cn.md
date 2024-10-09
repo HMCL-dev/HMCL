@@ -10,7 +10,7 @@
 | ARM32                      | /️                                                | 👌  (Minecraft 1.6~1.20.1) | /                                                                      | /                       |
 | MIPS64el                   | /                                                 | 👌 (Minecraft 1.6~1.20.1)  | /                                                                      | /                       |
 | RISC-V 64                  | /                                                 | 👌 (Minecraft 1.13~1.21)   | /                                                                      | /                       |
-| LoongArch64                | /                                                 | 👌 (Minecraft 1.6~1.20.1)  | /                                                                      | /                       |
+| LoongArch64                | /                                                 | 👌 (Minecraft 1.6~1.21.1)  | /                                                                      | /                       |
 | PowerPC-64 (Little-Endian) | /                                                 | ❔                          | /                                                                      | /                       |
 | S390x                      | /                                                 | ❔                          | /                                                                      | /                       |
 
