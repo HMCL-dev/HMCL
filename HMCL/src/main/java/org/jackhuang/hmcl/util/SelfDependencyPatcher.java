@@ -44,6 +44,7 @@ package org.jackhuang.hmcl.util;
 import com.google.gson.Gson;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.SwingUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -109,7 +110,7 @@ public final class SelfDependencyPatcher {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
                 Map<String, List<DependencyDescriptor>> allDependencies =
-                        new Gson().fromJson(reader, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class)));
+                        JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class)));
                 dependencies = allDependencies.get(Platform.getPlatform().toString());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
