@@ -42,7 +42,6 @@
 package org.jackhuang.hmcl.util;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
@@ -68,6 +67,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -104,11 +105,11 @@ public final class SelfDependencyPatcher {
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
-            ArrayList<DependencyDescriptor> dependencies;
+            List<DependencyDescriptor> dependencies;
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
-                Map<String, ArrayList<DependencyDescriptor>> allDependencies =
-                        new Gson().fromJson(reader, new TypeToken<Map<String, ArrayList<DependencyDescriptor>>>(){}.getType());
+                Map<String, List<DependencyDescriptor>> allDependencies =
+                        new Gson().fromJson(reader, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class)));
                 dependencies = allDependencies.get(Platform.getPlatform().toString());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);

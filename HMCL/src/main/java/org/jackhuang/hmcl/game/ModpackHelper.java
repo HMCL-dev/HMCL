@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
@@ -141,8 +140,7 @@ public final class ModpackHelper {
             throw new FileNotFoundException(file.getPath());
         else
             try {
-                return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<?>>() {
-                }.getType());
+                return JsonUtils.GSON.fromJson(FileUtils.readText(file), ModpackConfiguration.class);
             } catch (JsonParseException e) {
                 throw new IOException("Malformed modpack configuration");
             }
