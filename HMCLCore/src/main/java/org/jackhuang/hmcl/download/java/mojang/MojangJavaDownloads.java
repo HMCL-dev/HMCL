@@ -19,13 +19,15 @@ package org.jackhuang.hmcl.download.java.mojang;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 
 @JsonAdapter(MojangJavaDownloads.Adapter.class)
 public class MojangJavaDownloads {
@@ -49,8 +51,7 @@ public class MojangJavaDownloads {
 
         @Override
         public MojangJavaDownloads deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return new MojangJavaDownloads(context.deserialize(json, new TypeToken<Map<String, Map<String, List<JavaDownload>>>>() {
-            }.getType()));
+            return new MojangJavaDownloads(context.deserialize(json, mapTypeOf(String.class, mapTypeOf(String.class, listTypeOf(JavaDownload.class))).getType()));
         }
     }
 

@@ -27,14 +27,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * @author yushijinhun
  */
+@SuppressWarnings("unchecked")
 public final class JsonUtils {
 
     public static final Gson GSON = defaultGsonBuilder().create();
@@ -48,13 +50,29 @@ public final class JsonUtils {
     private JsonUtils() {
     }
 
+    public static <T> TypeToken<List<T>> listTypeOf(Class<T> elementType) {
+        return (TypeToken<List<T>>) TypeToken.getParameterized(List.class, elementType);
+    }
+
+    public static <T> TypeToken<List<T>> listTypeOf(TypeToken<T> elementType) {
+        return (TypeToken<List<T>>) TypeToken.getParameterized(List.class, elementType.getType());
+    }
+
+    public static <K, V> TypeToken<Map<K, V>> mapTypeOf(Class<K> keyType, Class<V> valueType) {
+        return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType);
+    }
+
+    public static <K, V> TypeToken<Map<K, V>> mapTypeOf(Class<K> keyType, TypeToken<V> valueType) {
+        return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType.getType());
+    }
+
     public static <T> T fromJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
         try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
             return GSON.fromJson(reader, classOfT);
         }
     }
 
-    public static <T> T fromJsonFully(InputStream json, Type type) throws IOException, JsonParseException {
+    public static <T> T fromJsonFully(InputStream json, TypeToken<T> type) throws IOException, JsonParseException {
         try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
             return GSON.fromJson(reader, type);
         }
@@ -62,13 +80,6 @@ public final class JsonUtils {
 
     public static <T> T fromNonNullJson(String json, Class<T> classOfT) throws JsonParseException {
         T parsed = GSON.fromJson(json, classOfT);
-        if (parsed == null)
-            throw new JsonParseException("Json object cannot be null.");
-        return parsed;
-    }
-
-    public static <T> T fromNonNullJson(String json, Type type) throws JsonParseException {
-        T parsed = GSON.fromJson(json, type);
         if (parsed == null)
             throw new JsonParseException("Json object cannot be null.");
         return parsed;
@@ -90,7 +101,7 @@ public final class JsonUtils {
         }
     }
 
-    public static <T> T fromNonNullJsonFully(InputStream json, Type type) throws IOException, JsonParseException {
+    public static <T> T fromNonNullJsonFully(InputStream json, TypeToken<T> type) throws IOException, JsonParseException {
         try (InputStreamReader reader = new InputStreamReader(json, StandardCharsets.UTF_8)) {
             T parsed = GSON.fromJson(reader, type);
             if (parsed == null)
@@ -107,7 +118,7 @@ public final class JsonUtils {
         }
     }
 
-    public static <T> T fromMaybeMalformedJson(String json, Type type) throws JsonParseException {
+    public static <T> T fromMaybeMalformedJson(String json, TypeToken<T> type) throws JsonParseException {
         try {
             return GSON.fromJson(json, type);
         } catch (JsonSyntaxException e) {
