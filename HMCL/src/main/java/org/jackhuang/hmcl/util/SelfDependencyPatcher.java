@@ -41,7 +41,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.Gson;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
