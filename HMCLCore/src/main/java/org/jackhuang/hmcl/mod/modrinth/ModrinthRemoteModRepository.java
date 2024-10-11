@@ -694,7 +694,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
-    public static final class Response<T> {
+    public static class Response<T> {
 
         @SuppressWarnings("unchecked")
         public static <T> TypeToken<Response<T>> typeOf(Class<T> responseType) {

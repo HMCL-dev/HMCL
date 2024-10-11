@@ -278,7 +278,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
     }
 
-    private static final class Response<T> {
+    public static class Response<T> {
 
         @SuppressWarnings("unchecked")
         public static <T> TypeToken<Response<T>> typeOf(Class<T> responseType) {
