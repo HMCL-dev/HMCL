@@ -52,7 +52,6 @@ import javafx.util.StringConverter;
 import org.glavo.png.PNGType;
 import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
@@ -70,12 +69,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.awt.*;
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
@@ -525,52 +521,6 @@ public final class FXUtils {
                 LOG.warning("Failed to open link: " + link, e);
             }
         });
-    }
-
-    public static void showWebDialog(String title, String content) {
-        showWebDialog(title, content, 800, 480);
-    }
-
-    public static void showWebDialog(String title, String content, int width, int height) {
-        try {
-            WebStage stage = new WebStage(width, height);
-            stage.getWebView().getEngine().loadContent(content);
-            stage.setTitle(title);
-            stage.showAndWait();
-        } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-            LOG.warning("WebView is missing or initialization failed, use JEditorPane replaced", e);
-
-            SwingUtils.initLookAndFeel();
-            SwingUtilities.invokeLater(() -> {
-                final JFrame frame = new JFrame(title);
-                frame.setSize(width, height);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.setLocationByPlatform(true);
-                frame.setIconImage(new ImageIcon(FXUtils.class.getResource("/assets/img/icon.png")).getImage());
-                frame.setLayout(new BorderLayout());
-
-                final JProgressBar progressBar = new JProgressBar();
-                progressBar.setIndeterminate(true);
-                frame.add(progressBar, BorderLayout.PAGE_START);
-
-                Schedulers.defaultScheduler().execute(() -> {
-                    final JEditorPane pane = new JEditorPane("text/html", content);
-                    pane.setEditable(false);
-                    pane.addHyperlinkListener(event -> {
-                        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                            openLink(event.getURL().toExternalForm());
-                        }
-                    });
-                    SwingUtilities.invokeLater(() -> {
-                        progressBar.setVisible(false);
-                        frame.add(new JScrollPane(pane), BorderLayout.CENTER);
-                    });
-                });
-
-                frame.setVisible(true);
-                frame.toFront();
-            });
-        }
     }
 
     public static <T> void bind(JFXTextField textField, Property<T> property, StringConverter<T> converter) {

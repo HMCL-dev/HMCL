@@ -25,6 +25,7 @@ import javafx.scene.control.ScrollPane;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -73,6 +74,9 @@ public final class UpgradeDialog extends JFXDialogLayout {
             }
         }).start();
 
+        JFXHyperlink openInBrowser = new JFXHyperlink(i18n("web.open_in_browser"));
+        openInBrowser.setExternalLink(url);
+
         JFXButton updateButton = new JFXButton(i18n("update.accept"));
         updateButton.getStyleClass().add("dialog-accept");
         updateButton.setOnAction(e -> updateRunnable.run());
@@ -81,7 +85,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-        setActions(updateButton, cancelButton);
+        setActions(openInBrowser, updateButton, cancelButton);
         onEscPressed(this, cancelButton::fire);
     }
 }
