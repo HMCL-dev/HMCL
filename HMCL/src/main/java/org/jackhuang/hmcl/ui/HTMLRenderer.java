@@ -1,5 +1,24 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui;
 
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jsoup.nodes.Node;
@@ -14,6 +33,18 @@ import java.util.function.Consumer;
  * @author Glavo
  */
 public final class HTMLRenderer {
+    private static URI resolveLink(Node linkNode) {
+        String href = linkNode.absUrl("href");
+        if (href.isEmpty())
+            return null;
+
+        try {
+            return new URI(href);
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
     private final List<javafx.scene.Node> children = new ArrayList<>();
     private final List<Node> stack = new ArrayList<>();
 
@@ -87,13 +118,9 @@ public final class HTMLRenderer {
 
     private void applyStyle(Text text) {
         if (hyperlink != null) {
-            String href = hyperlink.absUrl("href");
-            try {
-                URI uri = new URI(href);
-                text.setOnMouseClicked(event -> onClickHyperlink.accept(uri));
-            } catch (Exception ignored) {
-            }
-
+            URI target = resolveLink(hyperlink);
+            if (target != null)
+                text.setOnMouseClicked(event -> onClickHyperlink.accept(target));
             text.getStyleClass().add("html-hyperlink");
         }
 
@@ -119,6 +146,56 @@ public final class HTMLRenderer {
         children.add(textNode);
     }
 
+    private void appendImage(Node node) {
+        String src = node.absUrl("src");
+        URI imageUri = null;
+        try {
+            if (!src.isEmpty())
+                imageUri = URI.create(src);
+        } catch (Exception ignored) {
+        }
+
+        String alt = node.attr("alt");
+
+        if (imageUri != null) {
+            URI uri = URI.create(src);
+
+            String widthAttr = node.attr("width");
+            String heightAttr = node.attr("height");
+
+            double width = 0;
+            double height = 0;
+
+            if (!widthAttr.isEmpty() && !heightAttr.isEmpty()) {
+                try {
+                    width = Double.parseDouble(widthAttr);
+                    height = Double.parseDouble(heightAttr);
+                } catch (NumberFormatException ignored) {
+                }
+
+                if (width <= 0 || height <= 0) {
+                    width = 0;
+                    height = 0;
+                }
+            }
+
+            Image image = FXUtils.newRemoteImage(uri.toString(), width, height, true, true, false);
+            if (!image.isError()) {
+                ImageView imageView = new ImageView(image);
+                if (hyperlink != null) {
+                    URI target = resolveLink(hyperlink);
+                    if (target != null)
+                        imageView.setOnMouseClicked(event -> onClickHyperlink.accept(target));
+                }
+                children.add(imageView);
+                return;
+            }
+        }
+
+        if (!alt.isEmpty())
+            appendText(alt);
+    }
+
     public void appendNode(Node node) {
         if (node instanceof TextNode) {
             appendText(((TextNode) node).text());
@@ -126,6 +203,9 @@ public final class HTMLRenderer {
 
         String name = node.nodeName();
         switch (name) {
+            case "img":
+                appendImage(node);
+                break;
             case "li":
                 appendText("\n \u2022 ");
                 break;
@@ -140,7 +220,7 @@ public final class HTMLRenderer {
             case "h5":
             case "h6":
             case "tr":
-                if (!children.isEmpty())
+                if (children.isEmpty())
                     appendText("\n\n");
                 break;
         }
