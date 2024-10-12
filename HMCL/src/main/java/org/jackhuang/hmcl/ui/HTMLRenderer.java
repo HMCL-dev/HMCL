@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /**
  * @author Glavo
  */
@@ -180,7 +182,9 @@ public final class HTMLRenderer {
             }
 
             Image image = FXUtils.newRemoteImage(uri.toString(), width, height, true, true, false);
-            if (!image.isError()) {
+            if (image.isError()) {
+                LOG.warning("Failed to load image: " + uri, image.getException());
+            } else {
                 ImageView imageView = new ImageView(image);
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
