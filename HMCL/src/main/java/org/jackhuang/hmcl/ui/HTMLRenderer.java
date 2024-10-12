@@ -224,7 +224,7 @@ public final class HTMLRenderer {
             case "h5":
             case "h6":
             case "tr":
-                if (children.isEmpty())
+                if (!children.isEmpty())
                     appendText("\n\n");
                 break;
         }
