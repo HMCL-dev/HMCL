@@ -1454,19 +1454,14 @@
 }
 
 .html-h1 {
-    -fx-font-size: 24;
-    -fx-background-color: red;
-}
-
-.html-h2 {
     -fx-font-size: 22;
 }
 
-.html-h3 {
+.html-h2 {
     -fx-font-size: 20;
 }
 
-.html-h4 {
+.html-h3 {
     -fx-font-size: 18;
 }
 

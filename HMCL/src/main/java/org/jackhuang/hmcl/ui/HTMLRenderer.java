@@ -127,7 +127,7 @@ public final class HTMLRenderer {
         String name = node.nodeName();
         switch (name) {
             case "li":
-                appendText("\n * ");
+                appendText("\n \u2022 ");
                 break;
             case "dt":
                 appendText(" ");
@@ -170,6 +170,7 @@ public final class HTMLRenderer {
 
     public TextFlow render() {
         TextFlow textFlow = new TextFlow();
+        textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
         return textFlow;
     }
