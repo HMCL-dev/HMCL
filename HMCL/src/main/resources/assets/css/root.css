@@ -1438,3 +1438,37 @@
 .fit-width {
     -fx-pref-width: 100%;
 }
+
+/*******************************************************************************
+*                                                                              *
+* HTML Renderer                                                                *
+*                                                                              *
+*******************************************************************************/
+
+.html {
+    -fx-font-size: 16;
+}
+
+.html-hyperlink {
+    -fx-fill: blue;
+}
+
+.html-h1 {
+    -fx-font-size: 22;
+}
+
+.html-h2 {
+    -fx-font-size: 20;
+}
+
+.html-h3 {
+    -fx-font-size: 18;
+}
+
+.html-bold {
+    -fx-font-weight: bold;
+}
+
+.html-italic {
+    -fx-font-style: italic;
+}
