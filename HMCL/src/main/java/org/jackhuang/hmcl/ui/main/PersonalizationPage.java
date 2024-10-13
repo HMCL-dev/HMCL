@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
@@ -28,10 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
@@ -43,7 +41,10 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -125,6 +126,66 @@ public class PersonalizationPage extends StackPane {
             componentList.getContent().add(backgroundItem);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
         }
+
+        {
+            VBox bgSettings = new VBox(16);
+            bgSettings.getStyleClass().add("card-non-transparent");
+            {
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
+                hbox.setPadding(new Insets(0, 0, 0, 10));
+
+                Label label1 = new Label(i18n("settings.launcher.background.settings.opacity"));
+                Label label2 = new Label("%");
+
+                double opa = config().getBackgroundImageOpacity();
+                JFXSlider slider = new JFXSlider(0, 1, opa);
+                HBox.setHgrow(slider, Priority.ALWAYS);
+
+                JFXTextField textOpacity = new JFXTextField();
+                textOpacity.setText(BigDecimal.valueOf(opa * 100).setScale(2, RoundingMode.HALF_UP).toString());
+                textOpacity.setPrefWidth(60);
+
+                AtomicReference<Double> lastValidOpacity = new AtomicReference<>(slider.getValue());
+                slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+                    double opacity = newValue.doubleValue();
+                    textOpacity.setText(BigDecimal.valueOf(opacity * 100).setScale(2, RoundingMode.HALF_UP).toString());
+                    lastValidOpacity.set(opacity);
+                    config().setBackgroundImageOpacity(opacity);
+                });
+                textOpacity.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue){
+                        try {
+                            String text = textOpacity.getText().trim();
+                            double opacity = Double.parseDouble(text) / 100;
+                            if (opacity >= 0 && opacity <= 1) {
+                                slider.setValue(opacity);
+                            } else if (opacity < 0) {
+                                slider.setValue(0);
+                                textOpacity.setText("0.00");
+                            } else if (opacity > 1) {
+                                slider.setValue(1);
+                                textOpacity.setText("100.00");
+                            }
+                        } catch (NumberFormatException ignored) {
+                            slider.setValue(lastValidOpacity.get());
+                            textOpacity.setText(BigDecimal.valueOf(lastValidOpacity.get() * 100).setScale(2, RoundingMode.HALF_UP).toString());
+                        }
+                    }
+                });
+
+                slider.setValueFactory(slider1 -> Bindings.createStringBinding(() -> String.format("%.2f", slider1.getValue()), slider1.valueProperty()));
+
+                HBox.setMargin(label2, new Insets(0, 10, 0, 0));
+
+                hbox.getChildren().setAll(label1, slider, textOpacity, label2);
+                bgSettings.getChildren().add(hbox);
+            }
+            //hide the opacity setting when selecting a translucency type
+            config().backgroundImageTypeProperty().addListener((observable, oldValue, newValue) -> bgSettings.setVisible(newValue != EnumBackgroundImage.TRANSLUCENT));
+            content.getChildren().add(bgSettings);
+        }
+
 
         {
             ComponentList logPane = new ComponentSublist();
