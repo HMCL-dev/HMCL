@@ -189,11 +189,6 @@ tasks.processResources {
         from(sourceSets["java11"].output)
     }
     dependsOn(tasks["java11Classes"])
-
-    into("assets") {
-        from(project.layout.buildDirectory.file("openjfx-dependencies.json"))
-    }
-    dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }
 
 val makeExecutables = tasks.create("makeExecutables") {

@@ -27,7 +27,7 @@ data class Platform(
 
 val jfxModules = listOf("base", "graphics", "controls")
 val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
-val jfxDependenciesFile = project("HMCL").layout.buildDirectory.file("openjfx-dependencies.json").get().asFile
+val jfxDependenciesFile = project.file("HMCL/src/main/resources/assets/openjfx-dependencies.json")
 val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86"),
     Platform("windows-x86_64", "win"),
@@ -86,8 +86,6 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
 }
 
 rootProject.tasks.create("generateOpenJFXDependencies") {
-    outputs.file(jfxDependenciesFile)
-
     doLast {
         val jfxDependencies = jfxPlatforms.associate { platform ->
             platform.name to jfxModules.map { module ->
