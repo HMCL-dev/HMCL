@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -271,8 +270,12 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         private final Pattern group, artifact;
         private final ModLoaderType modLoaderType;
 
-        private static final Map<String, LibraryType> PATCH_ID_MAP = Stream.of(values())
-                .collect(Collectors.toMap(LibraryType::getPatchId, type -> type));
+        private static final Map<String, LibraryType> PATCH_ID_MAP = new HashMap<>();
+        static {
+            for (LibraryType type : values()) {
+                PATCH_ID_MAP.put(type.getPatchId(), type);
+            }
+        }
 
         LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact, ModLoaderType modLoaderType) {
             this.modLoader = modLoader;
