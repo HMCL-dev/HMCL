@@ -108,7 +108,6 @@ public final class LocalModpackPage extends ModpackPage {
                         hideSpinner();
                         lblName.setText(selectedFile.getName());
                         installAsVersion.set(false);
-                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
@@ -130,8 +129,6 @@ public final class LocalModpackPage extends ModpackPage {
                         lblName.setText(manifest.getName());
                         lblVersion.setText(manifest.getVersion());
                         lblAuthor.setText(manifest.getAuthor());
-
-                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
