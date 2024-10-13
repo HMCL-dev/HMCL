@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -34,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -51,9 +51,7 @@ public final class NativePatcher {
         return natives.computeIfAbsent(platform, p -> {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"), StandardCharsets.UTF_8)) {
-                Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Library>>>() {
-                }.getType());
-
+                Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, Library.class)));
                 return natives.getOrDefault(p.toString(), Collections.emptyMap());
             } catch (IOException e) {
                 LOG.warning("Failed to load native library list", e);

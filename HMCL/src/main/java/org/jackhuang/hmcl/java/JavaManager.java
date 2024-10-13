@@ -404,9 +404,9 @@ public final class JavaManager {
             FileUtils.tryGetPath(Lang.requireNonNullElse(System.getenv("ProgramFiles(x86)"), "C:\\Program Files (x86)"), "Minecraft Launcher\\runtime")
                     .ifPresent(it -> searchAllOfficialJava(javaRuntimes, it, false));
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-            searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home")).resolve(".minecraft/runtime"), false);
+            searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home"), ".minecraft/runtime"), false);
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
-            searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home")).resolve("Library/Application Support/minecraft/runtime"), false);
+            searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"), false);
         }
         searchAllOfficialJava(javaRuntimes, CacheRepository.getInstance().getCacheDirectory().resolve("java"), true);
 
@@ -430,6 +430,7 @@ public final class JavaManager {
                 }
             }
         }
+        searchAllJavaInDirectory(javaRuntimes, Paths.get(System.getProperty("user.home"), ".jdks"));
 
         for (String javaPath : ConfigHolder.globalConfig().getUserJava()) {
             try {

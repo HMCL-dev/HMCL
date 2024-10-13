@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ListChangeListener;
@@ -33,6 +34,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -113,7 +115,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            searchField.setOnAction(e -> search());
+            PauseTransition pause = new PauseTransition(Duration.millis(100));
+            pause.setOnFinished(e -> search());
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                pause.setRate(1);
+                pause.playFromStart();
+            });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {

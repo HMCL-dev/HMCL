@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.java;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -28,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Optional;
+
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 
 /**
  * @author Glavo
@@ -63,8 +64,7 @@ public final class JavaManifest {
 
     public static final class Serializer implements JsonSerializer<JavaManifest>, JsonDeserializer<JavaManifest> {
 
-        private static final Type LOCAL_FILES_TYPE = new TypeToken<Map<String, JavaLocalFiles.Local>>() {
-        }.getType();
+        private static final Type LOCAL_FILES_TYPE = mapTypeOf(String.class, JavaLocalFiles.Local.class).getType();
 
         @Override
         public JsonElement serialize(JavaManifest src, Type typeOfSrc, JsonSerializationContext context) {
