@@ -203,6 +203,56 @@ tasks.build {
     dependsOn(makeExecutables)
 }
 
+fun parseToolOptions(options: String?): List<String> {
+    if (options == null)
+        return listOf()
+
+    val builder = StringBuilder()
+    val result = mutableListOf<String>()
+
+    var offset = 0
+
+    loop@ while (offset < options.length) {
+        val ch = options[offset]
+        if (Character.isWhitespace(ch)) {
+            if (builder.isNotEmpty()) {
+                result += builder.toString()
+                builder.clear()
+            }
+
+            while (offset < options.length && Character.isWhitespace(options[offset])) {
+                offset++
+            }
+
+            continue@loop
+        }
+
+        if (ch == '\'' || ch == '"') {
+            offset++
+
+            while (offset < options.length) {
+                val ch2 = options[offset++]
+                if (ch2 != ch) {
+                    builder.append(ch2)
+                } else {
+                    continue@loop
+                }
+            }
+
+            throw GradleException("Unmatched quote in $options")
+        }
+
+        builder.append(ch)
+        offset++
+    }
+
+    if (builder.isNotEmpty()) {
+        result += builder.toString()
+    }
+
+    return result
+}
+
 tasks.create<JavaExec>("run") {
     dependsOn(tasks.jar)
 
@@ -210,4 +260,11 @@ tasks.create<JavaExec>("run") {
 
     classpath = files(jarPath)
     workingDir = rootProject.rootDir
+
+    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    jvmArgs(vmOptions)
+
+    doFirst {
+        logger.quiet("HMCL_JAVA_OPTS: $vmOptions")
+    }
 }
