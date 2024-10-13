@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.scene.Cursor;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
@@ -121,8 +122,10 @@ public final class HTMLRenderer {
     private void applyStyle(Text text) {
         if (hyperlink != null) {
             URI target = resolveLink(hyperlink);
-            if (target != null)
+            if (target != null) {
                 text.setOnMouseClicked(event -> onClickHyperlink.accept(target));
+                text.setCursor(Cursor.HAND);
+            }
             text.getStyleClass().add("html-hyperlink");
         }
 
@@ -188,8 +191,10 @@ public final class HTMLRenderer {
                 ImageView imageView = new ImageView(image);
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
-                    if (target != null)
+                    if (target != null) {
                         imageView.setOnMouseClicked(event -> onClickHyperlink.accept(target));
+                        imageView.setCursor(Cursor.HAND);
+                    }
                 }
                 children.add(imageView);
                 return;

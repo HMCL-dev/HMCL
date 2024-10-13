@@ -74,7 +74,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
             }
         }).start();
 
-        JFXHyperlink openInBrowser = new JFXHyperlink(i18n("web.open_in_browser"));
+        JFXHyperlink openInBrowser = new JFXHyperlink(i18n("web.view_in_browser"));
         openInBrowser.setExternalLink(url);
 
         JFXButton updateButton = new JFXButton(i18n("update.accept"));
