@@ -22,6 +22,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -42,7 +43,7 @@ public final class WebPage extends SpinnerPane implements DecoratorPage {
 
     public WebPage(String title, String content) {
         this.stateProperty = new SimpleObjectProperty<>(DecoratorPage.State.fromTitle(title));
-        this.setBackground(Background.fill(Color.WHITE));
+        this.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
 
         Task.supplyAsync(() -> {
             Document document = Jsoup.parseBodyFragment(content);
