@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -70,6 +71,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> modTab = new TabHeader.Tab<>("modTab");
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
@@ -90,8 +92,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }));
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
+        shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
-        tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
+        tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
@@ -127,6 +130,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         item.setLeftGraphic(wrap(SVG.TEXTURE_BOX));
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
                         item.setOnAction(e -> tab.select(resourcePackTab));
+                    })
+                    .addNavigationDrawerItem(item -> {
+                        item.setTitle(i18n("download.shader"));
+                        item.setLeftGraphic(wrap(SVG.APPLICATION_OUTLINE));
+                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(shaderTab));
+                        item.setOnAction(e -> tab.select(shaderTab));
                     })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("world"));
@@ -204,6 +213,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                     if (resourcePackTab.isInitialized()) {
                         resourcePackTab.getNode().loadVersion(profile, null);
+                    }
+                    if (shaderTab.isInitialized()) {
+                        shaderTab.getNode().loadVersion(profile, null);
                     }
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadVersion(profile, null);
