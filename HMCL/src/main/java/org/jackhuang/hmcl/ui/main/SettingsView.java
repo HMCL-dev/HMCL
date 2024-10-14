@@ -133,7 +133,7 @@ public abstract class SettingsView extends StackPane {
                         content.setSpacing(8);
 
                         chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
-                        chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
+                        chkUpdateDev = new JFXRadioButton(i18n("update.channel.beta"));
 
                         TextFlow noteWrapper = new TextFlow(new Text(i18n("update.note")));
                         VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
