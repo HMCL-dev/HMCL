@@ -881,8 +881,8 @@ public final class LauncherHelper {
 
     }
 
-    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download";
-    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
+    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download/";
+    private static final String OPENJDK_DOWNLOAD_LINK = "https://learn.microsoft.com/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 
