@@ -100,7 +100,7 @@ public class DownloadSettingsPage extends StackPane {
                 downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source")), downloadSource);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
         }
 
         {
@@ -158,7 +158,7 @@ public class DownloadSettingsPage extends StackPane {
                 }
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download.threads")), downloadThreads);
         }
 
         {
