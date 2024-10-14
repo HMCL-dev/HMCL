@@ -295,7 +295,10 @@ public class Version implements Comparable<Version>, Validation {
             }
         }
 
-        if (patches != null && !patches.isEmpty()) {
+        if (patches == null) {
+            // This is a version from external launcher. NO need to resolve the patches.
+            return thisVersion;
+        } else if (!patches.isEmpty()) {
             // Assume patches themselves do not have patches recursively.
             List<Version> sortedPatches = patches.stream()
                     .sorted(Comparator.comparing(Version::getPriority))

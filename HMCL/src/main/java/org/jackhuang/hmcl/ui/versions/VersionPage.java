@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -55,8 +56,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final TabHeader tab;
     private final TabHeader.Tab<VersionSettingsPage> versionSettingsTab = new TabHeader.Tab<>("versionSettingsTab");
-    private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
     private final TabHeader.Tab<InstallerListPage> installerListTab = new TabHeader.Tab<>("installerListTab");
+    private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
@@ -67,11 +68,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
     {
         versionSettingsTab.setNodeSupplier(loadVersionFor(() -> new VersionSettingsPage(false)));
-        modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
         installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
+        modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
         worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
 
-        tab = new TabHeader(versionSettingsTab, modListTab, installerListTab, worldListTab);
+        tab = new TabHeader(versionSettingsTab, installerListTab, modListTab, worldListTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
@@ -127,10 +128,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
         if (versionSettingsTab.isInitialized())
             versionSettingsTab.getNode().loadVersion(profile, version);
-        if (modListTab.isInitialized())
-            modListTab.getNode().loadVersion(profile, version);
         if (installerListTab.isInitialized())
             installerListTab.getNode().loadVersion(profile, version);
+        if (modListTab.isInitialized())
+            modListTab.getNode().loadVersion(profile, version);
         if (worldListTab.isInitialized())
             worldListTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
@@ -164,9 +165,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearAssets() {
-        File baseDirectory = getProfile().getRepository().getBaseDirectory();
-        FileUtils.deleteDirectoryQuietly(new File(baseDirectory, "assets"));
-        FileUtils.deleteDirectoryQuietly(new File(baseDirectory, "resources"));
+        HMCLGameRepository baseDirectory = getProfile().getRepository();
+        FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getBaseDirectory(), "assets"));
+        if (version.get() != null) {
+            FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getRunDirectory(version.get().getVersion()), "resources"));
+        }
     }
 
     private void clearJunkFiles() {
@@ -244,15 +247,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 runInFX(() -> FXUtils.installFastTooltip(versionSettingsItem, i18n("settings.game")));
                 versionSettingsItem.setOnAction(e -> control.tab.select(control.versionSettingsTab));
 
-                AdvancedListItem modListItem = new AdvancedListItem();
-                modListItem.getStyleClass().add("navigation-drawer-item");
-                modListItem.setTitle(i18n("mods.manage"));
-                modListItem.setLeftGraphic(wrap(SVG.PUZZLE));
-                modListItem.setActionButtonVisible(false);
-                modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
-                runInFX(() -> FXUtils.installFastTooltip(modListItem, i18n("mods.manage")));
-                modListItem.setOnAction(e -> control.tab.select(control.modListTab));
-
                 AdvancedListItem installerListItem = new AdvancedListItem();
                 installerListItem.getStyleClass().add("navigation-drawer-item");
                 installerListItem.setTitle(i18n("settings.tabs.installers"));
@@ -261,6 +255,15 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 installerListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.installerListTab));
                 runInFX(() -> FXUtils.installFastTooltip(installerListItem, i18n("settings.tabs.installers")));
                 installerListItem.setOnAction(e -> control.tab.select(control.installerListTab));
+
+                AdvancedListItem modListItem = new AdvancedListItem();
+                modListItem.getStyleClass().add("navigation-drawer-item");
+                modListItem.setTitle(i18n("mods.manage"));
+                modListItem.setLeftGraphic(wrap(SVG.PUZZLE));
+                modListItem.setActionButtonVisible(false);
+                modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
+                runInFX(() -> FXUtils.installFastTooltip(modListItem, i18n("mods.manage")));
+                modListItem.setOnAction(e -> control.tab.select(control.modListTab));
 
                 AdvancedListItem worldListItem = new AdvancedListItem();
                 worldListItem.getStyleClass().add("navigation-drawer-item");
@@ -273,8 +276,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
                 AdvancedListBox sideBar = new AdvancedListBox()
                         .add(versionSettingsItem)
-                        .add(modListItem)
                         .add(installerListItem)
+                        .add(modListItem)
                         .add(worldListItem);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 

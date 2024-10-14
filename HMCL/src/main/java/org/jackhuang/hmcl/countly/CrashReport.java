@@ -5,14 +5,8 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
-
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CrashReport {
 
@@ -20,22 +14,14 @@ public class CrashReport {
     private final Throwable throwable;
     private final String stackTrace;
 
-    private boolean nonFatal;
-
     public CrashReport(Thread thread, Throwable throwable) {
         this.thread = thread;
         this.throwable = throwable;
         stackTrace = StringUtils.getStackTrace(throwable);
-        nonFatal = false;
     }
 
     public Throwable getThrowable() {
         return this.throwable;
-    }
-
-    public CrashReport setNonFatal() {
-        nonFatal = true;
-        return this;
     }
 
     public boolean shouldBeReport() {
@@ -46,23 +32,6 @@ public class CrashReport {
             return false;
 
         return true;
-    }
-
-    public Map<String, Object> getMetrics(long runningTime) {
-        return mapOf(
-                pair("_run", runningTime),
-                pair("_app_version", Metadata.VERSION),
-                pair("_os", OperatingSystem.SYSTEM_NAME),
-                pair("_os_version", OperatingSystem.SYSTEM_VERSION),
-                pair("_disk_current", getDiskAvailable()),
-                pair("_disk_total", getDiskTotal()),
-                pair("_ram_current", getMemoryAvailable()),
-                pair("_ram_total", Runtime.getRuntime().maxMemory() / BYTES_IN_MB),
-                pair("_error", stackTrace),
-                pair("_logs", LOG.getLogs()),
-                pair("_name", throwable.getLocalizedMessage()),
-                pair("_nonfatal", nonFatal)
-        );
     }
 
     public String getDisplayText() {
@@ -81,30 +50,5 @@ public class CrashReport {
                 "  JVM Max Memory: " + Runtime.getRuntime().maxMemory() + "\n" +
                 "  JVM Total Memory: " + Runtime.getRuntime().totalMemory() + "\n" +
                 "  JVM Free Memory: " + Runtime.getRuntime().freeMemory() + "\n";
-    }
-
-    private static final Long BYTES_IN_MB = 1024L * 1024;
-
-    private static long getMemoryAvailable() {
-        Long total = Runtime.getRuntime().totalMemory();
-        Long availMem = Runtime.getRuntime().freeMemory();
-        return (total - availMem) / BYTES_IN_MB;
-    }
-
-    private static long getDiskAvailable() {
-        long total = 0, free = 0;
-        for (File f : File.listRoots()) {
-            total += f.getTotalSpace();
-            free += f.getUsableSpace();
-        }
-        return (total - free) / BYTES_IN_MB;
-    }
-
-    private static long getDiskTotal() {
-        long total = 0;
-        for (File f : File.listRoots()) {
-            total += f.getTotalSpace();
-        }
-        return total / BYTES_IN_MB;
     }
 }

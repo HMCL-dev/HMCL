@@ -52,44 +52,45 @@ public class InstallersPage extends Control implements WizardPage {
     protected JFXTextField txtName = new JFXTextField();
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
+    private boolean isNameModifiedByUser = false;
+
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
-        this.group = new InstallerItem.InstallerItemGroup(gameVersion);
+        this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
                 new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
-        txtName.setText(gameVersion);
 
-        group.game.installable.setValue(false);
-
-        for (InstallerItem item : group.getLibraries()) {
-            item.setStyleMode(InstallerItem.Style.CARD);
-        }
+        txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
-            library.action.set(e -> {
+            library.installActionProperty().set(e -> {
                 if (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)) {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
                 }
 
-                if (library.incompatibleLibraryName.get() == null)
+                if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
             });
-            library.removeAction.set(e -> {
+            library.removeActionProperty().set(e -> {
                 controller.getSettings().remove(libraryId);
                 reload();
             });
         }
     }
 
+    protected InstallerItem.Style getInstallerItemStyle() {
+        return InstallerItem.Style.CARD;
+    }
+
     @Override
     public String getTitle() {
-        return i18n("install.new_game");
+        return group.getGame().versionProperty().get().getVersion();
     }
 
     private String getVersion(String id) {
@@ -100,12 +101,13 @@ public class InstallersPage extends Control implements WizardPage {
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (controller.getSettings().containsKey(libraryId)) {
-                library.libraryVersion.set(getVersion(libraryId));
-                library.removable.set(true);
+                library.versionProperty().set(new InstallerItem.InstalledState(getVersion(libraryId), false, false));
             } else {
-                library.libraryVersion.set(null);
-                library.removable.set(false);
+                library.versionProperty().set(null);
             }
+        }
+        if (!isNameModifiedByUser) {
+            setTxtNameWithLoaders();
         }
     }
 
@@ -128,6 +130,49 @@ public class InstallersPage extends Control implements WizardPage {
         return new InstallersPageSkin(this);
     }
 
+    private void setTxtNameWithLoaders() {
+        StringBuilder nameBuilder = new StringBuilder(group.getGame().versionProperty().get().getVersion());
+
+        for (InstallerItem library : group.getLibraries()) {
+            String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
+            if (!controller.getSettings().containsKey(libraryId)) {
+                continue;
+            }
+
+            LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
+            if (libraryType != null) {
+                String loaderName;
+                switch (libraryType) {
+                    case FORGE:
+                        loaderName = i18n("install.installer.forge");
+                        break;
+                    case NEO_FORGE:
+                        loaderName = i18n("install.installer.neoforge");
+                        break;
+                    case FABRIC:
+                        loaderName = i18n("install.installer.fabric");
+                        break;
+                    case LITELOADER:
+                        loaderName = i18n("install.installer.liteloader");
+                        break;
+                    case QUILT:
+                        loaderName = i18n("install.installer.quilt");
+                        break;
+                    case OPTIFINE:
+                        loaderName = i18n("install.installer.optifine");
+                        break;
+                    default:
+                        continue;
+                }
+
+                nameBuilder.append("-").append(loaderName);
+            }
+        }
+
+        txtName.setText(nameBuilder.toString());
+        isNameModifiedByUser = false;
+    }
+
     protected static class InstallersPageSkin extends SkinBase<InstallersPage> {
 
         /**
@@ -148,7 +193,7 @@ public class InstallersPage extends Control implements WizardPage {
                 versionNamePane.setAlignment(Pos.CENTER_LEFT);
 
                 control.txtName.setMaxWidth(300);
-                versionNamePane.getChildren().setAll(new Label(i18n("archive.name")), control.txtName);
+                versionNamePane.getChildren().setAll(new Label(i18n("version.name")), control.txtName);
                 root.setTop(versionNamePane);
             }
 

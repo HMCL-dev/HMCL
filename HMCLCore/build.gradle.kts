@@ -12,5 +12,12 @@ dependencies {
     api("com.github.steveice10:opennbt:1.5")
     api("org.nanohttpd:nanohttpd:2.3.1")
     api("org.apache.commons:commons-compress:1.25.0")
+    api("org.jsoup:jsoup:1.18.1")
     compileOnlyApi("org.jetbrains:annotations:24.1.0")
+
+    if (JavaVersion.current().isJava8) {
+        org.gradle.internal.jvm.Jvm.current().toolsJar?.let {
+            compileOnly(files(it))
+        }
+    }
 }

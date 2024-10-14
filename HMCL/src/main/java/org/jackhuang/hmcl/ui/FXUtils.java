@@ -29,6 +29,7 @@ import javafx.beans.value.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -38,6 +39,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -48,13 +50,13 @@ import javafx.util.StringConverter;
 import org.glavo.png.PNGType;
 import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -66,12 +68,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.awt.*;
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
@@ -80,6 +79,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -407,6 +407,22 @@ public final class FXUtils {
         });
     }
 
+    private static String which(String command) {
+        String path = System.getenv("PATH");
+        if (path == null)
+            return null;
+
+        for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
+            try {
+                Path program = Paths.get(item, command);
+                if (Files.isExecutable(program))
+                    return program.toRealPath().toString();
+            } catch (Throwable ignored) {
+            }
+        }
+        return null;
+    }
+
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
@@ -415,6 +431,16 @@ public final class FXUtils {
             openCommands = new String[]{"explorer.exe", "/select,", path};
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && which("dbus-send") != null)
+            openCommands = new String[]{
+                    "dbus-send",
+                    "--print-reply",
+                    "--dest=org.freedesktop.FileManager1",
+                    "/org/freedesktop/FileManager1",
+                    "org.freedesktop.FileManager1.ShowItems",
+                    "array:string:" + file.toAbsolutePath().toUri(),
+                    "string:"
+            };
         else
             openCommands = null;
 
@@ -471,12 +497,13 @@ public final class FXUtils {
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
-                    try (final InputStream is = Runtime.getRuntime().exec(new String[]{"which", browser}).getInputStream()) {
-                        if (is.read() != -1) {
+                    String path = which(browser);
+                    if (path != null) {
+                        try {
                             Runtime.getRuntime().exec(new String[]{browser, link});
                             return;
+                        } catch (Throwable ignored) {
                         }
-                    } catch (Throwable ignored) {
                     }
                     LOG.warning("No known browser found");
                 }
@@ -493,52 +520,6 @@ public final class FXUtils {
                 LOG.warning("Failed to open link: " + link, e);
             }
         });
-    }
-
-    public static void showWebDialog(String title, String content) {
-        showWebDialog(title, content, 800, 480);
-    }
-
-    public static void showWebDialog(String title, String content, int width, int height) {
-        try {
-            WebStage stage = new WebStage(width, height);
-            stage.getWebView().getEngine().loadContent(content);
-            stage.setTitle(title);
-            stage.showAndWait();
-        } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-            LOG.warning("WebView is missing or initialization failed, use JEditorPane replaced", e);
-
-            SwingUtils.initLookAndFeel();
-            SwingUtilities.invokeLater(() -> {
-                final JFrame frame = new JFrame(title);
-                frame.setSize(width, height);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.setLocationByPlatform(true);
-                frame.setIconImage(new ImageIcon(FXUtils.class.getResource("/assets/img/icon.png")).getImage());
-                frame.setLayout(new BorderLayout());
-
-                final JProgressBar progressBar = new JProgressBar();
-                progressBar.setIndeterminate(true);
-                frame.add(progressBar, BorderLayout.PAGE_START);
-
-                Schedulers.defaultScheduler().execute(() -> {
-                    final JEditorPane pane = new JEditorPane("text/html", content);
-                    pane.setEditable(false);
-                    pane.addHyperlinkListener(event -> {
-                        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                            openLink(event.getURL().toExternalForm());
-                        }
-                    });
-                    SwingUtilities.invokeLater(() -> {
-                        progressBar.setVisible(false);
-                        frame.add(new JScrollPane(pane), BorderLayout.CENTER);
-                    });
-                });
-
-                frame.setVisible(true);
-                frame.toFront();
-            });
-        }
     }
 
     public static <T> void bind(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
@@ -869,6 +850,17 @@ public final class FXUtils {
         return button;
     }
 
+    public static Label truncatedLabel(String text, int limit) {
+        Label label = new Label();
+        if (text.length() <= limit) {
+            label.setText(text);
+        } else {
+            label.setText(StringUtils.truncate(text, limit));
+            installFastTooltip(label, text);
+        }
+        return label;
+    }
+
     public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
         applyDragListener(node, filter, callback, null);
     }
@@ -1031,4 +1023,11 @@ public final class FXUtils {
         return tf;
     }
 
+    public static String toWeb(Color color) {
+        int r = (int) Math.round(color.getRed() * 255.0);
+        int g = (int) Math.round(color.getGreen() * 255.0);
+        int b = (int) Math.round(color.getBlue() * 255.0);
+
+        return String.format("#%02x%02x%02x", r, g, b);
+    }
 }

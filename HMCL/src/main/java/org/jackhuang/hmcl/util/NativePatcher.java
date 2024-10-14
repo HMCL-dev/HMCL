@@ -1,11 +1,27 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -17,8 +33,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/**
+ * @author Glavo
+ */
 public final class NativePatcher {
     private NativePatcher() {
     }
@@ -31,9 +51,7 @@ public final class NativePatcher {
         return natives.computeIfAbsent(platform, p -> {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"), StandardCharsets.UTF_8)) {
-                Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Library>>>() {
-                }.getType());
-
+                Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, Library.class)));
                 return natives.getOrDefault(p.toString(), Collections.emptyMap());
             } catch (IOException e) {
                 LOG.warning("Failed to load native library list", e);
@@ -42,7 +60,7 @@ public final class NativePatcher {
         });
     }
 
-    public static Version patchNative(Version version, String gameVersion, JavaVersion javaVersion, VersionSetting settings) {
+    public static Version patchNative(Version version, String gameVersion, JavaRuntime javaVersion, VersionSetting settings) {
         if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
@@ -114,9 +132,10 @@ public final class NativePatcher {
             if (library.isNative()) {
                 Library replacement = replacements.getOrDefault(library.getName() + ":natives", NONEXISTENT_LIBRARY);
                 if (replacement == NONEXISTENT_LIBRARY) {
-                    LOG.warning("No alternative native library " + library.getName() + " provided for platform " + javaVersion.getPlatform());
+                    LOG.warning("No alternative native library " + library.getName() + ":natives provided for platform " + javaVersion.getPlatform());
                     newLibraries.add(library);
                 } else if (replacement != null) {
+                    LOG.info("Replace " + library.getName() + ":natives with " + replacement.getName());
                     newLibraries.add(replacement);
                 }
             } else {
@@ -124,6 +143,7 @@ public final class NativePatcher {
                 if (replacement == NONEXISTENT_LIBRARY) {
                     newLibraries.add(library);
                 } else if (replacement != null) {
+                    LOG.info("Replace " + library.getName() + " with " + replacement.getName());
                     newLibraries.add(replacement);
                 }
             }
@@ -132,7 +152,7 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static Library getMesaLoader(JavaVersion javaVersion, Renderer renderer) {
+    public static Library getMesaLoader(JavaRuntime javaVersion, Renderer renderer) {
         return getNatives(javaVersion.getPlatform()).get(renderer == Renderer.LLVMPIPE ? "software-renderer-loader" : "mesa-loader");
     }
 }

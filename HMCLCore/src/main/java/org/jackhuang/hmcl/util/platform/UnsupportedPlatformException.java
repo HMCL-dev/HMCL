@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
-import org.junit.jupiter.api.Test;
+/**
+ * @author Glavo
+ */
+public final class UnsupportedPlatformException extends Exception {
+    public UnsupportedPlatformException() {
+    }
 
-import static org.junit.jupiter.api.Assertions.*;
-
-public class JavaVersionConstraintTest {
-
-    @Test
-    public void vanillaJava16() {
-        JavaVersionConstraint.VersionRanges range = JavaVersionConstraint.findSuitableJavaVersionRange(
-                GameVersionNumber.asGameVersion("1.17"),
-                null
-        );
-
-        assertEquals(VersionNumber.atLeast("16"), range.getMandatory());
+    public UnsupportedPlatformException(String message) {
+        super(message);
     }
 }
