@@ -400,7 +400,7 @@ public final class FXUtils {
 
             // Fallback to java.awt.Desktop::open
             try {
-                Desktop.getDesktop().open(file);
+                java.awt.Desktop.getDesktop().open(file);
             } catch (Throwable e) {
                 LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
@@ -509,7 +509,7 @@ public final class FXUtils {
                 }
             }
             try {
-                Desktop.getDesktop().browse(new URI(link));
+                java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
                     try {
