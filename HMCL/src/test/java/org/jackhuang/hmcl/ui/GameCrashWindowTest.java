@@ -20,10 +20,11 @@ package org.jackhuang.hmcl.ui;
 import org.jackhuang.hmcl.JavaFXLauncher;
 import org.jackhuang.hmcl.game.ClassicVersion;
 import org.jackhuang.hmcl.game.LaunchOptions;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.junit.jupiter.api.Disabled;
@@ -51,7 +52,7 @@ public class GameCrashWindowTest {
             GameCrashWindow window = new GameCrashWindow(process, ProcessListener.ExitType.APPLICATION_ERROR, null,
                     new ClassicVersion(),
                     new LaunchOptions.Builder()
-                            .setJava(new JavaVersion(Paths.get("."), "16", Platform.SYSTEM_PLATFORM))
+                            .setJava(new JavaRuntime(Paths.get("."), new JavaInfo(Platform.SYSTEM_PLATFORM, "16", null), false, false))
                             .setGameDir(new File("."))
                             .create(),
                     Arrays.stream(logs.split("\\n"))

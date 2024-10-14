@@ -19,18 +19,17 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVersion> {
     private final String apiRoot;
@@ -68,8 +67,7 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
     @Override
     public CompletableFuture<?> refreshAsync(String gameVersion) {
         return CompletableFuture.completedFuture((Void) null)
-                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).<List<NeoForgeVersion>>getJson(new TypeToken<List<NeoForgeVersion>>() {
-                }.getType())))
+                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).getJson(listTypeOf(NeoForgeVersion.class))))
                 .thenAcceptAsync(neoForgeVersions -> {
                     lock.writeLock().lock();
 

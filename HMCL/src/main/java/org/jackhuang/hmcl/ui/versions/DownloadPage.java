@@ -381,8 +381,6 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 {
                     StackPane graphicPane = new StackPane();
-                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
-
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.getName());
@@ -390,11 +388,16 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
+                            content.getTags().add(i18n("version.game.snapshot"));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            break;
                         case Beta:
                             content.getTags().add(i18n("version.game.snapshot"));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                         case Release:
                             content.getTags().add(i18n("version.game.release"));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                     }
 
@@ -457,7 +460,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(i18n("download"));
+            JFXButton downloadButton = new JFXButton(i18n("mods.install"));
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.setOnAction(e -> {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
@@ -466,7 +469,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 selfPage.download(version);
             });
 
-            JFXButton saveAsButton = new JFXButton(i18n("button.save_as"));
+            JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
             saveAsButton.setOnAction(e -> {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {

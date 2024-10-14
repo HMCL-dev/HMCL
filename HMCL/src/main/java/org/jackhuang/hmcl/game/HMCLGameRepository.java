@@ -37,7 +37,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -383,7 +383,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaVersion javaVersion, File gameDir, List<String> javaAgents, boolean makeLaunchScript) {
+    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, File gameDir, List<String> javaAgents, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -396,7 +396,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
                 .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
-                        OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
+                        OperatingSystem.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())

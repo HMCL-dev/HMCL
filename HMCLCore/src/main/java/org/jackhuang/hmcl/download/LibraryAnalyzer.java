@@ -270,6 +270,13 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         private final Pattern group, artifact;
         private final ModLoaderType modLoaderType;
 
+        private static final Map<String, LibraryType> PATCH_ID_MAP = new HashMap<>();
+        static {
+            for (LibraryType type : values()) {
+                PATCH_ID_MAP.put(type.getPatchId(), type);
+            }
+        }
+
         LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact, ModLoaderType modLoaderType) {
             this.modLoader = modLoader;
             this.patchId = patchId;
@@ -291,10 +298,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         }
 
         public static LibraryType fromPatchId(String patchId) {
-            for (LibraryType type : values())
-                if (type.getPatchId().equals(patchId))
-                    return type;
-            return null;
+            return PATCH_ID_MAP.get(patchId);
         }
 
         protected boolean matchLibrary(Library library, List<Library> libraries) {

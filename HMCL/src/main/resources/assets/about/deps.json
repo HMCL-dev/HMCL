@@ -1,0 +1,62 @@
+[
+  {
+    "title" : "OpenJFX",
+    "subtitle" : "Copyright © 2013, 2024, Oracle and/or its affiliates.\nLicensed under the GPL 2 with Classpath Exception.",
+    "externalLink" : "https://openjfx.io"
+  },
+  {
+    "title" : "JFoenix",
+    "subtitle" : "Copyright © 2016 JFoenix.\nLicensed under the MIT License.",
+    "externalLink" : "https://github.com/sshahine/JFoenix"
+  },
+  {
+    "title" : "Gson",
+    "subtitle" : "Copyright © 2008 Google Inc.\nLicensed under the Apache 2.0 License.",
+    "externalLink" : "https://github.com/google/gson"
+  },
+  {
+    "title" : "Apache Commons Compress",
+    "subtitle" : "Licensed under the Apache 2.0 License.",
+    "externalLink" : "https://commons.apache.org/proper/commons-compress/"
+  },
+  {
+    "title" : "XZ for Java",
+    "subtitle" : "Lasse Collin, Igor Pavlov, and/or Brett Okken.\nPublic Domain.",
+    "externalLink" : "https://tukaani.org/xz/java.html"
+  },
+  {
+    "title" : "FX Gson",
+    "subtitle" : "Copyright © 2016 Joffrey Bion.\nLicensed under the MIT License.",
+    "externalLink" : "https://github.com/joffrey-bion/fx-gson"
+  },
+  {
+    "title" : "jsoup",
+    "subtitle" : "Copyright © 2009 - 2024 Jonathan Hedley (https://jsoup.org/)\nLicensed under the MIT License.",
+    "externalLink" : "https://jsoup.org/"
+  },
+  {
+    "title" : "NanoHTTPD",
+    "subtitle" : "Copyright © 2012 - 2015 nanohttpd.\nLicensed under the BSD 3-clause License.",
+    "externalLink" : "https://github.com/NanoHttpd/nanohttpd"
+  },
+  {
+    "title" : "Constant Pool Scanner",
+    "subtitle" : "Copyright © 1997-2010 Oracle and/or its affiliates.\nLicensed under the GPL 2 or the CDDL.",
+    "externalLink" : "https://github.com/jenkinsci/constant-pool-scanner"
+  },
+  {
+    "title" : "OpenNBT",
+    "subtitle" : "Copyright © 2013-2021 Steveice10.\nLicensed under the MIT License.",
+    "externalLink" : "https://github.com/GeyserMC/OpenNBT"
+  },
+  {
+    "title" : "minecraft-jfx-skin",
+    "subtitle" : "Copyright © 2016 InfinityStudio.\nLicensed under the GPL 3.",
+    "externalLink" : "https://github.com/InfinityStudio/minecraft-jfx-skin"
+  },
+  {
+    "title" : "SimplePNG",
+    "subtitle" : "Copyright © 2023 Glavo.\nLicensed under the Apache 2.0 License.",
+    "externalLink" : "https://github.com/Glavo/SimplePNG"
+  }
+]

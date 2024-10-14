@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.server;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -66,8 +65,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             try {
                 File manifestFile = repository.getModpackConfiguration(version);
                 if (manifestFile.exists()) {
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), new TypeToken<ModpackConfiguration<ServerModpackManifest>>() {
-                    }.getType());
+                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModpackConfiguration.typeOf(ServerModpackManifest.class));
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read Server modpack manifest.json", e);
