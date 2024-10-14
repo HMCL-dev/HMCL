@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -39,7 +38,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -74,35 +72,42 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             return LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(versionId), gameVersion);
         }).thenAcceptAsync(analyzer -> {
-            Function<String, Runnable> removeAction = libraryId -> () -> {
-                profile.getDependency().removeLibraryAsync(version, libraryId)
+            itemsProperty().clear();
+
+            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion, InstallerItem.Style.LIST_ITEM);
+
+            // Conventional libraries: game, fabric, forge, neoforge, liteloader, optifine
+            for (InstallerItem item : group.getLibraries()) {
+                String libraryId = item.getLibraryId();
+
+                // Skip fabric-api and quilt-api
+                if (libraryId.contains("fabric-api") || libraryId.contains("quilt-api")) {
+                    continue;
+                }
+
+                String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
+
+                if (libraryVersion != null) {
+                    item.versionProperty().set(new InstallerItem.InstalledState(
+                            libraryVersion,
+                            analyzer.getLibraryStatus(libraryId) != LibraryAnalyzer.LibraryMark.LibraryStatus.CLEAR,
+                            false
+                    ));
+                } else {
+                    item.versionProperty().set(null);
+                }
+
+                item.installActionProperty().set(e -> {
+                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
+                });
+
+                item.removeActionProperty().set(e -> profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::saveAsync)
                         .withComposeAsync(profile.getRepository().refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
-                        .start();
-            };
+                        .start());
 
-            itemsProperty().clear();
-
-            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion);
-
-            // Conventional libraries: game, fabric, forge, neoforge, liteloader, optifine
-            for (InstallerItem installerItem : group.getLibraries()) {
-                String libraryId = installerItem.getLibraryId();
-                String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
-                installerItem.libraryVersion.set(libraryVersion);
-                installerItem.upgradable.set(libraryVersion != null);
-                installerItem.installable.set(true);
-                installerItem.action.set(e -> {
-                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
-                });
-                boolean removable = !LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(libraryId) && libraryVersion != null;
-                installerItem.removable.set(removable);
-                if (removable) {
-                    Runnable action = removeAction.apply(libraryId);
-                    installerItem.removeAction.set(e -> action.run());
-                }
-                itemsProperty().add(installerItem);
+                itemsProperty().add(item);
             }
 
             // other third-party libraries which are unable to manage.
@@ -114,21 +119,13 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                 if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)
                     continue;
 
-                Runnable action = removeAction.apply(libraryId);
-
-                InstallerItem installerItem = new InstallerItem(libraryId);
-                installerItem.libraryVersion.set(libraryVersion);
-                installerItem.installable.set(false);
-                installerItem.upgradable.bind(installerItem.installable);
-                installerItem.removable.set(true);
-                installerItem.removeAction.set(e -> action.run());
-
-                if (libraryVersion != null && Lang.test(() -> profile.getDependency().getVersionList(libraryId))) {
-                    installerItem.installable.set(true);
-                    installerItem.action.set(e -> {
-                        Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
-                    });
-                }
+                InstallerItem installerItem = new InstallerItem(libraryId, InstallerItem.Style.LIST_ITEM);
+                installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
+                installerItem.removeActionProperty().set(e -> profile.getDependency().removeLibraryAsync(version, libraryId)
+                        .thenComposeAsync(profile.getRepository()::saveAsync)
+                        .withComposeAsync(profile.getRepository().refreshVersionsAsync())
+                        .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
+                        .start());
 
                 itemsProperty().add(installerItem);
             }
@@ -175,7 +172,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         @Override
         protected List<Node> initializeToolbar(InstallerListPage skinnable) {
             return Collections.singletonList(
-                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.PLUS, skinnable::installOffline));
+                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.PLUS, skinnable::installOffline)
+            );
         }
     }
 }

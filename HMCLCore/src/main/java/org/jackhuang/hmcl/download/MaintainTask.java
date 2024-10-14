@@ -76,7 +76,9 @@ public class MaintainTask extends Task<Version> {
         }
 
         List<Library> libraries = version.getLibraries();
-        if (libraries.size() > 0) {
+        if (!libraries.isEmpty()) {
+            // HMCL once use log4j-patch to prevent virus. But now, we only modify log4j2.xml.
+            // Therefore, we remove this library.
             Library library = libraries.get(0);
             if ("org.glavo".equals(library.getGroupId())
                     && ("log4j-patch".equals(library.getArtifactId()) || "log4j-patch-beta9".equals(library.getArtifactId()))
@@ -161,8 +163,8 @@ public class MaintainTask extends Task<Version> {
                 Path libraryPath = repository.getLibraryFile(version, hmclTransformerDiscoveryService).toPath();
                 try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLTransformerDiscoveryService-1.0.jar")) {
                     Files.createDirectories(libraryPath.getParent());
-                    Files.copy(input, libraryPath, StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
+                    Files.copy(Objects.requireNonNull(input, "Bundled HMCLTransformerDiscoveryService is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException | NullPointerException e) {
                     LOG.warning("Unable to unpack HMCLTransformerDiscoveryService", e);
                 }
             });
@@ -280,13 +282,6 @@ public class MaintainTask extends Task<Version> {
         }
 
         return version.setLibraries(libraries.stream().filter(Objects::nonNull).collect(Collectors.toList()));
-    }
-
-    public static boolean isPurePatched(Version version) {
-        if (!version.isResolvedPreservingPatches())
-            throw new IllegalArgumentException("isPurePatched requires a version resolved preserving patches");
-
-        return version.hasPatch("game");
     }
 
     public static Version unique(Version version) {

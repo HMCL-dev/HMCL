@@ -167,7 +167,7 @@ public final class Config implements Cloneable, Observable {
     private BooleanProperty fontSmoothingByGray = new SimpleBooleanProperty(false);
 
     @SerializedName("logLines")
-    private IntegerProperty logLines = new SimpleIntegerProperty(1000);
+    private ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
 
     @SerializedName("titleTransparent")
     private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
@@ -588,15 +588,15 @@ public final class Config implements Cloneable, Observable {
         this.fontSmoothingByGray.set(fontSmoothingByGray);
     }
 
-    public int getLogLines() {
+    public Integer getLogLines() {
         return logLines.get();
     }
 
-    public void setLogLines(int logLines) {
+    public void setLogLines(Integer logLines) {
         this.logLines.set(logLines);
     }
 
-    public IntegerProperty logLinesProperty() {
+    public ObjectProperty<Integer> logLinesProperty() {
         return logLines;
     }
 

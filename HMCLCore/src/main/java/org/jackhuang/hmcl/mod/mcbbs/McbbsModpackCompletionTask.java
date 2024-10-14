@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -88,8 +87,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
             if (configuration == null) {
                 // Load configuration from disk
                 try {
-                    configuration = JsonUtils.fromNonNullJson(FileUtils.readText(configurationFile), new TypeToken<ModpackConfiguration<McbbsModpackManifest>>() {
-                    }.getType());
+                    configuration = JsonUtils.fromNonNullJson(FileUtils.readText(configurationFile), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
                 } catch (IOException | JsonParseException e) {
                     throw new IOException("Malformed modpack configuration");
                 }

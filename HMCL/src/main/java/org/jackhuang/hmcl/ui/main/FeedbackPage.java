@@ -59,13 +59,7 @@ public class FeedbackPage extends SpinnerPane {
             discord.setSubtitle(i18n("feedback.discord.statement"));
             discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
 
-            IconedTwoLineListItem kookapp = new IconedTwoLineListItem();
-            kookapp.setImage(FXUtils.newBuiltinImage("/assets/img/kookapp.png"));
-            kookapp.setTitle(i18n("feedback.kookapp"));
-            kookapp.setSubtitle(i18n("feedback.kookapp.statement"));
-            kookapp.setExternalLink("https://kook.top/Kx7n3t");
-
-            community.getContent().setAll(users, github, discord, kookapp);
+            community.getContent().setAll(users, github, discord);
         }
 
         content.getChildren().addAll(

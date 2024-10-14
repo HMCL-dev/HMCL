@@ -18,7 +18,7 @@ public class NeoForgeRemoteVersion extends RemoteVersion {
         return new NeoForgeInstallTask(dependencyManager, baseVersion, this);
     }
 
-    public static String fixInvalidVersion(String version) {
+    public static String normalize(String version) {
         if (version.startsWith("1.20.1-")) {
             if (version.startsWith("forge-", "1.20.1-".length())) {
                 return version.substring("1.20.1-forge-".length());

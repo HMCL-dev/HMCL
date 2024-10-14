@@ -43,7 +43,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     private final Supplier<DownloadProvider> downloadProvider;
 
     /**
-     * @param artifactsDirectory where to save authlib-injector artifacts
+     * @param artifactLocation where to save authlib-injector artifacts
      */
     public AuthlibInjectorDownloader(Path artifactLocation, Supplier<DownloadProvider> downloadProvider) {
         this.artifactLocation = artifactLocation;

@@ -22,7 +22,6 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected final Label lblName;
     protected final Label lblVersion;
     protected final Label lblAuthor;
-    protected final Label lblModpackLocation;
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
 
@@ -37,18 +36,9 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
         ComponentList componentList = new ComponentList();
         {
-            BorderPane locationPane = new BorderPane();
-            {
-                locationPane.setLeft(new Label(i18n("modpack.task.install.will")));
-
-                lblModpackLocation = new Label();
-                BorderPane.setAlignment(lblModpackLocation, Pos.CENTER_RIGHT);
-                locationPane.setCenter(lblModpackLocation);
-            }
-
             BorderPane archiveNamePane = new BorderPane();
             {
-                Label label = new Label(i18n("archive.name"));
+                Label label = new Label(i18n("archive.file.name"));
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                 archiveNamePane.setLeft(label);
 
@@ -99,7 +89,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
             }
 
             componentList.getContent().setAll(
-                    locationPane, archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
+                    archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
         }
 
         borderPane.getChildren().setAll(componentList);

@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.util.i18n;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 
 import java.io.IOException;
 import java.util.List;
@@ -116,7 +116,7 @@ public final class Locales {
             if (resourceBundle == null) {
                 if (this != DEFAULT && this.locale == DEFAULT.locale) {
                     bundle = DEFAULT.getResourceBundle();
-                } else if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9) {
+                } else if (JavaInfo.CURRENT_ENVIRONMENT.getParsedVersion() < 9) {
                     bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
                 } else {
                     // Java 9+ uses UTF-8 as the default encoding for resource bundles

@@ -148,7 +148,10 @@ public class Theme {
     public String[] getStylesheets(String overrideFontFamily) {
         String css = "/assets/css/blue.css";
 
-        String fontFamily = System.getProperty("hmcl.font.override", overrideFontFamily);
+        String fontFamily = overrideFontFamily == null
+                ? System.getProperty("hmcl.font.override", System.getenv("HMCL_FONT"))
+                : overrideFontFamily;
+
         String fontStyle = null;
         String fontCss = "";
         if (fontFamily == null) {

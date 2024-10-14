@@ -140,7 +140,8 @@ public class CrashReportAnalyzerTest {
                         "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]\n" +
                         "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]\n" +
                         "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
-                        "\tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]\n").replaceAll("\\s+", ""),
+                        "\tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]\n" +
+                        "\tat oolloo.jlw.Wrapper.main(Wrapper.java:51) [JavaWrapper.jar:?]").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 
@@ -279,6 +280,13 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/splashscreen.txt")),
                 CrashReportAnalyzer.Rule.GRAPHICS_DRIVER);
+    }
+
+    @Test
+    public void macosFailedToFindServicePortForDisplay() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/logs/macos_failed_to_find_service_port_for_display.txt")),
+                CrashReportAnalyzer.Rule.MACOS_FAILED_TO_FIND_SERVICE_PORT_FOR_DISPLAY);
     }
 
     @Test
@@ -446,6 +454,13 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/performant_optifine_incompatibility.txt")),
                 CrashReportAnalyzer.Rule.PERFORMANT_FOREST_OPTIFINE);
+    }
+
+    @Test
+    public void neoforgeForestOptiFineIncompatible() throws IOException {
+        CrashReportAnalyzer.Result result = findResultByRule(
+                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/neoforgeforest_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.Rule.NEOFORGE_FOREST_OPTIFINE);
     }
 
     @Test

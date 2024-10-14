@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
@@ -26,7 +27,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -101,7 +101,7 @@ public abstract class HttpRequest {
         return JsonUtils.fromNonNullJson(getString(), typeOfT);
     }
 
-    public <T> T getJson(Type type) throws IOException, JsonParseException {
+    public <T> T getJson(TypeToken<T> type) throws IOException, JsonParseException {
         return JsonUtils.fromNonNullJson(getString(), type);
     }
 
@@ -109,7 +109,7 @@ public abstract class HttpRequest {
         return getStringAsync().thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, typeOfT));
     }
 
-    public <T> CompletableFuture<T> getJsonAsync(Type type) {
+    public <T> CompletableFuture<T> getJsonAsync(TypeToken<T> type) {
         return getStringAsync().thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
     }
 
@@ -187,13 +187,18 @@ public abstract class HttpRequest {
                     os.write(bytes);
                 }
 
+                URL url = new URL(this.url);
+
                 if (responseCodeTester != null) {
-                    responseCodeTester.accept(new URL(url), con.getResponseCode());
+                    responseCodeTester.accept(url, con.getResponseCode());
                 } else {
                     if (con.getResponseCode() / 100 != 2) {
                         if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
-                            String data = NetworkUtils.readData(con);
-                            throw new ResponseCodeException(new URL(url), con.getResponseCode(), data);
+                            try {
+                                throw new ResponseCodeException(url, con.getResponseCode(), NetworkUtils.readData(con));
+                            } catch (IOException e) {
+                                throw new ResponseCodeException(url, con.getResponseCode(), e);
+                            }
                         }
                     }
                 }
