@@ -23,11 +23,9 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.beans.value.WeakChangeListener;
-import javafx.beans.value.WritableValue;
+import javafx.beans.value.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -54,6 +52,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
+import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -401,7 +400,7 @@ public final class FXUtils {
 
             // Fallback to java.awt.Desktop::open
             try {
-                java.awt.Desktop.getDesktop().open(file);
+                Desktop.getDesktop().open(file);
             } catch (Throwable e) {
                 LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
@@ -483,7 +482,7 @@ public final class FXUtils {
                 }
             }
             try {
-                java.awt.Desktop.getDesktop().browse(new URI(link));
+                Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
                     try {
@@ -676,6 +675,61 @@ public final class FXUtils {
             comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }
 
+    public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
+        int itemCount = children.length;
+        int childSelectedCount = 0;
+        for (BooleanProperty child : children) {
+            if (child.get())
+                childSelectedCount++;
+        }
+
+        allEnabled.set(childSelectedCount == itemCount);
+
+        class Listener implements InvalidationListener {
+            private int childSelectedCount;
+            private boolean updating = false;
+
+            public Listener(int childSelectedCount) {
+                this.childSelectedCount = childSelectedCount;
+            }
+
+            @Override
+            public void invalidated(Observable observable) {
+                if (updating)
+                    return;
+
+                updating = true;
+                try {
+                    boolean value = ((BooleanProperty) observable).get();
+
+                    if (observable == allEnabled) {
+                        for (BooleanProperty child : children) {
+                            child.setValue(value);
+                        }
+                        childSelectedCount = value ? itemCount : 0;
+                    } else {
+                        if (value)
+                            childSelectedCount++;
+                        else
+                            childSelectedCount--;
+
+                        allEnabled.set(childSelectedCount == itemCount);
+                    }
+                } finally {
+                    updating = false;
+                }
+            }
+        }
+
+        InvalidationListener listener = new Listener(childSelectedCount);
+
+        WeakInvalidationListener weakListener = new WeakInvalidationListener(listener);
+        allEnabled.addListener(listener);
+        for (BooleanProperty child : children) {
+            child.addListener(weakListener);
+        }
+    }
+
     public static void setIcon(Stage stage) {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -691,7 +745,7 @@ public final class FXUtils {
      *
      * @param url the url of image. The image resource should be a file within the jar.
      * @return the image resource within the jar.
-     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url) {
@@ -715,7 +769,7 @@ public final class FXUtils {
      *                        algorithm or a faster one when scaling this image to fit within
      *                        the specified bounding box
      * @return the image resource within the jar.
-     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
@@ -933,7 +987,7 @@ public final class FXUtils {
             Element r = doc.getDocumentElement();
 
             NodeList children = r.getChildNodes();
-            List<javafx.scene.Node> texts = new ArrayList<>();
+            List<Node> texts = new ArrayList<>();
             for (int i = 0; i < children.getLength(); i++) {
                 org.w3c.dom.Node node = children.item(i);
 
