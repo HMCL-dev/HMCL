@@ -23,11 +23,9 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.beans.value.WeakChangeListener;
-import javafx.beans.value.WritableValue;
+import javafx.beans.value.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -657,6 +655,61 @@ public final class FXUtils {
             comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
     }
 
+    public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
+        int itemCount = children.length;
+        int childSelectedCount = 0;
+        for (BooleanProperty child : children) {
+            if (child.get())
+                childSelectedCount++;
+        }
+
+        allEnabled.set(childSelectedCount == itemCount);
+
+        class Listener implements InvalidationListener {
+            private int childSelectedCount;
+            private boolean updating = false;
+
+            public Listener(int childSelectedCount) {
+                this.childSelectedCount = childSelectedCount;
+            }
+
+            @Override
+            public void invalidated(Observable observable) {
+                if (updating)
+                    return;
+
+                updating = true;
+                try {
+                    boolean value = ((BooleanProperty) observable).get();
+
+                    if (observable == allEnabled) {
+                        for (BooleanProperty child : children) {
+                            child.setValue(value);
+                        }
+                        childSelectedCount = value ? itemCount : 0;
+                    } else {
+                        if (value)
+                            childSelectedCount++;
+                        else
+                            childSelectedCount--;
+
+                        allEnabled.set(childSelectedCount == itemCount);
+                    }
+                } finally {
+                    updating = false;
+                }
+            }
+        }
+
+        InvalidationListener listener = new Listener(childSelectedCount);
+
+        WeakInvalidationListener weakListener = new WeakInvalidationListener(listener);
+        allEnabled.addListener(listener);
+        for (BooleanProperty child : children) {
+            child.addListener(weakListener);
+        }
+    }
+
     public static void setIcon(Stage stage) {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -925,7 +978,7 @@ public final class FXUtils {
             Element r = doc.getDocumentElement();
 
             NodeList children = r.getChildNodes();
-            List<javafx.scene.Node> texts = new ArrayList<>();
+            List<Node> texts = new ArrayList<>();
             for (int i = 0; i < children.getLength(); i++) {
                 org.w3c.dom.Node node = children.item(i);
 
