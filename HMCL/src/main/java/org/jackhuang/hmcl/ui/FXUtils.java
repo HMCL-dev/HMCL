@@ -53,7 +53,6 @@ import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
-import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -726,7 +725,7 @@ public final class FXUtils {
      *
      * @param url the url of image. The image resource should be a file within the jar.
      * @return the image resource within the jar.
-     * @see CrashReporter
+     * @see org.jackhuang.hmcl.util.CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url) {
@@ -750,7 +749,7 @@ public final class FXUtils {
      *                        algorithm or a faster one when scaling this image to fit within
      *                        the specified bounding box
      * @return the image resource within the jar.
-     * @see CrashReporter
+     * @see org.jackhuang.hmcl.util.CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
