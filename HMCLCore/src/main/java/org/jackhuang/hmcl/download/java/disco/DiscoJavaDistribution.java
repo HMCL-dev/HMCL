@@ -54,8 +54,8 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             pair(OSX, EnumSet.of(X86_64, ARM64))),
     GRAALVM("GraalVM", "graalvm", "Oracle",
             EnumSet.of(JDK),
-            pair(WINDOWS, EnumSet.of(X86_64, X86)),
-            pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64LE)),
+            pair(WINDOWS, EnumSet.of(X86_64)),
+            pair(LINUX, EnumSet.of(X86_64, ARM64)),
             pair(OSX, EnumSet.of(X86_64, ARM64)));
 
     public static DiscoJavaDistribution of(String name) {
