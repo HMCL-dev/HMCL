@@ -79,7 +79,7 @@ public final class DiscoFetchJavaListTask extends Task<TreeMap<Integer, DiscoJav
         TreeMap<Integer, DiscoJavaRemoteVersion> map = new TreeMap<>();
 
         for (DiscoJavaRemoteVersion version : result) {
-            if (!distribution.getApiParameter().equals(version.getDistribution()))
+            if (!distribution.testVersion(version))
                 continue;
 
             int jdkVersion = version.getJdkVersion();
