@@ -46,7 +46,16 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             EnumSet.of(JDK, JRE, JDKFX, JREFX),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64LE)),
-            pair(OSX, EnumSet.of(X86_64, ARM64))),
+            pair(OSX, EnumSet.of(X86_64, ARM64))) {
+        @Override
+        public boolean testVersion(DiscoJavaRemoteVersion version) {
+            if (!super.testVersion(version))
+                return false;
+
+            String fileName = version.getFileName();
+            return !fileName.endsWith("-lite.tar.gz") && !fileName.endsWith("-lite.zip");
+        }
+    },
     ZULU("Zulu", "zulu", "Azul",
             EnumSet.of(JDK, JRE, JDKFX, JREFX),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
@@ -112,5 +121,9 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
     @Override
     public Task<TreeMap<Integer, DiscoJavaRemoteVersion>> getFetchJavaVersionsTask(DownloadProvider provider, Platform platform, JavaPackageType packageType) {
         return new DiscoFetchJavaListTask(provider, this, platform, packageType);
+    }
+
+    public boolean testVersion(DiscoJavaRemoteVersion version) {
+        return this.getApiParameter().equals(version.getDistribution());
     }
 }
