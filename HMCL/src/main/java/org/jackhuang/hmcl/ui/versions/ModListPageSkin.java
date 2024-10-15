@@ -460,6 +460,15 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 getActions().add(mcmodButton);
             }
 
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getName())) {
+                JFXHyperlink copyNameButton = new JFXHyperlink(i18n("mods.name.copy"));
+                copyNameButton.setOnAction(e -> {
+                    FXUtils.copyText(modInfo.getModInfo().getName());
+                });
+
+                getActions().add(copyNameButton);
+            }
+
             JFXButton okButton = new JFXButton();
             okButton.getStyleClass().add("dialog-accept");
             okButton.setText(i18n("button.ok"));
