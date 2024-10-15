@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -78,6 +79,8 @@ public final class LocalModpackPage extends ModpackPage {
                 }
             });
         }
+
+        btnDescription.setVisible(false);
 
         File selectedFile;
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
@@ -134,6 +137,8 @@ public final class LocalModpackPage extends ModpackPage {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(manifest.getName().trim());
                         }
+
+                        btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
                     }
                 }).start();
     }

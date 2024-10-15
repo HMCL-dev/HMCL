@@ -24,6 +24,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected final Label lblAuthor;
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
+    protected final JFXButton btnDescription;
 
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
@@ -77,7 +78,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
             BorderPane descriptionPane = new BorderPane();
             {
-                JFXButton btnDescription = new JFXButton(i18n("modpack.description"));
+                btnDescription = new JFXButton(i18n("modpack.description"));
                 btnDescription.getStyleClass().add("jfx-button-border");
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);

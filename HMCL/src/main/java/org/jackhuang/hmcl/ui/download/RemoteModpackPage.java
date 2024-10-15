@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -69,6 +70,8 @@ public final class RemoteModpackPage extends ModpackPage {
                     new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
                     new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         }
+
+        btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
     }
 
     @Override
