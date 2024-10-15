@@ -52,7 +52,7 @@ Simply execute the following command in project root directory:
 ./gradlew clean build
 ```
 
-Make sure you have Java installed with JavaFX 11 at least. Liberica Full JDK 11 or later is recommended.
+Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or later is recommended.
 
 ## JVM Options (for debugging)
 

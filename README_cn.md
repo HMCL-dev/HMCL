@@ -52,7 +52,7 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS �
 ./gradlew clean build
 ```
 
-请确保你至少安装了含有 JavaFX 11 的 Java。建议使用 Liberica Full JDK 11 或更高版本。
+请确保你至少安装了含有 JavaFX 8 的 Java。建议使用 Liberica Full JDK 8 或更高版本。
 
 ## JVM 选项 (用于调试)
 
