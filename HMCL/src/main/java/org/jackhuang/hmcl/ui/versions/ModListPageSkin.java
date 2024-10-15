@@ -186,6 +186,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             });
 
+            listView.setOnContextMenuRequested(event -> {
+                ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                    listView.getSelectionModel().clearSelection();
+                    Controllers.dialog(new ModInfoDialog(selectedItem));
+                }
+            });
+
             center.setContent(listView);
             root.getContent().add(center);
         }
