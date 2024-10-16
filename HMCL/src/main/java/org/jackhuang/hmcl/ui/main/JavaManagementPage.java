@@ -151,7 +151,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
 
     private void onInstallArchive(Path file) {
         Task.supplyAsync(() -> {
-            try (ArchiveFileTree<?, ?> tree = TarFileTree.open(file)) {
+            try (ArchiveFileTree<?, ?> tree = ArchiveFileTree.open(file)) {
                 JavaInfo info = JavaInfo.fromArchive(tree);
 
                 if (!JavaManager.isCompatible(info.getPlatform()))
