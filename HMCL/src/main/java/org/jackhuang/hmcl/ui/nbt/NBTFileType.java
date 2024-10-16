@@ -5,7 +5,7 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.apache.commons.compress.utils.BoundedInputStream;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.*;
@@ -77,7 +77,7 @@ public enum NBTFileType {
 
                     InputStream input = new ByteArrayInputStream(buffer);
                     input.skip(5);
-                    input = new BoundedInputStream(input, chunkLength - 1);
+                    input = BoundedInputStream.builder().setInputStream(input).setMaxCount(chunkLength - 1).get();
 
                     switch (buffer[4]) {
                         case 0x01:
