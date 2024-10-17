@@ -5,10 +5,11 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.apache.commons.io.input.BoundedInputStream;
+import org.apache.commons.compress.utils.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
@@ -17,8 +18,22 @@ public enum NBTFileType {
     COMPRESSED("dat", "dat_old") {
         @Override
         public Tag read(File file) throws IOException {
-            try (InputStream in = new GZIPInputStream(new FileInputStream(file))) {
-                Tag tag = NBTIO.readTag(in);
+            try (BufferedInputStream fileInputStream = new BufferedInputStream(new FileInputStream(file))) {
+                fileInputStream.mark(3);
+                byte[] header = new byte[3];
+                if (fileInputStream.read(header) < 3) {
+                    throw new IOException("File is too small");
+                }
+                fileInputStream.reset();
+
+                InputStream input;
+                if (Arrays.equals(header, new byte[]{0x1f, (byte) 0x8b, 0x08})) {
+                    input = new GZIPInputStream(fileInputStream);
+                } else {
+                    input = fileInputStream;
+                }
+
+                Tag tag = NBTIO.readTag(input);
                 if (!(tag instanceof CompoundTag))
                     throw new IOException("Unexpected tag: " + tag);
                 return tag;
@@ -62,7 +77,7 @@ public enum NBTFileType {
 
                     InputStream input = new ByteArrayInputStream(buffer);
                     input.skip(5);
-                    input = BoundedInputStream.builder().setInputStream(input).setMaxCount(chunkLength - 1).get();
+                    input = new BoundedInputStream(input, chunkLength - 1);
 
                     switch (buffer[4]) {
                         case 0x01:
