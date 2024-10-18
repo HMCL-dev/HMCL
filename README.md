@@ -10,9 +10,9 @@
 
 ## Introduction
 
-HMCL is a cross-platform Minecraft launcher which supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL is an open-source, cross-platform Minecraft launcher with supports of Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
 
-HMCL has amazing cross-platform capabilities. It can not only run on different operating systems such as Windows, Linux, and macOS, but also supports multiple CPU architectures such as x86, ARM, MIPS, and LoongArch. You can easily play Minecraft on different platforms through HMCL.
+HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, and macOS, but it also supports various CPU architectures such as x86, ARM, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
 
 For systems and CPU architectures supported by HMCL, see [this table](PLATFORM.md).
 
@@ -20,13 +20,13 @@ For systems and CPU architectures supported by HMCL, see [this table](PLATFORM.m
 
 Download the latest version from [the official website](https://hmcl.huangyuhui.net/download).
 
-You can also download the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
+You can also find the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
 
-Although not necessary, it is recommended to download the ones from the official website.
+Although not necessary, it is recommended only to download releases from the official websites listed above.
 
 ## License
 
-The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) with additional terms.
+The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license with the following additional terms:
 
 ### Additional terms under GPLv3 Section 7
 
@@ -38,7 +38,7 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 
 ## Contribution
 
-If you want to submit a pull request, there are some requirements:
+If you want to submit a pull request, here are some requirements:
 
 * IDE: IntelliJ IDEA
 * Compiler: Java 1.8 or Java 11+
@@ -52,7 +52,7 @@ Simply execute the following command in project root directory:
 ./gradlew clean build
 ```
 
-Make sure you have Java installed with JavaFX 8 at least. Liberica Full JDK 8 or later is recommended.
+Make sure you have at least JavaFX 8 installed. Liberica Full JDK 8 or later is recommended.
 
 ## JVM Options (for debugging)
 
