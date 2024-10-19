@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
 import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXSpinner;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -28,6 +27,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -60,12 +60,13 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
     private CompoundTag levelDat;
     private CompoundTag dataTag;
 
-    private final ObjectProperty<State> stateProperty = new SimpleObjectProperty<>();
+    private final ObjectProperty<State> stateProperty;
 
     public WorldInfoPage(World world) {
         this.world = world;
+        this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(i18n("world.info.title", world.getWorldName())));
 
-        this.getChildren().add(new JFXSpinner());
+        this.getChildren().add(new ProgressIndicator());
         Task.supplyAsync(world::readLevelDat)
                 .whenComplete(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
@@ -73,7 +74,8 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                         this.dataTag = levelDat.get("Data");
                         loadWorldInfo();
                     } else {
-                        LOG.warning("Failed to load level dat", exception);
+                        LOG.warning("Failed to load level.dat", exception);
+                        this.getChildren().setAll(new Label(i18n("world.info.failed")));
                     }
                 })).start();
     }
@@ -81,7 +83,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
     private void loadWorldInfo() {
         CompoundTag worldGenSettings = dataTag.get("WorldGenSettings");
 
-        stateProperty.set(State.fromTitle(i18n("world.info.title", world.getWorldName())));
+
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -518,7 +520,6 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 Tag z = listTag.get(2);
 
                 if (x instanceof DoubleTag && y instanceof DoubleTag && z instanceof DoubleTag) {
-                    //noinspection MalformedFormatString
                     return this == OVERWORLD
                             ? String.format("(%.2f, %.2f, %.2f)", x.getValue(), y.getValue(), z.getValue())
                             : String.format("%s (%.2f, %.2f, %.2f)", name, x.getValue(), y.getValue(), z.getValue());
