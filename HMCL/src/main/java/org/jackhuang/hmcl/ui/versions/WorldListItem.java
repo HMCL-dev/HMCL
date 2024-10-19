@@ -102,10 +102,6 @@ public class WorldListItem extends Control {
     }
 
     public void showInfo() {
-        try {
-            Controllers.navigate(new WorldInfoPage(world));
-        } catch (Exception e) {
-            // TODO
-        }
+        Controllers.navigate(new WorldInfoPage(world));
     }
 }
