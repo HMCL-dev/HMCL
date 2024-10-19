@@ -388,15 +388,15 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
-                            content.getTags().add(i18n("version.game.snapshot"));
+                            content.getTags().add(i18n("mods.channel.alpha"));
                             graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                         case Beta:
-                            content.getTags().add(i18n("version.game.snapshot"));
+                            content.getTags().add(i18n("mods.channel.beta"));
                             graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                         case Release:
-                            content.getTags().add(i18n("version.game.release"));
+                            content.getTags().add(i18n("mods.channel.release"));
                             graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
                             break;
                     }
