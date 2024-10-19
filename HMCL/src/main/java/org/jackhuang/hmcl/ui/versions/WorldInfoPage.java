@@ -58,7 +58,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class WorldInfoPage extends StackPane implements DecoratorPage {
     private final World world;
     private CompoundTag levelDat;
-    private CompoundTag dataTag;
 
     private final ObjectProperty<State> stateProperty;
 
@@ -71,7 +70,6 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 .whenComplete(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
                         this.levelDat = result;
-                        this.dataTag = levelDat.get("Data");
                         loadWorldInfo();
                     } else {
                         LOG.warning("Failed to load level.dat", exception);
@@ -81,9 +79,8 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
     }
 
     private void loadWorldInfo() {
+        CompoundTag dataTag = levelDat.get("Data");
         CompoundTag worldGenSettings = dataTag.get("WorldGenSettings");
-
-
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
