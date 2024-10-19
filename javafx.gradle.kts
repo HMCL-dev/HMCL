@@ -4,11 +4,12 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.google.code.gson:gson:2.10.1")
+        classpath("com.google.code.gson:gson:2.11.0")
     }
 }
 
-val jfxVersion = "19.0.2.1"
+val jfxVersion = "17.0.13"
+val oldJfxVersion = "19.0.2.1"
 
 data class Platform(
     val name: String,
@@ -29,14 +30,14 @@ val jfxModules = listOf("base", "graphics", "controls")
 val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
 val jfxDependenciesFile = project.file("HMCL/src/main/resources/assets/openjfx-dependencies.json")
 val jfxPlatforms = listOf(
-    Platform("windows-x86", "win-x86"),
+    Platform("windows-x86", "win-x86", version = oldJfxVersion),
     Platform("windows-x86_64", "win"),
     Platform("windows-arm64", "win", groupId = "org.glavo.hmcl.openjfx", version = "18.0.2+1-arm64"),
     Platform("osx-x86_64", "mac"),
     Platform("osx-arm64", "mac-aarch64"),
     Platform("linux-x86_64", "linux"),
-    Platform("linux-arm32", "linux-arm32-monocle"),
-    Platform("linux-arm64", "linux-aarch64"),
+    Platform("linux-arm32", "linux-arm32-monocle", version = oldJfxVersion),
+    Platform("linux-arm64", "linux-aarch64", version = oldJfxVersion),
     Platform("linux-loongarch64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "17.0.8-loongarch64"),
     Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64"),
     Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64"),
