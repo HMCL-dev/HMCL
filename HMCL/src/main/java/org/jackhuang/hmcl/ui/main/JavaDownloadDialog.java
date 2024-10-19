@@ -319,7 +319,7 @@ public final class JavaDownloadDialog extends StackPane {
                                         if (idx > 0)
                                             checksum = checksum.substring(0, idx);
 
-                                        return new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum.trim());
+                                        return new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum);
                                     });
                         else
                             throw new IOException("Unable to get checksum for file");
