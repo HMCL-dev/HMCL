@@ -312,8 +312,15 @@ public final class JavaDownloadDialog extends StackPane {
                             getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), fileInfo.getChecksum()));
                         else if (StringUtils.isNotBlank(fileInfo.getChecksumUri()))
                             getIntegrityCheck = new GetTask(downloadProvider.injectURLWithCandidates(fileInfo.getChecksumUri()))
-                                    .thenApplyAsync(checksum ->
-                                            new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum.trim()));
+                                    .thenApplyAsync(checksum -> {
+                                        checksum = checksum.trim();
+
+                                        int idx = checksum.indexOf(' ');
+                                        if (idx > 0)
+                                            checksum = checksum.substring(0, idx);
+
+                                        return new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum.trim());
+                                    });
                         else
                             throw new IOException("Unable to get checksum for file");
 
