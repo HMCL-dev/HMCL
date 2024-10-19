@@ -1,8 +1,8 @@
 # ⛏ Hello Minecraft! Launcher 💎
 
 [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
-![Downloads](https://img.shields.io/github/downloads/huanghongxun/HMCL/total?style=flat)
-![Stars](https://img.shields.io/github/stars/huanghongxun/HMCL?style=flat)
+![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?style=flat)
+![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=tencentqq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 
@@ -10,7 +10,7 @@
 
 ## 簡介
 
-HMCL 是一款跨平臺 Minecraft 啟動器，支援模組管理、遊戲自訂、遊戲自動安裝 (Forge、NeoForge、Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面自訂等功能。
+HMCL 是一款開源、跨平臺的 Minecraft 啟動器，支援模組管理、遊戲自訂、遊戲自動安裝 (Forge、NeoForge、Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面自訂等功能。
 
 HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS 等常見的作業系統，同時也支援 x86、ARM、MIPS 和 LoongArch 等不同的 CPU 架構。你可以使用 HMCL 在不同平臺上輕鬆地遊玩 Minecraft。
 
@@ -26,7 +26,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 
 ## 開源協議
 
-該程式在 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 開源協議下發布，同時附有附加條款。
+該程式在 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 開源協議下發布，同時附有以下附加條款。
 
 ### 附加條款 (依據 GPLv3 開源協議第七條)
 
@@ -58,12 +58,12 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 
 | 參數                                         | 簡介                                                                 |
 | -------------------------------------------- | -------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | 覆蓋 HMCL 使用者資料夾                                               |
+| `-Dhmcl.home=<path>`                         | 覆蓋 HMCL 使用者目錄                                                 |
 | `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時繞過本體完整性檢查                                         |
 | `-Dhmcl.bmclapi.override=<url>`              | 覆蓋 BMCLAPI 的 API Root，預設值為 `https://bmclapi2.bangbang93.com` |
 | `-Dhmcl.font.override=<font family>`         | 覆蓋字族                                                             |
 | `-Dhmcl.version.override=<version>`          | 覆蓋版本號                                                           |
-| `-Dhmcl.update_source.override=<url>`        | 覆蓋 HMCL 更新源                                                     |
+| `-Dhmcl.update_source.override=<url>`        | 覆蓋 HMCL 更新來源                                                   |
 | `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下載一個)                           |
 | `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用於下載 OpenJFX 的自訂 Maven 倉庫                               |
 | `-Dhmcl.native.encoding=<encoding>`          | 覆蓋原生編碼                                                         |
