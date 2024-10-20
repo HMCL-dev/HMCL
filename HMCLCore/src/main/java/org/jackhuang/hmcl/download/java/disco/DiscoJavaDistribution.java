@@ -43,7 +43,7 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64, PPC64LE, S390X, SPARCV9)),
             pair(OSX, EnumSet.of(X86_64, ARM64))),
-    LIBERICA("Liberica", "liberica", "BellSoft",
+    LIBERICA("BellSoft Liberica", "liberica", "BellSoft",
             EnumSet.of(JDK, JRE, JDKFX, JREFX),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64LE)),
@@ -57,12 +57,12 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             return !fileName.endsWith("-lite.tar.gz") && !fileName.endsWith("-lite.zip");
         }
     },
-    ZULU("Zulu", "zulu", "Azul",
+    ZULU("Azul Zulu", "zulu", "Azul",
             EnumSet.of(JDK, JRE, JDKFX, JREFX),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64LE)),
             pair(OSX, EnumSet.of(X86_64, ARM64))),
-    GRAALVM("GraalVM", "graalvm", "Oracle",
+    GRAALVM("Oracle GraalVM", "graalvm", "Oracle",
             EnumSet.of(JDK),
             pair(WINDOWS, EnumSet.of(X86_64)),
             pair(LINUX, EnumSet.of(X86_64, ARM64)),
@@ -71,6 +71,12 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             EnumSet.of(JDK, JRE),
             pair(WINDOWS, EnumSet.of(X86_64)),
             pair(LINUX, EnumSet.of(X86_64, ARM64, PPC64LE, S390X)),
+            pair(OSX, EnumSet.of(X86_64, ARM64))
+    ),
+    CORRETTO("Amazon Corretto", "corretto", "Amazon",
+            EnumSet.of(JDK),
+            pair(WINDOWS, EnumSet.of(X86_64)),
+            pair(LINUX, EnumSet.of(X86_64, ARM64)),
             pair(OSX, EnumSet.of(X86_64, ARM64))
     );
 
