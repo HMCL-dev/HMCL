@@ -65,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -637,7 +638,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnAction(e -> latch.countDown());
 
-            listBox.startCategory(i18n("account.choose"));
+            listBox.startCategory(i18n("account.choose").toUpperCase(Locale.ROOT));
 
             setCenter(listBox);
 
