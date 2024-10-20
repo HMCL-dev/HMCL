@@ -35,6 +35,7 @@ import static org.jackhuang.hmcl.util.platform.OperatingSystem.*;
 
 /**
  * @author Glavo
+ * @see <a href="https://github.com/foojayio/discoapi">discoapi</a>
  */
 public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVersion> {
     TEMURIN("Eclipse Temurin", "temurin", "Adoptium",
@@ -65,7 +66,13 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             EnumSet.of(JDK),
             pair(WINDOWS, EnumSet.of(X86_64)),
             pair(LINUX, EnumSet.of(X86_64, ARM64)),
-            pair(OSX, EnumSet.of(X86_64, ARM64)));
+            pair(OSX, EnumSet.of(X86_64, ARM64))),
+    SEMERU("IBM Semeru (OpenJ9)", "semeru", "IBM",
+            EnumSet.of(JDK, JRE),
+            pair(WINDOWS, EnumSet.of(X86_64)),
+            pair(LINUX, EnumSet.of(X86_64, ARM64, PPC64LE, S390X)),
+            pair(OSX, EnumSet.of(X86_64, ARM64))
+    );
 
     public static DiscoJavaDistribution of(String name) {
         for (DiscoJavaDistribution distribution : values()) {
