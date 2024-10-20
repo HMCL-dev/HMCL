@@ -191,7 +191,7 @@ public final class DiscoJavaRemoteVersion implements JavaRemoteVersion {
         return packageType;
     }
 
-    public boolean isJavafxBundled() {
+    public boolean isJavaFXBundled() {
         return javafxBundled;
     }
 

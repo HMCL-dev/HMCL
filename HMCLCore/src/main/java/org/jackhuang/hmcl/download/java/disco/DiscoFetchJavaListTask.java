@@ -46,22 +46,27 @@ public final class DiscoFetchJavaListTask extends Task<TreeMap<Integer, DiscoJav
     }
 
     private final DiscoJavaDistribution distribution;
+    private final String packageType;
+    private final boolean isJavaFXBundled;
+    private final String archiveType;
     private final Task<String> fetchPackagesTask;
 
     public DiscoFetchJavaListTask(DownloadProvider downloadProvider, DiscoJavaDistribution distribution, Platform platform, JavaPackageType packageType) {
         this.distribution = distribution;
+        this.packageType = packageType.isJDK() ? "jdk" : "jre";
+        this.isJavaFXBundled = packageType.isJavaFXBundled();
+        this.archiveType = platform.getOperatingSystem() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
 
         HashMap<String, String> params = new HashMap<>();
         params.put("distribution", distribution.getApiParameter());
-        params.put("package", packageType.isJDK() ? "jdk" : "jre");
-        params.put("javafx_bundled", Boolean.toString(packageType.isJavaFXBundled()));
+        params.put("package", this.packageType);
+        params.put("javafx_bundled", Boolean.toString(isJavaFXBundled));
         params.put("operating_system", getOperatingSystemName(platform.getOperatingSystem()));
         params.put("architecture", getArchitectureName(platform.getArchitecture()));
-        params.put("archive_type", platform.getOperatingSystem() == OperatingSystem.WINDOWS ? "zip" : "tar.gz");
+        params.put("archive_type", archiveType);
         params.put("directly_downloadable", "true");
-        if (platform.getOperatingSystem() == OperatingSystem.LINUX) {
+        if (platform.getOperatingSystem() == OperatingSystem.LINUX)
             params.put("lib_c_type", "glibc");
-        }
 
         this.fetchPackagesTask = new GetTask(downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
     }
@@ -79,6 +84,13 @@ public final class DiscoFetchJavaListTask extends Task<TreeMap<Integer, DiscoJav
         TreeMap<Integer, DiscoJavaRemoteVersion> map = new TreeMap<>();
 
         for (DiscoJavaRemoteVersion version : result) {
+            if (!distribution.getApiParameter().equals(version.getDistribution())
+                    || !version.isDirectlyDownloadable()
+                    || !packageType.equals(version.getPackageType())
+                    || !archiveType.equals(version.getArchiveType())
+                    || isJavaFXBundled != version.isJavaFXBundled())
+                continue;
+
             if (!distribution.testVersion(version))
                 continue;
 
