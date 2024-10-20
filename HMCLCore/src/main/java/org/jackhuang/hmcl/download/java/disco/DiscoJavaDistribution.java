@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hmcl.download.java.disco;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -129,11 +127,6 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
     public boolean isSupport(Platform platform) {
         EnumSet<Architecture> architectures = supportedPlatforms.get(platform.getOperatingSystem());
         return architectures != null && architectures.contains(platform.getArchitecture());
-    }
-
-    @Override
-    public Task<TreeMap<Integer, DiscoJavaRemoteVersion>> getFetchJavaVersionsTask(DownloadProvider provider, Platform platform, JavaPackageType packageType) {
-        return new DiscoFetchJavaListTask(provider, this, platform, packageType);
     }
 
     public boolean testVersion(DiscoJavaRemoteVersion version) {

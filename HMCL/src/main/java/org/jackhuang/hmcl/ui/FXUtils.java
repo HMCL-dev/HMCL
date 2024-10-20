@@ -148,6 +148,11 @@ public final class FXUtils {
         onChange(value, consumer);
     }
 
+    public static <T> void onChangeAndOperate(ObservableValue<T> value, ChangeListener<T> listener) {
+        listener.changed(value, null, value.getValue());
+        value.addListener(listener);
+    }
+
     public static <T> ChangeListener<T> onWeakChangeAndOperate(ObservableValue<T> value, Consumer<T> consumer) {
         consumer.accept(value.getValue());
         return onWeakChange(value, consumer);

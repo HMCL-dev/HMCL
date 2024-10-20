@@ -171,6 +171,10 @@ public final class DiscoJavaRemoteVersion implements JavaRemoteVersion {
         return termOfSupport;
     }
 
+    public boolean isLTS() {
+        return "lts".equals(termOfSupport);
+    }
+
     public String getOperatingSystem() {
         return operatingSystem;
     }

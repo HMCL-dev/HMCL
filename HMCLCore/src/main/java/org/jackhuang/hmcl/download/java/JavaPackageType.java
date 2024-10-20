@@ -34,6 +34,13 @@ public enum JavaPackageType {
         this.javafx = javafx;
     }
 
+    public static JavaPackageType of(boolean jdk, boolean javafx) {
+        if (jdk)
+            return javafx ? JDKFX : JDK;
+        else
+            return javafx ? JREFX : JRE;
+    }
+
     public boolean isJDK() {
         return jdk;
     }

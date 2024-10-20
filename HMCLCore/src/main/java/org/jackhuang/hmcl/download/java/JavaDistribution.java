@@ -17,12 +17,7 @@
  */
 package org.jackhuang.hmcl.download.java;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.platform.Platform;
-
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * @author Glavo
@@ -31,6 +26,4 @@ public interface JavaDistribution<V extends JavaRemoteVersion> {
     String getDisplayName();
 
     Set<JavaPackageType> getSupportedPackageTypes();
-
-    Task<TreeMap<Integer, V>> getFetchJavaVersionsTask(DownloadProvider provider, Platform platform, JavaPackageType packageType);
 }
