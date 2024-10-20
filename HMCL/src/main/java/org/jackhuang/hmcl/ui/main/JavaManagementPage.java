@@ -50,7 +50,6 @@ import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.tree.TarFileTree;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -151,7 +150,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
 
     private void onInstallArchive(Path file) {
         Task.supplyAsync(() -> {
-            try (ArchiveFileTree<?, ?> tree = TarFileTree.open(file)) {
+            try (ArchiveFileTree<?, ?> tree = ArchiveFileTree.open(file)) {
                 JavaInfo info = JavaInfo.fromArchive(tree);
 
                 if (!JavaManager.isCompatible(info.getPlatform()))
