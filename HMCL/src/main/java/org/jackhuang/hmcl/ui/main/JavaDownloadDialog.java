@@ -294,6 +294,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             DiscoJavaDistribution distribution = distributionBox.getSelectionModel().getSelectedItem();
             DiscoJavaRemoteVersion version = remoteVersionBox.getSelectionModel().getSelectedItem();
+            JavaPackageType packageType = packageTypeBox.getSelectionModel().getSelectedItem();
 
             if (version == null)
                 return;
@@ -350,7 +351,7 @@ public final class JavaDownloadDialog extends StackPane {
                             if (idx > 0) {
                                 javaVersion = javaVersion.substring(0, idx);
                             }
-                            String defaultName = distribution.getApiParameter() + "-" + javaVersion;
+                            String defaultName = distribution.getApiParameter() + "-" + javaVersion + "-" + packageType.name().toLowerCase(Locale.ROOT);
                             Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
                                     new JavaInstallPage(controller::onFinish, info, version, updateInfo, defaultName, result)));
                         } else {
