@@ -33,7 +33,7 @@ import java.util.*;
 /**
  * @author Glavo
  */
-public final class DiscoFetchJavaListTask extends Task<TreeMap<Integer, DiscoJavaRemoteVersion>> {
+public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>>> {
 
     public static final String API_ROOT = System.getProperty("hmcl.discoapi.override", "https://api.foojay.io/disco/v3.0");
 
@@ -46,21 +46,15 @@ public final class DiscoFetchJavaListTask extends Task<TreeMap<Integer, DiscoJav
     }
 
     private final DiscoJavaDistribution distribution;
-    private final String packageType;
-    private final boolean isJavaFXBundled;
     private final String archiveType;
     private final Task<String> fetchPackagesTask;
 
-    public DiscoFetchJavaListTask(DownloadProvider downloadProvider, DiscoJavaDistribution distribution, Platform platform, JavaPackageType packageType) {
+    public DiscoFetchJavaListTask(DownloadProvider downloadProvider, DiscoJavaDistribution distribution, Platform platform) {
         this.distribution = distribution;
-        this.packageType = packageType.isJDK() ? "jdk" : "jre";
-        this.isJavaFXBundled = packageType.isJavaFXBundled();
         this.archiveType = platform.getOperatingSystem() == OperatingSystem.WINDOWS ? "zip" : "tar.gz";
 
         HashMap<String, String> params = new HashMap<>();
         params.put("distribution", distribution.getApiParameter());
-        params.put("package", this.packageType);
-        params.put("javafx_bundled", Boolean.toString(isJavaFXBundled));
         params.put("operating_system", getOperatingSystemName(platform.getOperatingSystem()));
         params.put("architecture", getArchitectureName(platform.getArchitecture()));
         params.put("archive_type", archiveType);
@@ -79,29 +73,28 @@ public final class DiscoFetchJavaListTask extends Task<TreeMap<Integer, DiscoJav
     @Override
     public void execute() throws Exception {
         String json = fetchPackagesTask.getResult();
-        List<DiscoJavaRemoteVersion> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoJavaRemoteVersion.class)).getResult();
+        List<DiscoJavaRemoteVersion> list = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoJavaRemoteVersion.class)).getResult();
+        EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
 
-        TreeMap<Integer, DiscoJavaRemoteVersion> map = new TreeMap<>();
-
-        for (DiscoJavaRemoteVersion version : result) {
+        for (DiscoJavaRemoteVersion version : list) {
             if (!distribution.getApiParameter().equals(version.getDistribution())
                     || !version.isDirectlyDownloadable()
-                    || !packageType.equals(version.getPackageType())
-                    || !archiveType.equals(version.getArchiveType())
-                    || isJavaFXBundled != version.isJavaFXBundled())
+                    || !archiveType.equals(version.getArchiveType()))
                 continue;
 
             if (!distribution.testVersion(version))
                 continue;
 
+            JavaPackageType packageType = JavaPackageType.of("jdk".equals(version.getPackageType()), version.isJavaFXBundled());
+            TreeMap<Integer, DiscoJavaRemoteVersion> map = result.computeIfAbsent(packageType, ignored -> new TreeMap<>());
+
             int jdkVersion = version.getJdkVersion();
             DiscoJavaRemoteVersion oldVersion = map.get(jdkVersion);
-            if (oldVersion == null || VersionNumber.compare(version.getDistributionVersion(), oldVersion.getDistributionVersion()) > 0) {
+            if (oldVersion == null || VersionNumber.compare(version.getDistributionVersion(), oldVersion.getDistributionVersion()) > 0)
                 map.put(jdkVersion, version);
-            }
         }
 
-        setResult(map);
+        setResult(result);
     }
 
 }
