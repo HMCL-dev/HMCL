@@ -402,7 +402,7 @@ public final class JavaDownloadDialog extends StackPane {
 
     private static final class DiscoJavaVersionList {
         enum Status {
-            LOADING, SUCCESS, FAILED;
+            LOADING, SUCCESS, FAILED
         }
 
         final DiscoJavaDistribution distribution;
