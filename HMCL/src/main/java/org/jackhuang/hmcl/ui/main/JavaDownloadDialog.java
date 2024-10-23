@@ -117,6 +117,8 @@ public final class JavaDownloadDialog extends StackPane {
                 button.setUserData(version);
                 vbox.getChildren().add(button);
                 toggleGroup.getToggles().add(button);
+                if (JavaManager.REPOSITORY.isInstalled(platform, version))
+                    button.setDisable(true);
             }
 
             setBody(vbox);
