@@ -104,9 +104,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
             announcementPane = new VBox(16);
             if (Metadata.isNightly()) {
-                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint")));
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint"), null));
             } else if (Metadata.isDev()) {
-                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint")));
+                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint"), this::hideAnnouncementPane));
             }
             getChildren().add(announcementPane);
         }
