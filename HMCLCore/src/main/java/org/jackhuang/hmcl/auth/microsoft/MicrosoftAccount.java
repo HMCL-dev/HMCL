@@ -161,6 +161,7 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public void clearCache() {
         authenticated = false;
+        service.getProfileRepository().invalidate(characterUUID);
     }
 
     @Override
