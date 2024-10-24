@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -68,6 +69,14 @@ public abstract class Account implements Observable {
      * @return the specific offline player's info.
      */
     public abstract AuthInfo playOffline() throws AuthenticationException;
+
+    public boolean canUploadSkin() {
+        return false;
+    }
+
+    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        throw new UnsupportedOperationException("Unsupported Operation");
+    }
 
     public abstract Map<Object, Object> toStorage();
 
