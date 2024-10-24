@@ -28,6 +28,7 @@ import javafx.beans.property.Property;
 import javafx.beans.value.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -52,7 +53,6 @@ import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -986,8 +986,8 @@ public final class FXUtils {
                     Element element = (Element) node;
                     if ("a".equals(element.getTagName())) {
                         String href = element.getAttribute("href");
-                        JFXHyperlink hyperlink = new JFXHyperlink(element.getTextContent());
-                        hyperlink.setOnAction(e -> {
+                        Text text = new Text(element.getTextContent());
+                        text.setOnMouseClicked(e -> {
                             String link = href;
                             try {
                                 link = new URI(href).toASCIIString();
@@ -995,7 +995,10 @@ public final class FXUtils {
                             }
                             hyperlinkAction.accept(link);
                         });
-                        texts.add(hyperlink);
+                        text.setCursor(Cursor.HAND);
+                        text.setUnderline(true);
+                        text.setFill(Color.web("#283593"));
+                        texts.add(text);
                     } else if ("b".equals(element.getTagName())) {
                         Text text = new Text(element.getTextContent());
                         text.getStyleClass().add("bold");
