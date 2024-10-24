@@ -144,7 +144,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
             StackPane.setMargin(closeUpdateButton, new Insets(5));
-            closeUpdateButton.setOnMouseClicked(e -> closeUpdateBubble());
+            closeUpdateButton.setOnAction(e -> closeUpdateBubble());
 
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
         }
@@ -206,7 +206,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setPrefWidth(230);
             //menuButton.setButtonType(JFXButton.ButtonType.RAISED);
             menuButton.setStyle("-fx-font-size: 15px;");
-            menuButton.setOnMouseClicked(e -> onMenu());
+            menuButton.setOnAction(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));
             StackPane graphic = new StackPane();
             Node svg = SVG.TRIANGLE.createIcon(Theme.foregroundFillBinding(), 10, 10);

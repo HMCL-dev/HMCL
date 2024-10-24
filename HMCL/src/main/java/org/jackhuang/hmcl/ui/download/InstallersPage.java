@@ -222,7 +222,7 @@ public class InstallersPage extends Control implements WizardPage {
                 installButton.disableProperty().bind(control.installable.not());
                 installButton.setPrefWidth(100);
                 installButton.setPrefHeight(40);
-                installButton.setOnMouseClicked(e -> control.onInstall());
+                installButton.setOnAction(e -> control.onInstall());
                 BorderPane.setAlignment(installButton, Pos.CENTER_RIGHT);
                 root.setBottom(installButton);
             }
