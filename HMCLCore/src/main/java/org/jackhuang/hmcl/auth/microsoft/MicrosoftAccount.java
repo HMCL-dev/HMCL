@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,7 +33,7 @@ import java.util.UUID;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class MicrosoftAccount extends OAuthAccount {
+public final class MicrosoftAccount extends OAuthAccount {
 
     protected final MicrosoftService service;
     protected UUID characterUUID;
@@ -126,6 +127,16 @@ public class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
+    public boolean canUploadSkin() {
+        return true;
+    }
+
+    @Override
+    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        service.uploadSkin(session.getAccessToken(), isSlim, file);
+    }
+
+    @Override
     public Map<Object, Object> toStorage() {
         return session.toStorage();
     }
@@ -150,6 +161,7 @@ public class MicrosoftAccount extends OAuthAccount {
     @Override
     public void clearCache() {
         authenticated = false;
+        service.getProfileRepository().invalidate(characterUUID);
     }
 
     @Override
