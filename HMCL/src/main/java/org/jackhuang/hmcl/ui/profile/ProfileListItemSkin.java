@@ -64,7 +64,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         right.setAlignment(Pos.CENTER_RIGHT);
 
         JFXButton btnRemove = new JFXButton();
-        btnRemove.setOnMouseClicked(e -> skinnable.remove());
+        btnRemove.setOnAction(e -> skinnable.remove());
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14));

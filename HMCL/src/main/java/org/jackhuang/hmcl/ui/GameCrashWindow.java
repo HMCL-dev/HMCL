@@ -417,10 +417,10 @@ public class GameCrashWindow extends Stage {
             HBox toolBar = new HBox();
             {
                 JFXButton exportGameCrashInfoButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
-                exportGameCrashInfoButton.setOnMouseClicked(e -> exportGameCrashInfo());
+                exportGameCrashInfoButton.setOnAction(e -> exportGameCrashInfo());
 
                 JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
-                logButton.setOnMouseClicked(e -> showLogWindow());
+                logButton.setOnAction(e -> showLogWindow());
 
                 JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));

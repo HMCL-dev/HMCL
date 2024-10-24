@@ -178,9 +178,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
                 if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_SERVER) {
                     Hyperlink hyperlink = new Hyperlink(i18n("modpack.wizard.step.initialization.server"));
-                    hyperlink.setOnMouseClicked(e -> {
-                        FXUtils.openLink("https://docs.hmcl.net/modpack/serverpack.html");
-                    });
+                    hyperlink.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/modpack/serverpack.html"));
                     borderPane.setTop(hyperlink);
                 } else {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
