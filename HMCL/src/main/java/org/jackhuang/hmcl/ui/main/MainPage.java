@@ -32,7 +32,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -46,6 +45,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
@@ -83,7 +84,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ObservableList<Node> versionNodes;
     private Profile profile;
 
-    private VBox announcementPane;
+    private TransitionPane announcementPane;
     private final StackPane updatePane;
     private final JFXButton menuButton;
 
@@ -102,13 +103,23 @@ public final class MainPage extends StackPane implements DecoratorPage {
         setPadding(new Insets(20));
 
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
-            announcementPane = new VBox(16);
+            AnnouncementCard announcementCard = null;
+
             if (Metadata.isNightly()) {
-                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint"), null));
+                announcementCard = new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint"), null);
             } else if (Metadata.isDev()) {
-                announcementPane.getChildren().add(new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint"), this::hideAnnouncementPane));
+                announcementCard = new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint"), this::hideAnnouncementPane);
             }
-            getChildren().add(announcementPane);
+
+            if (announcementCard != null) {
+                VBox announcementBox = new VBox(16);
+                announcementBox.getChildren().add(announcementCard);
+
+                announcementPane = new TransitionPane();
+                announcementPane.setContent(announcementBox, ContainerAnimations.NONE.getAnimationProducer());
+
+                getChildren().add(announcementPane);
+            }
         }
 
         updatePane = new StackPane();
@@ -290,10 +301,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     public void hideAnnouncementPane() {
         if (announcementPane != null) {
             config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
-            Pane parent = (Pane) announcementPane.getParent();
-            if (parent != null)
-                parent.getChildren().remove(announcementPane);
-            announcementPane = null;
+            announcementPane.setContent(new StackPane(), ContainerAnimations.FADE.getAnimationProducer());
         }
     }
 
