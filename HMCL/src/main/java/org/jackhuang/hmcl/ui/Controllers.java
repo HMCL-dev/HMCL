@@ -391,9 +391,6 @@ public final class Controllers {
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
                     break;
-                case "hmcl://hide-announcement":
-                    Controllers.getRootPage().getMainPage().hideAnnouncementPane();
-                    break;
             }
         } else {
             FXUtils.openLink(href);

@@ -17,21 +17,36 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 
-public class AnnouncementCard extends VBox {
+public final class AnnouncementCard extends VBox {
 
-    public AnnouncementCard(String title, String content) {
-        TextFlow tf = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
+    public AnnouncementCard(String title, String content, Runnable onClose) {
+        TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
+        body.setLineSpacing(4);
 
-        Label label = new Label(title);
-        label.getStyleClass().add("title");
-        getChildren().setAll(label, tf);
-        setSpacing(14);
+        BorderPane titleBar = new BorderPane();
+        titleBar.getStyleClass().add("title");
+        titleBar.setLeft(new Label(title));
+
+        if (onClose != null) {
+            Node hideNode = SVG.CLOSE.createIcon(Theme.blackFill(), 20, 20);
+            hideNode.setOnMouseClicked(e -> onClose.run());
+            hideNode.setCursor(Cursor.HAND);
+            titleBar.setRight(hideNode);
+        }
+
+        getChildren().setAll(titleBar, body);
+        setSpacing(16);
         getStyleClass().addAll("card", "announcement");
     }
 }
