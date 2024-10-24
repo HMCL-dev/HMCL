@@ -25,7 +25,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Pair;
@@ -42,7 +41,7 @@ public class AdvancedListItem extends Control {
 
     public AdvancedListItem() {
         getStyleClass().add("advanced-list-item");
-        addEventHandler(MouseEvent.MOUSE_CLICKED, e -> fireEvent(new ActionEvent()));
+        FXUtils.onClicked(this, () -> fireEvent(new ActionEvent()));
     }
 
     public Node getLeftGraphic() {

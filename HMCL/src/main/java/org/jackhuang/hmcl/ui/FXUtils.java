@@ -957,6 +957,15 @@ public final class FXUtils {
         });
     }
 
+    public static void onClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
     public static void copyText(String text) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
@@ -987,7 +996,7 @@ public final class FXUtils {
                     if ("a".equals(element.getTagName())) {
                         String href = element.getAttribute("href");
                         Text text = new Text(element.getTextContent());
-                        text.setOnMouseClicked(e -> {
+                        onClicked(text, () -> {
                             String link = href;
                             try {
                                 link = new URI(href).toASCIIString();

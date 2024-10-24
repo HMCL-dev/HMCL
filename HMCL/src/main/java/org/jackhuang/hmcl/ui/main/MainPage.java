@@ -117,7 +117,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.setLimitWidth(updatePane, 230);
         FXUtils.setLimitHeight(updatePane, 55);
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
-        updatePane.setOnMouseClicked(e -> onUpgrade());
+        FXUtils.onClicked(updatePane, this::onUpgrade);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
 
         {
@@ -224,10 +224,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
         menu.setAlwaysShowingVBar(true);
-        menu.setOnMouseClicked(e -> popup.hide());
+        FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-            node.setOnMouseClicked(e -> profile.setSelectedVersion(version.getId()));
+            FXUtils.onClicked(node, () -> profile.setSelectedVersion(version.getId()));
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
