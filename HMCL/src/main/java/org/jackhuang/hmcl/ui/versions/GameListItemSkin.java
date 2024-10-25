@@ -79,7 +79,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         right.setAlignment(Pos.CENTER_RIGHT);
         if (skinnable.canUpdate()) {
             JFXButton btnUpgrade = new JFXButton();
-            btnUpgrade.setOnMouseClicked(e -> skinnable.update());
+            btnUpgrade.setOnAction(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
             btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
             runInFX(() -> FXUtils.installFastTooltip(btnUpgrade, i18n("version.update")));
@@ -88,7 +88,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         {
             JFXButton btnLaunch = new JFXButton();
-            btnLaunch.setOnMouseClicked(e -> skinnable.launch());
+            btnLaunch.setOnAction(e -> skinnable.launch());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
             btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
@@ -98,7 +98,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         {
             JFXButton btnManage = new JFXButton();
-            btnManage.setOnMouseClicked(e -> {
+            btnManage.setOnAction(e -> {
                 currentSkinnable = skinnable;
                 popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
             });

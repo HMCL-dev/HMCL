@@ -123,7 +123,7 @@ public final class HTMLRenderer {
         if (hyperlink != null) {
             URI target = resolveLink(hyperlink);
             if (target != null) {
-                text.setOnMouseClicked(event -> onClickHyperlink.accept(target));
+                FXUtils.onClicked(text, () -> onClickHyperlink.accept(target));
                 text.setCursor(Cursor.HAND);
             }
             text.getStyleClass().add("html-hyperlink");
@@ -192,7 +192,7 @@ public final class HTMLRenderer {
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
                     if (target != null) {
-                        imageView.setOnMouseClicked(event -> onClickHyperlink.accept(target));
+                        FXUtils.onClicked(imageView, () -> onClickHyperlink.accept(target));
                         imageView.setCursor(Cursor.HAND);
                     }
                 }

@@ -346,7 +346,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
             RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> Controllers.navigate(new DownloadPage(page, addon, version, callback)));
+            FXUtils.onClicked(container, () -> Controllers.navigate(new DownloadPage(page, addon, version, callback)));
             getChildren().setAll(container);
 
             if (addon != RemoteMod.BROKEN) {
@@ -428,7 +428,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
+            FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -443,7 +443,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
             ModItem modItem = new ModItem(version, selfPage);
-            modItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+            FXUtils.onClicked(modItem, () -> fireEvent(new DialogCloseEvent()));
             box.getChildren().setAll(modItem);
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
@@ -505,7 +505,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.put(dependency.getType(), list);
                     }
                     DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
-                    dependencyModItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+                    FXUtils.onClicked(dependencyModItem, () -> fireEvent(new DialogCloseEvent()));
                     dependencies.get(dependency.getType()).add(dependencyModItem);
                 }
 

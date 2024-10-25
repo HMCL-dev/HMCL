@@ -34,6 +34,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
@@ -322,6 +323,9 @@ public final class LogWindow extends Stage {
                         setGraphic(null);
 
                         setOnMouseClicked(event -> {
+                            if (event.getButton() != MouseButton.PRIMARY)
+                                return;
+
                             if (!event.isControlDown()) {
                                 for (ListCell<Log> logListCell : selected) {
                                     if (logListCell != this) {
@@ -340,6 +344,8 @@ public final class LogWindow extends Stage {
                             if (getItem() != null) {
                                 getItem().setSelected(true);
                             }
+
+                            event.consume();
                         });
                     }
 

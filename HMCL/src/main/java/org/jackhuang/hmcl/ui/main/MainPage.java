@@ -128,7 +128,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.setLimitWidth(updatePane, 230);
         FXUtils.setLimitHeight(updatePane, 55);
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
-        updatePane.setOnMouseClicked(e -> onUpgrade());
+        FXUtils.onClicked(updatePane, this::onUpgrade);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
 
         {
@@ -155,7 +155,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
             StackPane.setMargin(closeUpdateButton, new Insets(5));
-            closeUpdateButton.setOnMouseClicked(e -> closeUpdateBubble());
+            closeUpdateButton.setOnAction(e -> closeUpdateBubble());
 
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
         }
@@ -217,7 +217,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setPrefWidth(230);
             //menuButton.setButtonType(JFXButton.ButtonType.RAISED);
             menuButton.setStyle("-fx-font-size: 15px;");
-            menuButton.setOnMouseClicked(e -> onMenu());
+            menuButton.setOnAction(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));
             StackPane graphic = new StackPane();
             Node svg = SVG.TRIANGLE.createIcon(Theme.foregroundFillBinding(), 10, 10);
@@ -235,10 +235,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
         menu.setAlwaysShowingVBar(true);
-        menu.setOnMouseClicked(e -> popup.hide());
+        FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-            node.setOnMouseClicked(e -> profile.setSelectedVersion(version.getId()));
+            FXUtils.onClicked(node, () -> profile.setSelectedVersion(version.getId()));
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);

@@ -53,7 +53,7 @@ public class CrashWindow extends Stage {
 
         Button btnContact = new Button();
         btnContact.setText(i18n("launcher.contact"));
-        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Metadata.CONTACT_URL));
+        btnContact.setOnAction(event -> FXUtils.openLink(Metadata.CONTACT_URL));
         HBox box = new HBox();
         box.setStyle("-fx-padding: 8px;");
         box.getChildren().add(btnContact);

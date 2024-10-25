@@ -73,7 +73,7 @@ public abstract class SettingsView extends StackPane {
                     {
                         StackPane sponsorPane = new StackPane();
                         sponsorPane.setCursor(Cursor.HAND);
-                        sponsorPane.setOnMouseClicked(e -> onSponsor());
+                        FXUtils.onClicked(sponsorPane, this::onSponsor);
                         sponsorPane.setPadding(new Insets(8, 0, 8, 0));
 
                         GridPane gridPane = new GridPane();
@@ -121,7 +121,7 @@ public abstract class SettingsView extends StackPane {
 
                     {
                         btnUpdate = new JFXButton();
-                        btnUpdate.setOnMouseClicked(e -> onUpdate());
+                        btnUpdate.setOnAction(e -> onUpdate());
                         btnUpdate.getStyleClass().add("toggle-icon4");
                         btnUpdate.setGraphic(SVG.UPDATE.createIcon(Theme.blackFill(), 20, 20));
 
@@ -161,7 +161,7 @@ public abstract class SettingsView extends StackPane {
 
                     {
                         JFXButton cleanButton = new JFXButton(i18n("launcher.cache_directory.clean"));
-                        cleanButton.setOnMouseClicked(e -> clearCacheDirectory());
+                        cleanButton.setOnAction(e -> clearCacheDirectory());
                         cleanButton.getStyleClass().add("jfx-button-border");
 
                         fileCommonLocationSublist.setHeaderRight(cleanButton);
@@ -193,11 +193,11 @@ public abstract class SettingsView extends StackPane {
                     debugPane.setLeft(left);
 
                     JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
-                    openLogFolderButton.setOnMouseClicked(e -> openLogFolder());
+                    openLogFolderButton.setOnAction(e -> openLogFolder());
                     openLogFolderButton.getStyleClass().add("jfx-button-border");
 
                     JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
-                    logButton.setOnMouseClicked(e -> onExportLogs());
+                    logButton.setOnAction(e -> onExportLogs());
                     logButton.getStyleClass().add("jfx-button-border");
 
                     HBox buttonBox = new HBox();
