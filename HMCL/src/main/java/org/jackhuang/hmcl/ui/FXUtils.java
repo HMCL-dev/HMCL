@@ -1005,8 +1005,8 @@ public final class FXUtils {
                             hyperlinkAction.accept(link);
                         });
                         text.setCursor(Cursor.HAND);
+                        text.setFill(Color.web("#0070E0"));
                         text.setUnderline(true);
-                        text.setFill(Color.web("#283593"));
                         texts.add(text);
                     } else if ("b".equals(element.getTagName())) {
                         Text text = new Text(element.getTextContent());
