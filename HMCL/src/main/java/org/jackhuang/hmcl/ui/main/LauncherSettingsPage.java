@@ -76,7 +76,6 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         settingsItem.setTitle(i18n("settings.type.global.manage"));
                         settingsItem.setLeftGraphic(wrap(SVG.GAMEPAD));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
-                        runInFX(() -> FXUtils.installFastTooltip(settingsItem, i18n("settings.type.global.manage")));
                         settingsItem.setOnAction(e -> tab.select(gameTab));
                     })
                     .addNavigationDrawerItem(javaItem -> {
