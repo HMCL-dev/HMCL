@@ -30,9 +30,9 @@ public class IconedMenuItem extends IconedItem {
         getStyleClass().setAll("iconed-menu-item");
 
         if (popup == null) {
-            setOnMouseClicked(e -> action.run());
+            FXUtils.onClicked(this, action);
         } else {
-            setOnMouseClicked(e -> {
+            FXUtils.onClicked(this, () -> {
                 action.run();
                 popup.hide();
             });

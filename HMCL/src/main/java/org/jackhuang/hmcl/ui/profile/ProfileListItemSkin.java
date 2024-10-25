@@ -22,7 +22,6 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.setting.Theme;
@@ -47,9 +46,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
             skinnable.pseudoClassStateChanged(SELECTED, active);
         });
 
-        getSkinnable().addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            getSkinnable().setSelected(true);
-        });
+        FXUtils.onClicked(getSkinnable(), () -> getSkinnable().setSelected(true));
 
         Node left = VersionPage.wrap(SVG.FOLDER_OUTLINE);
         root.setLeft(left);
