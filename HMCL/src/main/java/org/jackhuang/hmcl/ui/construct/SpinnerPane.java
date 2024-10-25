@@ -28,8 +28,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -110,11 +108,11 @@ public class SpinnerPane extends Control {
     };
 
     @Override
-    protected Skin createDefaultSkin() {
+    protected SkinBase<SpinnerPane> createDefaultSkin() {
         return new Skin(this);
     }
 
-    private static class Skin extends SkinBase<SpinnerPane> {
+    private static final class Skin extends SkinBase<SpinnerPane> {
         private final JFXSpinner spinner = new JFXSpinner();
         private final StackPane contentPane = new StackPane();
         private final StackPane topPane = new StackPane();
@@ -131,12 +129,10 @@ public class SpinnerPane extends Control {
             topPane.getStyleClass().add("notice-pane");
             failedPane.getStyleClass().add("notice-pane");
             failedPane.getChildren().setAll(failedReasonLabel);
-            failedPane.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            FXUtils.onClicked(failedPane, () -> {
                 EventHandler<Event> action = control.getOnFailedAction();
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1 && action != null) {
+                if (action != null)
                     action.handle(new Event(FAILED_ACTION));
-                    event.consume();
-                }
             });
 
             FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> {
