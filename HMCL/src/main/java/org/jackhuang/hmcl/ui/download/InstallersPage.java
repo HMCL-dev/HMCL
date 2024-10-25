@@ -69,7 +69,7 @@ public class InstallersPage extends Control implements WizardPage {
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
-            library.installActionProperty().set(e -> {
+            library.setOnInstall(() -> {
                 if (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)) {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
                 }
@@ -77,7 +77,7 @@ public class InstallersPage extends Control implements WizardPage {
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
             });
-            library.removeActionProperty().set(e -> {
+            library.setOnRemove(() -> {
                 controller.getSettings().remove(libraryId);
                 reload();
             });
