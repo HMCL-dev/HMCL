@@ -402,7 +402,7 @@ public class InstallerItem extends Control {
             ));
             installButton.getStyleClass().add("toggle-icon4");
             installButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
-                if (control.onInstall.get() == null) {
+                if (control.getOnInstall() == null) {
                     return false;
                 }
 
