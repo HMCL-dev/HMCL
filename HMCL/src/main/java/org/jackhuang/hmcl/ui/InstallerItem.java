@@ -435,7 +435,6 @@ public class InstallerItem extends Control {
                     });
                     pane.setCursor(Cursor.HAND);
                 } else {
-                    container.onMouseClickedProperty().unbind();
                     container.setOnMouseClicked(null);
                     pane.setCursor(Cursor.DEFAULT);
                 }
