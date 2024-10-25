@@ -21,12 +21,10 @@ import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
@@ -78,7 +76,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleStringProperty authlibInjectorServer = new SimpleStringProperty();
     private final SimpleStringProperty launchArguments = new SimpleStringProperty("");
     private final SimpleStringProperty javaArguments = new SimpleStringProperty("");
-    private final ObjectProperty<EventHandler<? super MouseEvent>> next = new SimpleObjectProperty<>();
     private final SimpleStringProperty mcbbsThreadId = new SimpleStringProperty("");
 
     public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
@@ -97,8 +94,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         javaArguments.set(versionSetting.getJavaArgs());
 
         canIncludeLauncher = JarUtils.thisJarPath() != null;
-
-        next.set(e -> onNext());
     }
 
     private void onNext() {
@@ -376,7 +371,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     borderPane.setBottom(hbox);
 
                     JFXButton nextButton = FXUtils.newRaisedButton(i18n("wizard.next"));
-                    nextButton.onMouseClickedProperty().bind(skinnable.next);
+                    nextButton.setOnAction(e -> skinnable.onNext());
                     nextButton.setPrefWidth(100);
                     nextButton.setPrefHeight(40);
                     nextButton.disableProperty().bind(

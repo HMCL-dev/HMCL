@@ -28,11 +28,12 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 @DefaultProperty("content")
 public class SpinnerPane extends Control {
@@ -101,12 +102,13 @@ public class SpinnerPane extends Control {
         return onFailedActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
+    private final ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
         @Override
         protected void invalidated() {
             setEventHandler(FAILED_ACTION, get());
         }
     };
+
     @Override
     protected Skin createDefaultSkin() {
         return new Skin(this);
@@ -129,13 +131,13 @@ public class SpinnerPane extends Control {
             topPane.getStyleClass().add("notice-pane");
             failedPane.getStyleClass().add("notice-pane");
             failedPane.getChildren().setAll(failedReasonLabel);
-            failedPane.onMouseClickedProperty().bind(
-                    BindingMapping.of(control.onFailedAction)
-                            .map(actionHandler -> (e -> {
-                                if (actionHandler != null) {
-                                    actionHandler.handle(new Event(FAILED_ACTION));
-                                }
-                            })));
+            failedPane.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+                EventHandler<Event> action = control.getOnFailedAction();
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1 && action != null) {
+                    action.handle(new Event(FAILED_ACTION));
+                    event.consume();
+                }
+            });
 
             FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> {
                 if (newValue == null) {
