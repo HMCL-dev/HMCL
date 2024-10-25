@@ -122,7 +122,7 @@ public class SpinnerPane extends Control {
         @SuppressWarnings("FieldCanBeLocal") // prevent from gc.
         private final InvalidationListener observer;
 
-        protected Skin(SpinnerPane control) {
+        Skin(SpinnerPane control) {
             super(control);
 
             topPane.getChildren().setAll(spinner);
