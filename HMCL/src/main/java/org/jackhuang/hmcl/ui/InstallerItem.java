@@ -59,8 +59,8 @@ public class InstallerItem extends Control {
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
 
-    private final ObjectProperty<Runnable> onInstall = new SimpleObjectProperty<>(this, "installAction");
-    private final ObjectProperty<Runnable> onRemove = new SimpleObjectProperty<>(this, "removeAction");
+    private final ObjectProperty<Runnable> onInstall = new SimpleObjectProperty<>(this, "onInstall");
+    private final ObjectProperty<Runnable> onRemove = new SimpleObjectProperty<>(this, "onRemove");
 
     public interface State {
     }
