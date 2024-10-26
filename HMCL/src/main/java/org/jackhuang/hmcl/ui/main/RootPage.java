@@ -58,8 +58,8 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
@@ -191,7 +191,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
-                    .add(chatItem);
+                    .add(chatItem)
+                    ;
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);
