@@ -37,6 +37,7 @@ import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -53,7 +54,6 @@ import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -252,7 +252,7 @@ public final class Controllers {
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
-        Task.runAsync(JavaVersion::initialize).start();
+        Lang.thread(JavaManager::initialize, "Search Java", true);
 
         scene = new Scene(decorator.getDecorator());
         scene.setFill(Color.TRANSPARENT);
@@ -390,9 +390,6 @@ public final class Controllers {
                 case "hmcl://settings/feedback":
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
-                    break;
-                case "hmcl://hide-announcement":
-                    Controllers.getRootPage().getMainPage().hideAnnouncementPane();
                     break;
             }
         } else {

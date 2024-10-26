@@ -94,7 +94,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnMove = new JFXButton();
         SpinnerPane spinnerMove = new SpinnerPane();
         spinnerMove.getStyleClass().add("small-spinner-pane");
-        btnMove.setOnMouseClicked(e -> {
+        btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
             Accounts.getAccounts().remove(account);
             if (account.isPortable()) {
@@ -129,7 +129,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnRefresh = new JFXButton();
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
-        btnRefresh.setOnMouseClicked(e -> {
+        btnRefresh.setOnAction(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()
                     .whenComplete(Schedulers.javafx(), ex -> {
@@ -149,7 +149,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
 
         JFXButton btnUpload = new JFXButton();
         SpinnerPane spinnerUpload = new SpinnerPane();
-        btnUpload.setOnMouseClicked(e -> {
+        btnUpload.setOnAction(e -> {
             Task<?> uploadTask = skinnable.uploadSkin();
             if (uploadTask != null) {
                 spinnerUpload.showSpinner();
@@ -170,14 +170,14 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnCopyUUID = new JFXButton();
         SpinnerPane spinnerCopyUUID = new SpinnerPane();
         spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
-        btnCopyUUID.setOnMouseClicked(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
+        btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
         btnCopyUUID.setGraphic(SVG.COPY.createIcon(Theme.blackFill(), -1, -1));
         runInFX(() -> FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid")));
         spinnerCopyUUID.setContent(btnCopyUUID);
         right.getChildren().add(spinnerCopyUUID);
 
         JFXButton btnRemove = new JFXButton();
-        btnRemove.setOnMouseClicked(e -> skinnable.remove());
+        btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
         btnRemove.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1, -1));

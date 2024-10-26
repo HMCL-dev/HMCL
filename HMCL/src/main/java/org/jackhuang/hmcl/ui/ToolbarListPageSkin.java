@@ -91,7 +91,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         ret.textFillProperty().bind(Theme.foregroundFillBinding());
         ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1, -1)));
         ret.setText(text);
-        ret.setOnMouseClicked(e -> onClick.run());
+        ret.setOnAction(e -> onClick.run());
         return ret;
     }
 
@@ -100,7 +100,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         ret.getStyleClass().add("jfx-tool-bar-button");
         ret.setGraphic(wrap(svg.createIcon(Theme.blackFill(), -1, -1)));
         ret.setText(text);
-        ret.setOnMouseClicked(e -> onClick.run());
+        ret.setOnAction(e -> onClick.run());
         return ret;
     }
 
@@ -110,7 +110,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         ret.textFillProperty().bind(Theme.foregroundFillBinding());
         ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1, -1)));
         FXUtils.installFastTooltip(ret, tooltip);
-        ret.setOnMouseClicked(e -> onClick.run());
+        ret.setOnAction(e -> onClick.run());
         return ret;
     }
 

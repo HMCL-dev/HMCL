@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -79,10 +78,11 @@ public class TaskTest {
     @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
     public void testThenAccept() {
         AtomicBoolean flag = new AtomicBoolean();
-        boolean result = Task.supplyAsync(JavaVersion::fromCurrentEnvironment)
-                .thenAcceptAsync(Schedulers.io(), javaVersion -> {
+        Object obj = new Object();
+        boolean result = Task.supplyAsync(() -> obj)
+                .thenAcceptAsync(Schedulers.io(), o -> {
                     flag.set(true);
-                    assertEquals(javaVersion, JavaVersion.fromCurrentEnvironment());
+                    assertSame(obj, o);
                 })
                 .test();
 

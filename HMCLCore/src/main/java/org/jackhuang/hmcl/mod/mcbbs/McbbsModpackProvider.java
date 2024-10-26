@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
@@ -56,8 +55,7 @@ public final class McbbsModpackProvider implements ModpackProvider {
 
     @Override
     public void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
-        ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(modpackConfigurationJson, new TypeToken<ModpackConfiguration<McbbsModpackManifest>>() {
-        }.getType());
+        ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(modpackConfigurationJson, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
         if (!getName().equals(config.getType())) {
             throw new IllegalArgumentException("Incorrect manifest type, actual=" + config.getType() + ", expected=" + getName());

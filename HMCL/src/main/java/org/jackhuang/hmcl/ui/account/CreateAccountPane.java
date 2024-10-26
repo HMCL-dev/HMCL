@@ -65,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -296,7 +297,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                     }
                 });
-                hintPane.setOnMouseClicked(e -> {
+                FXUtils.onClicked(hintPane, () -> {
                     if (deviceCode.get() != null) {
                         FXUtils.copyText(deviceCode.get().getUserCode());
                     }
@@ -637,7 +638,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnAction(e -> latch.countDown());
 
-            listBox.startCategory(i18n("account.choose"));
+            listBox.startCategory(i18n("account.choose").toUpperCase(Locale.ROOT));
 
             setCenter(listBox);
 
@@ -657,7 +658,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     TexturesLoader.bindAvatar(portraitCanvas, service, profile.getId());
 
                     IconedItem accountItem = new IconedItem(portraitCanvas, profile.getName());
-                    accountItem.setOnMouseClicked(e -> {
+                    FXUtils.onClicked(accountItem, () -> {
                         selectedProfile = profile;
                         latch.countDown();
                     });
