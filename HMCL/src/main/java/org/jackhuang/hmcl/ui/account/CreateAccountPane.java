@@ -317,7 +317,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
                 deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
                 JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
-                forgotpasswordLink.setExternalLink("https://www.minecraft.net/password/forgot");
+                forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
                 box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
