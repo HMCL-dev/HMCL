@@ -146,12 +146,12 @@ public class SpinnerPane extends Control {
 
             observer = FXUtils.observeWeak(() -> {
                 if (getSkinnable().getFailedReason() != null) {
-                    root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(failedPane, ContainerAnimations.FADE);
                     failedReasonLabel.setText(getSkinnable().getFailedReason());
                 } else if (getSkinnable().isLoading()) {
-                    root.setContent(topPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(topPane, ContainerAnimations.FADE);
                 } else {
-                    root.setContent(contentPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(contentPane, ContainerAnimations.FADE);
                 }
             }, getSkinnable().loadingProperty(), getSkinnable().failedReasonProperty());
         }
