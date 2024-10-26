@@ -116,7 +116,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 announcementBox.getChildren().add(announcementCard);
 
                 announcementPane = new TransitionPane();
-                announcementPane.setContent(announcementBox, ContainerAnimations.NONE.getAnimationProducer());
+                announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
 
                 getChildren().add(announcementPane);
             }
@@ -301,7 +301,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
     public void hideAnnouncementPane() {
         if (announcementPane != null) {
             config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
-            announcementPane.setContent(new StackPane(), ContainerAnimations.FADE.getAnimationProducer());
+            announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
         }
     }
 

@@ -78,7 +78,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
         tab.select(versionSettingsTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
+            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));

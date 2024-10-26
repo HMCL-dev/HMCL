@@ -97,7 +97,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         tab.select(newGameTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
+            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
         {

@@ -174,11 +174,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 if (s.isAnimate()) {
                     AnimationProducer animation;
                     if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.NEXT) {
-                        animation = ContainerAnimations.SWIPE_LEFT_FADE_SHORT.getAnimationProducer();
+                        animation = ContainerAnimations.SWIPE_LEFT_FADE_SHORT;
                     } else if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.PREVIOUS) {
-                        animation = ContainerAnimations.SWIPE_RIGHT_FADE_SHORT.getAnimationProducer();
+                        animation = ContainerAnimations.SWIPE_RIGHT_FADE_SHORT;
                     } else {
-                        animation = ContainerAnimations.FADE.getAnimationProducer();
+                        animation = ContainerAnimations.FADE;
                     }
                     skinnable.setNavigationDirection(Navigation.NavigationDirection.START);
                     navBarPane.setContent(node, animation);
