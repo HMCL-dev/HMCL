@@ -240,7 +240,6 @@ public final class JavaInfo {
     }
 
     public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(Platform.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));
-    public static final int CURRENT_VERSION = CURRENT_ENVIRONMENT.getParsedVersion();
 
     private final Platform platform;
     private final String version;
