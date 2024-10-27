@@ -82,7 +82,7 @@ public class TooltipInstaller {
                 Object behavior = createTooltipBehavior.newInstance(showDelay, showDuration, hideDelay, false);
                 installTooltipBehavior.invoke(behavior, node, tooltip);
             } catch (ReflectiveOperationException e) {
-                LOG.warning("Failed to set tooltip delay", e);
+                LOG.warning("Failed to set tooltip show delay", e);
                 Tooltip.install(node, tooltip);
             }
         }
@@ -114,7 +114,7 @@ public class TooltipInstaller {
                 setTooltipShowDuration.invokeExact(tooltip, showDuration);
                 setTooltipHideDelay.invokeExact(tooltip, hideDelay);
             } catch (Throwable e) {
-                LOG.warning("Failed to set tooltip delay", e);
+                LOG.warning("Failed to set tooltip show delay", e);
             }
 
             Tooltip.install(node, tooltip);
