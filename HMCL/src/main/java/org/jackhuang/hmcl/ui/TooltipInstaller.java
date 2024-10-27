@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.java.JavaInfo;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
