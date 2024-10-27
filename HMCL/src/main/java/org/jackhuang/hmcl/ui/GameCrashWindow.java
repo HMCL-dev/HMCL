@@ -387,13 +387,13 @@ public class GameCrashWindow extends Stage {
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
                 gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
-                runInFX(() -> FXUtils.installFastTooltip(gameDir, i18n("game.directory")));
+                FXUtils.installFastTooltip(gameDir, i18n("game.directory"));
 
                 TwoLineListItem javaDir = new TwoLineListItem();
                 javaDir.getStyleClass().setAll("two-line-item-second-large");
                 javaDir.setTitle(i18n("settings.game.java_directory"));
                 javaDir.setSubtitle(launchOptions.getJava().getBinary().toAbsolutePath().toString());
-                runInFX(() -> FXUtils.installFastTooltip(javaDir, i18n("settings.game.java_directory")));
+                FXUtils.installFastTooltip(javaDir, i18n("settings.game.java_directory"));
 
                 Label reasonTitle = new Label(i18n("game.crash.reason"));
                 reasonTitle.getStyleClass().add("two-line-item-second-large-title");
@@ -424,7 +424,7 @@ public class GameCrashWindow extends Stage {
 
                 JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
-                runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
+                FXUtils.installFastTooltip(helpButton, i18n("logwindow.help"));
 
 
                 toolBar.setPadding(new Insets(8));

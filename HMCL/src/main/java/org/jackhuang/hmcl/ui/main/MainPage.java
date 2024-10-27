@@ -224,7 +224,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
             graphic.setTranslateX(12);
-            runInFX(() -> FXUtils.installFastTooltip(menuButton, i18n("version.switch")));
+            FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(graphic);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);

@@ -510,7 +510,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             if (factory instanceof OfflineAccountFactory) {
                 txtUsername.setPromptText(i18n("account.methods.offline.name.special_characters"));
-                runInFX(() -> FXUtils.installFastTooltip(txtUsername, i18n("account.methods.offline.name.special_characters")));
+                FXUtils.installFastTooltip(txtUsername, i18n("account.methods.offline.name.special_characters"));
 
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
                 purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
