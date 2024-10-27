@@ -72,8 +72,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -298,8 +296,12 @@ public final class FXUtils {
             ScrollUtils.addSmoothScrolling(scrollPane);
     }
 
+    private static final Duration TOOLTIP_FAST_SHOW_DELAY = Duration.millis(50);
+    private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
+    private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
+
     public static void installFastTooltip(Node node, Tooltip tooltip) {
-        installTooltip(node, 50, 5000, 0, tooltip);
+        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installFastTooltip(Node node, String tooltip) {
@@ -307,37 +309,11 @@ public final class FXUtils {
     }
 
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
-        installTooltip(node, 500, 5000, 0, tooltip);
+        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installSlowTooltip(Node node, String tooltip) {
         installSlowTooltip(node, new Tooltip(tooltip));
-    }
-
-    public static void installTooltip(Node node, double openDelay, double visibleDelay, double closeDelay, Tooltip tooltip) {
-        runInFX(() -> {
-            try {
-                // Java 8
-                Class<?> behaviorClass = Class.forName("javafx.scene.control.Tooltip$TooltipBehavior");
-                Constructor<?> behaviorConstructor = behaviorClass.getDeclaredConstructor(Duration.class, Duration.class, Duration.class, boolean.class);
-                behaviorConstructor.setAccessible(true);
-                Object behavior = behaviorConstructor.newInstance(new Duration(openDelay), new Duration(visibleDelay), new Duration(closeDelay), false);
-                Method installMethod = behaviorClass.getDeclaredMethod("install", Node.class, Tooltip.class);
-                installMethod.setAccessible(true);
-                installMethod.invoke(behavior, node, tooltip);
-            } catch (ReflectiveOperationException e) {
-                try {
-                    // Java 9
-                    Tooltip.class.getMethod("setShowDelay", Duration.class).invoke(tooltip, new Duration(openDelay));
-                    Tooltip.class.getMethod("setShowDuration", Duration.class).invoke(tooltip, new Duration(visibleDelay));
-                    Tooltip.class.getMethod("setHideDelay", Duration.class).invoke(tooltip, new Duration(closeDelay));
-                } catch (ReflectiveOperationException e2) {
-                    e.addSuppressed(e2);
-                    LOG.error("Cannot install tooltip", e);
-                }
-                Tooltip.install(node, tooltip);
-            }
-        });
     }
 
     public static void playAnimation(Node node, String animationKey, Timeline timeline) {
