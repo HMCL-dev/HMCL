@@ -103,7 +103,7 @@ public class TooltipInstaller {
                 setTooltipShowDuration = lookup.findVirtual(Tooltip.class, "setShowDuration", methodType);
                 setTooltipHideDelay = lookup.findVirtual(Tooltip.class, "setHideDelay", methodType);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new ExceptionInInitializerError(e);
             }
         }
 
