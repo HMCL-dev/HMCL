@@ -301,7 +301,7 @@ public final class FXUtils {
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
 
     public static void installFastTooltip(Node node, Tooltip tooltip) {
-        FXUtils.runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installFastTooltip(Node node, String tooltip) {
@@ -309,7 +309,7 @@ public final class FXUtils {
     }
 
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
-        FXUtils.runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installSlowTooltip(Node node, String tooltip) {
