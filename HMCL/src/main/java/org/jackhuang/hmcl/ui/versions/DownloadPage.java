@@ -62,7 +62,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
@@ -241,14 +240,14 @@ public class DownloadPage extends Control implements DecoratorPage {
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
-                    runInFX(() -> FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod")));
+                    FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod"));
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
                 openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
-                runInFX(() -> FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage()));
+                FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage());
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();

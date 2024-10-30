@@ -64,7 +64,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
@@ -302,7 +301,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 lblGameVersion.visibleProperty().bind(hasVersion);
                 gameVersionField.managedProperty().bind(hasVersion);
                 gameVersionField.visibleProperty().bind(hasVersion);
-                runInFX(() -> FXUtils.installFastTooltip(gameVersionField, i18n("search.enter")));
+                FXUtils.installFastTooltip(gameVersionField, i18n("search.enter"));
 
                 FXUtils.onChangeAndOperate(getSkinnable().version, version -> {
                     if (StringUtils.isNotBlank(version.getVersion())) {
