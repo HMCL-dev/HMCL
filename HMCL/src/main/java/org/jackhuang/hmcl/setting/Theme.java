@@ -162,10 +162,13 @@ public class Theme {
             themeBuilder.append('}');
 
             if (FXUtils.JAVAFX_MAJOR_VERSION >= 17)
+                // JavaFX 17+ support loading stylesheets from data URIs
+                // https://bugs.openjdk.org/browse/JDK-8267554
                 css = "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(themeBuilder.toString().getBytes(StandardCharsets.UTF_8));
             else
                 try {
                     File temp = File.createTempFile("hmcl", ".css");
+                    // For JavaFX 17 or earlier, CssParser uses the default charset
                     // https://bugs.openjdk.org/browse/JDK-8279328
                     FileUtils.writeText(temp, themeBuilder.toString(), Charset.defaultCharset());
                     temp.deleteOnExit();
