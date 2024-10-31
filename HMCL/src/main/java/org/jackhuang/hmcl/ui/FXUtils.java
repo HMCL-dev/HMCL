@@ -54,6 +54,7 @@ import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -83,6 +84,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -92,6 +95,20 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class FXUtils {
     private FXUtils() {
+    }
+
+    public static final int JAVAFX_MAJOR_VERSION;
+
+    static {
+        String jfxVersion = System.getProperty("javafx.version");
+        int majorVersion = -1;
+        if (jfxVersion != null) {
+            Matcher matcher = Pattern.compile("^(?<version>[0-9]+)").matcher(jfxVersion);
+            if (matcher.find()) {
+                majorVersion = Lang.parseInt(matcher.group(), -1);
+            }
+        }
+        JAVAFX_MAJOR_VERSION = majorVersion;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
