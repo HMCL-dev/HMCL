@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -141,7 +142,6 @@ public class Theme {
             }
 
             try {
-                File temp = File.createTempFile("hmcl", ".css");
                 String themeText = IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
                         .replace("%base-color%", color)
                         .replace("%base-red%", Integer.toString((int) Math.ceil(paint.getRed() * 256)))
@@ -155,9 +155,17 @@ public class Theme {
                 // https://bugs.openjdk.org/browse/JDK-8279328
                 // For JavaFX 17 or earlier, native encoding should be used
                 Charset charset = FXUtils.JAVAFX_MAJOR_VERSION >= 18 ? StandardCharsets.UTF_8 : Charset.defaultCharset();
-                FileUtils.writeText(temp, themeText, charset);
-                temp.deleteOnExit();
-                css = temp.toURI().toString();
+
+                if (FXUtils.JAVAFX_MAJOR_VERSION < 17) {
+                    File temp = File.createTempFile("hmcl", ".css");
+
+                    FileUtils.writeText(temp, themeText, charset);
+                    temp.deleteOnExit();
+                    css = temp.toURI().toString();
+                } else {
+                    css = "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(themeText.getBytes(StandardCharsets.UTF_8));
+                    System.out.println(css);
+                }
             } catch (IOException | NullPointerException e) {
                 LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
             }
