@@ -427,7 +427,6 @@
 .jfx-dialog-layout {
     -fx-padding: 24.0px 24.0px 16.0px 24.0px;
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
-    -fx-background-radius: 5;
 }
 
 .jfx-layout-heading {
