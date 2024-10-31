@@ -24,7 +24,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
@@ -39,8 +39,6 @@ import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -57,34 +55,6 @@ public class Theme {
             Color.web("#9C27B0"), // purple
             Color.web("#B71C1C")  // red
     };
-
-    private static Charset cssCharset;
-
-    private static Charset getCssCharset() {
-        if (cssCharset != null)
-            return cssCharset;
-
-        Charset defaultCharset = Charset.defaultCharset();
-        if (defaultCharset != StandardCharsets.UTF_8) {
-            // https://bugs.openjdk.org/browse/JDK-8279328
-            // For JavaFX 17 or earlier, native encoding should be used
-            String jfxVersion = System.getProperty("javafx.version");
-            if (jfxVersion != null) {
-                Matcher matcher = Pattern.compile("^(?<version>[0-9]+)").matcher(jfxVersion);
-                if (matcher.find()) {
-                    int v = Lang.parseInt(matcher.group(), -1);
-                    if (v >= 18) {
-                        cssCharset = StandardCharsets.UTF_8;
-                    }
-                }
-            }
-        }
-
-        if (cssCharset == null)
-            cssCharset = defaultCharset;
-
-        return cssCharset;
-    }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private static Optional<Font> font;
@@ -181,7 +151,11 @@ public class Theme {
                         .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
                         .replace("%font-color%", getColorDisplayName(getForegroundColor()))
                         .replace("%font%", fontCss);
-                FileUtils.writeText(temp, themeText, getCssCharset());
+
+                // https://bugs.openjdk.org/browse/JDK-8279328
+                // For JavaFX 17 or earlier, native encoding should be used
+                Charset charset = FXUtils.JAVAFX_MAJOR_VERSION >= 18 ? StandardCharsets.UTF_8 : Charset.defaultCharset();
+                FileUtils.writeText(temp, themeText, charset);
                 temp.deleteOnExit();
                 css = temp.toURI().toString();
             } catch (IOException | NullPointerException e) {
