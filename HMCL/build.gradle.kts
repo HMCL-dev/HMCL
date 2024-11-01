@@ -167,24 +167,6 @@ fun createExecutable(suffix: String, header: String) {
 }
 
 tasks.processResources {
-    fun convertToBSS(resource: String) {
-        doFirst {
-            val cssFile = File(projectDir, "src/main/resources/$resource")
-            val bssFile = File(projectDir, "build/compiled-resources/${resource.substring(0, resource.length - 4)}.bss")
-            bssFile.parentFile.mkdirs()
-            javaexec {
-                classpath = sourceSets["main"].compileClasspath
-                mainClass.set("com.sun.javafx.css.parser.Css2Bin")
-                args(cssFile, bssFile)
-            }
-        }
-    }
-
-    from("build/compiled-resources")
-
-    convertToBSS("assets/css/root.css")
-    convertToBSS("assets/css/blue.css")
-
     into("META-INF/versions/11") {
         from(sourceSets["java11"].output)
     }
