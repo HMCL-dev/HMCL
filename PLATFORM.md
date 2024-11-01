@@ -17,20 +17,20 @@
 
 Legend:
 
-* ✅: Official supported platform.
+* ✅: Officially supported platform.
 
-  Fully supported by Mojang official. Problems encountered in the game should be directly reported to the Mojang.
+  Fully supported by Mojang officials. Problems encountered in the game should be directly reported to the Mojang.
 
 * 👌: Supported platforms.
 
-  Support is provided by HMCL, tested to work, but may have more issues than a fully supported platform.  
+  Support is provided by HMCL, tested to work, but may have more problems than a fully supported platform.  
   Support for versions below Minecraft 1.6 is not guaranteed.  
   If you encounter a problem that does not exist on fully supported platforms, you can report it to HMCL.
 
-* ❔: Low level supported platforms.
+* ❔: Low-level supported platforms.
 
   HMCL can run on this platform and has some basic support. However, launching the game directly is not yet available.  
-  If you want to start the game, you will need to get the native libraries needed by Minecraft in other way and specify the native path in the instance settings.
+  If you want to start the game, you will need to get the native libraries needed by Minecraft in another way and specify the native path in the instance settings.
 
 * `/`: Not applicable.
 
