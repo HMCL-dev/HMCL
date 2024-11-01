@@ -1,10 +1,10 @@
-package moe.mickey.minecraft.skin.fx.animation;
+package org.jackhuang.hmcl.ui.skin.animation;
 
 import javafx.util.Duration;
-import moe.mickey.minecraft.skin.fx.FunctionHelper;
-import moe.mickey.minecraft.skin.fx.SkinAnimation;
-import moe.mickey.minecraft.skin.fx.SkinCanvas;
-import moe.mickey.minecraft.skin.fx.SkinTransition;
+import org.jackhuang.hmcl.ui.skin.FunctionHelper;
+import org.jackhuang.hmcl.ui.skin.SkinAnimation;
+import org.jackhuang.hmcl.ui.skin.SkinCanvas;
+import org.jackhuang.hmcl.ui.skin.SkinTransition;
 
 public final class SkinAniRunning extends SkinAnimation {
 

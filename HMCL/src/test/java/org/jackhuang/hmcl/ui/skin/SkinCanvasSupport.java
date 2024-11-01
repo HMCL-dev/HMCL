@@ -1,4 +1,4 @@
-package moe.mickey.minecraft.skin.fx;
+package org.jackhuang.hmcl.ui.skin;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -8,7 +8,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.stage.Stage;
-import moe.mickey.minecraft.skin.fx.test.Test;
+import org.jackhuang.hmcl.ui.skin.test.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
