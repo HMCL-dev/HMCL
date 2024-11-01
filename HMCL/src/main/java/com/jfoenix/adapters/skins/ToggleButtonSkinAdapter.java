@@ -17,27 +17,11 @@
  */
 package com.jfoenix.adapters.skins;
 
-import javafx.beans.value.ObservableValue;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.skin.ComboBoxListViewSkin;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.skin.ToggleButtonSkin;
 
-public abstract class ComboBoxListViewSkinAdapter<T> extends ComboBoxListViewSkin<T> {
-
-    public ComboBoxListViewSkinAdapter(ComboBox<T> control) {
+public abstract class ToggleButtonSkinAdapter extends ToggleButtonSkin {
+    public ToggleButtonSkinAdapter(ToggleButton control) {
         super(control);
-    }
-
-    protected final void __registerChangeListener(ObservableValue<?> property, String key) {
-        this.registerChangeListener(property, ignored -> __handleControlPropertyChanged(key));
-    }
-
-    protected abstract void __handleControlPropertyChanged(String key);
-
-    protected final double __snapPositionX(double value) {
-        return super.snapPositionX(value);
-    }
-
-    protected final double __snapPositionY(double value) {
-        return super.snapPositionY(value);
     }
 }

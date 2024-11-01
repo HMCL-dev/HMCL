@@ -19,6 +19,7 @@
 
 package com.jfoenix.skins;
 
+import com.jfoenix.adapters.skins.ToggleButtonSkinAdapter;
 import com.jfoenix.controls.JFXRippler;
 import com.jfoenix.controls.JFXRippler.RipplerMask;
 import com.jfoenix.controls.JFXRippler.RipplerPos;
@@ -30,7 +31,6 @@ import com.jfoenix.transitions.JFXKeyValue;
 import javafx.animation.Interpolator;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
-import javafx.scene.control.skin.ToggleButtonSkin;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
@@ -44,7 +44,7 @@ import javafx.util.Duration;
  * @version 1.0
  * @since 2016-03-09
  */
-public class JFXToggleButtonSkin extends ToggleButtonSkin {
+public class JFXToggleButtonSkin extends ToggleButtonSkinAdapter {
     private Runnable releaseManualRippler = null;
 
     private JFXAnimationTimer timer;

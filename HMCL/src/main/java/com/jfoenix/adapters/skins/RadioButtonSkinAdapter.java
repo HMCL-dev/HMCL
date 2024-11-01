@@ -31,4 +31,12 @@ public abstract class RadioButtonSkinAdapter extends RadioButtonSkin {
     }
 
     protected abstract void __handleControlPropertyChanged(String key);
+
+    protected final double __snapSizeX(double value) {
+        return super.snapSizeX(value);
+    }
+
+    protected final double __snapSizeY(double value) {
+        return super.snapSizeY(value);
+    }
 }

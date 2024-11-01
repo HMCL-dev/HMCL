@@ -144,7 +144,7 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkinAdapter<T> {
         super.layoutChildren(x, y, w, h);
         final double height = getSkinnable().getHeight();
         linesWrapper.layoutLines(x, y, w, h, height,
-            promptText == null ? 0 : snapPositionX(promptText.getBaselineOffset() + promptText.getLayoutBounds().getHeight() * .36));
+            promptText == null ? 0 : __snapPositionX(promptText.getBaselineOffset() + promptText.getLayoutBounds().getHeight() * .36));
         errorContainer.layoutPane(x, height + linesWrapper.focusedLine.getHeight(), w, h);
 
         linesWrapper.updateLabelFloatLayout();
@@ -173,7 +173,7 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkinAdapter<T> {
         linesWrapper.promptContainer.getChildren().add(promptText);
 
         if (getSkinnable().isFocused() && ((JFXComboBox<T>) getSkinnable()).isLabelFloat()) {
-            promptText.setTranslateY(-snapPositionY(promptText.getBaselineOffset() + promptText.getLayoutBounds().getHeight() * .36));
+            promptText.setTranslateY(-__snapPositionY(promptText.getBaselineOffset() + promptText.getLayoutBounds().getHeight() * .36));
             linesWrapper.promptTextScale.setX(0.85);
             linesWrapper.promptTextScale.setY(0.85);
         }

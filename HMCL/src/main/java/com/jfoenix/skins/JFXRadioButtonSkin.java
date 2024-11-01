@@ -195,11 +195,11 @@ public class JFXRadioButtonSkin extends RadioButtonSkinAdapter {
     @Override
     protected void layoutChildren(final double x, final double y, final double w, final double h) {
         final RadioButton radioButton = getSkinnable();
-        final double contWidth = snapSizeX(container.prefWidth(-1));
-        final double contHeight = snapSizeY(container.prefHeight(-1));
+        final double contWidth = __snapSizeX(container.prefWidth(-1));
+        final double contHeight = __snapSizeY(container.prefHeight(-1));
         final double computeWidth = Math.max(radioButton.prefWidth(-1), radioButton.minWidth(-1));
-        final double width = snapSizeX(contWidth);
-        final double height = snapSizeY(contHeight);
+        final double width = __snapSizeX(contWidth);
+        final double height = __snapSizeY(contHeight);
 
         final double labelWidth = Math.min(computeWidth - contWidth, w - width);
         final double labelHeight = Math.min(radioButton.prefHeight(labelWidth), h);
@@ -248,7 +248,7 @@ public class JFXRadioButtonSkin extends RadioButtonSkinAdapter {
             topInset,
             rightInset,
             bottomInset,
-            leftInset) + snapSizeX(radio.minWidth(-1)) + padding / 3;
+            leftInset) + __snapSizeX(radio.minWidth(-1)) + padding / 3;
     }
 
     @Override
@@ -257,7 +257,7 @@ public class JFXRadioButtonSkin extends RadioButtonSkinAdapter {
             topInset,
             rightInset,
             bottomInset,
-            leftInset) + snapSizeX(radio.prefWidth(-1)) + padding / 3;
+            leftInset) + __snapSizeX(radio.prefWidth(-1)) + padding / 3;
     }
 
     private static double computeXOffset(double width, double contentWidth, HPos hpos) {
