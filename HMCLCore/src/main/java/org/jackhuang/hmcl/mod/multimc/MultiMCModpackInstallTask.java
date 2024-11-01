@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.Arguments;
@@ -128,8 +127,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>() {
-                }.getType());
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                 if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");

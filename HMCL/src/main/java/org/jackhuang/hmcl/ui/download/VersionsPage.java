@@ -95,7 +95,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         HintPane hintPane = new HintPane();
         hintPane.setText(i18n("sponsor.bmclapi"));
         hintPane.getStyleClass().add("sponsor-pane");
-        hintPane.setOnMouseClicked(e -> onSponsor());
+        FXUtils.onClicked(hintPane, this::onSponsor);
         BorderPane.setMargin(hintPane, new Insets(10, 10, 0, 10));
         this.setTop(hintPane);
 
@@ -146,7 +146,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             failedPane.getStyleClass().add("notice-pane");
             {
                 Label label = new Label(i18n("download.failed.refresh"));
-                label.setOnMouseClicked(e -> onRefresh());
+                FXUtils.onClicked(label, this::onRefresh);
 
                 failedPane.getChildren().setAll(label);
             }
@@ -155,7 +155,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             emptyPane.getStyleClass().add("notice-pane");
             {
                 Label label = new Label(i18n("download.failed.empty"));
-                label.setOnMouseClicked(e -> onBack());
+                FXUtils.onClicked(label, this::onBack);
 
                 emptyPane.getChildren().setAll(label);
             }
@@ -180,7 +180,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         Holder<RemoteVersionListCell> lastCell = new Holder<>();
         list.setCellFactory(listView -> new RemoteVersionListCell(lastCell));
 
-        list.setOnMouseClicked(e -> {
+        FXUtils.onClicked(list, () -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
                 return;
             navigation.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem());
@@ -210,7 +210,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @Override
     public void refresh() {
         VersionList<?> currentVersionList = versionList;
-        root.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
+        root.setContent(spinner, ContainerAnimations.FADE);
         executor = currentVersionList.refreshAsync(gameVersion).whenComplete((result, exception) -> {
             if (exception == null) {
                 List<RemoteVersion> items = loadVersions();
@@ -218,7 +218,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 Platform.runLater(() -> {
                     if (versionList != currentVersionList) return;
                     if (currentVersionList.getVersions(gameVersion).isEmpty()) {
-                        root.setContent(emptyPane, ContainerAnimations.FADE.getAnimationProducer());
+                        root.setContent(emptyPane, ContainerAnimations.FADE);
                     } else {
                         if (items.isEmpty()) {
                             chkRelease.setSelected(true);
@@ -227,14 +227,14 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         } else {
                             list.getItems().setAll(items);
                         }
-                        root.setContent(center, ContainerAnimations.FADE.getAnimationProducer());
+                        root.setContent(center, ContainerAnimations.FADE);
                     }
                 });
             } else {
                 LOG.warning("Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
                     if (versionList != currentVersionList) return;
-                    root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(failedPane, ContainerAnimations.FADE);
                 });
             }
 

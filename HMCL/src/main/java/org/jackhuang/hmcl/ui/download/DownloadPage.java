@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -69,7 +70,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> modTab = new TabHeader.Tab<>("modTab");
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<DownloadListPage> customizationTab = new TabHeader.Tab<>("customizationTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
@@ -80,7 +80,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            ModpackDownloadListPage page = new ModpackDownloadListPage(Versions::downloadModpackImpl, false);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack(Versions::downloadModpackImpl, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Versions.importModpack());
@@ -88,9 +88,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.getActions().add(installLocalModpackButton);
             return page;
         }));
-        modTab.setNodeSupplier(loadVersionFor(() -> new ModDownloadListPage((profile, version, file) -> download(profile, version, file, "mods"), true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> new ResourcePackDownloadListPage((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
-        customizationTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.CUSTOMIZATIONS)));
+        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, worldTab);
 
@@ -98,12 +97,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         tab.select(newGameTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
+            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
         {
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("download.game"))
+                    .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("game"));
                         item.setLeftGraphic(wrap(SVG.GAMEPAD));
@@ -116,7 +115,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
                         settingsItem.setOnAction(e -> tab.select(modpackTab));
                     })
-                    .startCategory(i18n("download.content"))
+                    .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
                         item.setLeftGraphic(wrap(SVG.PUZZLE));
@@ -129,12 +128,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
                         item.setOnAction(e -> tab.select(resourcePackTab));
                     })
-//                    .addNavigationDrawerItem(item -> {
-//                        item.setTitle(i18n("download.curseforge.customization"));
-//                        item.setLeftGraphic(wrap(SVG::script));
-//                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(customizationTab));
-//                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(customizationTab));
-//                    })
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("world"));
                         item.setLeftGraphic(wrap(SVG.EARTH));
@@ -170,7 +163,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
 
-        Controllers.prompt(i18n("archive.name"), (result, resolve, reject) -> {
+        Controllers.prompt(i18n("archive.file.name"), (result, resolve, reject) -> {
             if (!OperatingSystem.isNameValid(result)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;
@@ -211,9 +204,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                     if (resourcePackTab.isInitialized()) {
                         resourcePackTab.getNode().loadVersion(profile, null);
-                    }
-                    if (customizationTab.isInitialized()) {
-                        customizationTab.getNode().loadVersion(profile, null);
                     }
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadVersion(profile, null);

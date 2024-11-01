@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2020 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,165 +27,225 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
-public enum ContainerAnimations {
-    NONE(c -> {
-        c.getPreviousNode().setTranslateX(0);
-        c.getPreviousNode().setTranslateY(0);
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(0);
-        c.getCurrentNode().setTranslateY(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(1);
-    }, c -> Collections.emptyList()),
+public enum ContainerAnimations implements AnimationProducer {
+    NONE {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setTranslateX(0);
+            c.getPreviousNode().setTranslateY(0);
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(0);
+            c.getCurrentNode().setTranslateY(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(1);
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Collections.emptyList();
+        }
+    },
 
     /**
      * A fade between the old and new view
      */
-    FADE(c -> {
-        c.getPreviousNode().setTranslateX(0);
-        c.getPreviousNode().setTranslateY(0);
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(0);
-        c.getCurrentNode().setTranslateY(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(0);
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    FADE {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setTranslateX(0);
+            c.getPreviousNode().setTranslateY(0);
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(0);
+            c.getCurrentNode().setTranslateY(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(0);
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
                             new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
                             new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH)))),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH)));
+        }
+    },
 
     /**
      * A fade between the old and new view
      */
-    FADE_IN(c -> {
-        c.getCurrentNode().setTranslateX(0);
-        c.getCurrentNode().setTranslateY(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(0);
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    FADE_IN {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getCurrentNode().setTranslateX(0);
+            c.getCurrentNode().setTranslateY(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(0);
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getCurrentNode().opacityProperty(), 0, FXUtils.SINE)),
                     new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, FXUtils.SINE)))),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 1, FXUtils.SINE)));
+        }
+    },
 
     /**
      * A fade between the old and new view
      */
-    FADE_OUT(c -> {
-        c.getCurrentNode().setTranslateX(0);
-        c.getCurrentNode().setTranslateY(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(1);
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    FADE_OUT {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getCurrentNode().setTranslateX(0);
+            c.getCurrentNode().setTranslateY(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(1);
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getCurrentNode().opacityProperty(), 1, FXUtils.SINE)),
                     new KeyFrame(c.getDuration(),
-                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, FXUtils.SINE)))),
+                            new KeyValue(c.getCurrentNode().opacityProperty(), 0, FXUtils.SINE)));
+        }
+    },
     /**
      * A zoom effect
      */
-    ZOOM_IN(c -> {
-        c.getPreviousNode().setTranslateX(0);
-        c.getPreviousNode().setTranslateY(0);
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(0);
-        c.getCurrentNode().setTranslateY(0);
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    ZOOM_IN {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setTranslateX(0);
+            c.getPreviousNode().setTranslateY(0);
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(0);
+            c.getCurrentNode().setTranslateY(0);
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getPreviousNode().scaleXProperty(), 1, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().scaleYProperty(), 1, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
                             new KeyValue(c.getPreviousNode().scaleXProperty(), 4, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().scaleYProperty(), 4, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)))),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
+        }
+    },
     /**
      * A zoom effect
      */
-    ZOOM_OUT(c -> {
-        c.getPreviousNode().setTranslateX(0);
-        c.getPreviousNode().setTranslateY(0);
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(0);
-        c.getCurrentNode().setTranslateY(0);
-    }, c ->
-            (Arrays.asList(new KeyFrame(Duration.ZERO,
+    ZOOM_OUT {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setTranslateX(0);
+            c.getPreviousNode().setTranslateY(0);
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(0);
+            c.getCurrentNode().setTranslateY(0);
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getPreviousNode().scaleXProperty(), 1, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().scaleYProperty(), 1, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().opacityProperty(), 1, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
                             new KeyValue(c.getPreviousNode().scaleXProperty(), 0, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().scaleYProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH))))),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
+        }
+    },
     /**
      * A swipe effect
      */
-    SWIPE_LEFT(c -> {
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(0);
-        c.getPreviousNode().setTranslateX(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    SWIPE_LEFT {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(0);
+            c.getPreviousNode().setTranslateX(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getCurrentNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
                             new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)))),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)));
+        }
+    },
 
     /**
      * A swipe effect
      */
-    SWIPE_RIGHT(c -> {
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(0);
-        c.getPreviousNode().setTranslateX(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(-c.getCurrentRoot().getWidth());
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    SWIPE_RIGHT {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(0);
+            c.getPreviousNode().setTranslateX(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(-c.getCurrentRoot().getWidth());
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getCurrentNode().translateXProperty(), -c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH)),
                     new KeyFrame(c.getDuration(),
                             new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)))),
+                            new KeyValue(c.getPreviousNode().translateXProperty(), c.getCurrentRoot().getWidth(), Interpolator.EASE_BOTH)));
+        }
+    },
 
-    SWIPE_LEFT_FADE_SHORT(c -> {
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(0);
-        c.getPreviousNode().setTranslateX(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    SWIPE_LEFT_FADE_SHORT {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(0);
+            c.getPreviousNode().setTranslateX(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getCurrentNode().translateXProperty(), 50, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
                             new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
@@ -194,19 +254,26 @@ public enum ContainerAnimations {
                             new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().translateXProperty(), -50, Interpolator.EASE_BOTH),
                             new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)))),
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
+        }
+    },
 
-    SWIPE_RIGHT_FADE_SHORT(c -> {
-        c.getPreviousNode().setScaleX(1);
-        c.getPreviousNode().setScaleY(1);
-        c.getPreviousNode().setOpacity(0);
-        c.getPreviousNode().setTranslateX(0);
-        c.getCurrentNode().setScaleX(1);
-        c.getCurrentNode().setScaleY(1);
-        c.getCurrentNode().setOpacity(1);
-        c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
-    }, c ->
-            Arrays.asList(new KeyFrame(Duration.ZERO,
+    SWIPE_RIGHT_FADE_SHORT {
+        @Override
+        public void init(AnimationHandler c) {
+            c.getPreviousNode().setScaleX(1);
+            c.getPreviousNode().setScaleY(1);
+            c.getPreviousNode().setOpacity(0);
+            c.getPreviousNode().setTranslateX(0);
+            c.getCurrentNode().setScaleX(1);
+            c.getCurrentNode().setScaleY(1);
+            c.getCurrentNode().setOpacity(1);
+            c.getCurrentNode().setTranslateX(c.getCurrentRoot().getWidth());
+        }
+
+        @Override
+        public List<KeyFrame> animate(AnimationHandler c) {
+            return Arrays.asList(new KeyFrame(Duration.ZERO,
                             new KeyValue(c.getCurrentNode().translateXProperty(), -50, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
                             new KeyValue(c.getCurrentNode().opacityProperty(), 0, Interpolator.EASE_BOTH),
@@ -215,37 +282,11 @@ public enum ContainerAnimations {
                             new KeyValue(c.getCurrentNode().translateXProperty(), 0, Interpolator.EASE_BOTH),
                             new KeyValue(c.getPreviousNode().translateXProperty(), 50, Interpolator.EASE_BOTH),
                             new KeyValue(c.getCurrentNode().opacityProperty(), 1, Interpolator.EASE_BOTH),
-                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH))));
+                            new KeyValue(c.getPreviousNode().opacityProperty(), 0, Interpolator.EASE_BOTH)));
+        }
+    };
 
-    private final AnimationProducer animationProducer;
     private ContainerAnimations opposite;
-
-    ContainerAnimations(Consumer<AnimationHandler> init, Function<AnimationHandler, List<KeyFrame>> animationProducer) {
-        this.animationProducer = new AnimationProducer() {
-            @Override
-            public void init(AnimationHandler handler) {
-                init.accept(handler);
-            }
-
-            @Override
-            public List<KeyFrame> animate(AnimationHandler handler) {
-                return animationProducer.apply(handler);
-            }
-
-            @Override
-            public @Nullable AnimationProducer opposite() {
-                return opposite != null ? opposite.getAnimationProducer() : null;
-            }
-        };
-    }
-
-    public AnimationProducer getAnimationProducer() {
-        return animationProducer;
-    }
-
-    public ContainerAnimations getOpposite() {
-        return opposite;
-    }
 
     static {
         NONE.opposite = NONE;
@@ -256,5 +297,16 @@ public enum ContainerAnimations {
         FADE_OUT.opposite = FADE_IN;
         ZOOM_IN.opposite = ZOOM_OUT;
         ZOOM_OUT.opposite = ZOOM_IN;
+    }
+
+    @Override
+    public abstract void init(AnimationHandler handler);
+
+    @Override
+    public abstract List<KeyFrame> animate(AnimationHandler handler);
+
+    @Override
+    public @Nullable ContainerAnimations opposite() {
+        return opposite;
     }
 }

@@ -21,21 +21,22 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
-import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
-import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
-import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.ServerDisconnectException;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -44,8 +45,8 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftService {
     private static final String SCOPE = "XboxLive.signin offline_access";
@@ -110,30 +111,40 @@ public class MicrosoftService {
     }
 
     private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
-        // Authenticate with XBox Live
-        XBoxLiveAuthenticationResponse xboxResponse = HttpRequest
-                .POST("https://user.auth.xboxlive.com/user/authenticate")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
-                                        pair("RpsTicket", "d=" + liveAccessToken))),
-                        pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
-                .retry(5)
-                .accept("application/json").getJson(XBoxLiveAuthenticationResponse.class);
+        String uhs;
+        XBoxLiveAuthenticationResponse xboxResponse, minecraftXstsResponse;
+        try {
+            // Authenticate with XBox Live
+            xboxResponse = HttpRequest
+                    .POST("https://user.auth.xboxlive.com/user/authenticate")
+                    .json(mapOf(
+                            pair("Properties",
+                                    mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
+                                            pair("RpsTicket", "d=" + liveAccessToken))),
+                            pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
+                    .retry(5)
+                    .accept("application/json")
+                    .getJson(XBoxLiveAuthenticationResponse.class);
 
-        String uhs = getUhs(xboxResponse, null);
+            uhs = getUhs(xboxResponse, null);
 
-        // Authenticate Minecraft with XSTS
-        XBoxLiveAuthenticationResponse minecraftXstsResponse = HttpRequest
-                .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
-                .json(mapOf(
-                        pair("Properties",
-                                mapOf(pair("SandboxId", "RETAIL"),
-                                        pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
-                        pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
-                .ignoreHttpErrorCode(401)
-                .retry(5)
-                .getJson(XBoxLiveAuthenticationResponse.class);
+            minecraftXstsResponse = HttpRequest
+                    .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
+                    .json(mapOf(
+                            pair("Properties",
+                                    mapOf(pair("SandboxId", "RETAIL"),
+                                            pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
+                            pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
+                    .ignoreHttpErrorCode(401)
+                    .retry(5)
+                    .getJson(XBoxLiveAuthenticationResponse.class);
+        } catch (ResponseCodeException e) {
+            if (e.getResponseCode() == 400) {
+                throw new XBox400Exception();
+            }
+
+            throw e;
+        }
 
         getUhs(minecraftXstsResponse, uhs);
 
@@ -249,6 +260,33 @@ public class MicrosoftService {
         return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
     }
 
+    public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile/skins"));
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setDoOutput(true);
+            try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
+                request.param("variant", isSlim ? "slim" : "classic");
+                try (InputStream fis = Files.newInputStream(file)) {
+                    request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
+                }
+            }
+
+            String response = NetworkUtils.readData(con);
+            if (StringUtils.isBlank(response)) {
+                if (con.getResponseCode() / 100 != 2)
+                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+            } else {
+                MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to upload skin, response code: " + con.getResponseCode() + ", response: " + response);
+            }
+        } catch (IOException | JsonParseException e) {
+            throw new AuthenticationException(e);
+        }
+    }
+
     private static String request(URL url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -257,14 +295,6 @@ public class MicrosoftService {
                 return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
-        }
-    }
-
-    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        try {
-            return GSON.fromJson(text, typeOfT);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(text, e);
         }
     }
 
@@ -288,6 +318,9 @@ public class MicrosoftService {
         public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
         public static final long COUNTRY_UNAVAILABLE = 2148916235L;
         public static final long ADD_FAMILY = 2148916238L;
+    }
+
+    public static class XBox400Exception extends AuthenticationException {
     }
 
     public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {

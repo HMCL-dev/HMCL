@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.auth.offline;
 
-import com.google.gson.reflect.TypeToken;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -38,6 +37,7 @@ import java.util.stream.Stream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public class YggdrasilServer extends HttpServer {
 
@@ -81,8 +81,7 @@ public class YggdrasilServer extends HttpServer {
     }
 
     private Response profiles(Request request) throws IOException {
-        List<String> names = JsonUtils.fromNonNullJsonFully(request.getSession().getInputStream(), new TypeToken<List<String>>() {
-        }.getType());
+        List<String> names = JsonUtils.fromNonNullJsonFully(request.getSession().getInputStream(), listTypeOf(String.class));
         return ok(names.stream().distinct()
                 .map(this::findCharacterByName)
                 .flatMap(Lang::toStream)

@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
@@ -46,6 +44,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CacheRepository {
@@ -68,7 +67,7 @@ public class CacheRepository {
             }
 
             if (Files.isRegularFile(indexFile)) {
-                ETagIndex raw = JsonUtils.GSON.fromJson(FileUtils.readText(indexFile), ETagIndex.class);
+                ETagIndex raw = GSON.fromJson(FileUtils.readText(indexFile), ETagIndex.class);
                 if (raw == null)
                     index = new HashMap<>();
                 else
@@ -289,10 +288,10 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), ETagIndex.class);
+                ETagIndex indexOnDisk = fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
-                ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
+                ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
                 while (writeTo.hasRemaining()) {
                     if (channel.write(writeTo) == 0) {
                         throw new IOException("No value is written");
@@ -412,8 +411,7 @@ public class CacheRepository {
             try {
                 indexFile = cacheDirectory.resolve(name + ".json");
                 if (Files.isRegularFile(indexFile)) {
-                    joinEntries(JsonUtils.fromNonNullJson(FileUtils.readText(indexFile), new TypeToken<Map<String, Object>>() {
-                    }.getType()));
+                    joinEntries(fromNonNullJson(FileUtils.readText(indexFile), mapTypeOf(String.class, Object.class)));
                 }
             } catch (IOException | JsonParseException e) {
                 LOG.warning("Unable to read storage {" + name + "} file");
@@ -426,12 +424,11 @@ public class CacheRepository {
             try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 FileLock lock = channel.lock();
                 try {
-                    Map<String, Object> indexOnDisk = JsonUtils.fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), new TypeToken<Map<String, Object>>() {
-                    }.getType());
+                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), mapTypeOf(String.class, Object.class));
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);
-                    channel.write(ByteBuffer.wrap(JsonUtils.GSON.toJson(storage).getBytes(UTF_8)));
+                    channel.write(ByteBuffer.wrap(GSON.toJson(storage).getBytes(UTF_8)));
                     this.storage = indexOnDisk;
                 } finally {
                     lock.release();
