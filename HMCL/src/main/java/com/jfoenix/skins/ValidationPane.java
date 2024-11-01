@@ -21,7 +21,6 @@ package com.jfoenix.skins;
 
 import com.jfoenix.controls.base.IFXStaticControl;
 import com.jfoenix.controls.base.IFXValidatableControl;
-import com.jfoenix.utils.JFXUtilities;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.*;
 import javafx.beans.value.ObservableValue;
@@ -36,6 +35,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 /**
  * this class used to create validation ui for all {@link IFXValidatableControl}
@@ -140,9 +140,9 @@ public class ValidationPane<T extends Region & IFXValidatableControl & IFXStatic
                 }
             } else {
                 if (newVal != null) {
-                    JFXUtilities.runInFXAndWait(() -> showError(newVal));
+                    FXUtils.runInFXAndWait(() -> showError(newVal));
                 } else {
-                    JFXUtilities.runInFXAndWait(this::hideError);
+                    FXUtils.runInFXAndWait(this::hideError);
                 }
             }
         });
