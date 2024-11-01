@@ -143,7 +143,7 @@ public abstract class ValidatorBase {
         }
     }
 
-    private final Tooltip getActiveTooltip(Node node) {
+    private Tooltip getActiveTooltip(Node node) {
         Tooltip tooltip = null;
         for (String key : supportedTooltipKeys) {
             tooltip = (Tooltip) node.getProperties().get(key);
@@ -283,7 +283,7 @@ public abstract class ValidatorBase {
 
 
     /***** Icon *****/
-    protected SimpleObjectProperty<Supplier<Node>> iconSupplier = new SimpleObjectProperty<Supplier<Node>>();
+    protected SimpleObjectProperty<Supplier<Node>> iconSupplier = new SimpleObjectProperty<>();
 
     public void setIconSupplier(Supplier<Node> icon) {
         this.iconSupplier.set(icon);
