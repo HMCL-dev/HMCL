@@ -24,6 +24,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -252,9 +253,11 @@ public final class JavaDownloadDialog extends StackPane {
 
                 if (list == null || (list.versions != null && list.versions.isEmpty()))
                     downloadButtonPane.getChildren().setAll(downloadButton);
-                else if (list.status == DiscoJavaVersionList.Status.LOADING)
-                    downloadButtonPane.getChildren().setAll(new JFXSpinner());
-                else {
+                else if (list.status == DiscoJavaVersionList.Status.LOADING) {
+                    ProgressIndicator indicator = new ProgressIndicator();
+                    indicator.setMaxSize(24, 24);
+                    downloadButtonPane.getChildren().setAll(indicator);
+                } else {
                     downloadButtonPane.getChildren().setAll(downloadButton);
 
                     if (list.status == DiscoJavaVersionList.Status.SUCCESS) {

@@ -36,7 +36,7 @@ version = "$versionRoot.$buildNumber"
 
 dependencies {
     implementation(project(":HMCLCore"))
-    implementation("libs:JFoenix")
+    // implementation("com.jfoenix:jfoenix:9.0.10")
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -81,21 +81,25 @@ fun attachSignature(jar: File) {
     }
 }
 
-val java11 = sourceSets.create("java11") {
+tasks.checkstyleMain {
+    exclude("**/com/jfoenix/**")
+}
+
+val java9 = sourceSets.create("java9") {
     java {
-        srcDir("src/main/java11")
+        srcDir("src/main/java9")
     }
 }
 
-tasks.getByName<JavaCompile>(java11.compileJavaTaskName) {
+tasks.getByName<JavaCompile>(java9.compileJavaTaskName) {
     if (JavaVersion.current() < JavaVersion.VERSION_11) {
         javaCompiler.set(javaToolchains.compilerFor {
             languageVersion.set(JavaLanguageVersion.of(11))
         })
     }
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = "9"
+    targetCompatibility = "9"
 }
 
 tasks.jar {
@@ -113,7 +117,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
-        exclude(dependency("libs:JFoenix:.*"))
+        // exclude(dependency("com.jfoenix:.*:.*"))
     }
 
     manifest {
@@ -135,6 +139,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.base/com.sun.javafx.event",
                 "javafx.base/com.sun.javafx.runtime",
                 "javafx.graphics/javafx.css",
+                "javafx.graphics/com.sun.javafx.scene",
                 "javafx.graphics/com.sun.javafx.stage",
                 "javafx.graphics/com.sun.prism",
                 "javafx.controls/com.sun.javafx.scene.control",
@@ -167,10 +172,10 @@ fun createExecutable(suffix: String, header: String) {
 }
 
 tasks.processResources {
-    into("META-INF/versions/11") {
-        from(sourceSets["java11"].output)
+    into("META-INF/versions/9") {
+        from(java9.output)
     }
-    dependsOn(tasks["java11Classes"])
+    dependsOn(tasks[java9.classesTaskName])
 }
 
 val makeExecutables = tasks.create("makeExecutables") {

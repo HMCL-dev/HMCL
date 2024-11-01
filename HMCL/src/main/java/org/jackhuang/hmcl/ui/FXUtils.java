@@ -26,7 +26,6 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.value.*;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -226,20 +225,6 @@ public final class FXUtils {
                     info.unbind();
                     node.getProperties().remove(key);
                 });
-    }
-
-    public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
-        });
-    }
-
-    public static Node wrapMargin(Node node, Insets insets) {
-        StackPane.setMargin(node, insets);
-        return new StackPane(node);
     }
 
     public static void setValidateWhileTextChanged(Node field, boolean validate) {

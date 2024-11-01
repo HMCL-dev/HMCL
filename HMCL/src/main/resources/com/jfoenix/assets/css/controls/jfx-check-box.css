@@ -1,0 +1,72 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+.jfx-check-box {
+    -jfx-unchecked-color: #5A5A5A;
+    -jfx-checked-color: #0F9D58;
+}
+
+.jfx-check-box .box-container {
+    -fx-shape: "M 400 100 L 400 100 A 50 50 0 1 1 400 250 A 50 50 0 1 1 400 100 ";
+    -fx-padding: 10;
+}
+
+.jfx-check-box .box,
+.jfx-check-box:indeterminate .box,
+.jfx-check-box:indeterminate:selected .box{
+    -fx-pref-width: 18;
+    -fx-pref-height: 18;
+
+    -fx-min-width: -fx-pref-width;
+    -fx-max-width: -fx-pref-width;
+    -fx-min-height: -fx-pref-height;
+    -fx-max-height: -fx-pref-height;
+
+    -fx-background-color: TRANSPARENT;
+    -fx-background-radius: 2;
+
+    -fx-border-color: -jfx-unchecked-color;
+    -fx-border-style: solid;
+    -fx-border-radius: 2;
+    -fx-border-width: 2;
+}
+
+.jfx-check-box:selected .box {
+    -fx-border-color: -jfx-checked-color;
+}
+
+.jfx-check-box .mark {
+    -fx-shape: "M384 690l452-452 60 60-512 512-238-238 60-60z";
+    -fx-max-width: 15;
+    -fx-max-height: 12;
+
+    -fx-background-color: WHITE;
+
+    -fx-border-color: WHITE;
+    -fx-border-width: 2;
+    -fx-border-radius: 2;
+}
+
+.jfx-check-box .indeterminate-mark{
+    -fx-background-color: -jfx-checked-color;
+    -fx-background-radius: 2;
+    -fx-border-width: 0;
+    -fx-max-width: 10;
+    -fx-max-height: 10;
+}

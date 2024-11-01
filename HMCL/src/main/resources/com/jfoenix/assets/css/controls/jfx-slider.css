@@ -1,0 +1,71 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+.jfx-slider {
+    -jfx-default-thumb: #0F9D58;
+    -jfx-default-track: #CCCCCC;
+}
+
+.jfx-slider .track,
+.jfx-slider:vertical .track {
+    -fx-background-color: -jfx-default-track;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+    -fx-pref-width: 2px;
+    -fx-pref-height: 2px;
+}
+
+.jfx-slider .thumb,
+.jfx-slider:focused .thumb {
+    -fx-background-color: -jfx-default-thumb;
+    -fx-background-radius: 20;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .colored-track {
+    -fx-background-color: -jfx-default-thumb;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider .slider-value {
+    -fx-stroke: WHITE;
+    -fx-font-size: 10;
+}
+
+.jfx-slider .animated-thumb {
+    -fx-pref-width: 30px;
+    -fx-pref-height: 30px;
+    -fx-background-color: -jfx-default-thumb;
+    -fx-background-radius: 50% 50% 50% 0%;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider:min .thumb,
+.jfx-slider:min:focused .thumb {
+    -fx-background-color: -jfx-default-track;
+    -fx-background-radius: 20;
+    -fx-background-insets: 0;
+}
+
+.jfx-slider:min .animated-thumb {
+    -fx-background-color: -jfx-default-track;
+    -fx-background-radius: 50% 50% 50% 0%;
+    -fx-background-insets: 0;
+}

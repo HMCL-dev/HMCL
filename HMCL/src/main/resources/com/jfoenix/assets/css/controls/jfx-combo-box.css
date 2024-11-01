@@ -1,0 +1,71 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+.jfx-combo-box {
+    -jfx-focus-color: #4059A9;
+    -jfx-unfocus-color: #4d4d4d;
+    -fx-prompt-text-fill: #4d4d4d;
+}
+
+.jfx-combo-box > .input-line {
+    -fx-background-color: -jfx-unfocus-color;
+    -fx-pref-height: 1px;
+    -fx-translate-y: 1px;
+}
+
+.jfx-combo-box > .input-focused-line {
+    -fx-background-color: -jfx-focus-color;
+    -fx-pref-height: 2px;
+}
+
+.jfx-combo-box > .prompt-container {
+    -fx-alignment: center-left;
+}
+
+.jfx-combo-box,
+.jfx-combo-box:focused,
+.jfx-combo-box:editable,
+.jfx-combo-box:editable:focused {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-background-radius: 3px;
+    -fx-background-insets: 0px;
+}
+
+.jfx-combo-box .combo-box-button-container {
+    -fx-background-color: TRANSPARENT;
+}
+
+.jfx-combo-box > .arrow-button,
+.jfx-combo-box:editable > .arrow-button,
+.jfx-combo-box:editable:focused > .arrow-button {
+    -fx-background-color: TRANSPARENT;
+}
+
+.jfx-combo-box:error {
+    -jfx-focus-color: #D34336;
+    -jfx-unfocus-color: #D34336;
+}
+
+.jfx-combo-box .error-label {
+    -fx-text-fill: #D34336;
+}
+
+.jfx-combo-box .error-icon {
+    -fx-fill: #D34336;
+}

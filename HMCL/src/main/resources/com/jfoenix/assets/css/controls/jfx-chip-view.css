@@ -1,0 +1,110 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+.jfx-chip-view {
+    -fx-background-color: TRANSPARENT;
+    -fx-pref-width: 100px;
+    -fx-pref-height: 100px;
+}
+
+.jfx-chip-view .chips-pane {
+    -fx-background-color: TRANSPARENT;
+    -fx-vgap: 4;
+    -fx-hgap: 6;
+}
+
+.jfx-chip-view .chips-pane > .text-area,
+.jfx-chip-view .chips-pane > .text-area .scroll-pane,
+.jfx-chip-view .chips-pane > .text-area .scroll-pane > .viewport,
+.jfx-chip-view .chips-pane > .text-area:focused,
+.jfx-chip-view .chips-pane > .text-area:focused .scroll-pane {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+}
+
+.jfx-chip-view .chips-pane > .text-area {
+    -fx-padding: 0.333333em 0 0.333333em 0;
+    -fx-min-width: 100px;
+    -fx-pref-height: 42;
+}
+
+.jfx-chip-view .chips-pane > .text-area .content,
+.jfx-chip-view .chips-pane > .text-area:focused .content {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-padding: 0 0 0 0;
+}
+
+.jfx-chip-view .jfx-chip > HBox {
+    -fx-font-family: "Roboto Medium";
+    -fx-font-size: 14.0;
+    -fx-background-color: #E0E0E0;
+    -fx-background-radius: 40px;
+    -fx-padding: 5px 8px 5px 12px;
+    -fx-pref-height: 32px;
+    -fx-alignment: center-left;
+    -fx-spacing: 8;
+}
+
+.jfx-chip-view > .scroll-pane,
+.jfx-chip-view > .scroll-pane > .viewport {
+    -fx-background-color: TRANSPARENT;
+}
+
+.jfx-chip-view > .scroll-pane > .scroll-bar:horizontal,
+.jfx-chip-view > .scroll-pane > .scroll-bar:vertical {
+    -fx-background-color: TRANSPARENT;
+}
+
+.jfx-chip-view > .scroll-pane > .scroll-bar:horizontal .track,
+.jfx-chip-view > .scroll-pane > .scroll-bar:vertical .track {
+    -fx-background-color: TRANSPARENT;
+    -fx-border-color: TRANSPARENT;
+    -fx-background-radius: 0em;
+    -fx-border-radius: 2em;
+}
+
+.jfx-chip-view > .scroll-pane > .scroll-bar:horizontal .thumb,
+.jfx-chip-view > .scroll-pane > .scroll-bar:vertical .thumb {
+    -fx-background-color: #898989;
+    -fx-background-insets: 2, 0, 0;
+    -fx-background-radius: 2em;
+}
+
+.jfx-chip-view > .scroll-pane > .corner {
+    -fx-background-color: TRANSPARENT;
+}
+
+.jfx-chip-view > .scroll-pane > .scroll-bar:horizontal .increment-button,
+.jfx-chip-view > .scroll-pane > .scroll-bar:horizontal .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0em;
+    -fx-padding: 0 0 10 0;
+}
+
+.jfx-chip-view > .scroll-pane > .scroll-bar:vertical .increment-button,
+.jfx-chip-view > .scroll-pane > .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0em;
+    -fx-padding: 0 10 0 0;
+}
+
+.jfx-chip-view > .scroll-pane > .scroll-bar .increment-arrow,
+.jfx-chip-view > .scroll-pane > .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
