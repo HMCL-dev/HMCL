@@ -30,7 +30,7 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 
 // Old
-public class JFXDialogLayout extends StackPane {
+public class JFXDialogLayout extends VBox {
     private final StackPane heading = new StackPane();
     private final StackPane body = new StackPane();
     private final FlowPane actions = new FlowPane() {
@@ -78,17 +78,13 @@ public class JFXDialogLayout extends StackPane {
 
     public JFXDialogLayout() {
         this.initialize();
-        VBox layout = new VBox();
-        layout.getChildren().add(this.heading);
         this.heading.getStyleClass().add("jfx-layout-heading");
         this.heading.getStyleClass().add("title");
-        layout.getChildren().add(this.body);
         this.body.getStyleClass().add("jfx-layout-body");
         this.body.prefHeightProperty().bind(this.prefHeightProperty());
         this.body.prefWidthProperty().bind(this.prefWidthProperty());
-        layout.getChildren().add(this.actions);
         this.actions.getStyleClass().add("jfx-layout-actions");
-        this.getChildren().add(layout);
+        this.getChildren().setAll(this.heading, this.body, this.actions);
     }
 
     public ObservableList<Node> getHeading() {
@@ -122,7 +118,6 @@ public class JFXDialogLayout extends StackPane {
     private void initialize() {
         this.getStyleClass().add("jfx-dialog-layout");
         this.setPadding(new Insets(24.0, 24.0, 16.0, 24.0));
-        this.setStyle("-fx-text-fill: rgba(0, 0, 0, 0.87);");
         this.heading.setStyle("-fx-font-weight: BOLD;-fx-alignment: center-left;");
         this.heading.setPadding(new Insets(5.0, 0.0, 5.0, 0.0));
         this.body.setStyle("-fx-pref-width: 400px;-fx-wrap-text: true;");
