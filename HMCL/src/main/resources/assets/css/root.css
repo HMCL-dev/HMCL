@@ -671,6 +671,10 @@
     -fx-background-color: -fx-base-color;
 }
 
+.jfx-slider .colored-track {
+    -fx-background-color: -fx-base-color;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Rippler                                                                  *
