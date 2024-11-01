@@ -33,8 +33,8 @@
 }
 
 .title-label {
-    -fx-font-size: 16.0px;
-    -fx-padding: 14.0px;
+    -fx-font-size: 16px;
+    -fx-padding: 14px;
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
@@ -421,16 +421,16 @@
 .dialog-trigger {
     -fx-background-color: WHITE;
     -jfx-button-type: RAISED;
-    -fx-font-size: 14.0px;
+    -fx-font-size: 14px;
 }
 
 .jfx-dialog-layout {
-    -fx-padding: 24.0px 24.0px 16.0px 24.0px;
+    -fx-padding: 24px 24px 16px 24px;
     -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
 }
 
 .jfx-layout-heading {
-    -fx-font-size: 20.0px;
+    -fx-font-size: 20px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
 }
@@ -442,7 +442,7 @@
 
 .jfx-layout-actions {
     -fx-pref-width: 400;
-    -fx-padding: 10.0px 0.0 0.0 0.0;
+    -fx-padding: 10px 0.0 0.0 0.0;
     -fx-alignment: center-right;
 }
 
@@ -476,7 +476,7 @@
 }
 
 .popup-list-view {
-    -fx-pref-width: 150.0px;
+    -fx-pref-width: 150px;
 }
 
 .jfx-snackbar-content {
@@ -634,7 +634,7 @@
  }
 
 .jfx-radio-button .radio {
-    -fx-stroke-width: 2.0px;
+    -fx-stroke-width: 2px;
     -fx-fill: transparent;
 }
 
@@ -974,7 +974,7 @@
 }
 
 .toggle-label {
-    -fx-font-size: 14.0px;
+    -fx-font-size: 14px;
 }
 
 .toggle-icon1 .icon {

@@ -19,75 +19,98 @@
 
 package com.jfoenix.controls;
 
-import com.jfoenix.assets.JFoenixResources;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.util.List;
 
-/**
- * Default dialog layout according to material design guidelines.
- *
- * @author Shadi Shaheen
- * @version 1.0
- * @since 2016-03-09
- */
-public class JFXDialogLayout extends VBox {
+// Old
+public class JFXDialogLayout extends StackPane {
     private final StackPane heading = new StackPane();
     private final StackPane body = new StackPane();
-    private final FlowPane actions = new FlowPane();
+    private final FlowPane actions = new FlowPane() {
+        protected double computeMinWidth(double height) {
+            if (this.getContentBias() == Orientation.HORIZONTAL) {
+                double maxPref = 0.0;
+                List<Node> children = this.getChildren();
+                int i = 0;
 
-    /**
-     * creates empty dialog layout
-     */
+                for (int size = children.size(); i < size; ++i) {
+                    Node child = children.get(i);
+                    if (child.isManaged()) {
+                        maxPref = Math.max(maxPref, child.minWidth(-1.0));
+                    }
+                }
+
+                Insets insets = this.getInsets();
+                return insets.getLeft() + this.snapSize(maxPref) + insets.getRight();
+            } else {
+                return this.computePrefWidth(height);
+            }
+        }
+
+        protected double computeMinHeight(double width) {
+            if (this.getContentBias() == Orientation.VERTICAL) {
+                double maxPref = 0.0;
+                List<Node> children = this.getChildren();
+                int i = 0;
+
+                for (int size = children.size(); i < size; ++i) {
+                    Node child = children.get(i);
+                    if (child.isManaged()) {
+                        maxPref = Math.max(maxPref, child.minHeight(-1.0));
+                    }
+                }
+
+                Insets insets = this.getInsets();
+                return insets.getTop() + this.snapSize(maxPref) + insets.getBottom();
+            } else {
+                return this.computePrefHeight(width);
+            }
+        }
+    };
+    private static final String DEFAULT_STYLE_CLASS = "jfx-dialog-layout";
+
     public JFXDialogLayout() {
-        initialize();
-        heading.getStyleClass().addAll("jfx-layout-heading", "title");
-        body.getStyleClass().add("jfx-layout-body");
-        VBox.setVgrow(body, Priority.ALWAYS);
-        actions.getStyleClass().add("jfx-layout-actions");
-        getChildren().setAll(heading, body, actions);
+        this.initialize();
+        VBox layout = new VBox();
+        layout.getChildren().add(this.heading);
+        this.heading.getStyleClass().add("jfx-layout-heading");
+        this.heading.getStyleClass().add("title");
+        layout.getChildren().add(this.body);
+        this.body.getStyleClass().add("jfx-layout-body");
+        this.body.prefHeightProperty().bind(this.prefHeightProperty());
+        this.body.prefWidthProperty().bind(this.prefWidthProperty());
+        layout.getChildren().add(this.actions);
+        this.actions.getStyleClass().add("jfx-layout-actions");
+        this.getChildren().add(layout);
     }
-
-    /***************************************************************************
-     *                                                                         *
-     * Setters / Getters                                                       *
-     *                                                                         *
-     **************************************************************************/
 
     public ObservableList<Node> getHeading() {
-        return heading.getChildren();
+        return this.heading.getChildren();
     }
 
-    /**
-     * set header node
-     */
     public void setHeading(Node... titleContent) {
         this.heading.getChildren().setAll(titleContent);
     }
 
     public ObservableList<Node> getBody() {
-        return body.getChildren();
+        return this.body.getChildren();
     }
 
-    /**
-     * set body node
-     */
     public void setBody(Node... body) {
         this.body.getChildren().setAll(body);
     }
 
     public ObservableList<Node> getActions() {
-        return actions.getChildren();
+        return this.actions.getChildren();
     }
 
-    /**
-     * set actions of the dialog (Accept, Cancel,...)
-     */
     public void setActions(Node... actions) {
         this.actions.getChildren().setAll(actions);
     }
@@ -96,28 +119,14 @@ public class JFXDialogLayout extends VBox {
         this.actions.getChildren().setAll(actions);
     }
 
-    /***************************************************************************
-     *                                                                         *
-     * Stylesheet Handling                                                     *
-     *                                                                         *
-     **************************************************************************/
-    /**
-     * Initialize the style class to 'jfx-dialog-layout'.
-     * <p>
-     * This is the selector class from which CSS can be used to style
-     * this control.
-     */
-    private static final String DEFAULT_STYLE_CLASS = "jfx-dialog-layout";
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getUserAgentStylesheet() {
-        return JFoenixResources.load("css/controls/jfx-dialog-layout.css").toExternalForm();
-    }
-
     private void initialize() {
-        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+        this.getStyleClass().add("jfx-dialog-layout");
+        this.setPadding(new Insets(24.0, 24.0, 16.0, 24.0));
+        this.setStyle("-fx-text-fill: rgba(0, 0, 0, 0.87);");
+        this.heading.setStyle("-fx-font-weight: BOLD;-fx-alignment: center-left;");
+        this.heading.setPadding(new Insets(5.0, 0.0, 5.0, 0.0));
+        this.body.setStyle("-fx-pref-width: 400px;-fx-wrap-text: true;");
+        this.actions.setStyle("-fx-alignment: center-right ;");
+        this.actions.setPadding(new Insets(10.0, 0.0, 0.0, 0.0));
     }
 }
