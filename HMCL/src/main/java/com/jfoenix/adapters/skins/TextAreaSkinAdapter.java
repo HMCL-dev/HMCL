@@ -17,6 +17,7 @@
  */
 package com.jfoenix.adapters.skins;
 
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.skin.TextAreaSkin;
 import javafx.scene.text.Text;
@@ -24,7 +25,7 @@ import javafx.scene.text.Text;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
-public class TextAreaSkinAdapter extends TextAreaSkin {
+public abstract class TextAreaSkinAdapter extends TextAreaSkin {
     private static final VarHandle promptNodeHandle;
 
     static {
@@ -36,11 +37,15 @@ public class TextAreaSkinAdapter extends TextAreaSkin {
         }
     }
 
-
     public TextAreaSkinAdapter(TextArea control) {
         super(control);
     }
 
+    protected final void __registerChangeListener(ObservableValue<?> property, String key) {
+        this.registerChangeListener(property, ignored -> __handleControlPropertyChanged(key));
+    }
+
+    protected abstract void __handleControlPropertyChanged(String key);
 
     protected final Text __getPromptNode() {
         return (Text) promptNodeHandle.get(this);

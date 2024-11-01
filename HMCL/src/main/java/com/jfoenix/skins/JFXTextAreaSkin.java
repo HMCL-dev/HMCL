@@ -67,10 +67,24 @@ public class JFXTextAreaSkin extends TextAreaSkinAdapter {
         errorContainer = new ValidationPane<>(textArea);
         getChildren().addAll(linesWrapper.line, linesWrapper.focusedLine, linesWrapper.promptContainer, errorContainer);
 
-        registerChangeListener(textArea.disableProperty(), obs -> linesWrapper.updateDisabled());
-        registerChangeListener(textArea.focusColorProperty(), obs -> linesWrapper.updateFocusColor());
-        registerChangeListener(textArea.unFocusColorProperty(), obs -> linesWrapper.updateUnfocusColor());
-        registerChangeListener(textArea.disableAnimationProperty(), obs -> errorContainer.updateClip());
+        __registerChangeListener(textArea.disableProperty(), "DISABLE_NODE");
+        __registerChangeListener(textArea.focusColorProperty(), "FOCUS_COLOR");
+        __registerChangeListener(textArea.unFocusColorProperty(), "UNFOCUS_COLOR");
+        __registerChangeListener(textArea.disableAnimationProperty(), "DISABLE_ANIMATION");
+    }
+
+    @Override
+    protected void __handleControlPropertyChanged(String key) {
+        if ("DISABLE_NODE".equals(key)) {
+            linesWrapper.updateDisabled();
+        } else if ("FOCUS_COLOR".equals(key)) {
+            linesWrapper.updateFocusColor();
+        } else if ("UNFOCUS_COLOR".equals(key)) {
+            linesWrapper.updateUnfocusColor();
+        } else if ("DISABLE_ANIMATION".equals(key)) {
+            // remove error clip if animation is disabled
+            errorContainer.updateClip();
+        }
     }
 
     @Override

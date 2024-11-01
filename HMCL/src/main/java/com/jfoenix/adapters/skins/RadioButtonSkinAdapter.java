@@ -21,15 +21,14 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.skin.RadioButtonSkin;
 
-public class RadioButtonSkinAdapter extends RadioButtonSkin {
+public abstract class RadioButtonSkinAdapter extends RadioButtonSkin {
     public RadioButtonSkinAdapter(RadioButton control) {
         super(control);
     }
 
-    protected void __registerChangeListener(ObservableValue<?> property, String key) {
+    protected final void __registerChangeListener(ObservableValue<?> property, String key) {
         this.registerChangeListener(property, ignored -> __handleControlPropertyChanged(key));
     }
 
-    protected void __handleControlPropertyChanged(String key) {
-    }
+    protected abstract void __handleControlPropertyChanged(String key);
 }

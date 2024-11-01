@@ -161,7 +161,6 @@ public class JFXRadioButtonSkin extends RadioButtonSkinAdapter {
 
     @Override
     protected void __handleControlPropertyChanged(String p) {
-        super.__handleControlPropertyChanged(p);
         if ("SELECTED_COLOR".equals(p)) {
             // update current colors
             updateColors();

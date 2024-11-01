@@ -112,10 +112,24 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkinAdapter<T> {
             comboBox.getEditor().textProperty().addListener((o, oldVal, newVal) -> linesWrapper.usePromptText.invalidate());
         }
 
-        registerChangeListener(comboBox.disableProperty(), obs -> linesWrapper.updateDisabled());
-        registerChangeListener(comboBox.focusColorProperty(), obs -> linesWrapper.updateFocusColor());
-        registerChangeListener(comboBox.unFocusColorProperty(), obs -> linesWrapper.updateUnfocusColor());
-        registerChangeListener(comboBox.disableAnimationProperty(), obs -> errorContainer.updateClip());
+        __registerChangeListener(comboBox.disableProperty(), "DISABLE_NODE");
+        __registerChangeListener(comboBox.focusColorProperty(), "FOCUS_COLOR");
+        __registerChangeListener(comboBox.unFocusColorProperty(), "UNFOCUS_COLOR");
+        __registerChangeListener(comboBox.disableAnimationProperty(), "DISABLE_ANIMATION");
+    }
+
+    @Override
+    protected void __handleControlPropertyChanged(String key) {
+        if ("DISABLE_NODE".equals(key)) {
+            linesWrapper.updateDisabled();
+        } else if ("FOCUS_COLOR".equals(key)) {
+            linesWrapper.updateFocusColor();
+        } else if ("UNFOCUS_COLOR".equals(key)) {
+            linesWrapper.updateUnfocusColor();
+        } else if ("DISABLE_ANIMATION".equals(key)) {
+            // remove error clip if animation is disabled
+            errorContainer.updateClip();
+        }
     }
 
     /***************************************************************************

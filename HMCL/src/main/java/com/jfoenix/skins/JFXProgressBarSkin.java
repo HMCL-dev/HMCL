@@ -43,7 +43,6 @@ public class JFXProgressBarSkin extends ProgressBarSkinAdapter {
 
     @Override
     protected void __handleControlPropertyChanged(String p) {
-        super.__handleControlPropertyChanged(p);
         if ("INDETERMINATE".equals(p)) {
             this.init();
         }

@@ -21,7 +21,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.skin.CheckBoxSkin;
 
-public class CheckBoxSkinAdapter extends CheckBoxSkin {
+public abstract class CheckBoxSkinAdapter extends CheckBoxSkin {
     public CheckBoxSkinAdapter(CheckBox control) {
         super(control);
     }
@@ -30,6 +30,5 @@ public class CheckBoxSkinAdapter extends CheckBoxSkin {
         this.registerChangeListener(property, ignored -> __handleControlPropertyChanged(key));
     }
 
-    protected void __handleControlPropertyChanged(String key) {
-    }
+    protected abstract void __handleControlPropertyChanged(String key);
 }

@@ -79,22 +79,20 @@ public class JFXTextFieldSkin<T extends TextField & IFXLabelFloatControl> extend
         __registerChangeListener(textField.disableAnimationProperty(), "DISABLE_ANIMATION");
     }
 
-    protected void __handleControlPropertyChanged(String propertyReference) {
-        if ("LEADING_GRAPHIC".equals(propertyReference)) {
+    protected void __handleControlPropertyChanged(String key) {
+        if ("LEADING_GRAPHIC".equals(key)) {
             // fixme: updateGraphic(((JFXTextField) getSkinnable()).getLeadingGraphic(), "leading");
-        } else if ("TRAILING_GRAPHIC".equals(propertyReference)) {
+        } else if ("TRAILING_GRAPHIC".equals(key)) {
             // fixme: updateGraphic(((JFXTextField) getSkinnable()).getTrailingGraphic(), "trailing");
-        } else if ("DISABLE_NODE".equals(propertyReference)) {
+        } else if ("DISABLE_NODE".equals(key)) {
             linesWrapper.updateDisabled();
-        } else if ("FOCUS_COLOR".equals(propertyReference)) {
+        } else if ("FOCUS_COLOR".equals(key)) {
             linesWrapper.updateFocusColor();
-        } else if ("UNFOCUS_COLOR".equals(propertyReference)) {
+        } else if ("UNFOCUS_COLOR".equals(key)) {
             linesWrapper.updateUnfocusColor();
-        } else if ("DISABLE_ANIMATION".equals(propertyReference)) {
+        } else if ("DISABLE_ANIMATION".equals(key)) {
             // remove error clip if animation is disabled
             errorContainer.updateClip();
-        } else {
-            super.__handleControlPropertyChanged(propertyReference);
         }
     }
 

@@ -17,12 +17,19 @@
  */
 package com.jfoenix.adapters.skins;
 
+import javafx.beans.value.ObservableValue;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.skin.ComboBoxListViewSkin;
 
-public class ComboBoxListViewSkinAdapter<T> extends ComboBoxListViewSkin<T> {
+public abstract class ComboBoxListViewSkinAdapter<T> extends ComboBoxListViewSkin<T> {
 
     public ComboBoxListViewSkinAdapter(ComboBox<T> control) {
         super(control);
     }
+
+    protected final void __registerChangeListener(ObservableValue<?> property, String key) {
+        this.registerChangeListener(property, ignored -> __handleControlPropertyChanged(key));
+    }
+
+    protected abstract void __handleControlPropertyChanged(String key);
 }

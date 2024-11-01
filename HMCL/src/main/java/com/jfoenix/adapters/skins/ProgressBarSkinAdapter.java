@@ -26,7 +26,7 @@ import javafx.scene.control.skin.ProgressIndicatorSkin;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
-public class ProgressBarSkinAdapter extends ProgressBarSkin {
+public abstract class ProgressBarSkinAdapter extends ProgressBarSkin {
     private static final VarHandle indeterminateTransitionFieldHandle;
 
     static {
@@ -42,13 +42,11 @@ public class ProgressBarSkinAdapter extends ProgressBarSkin {
         super(control);
     }
 
-    protected void __registerChangeListener(ObservableValue<?> property, String key) {
-        this.registerChangeListener(property, (property2) -> __handleControlPropertyChanged(key));
+    protected final void __registerChangeListener(ObservableValue<?> property, String key) {
+        this.registerChangeListener(property, ignored -> __handleControlPropertyChanged(key));
     }
 
-    protected void __handleControlPropertyChanged(String p) {
-
-    }
+    protected abstract void __handleControlPropertyChanged(String p);
 
     protected Animation __getIndeterminateTransition() {
         return (Animation) indeterminateTransitionFieldHandle.get(this);

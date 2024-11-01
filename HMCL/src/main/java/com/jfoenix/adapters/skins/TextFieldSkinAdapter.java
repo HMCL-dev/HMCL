@@ -29,7 +29,7 @@ import javafx.scene.text.Text;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
-public class TextFieldSkinAdapter extends javafx.scene.control.skin.TextFieldSkin {
+public abstract class TextFieldSkinAdapter extends javafx.scene.control.skin.TextFieldSkin {
 
     private static final VarHandle textNodeHandle;
     private static final VarHandle textTranslateXHandle;
@@ -56,21 +56,15 @@ public class TextFieldSkinAdapter extends javafx.scene.control.skin.TextFieldSki
         super(textField);
     }
 
-    @Override
-    protected void layoutChildren(double x, double y, double w, double h) {
-        super.layoutChildren(x, y, w, h);
-    }
-
     protected final ObjectProperty<Paint> __promptTextFillProperty() {
         return super.promptTextFillProperty();
     }
 
-    protected void __registerChangeListener(ObservableValue<?> property, String key) {
-        this.registerChangeListener(property, (property2) -> __handleControlPropertyChanged(key));
+    protected final void __registerChangeListener(ObservableValue<?> property, String key) {
+        this.registerChangeListener(property, ignored -> __handleControlPropertyChanged(key));
     }
 
-    protected void __handleControlPropertyChanged(String propertyReference) {
-    }
+    protected abstract void __handleControlPropertyChanged(String key);
 
     protected final Text __getTextNode() {
         return (Text) textNodeHandle.get(this);

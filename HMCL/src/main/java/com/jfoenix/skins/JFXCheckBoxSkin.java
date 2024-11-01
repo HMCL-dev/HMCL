@@ -124,7 +124,6 @@ public class JFXCheckBoxSkin extends CheckBoxSkinAdapter {
 
     @Override
     protected void __handleControlPropertyChanged(String key) {
-        super.__handleControlPropertyChanged(key);
         if ("CHECKED_COLOR".equals(key)) {
             select.stop();
             createFillTransition();
