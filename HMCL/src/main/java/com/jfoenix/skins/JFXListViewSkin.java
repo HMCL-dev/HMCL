@@ -39,7 +39,7 @@ public class JFXListViewSkin<T> extends ListViewSkinAdapter<T> {
 
     public JFXListViewSkin(final JFXListView<T> listView) {
         super(listView);
-        flow = VirtualFlowAdapter.wrap(getChildren().get(0));
+        flow = __getFlow();
         JFXDepthManager.setDepth(flow.getFlow(), listView.depthProperty().get());
         listView.depthProperty().addListener((o, oldVal, newVal) -> JFXDepthManager.setDepth(flow.getFlow(), newVal));
     }

@@ -17,9 +17,11 @@
  */
 package com.jfoenix.adapters.skins;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.skin.TextAreaSkin;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 
 import java.lang.invoke.MethodHandles;
@@ -53,5 +55,9 @@ public abstract class TextAreaSkinAdapter extends TextAreaSkin {
 
     protected final void __setPromptNode(Text promptNode) {
         promptNodeHandle.set(this, promptNode);
+    }
+
+    protected final ObjectProperty<Paint> __promptTextFillProperty() {
+        return super.promptTextFillProperty();
     }
 }

@@ -17,11 +17,27 @@
  */
 package com.jfoenix.adapters.skins;
 
+import com.jfoenix.adapters.VirtualFlowAdapter;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.skin.ListViewSkin;
+import javafx.scene.control.skin.VirtualFlow;
 
 public class ListViewSkinAdapter<T> extends ListViewSkin<T> {
     public ListViewSkinAdapter(ListView<T> control) {
         super(control);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected final VirtualFlowAdapter<ListCell<T>> __getFlow() {
+        VirtualFlow<ListCell<T>> flow;
+        try {
+            // Since JavaFX 10
+            flow = getVirtualFlow();
+        } catch (NoSuchMethodError e) {
+            flow = (VirtualFlow<ListCell<T>>) getChildren().get(0);
+        }
+
+        return VirtualFlowAdapter.wrap(flow);
     }
 }

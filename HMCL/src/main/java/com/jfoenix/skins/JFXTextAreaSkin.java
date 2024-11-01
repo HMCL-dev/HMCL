@@ -58,7 +58,7 @@ public class JFXTextAreaSkin extends TextAreaSkinAdapter {
 
         linesWrapper = new PromptLinesWrapper<>(
                 textArea,
-                promptTextFillProperty(),
+                __promptTextFillProperty(),
                 textArea.textProperty(),
                 textArea.promptTextProperty(),
                 () -> promptText);

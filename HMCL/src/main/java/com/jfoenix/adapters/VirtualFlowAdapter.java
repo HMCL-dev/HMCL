@@ -21,9 +21,12 @@ import javafx.scene.Node;
 import javafx.scene.control.IndexedCell;
 import javafx.scene.control.skin.VirtualFlow;
 
+import java.util.Objects;
+
 public final class VirtualFlowAdapter<T extends IndexedCell<?>> {
     @SuppressWarnings("unchecked")
     public static <T extends IndexedCell<?>> VirtualFlowAdapter<T> wrap(Node node) {
+        Objects.requireNonNull(node);
         return new VirtualFlowAdapter<>((VirtualFlow<T>) node);
     }
 
