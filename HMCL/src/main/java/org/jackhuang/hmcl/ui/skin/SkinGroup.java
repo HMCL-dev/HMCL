@@ -1,4 +1,4 @@
-package moe.mickey.minecraft.skin.fx;
+package org.jackhuang.hmcl.ui.skin;
 
 import javafx.scene.Group;
 import javafx.scene.Node;
