@@ -23,13 +23,14 @@ import javafx.beans.value.ObservableBooleanValue;
 import javafx.beans.value.ObservableDoubleValue;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TextField;
+import javafx.scene.control.skin.TextFieldSkin;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
-public abstract class TextFieldSkinAdapter extends javafx.scene.control.skin.TextFieldSkin {
+public abstract class TextFieldSkinAdapter extends TextFieldSkin {
 
     private static final VarHandle textNodeHandle;
     private static final VarHandle textTranslateXHandle;
@@ -39,7 +40,7 @@ public abstract class TextFieldSkinAdapter extends javafx.scene.control.skin.Tex
 
     static {
         try {
-            Class<javafx.scene.control.skin.TextFieldSkin> clazz = javafx.scene.control.skin.TextFieldSkin.class;
+            Class<TextFieldSkin> clazz = TextFieldSkin.class;
             MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
 
             textNodeHandle = lookup.findVarHandle(clazz, "textNode", Text.class);

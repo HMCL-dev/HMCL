@@ -18,8 +18,9 @@
 package com.jfoenix.adapters.skins;
 
 import javafx.scene.control.Button;
+import javafx.scene.control.skin.ButtonSkin;
 
-public abstract class ButtonSkinAdapter extends javafx.scene.control.skin.ButtonSkin {
+public abstract class ButtonSkinAdapter extends ButtonSkin {
     public ButtonSkinAdapter(Button control) {
         super(control);
     }
