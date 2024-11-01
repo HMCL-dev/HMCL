@@ -20,12 +20,12 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
@@ -71,7 +71,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final Navigation navigation;
 
     private final JFXListView<RemoteVersion> list;
-    private final ProgressIndicator spinner;
+    private final JFXSpinner spinner;
     private final StackPane failedPane;
     private final StackPane emptyPane;
     private final TransitionPane root;
@@ -101,7 +101,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         root = new TransitionPane();
         {
-            spinner = new ProgressIndicator();
+            spinner = new JFXSpinner();
 
             center = new StackPane();
             center.setStyle("-fx-padding: 10;");

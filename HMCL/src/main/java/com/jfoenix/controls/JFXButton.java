@@ -45,24 +45,15 @@ import java.util.List;
  */
 public class JFXButton extends Button {
 
-    /**
-     * {@inheritDoc}
-     */
     public JFXButton() {
         initialize();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public JFXButton(String text) {
         super(text);
         initialize();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public JFXButton(String text, Node graphic) {
         super(text, graphic);
         initialize();
@@ -72,17 +63,11 @@ public class JFXButton extends Button {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Skin<?> createDefaultSkin() {
         return new JFXButtonSkin(this);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getUserAgentStylesheet() {
         return USER_AGENT_STYLESHEET;
