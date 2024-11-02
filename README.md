@@ -10,7 +10,7 @@
 
 ## Introduction
 
-HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
 
 HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, and macOS, but it also supports various CPU architectures such as x86, ARM, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
 
@@ -46,7 +46,7 @@ If you want to submit a pull request, here are some requirements:
 
 ### Compilation
 
-Simply execute the following command in project root directory:
+Simply execute the following command in the project root directory:
 
 ```bash
 ./gradlew clean build
@@ -59,13 +59,13 @@ Make sure you have at least JavaFX 8 installed. Liberica Full JDK 8 or later is 
 | Parameter                                    | Description                                                                                   |
 | -------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `-Dhmcl.home=<path>`                         | Override HMCL directory                                                                       |
-| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for update                                      |
-| `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider, defaults to `https://bmclapi2.bangbang93.com` |
+| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for updates                                     |
+| `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider. Defaults to `https://bmclapi2.bangbang93.com` |
 | `-Dhmcl.font.override=<font family>`         | Override font family                                                                          |
 | `-Dhmcl.version.override=<version>`          | Override the version number                                                                   |
 | `-Dhmcl.update_source.override=<url>`        | Override the update source for HMCL itself                                                    |
-| `-Dhmcl.authlibinjector.location=<path>`     | Use specified authlib-injector (instead of downloading one)                                   |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for download OpenJFX                                              |
+| `-Dhmcl.authlibinjector.location=<path>`     | Use the specified authlib-injector (instead of downloading one)                               |
+| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for downloading OpenJFX                                           |
 | `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding                                                                  |
 | `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID                                                               |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App secret                                                           |
+| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App Secret                                                           |
