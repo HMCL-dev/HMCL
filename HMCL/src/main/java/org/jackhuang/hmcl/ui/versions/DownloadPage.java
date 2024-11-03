@@ -345,7 +345,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
             RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> Controllers.navigate(new DownloadPage(page, addon, version, callback)));
+            FXUtils.onClicked(container, () -> {
+                fireEvent(new DialogCloseEvent());
+                Controllers.navigate(new DownloadPage(page, addon, version, callback));
+            });
             getChildren().setAll(container);
 
             if (addon != RemoteMod.BROKEN) {
@@ -504,7 +507,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.put(dependency.getType(), list);
                     }
                     DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
-                    FXUtils.onClicked(dependencyModItem, () -> fireEvent(new DialogCloseEvent()));
                     dependencies.get(dependency.getType()).add(dependencyModItem);
                 }
 
