@@ -23,6 +23,7 @@
     -fx-base-rippler-color: derive(rgba(92, 107, 192, 0.3), 100%);
     -fx-base-disabled-text-fill: rgba(256, 256, 256, 0.7);
     -fx-base-text-fill: white;
+    -fx-font-family: -fx-base-font-family;
 
     -theme-thumb: rgba(92, 107, 192, 0.7);
 }

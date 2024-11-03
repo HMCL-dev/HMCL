@@ -25,6 +25,7 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -153,11 +154,9 @@ public class Theme {
                     .append("-fx-base-text-fill:").append(getColorDisplayName(getForegroundColor())).append(";")
                     .append("-theme-thumb:").append(rgba(paint, 0.7)).append(";");
 
-            if (fontFamily != null) {
-                themeBuilder.append("-fx-font-family:\"").append(fontFamily).append("\";");
-                if (fontStyle != null && !fontStyle.isEmpty())
-                    themeBuilder.append("-fx-font-style:\"").append(fontStyle).append("\";");
-            }
+            themeBuilder.append("-fx-font-family:\"").append(Lang.requireNonNullElse(fontFamily, "-fx-base-font-family")).append("\";");
+            if (fontStyle != null && !fontStyle.isEmpty())
+                themeBuilder.append("-fx-font-style:\"").append(fontStyle).append("\";");
 
             themeBuilder.append('}');
 
