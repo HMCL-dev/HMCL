@@ -25,7 +25,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
