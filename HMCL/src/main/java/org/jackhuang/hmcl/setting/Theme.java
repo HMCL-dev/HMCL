@@ -153,11 +153,14 @@ public class Theme {
                     .append("-fx-base-text-fill:").append(getColorDisplayName(getForegroundColor())).append(";")
                     .append("-theme-thumb:").append(rgba(paint, 0.7)).append(";");
 
-            if (fontFamily != null) {
+            if (fontFamily == null)
+                // https://github.com/HMCL-dev/HMCL/pull/3423
+                themeBuilder.append("-fx-font-family: -fx-base-font-family;");
+            else
                 themeBuilder.append("-fx-font-family:\"").append(fontFamily).append("\";");
-                if (fontStyle != null && !fontStyle.isEmpty())
-                    themeBuilder.append("-fx-font-style:\"").append(fontStyle).append("\";");
-            }
+
+            if (fontStyle != null && !fontStyle.isEmpty())
+                themeBuilder.append("-fx-font-style:\"").append(fontStyle).append("\";");
 
             themeBuilder.append('}');
 
