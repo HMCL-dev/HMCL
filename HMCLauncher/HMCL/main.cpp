@@ -142,7 +142,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   if (isARM64) {
     downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
-  } if (isX64) {
+  } else if (isX64) {
     downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
   } else {
     downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
