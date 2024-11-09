@@ -685,7 +685,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 version = null;
             } else {
                 gameVersionNumber = GameVersionNumber.asGameVersion(repository.getGameVersion(versionId));
-                version = repository.getVersion(versionId);
+                version = repository.getResolvedVersion(versionId);
             }
 
             try {

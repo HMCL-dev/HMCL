@@ -1,6 +1,41 @@
 #include "stdafx.h"
 #include "os.h"
 
+typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS2) (HANDLE, PUSHORT, PUSHORT);
+
+MyArchitecture MyGetArchitecture() {
+  LPFN_ISWOW64PROCESS2 fnIsWow64Process2 = (LPFN_ISWOW64PROCESS2)GetProcAddress(
+      GetModuleHandle(L"Kernel32.dll"), "IsWow64Process2");
+  if (NULL != fnIsWow64Process2) {
+    USHORT uProcessMachine = 0;
+    USHORT uNativeMachine = 0;
+    if (fnIsWow64Process2(GetCurrentProcess(), &uProcessMachine, &uNativeMachine)) {
+      if (uNativeMachine == 0xAA64) {
+        return MyArchitecture::ARM64;
+      }
+
+      if (uNativeMachine == 0x8664) {
+        return MyArchitecture::X86_64;
+      }
+
+      return MyArchitecture::X86;
+    }
+  }
+
+  SYSTEM_INFO systemInfo;
+  GetNativeSystemInfo(&systemInfo);
+
+  if (systemInfo.wProcessorArchitecture == 12) {  // PROCESSOR_ARCHITECTURE_ARM64
+    return MyArchitecture::ARM64;
+  }
+
+  if (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) {
+    return MyArchitecture::X86_64;
+  }
+
+  return MyArchitecture::X86;
+}
+
 LSTATUS MyRegQueryValue(HKEY hKey, LPCWSTR subKey, DWORD dwType,
                         std::wstring &out) {
   DWORD dwSize = 0;
