@@ -24,6 +24,8 @@ import com.google.gson.annotations.SerializedName;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
@@ -34,6 +36,8 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
@@ -142,6 +146,9 @@ public final class Config implements Cloneable, Observable {
     @SerializedName("autoChooseDownloadType")
     private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
 
+    @SerializedName("enableMCIM")
+    private BooleanProperty enableMCIM = new SimpleBooleanProperty(false);
+
     @SerializedName("versionListSource")
     private StringProperty versionListSource = new SimpleStringProperty("balanced");
 
@@ -207,6 +214,20 @@ public final class Config implements Cloneable, Observable {
 
     public Config() {
         PropertyUtils.attachListener(this, helper);
+        enableMCIM.addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observableValue, Boolean previous, Boolean now) {
+                ModrinthRemoteModRepository.MODS.mcim(now);
+                ModrinthRemoteModRepository.MODPACKS.mcim(now);
+                ModrinthRemoteModRepository.RESOURCE_PACKS.mcim(now);
+
+                CurseForgeRemoteModRepository.MODS.mcim(now);
+                CurseForgeRemoteModRepository.MODPACKS.mcim(now);
+                CurseForgeRemoteModRepository.RESOURCE_PACKS.mcim(now);
+
+                return;
+            }
+        });
     }
 
     @Override
@@ -504,6 +525,12 @@ public final class Config implements Cloneable, Observable {
     public void setAutoChooseDownloadType(boolean autoChooseDownloadType) {
         this.autoChooseDownloadType.set(autoChooseDownloadType);
     }
+
+    public void enableMCIM() { this.enableMCIM.set(true); }
+
+    public void disableMCIM() { this.enableMCIM.set(false); }
+
+    public Property<Boolean> enableMCIMProperty() { return enableMCIM; }
 
     public String getVersionListSource() {
         return versionListSource.get();
