@@ -77,16 +77,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
     }
 
-    public ModrinthRemoteModRepository mcim(boolean enabled) {
-        if(enabled) {
+    public void mcim(boolean enabled) {
+        if(enabled)
             this.PREFIX = "https://mod.mcimirror.top/modrinth";
-            Logger.LOG.info("MCIM enabled");
-        }
-        else {
+        else
             this.PREFIX = "https://api.modrinth.com";
-            Logger.LOG.info("MCIM disabled");
-        }
-        return this;
+        return;
     }
 
     @Override

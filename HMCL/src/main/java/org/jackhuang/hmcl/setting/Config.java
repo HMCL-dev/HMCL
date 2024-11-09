@@ -24,8 +24,6 @@ import com.google.gson.annotations.SerializedName;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
@@ -214,19 +212,16 @@ public final class Config implements Cloneable, Observable {
 
     public Config() {
         PropertyUtils.attachListener(this, helper);
-        mcimEnablement.addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observableValue, Boolean previous, Boolean now) {
-                ModrinthRemoteModRepository.MODS.mcim(now);
-                ModrinthRemoteModRepository.MODPACKS.mcim(now);
-                ModrinthRemoteModRepository.RESOURCE_PACKS.mcim(now);
+        mcimEnablement.addListener((observableValue, previous, now) -> {
+            ModrinthRemoteModRepository.MODS.mcim(now);
+            ModrinthRemoteModRepository.MODPACKS.mcim(now);
+            ModrinthRemoteModRepository.RESOURCE_PACKS.mcim(now);
 
-                CurseForgeRemoteModRepository.MODS.mcim(now);
-                CurseForgeRemoteModRepository.MODPACKS.mcim(now);
-                CurseForgeRemoteModRepository.RESOURCE_PACKS.mcim(now);
+            CurseForgeRemoteModRepository.MODS.mcim(now);
+            CurseForgeRemoteModRepository.MODPACKS.mcim(now);
+            CurseForgeRemoteModRepository.RESOURCE_PACKS.mcim(now);
 
-                return;
-            }
+            return;
         });
     }
 

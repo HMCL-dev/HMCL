@@ -64,12 +64,12 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         return type;
     }
 
-    public CurseForgeRemoteModRepository mcim(boolean enabled) {
+    public void mcim(boolean enabled) {
         if(enabled)
             this.PREFIX = "https://mod.mcimirror.top/curseforge";
         else
             this.PREFIX = "https://api.curseforge.com";
-        return this;
+        return;
     }
 
     private int toModsSearchSortField(SortType sort) {
