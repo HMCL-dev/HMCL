@@ -62,7 +62,14 @@ public enum JavaVersionConstraint {
             return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
         }
     },
-    MODDED_JAVA_17(false, GameVersionNumber.atLeast("1.18"), VersionNumber.between("17", "17.999")) {
+    MODDED_JAVA_17(false, GameVersionNumber.between("1.18", "1.20.4"), VersionNumber.between("17", "17.999")) {
+        @Override
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
+            return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.FORGE);
+        }
+    },
+    MODDED_JAVA_21(false, GameVersionNumber.atLeast("1.20.5"), VersionNumber.between("21", "21.999")) {
         @Override
         protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {

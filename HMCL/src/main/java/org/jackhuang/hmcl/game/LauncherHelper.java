@@ -522,6 +522,9 @@ public final class LauncherHelper {
                         case MODDED_JAVA_17:
                             suggestions.add(i18n("launch.advice.modded_java", 17, gameVersion));
                             break;
+                        case MODDED_JAVA_21:
+                            suggestions.add(i18n("launch.advice.modded_java", 21, gameVersion));
+                            break;
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));
                             break;
