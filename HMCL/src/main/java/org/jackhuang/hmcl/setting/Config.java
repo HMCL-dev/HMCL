@@ -147,7 +147,7 @@ public final class Config implements Cloneable, Observable {
     private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
 
     @SerializedName("enableMCIM")
-    private BooleanProperty enableMCIM = new SimpleBooleanProperty(false);
+    private BooleanProperty mcimEnablement = new SimpleBooleanProperty(false);
 
     @SerializedName("versionListSource")
     private StringProperty versionListSource = new SimpleStringProperty("balanced");
@@ -214,7 +214,7 @@ public final class Config implements Cloneable, Observable {
 
     public Config() {
         PropertyUtils.attachListener(this, helper);
-        enableMCIM.addListener(new ChangeListener<Boolean>() {
+        mcimEnablement.addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observableValue, Boolean previous, Boolean now) {
                 ModrinthRemoteModRepository.MODS.mcim(now);
@@ -526,11 +526,7 @@ public final class Config implements Cloneable, Observable {
         this.autoChooseDownloadType.set(autoChooseDownloadType);
     }
 
-    public void enableMCIM() { this.enableMCIM.set(true); }
-
-    public void disableMCIM() { this.enableMCIM.set(false); }
-
-    public Property<Boolean> enableMCIMProperty() { return enableMCIM; }
+    public BooleanProperty getMCIMEnablementProperty() { return mcimEnablement; }
 
     public String getVersionListSource() {
         return versionListSource.get();
