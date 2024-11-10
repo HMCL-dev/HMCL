@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class ModrinthCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
-    private ModManager modManager;
+    private final ModManager modManager;
     private final String version;
     private ModrinthManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -102,7 +103,7 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = repository.getRunDirectory(version).toPath();
+        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
         Path modsDirectory = runDirectory.resolve("mods");
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
@@ -111,7 +112,10 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (file.getDownloads().isEmpty())
                 continue;
 
-            Path filePath = runDirectory.resolve(file.getPath());
+            Path filePath = runDirectory.resolve(file.getPath()).toAbsolutePath().normalize();
+            if (!filePath.startsWith(runDirectory))
+                throw new IOException("Unsecure path: " + file.getPath());
+
             if (modsDirectory.equals(filePath.getParent())) {
                 if (this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                     continue;
