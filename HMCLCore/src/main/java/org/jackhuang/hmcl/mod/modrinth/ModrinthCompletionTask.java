@@ -103,7 +103,6 @@ public class ModrinthCompletionTask extends Task<Void> {
             return;
 
         Path runDirectory = repository.getRunDirectory(version).toPath();
-        Path modsDir = modManager.getModsDirectory();
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
@@ -112,7 +111,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                 continue;
 
             Path filePath = runDirectory.resolve(file.getPath());
-            if (filePath.startsWith(modsDir)) {
+            if (file.getPath().startsWith("mods/")) {
                 if (this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                     continue;
             } else if (Files.exists(filePath)) {
