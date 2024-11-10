@@ -116,12 +116,11 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (!filePath.startsWith(runDirectory))
                 throw new IOException("Unsecure path: " + file.getPath());
 
-            if (modsDirectory.equals(filePath.getParent())) {
-                if (this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
-                    continue;
-            } else if (Files.exists(filePath)) {
+            if (Files.exists(filePath))
                 continue;
-            }
+
+            if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
+                continue;
 
             FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
             task.setCacheRepository(dependency.getCacheRepository());
