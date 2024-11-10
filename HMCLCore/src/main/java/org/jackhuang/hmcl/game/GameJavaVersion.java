@@ -33,7 +33,7 @@ public final class GameJavaVersion {
     public static final GameJavaVersion LATEST = JAVA_21;
 
     public static GameJavaVersion getMinimumJavaVersion(GameVersionNumber gameVersion) {
-        if (gameVersion.compareTo("1.21") >= 0)
+        if (gameVersion.compareTo("1.20.5") >= 0)
             return JAVA_21;
         if (gameVersion.compareTo("1.18") >= 0)
             return JAVA_17;
