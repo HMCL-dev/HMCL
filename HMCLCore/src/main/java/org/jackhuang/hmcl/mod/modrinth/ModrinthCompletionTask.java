@@ -118,7 +118,6 @@ public class ModrinthCompletionTask extends Task<Void> {
 
             if (Files.exists(filePath))
                 continue;
-
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
 
