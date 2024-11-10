@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -102,18 +103,26 @@ public class ModrinthCompletionTask extends Task<Void> {
             return;
 
         Path runDirectory = repository.getRunDirectory(version).toPath();
-        Path modsDir = runDirectory.resolve("mods");
+        Path modsDir = modManager.getModsDirectory();
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
                 continue;
+            if (file.getDownloads().isEmpty())
+                continue;
+
             Path filePath = runDirectory.resolve(file.getPath());
-            if (modsDir.startsWith(filePath) && this.modManager.hasSimpleMod(FileUtils.getName(filePath))) {
-                FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
-                task.setCacheRepository(dependency.getCacheRepository());
-                task.setCaching(true);
-                dependencies.add(task.withCounter("hmcl.modpack.download"));
+            if (filePath.startsWith(modsDir)) {
+                if (this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
+                    continue;
+            } else if (Files.exists(filePath)) {
+                continue;
             }
+
+            FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
+            task.setCacheRepository(dependency.getCacheRepository());
+            task.setCaching(true);
+            dependencies.add(task.withCounter("hmcl.modpack.download"));
         }
 
         if (!dependencies.isEmpty()) {
