@@ -170,6 +170,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         Version resolvedVersion = version.resolve(provider);
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
+                || mainClass.startsWith("net.minecraftforge")
                 || mainClass.startsWith("net.fabricmc")
                 || mainClass.startsWith("org.quiltmc")
                 || mainClass.startsWith("cpw.mods"));
