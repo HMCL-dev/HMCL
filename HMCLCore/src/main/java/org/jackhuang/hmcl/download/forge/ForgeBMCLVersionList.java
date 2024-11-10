@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
@@ -40,6 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
@@ -87,11 +87,9 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         String lookupVersion = toLookupVersion(gameVersion);
 
         return CompletableFuture.completedFuture(null)
-                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/forge/minecraft/" + lookupVersion).<List<ForgeVersion>>getJson(new TypeToken<List<ForgeVersion>>() {
-                }.getType())))
+                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/forge/minecraft/" + lookupVersion).getJson(listTypeOf(ForgeVersion.class))))
                 .thenAcceptAsync(forgeVersions -> {
                     lock.writeLock().lock();
-
                     try {
                         versions.clear(gameVersion);
                         if (forgeVersions == null) return;

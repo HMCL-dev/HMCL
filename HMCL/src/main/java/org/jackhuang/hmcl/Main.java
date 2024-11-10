@@ -20,10 +20,9 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
-import org.jackhuang.hmcl.util.FractureiserDetector;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -61,7 +60,7 @@ public final class Main {
 
         checkDirectoryPath();
 
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9)
+        if (JavaRuntime.CURRENT_VERSION < 9)
             // This environment check will take ~300ms
             thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
@@ -70,7 +69,6 @@ public final class Main {
 
         checkJavaFX();
         verifyJavaFX();
-        detectFractureiser();
 
         Launcher.main(args);
     }
@@ -91,13 +89,6 @@ public final class Main {
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
             showErrorAndExit("Exclamation mark(!) is not allowed in the path where HMCL is in.\n"
                     + "The path is " + currentDirectory);
-        }
-    }
-
-    private static void detectFractureiser() {
-        if (FractureiserDetector.detect()) {
-            LOG.error("Detected that this computer is infected by fractureiser");
-            showErrorAndExit(i18n("fatal.fractureiser"));
         }
     }
 

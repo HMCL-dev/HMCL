@@ -5,6 +5,7 @@ import java.util.Objects;
 public final class Platform {
     public static final Platform UNKNOWN = new Platform(OperatingSystem.UNKNOWN, Architecture.UNKNOWN);
 
+    public static final Platform WINDOWS_X86 = new Platform(OperatingSystem.WINDOWS, Architecture.X86);
     public static final Platform WINDOWS_X86_64 = new Platform(OperatingSystem.WINDOWS, Architecture.X86_64);
     public static final Platform WINDOWS_ARM64 = new Platform(OperatingSystem.WINDOWS, Architecture.ARM64);
 
@@ -76,6 +77,10 @@ public final class Platform {
     @Override
     public int hashCode() {
         return Objects.hash(os, arch);
+    }
+
+    public boolean equals(OperatingSystem os, Architecture arch) {
+        return this.os == os && this.arch == arch;
     }
 
     @Override

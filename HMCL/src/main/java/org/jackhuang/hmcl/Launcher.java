@@ -222,7 +222,9 @@ public final class Launcher extends Application {
 
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");
-            LOG.info("Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION);
+            LOG.info("Operating System: " + (OperatingSystem.OS_RELEASE_PRETTY_NAME == null
+                    ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION
+                    : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')'));
             LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH_NAME);
             LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH_NAME);
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));

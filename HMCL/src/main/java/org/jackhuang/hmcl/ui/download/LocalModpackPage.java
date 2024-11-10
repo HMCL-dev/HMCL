@@ -31,10 +31,12 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WebPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -78,6 +80,8 @@ public final class LocalModpackPage extends ModpackPage {
             });
         }
 
+        btnDescription.setVisible(false);
+
         File selectedFile;
         Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
         if (filePath.isPresent()) {
@@ -107,7 +111,6 @@ public final class LocalModpackPage extends ModpackPage {
                         hideSpinner();
                         lblName.setText(selectedFile.getName());
                         installAsVersion.set(false);
-                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
 
                         if (!name.isPresent()) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
@@ -130,12 +133,12 @@ public final class LocalModpackPage extends ModpackPage {
                         lblVersion.setText(manifest.getVersion());
                         lblAuthor.setText(manifest.getAuthor());
 
-                        lblModpackLocation.setText(selectedFile.getAbsolutePath());
-
                         if (!name.isPresent()) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(manifest.getName().trim());
                         }
+
+                        btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
                     }
                 }).start();
     }
@@ -153,9 +156,8 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     protected void onDescribe() {
-        if (manifest != null) {
-            FXUtils.showWebDialog(i18n("modpack.description"), manifest.getDescription());
-        }
+        if (manifest != null)
+            Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
     public static final String MODPACK_FILE = "MODPACK_FILE";

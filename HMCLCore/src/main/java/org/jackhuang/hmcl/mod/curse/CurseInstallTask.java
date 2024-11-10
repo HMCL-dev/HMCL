@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -99,8 +98,7 @@ public final class CurseInstallTask extends Task<Void> {
         ModpackConfiguration<CurseManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<CurseManifest>>() {
-                }.getType());
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(CurseManifest.class));
 
                 if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");

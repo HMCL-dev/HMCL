@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.*;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -100,7 +99,7 @@ public class DownloadSettingsPage extends StackPane {
                 downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.version_list_source")), downloadSource);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
         }
 
         {
@@ -204,7 +203,6 @@ public class DownloadSettingsPage extends StackPane {
                         Label host = new Label(i18n("settings.launcher.proxy.host"));
                         GridPane.setRowIndex(host, 1);
                         GridPane.setColumnIndex(host, 0);
-                        GridPane.setHalignment(host, HPos.RIGHT);
                         gridPane.getChildren().add(host);
                     }
 
@@ -220,7 +218,6 @@ public class DownloadSettingsPage extends StackPane {
                         Label port = new Label(i18n("settings.launcher.proxy.port"));
                         GridPane.setRowIndex(port, 2);
                         GridPane.setColumnIndex(port, 0);
-                        GridPane.setHalignment(port, HPos.RIGHT);
                         gridPane.getChildren().add(port);
                     }
 
