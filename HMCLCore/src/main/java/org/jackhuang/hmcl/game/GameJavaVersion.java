@@ -59,21 +59,6 @@ public final class GameJavaVersion {
         }
     }
 
-    public static boolean isSupportedPlatform(Platform platform) {
-        OperatingSystem os = platform.getOperatingSystem();
-        Architecture arch = platform.getArchitecture();
-        switch (arch) {
-            case X86:
-                return os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX;
-            case X86_64:
-                return os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.OSX;
-            case ARM64:
-                return os == OperatingSystem.WINDOWS || os == OperatingSystem.OSX;
-            default:
-                return false;
-        }
-    }
-
     public static List<GameJavaVersion> getSupportedVersions(Platform platform) {
         OperatingSystem operatingSystem = platform.getOperatingSystem();
         Architecture architecture = platform.getArchitecture();
