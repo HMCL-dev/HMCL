@@ -123,7 +123,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                 continue;
             }
 
-            FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
+            FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
             dependencies.add(task.withCounter("hmcl.modpack.download"));
