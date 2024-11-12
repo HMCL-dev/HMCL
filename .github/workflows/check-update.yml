@@ -69,6 +69,7 @@ jobs:
           target_commitish: ${{ env.HMCL_COMMIT_SHA }}
           name: ${{ env.HMCL_TAG_NAME }}
           tag_name: ${{ env.HMCL_TAG_NAME }}
+          prerelease: ture
   stable-check-update:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
     needs: dev-check-update
