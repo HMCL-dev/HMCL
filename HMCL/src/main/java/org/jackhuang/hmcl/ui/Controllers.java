@@ -281,14 +281,12 @@ public final class Controllers {
                     new KeyFrame(Duration.millis(0),
                             new KeyValue(node.opacityProperty(), 0, ease),
                             new KeyValue(node.scaleXProperty(), 0.3, ease),
-                            new KeyValue(node.scaleYProperty(), 0.3, ease),
-                            new KeyValue(node.scaleZProperty(), 0.3, ease)
+                            new KeyValue(node.scaleYProperty(), 0.3, ease)
                     ),
                     new KeyFrame(Duration.millis(600),
                             new KeyValue(node.opacityProperty(), 1, ease),
                             new KeyValue(node.scaleXProperty(), 1, ease),
-                            new KeyValue(node.scaleYProperty(), 1, ease),
-                            new KeyValue(node.scaleZProperty(), 1, ease)
+                            new KeyValue(node.scaleYProperty(), 1, ease)
                     )
             );
             timeline.play();
