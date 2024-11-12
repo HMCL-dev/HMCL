@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.svg.SVGGlyph;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
-import javafx.css.PseudoClass;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -44,13 +42,8 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
-import org.jackhuang.hmcl.util.Lang;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
-    private static final PseudoClass TRANSPARENT = PseudoClass.getPseudoClass("transparent");
-    private static final SVGGlyph minus = Lang.apply(new SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE),
-        glyph -> { glyph.setSize(12, 2); glyph.setTranslateY(4); });
-
     private final StackPane root, parent;
     private final StackPane titleContainer;
     private final Stage primaryStage;
@@ -68,8 +61,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         super(control);
 
         primaryStage = control.getPrimaryStage();
-
-        minus.fillProperty().bind(Theme.foregroundFillBinding());
 
         Decorator skinnable = getSkinnable();
         root = new StackPane();
@@ -202,9 +193,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnHelp.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
 
                 JFXButton btnMin = new JFXButton();
-                StackPane pane = new StackPane(minus);
-                pane.setAlignment(Pos.CENTER);
-                btnMin.setGraphic(pane);
+                btnMin.setGraphic(SVG.MINUS.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
