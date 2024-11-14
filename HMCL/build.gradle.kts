@@ -37,6 +37,7 @@ version = "$versionRoot.$buildNumber"
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
+    implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -110,6 +111,9 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     exclude("**/package-info.class")
     exclude("META-INF/maven/**")
+
+    exclude("META-INF/services/javax.imageio.spi.ImageReaderSpi")
+    exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))

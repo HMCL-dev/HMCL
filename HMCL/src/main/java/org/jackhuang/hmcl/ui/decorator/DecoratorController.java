@@ -49,13 +49,9 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -186,17 +182,7 @@ public class DecoratorController {
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        URLConnection connection = NetworkUtils.createConnection(new URL(backgroundImageUrl));
-                        if (connection instanceof HttpURLConnection) {
-                            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
-                        }
-
-                        try (InputStream input = connection.getInputStream()) {
-                            image = new Image(input);
-                            if (image.isError()) {
-                                throw image.getException();
-                            }
-                        }
+                        image = FXUtils.loadImage(new URL(backgroundImageUrl));
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -228,6 +214,9 @@ public class DecoratorController {
         if (!image.isPresent()) {
             image = tryLoadImage(Paths.get("background.gif"));
         }
+        if (!image.isPresent()) {
+            image = tryLoadImage(Paths.get("background.webp"));
+        }
         return image.orElseGet(() -> newBuiltinImage("/assets/img/background.jpg"));
     }
 
@@ -242,7 +231,7 @@ public class DecoratorController {
                     .filter(Files::isReadable)
                     .filter(it -> {
                         String ext = getExtension(it).toLowerCase(Locale.ROOT);
-                        return ext.equals("png") || ext.equals("jpg") || ext.equals("gif");
+                        return ext.equals("png") || ext.equals("jpg") || ext.equals("gif") || ext.equals("webp");
                     })
                     .collect(toList());
         } catch (IOException e) {
@@ -267,24 +256,12 @@ public class DecoratorController {
         if (!Files.isReadable(path))
             return Optional.empty();
 
-        return tryLoadImage(path.toAbsolutePath().toUri().toString());
-    }
-
-    private Optional<Image> tryLoadImage(String url) {
-        Image img;
         try {
-            img = new Image(url);
-        } catch (IllegalArgumentException e) {
+            return Optional.of(FXUtils.loadImage(path));
+        } catch (Exception e) {
             LOG.warning("Couldn't load background image", e);
             return Optional.empty();
         }
-
-        if (img.getException() != null) {
-            LOG.warning("Couldn't load background image", img.getException());
-            return Optional.empty();
-        }
-
-        return Optional.of(img);
     }
 
     // ==== Navigation ====
