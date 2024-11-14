@@ -106,7 +106,8 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setHasSubtitle(true);
 
             backgroundItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT),
+                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
+                            .setTooltip(i18n("launcher.background.default.tooltip")),
                     new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
                     new MultiFileItem.Option<>(i18n("launcher.background.translucent"), EnumBackgroundImage.TRANSLUCENT),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)

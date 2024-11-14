@@ -114,6 +114,7 @@ public final class MultiFileItem<T> extends VBox {
     public static class Option<T> {
         protected final String title;
         protected String subtitle;
+        protected String tooltip;
         protected final T data;
         protected final BooleanProperty selected = new SimpleBooleanProperty();
         protected final JFXRadioButton left = new JFXRadioButton();
@@ -140,6 +141,11 @@ public final class MultiFileItem<T> extends VBox {
             return this;
         }
 
+        public Option<T> setTooltip(String tooltip) {
+            this.tooltip = tooltip;
+            return this;
+        }
+
         public boolean isSelected() {
             return left.isSelected();
         }
@@ -161,6 +167,8 @@ public final class MultiFileItem<T> extends VBox {
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
+            if (StringUtils.isNotBlank(tooltip))
+                FXUtils.installFastTooltip(left, tooltip);
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
