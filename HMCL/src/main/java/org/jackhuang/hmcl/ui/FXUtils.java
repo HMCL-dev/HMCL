@@ -45,6 +45,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
@@ -113,6 +114,10 @@ public final class FXUtils {
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+
+    public static final List<String> IMAGE_EXTENSIONS = Lang.immutableListOf(
+            "png", "jpg", "jpeg", "bmp", "gif", "webp"
+    );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
     private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
@@ -1078,5 +1083,10 @@ public final class FXUtils {
         int b = (int) Math.round(color.getBlue() * 255.0);
 
         return String.format("#%02x%02x%02x", r, g, b);
+    }
+
+    public static FileChooser.ExtensionFilter getImageExtensionFilter() {
+        return new FileChooser.ExtensionFilter(i18n("extension.png"),
+                IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
     }
 }

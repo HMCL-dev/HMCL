@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
@@ -176,7 +177,7 @@ public class DecoratorController {
             case CUSTOM:
                 String backgroundImage = config().getBackgroundImage();
                 if (backgroundImage != null)
-                    image = tryLoadImage(Paths.get(backgroundImage)).orElse(null);
+                    image = tryLoadImage(Paths.get(backgroundImage));
                 break;
             case NETWORK:
                 String backgroundImageUrl = config().getBackgroundImageUrl();
@@ -204,63 +205,56 @@ public class DecoratorController {
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
-        Optional<Image> image = randomImageIn(Paths.get("bg"));
-        if (!image.isPresent()) {
-            image = tryLoadImage(Paths.get("background.png"));
+        Image image = randomImageIn(Paths.get("bg"));
+        if (image != null)
+            return image;
+
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            image = tryLoadImage(Paths.get("background." + extension));
+            if (image != null)
+                return image;
         }
-        if (!image.isPresent()) {
-            image = tryLoadImage(Paths.get("background.jpg"));
-        }
-        if (!image.isPresent()) {
-            image = tryLoadImage(Paths.get("background.gif"));
-        }
-        if (!image.isPresent()) {
-            image = tryLoadImage(Paths.get("background.webp"));
-        }
-        return image.orElseGet(() -> newBuiltinImage("/assets/img/background.jpg"));
+
+        return newBuiltinImage("/assets/img/background.jpg");
     }
 
-    private Optional<Image> randomImageIn(Path imageDir) {
+    private @Nullable Image randomImageIn(Path imageDir) {
         if (!Files.isDirectory(imageDir)) {
-            return Optional.empty();
+            return null;
         }
 
         List<Path> candidates;
         try (Stream<Path> stream = Files.list(imageDir)) {
             candidates = stream
+                    .filter(it -> FXUtils.IMAGE_EXTENSIONS.contains(getExtension(it).toLowerCase(Locale.ROOT)))
                     .filter(Files::isReadable)
-                    .filter(it -> {
-                        String ext = getExtension(it).toLowerCase(Locale.ROOT);
-                        return ext.equals("png") || ext.equals("jpg") || ext.equals("gif") || ext.equals("webp");
-                    })
                     .collect(toList());
         } catch (IOException e) {
             LOG.warning("Failed to list files in ./bg", e);
-            return Optional.empty();
+            return null;
         }
 
         Random rnd = new Random();
-        while (candidates.size() > 0) {
+        while (!candidates.isEmpty()) {
             int selected = rnd.nextInt(candidates.size());
-            Optional<Image> loaded = tryLoadImage(candidates.get(selected));
-            if (loaded.isPresent()) {
+            Image loaded = tryLoadImage(candidates.get(selected));
+            if (loaded != null)
                 return loaded;
-            } else {
+            else
                 candidates.remove(selected);
-            }
         }
-        return Optional.empty();
+        return null;
     }
 
-    private Optional<Image> tryLoadImage(Path path) {
+    private @Nullable Image tryLoadImage(Path path) {
         if (!Files.isReadable(path))
-            return Optional.empty();
+            return null;
 
         try {
-            return Optional.of(FXUtils.loadImage(path));
+            return FXUtils.loadImage(path);
         } catch (Exception e) {
             LOG.warning("Couldn't load background image", e);
-            return Optional.empty();
+            return null;
         }
     }
 
