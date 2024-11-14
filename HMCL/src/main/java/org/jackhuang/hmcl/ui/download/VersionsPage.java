@@ -178,7 +178,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1)));
 
         Holder<RemoteVersionListCell> lastCell = new Holder<>();
-        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell));
+        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, libraryId));
 
         FXUtils.onClicked(list, () -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
@@ -272,8 +272,12 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         private final Holder<RemoteVersionListCell> lastCell;
 
-        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell) {
+        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, String libraryId) {
             this.lastCell = lastCell;
+            if ("game".equals(libraryId)) {
+                content.getExternalLinkButton().setGraphic(SVG.EARTH.createIcon(Theme.blackFill(), -1, -1));
+                FXUtils.installFastTooltip(content.getExternalLinkButton(), i18n("wiki.tooltip"));
+            }
 
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(content, new Insets(10, 16, 10, 16));
@@ -307,14 +311,19 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
                         content.setImage(VersionIconType.GRASS.getIcon());
+                        content.setExternalLink(i18n("wiki.version.game.release", remoteVersion.getGameVersion()));
                         break;
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
+
+
+                        content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));
                         content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
+                        content.setExternalLink(null);
                         break;
                 }
             } else {
@@ -339,6 +348,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     content.setSubtitle(remoteVersion.getGameVersion());
                 else
                     content.getTags().setAll(remoteVersion.getGameVersion());
+                content.setExternalLink(null);
             }
         }
     }
