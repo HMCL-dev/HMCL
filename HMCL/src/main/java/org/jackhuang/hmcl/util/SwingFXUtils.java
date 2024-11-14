@@ -27,7 +27,6 @@ package org.jackhuang.hmcl.util;
 
 import javafx.scene.image.*;
 import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -42,9 +41,9 @@ import java.nio.IntBuffer;
  *
  * @since JavaFX 2.2
  */
-public class SwingFXUtils {
+public final class SwingFXUtils {
     private SwingFXUtils() {
-    } // no instances
+    }
 
     /**
      * Snapshots the specified {@link BufferedImage} and stores a copy of
