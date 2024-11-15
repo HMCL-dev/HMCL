@@ -62,36 +62,54 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
     private final MultiMCManifest mmcPack;
 
     MultiMCInstanceConfiguration(String defaultName, InputStream contentStream, MultiMCManifest mmcPack) throws IOException {
+        // instance.cfg is in .ini format. As it's like the .properties format, we use Properties to parse thie file.
+        // Maybe this will provide some problems (and it does, such as https://github.com/HMCL-dev/HMCL/issues/2991), but this workaround works, doesn't it?
         Properties p = new Properties();
         p.load(new InputStreamReader(contentStream, StandardCharsets.UTF_8));
 
         this.mmcPack = mmcPack;
 
-        instanceType = p.getProperty("InstanceType");
-        autoCloseConsole = Boolean.parseBoolean(p.getProperty("AutoCloseConsole"));
+        instanceType = readValue(p, "InstanceType");
+        autoCloseConsole = Boolean.parseBoolean(readValue(p, "AutoCloseConsole"));
         gameVersion = mmcPack != null ? mmcPack.getComponents().stream().filter(e -> "net.minecraft".equals(e.getUid())).findAny()
-                .orElseThrow(() -> new IOException("Malformed mmc-pack.json")).getVersion() : p.getProperty("IntendedVersion");
-        javaPath = p.getProperty("JavaPath");
-        jvmArgs = p.getProperty("JvmArgs");
-        fullscreen = Boolean.parseBoolean(p.getProperty("LaunchMaximized"));
-        maxMemory = Lang.toIntOrNull(p.getProperty("MaxMemAlloc"));
-        minMemory = Lang.toIntOrNull(p.getProperty("MinMemAlloc"));
-        height = Lang.toIntOrNull(p.getProperty("MinecraftWinHeight"));
-        width = Lang.toIntOrNull(p.getProperty("MinecraftWinWidth"));
-        overrideCommands = Boolean.parseBoolean(p.getProperty("OverrideCommands"));
-        overrideConsole = Boolean.parseBoolean(p.getProperty("OverrideConsole"));
-        overrideJavaArgs = Boolean.parseBoolean(p.getProperty("OverrideJavaArgs"));
-        overrideJavaLocation = Boolean.parseBoolean(p.getProperty("OverrideJavaLocation"));
-        overrideMemory = Boolean.parseBoolean(p.getProperty("OverrideMemory"));
-        overrideWindow = Boolean.parseBoolean(p.getProperty("OverrideWindow"));
-        permGen = Lang.toIntOrNull(p.getProperty("PermGen"));
-        postExitCommand = p.getProperty("PostExitCommand");
-        preLaunchCommand = p.getProperty("PreLaunchCommand");
-        showConsole = Boolean.parseBoolean(p.getProperty("ShowConsole"));
-        showConsoleOnError = Boolean.parseBoolean(p.getProperty("ShowConsoleOnError"));
-        wrapperCommand = p.getProperty("WrapperCommand");
+                .orElseThrow(() -> new IOException("Malformed mmc-pack.json")).getVersion() : readValue(p, "IntendedVersion");
+        javaPath = readValue(p, "JavaPath");
+        jvmArgs = readValue(p, "JvmArgs");
+        fullscreen = Boolean.parseBoolean(readValue(p, "LaunchMaximized"));
+        maxMemory = Lang.toIntOrNull(readValue(p, "MaxMemAlloc"));
+        minMemory = Lang.toIntOrNull(readValue(p, "MinMemAlloc"));
+        height = Lang.toIntOrNull(readValue(p, "MinecraftWinHeight"));
+        width = Lang.toIntOrNull(readValue(p, "MinecraftWinWidth"));
+        overrideCommands = Boolean.parseBoolean(readValue(p, "OverrideCommands"));
+        overrideConsole = Boolean.parseBoolean(readValue(p, "OverrideConsole"));
+        overrideJavaArgs = Boolean.parseBoolean(readValue(p, "OverrideJavaArgs"));
+        overrideJavaLocation = Boolean.parseBoolean(readValue(p, "OverrideJavaLocation"));
+        overrideMemory = Boolean.parseBoolean(readValue(p, "OverrideMemory"));
+        overrideWindow = Boolean.parseBoolean(readValue(p, "OverrideWindow"));
+        permGen = Lang.toIntOrNull(readValue(p, "PermGen"));
+        postExitCommand = readValue(p, "PostExitCommand");
+        preLaunchCommand = readValue(p, "PreLaunchCommand");
+        showConsole = Boolean.parseBoolean(readValue(p, "ShowConsole"));
+        showConsoleOnError = Boolean.parseBoolean(readValue(p, "ShowConsoleOnError"));
+        wrapperCommand = readValue(p, "WrapperCommand");
         name = defaultName;
-        notes = Optional.ofNullable(p.getProperty("notes")).orElse("");
+        notes = Optional.ofNullable(readValue(p, "notes")).orElse("");
+    }
+
+    /**
+     * A workaround for <a href="https://github.com/HMCL-dev/HMCL/issues/2991">...</a>
+     */
+    private String readValue(Properties p, String key) {
+        String value = p.getProperty(key);
+        if (value == null) {
+            return null;
+        }
+
+        int l = value.length();
+        if (l >= 2 && value.charAt(0) == '"' && value.charAt(l - 1) == ':') {
+            return value.substring(0, l - 1);
+        }
+        return value;
     }
 
     public MultiMCInstanceConfiguration(String instanceType, String name, String gameVersion, Integer permGen, String wrapperCommand, String preLaunchCommand, String postExitCommand, String notes, String javaPath, String jvmArgs, boolean fullscreen, Integer width, Integer height, Integer maxMemory, Integer minMemory, boolean showConsole, boolean showConsoleOnError, boolean autoCloseConsole, boolean overrideMemory, boolean overrideJavaLocation, boolean overrideJavaArgs, boolean overrideConsole, boolean overrideCommands, boolean overrideWindow) {
