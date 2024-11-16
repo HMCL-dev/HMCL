@@ -148,14 +148,14 @@ public class YggdrasilService {
         requireEmpty(request(provider.getInvalidationURL(), createRequestWithCredentials(accessToken, clientToken)));
     }
 
-    public void uploadSkin(UUID uuid, String accessToken, String model, Path file) throws AuthenticationException, UnsupportedOperationException {
+    public void uploadSkin(UUID uuid, String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         try {
             HttpURLConnection con = NetworkUtils.createHttpConnection(provider.getSkinUploadURL(uuid));
             con.setRequestMethod("PUT");
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
             con.setDoOutput(true);
             try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
-                request.param("model", model);
+                request.param("model", isSlim ? "slim" : "");
                 try (InputStream fis = Files.newInputStream(file)) {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }

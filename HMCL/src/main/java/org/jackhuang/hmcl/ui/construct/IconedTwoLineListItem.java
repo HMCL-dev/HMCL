@@ -17,7 +17,6 @@ import javafx.scene.layout.Priority;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 
 public class IconedTwoLineListItem extends HBox {
@@ -29,13 +28,8 @@ public class IconedTwoLineListItem extends HBox {
 
     private final ImageView imageView = new ImageView();
     private final TwoLineListItem twoLineListItem = new TwoLineListItem();
-    private final Lazy<JFXButton> externalLinkButton = new Lazy<>(() -> {
-        JFXButton button = new JFXButton();
-        button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), -1, -1));
-        button.setOnAction(e -> FXUtils.openLink(externalLink.get()));
-        return button;
-    });
+    private JFXButton externalLinkButton;
+
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener observer;
 
@@ -52,7 +46,7 @@ public class IconedTwoLineListItem extends HBox {
             getChildren().clear();
             if (image.get() != null) getChildren().add(imageView);
             getChildren().add(twoLineListItem);
-            if (StringUtils.isNotBlank(externalLink.get())) getChildren().add(externalLinkButton.get());
+            if (StringUtils.isNotBlank(externalLink.get())) getChildren().add(getExternalLinkButton());
         }, image, externalLink);
     }
 
@@ -110,5 +104,15 @@ public class IconedTwoLineListItem extends HBox {
 
     public ImageView getImageView() {
         return imageView;
+    }
+
+    public JFXButton getExternalLinkButton() {
+        if (externalLinkButton == null) {
+            externalLinkButton = new JFXButton();
+            externalLinkButton.getStyleClass().add("toggle-icon4");
+            externalLinkButton.setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), -1, -1));
+            externalLinkButton.setOnAction(e -> FXUtils.openLink(externalLink.get()));
+        }
+        return externalLinkButton;
     }
 }

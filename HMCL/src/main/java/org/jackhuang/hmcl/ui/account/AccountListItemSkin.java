@@ -42,10 +42,9 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AccountListItemSkin extends SkinBase<AccountListItem> {
+public final class AccountListItemSkin extends SkinBase<AccountListItem> {
 
     public AccountListItemSkin(AccountListItem skinnable) {
         super(skinnable);
@@ -94,7 +93,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnMove = new JFXButton();
         SpinnerPane spinnerMove = new SpinnerPane();
         spinnerMove.getStyleClass().add("small-spinner-pane");
-        btnMove.setOnMouseClicked(e -> {
+        btnMove.setOnAction(e -> {
             Account account = skinnable.getAccount();
             Accounts.getAccounts().remove(account);
             if (account.isPortable()) {
@@ -118,10 +117,10 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
             btnMove.setGraphic(SVG.EARTH.createIcon(Theme.blackFill(), -1, -1));
-            runInFX(() -> FXUtils.installFastTooltip(btnMove, i18n("account.move_to_global")));
+            FXUtils.installFastTooltip(btnMove, i18n("account.move_to_global"));
         } else {
             btnMove.setGraphic(SVG.EXPORT.createIcon(Theme.blackFill(), -1, -1));
-            runInFX(() -> FXUtils.installFastTooltip(btnMove, i18n("account.move_to_portable")));
+            FXUtils.installFastTooltip(btnMove, i18n("account.move_to_portable"));
         }
         spinnerMove.setContent(btnMove);
         right.getChildren().add(spinnerMove);
@@ -129,7 +128,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnRefresh = new JFXButton();
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
-        btnRefresh.setOnMouseClicked(e -> {
+        btnRefresh.setOnAction(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()
                     .whenComplete(Schedulers.javafx(), ex -> {
@@ -143,13 +142,13 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         });
         btnRefresh.getStyleClass().add("toggle-icon4");
         btnRefresh.setGraphic(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1));
-        runInFX(() -> FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh")));
+        FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh"));
         spinnerRefresh.setContent(btnRefresh);
         right.getChildren().add(spinnerRefresh);
 
         JFXButton btnUpload = new JFXButton();
         SpinnerPane spinnerUpload = new SpinnerPane();
-        btnUpload.setOnMouseClicked(e -> {
+        btnUpload.setOnAction(e -> {
             Task<?> uploadTask = skinnable.uploadSkin();
             if (uploadTask != null) {
                 spinnerUpload.showSpinner();
@@ -160,7 +159,7 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         });
         btnUpload.getStyleClass().add("toggle-icon4");
         btnUpload.setGraphic(SVG.HANGER.createIcon(Theme.blackFill(), -1, -1));
-        runInFX(() -> FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload")));
+        FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
         spinnerUpload.managedProperty().bind(spinnerUpload.visibleProperty());
         spinnerUpload.visibleProperty().bind(skinnable.canUploadSkin());
         spinnerUpload.setContent(btnUpload);
@@ -170,18 +169,19 @@ public class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnCopyUUID = new JFXButton();
         SpinnerPane spinnerCopyUUID = new SpinnerPane();
         spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
-        btnCopyUUID.setOnMouseClicked(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
+        btnUpload.getStyleClass().add("toggle-icon4");
+        btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
         btnCopyUUID.setGraphic(SVG.COPY.createIcon(Theme.blackFill(), -1, -1));
-        runInFX(() -> FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid")));
+        FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
         spinnerCopyUUID.setContent(btnCopyUUID);
         right.getChildren().add(spinnerCopyUUID);
 
         JFXButton btnRemove = new JFXButton();
-        btnRemove.setOnMouseClicked(e -> skinnable.remove());
+        btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1, -1));
-        runInFX(() -> FXUtils.installFastTooltip(btnRemove, i18n("button.delete")));
+        btnRemove.setGraphic(SVG.DELETE_OUTLINE.createIcon(Theme.blackFill(), -1, -1));
+        FXUtils.installFastTooltip(btnRemove, i18n("button.delete"));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

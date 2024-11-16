@@ -30,6 +30,8 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -144,6 +146,18 @@ public class DecoratorController {
 
         // press ESC to go back
         onEscPressed(navigator, this::back);
+
+        try {
+            // For JavaFX 12+
+            MouseButton button = MouseButton.valueOf("BACK");
+            navigator.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
+                if (e.getButton() == button) {
+                    back();
+                    e.consume();
+                }
+            });
+        } catch (IllegalArgumentException ignored) {
+        }
     }
 
     public Decorator getDecorator() {
@@ -443,7 +457,7 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
+        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE);
     }
 
     // ==== Authlib Injector DnD ====

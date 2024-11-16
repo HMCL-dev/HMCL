@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -96,12 +97,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         tab.select(newGameTab);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
+            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
         {
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("download.game"))
+                    .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("game"));
                         item.setLeftGraphic(wrap(SVG.GAMEPAD));
@@ -114,7 +115,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
                         settingsItem.setOnAction(e -> tab.select(modpackTab));
                     })
-                    .startCategory(i18n("download.content"))
+                    .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
                     .addNavigationDrawerItem(item -> {
                         item.setTitle(i18n("mods"));
                         item.setLeftGraphic(wrap(SVG.PUZZLE));

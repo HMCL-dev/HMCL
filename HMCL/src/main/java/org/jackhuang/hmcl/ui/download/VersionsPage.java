@@ -95,7 +95,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         HintPane hintPane = new HintPane();
         hintPane.setText(i18n("sponsor.bmclapi"));
         hintPane.getStyleClass().add("sponsor-pane");
-        hintPane.setOnMouseClicked(e -> onSponsor());
+        FXUtils.onClicked(hintPane, this::onSponsor);
         BorderPane.setMargin(hintPane, new Insets(10, 10, 0, 10));
         this.setTop(hintPane);
 
@@ -146,7 +146,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             failedPane.getStyleClass().add("notice-pane");
             {
                 Label label = new Label(i18n("download.failed.refresh"));
-                label.setOnMouseClicked(e -> onRefresh());
+                FXUtils.onClicked(label, this::onRefresh);
 
                 failedPane.getChildren().setAll(label);
             }
@@ -155,7 +155,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             emptyPane.getStyleClass().add("notice-pane");
             {
                 Label label = new Label(i18n("download.failed.empty"));
-                label.setOnMouseClicked(e -> onBack());
+                FXUtils.onClicked(label, this::onBack);
 
                 emptyPane.getChildren().setAll(label);
             }
@@ -178,9 +178,9 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1)));
 
         Holder<RemoteVersionListCell> lastCell = new Holder<>();
-        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell));
+        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, libraryId));
 
-        list.setOnMouseClicked(e -> {
+        FXUtils.onClicked(list, () -> {
             if (list.getSelectionModel().getSelectedIndex() < 0)
                 return;
             navigation.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem());
@@ -210,7 +210,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @Override
     public void refresh() {
         VersionList<?> currentVersionList = versionList;
-        root.setContent(spinner, ContainerAnimations.FADE.getAnimationProducer());
+        root.setContent(spinner, ContainerAnimations.FADE);
         executor = currentVersionList.refreshAsync(gameVersion).whenComplete((result, exception) -> {
             if (exception == null) {
                 List<RemoteVersion> items = loadVersions();
@@ -218,7 +218,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 Platform.runLater(() -> {
                     if (versionList != currentVersionList) return;
                     if (currentVersionList.getVersions(gameVersion).isEmpty()) {
-                        root.setContent(emptyPane, ContainerAnimations.FADE.getAnimationProducer());
+                        root.setContent(emptyPane, ContainerAnimations.FADE);
                     } else {
                         if (items.isEmpty()) {
                             chkRelease.setSelected(true);
@@ -227,14 +227,14 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         } else {
                             list.getItems().setAll(items);
                         }
-                        root.setContent(center, ContainerAnimations.FADE.getAnimationProducer());
+                        root.setContent(center, ContainerAnimations.FADE);
                     }
                 });
             } else {
                 LOG.warning("Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
                     if (versionList != currentVersionList) return;
-                    root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(failedPane, ContainerAnimations.FADE);
                 });
             }
 
@@ -272,8 +272,12 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         private final Holder<RemoteVersionListCell> lastCell;
 
-        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell) {
+        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, String libraryId) {
             this.lastCell = lastCell;
+            if ("game".equals(libraryId)) {
+                content.getExternalLinkButton().setGraphic(SVG.EARTH.createIcon(Theme.blackFill(), -1, -1));
+                FXUtils.installFastTooltip(content.getExternalLinkButton(), i18n("wiki.tooltip"));
+            }
 
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(content, new Insets(10, 16, 10, 16));
@@ -307,14 +311,19 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
                         content.setImage(VersionIconType.GRASS.getIcon());
+                        content.setExternalLink(i18n("wiki.version.game.release", remoteVersion.getGameVersion()));
                         break;
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
+
+
+                        content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));
                         content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
+                        content.setExternalLink(null);
                         break;
                 }
             } else {
@@ -339,6 +348,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     content.setSubtitle(remoteVersion.getGameVersion());
                 else
                     content.getTags().setAll(remoteVersion.getGameVersion());
+                content.setExternalLink(null);
             }
         }
     }
