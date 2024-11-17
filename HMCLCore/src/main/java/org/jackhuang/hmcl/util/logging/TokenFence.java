@@ -3,6 +3,9 @@ package org.jackhuang.hmcl.util.logging;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 final class TokenFence {
     private TokenFence() {
@@ -15,7 +18,35 @@ final class TokenFence {
     }
 
     public static void filter(String[] accessTokens, Reader reader, Writer out) throws IOException {
-        char[] buffer = new char[1024];
+        char[] buffer = new char[Math.max(1024, accessTokens[0].length() + 16)];
+        if (accessTokens.length == 1) {
+            filter(accessTokens[0], reader, out, buffer);
+        } else {
+            Path t1 = Files.createTempFile("hmcl-token-fence-", ".txt"), t2 = Files.createTempFile("hmcl-token-fence-", ".txt");
+            try (Writer o1 = Files.newBufferedWriter(t1, StandardCharsets.UTF_8)) {
+                filter(accessTokens[0], reader, o1, buffer);
+            }
+
+            for (int i = 1; i < accessTokens.length - 1; i++) {
+                String token = accessTokens[i];
+                if (token.length() > buffer.length) {
+                    buffer = new char[token.length() + 16];
+                }
+
+                try (Reader i1 = Files.newBufferedReader(t1, StandardCharsets.UTF_8); Writer i2 = Files.newBufferedWriter(t2, StandardCharsets.UTF_8)) {
+                    filter(token, i1, i2, buffer);
+                }
+
+                Path t3 = t2;
+                t2 = t1;
+                t1 = t3;
+            }
+
+            try (Reader r1 = Files.newBufferedReader(t1, StandardCharsets.UTF_8)) {
+                filter(accessTokens[accessTokens.length - 1], r1, out, buffer);
+            }
+        }
+
         for (String token : accessTokens) {
             if (token.length() > buffer.length) {
                 buffer = new char[token.length() + 16];
@@ -27,10 +58,18 @@ final class TokenFence {
     private static void filter(String token, Reader reader, Writer out, char[] buffer) throws IOException {
         char first = token.charAt(0);
         int start = 0, length;
-        while ((length = reader.read(buffer, start, buffer.length - start)) != -1) {
-            int fi = TokenFence.indexOf(buffer, 0, length - token.length(), first);
-            if (fi == -1 || !TokenFence.isToken(buffer, fi, token)) {
-                int fi2 = TokenFence.indexOf(buffer, length - token.length(), buffer.length, first);
+        while ((length = reader.read(buffer, start, buffer.length - start)) != -1 || start != 0) {
+            if (start != 0) {
+                length = (length == -1 ? 0 : length) + start;
+            }
+            if (length < token.length()) {
+                out.write(buffer, 0, length);
+                return;
+            }
+
+            int fi = findToken(buffer, length, token);
+            if (fi == -1) {
+                int fi2 = indexOf(buffer, length - token.length() + 1, length, first);
                 if (fi2 == -1) {
                     out.write(buffer, 0, length);
                     start = 0;
@@ -42,9 +81,24 @@ final class TokenFence {
             } else {
                 out.write(buffer, 0, fi);
                 out.write("<access token>");
-                System.arraycopy(buffer, fi + token.length(), buffer, 0, token.length());
-                start = 0;
+                start = length - fi - token.length();
+                System.arraycopy(buffer, fi + token.length(), buffer, 0, start);
             }
+        }
+    }
+
+    private static int findToken(char[] buffer, int length, String token) {
+        char first = token.charAt(0);
+        int start = 0;
+        while (true) {
+            int fi = indexOf(buffer, start, length - token.length() + 1, first);
+            if (fi == -1) {
+                return -1;
+            }
+            if (isToken(buffer, fi, token)) {
+                return fi;
+            }
+            start = fi + 1;
         }
     }
 

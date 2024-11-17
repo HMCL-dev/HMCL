@@ -20,41 +20,40 @@ package org.jackhuang.hmcl.util.logger;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class LoggerTest {
-    private static final String TOKEN = "the_token";
-
     @Test
     public void checkTokenFence() throws IOException {
-        test("001122334455the_token667788", TOKEN);
+        for (String s : new String[]{
+                "a_token", "the_token", "another_token"
+        }) {
+            Logger.registerAccessToken(s);
+        }
+
+        test("a_token001122334455the_token667788another_token");
 
         {
             char[] data = new char[1050];
-            TOKEN.getChars(0, TOKEN.length(), data, 1020);
-            test(data, TOKEN);
+            "the_token".getChars(0, "the_token".length(), data, 1020);
+            "another_token".getChars(0, "another_token".length(), data, 1035);
+            test(data);
         }
     }
 
-    private void test(String data, String token) throws IOException {
-        test0(new StringReader(data), token);
+    private void test(char[] data) throws IOException {
+        test(new String(data));
     }
 
-    private void test(char[] data, String token) throws IOException {
-        test0(new CharArrayReader(data), token);
-    }
-
-    private void test0(Reader reader, String token) throws IOException {
-        Logger.registerAccessToken(token);
-
+    private void test(String data) throws IOException {
         try (StringWriter writer = new StringWriter()) {
-            Logger.filterForbiddenToken(reader, writer);
+            Logger.filterForbiddenToken(new StringReader(data), writer);
 
-            assertEquals(writer.getBuffer().indexOf(token), -1);
-            assertNotEquals(writer.getBuffer().indexOf("<access token>"), -1);
+            assertEquals(Logger.filterForbiddenToken(data), writer.toString());
         }
     }
 }
