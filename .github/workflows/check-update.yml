@@ -59,7 +59,7 @@ jobs:
           echo "| HMCL-$HMCL_VERSION.sh  | $(cat HMCL-$HMCL_VERSION.sh.sha256) |"  >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body_path: RELEASE_NOTE
           files: |
@@ -124,7 +124,7 @@ jobs:
           echo "| HMCL-$HMCL_VERSION.sh  | $(cat HMCL-$HMCL_VERSION.sh.sha256) |"  >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body_path: RELEASE_NOTE
           files: |
