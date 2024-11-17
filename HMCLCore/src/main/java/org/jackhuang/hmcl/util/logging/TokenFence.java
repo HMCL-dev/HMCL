@@ -45,6 +45,9 @@ final class TokenFence {
             try (Reader r1 = Files.newBufferedReader(t1, StandardCharsets.UTF_8)) {
                 filter(accessTokens[accessTokens.length - 1], r1, out, buffer);
             }
+
+            Files.delete(t1);
+            Files.delete(t2);
         }
 
         for (String token : accessTokens) {
