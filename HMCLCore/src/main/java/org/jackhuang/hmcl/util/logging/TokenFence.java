@@ -48,7 +48,6 @@ final class TokenFence {
         }
     }
 
-
     private static int indexOf(char[] buffer, int start, int length, char target) {
         for (int i = start; i < length; i++) {
             if (buffer[i] == target) {
