@@ -23,9 +23,9 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,8 +94,17 @@ public final class LogExporter {
                     FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
                         try {
-                            String crashLog = Logger.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
-                            zipper.putTextFile(crashLog, file.getFileName().toString());
+                            if (Files.size(file) >= 1024 * 1024 * 5) {
+                                try (
+                                        Reader reader = Files.newBufferedReader(file, OperatingSystem.NATIVE_CHARSET);
+                                        Writer writer = new BufferedWriter(new OutputStreamWriter(zipper.putStream(file.getFileName().toString()), StandardCharsets.UTF_8))
+                                ) {
+                                    Logger.filterForbiddenToken(reader, writer);
+                                }
+                            } else {
+                                String crashLog = Logger.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
+                                zipper.putTextFile(crashLog, file.getFileName().toString());
+                            }
                         } catch (IOException e) {
                             LOG.warning("Failed to read log file: " + file, e);
                         }

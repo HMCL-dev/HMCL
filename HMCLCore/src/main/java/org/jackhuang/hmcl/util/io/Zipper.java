@@ -18,11 +18,9 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.function.ExceptionalPredicate;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -147,6 +145,44 @@ public final class Zipper implements Closeable {
                 zos.closeEntry();
             }
         }
+    }
+
+    public OutputStream putStream(String path) throws IOException {
+        zos.putNextEntry(new ZipEntry(normalize(path)));
+
+        return new OutputStream() {
+            private volatile boolean closed;
+
+            private void ensureOpen() throws IOException {
+                if (closed) {
+                    throw new IOException("Stream closed");
+                }
+            }
+
+            @Override
+            public void write(byte @NotNull [] b) throws IOException {
+                ensureOpen();
+                zos.write(b);
+            }
+
+            @Override
+            public void write(byte @NotNull [] b, int off, int len) throws IOException {
+                ensureOpen();
+                zos.write(b, off, len);
+            }
+
+            @Override
+            public void close() throws IOException {
+                closed = true;
+                zos.closeEntry();
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+                ensureOpen();
+                zos.write(b);
+            }
+        };
     }
 
     public void putStream(InputStream in, String path) throws IOException {
