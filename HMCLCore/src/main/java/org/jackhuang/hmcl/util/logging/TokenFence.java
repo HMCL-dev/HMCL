@@ -70,9 +70,9 @@ final class TokenFence {
                 return;
             }
 
-            int fi = findToken(buffer, length, token);
+            int tail = length - token.length() + 1, fi = findToken(buffer, tail, token);
             if (fi == -1) {
-                int fi2 = indexOf(buffer, length - token.length() + 1, length, first);
+                int fi2 = indexOf(buffer, tail, length, first);
                 if (fi2 == -1) {
                     out.write(buffer, 0, length);
                     start = 0;
@@ -90,15 +90,15 @@ final class TokenFence {
         }
     }
 
-    private static int findToken(char[] buffer, int length, String token) {
+    private static int findToken(char[] buffer, int tail, String token) {
         char first = token.charAt(0);
         int start = 0;
         while (true) {
-            int fi = indexOf(buffer, start, length - token.length() + 1, first);
+            int fi = indexOf(buffer, start, tail, first);
             if (fi == -1) {
                 return -1;
             }
-            if (isToken(buffer, fi, token)) {
+            if (isToken(buffer, fi, token, token.length())) {
                 return fi;
             }
             start = fi + 1;
@@ -115,7 +115,7 @@ final class TokenFence {
         return -1;
     }
 
-    private static boolean isToken(char[] buffer, int start, String token) {
+    private static boolean isToken(char[] buffer, int start, String token, int length) {
         for (int i = 1; i < token.length(); i++) {
             if (buffer[start + i] != token.charAt(i)) {
                 return false;
