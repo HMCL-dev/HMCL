@@ -43,6 +43,7 @@ fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getIn
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
+        "SHA-1" to "sha1",
         "SHA-256" to "sha256",
         "SHA-512" to "sha512"
     )
