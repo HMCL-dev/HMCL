@@ -185,7 +185,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             javaCustomOption = new MultiFileItem.FileOption<Pair<JavaVersionType, JavaRuntime>>(i18n("settings.custom"), pair(JavaVersionType.CUSTOM, null))
                     .setChooserTitle(i18n("settings.game.java_directory.choose"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-                javaCustomOption.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
+                javaCustomOption.addExtensionFilter(new FileChooser.ExtensionFilter("Java", "java.exe"));
 
             javaListChangeListener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                 List<MultiFileItem.Option<Pair<JavaVersionType, JavaRuntime>>> options = new ArrayList<>();

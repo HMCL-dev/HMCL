@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
+import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -44,6 +45,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
@@ -53,11 +55,9 @@ import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.ResourceNotFoundError;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -68,13 +68,15 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.lang.ref.WeakReference;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -112,6 +114,10 @@ public final class FXUtils {
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+
+    public static final List<String> IMAGE_EXTENSIONS = Lang.immutableListOf(
+            "png", "jpg", "jpeg", "bmp", "gif", "webp"
+    );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
     private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
@@ -713,6 +719,50 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
+    private static Image loadWebPImage(InputStream input) throws IOException {
+        WebPImageReaderSpi spi = new WebPImageReaderSpi();
+        ImageReader reader = spi.createReaderInstance(null);
+
+        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
+            reader.setInput(imageInput, true, true);
+            return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()), null);
+        } finally {
+            reader.dispose();
+        }
+    }
+
+    public static Image loadImage(Path path) throws Exception {
+        try (InputStream input = Files.newInputStream(path)) {
+            if ("webp".equalsIgnoreCase(FileUtils.getExtension(path)))
+                return loadWebPImage(input);
+            else {
+                Image image = new Image(input);
+                if (image.isError())
+                    throw image.getException();
+                return image;
+            }
+        }
+    }
+
+    public static Image loadImage(URL url) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(url);
+        if (connection instanceof HttpURLConnection) {
+            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+        }
+
+        try (InputStream input = connection.getInputStream()) {
+            String path = url.getPath();
+            if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
+                return loadWebPImage(input);
+            else {
+                Image image = new Image(input);
+                if (image.isError())
+                    throw image.getException();
+                return image;
+            }
+        }
+    }
+
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
@@ -1033,5 +1083,10 @@ public final class FXUtils {
         int b = (int) Math.round(color.getBlue() * 255.0);
 
         return String.format("#%02x%02x%02x", r, g, b);
+    }
+
+    public static FileChooser.ExtensionFilter getImageExtensionFilter() {
+        return new FileChooser.ExtensionFilter(i18n("extension.png"),
+                IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
     }
 }
