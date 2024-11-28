@@ -48,6 +48,8 @@ import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
@@ -289,6 +291,11 @@ public final class JavaDownloadDialog extends StackPane {
             setHeading(new Label(i18n("java.download")));
             setBody(body);
             setActions(warningLabel, downloadButtonPane, cancelButton);
+            if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {
+                JFXHyperlink hyperlink = new JFXHyperlink("java.download.jdk8u");
+                hyperlink.setExternalLink("https://www.zthread.cn/#product");
+                getActions().add(0, hyperlink);
+            }
         }
 
         private void onDownload() {
