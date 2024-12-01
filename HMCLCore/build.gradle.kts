@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    val kalaCompressVersion = "1.27.1-0"
+    val kalaCompressVersion = "1.27.1-1"
 
     api("org.glavo.kala:kala-compress-archivers-zip:$kalaCompressVersion")
     api("org.glavo.kala:kala-compress-archivers-tar:$kalaCompressVersion")
