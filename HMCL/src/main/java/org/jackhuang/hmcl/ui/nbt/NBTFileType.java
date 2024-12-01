@@ -5,7 +5,7 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.apache.commons.compress.utils.BoundedInputStream;
+import kala.compress.utils.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.*;

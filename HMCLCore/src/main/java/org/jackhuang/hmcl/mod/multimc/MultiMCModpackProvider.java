@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.mod.multimc;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -71,7 +71,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         }
     }
 
-    private static String getRootEntryName(ZipFile file) throws IOException {
+    private static String getRootEntryName(ZipArchiveReader file) throws IOException {
         final String instanceFileName = "instance.cfg";
 
         if (file.getEntry(instanceFileName) != null) return "";
@@ -92,7 +92,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipFile modpackFile, Path modpackPath, Charset encoding) throws IOException {
+    public Modpack readManifest(ZipArchiveReader modpackFile, Path modpackPath, Charset encoding) throws IOException {
         String rootEntryName = getRootEntryName(modpackFile);
         MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, rootEntryName);
 
