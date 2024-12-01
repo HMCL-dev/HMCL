@@ -22,7 +22,6 @@ import kala.compress.archivers.zip.ZipArchiveReader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Enumeration;
 
 /**
  * @author Glavo
@@ -31,9 +30,8 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
     public ZipFileTree(ZipArchiveReader file) throws IOException {
         super(file);
         try {
-            Enumeration<ZipArchiveEntry> entries = file.getEntries();
-            while (entries.hasMoreElements()) {
-                addEntry(entries.nextElement());
+            for (ZipArchiveEntry zipArchiveEntry : file.getEntries()) {
+                addEntry(zipArchiveEntry);
             }
         } catch (Throwable e) {
             try {

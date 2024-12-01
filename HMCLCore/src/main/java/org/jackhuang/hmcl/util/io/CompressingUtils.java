@@ -60,13 +60,10 @@ public final class CompressingUtils {
     }
 
     public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) throws IOException {
-        Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
         CharsetDecoder cd = newCharsetDecoder(encoding);
         CharBuffer cb = CharBuffer.allocate(32);
 
-        while (entries.hasMoreElements()) {
-            ZipArchiveEntry entry = entries.nextElement();
-
+        for (ZipArchiveEntry entry : zipFile.getEntries()) {
             if (entry.getGeneralPurposeBit().usesUTF8ForNames()) continue;
 
             cd.reset();

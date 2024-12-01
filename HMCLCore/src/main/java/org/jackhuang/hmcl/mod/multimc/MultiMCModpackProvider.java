@@ -33,7 +33,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.stream.Stream;
 
 public final class MultiMCModpackProvider implements ModpackProvider {
@@ -76,9 +75,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
 
         if (file.getEntry(instanceFileName) != null) return "";
 
-        Enumeration<ZipArchiveEntry> entries = file.getEntries();
-        while (entries.hasMoreElements()) {
-            ZipArchiveEntry entry = entries.nextElement();
+        for (ZipArchiveEntry entry : file.getEntries()) {
             String entryName = entry.getName();
 
             int idx = entryName.indexOf('/');
