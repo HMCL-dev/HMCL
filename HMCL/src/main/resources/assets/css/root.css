@@ -339,7 +339,7 @@
     -fx-alignment: center;
     -fx-pref-width: 180px;
 
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 /*******************************************************************************
@@ -841,31 +841,31 @@
 
 .options-list {
     -fx-background-color: transparent;
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
 .depth-0 {
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0), 0, 0, 0, 0);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0), 0, 0, 0, 0);
 }
 
 .depth-1 {
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 .depth-2 {
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 15, 0.16, 0, 4);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 15, 0.16, 0, 4);
 }
 
 .depth-3 {
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 20, 0.19, 0, 6);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 20, 0.19, 0, 6);
 }
 
 .depth-4 {
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 25, 0.25, 0, 8);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 25, 0.25, 0, 8);
 }
 
 .depth-5 {
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 30, 0.3, 0, 10);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 30, 0.3, 0, 10);
 }
 
 .padding-8 {
@@ -877,7 +877,7 @@
     -fx-background-radius: 4;
     -fx-padding: 8px;
 
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 .card-non-transparent {
@@ -885,7 +885,7 @@
     -fx-background-radius: 4;
     -fx-padding: 8px;
 
-    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
+    -fx-effect: ropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
 .card:selected {
