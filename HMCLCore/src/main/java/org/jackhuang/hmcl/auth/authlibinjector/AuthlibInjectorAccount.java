@@ -40,14 +40,14 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final AuthlibInjectorServer server;
     private AuthlibInjectorArtifactProvider downloader;
 
-    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, String password, CharacterSelector selector) throws AuthenticationException {
-        super(server.getYggdrasilService(), username, password, selector);
+    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, YggdrasilSession session) {
+        super(server.getYggdrasilService(), username, session);
         this.server = server;
         this.downloader = downloader;
     }
 
-    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, YggdrasilSession session) {
-        super(server.getYggdrasilService(), username, session);
+    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, String password, CharacterSelector selector) throws AuthenticationException {
+        super(server.getYggdrasilService(), username, password, selector);
         this.server = server;
         this.downloader = downloader;
     }

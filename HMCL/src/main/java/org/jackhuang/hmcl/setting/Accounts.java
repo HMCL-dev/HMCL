@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -80,11 +81,16 @@ public final class Accounts {
         }
     }
 
-    public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
+    public static final OAuthServer.Factory MICROSOFT_OAUTH_CALLBACK = new OAuthServer.Factory(
+            System.getProperty("hmcl.microsoft.auth.id",
+                    JarUtils.getManifestAttribute("Microsoft-Auth-Id", "")),
+            System.getProperty("hmcl.microsoft.auth.secret",
+                    JarUtils.getManifestAttribute("Microsoft-Auth-Secret", ""))
+    );
 
     public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
-    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
+    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(MICROSOFT_OAUTH_CALLBACK));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====

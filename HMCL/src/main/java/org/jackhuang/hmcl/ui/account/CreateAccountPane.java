@@ -287,7 +287,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
-            if (!Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+            if (!Accounts.MICROSOFT_OAUTH_CALLBACK.getClientId().isEmpty()) {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                 FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
                     if (deviceCode != null) {
@@ -303,7 +303,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     }
                 });
 
-                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
+                holder.add(Accounts.MICROSOFT_OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
                     runInFX(() -> deviceCode.set(value));
                 }));
                 FlowPane box = new FlowPane();

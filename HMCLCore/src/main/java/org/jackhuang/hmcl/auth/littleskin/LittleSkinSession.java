@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth.microsoft;
+package org.jackhuang.hmcl.auth.littleskin;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
@@ -29,7 +29,10 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public class MicrosoftSession {
+/**
+ * @author Glavo
+ */
+public class LittleSkinSession {
     private final String tokenType;
     private final long notAfter;
     private final String accessToken;
@@ -37,7 +40,7 @@ public class MicrosoftSession {
     private final User user;
     private final GameProfile profile;
 
-    public MicrosoftSession(String tokenType, String accessToken, long notAfter, String refreshToken, User user, GameProfile profile) {
+    public LittleSkinSession(String tokenType, String accessToken, long notAfter, String refreshToken, User user, GameProfile profile) {
         this.tokenType = tokenType;
         this.accessToken = accessToken;
         this.notAfter = notAfter;
@@ -76,7 +79,7 @@ public class MicrosoftSession {
         return profile;
     }
 
-    public static MicrosoftSession fromStorage(Map<?, ?> storage) {
+    public static LittleSkinSession fromStorage(Map<?, ?> storage) {
         UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString)
                 .orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
         String name = tryCast(storage.get("displayName"), String.class)
@@ -90,7 +93,7 @@ public class MicrosoftSession {
         Long notAfter = tryCast(storage.get("notAfter"), Number.class).map(Number::longValue).orElse(0L);
         String userId = tryCast(storage.get("userid"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
-        return new MicrosoftSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
+        return new LittleSkinSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
     }
 
     public Map<Object, Object> toStorage() {

@@ -35,19 +35,19 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MicrosoftAccount extends OAuthAccount {
 
-    protected final MicrosoftService service;
-    protected UUID characterUUID;
+    private final MicrosoftService service;
+    private UUID characterUUID;
 
     private boolean authenticated = false;
     private MicrosoftSession session;
 
-    protected MicrosoftAccount(MicrosoftService service, MicrosoftSession session) {
+    MicrosoftAccount(MicrosoftService service, MicrosoftSession session) {
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
         this.characterUUID = requireNonNull(session.getProfile().getId());
     }
 
-    protected MicrosoftAccount(MicrosoftService service, CharacterSelector characterSelector) throws AuthenticationException {
+    MicrosoftAccount(MicrosoftService service, CharacterSelector characterSelector) throws AuthenticationException {
         this.service = requireNonNull(service);
 
         MicrosoftSession acquiredSession = service.authenticate();
