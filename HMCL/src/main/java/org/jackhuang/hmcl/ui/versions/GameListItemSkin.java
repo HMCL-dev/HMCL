@@ -123,8 +123,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                     skinnable.modifyGameSettings();
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                currentSkinnable = skinnable;
-                popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+                chkSelected.setSelected(true);
             }
         });
     }
