@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -33,6 +32,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 /**
  *
@@ -125,9 +126,7 @@ public final class ForgeOldModMetadata {
         Path mcmod = fs.getPath("mcmod.info");
         if (Files.notExists(mcmod))
             throw new IOException("File " + modFile + " is not a Forge mod.");
-        List<ForgeOldModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod),
-                new TypeToken<List<ForgeOldModMetadata>>() {
-                }.getType());
+        List<ForgeOldModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod), listTypeOf(ForgeOldModMetadata.class));
         if (modList == null || modList.isEmpty())
             throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
         ForgeOldModMetadata metadata = modList.get(0);

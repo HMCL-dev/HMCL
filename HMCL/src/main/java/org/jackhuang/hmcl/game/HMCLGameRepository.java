@@ -33,19 +33,18 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -261,24 +260,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public Optional<File> getVersionIconFile(String id) {
         File root = getVersionRoot(id);
 
-        File iconFile = new File(root, "icon.png");
-        if (iconFile.exists()) {
-            return Optional.of(iconFile);
-        }
-
-        iconFile = new File(root, "icon.jpg");
-        if (iconFile.exists()) {
-            return Optional.of(iconFile);
-        }
-
-        iconFile = new File(root, "icon.bmp");
-        if (iconFile.exists()) {
-            return Optional.of(iconFile);
-        }
-
-        iconFile = new File(root, "icon.gif");
-        if (iconFile.exists()) {
-            return Optional.of(iconFile);
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            File file = new File(root, "icon." + extension);
+            if (file.exists()) {
+                return Optional.of(file);
+            }
         }
 
         return Optional.empty();
@@ -286,7 +272,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public void setVersionIconFile(String id, File iconFile) throws IOException {
         String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
-        if (!ext.equals("png") && !ext.equals("jpg") && !ext.equals("bmp") && !ext.equals("gif")) {
+        if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }
 
@@ -297,11 +283,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public void deleteIconFile(String id) {
         File root = getVersionRoot(id);
-
-        new File(root, "icon.png").delete();
-        new File(root, "icon.jpg").delete();
-        new File(root, "icon.bmp").delete();
-        new File(root, "icon.gif").delete();
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            new File(root, "icon." + extension).delete();
+        }
     }
 
     public Image getVersionIconImage(String id) {
@@ -315,9 +299,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
             Version version = getVersion(id).resolve(this);
             Optional<File> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
-                try (InputStream inputStream = new FileInputStream(iconFile.get())) {
-                    return new Image(inputStream);
-                } catch (IOException e) {
+                try {
+                    return FXUtils.loadImage(iconFile.get().toPath());
+                } catch (Exception e) {
                     LOG.warning("Failed to load version icon of " + id, e);
                 }
             }
@@ -383,7 +367,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaVersion javaVersion, File gameDir, List<String> javaAgents, boolean makeLaunchScript) {
+    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, File gameDir, List<String> javaAgents, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -396,7 +380,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
                 .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
-                        OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
+                        OperatingSystem.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())

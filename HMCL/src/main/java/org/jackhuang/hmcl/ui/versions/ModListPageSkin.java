@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ListChangeListener;
@@ -33,6 +34,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -59,15 +61,11 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -117,7 +115,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            searchField.setOnAction(e -> search());
+            PauseTransition pause = new PauseTransition(Duration.millis(100));
+            pause.setOnFinished(e -> search());
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                pause.setRate(1);
+                pause.playFromStart();
+            });
 
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
@@ -183,6 +186,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             });
 
+            listView.setOnContextMenuRequested(event -> {
+                ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                    listView.getSelectionModel().clearSelection();
+                    Controllers.dialog(new ModInfoDialog(selectedItem));
+                }
+            });
+
             center.setContent(listView);
             root.getContent().add(center);
         }
@@ -201,7 +212,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     private void changeToolbar(HBox newToolbar) {
         Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
-            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE.getAnimationProducer());
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
             if (newToolbar == searchBar) {
                 searchField.requestFocus();
             }
@@ -297,25 +308,65 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
 
             ImageView imageView = new ImageView();
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getLogoPath())) {
-                Task.supplyAsync(() -> {
-                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
-                        Path iconPath = fs.getPath(modInfo.getModInfo().getLogoPath());
+            Task.supplyAsync(() -> {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                    String logoPath = modInfo.getModInfo().getLogoPath();
+                    if (StringUtils.isNotBlank(logoPath)) {
+                        Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            Files.copy(iconPath, stream);
-                            return new ByteArrayInputStream(stream.toByteArray());
+                            try (InputStream stream = Files.newInputStream(iconPath)) {
+                                Image image = new Image(stream, 40, 40, true, true);
+                                if (!image.isError() && image.getWidth() == image.getHeight())
+                                    return image;
+                            } catch (Throwable e) {
+                                LOG.warning("Failed to load image " + logoPath, e);
+                            }
                         }
                     }
-                    return null;
-                }).whenComplete(Schedulers.javafx(), (stream, exception) -> {
-                    if (stream != null) {
-                        imageView.setImage(new Image(stream, 40, 40, true, true));
-                    } else {
-                        imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
+
+                    List<String> defaultPaths = new ArrayList<>(Arrays.asList(
+                            "icon.png",
+                            "logo.png",
+                            "mod_logo.png",
+                            "pack.png",
+                            "logoFile.png"
+                    ));
+
+                    String id = modInfo.getModInfo().getId();
+                    if (StringUtils.isNotBlank(id)) {
+                        defaultPaths.addAll(Arrays.asList(
+                                "assets/" + id + "/icon.png",
+                                "assets/" + id.replace("-", "") + "/icon.png",
+                                id + ".png",
+                                id + "-logo.png",
+                                id + "-icon.png",
+                                id + "_logo.png",
+                                id + "_icon.png"
+                        ));
                     }
-                }).start();
-            }
+
+                    for (String path : defaultPaths) {
+                        Path iconPath = fs.getPath(path);
+                        if (Files.exists(iconPath)) {
+                            try (InputStream stream = Files.newInputStream(iconPath)) {
+                                Image image = new Image(stream, 40, 40, true, true);
+                                if (!image.isError() && image.getWidth() == image.getHeight())
+                                    return image;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to load icon", e);
+                }
+
+                return null;
+            }).whenComplete(Schedulers.javafx(), (image, exception) -> {
+                if (image != null) {
+                    imageView.setImage(image);
+                } else {
+                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
+                }
+            }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
@@ -496,7 +547,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
             restoreButton.setVisible(!dataItem.getModInfo().getMod().getOldFiles().isEmpty());
-            restoreButton.setOnMouseClicked(e -> {
+            restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
                                 () -> getSkinnable().rollback(dataItem.getModInfo(), localModFile),
@@ -506,12 +557,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
                 popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
             });
-            revealButton.setOnMouseClicked(e -> {
-                FXUtils.showFileInExplorer(dataItem.getModInfo().getFile());
-            });
-            infoButton.setOnMouseClicked(e -> {
-                Controllers.dialog(new ModInfoDialog(dataItem));
-            });
+            revealButton.setOnAction(e -> FXUtils.showFileInExplorer(dataItem.getModInfo().getFile()));
+            infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
         }
     }
 }

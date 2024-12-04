@@ -25,19 +25,18 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
-import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
-import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -261,6 +260,33 @@ public class MicrosoftService {
         return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
     }
 
+    public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile/skins"));
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setDoOutput(true);
+            try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
+                request.param("variant", isSlim ? "slim" : "classic");
+                try (InputStream fis = Files.newInputStream(file)) {
+                    request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
+                }
+            }
+
+            String response = NetworkUtils.readData(con);
+            if (StringUtils.isBlank(response)) {
+                if (con.getResponseCode() / 100 != 2)
+                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+            } else {
+                MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to upload skin, response code: " + con.getResponseCode() + ", response: " + response);
+            }
+        } catch (IOException | JsonParseException e) {
+            throw new AuthenticationException(e);
+        }
+    }
+
     private static String request(URL url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -269,14 +295,6 @@ public class MicrosoftService {
                 return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
-        }
-    }
-
-    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        try {
-            return GSON.fromJson(text, typeOfT);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(text, e);
         }
     }
 

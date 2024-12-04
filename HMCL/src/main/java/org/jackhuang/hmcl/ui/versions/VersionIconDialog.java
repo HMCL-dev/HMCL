@@ -72,7 +72,7 @@ public class VersionIconDialog extends DialogPane {
 
     private void exploreIcon() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png", "*.jpg", "*.bmp", "*.gif"));
+        chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
             try {
@@ -95,9 +95,7 @@ public class VersionIconDialog extends DialogPane {
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
-        container.setOnMouseClicked(e -> {
-            exploreIcon();
-        });
+        FXUtils.onClicked(container, this::exploreIcon);
         return container;
     }
 
@@ -107,7 +105,7 @@ public class VersionIconDialog extends DialogPane {
         RipplerContainer container = new RipplerContainer(imageView);
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
-        container.setOnMouseClicked(e -> {
+        FXUtils.onClicked(container, () -> {
             if (vs != null) {
                 vs.setVersionIcon(type);
                 onAccept();

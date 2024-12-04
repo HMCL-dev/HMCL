@@ -22,20 +22,22 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Toggle;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ProcessPriority;
+import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
@@ -46,18 +48,13 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -72,7 +69,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private Profile profile;
     private WeakListenerHolder listenerHolder;
     private String versionId;
-    private boolean javaItemsLoaded;
 
     private final VBox rootPane;
     private final JFXTextField txtWidth;
@@ -83,9 +79,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
     private final ComponentSublist javaSublist;
-    private final MultiFileItem<Pair<JavaVersionType, JavaVersion>> javaItem;
-    private final MultiFileItem.Option<Pair<JavaVersionType, JavaVersion>> javaAutoDeterminedOption;
-    private final MultiFileItem.FileOption<Pair<JavaVersionType, JavaVersion>> javaCustomOption;
+    private final MultiFileItem<Pair<JavaVersionType, JavaRuntime>> javaItem;
+    private final MultiFileItem.Option<Pair<JavaVersionType, JavaRuntime>> javaAutoDeterminedOption;
+    private final MultiFileItem.StringOption<Pair<JavaVersionType, JavaRuntime>> javaVersionOption;
+    private final MultiFileItem.FileOption<Pair<JavaVersionType, JavaRuntime>> javaCustomOption;
+
     private final ComponentSublist gameDirSublist;
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
@@ -93,9 +91,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final OptionToggleButton showLogsPane;
     private final ImagePickerItem iconPickerItem;
 
+    private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
     private final InvalidationListener specificSettingsListener;
-
     private final InvalidationListener javaListener = any -> initJavaSubtitle();
+    private boolean updatingJavaSetting = false;
+    private boolean updatingSelectedJava = false;
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final BooleanProperty navigateToSpecificSettings = new SimpleBooleanProperty(false);
@@ -179,8 +179,36 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             javaSublist.setTitle(i18n("settings.game.java_directory"));
             javaSublist.setHasSubtitle(true);
             javaAutoDeterminedOption = new MultiFileItem.Option<>(i18n("settings.game.java_directory.auto"), pair(JavaVersionType.AUTO, null));
-            javaCustomOption = new MultiFileItem.FileOption<Pair<JavaVersionType, JavaVersion>>(i18n("settings.custom"), pair(JavaVersionType.CUSTOM, null))
+            javaVersionOption = new MultiFileItem.StringOption<>(i18n("settings.game.java_directory.version"), pair(JavaVersionType.VERSION, null));
+            javaVersionOption.setValidators(new NumberValidator(true));
+            FXUtils.setLimitWidth(javaVersionOption.getCustomField(), 40);
+            javaCustomOption = new MultiFileItem.FileOption<Pair<JavaVersionType, JavaRuntime>>(i18n("settings.custom"), pair(JavaVersionType.CUSTOM, null))
                     .setChooserTitle(i18n("settings.game.java_directory.choose"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                javaCustomOption.addExtensionFilter(new FileChooser.ExtensionFilter("Java", "java.exe"));
+
+            javaListChangeListener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
+                List<MultiFileItem.Option<Pair<JavaVersionType, JavaRuntime>>> options = new ArrayList<>();
+                options.add(javaAutoDeterminedOption);
+                options.add(javaVersionOption);
+                if (allJava != null) {
+                    boolean isX86 = Architecture.SYSTEM_ARCH.isX86() && allJava.stream().allMatch(java -> java.getArchitecture().isX86());
+
+                    for (JavaRuntime java : allJava) {
+                        options.add(new MultiFileItem.Option<>(
+                                i18n("settings.game.java_directory.template",
+                                        java.getVersion(),
+                                        isX86 ? i18n("settings.game.java_directory.bit", java.getBits().getBit())
+                                                : java.getPlatform().getArchitecture().getDisplayName()),
+                                pair(JavaVersionType.DETECTED, java))
+                                .setSubtitle(java.getBinary().toString()));
+                    }
+                }
+
+                options.add(javaCustomOption);
+                javaItem.loadChildren(options);
+                initializeSelectedJava();
+            });
 
             gameDirItem = new MultiFileItem<>();
             gameDirSublist = new ComponentSublist();
@@ -429,31 +457,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private void initialize() {
-        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID));
-
-        Task.supplyAsync(JavaVersion::getJavas).thenAcceptAsync(Schedulers.javafx(), list -> {
-            boolean isX86 = Architecture.SYSTEM_ARCH.isX86() && list.stream().allMatch(java -> java.getArchitecture().isX86());
-
-            List<MultiFileItem.Option<Pair<JavaVersionType, JavaVersion>>> options = list.stream()
-                    .map(javaVersion -> new MultiFileItem.Option<>(
-                            i18n("settings.game.java_directory.template",
-                                    javaVersion.getVersion(),
-                                    isX86 ? i18n("settings.game.java_directory.bit", javaVersion.getBits().getBit())
-                                            : javaVersion.getPlatform().getArchitecture().getDisplayName()),
-                            pair(JavaVersionType.DETECTED, javaVersion))
-                            .setSubtitle(javaVersion.getBinary().toString()))
-                    .collect(Collectors.toList());
-            options.add(0, javaAutoDeterminedOption);
-            options.add(javaCustomOption);
-            javaItem.loadChildren(options);
-            javaItemsLoaded = true;
-            initializeSelectedJava();
-        }).start();
-
-        javaItem.setSelectedData(null);
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            javaCustomOption.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
-
+        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
         enableSpecificSettings.addListener((a, b, newValue) -> {
             if (versionId == null) return;
 
@@ -472,7 +476,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
@@ -517,8 +520,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindEnum(cboProcessPriority);
 
             lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
+            lastVersionSetting.javaVersionTypeProperty().removeListener(javaListener);
             lastVersionSetting.javaDirProperty().removeListener(javaListener);
-            lastVersionSetting.javaProperty().removeListener(javaListener);
+            lastVersionSetting.defaultJavaPathPropertyProperty().removeListener(javaListener);
+            lastVersionSetting.javaVersionProperty().removeListener(javaListener);
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
             gameDirSublist.subtitleProperty().unbind();
@@ -531,6 +536,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         // unbind data fields
         javaItem.setToggleSelectedListener(null);
+        javaVersionOption.valueProperty().unbind();
 
         // bind new data fields
         FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
@@ -551,18 +557,42 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
 
         javaItem.setToggleSelectedListener(newValue -> {
+            if (javaItem.getSelectedData() == null || updatingSelectedJava)
+                return;
+
+            updatingJavaSetting = true;
+
+            if (javaVersionOption.isSelected()) {
+                javaVersionOption.valueProperty().bindBidirectional(versionSetting.javaVersionProperty());
+            } else {
+                javaVersionOption.valueProperty().unbind();
+                javaVersionOption.setValue("");
+            }
+
             if (javaCustomOption.isSelected()) {
                 versionSetting.setUsesCustomJavaDir();
             } else if (javaAutoDeterminedOption.isSelected()) {
                 versionSetting.setJavaAutoSelected();
+            } else if (javaVersionOption.isSelected()) {
+                if (versionSetting.getJavaVersionType() != JavaVersionType.VERSION)
+                    versionSetting.setJavaVersion("");
+                versionSetting.setJavaVersionType(JavaVersionType.VERSION);
+                versionSetting.setDefaultJavaPath(null);
             } else {
-                versionSetting.setJavaVersion(((Pair<JavaVersionType, JavaVersion>) newValue.getUserData()).getValue());
+                @SuppressWarnings("unchecked")
+                JavaRuntime java = ((Pair<JavaVersionType, JavaRuntime>) newValue.getUserData()).getValue();
+                versionSetting.setJavaVersionType(JavaVersionType.DETECTED);
+                versionSetting.setJavaVersion(java.getVersion());
+                versionSetting.setDefaultJavaPath(java.getBinary().toString());
             }
+
+            updatingJavaSetting = false;
         });
 
+        versionSetting.javaVersionTypeProperty().addListener(javaListener);
         versionSetting.javaDirProperty().addListener(javaListener);
         versionSetting.defaultJavaPathPropertyProperty().addListener(javaListener);
-        versionSetting.javaProperty().addListener(javaListener);
+        versionSetting.javaVersionProperty().addListener(javaListener);
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
         gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
@@ -576,52 +606,101 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private void initializeSelectedJava() {
-        if (lastVersionSetting == null
-                || !javaItemsLoaded /* JREs are still being loaded */) {
+        if (lastVersionSetting == null || updatingJavaSetting)
             return;
-        }
 
-        if (lastVersionSetting.isUsesCustomJavaDir()) {
-            javaCustomOption.setSelected(true);
-        } else if (lastVersionSetting.isJavaAutoSelected()) {
-            javaAutoDeterminedOption.setSelected(true);
-        } else {
-//            javaLoading.set(true);
-            lastVersionSetting.getJavaVersion(null, null)
-                    .thenAcceptAsync(Schedulers.javafx(), javaVersion -> {
-                        javaItem.setSelectedData(pair(JavaVersionType.DETECTED, javaVersion));
-//                        javaLoading.set(false);
-                    }).start();
+        updatingSelectedJava = true;
+        switch (lastVersionSetting.getJavaVersionType()) {
+            case CUSTOM:
+                javaCustomOption.setSelected(true);
+                break;
+            case VERSION:
+                javaVersionOption.setSelected(true);
+                javaVersionOption.setValue(lastVersionSetting.getJavaVersion());
+                break;
+            case AUTO:
+                javaAutoDeterminedOption.setSelected(true);
+                break;
+            default:
+                Toggle toggle = null;
+                if (JavaManager.isInitialized()) {
+                    try {
+                        JavaRuntime java = lastVersionSetting.getJava(null, null);
+                        if (java != null) {
+                            for (Toggle t : javaItem.getGroup().getToggles()) {
+                                if (t.getUserData() != null) {
+                                    @SuppressWarnings("unchecked")
+                                    Pair<JavaVersionType, JavaRuntime> userData = (Pair<JavaVersionType, JavaRuntime>) t.getUserData();
+                                    if (userData.getValue() != null && java.getBinary().equals(userData.getValue().getBinary())) {
+                                        toggle = t;
+                                        break;
+
+                                    }
+                                }
+                            }
+                        }
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+
+                if (toggle != null) {
+                    toggle.setSelected(true);
+                } else {
+                    Toggle selectedToggle = javaItem.getGroup().getSelectedToggle();
+                    if (selectedToggle != null) {
+                        selectedToggle.setSelected(false);
+                    }
+                }
+                break;
         }
+        updatingSelectedJava = false;
     }
 
     private void initJavaSubtitle() {
         FXUtils.checkFxUserThread();
-        initializeSelectedJava();
-        VersionSetting versionSetting = lastVersionSetting;
-        if (versionSetting == null)
+        if (lastVersionSetting == null)
             return;
-        Profile profile = this.profile;
+        initializeSelectedJava();
+        HMCLGameRepository repository = this.profile.getRepository();
         String versionId = this.versionId;
-        boolean autoSelected = versionSetting.isJavaAutoSelected();
+        JavaVersionType javaVersionType = lastVersionSetting.getJavaVersionType();
+        boolean autoSelected = javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION;
 
-        if (autoSelected && versionId == null) {
+        if (versionId == null && autoSelected) {
             javaSublist.setSubtitle(i18n("settings.game.java_directory.auto"));
             return;
         }
 
-        Task.composeAsync(Schedulers.javafx(), () -> {
+        Pair<JavaVersionType, JavaRuntime> selectedData = javaItem.getSelectedData();
+        if (selectedData != null && selectedData.getValue() != null) {
+            javaSublist.setSubtitle(selectedData.getValue().getBinary().toString());
+            return;
+        }
+
+        if (JavaManager.isInitialized()) {
+            GameVersionNumber gameVersionNumber;
+            Version version;
             if (versionId == null) {
-                return versionSetting.getJavaVersion(GameVersionNumber.unknown(), null);
+                gameVersionNumber = GameVersionNumber.unknown();
+                version = null;
             } else {
-                return versionSetting.getJavaVersion(
-                        GameVersionNumber.asGameVersion(profile.getRepository().getGameVersion(versionId)),
-                        profile.getRepository().getVersion(versionId));
+                gameVersionNumber = GameVersionNumber.asGameVersion(repository.getGameVersion(versionId));
+                version = repository.getResolvedVersion(versionId);
             }
-        }).thenAcceptAsync(Schedulers.javafx(), javaVersion -> javaSublist.setSubtitle(Optional.ofNullable(javaVersion)
-                        .map(JavaVersion::getBinary).map(Path::toString).orElseGet(() ->
-                                autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"))))
-                .start();
+
+            try {
+                JavaRuntime java = lastVersionSetting.getJava(gameVersionNumber, version);
+                if (java != null) {
+                    javaSublist.setSubtitle(java.getBinary().toString());
+                } else {
+                    javaSublist.setSubtitle(autoSelected ? i18n("settings.game.java_directory.auto.not_found") : i18n("settings.game.java_directory.invalid"));
+                }
+                return;
+            } catch (InterruptedException ignored) {
+            }
+        }
+
+        javaSublist.setSubtitle("");
     }
 
     private void editSpecificSettings() {
@@ -663,11 +742,5 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
-    }
-
-    private enum JavaVersionType {
-        DETECTED,
-        CUSTOM,
-        AUTO,
     }
 }
