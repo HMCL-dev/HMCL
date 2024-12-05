@@ -52,4 +52,9 @@ public class LittleSkinAccountFactory extends AccountFactory<LittleSkinAccount> 
         // TODO: return new LittleSkinAccount(service, session);
         return null;
     }
+
+    @Override
+    public boolean isAvailable() {
+        return service.isAvailable();
+    }
 }

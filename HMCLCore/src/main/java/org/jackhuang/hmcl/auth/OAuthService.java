@@ -30,4 +30,8 @@ public abstract class OAuthService {
         this.scope = scope;
         this.callback = callback;
     }
+
+    public boolean isAvailable() {
+        return !callback.getClientId().isEmpty();
+    }
 }

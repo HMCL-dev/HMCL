@@ -490,7 +490,7 @@ public final class Accounts {
         } else if (exception instanceof MicrosoftService.NoXuiException) {
             return i18n("account.methods.microsoft.error.add_family_probably");
         } else if (exception instanceof OAuthServer.MicrosoftAuthenticationNotSupportedException) {
-            return i18n("account.methods.microsoft.snapshot");
+            return i18n("account.methods.snapshot");
         } else if (exception instanceof OAuthAccount.WrongAccountException) {
             return i18n("account.failed.wrong_account");
         } else if (exception.getClass() == AuthenticationException.class) {
