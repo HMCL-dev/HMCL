@@ -171,7 +171,7 @@ public class OAuth {
 
             handleErrorResponse(response);
 
-            return new Result(response.accessToken, response.refreshToken);
+            return new Result(response.accessToken, response.refreshToken, response.idToken);
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -368,5 +368,8 @@ public class OAuth {
 
         @SerializedName("refresh_token")
         String refreshToken;
+
+        @SerializedName("id_token")
+        String idToken;
     }
 }

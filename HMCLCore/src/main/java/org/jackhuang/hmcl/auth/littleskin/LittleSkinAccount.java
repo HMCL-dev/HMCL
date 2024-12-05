@@ -20,28 +20,66 @@ package org.jackhuang.hmcl.auth.littleskin;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuthAccount;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftSession;
+import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
  * @author Glavo
  */
 public final class LittleSkinAccount extends OAuthAccount {
-    protected final LittleSkinService service;
-    protected UUID characterUUID;
+    private final LittleSkinService service;
+    private LittleSkinSession session;
+    private UUID characterUUID;
 
     private boolean authenticated = false;
-    private MicrosoftSession session;
 
-    public LittleSkinAccount(LittleSkinService service) {
+    public LittleSkinAccount(LittleSkinService service, LittleSkinSession session) {
         this.service = service;
+        this.session = session;
+    }
+
+    @Override
+    public AuthInfo logIn() throws AuthenticationException {
+        if (!authenticated) {
+            if (service.validate(session)) {
+                authenticated = true;
+            } else {
+                LittleSkinSession acquiredSession = service.refresh(session);
+                if (!Objects.equals(acquiredSession.getIdToken().getSelectedProfile().getId(), session.getIdToken().getSelectedProfile().getId())) {
+                    throw new ServerResponseMalformedException("Selected profile changed");
+                }
+
+                session = acquiredSession;
+
+                authenticated = true;
+                invalidate();
+            }
+        }
+
+        return session.toAuthInfo();
     }
 
     @Override
     public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
-        return null;
+        LittleSkinSession acquiredSession = service.authenticate();
+        UUID id = acquiredSession.getIdToken().getSelectedProfile().getId();
+
+        if (!Objects.equals(characterUUID, id)) {
+            throw new WrongAccountException(characterUUID, id);
+        }
+
+        if (acquiredSession.getIdToken() == null) {
+            session = service.refresh(acquiredSession);
+        } else {
+            session = acquiredSession;
+        }
+
+        authenticated = true;
+        invalidate();
+        return session.toAuthInfo();
     }
 
     @Override
@@ -56,11 +94,6 @@ public final class LittleSkinAccount extends OAuthAccount {
 
     @Override
     public UUID getUUID() {
-        return null;
-    }
-
-    @Override
-    public AuthInfo logIn() throws AuthenticationException {
         return null;
     }
 

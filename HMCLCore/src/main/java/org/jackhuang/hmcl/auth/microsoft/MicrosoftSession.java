@@ -64,10 +64,6 @@ public class MicrosoftSession {
         return refreshToken;
     }
 
-    public String getAuthorization() {
-        return String.format("%s %s", getTokenType(), getAccessToken());
-    }
-
     public User getUser() {
         return user;
     }

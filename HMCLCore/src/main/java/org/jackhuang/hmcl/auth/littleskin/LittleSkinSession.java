@@ -18,131 +18,61 @@
 package org.jackhuang.hmcl.auth.littleskin;
 
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.Map;
-import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
  * @author Glavo
  */
 public class LittleSkinSession {
-    private final String tokenType;
-    private final long notAfter;
     private final String accessToken;
     private final String refreshToken;
-    private final User user;
-    private final GameProfile profile;
+    private final LittleSkinIdToken idToken;
 
-    public LittleSkinSession(String tokenType, String accessToken, long notAfter, String refreshToken, User user, GameProfile profile) {
-        this.tokenType = tokenType;
+    public LittleSkinSession(String accessToken, String refreshToken, LittleSkinIdToken idToken) {
         this.accessToken = accessToken;
-        this.notAfter = notAfter;
         this.refreshToken = refreshToken;
-        this.user = user;
-        this.profile = profile;
+        this.idToken = idToken;
 
         if (accessToken != null) Logger.registerAccessToken(accessToken);
-    }
-
-    public String getTokenType() {
-        return tokenType;
     }
 
     public String getAccessToken() {
         return accessToken;
     }
 
-    public long getNotAfter() {
-        return notAfter;
-    }
-
     public String getRefreshToken() {
         return refreshToken;
     }
 
-    public String getAuthorization() {
-        return String.format("%s %s", getTokenType(), getAccessToken());
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public GameProfile getProfile() {
-        return profile;
+    public LittleSkinIdToken getIdToken() {
+        return idToken;
     }
 
     public static LittleSkinSession fromStorage(Map<?, ?> storage) {
-        UUID uuid = tryCast(storage.get("uuid"), String.class).map(UUIDTypeAdapter::fromString)
-                .orElseThrow(() -> new IllegalArgumentException("uuid is missing"));
-        String name = tryCast(storage.get("displayName"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("displayName is missing"));
-        String tokenType = tryCast(storage.get("tokenType"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("tokenType is missing"));
-        String accessToken = tryCast(storage.get("accessToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("accessToken is missing"));
-        String refreshToken = tryCast(storage.get("refreshToken"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
-        Long notAfter = tryCast(storage.get("notAfter"), Number.class).map(Number::longValue).orElse(0L);
-        String userId = tryCast(storage.get("userid"), String.class)
-                .orElseThrow(() -> new IllegalArgumentException("userid is missing"));
-        return new LittleSkinSession(tokenType, accessToken, notAfter, refreshToken, new User(userId), new GameProfile(uuid, name));
+        return null; // TODO
     }
 
     public Map<Object, Object> toStorage() {
-        requireNonNull(profile);
-        requireNonNull(user);
+        requireNonNull(idToken);
 
         return mapOf(
-                pair("uuid", UUIDTypeAdapter.fromUUID(profile.getId())),
-                pair("displayName", profile.getName()),
-                pair("tokenType", tokenType),
                 pair("accessToken", accessToken),
                 pair("refreshToken", refreshToken),
-                pair("notAfter", notAfter),
-                pair("userid", user.id));
+                pair("idToken", idToken));
     }
 
     public AuthInfo toAuthInfo() {
-        requireNonNull(profile);
+        requireNonNull(idToken);
+        CompleteGameProfile selectedProfile = idToken.getSelectedProfile();
+        selectedProfile.validate();
 
-        return new AuthInfo(profile.getName(), profile.getId(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
-    }
-
-    public static final class User {
-        private final String id;
-
-        public User(String id) {
-            this.id = id;
-        }
-
-        public String getId() {
-            return id;
-        }
-    }
-
-    public static final class GameProfile {
-        private final UUID id;
-        private final String name;
-
-        public GameProfile(UUID id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public UUID getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
+        return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
     }
 }

@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.auth.littleskin;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorProvider;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
-import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.JWTToken;
 
-import java.io.IOException;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Glavo
@@ -36,50 +36,45 @@ public final class LittleSkinService extends OAuthService {
             "https://open.littleskin.cn/oauth/device_code",
             "https://open.littleskin.cn/oauth/token"
     );
-    private static final String USER_INFO_API = "https://littleskin.cn/api/user";
-    private static final String SCOPE = "User.Read Player.ReadWrite Yggdrasil.MinecraftToken.Create";
-    private static final YggdrasilService SERVICE = new YggdrasilService(new AuthlibInjectorProvider(API_ROOT));
+    // private static final String USER_INFO_API = "https://littleskin.cn/api/user";
+    private static final String SCOPE = "openid offline_access User.Read Player.ReadWrite Yggdrasil.PlayerProfiles.Select Yggdrasil.Server.Join";
+    private static final YggdrasilService YGGDRASIL_SERVICE = new YggdrasilService(new AuthlibInjectorProvider(API_ROOT));
 
     public LittleSkinService(OAuth.Callback callback) {
         super(OAUTH, SCOPE, callback);
     }
 
-    public YggdrasilSession authenticate() throws AuthenticationException {
-        try {
-            OAuth.Result result = OAUTH.authenticate(OAuth.GrantFlow.DEVICE, this);
-            UserInfo userInfo = HttpRequest.POST(USER_INFO_API)
-                    .authorization("Bearer", result.getAccessToken())
-                    .getJson(UserInfo.class);
-
-
-        } catch (IOException e) {
-            throw new RuntimeException(e); // TODO
-        }
-
-        return null; // TODO
+    private static LittleSkinSession fromResult(OAuth.Result result) {
+        return new LittleSkinSession(
+                result.getAccessToken(),
+                result.getRefreshToken(),
+                JWTToken.parse(LittleSkinIdToken.class, result.getIdToken()).getPayload()
+        );
     }
 
-    /**
-     * <code>
-     * {
-     * "uid": 1,
-     * "email": "example@example.com",
-     * "nickname": "name",
-     * "avatar": 0,
-     * "score": 1000,
-     * "permission": 0,
-     * "last_sign_at": "2020-01-01 00:00:00",
-     * "register_at": "2020-01-01 00:00:00",
-     * "verified": true
-     * }
-     * </code>
-     *
-     * @see <a href="https://blessing.netlify.app/api/user.html#%E7%94%A8%E6%88%B7">Blessing Skin Web API</a>
-     */
-    private static final class UserInfo {
-        public int uid;
-        public String email;
-        public String nickname;
-        public boolean verified;
+    public LittleSkinSession authenticate() throws AuthenticationException {
+        try {
+            return fromResult(OAUTH.authenticate(OAuth.GrantFlow.DEVICE, this));
+        } catch (JsonParseException | IllegalArgumentException e) {
+            throw new ServerResponseMalformedException(e);
+        }
+    }
+
+    public LittleSkinSession refresh(LittleSkinSession oldSession) throws AuthenticationException {
+        try {
+            return fromResult(OAUTH.refresh(oldSession.getRefreshToken(), this));
+        } catch (JsonParseException | IllegalArgumentException e) {
+            throw new ServerResponseMalformedException(e);
+        }
+    }
+
+    public boolean validate(LittleSkinSession session) throws AuthenticationException {
+        requireNonNull(session);
+
+        if (System.currentTimeMillis() > session.getIdToken().getExpirationTime()) {
+            return false;
+        }
+
+        return YGGDRASIL_SERVICE.validate(session.getAccessToken(), null);
     }
 }
