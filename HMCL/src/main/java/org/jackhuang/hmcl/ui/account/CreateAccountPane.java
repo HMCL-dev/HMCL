@@ -83,7 +83,6 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
-    private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
 
     private final Label lblErrorMessage;
@@ -105,17 +104,16 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     }
 
     public CreateAccountPane(AccountFactory<?> factory) {
+        boolean showMethodSwitcher = factory == null;
         if (factory == null) {
-            showMethodSwitcher = true;
             String preferred = config().getPreferredLoginType();
             try {
                 factory = Accounts.getAccountFactory(preferred);
             } catch (IllegalArgumentException e) {
                 factory = Accounts.FACTORY_OFFLINE;
             }
-        } else {
-            showMethodSwitcher = false;
         }
+
         this.factory = factory;
 
         {
@@ -344,6 +342,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             }
 
             detailsPane = vbox;
+        } else if (factory == Accounts.FACTORY_LITTLE_SKIN) {
+
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
             btnAccept.disableProperty().bind(((AccountDetailsInputPane) detailsPane).validProperty().not());

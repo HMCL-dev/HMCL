@@ -109,6 +109,7 @@ public final class Accounts {
         type2factory.put("offline", FACTORY_OFFLINE);
         type2factory.put("authlibInjector", FACTORY_AUTHLIB_INJECTOR);
         type2factory.put("microsoft", FACTORY_MICROSOFT);
+        type2factory.put("littleskin", FACTORY_LITTLE_SKIN);
 
         type2factory.forEach((type, factory) -> factory2type.put(factory, type));
     }
@@ -423,7 +424,9 @@ public final class Accounts {
     private static final Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
             pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
             pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"),
-            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"));
+            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"),
+            pair(Accounts.FACTORY_LITTLE_SKIN, "account.methods.littleskin")
+    );
 
     public static String getLocalizedLoginTypeName(AccountFactory<?> factory) {
         return i18n(Optional.ofNullable(unlocalizedLoginTypeNames.get(factory))
