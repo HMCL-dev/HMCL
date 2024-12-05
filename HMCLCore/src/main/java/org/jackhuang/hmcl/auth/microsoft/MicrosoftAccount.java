@@ -36,7 +36,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MicrosoftAccount extends OAuthAccount {
 
     private final MicrosoftService service;
-    private UUID characterUUID;
+    private final UUID characterUUID;
 
     private boolean authenticated = false;
     private MicrosoftSession session;
@@ -59,12 +59,6 @@ public final class MicrosoftAccount extends OAuthAccount {
 
         characterUUID = session.getProfile().getId();
         authenticated = true;
-    }
-
-    @Override
-    public String getUsername() {
-        // TODO: email of Microsoft account is blocked by oauth.
-        return "";
     }
 
     @Override

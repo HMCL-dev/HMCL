@@ -200,7 +200,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
                         return Optional.empty();
                     }
                 }));
-
     }
 
     @Override

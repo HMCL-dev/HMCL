@@ -137,13 +137,16 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             }
 
             IOException exception = null;
-            for (int port : new int[]{29111, 29112, 29113, 29114, 29115}) {
+            for (int port = 29111; port < 29116; port++) {
                 try {
                     OAuthServer server = new OAuthServer(port);
                     server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, true);
                     return server;
                 } catch (IOException e) {
-                    exception = e;
+                    if (exception == null) {
+                        exception = new IOException();
+                    }
+                    exception.addSuppressed(e);
                 }
             }
             throw exception;

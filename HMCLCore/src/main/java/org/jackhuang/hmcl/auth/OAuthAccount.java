@@ -35,6 +35,12 @@ public abstract class OAuthAccount extends Account {
      */
     public abstract AuthInfo logInWhenCredentialsExpired() throws AuthenticationException;
 
+    @Override
+    public String getUsername() {
+        // TODO: email of Microsoft account is blocked by oauth.
+        return "";
+    }
+
     public static class WrongAccountException extends AuthenticationException {
         private final UUID expected;
         private final UUID actual;

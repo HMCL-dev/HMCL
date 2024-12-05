@@ -26,6 +26,8 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.*;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinAccountFactory;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinService;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
@@ -88,10 +90,16 @@ public final class Accounts {
                     JarUtils.getManifestAttribute("Microsoft-Auth-Secret", ""))
     );
 
+    public static final OAuthServer.Factory LITTLE_SKIN_CALLBACK = new OAuthServer.Factory(
+            JarUtils.getManifestAttribute("LittleSkin-Client-Id", ""),
+            ""
+    );
+
     public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(MICROSOFT_OAUTH_CALLBACK));
-    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    public static final LittleSkinAccountFactory FACTORY_LITTLE_SKIN = new LittleSkinAccountFactory(new LittleSkinService(LITTLE_SKIN_CALLBACK));
+    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_LITTLE_SKIN, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();

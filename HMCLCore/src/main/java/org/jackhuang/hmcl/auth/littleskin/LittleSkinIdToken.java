@@ -17,14 +17,16 @@
  */
 package org.jackhuang.hmcl.auth.littleskin;
 
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.util.gson.Validation;
 
 /**
  * @author Glavo
  * @since <a href="https://manual.littlesk.in/advanced/oauth2/device-authorization-grant#%E5%85%B3%E4%BA%8E-id-%E4%BB%A4%E7%89%8C">About Id Token</a>
  */
-public final class LittleSkinIdToken {
+public final class LittleSkinIdToken implements Validation {
     @SerializedName("aud")
     private final String audience;
 
@@ -74,5 +76,11 @@ public final class LittleSkinIdToken {
 
     public CompleteGameProfile getSelectedProfile() {
         return selectedProfile;
+    }
+
+    @Override
+    public void validate() throws JsonParseException {
+        Validation.requireNonNull(selectedProfile, "selectedProfile");
+        selectedProfile.validate();
     }
 }

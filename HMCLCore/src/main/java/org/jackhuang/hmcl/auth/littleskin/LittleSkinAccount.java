@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuthAccount;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -32,13 +33,14 @@ import java.util.UUID;
 public final class LittleSkinAccount extends OAuthAccount {
     private final LittleSkinService service;
     private LittleSkinSession session;
-    private UUID characterUUID;
+    private final UUID characterUUID;
 
     private boolean authenticated = false;
 
     public LittleSkinAccount(LittleSkinService service, LittleSkinSession session) {
         this.service = service;
         this.session = session;
+        this.characterUUID = session.getIdToken().getSelectedProfile().getId();
     }
 
     @Override
@@ -48,7 +50,7 @@ public final class LittleSkinAccount extends OAuthAccount {
                 authenticated = true;
             } else {
                 LittleSkinSession acquiredSession = service.refresh(session);
-                if (!Objects.equals(acquiredSession.getIdToken().getSelectedProfile().getId(), session.getIdToken().getSelectedProfile().getId())) {
+                if (!Objects.equals(acquiredSession.getIdToken().getSelectedProfile().getId(), characterUUID)) {
                     throw new ServerResponseMalformedException("Selected profile changed");
                 }
 
@@ -65,11 +67,6 @@ public final class LittleSkinAccount extends OAuthAccount {
     @Override
     public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
         LittleSkinSession acquiredSession = service.authenticate();
-        UUID id = acquiredSession.getIdToken().getSelectedProfile().getId();
-
-        if (!Objects.equals(characterUUID, id)) {
-            throw new WrongAccountException(characterUUID, id);
-        }
 
         if (acquiredSession.getIdToken() == null) {
             session = service.refresh(acquiredSession);
@@ -83,28 +80,33 @@ public final class LittleSkinAccount extends OAuthAccount {
     }
 
     @Override
-    public String getUsername() {
-        return "";
-    }
-
-    @Override
     public String getCharacter() {
-        return "";
+        return session.getIdToken().getSelectedProfile().getName();
     }
 
     @Override
     public UUID getUUID() {
-        return null;
+        return characterUUID;
     }
 
     @Override
-    public AuthInfo playOffline() throws AuthenticationException {
-        return null;
+    public AuthInfo playOffline() {
+        return session.toAuthInfo();
+    }
+
+    @Override
+    public boolean canUploadSkin() {
+        return true;
+    }
+
+    @Override
+    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        service.uploadSkin(characterUUID, session.getAccessToken(), isSlim, file);
     }
 
     @Override
     public Map<Object, Object> toStorage() {
-        return null;
+        return session.toStorage();
     }
 
     @Override

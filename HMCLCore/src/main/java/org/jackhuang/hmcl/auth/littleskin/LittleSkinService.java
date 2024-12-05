@@ -23,6 +23,9 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorProvider;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.JWTToken;
 
+import java.nio.file.Path;
+import java.util.UUID;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -44,12 +47,10 @@ public final class LittleSkinService extends OAuthService {
         super(OAUTH, SCOPE, callback);
     }
 
-    private static LittleSkinSession fromResult(OAuth.Result result) {
-        return new LittleSkinSession(
-                result.getAccessToken(),
-                result.getRefreshToken(),
-                JWTToken.parse(LittleSkinIdToken.class, result.getIdToken()).getPayload()
-        );
+    private static LittleSkinSession fromResult(OAuth.Result result) throws JsonParseException {
+        LittleSkinIdToken idToken = JWTToken.parse(LittleSkinIdToken.class, result.getIdToken()).getPayload();
+        idToken.validate();
+        return new LittleSkinSession(result.getAccessToken(), result.getRefreshToken(), idToken);
     }
 
     public LittleSkinSession authenticate() throws AuthenticationException {
@@ -76,5 +77,9 @@ public final class LittleSkinService extends OAuthService {
         }
 
         return YGGDRASIL_SERVICE.validate(session.getAccessToken(), null);
+    }
+
+    public void uploadSkin(UUID uuid, String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        YGGDRASIL_SERVICE.uploadSkin(uuid, accessToken, isSlim, file);
     }
 }

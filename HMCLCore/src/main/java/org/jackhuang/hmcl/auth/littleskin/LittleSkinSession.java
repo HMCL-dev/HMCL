@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.Map;
+import java.util.Objects;
 
-import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
@@ -60,16 +60,16 @@ public class LittleSkinSession {
     }
 
     public Map<Object, Object> toStorage() {
-        requireNonNull(idToken);
-
+        Objects.requireNonNull(idToken);
         return mapOf(
                 pair("accessToken", accessToken),
                 pair("refreshToken", refreshToken),
-                pair("idToken", idToken));
+                pair("idToken", idToken)
+        );
     }
 
     public AuthInfo toAuthInfo() {
-        requireNonNull(idToken);
+        Objects.requireNonNull(idToken);
         CompleteGameProfile selectedProfile = idToken.getSelectedProfile();
         selectedProfile.validate();
 
