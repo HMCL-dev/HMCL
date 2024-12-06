@@ -731,5 +731,4 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
-    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a";
 }

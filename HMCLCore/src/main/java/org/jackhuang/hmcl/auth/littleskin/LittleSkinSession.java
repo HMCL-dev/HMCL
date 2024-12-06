@@ -26,11 +26,12 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.GSON;
 
 /**
  * @author Glavo
  */
-public class LittleSkinSession {
+public final class LittleSkinSession {
     private final String accessToken;
     private final String refreshToken;
     private final LittleSkinIdToken idToken;
@@ -56,7 +57,13 @@ public class LittleSkinSession {
     }
 
     public static LittleSkinSession fromStorage(Map<?, ?> storage) {
-        return null; // TODO
+        String accessToken = getOrThrow(storage, "accessToken", String.class);
+        String refreshToken = getOrThrow(storage, "refreshToken", String.class);
+        LittleSkinIdToken idToken = tryCast(storage.get("idToken"), Map.class)
+                .map(it -> GSON.fromJson(GSON.toJsonTree(it), LittleSkinIdToken.class))
+                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
+        idToken.validate();
+        return new LittleSkinSession(accessToken, refreshToken, idToken);
     }
 
     public Map<Object, Object> toStorage() {
@@ -64,7 +71,7 @@ public class LittleSkinSession {
         return mapOf(
                 pair("accessToken", accessToken),
                 pair("refreshToken", refreshToken),
-                pair("idToken", idToken)
+                pair("idToken", GSON.toJsonTree(idToken))
         );
     }
 
