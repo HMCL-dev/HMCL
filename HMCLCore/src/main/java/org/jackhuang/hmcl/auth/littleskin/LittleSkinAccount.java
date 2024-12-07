@@ -37,7 +37,11 @@ public final class LittleSkinAccount extends OAuthAccount {
 
     private boolean authenticated = false;
 
-    public LittleSkinAccount(LittleSkinService service, LittleSkinSession session) {
+    LittleSkinAccount(LittleSkinService service) throws AuthenticationException {
+        this(service, service.authenticate());
+    }
+
+    LittleSkinAccount(LittleSkinService service, LittleSkinSession session) {
         this.service = service;
         this.session = session;
         this.characterUUID = session.getIdToken().getSelectedProfile().getId();

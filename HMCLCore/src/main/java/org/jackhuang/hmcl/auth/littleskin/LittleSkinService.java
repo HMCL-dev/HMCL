@@ -32,7 +32,7 @@ import static java.util.Objects.requireNonNull;
  * @author Glavo
  */
 public final class LittleSkinService extends OAuthService {
-    private static final String API_ROOT = "https://littleskin.cn/api/yggdrasil/";
+    public static final String API_ROOT = "https://littleskin.cn/api/yggdrasil/";
     private static final OAuth OAUTH = new OAuth(
             "https://littleskin.cn/api/yggdrasil/authserver/oauth",
             "https://littleskin.cn/oauth/token",

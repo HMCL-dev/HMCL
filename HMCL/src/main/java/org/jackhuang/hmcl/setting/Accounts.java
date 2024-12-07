@@ -236,16 +236,6 @@ public final class Accounts {
         if (initialized)
             throw new IllegalStateException("Already initialized");
 
-        if (!config().isAddedLittleSkin()) {
-            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
-
-            if (config().getAuthlibInjectorServers().stream().noneMatch(it -> littleSkin.getUrl().equals(it.getUrl()))) {
-                config().getAuthlibInjectorServers().add(0, littleSkin);
-            }
-
-            config().setAddedLittleSkin(true);
-        }
-
         loadGlobalAccountStorages();
 
         // load accounts

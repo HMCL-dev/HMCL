@@ -40,17 +40,14 @@ public class LittleSkinAccountFactory extends AccountFactory<LittleSkinAccount> 
     @Override
     public LittleSkinAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) throws AuthenticationException {
         Objects.requireNonNull(selector);
-
-        // TODO:        return new LittleSkinAccount(service, selector);
-        return null;
+        return new LittleSkinAccount(service);
     }
 
     @Override
     public LittleSkinAccount fromStorage(Map<Object, Object> storage) {
         Objects.requireNonNull(storage);
-        // TODO: MicrosoftSession session = MicrosoftSession.fromStorage(storage);
-        // TODO: return new LittleSkinAccount(service, session);
-        return null;
+        LittleSkinSession session = LittleSkinSession.fromStorage(storage);
+        return new LittleSkinAccount(service, session);
     }
 
     @Override
