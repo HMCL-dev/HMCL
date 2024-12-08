@@ -39,7 +39,6 @@ public final class LittleSkinService extends OAuthService {
             "https://open.littleskin.cn/oauth/device_code",
             "https://open.littleskin.cn/oauth/token"
     );
-    // private static final String USER_INFO_API = "https://littleskin.cn/api/user";
     private static final String SCOPE = "openid offline_access User.Read Player.ReadWrite Yggdrasil.PlayerProfiles.Select Yggdrasil.Server.Join";
     private static final YggdrasilService YGGDRASIL_SERVICE = new YggdrasilService(new AuthlibInjectorProvider(API_ROOT));
 

@@ -344,8 +344,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         } else if (factory == Accounts.FACTORY_LITTLE_SKIN) {
             VBox vbox = new VBox(8);
 
-            // TODO
-
             if (!IntegrityChecker.isOfficial()) {
                 HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
                 unofficialHint.setText(i18n("unofficial.hint"));
