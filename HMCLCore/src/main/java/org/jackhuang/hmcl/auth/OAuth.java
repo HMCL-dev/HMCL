@@ -109,7 +109,7 @@ public class OAuth {
         options.callback.openBrowser(deviceTokenResponse.verificationURI);
 
         long startTime = System.nanoTime();
-        long interval = TimeUnit.SECONDS.convert(deviceTokenResponse.interval, TimeUnit.MICROSECONDS);
+        long interval = TimeUnit.MILLISECONDS.convert(deviceTokenResponse.interval, TimeUnit.SECONDS);
 
         while (true) {
             Thread.sleep(Math.max(interval, 1));
