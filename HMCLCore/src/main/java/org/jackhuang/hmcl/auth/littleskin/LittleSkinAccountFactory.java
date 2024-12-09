@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth.microsoft;
+package org.jackhuang.hmcl.auth.littleskin;
 
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -24,11 +24,11 @@ import org.jackhuang.hmcl.auth.CharacterSelector;
 import java.util.Map;
 import java.util.Objects;
 
-public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
+public class LittleSkinAccountFactory extends AccountFactory<LittleSkinAccount> {
 
-    private final MicrosoftService service;
+    private final LittleSkinService service;
 
-    public MicrosoftAccountFactory(MicrosoftService service) {
+    public LittleSkinAccountFactory(LittleSkinService service) {
         this.service = service;
     }
 
@@ -38,17 +38,16 @@ public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
     }
 
     @Override
-    public MicrosoftAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) throws AuthenticationException {
+    public LittleSkinAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) throws AuthenticationException {
         Objects.requireNonNull(selector);
-
-        return new MicrosoftAccount(service, selector);
+        return new LittleSkinAccount(service);
     }
 
     @Override
-    public MicrosoftAccount fromStorage(Map<Object, Object> storage) {
+    public LittleSkinAccount fromStorage(Map<Object, Object> storage) {
         Objects.requireNonNull(storage);
-        MicrosoftSession session = MicrosoftSession.fromStorage(storage);
-        return new MicrosoftAccount(service, session);
+        LittleSkinSession session = LittleSkinSession.fromStorage(storage);
+        return new LittleSkinAccount(service, session);
     }
 
     @Override

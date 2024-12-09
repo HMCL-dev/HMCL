@@ -1307,6 +1307,11 @@
     -fx-padding: 8;
 }
 
+.body {
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0.3, 0.0, 0.0);
+}
+
 .debug-border {
     -fx-border-color: red;
     -fx-border-width: 1;
