@@ -20,8 +20,10 @@ package org.jackhuang.hmcl.auth.littleskin;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorProvider;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.JWTToken;
+import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.nio.file.Path;
 import java.util.UUID;
@@ -40,10 +42,15 @@ public final class LittleSkinService extends OAuthService {
             "https://open.littleskin.cn/oauth/token"
     );
     private static final String SCOPE = "openid offline_access User.Read Player.ReadWrite Yggdrasil.PlayerProfiles.Select Yggdrasil.Server.Join";
-    private static final YggdrasilService YGGDRASIL_SERVICE = new YggdrasilService(new AuthlibInjectorProvider(API_ROOT));
+
+    private final YggdrasilService yggdrasilService = new YggdrasilService(new AuthlibInjectorProvider(API_ROOT));
 
     public LittleSkinService(OAuth.Callback callback) {
         super(OAUTH, SCOPE, callback);
+    }
+
+    public ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> getProfileRepository() {
+        return yggdrasilService.getProfileRepository();
     }
 
     private static LittleSkinSession fromResult(OAuth.Result result) throws JsonParseException {
@@ -75,10 +82,10 @@ public final class LittleSkinService extends OAuthService {
             return false;
         }
 
-        return YGGDRASIL_SERVICE.validate(session.getAccessToken(), null);
+        return yggdrasilService.validate(session.getAccessToken(), null);
     }
 
     public void uploadSkin(UUID uuid, String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
-        YGGDRASIL_SERVICE.uploadSkin(uuid, accessToken, isSlim, file);
+        yggdrasilService.uploadSkin(uuid, accessToken, isSlim, file);
     }
 }

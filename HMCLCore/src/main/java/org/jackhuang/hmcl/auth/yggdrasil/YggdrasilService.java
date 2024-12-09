@@ -21,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.OAuthService;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -56,8 +55,6 @@ public class YggdrasilService {
 
     private final YggdrasilProvider provider;
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
-
-    private final OAuthService oAuthService = null; // TODO
 
     public YggdrasilService(YggdrasilProvider provider) {
         this.provider = provider;
