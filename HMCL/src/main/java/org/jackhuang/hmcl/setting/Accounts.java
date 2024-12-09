@@ -26,6 +26,7 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.*;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinAccount;
 import org.jackhuang.hmcl.auth.littleskin.LittleSkinAccountFactory;
 import org.jackhuang.hmcl.auth.littleskin.LittleSkinService;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
@@ -142,6 +143,8 @@ public final class Accounts {
             return FACTORY_AUTHLIB_INJECTOR;
         else if (account instanceof MicrosoftAccount)
             return FACTORY_MICROSOFT;
+        else if (account instanceof LittleSkinAccount)
+            return FACTORY_LITTLE_SKIN;
         else
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
