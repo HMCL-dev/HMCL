@@ -31,7 +31,7 @@ val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" els
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
-val littleSkinClientId = System.getenv("LITTLT_SKIN_CLIENT_ID") ?: ""
+val littleSkinClientId = System.getenv("LITTLT_SKIN_CLIENT_ID") ?: "866" // TODO
 
 version = "$versionRoot.$buildNumber"
 
