@@ -49,6 +49,7 @@ public abstract class Account implements Observable {
 
     /**
      * @return the character name
+     *
      */
     public abstract String getCharacter();
 
