@@ -18,8 +18,8 @@
 
 package org.jackhuang.hmcl.util.tree;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarFile;
+import kala.compress.archivers.tar.TarArchiveEntry;
+import kala.compress.archivers.tar.TarArchiveReader;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
@@ -31,19 +31,19 @@ import java.util.zip.GZIPInputStream;
 /**
  * @author Glavo
  */
-public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry> {
+public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArchiveEntry> {
 
     public static TarFileTree open(Path file) throws IOException {
         String fileName = file.getFileName().toString();
 
         if (fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz")) {
             Path tempFile = Files.createTempFile("hmcl-", ".tar");
-            TarFile tarFile;
+            TarArchiveReader tarFile;
             try (GZIPInputStream input = new GZIPInputStream(Files.newInputStream(file));
                  OutputStream output = Files.newOutputStream(tempFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
             ) {
                 IOUtils.copyTo(input, output);
-                tarFile = new TarFile(tempFile.toFile());
+                tarFile = new TarArchiveReader(tempFile);
             } catch (Throwable e) {
                 try {
                     Files.deleteIfExists(tempFile);
@@ -55,14 +55,14 @@ public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry>
 
             return new TarFileTree(tarFile, tempFile);
         } else {
-            return new TarFileTree(new TarFile(file), null);
+            return new TarFileTree(new TarArchiveReader(file), null);
         }
     }
 
     private final Path tempFile;
     private final Thread shutdownHook;
 
-    public TarFileTree(TarFile file, Path tempFile) throws IOException {
+    public TarFileTree(TarArchiveReader file, Path tempFile) throws IOException {
         super(file);
         this.tempFile = tempFile;
         try {
