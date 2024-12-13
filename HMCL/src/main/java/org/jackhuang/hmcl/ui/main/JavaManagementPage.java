@@ -29,7 +29,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.stage.FileChooser;
+import javafx.stage.DirectoryChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -106,23 +106,32 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
     }
 
     void onAddJava() {
-        FileChooser chooser = new FileChooser();
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
+        final DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        File file = chooser.showOpenDialog(Controllers.getStage());
-        if (file != null) {
-            JavaManager.getAddJavaTask(file.toPath()).whenComplete(Schedulers.javafx(), exception -> {
-                if (exception != null) {
-                    LOG.warning("Failed to add java", exception);
-                    Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-                }
-            }).start();
+        File directory = chooser.showDialog(Controllers.getStage());
+        if(directory == null) return;
+
+        final File file = new File(directory, OperatingSystem.CURRENT_OS.getJavaExecutable());
+        if(file.exists()) {
+            onAddJavaBinary(file.toPath());
+            return;
         }
+
+        onSearchAndAddJavaBinary(directory);
     }
 
     void onShowRestoreJavaPage() {
         Controllers.navigate(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
+    }
+
+    private void onSearchAndAddJavaBinary(File directory) {
+        Task<Void> task = JavaManager.getSearchAndAddJavaTask(directory).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception instanceof UnsupportedPlatformException) {
+                LOG.warning("Failed to add java", exception);
+                Controllers.dialog(i18n("java.add.failed.some"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            } else LOG.warning("Other exception when add java", exception);
+        });
+        Controllers.taskDialog(task, i18n("java.add"), TaskCancellationAction.NORMAL);
     }
 
     private void onAddJavaBinary(Path file) {
