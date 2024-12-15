@@ -200,12 +200,12 @@ public final class JavaManager {
             Queue<File> fileQueue = new LinkedList<>(Arrays.asList(subDirs));
             fileQueue.add(directory);
             final String relative = "bin" + File.separator + OperatingSystem.CURRENT_OS.getJavaExecutable();
-            int depth = 0;
+            int depth = 1;
             while(!fileQueue.isEmpty()) {
                 final File dir = fileQueue.poll();
                 if (dir == directory) {
                     depth++;
-                    if (!fileQueue.isEmpty() && depth < maxDepth - 1)
+                    if (!fileQueue.isEmpty() && depth < maxDepth)
                         fileQueue.add(directory);
                     continue;
                 }
@@ -214,7 +214,7 @@ public final class JavaManager {
                     binaryList.add(JavaManager.getJava(binary.toPath()));
                     continue;
                 }
-                if(depth < maxDepth - 1) {
+                if(depth < maxDepth) {
                     subDirs = dir.listFiles(File::isDirectory);
                     if (subDirs != null)
                         fileQueue.addAll(Arrays.asList(subDirs));
