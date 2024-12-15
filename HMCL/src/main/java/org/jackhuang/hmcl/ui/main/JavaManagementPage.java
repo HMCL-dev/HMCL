@@ -111,7 +111,9 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         File directory = chooser.showDialog(Controllers.getStage());
         if(directory == null) return;
 
-        final File file = new File(directory, OperatingSystem.CURRENT_OS.getJavaExecutable());
+        File file = new File(directory, OperatingSystem.CURRENT_OS.getJavaExecutable());
+        file = file.exists()? file
+                : new File(file, "bin" + File.separator + OperatingSystem.CURRENT_OS.getJavaExecutable());
         if(file.exists()) {
             onAddJavaBinary(file.toPath());
             return;
