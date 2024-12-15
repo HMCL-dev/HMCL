@@ -192,20 +192,16 @@ public final class JavaManager {
         }
 
         private List<JavaRuntime> searchJava() throws IOException, InterruptedException {
-            final int maxDepth = 2;
+            final int maxDepth = 3;
 
-            Queue<File> fileQueue = new ArrayDeque<>(64);
-            ArrayList<JavaRuntime> binaryList = new ArrayList<>();
-            final String relative = "bin" + File.separator + OperatingSystem.CURRENT_OS.getJavaExecutable();
             File[] subDirs = directory.listFiles(File::isDirectory);
-            if(subDirs == null) return binaryList;
-            fileQueue.addAll(Arrays.asList(subDirs));
+            if(subDirs == null) return Collections.emptyList();
+            List<JavaRuntime> binaryList = new ArrayList<>();
+            Queue<File> fileQueue = new LinkedList<>(Arrays.asList(subDirs));
             fileQueue.add(directory);
+            final String relative = "bin" + File.separator + OperatingSystem.CURRENT_OS.getJavaExecutable();
             int depth = 0;
-            while (depth < maxDepth) {
-                if(isCancelled())
-                    return Collections.emptyList();
-                if(fileQueue.isEmpty()) break;
+            while(!fileQueue.isEmpty()) {
                 final File dir = fileQueue.poll();
                 if (dir == directory) {
                     depth++;
@@ -218,11 +214,15 @@ public final class JavaManager {
                     binaryList.add(JavaManager.getJava(binary.toPath()));
                     continue;
                 }
-                subDirs = dir.listFiles(File::isDirectory);
-                if (subDirs != null)
-                    fileQueue.addAll(Arrays.asList(subDirs));
+                if(depth < maxDepth - 1) {
+                    subDirs = dir.listFiles(File::isDirectory);
+                    if (subDirs != null)
+                        fileQueue.addAll(Arrays.asList(subDirs));
+                }
+                if(isCancelled())
+                    return Collections.emptyList();
             }
-            return binaryList;
+            return Collections.unmodifiableList(binaryList);
         }
     }
 
