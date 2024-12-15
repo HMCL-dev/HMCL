@@ -125,11 +125,14 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
     }
 
     private void onSearchAndAddJavaBinary(File directory) {
-        Task<Void> task = JavaManager.getSearchAndAddJavaTask(directory).whenComplete(Schedulers.javafx(), exception -> {
-            if (exception instanceof UnsupportedPlatformException) {
+        Task<Void> task = JavaManager.getSearchAndAddJavaTask(directory).thenAcceptAsync(Schedulers.javafx(), javaRuntimes -> {
+            if(javaRuntimes.isEmpty())
+                Controllers.dialog(i18n("java.add.not_found"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if(exception instanceof UnsupportedPlatformException) {
                 LOG.warning("Failed to add java", exception);
                 Controllers.dialog(i18n("java.add.failed.some"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-            } else LOG.warning("Other exception when add java", exception);
+            } else if(exception != null) LOG.warning("Other exception when add java", exception);
         });
         Controllers.taskDialog(task, i18n("java.add"), TaskCancellationAction.NORMAL);
     }
