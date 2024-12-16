@@ -209,9 +209,15 @@ public final class JavaManager {
                         fileQueue.add(directory);
                     continue;
                 }
-                final File binary = new File(dir, relative);
-                if (binary.exists()) {
-                    binaryList.add(JavaManager.getJava(binary.toPath()));
+                Path binary = dir.toPath().resolve(relative);
+                if (Files.exists(binary)) {
+                    JavaRuntime java = JavaManager.getJava(binary);
+                    if(java.getParsedVersion() <= 8 && java.isJDK()) {
+                        binary = dir.toPath().resolve("jre").resolve(relative);
+                        if(Files.exists(binary))
+                            java = JavaManager.getJava(binary);
+                    }
+                    binaryList.add(java);
                     continue;
                 }
                 if(depth < maxDepth) {
