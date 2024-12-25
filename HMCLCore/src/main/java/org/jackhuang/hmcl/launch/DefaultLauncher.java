@@ -496,6 +496,13 @@ public class DefaultLauncher extends Launcher {
                         break;
                     case ZINK:
                         env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
+                        /**
+                         * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
+                         * Disable DRI3 to workaround this issue.
+                         *
+                         * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
+                         */
+                        env.put("LIBGL_KOPPER_DRI2", "1");
                         break;
                 }
             }
