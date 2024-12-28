@@ -41,13 +41,13 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -177,10 +177,10 @@ public final class JavaManager {
         }).start();
     }
 
-    public static Task<List<JavaRuntime>> getSearchAndAddJavaTask(File directory) {
+    public static Task<List<JavaRuntime>> getSearchAndAddJavaTask(Path directory) {
         return new Task<List<JavaRuntime>>() {
 
-            private final File dir = directory;
+            private final Path dir = directory;
             { setName("Search Java"); }
 
             @Override
@@ -191,37 +191,39 @@ public final class JavaManager {
             private List<JavaRuntime> searchJava() throws IOException, InterruptedException {
                 final int maxDepth = 3;
 
-                File[] subDirs = dir.listFiles(File::isDirectory);
-                if(subDirs == null) return Collections.emptyList();
                 List<JavaRuntime> binaryList = new ArrayList<>();
-                Queue<File> fileQueue = new LinkedList<>(Arrays.asList(subDirs));
-                fileQueue.add(dir);
-                final String relative = "bin" + File.separator + OperatingSystem.CURRENT_OS.getJavaExecutable();
+                Queue<Path> fileQueue;
+                try(Stream<Path> subDirs = Files.list(dir)) {
+                    fileQueue = subDirs.filter(Files::isDirectory).filter(Files::isReadable)
+                            .collect(Collectors.toCollection(LinkedList::new));
+                }
+                fileQueue.add(null);
+                final Path relative = Paths.get("bin", OperatingSystem.CURRENT_OS.getJavaExecutable());
                 int depth = 1;
                 while(!fileQueue.isEmpty()) {
-                    final File directory = fileQueue.poll();
-                    if (directory == dir) {
+                    final Path directory = fileQueue.poll();
+                    if (directory == null) {
                         depth++;
                         if (!fileQueue.isEmpty() && depth < maxDepth)
-                            fileQueue.add(directory);
+                            fileQueue.add(null);
                         continue;
                     }
-                    Path binary = directory.toPath().resolve(relative);
+                    Path binary = directory.resolve(relative);
                     if (Files.exists(binary)) {
                         JavaRuntime java = JavaManager.getJava(binary);
                         if(java.getParsedVersion() <= 8 && java.isJDK()) {
-                            binary = directory.toPath().resolve("jre").resolve(relative);
+                            binary = directory.resolve("jre").resolve(relative);
                             if(Files.exists(binary))
                                 java = JavaManager.getJava(binary);
                         }
                         binaryList.add(java);
                         continue;
                     }
-                    if(depth < maxDepth) {
-                        subDirs = directory.listFiles(File::isDirectory);
-                        if (subDirs != null)
-                            fileQueue.addAll(Arrays.asList(subDirs));
-                    }
+                    if(depth < maxDepth)
+                        try(Stream<Path> subDirs = Files.list(directory)) {
+                            fileQueue.addAll(subDirs.filter(Files::isDirectory).filter(Files::isReadable)
+                                    .collect(Collectors.toList()));
+                        }
                     if(isCancelled())
                         return Collections.emptyList();
                 }

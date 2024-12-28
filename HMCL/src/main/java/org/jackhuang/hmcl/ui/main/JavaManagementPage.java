@@ -108,14 +108,15 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
     void onAddJava() {
         final DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        File directory = chooser.showDialog(Controllers.getStage());
-        if(directory == null) return;
+        File dir = chooser.showDialog(Controllers.getStage());
+        if(dir == null) return;
+        Path directory = dir.toPath();
 
-        File file = new File(directory, OperatingSystem.CURRENT_OS.getJavaExecutable());
-        file = file.exists()? file
-                : new File(file, "bin" + File.separator + OperatingSystem.CURRENT_OS.getJavaExecutable());
-        if(file.exists()) {
-            onAddJavaBinary(file.toPath());
+        Path file = directory.resolve(OperatingSystem.CURRENT_OS.getJavaExecutable());
+        file = Files.exists(file)? file
+                : directory.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable());
+        if(Files.exists(file)) {
+            onAddJavaBinary(file);
             return;
         }
 
@@ -126,7 +127,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         Controllers.navigate(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
     }
 
-    private void onSearchAndAddJavaBinary(File directory) {
+    private void onSearchAndAddJavaBinary(Path directory) {
         Task<Void> task = JavaManager.getSearchAndAddJavaTask(directory).thenAcceptAsync(Schedulers.javafx(), javaRuntimes -> {
             if(javaRuntimes.isEmpty())
                 Controllers.dialog(i18n("java.add.not_found"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
