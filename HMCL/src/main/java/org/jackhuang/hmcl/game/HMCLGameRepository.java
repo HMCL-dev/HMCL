@@ -212,7 +212,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (localVersionSettings.containsKey(id))
             return getLocalVersionSetting(id);
         else
-            return initLocalVersionSetting(id, new VersionSetting());
+            return initLocalVersionSetting(id, profile.getGlobal().clone());
     }
 
     private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
