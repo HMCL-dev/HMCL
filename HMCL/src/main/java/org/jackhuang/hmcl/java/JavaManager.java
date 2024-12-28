@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -202,14 +203,16 @@ public final class JavaManager {
                 int depth = 1;
                 while(!fileQueue.isEmpty()) {
                     final Path directory = fileQueue.poll();
-                    if (directory == null) {
+                    if(directory == null) {
                         depth++;
-                        if (!fileQueue.isEmpty() && depth < maxDepth)
+                        if(!fileQueue.isEmpty() && depth < maxDepth)
                             fileQueue.add(null);
                         continue;
                     }
+                    if(isCancelled())
+                        throw new CancellationException("Cancelled by user");
                     Path binary = directory.resolve(relative);
-                    if (Files.exists(binary)) {
+                    if(Files.exists(binary)) {
                         JavaRuntime java = JavaManager.getJava(binary);
                         if(java.getParsedVersion() <= 8 && java.isJDK()) {
                             binary = directory.resolve("jre").resolve(relative);
@@ -217,15 +220,11 @@ public final class JavaManager {
                                 java = JavaManager.getJava(binary);
                         }
                         binaryList.add(java);
-                        continue;
-                    }
-                    if(depth < maxDepth)
+                    } else if(depth < maxDepth)
                         try(Stream<Path> subDirs = Files.list(directory)) {
                             fileQueue.addAll(subDirs.filter(Files::isDirectory).filter(Files::isReadable)
                                     .collect(Collectors.toList()));
                         }
-                    if(isCancelled())
-                        return Collections.emptyList();
                 }
                 return Collections.unmodifiableList(binaryList);
             }
