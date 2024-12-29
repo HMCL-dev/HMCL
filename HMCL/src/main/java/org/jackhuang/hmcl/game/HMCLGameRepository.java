@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -357,7 +358,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs = createLocalVersionSetting(id);
         if (vs == null)
             return null;
+        VersionIconType versionIcon = vs.getVersionIcon();
+        PropertyUtils.copyProperties(profile.getGlobal(), vs);
         vs.setUsesGlobal(false);
+        vs.setVersionIcon(versionIcon); // versionIcon is preserved
         return vs;
     }
 
