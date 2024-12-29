@@ -358,8 +358,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (vs == null)
             return null;
         VersionIconType versionIcon = vs.getVersionIcon();
-        PropertyUtils.copyProperties(profile.getGlobal(), vs);
-        vs.setUsesGlobal(false);
+        if (vs.isUsesGlobal()) {
+            PropertyUtils.copyProperties(profile.getGlobal(), vs);
+            vs.setUsesGlobal(false);
+        }
         vs.setVersionIcon(versionIcon); // versionIcon is preserved
         return vs;
     }

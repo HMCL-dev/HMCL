@@ -92,7 +92,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final ImagePickerItem iconPickerItem;
 
     private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
-    private final InvalidationListener specificSettingsListener;
+    private final InvalidationListener usesGlobalListener;
+    private final ChangeListener<Boolean> specificSettingsListener;
     private final InvalidationListener javaListener = any -> initJavaSubtitle();
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
@@ -443,22 +444,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         rootPane.getChildren().add(componentList);
 
-        initialize();
-
-        specificSettingsListener = any -> enableSpecificSettings.set(!lastVersionSetting.isUsesGlobal());
-
-        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
-
-        cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
-        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT))));
-
-        cboProcessPriority.getItems().setAll(ProcessPriority.values());
-        cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
-    }
-
-    private void initialize() {
-        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
-        enableSpecificSettings.addListener((a, b, newValue) -> {
+        usesGlobalListener = any -> enableSpecificSettings.set(!lastVersionSetting.isUsesGlobal());
+        specificSettingsListener = (a, b, newValue) -> {
             if (versionId == null) return;
 
             // do not call versionSettings.setUsesGlobal(true/false)
@@ -470,8 +457,17 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 profile.getRepository().globalizeVersionSetting(versionId);
 
             Platform.runLater(() -> loadVersion(profile, versionId));
-        });
+        };
 
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
+
+        cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
+        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT))));
+
+        cboProcessPriority.getItems().setAll(ProcessPriority.values());
+        cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
+
+        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
         componentList.disableProperty().bind(enableSpecificSettings.not());
     }
 
@@ -519,7 +515,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindEnum(cboLauncherVisibility);
             FXUtils.unbindEnum(cboProcessPriority);
 
-            lastVersionSetting.usesGlobalProperty().removeListener(specificSettingsListener);
+            lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
             lastVersionSetting.javaVersionTypeProperty().removeListener(javaListener);
             lastVersionSetting.javaDirProperty().removeListener(javaListener);
             lastVersionSetting.defaultJavaPathPropertyProperty().removeListener(javaListener);
@@ -527,6 +523,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             gameDirItem.selectedDataProperty().unbindBidirectional(lastVersionSetting.gameDirTypeProperty());
             gameDirSublist.subtitleProperty().unbind();
+
+            enableSpecificSettings.removeListener(specificSettingsListener);
 
             if (advancedVersionSettingPage != null) {
                 advancedVersionSettingPage.unbindProperties();
@@ -554,7 +552,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
-        versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
+        versionSetting.usesGlobalProperty().addListener(usesGlobalListener);
+        enableSpecificSettings.addListener(specificSettingsListener);
 
         javaItem.setToggleSelectedListener(newValue -> {
             if (javaItem.getSelectedData() == null || updatingSelectedJava)
