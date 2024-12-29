@@ -44,16 +44,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable {
 
-    private boolean global = false;
-
-    public boolean isGlobal() {
-        return global;
-    }
-
-    public void setGlobal(boolean global) {
-        this.global = global;
-    }
-
     private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", true);
 
     public BooleanProperty usesGlobalProperty() {
