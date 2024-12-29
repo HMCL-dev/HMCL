@@ -337,6 +337,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
             return false;
 
+        LOG.info("Saving version setting: " + id);
+
         try {
             FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
