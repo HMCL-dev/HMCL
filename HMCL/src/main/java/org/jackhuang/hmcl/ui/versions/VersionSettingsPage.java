@@ -552,9 +552,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
-        versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
+        versionSetting.usesGlobalProperty().addListener(specificSettingsListener);
 
         javaItem.setToggleSelectedListener(newValue -> {
             if (javaItem.getSelectedData() == null || updatingSelectedJava)
