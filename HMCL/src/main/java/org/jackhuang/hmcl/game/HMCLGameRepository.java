@@ -218,7 +218,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
         localVersionSettings.put(id, vs);
-        vs.addPropertyChangedListener(a -> saveVersionSetting(id));
+        vs.addListener(a -> saveVersionSetting(id));
         return vs;
     }
 
