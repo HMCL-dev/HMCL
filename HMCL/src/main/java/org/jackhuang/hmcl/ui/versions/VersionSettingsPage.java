@@ -57,10 +57,27 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.util.Lang.getTimer;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
+
+    private static final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
+    private static TimerTask memoryStatusUpdateTask;
+    private static void initMemoryStatusUpdateTask() {
+        FXUtils.checkFxUserThread();
+        if (memoryStatusUpdateTask != null)
+            return;
+        memoryStatusUpdateTask = new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus()));
+            }
+        };
+        getTimer().scheduleAtFixedRate(memoryStatusUpdateTask, 0, 1000);
+    }
+
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
 
     private AdvancedVersionSettingPage advancedVersionSettingPage;
@@ -102,7 +119,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final BooleanProperty navigateToSpecificSettings = new SimpleBooleanProperty(false);
     private final BooleanProperty enableSpecificSettings = new SimpleBooleanProperty(false);
     private final IntegerProperty maxMemory = new SimpleIntegerProperty();
-    private final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
     private final BooleanProperty modpack = new SimpleBooleanProperty();
 
     public VersionSettingsPage(boolean globalSetting) {
@@ -470,6 +486,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
         componentList.disableProperty().bind(enableSpecificSettings.not());
+
+        initMemoryStatusUpdateTask();
     }
 
     @Override
