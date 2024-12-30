@@ -236,6 +236,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 VBox.setMargin(chkAutoAllocate, new Insets(0, 0, 8, 5));
 
                 HBox lowerBoundPane = new HBox(8);
+                lowerBoundPane.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the progress bar
                 lowerBoundPane.setAlignment(Pos.CENTER);
                 VBox.setMargin(lowerBoundPane, new Insets(0, 0, 0, 16));
                 {
