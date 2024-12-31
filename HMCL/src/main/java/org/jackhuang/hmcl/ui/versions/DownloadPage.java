@@ -62,6 +62,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
@@ -380,6 +381,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 HBox descPane = new HBox(8);
                 descPane.setPadding(new Insets(0, 8, 0, 8));
                 descPane.setAlignment(Pos.CENTER_LEFT);
+                descPane.setMouseTransparent(true);
 
                 {
                     StackPane graphicPane = new StackPane();
@@ -445,7 +447,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
             ModItem modItem = new ModItem(version, selfPage);
-            FXUtils.onClicked(modItem, () -> fireEvent(new DialogCloseEvent()));
+            modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(modItem);
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
@@ -488,6 +490,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+
+            onEscPressed(this, cancelButton::fire);
         }
 
         private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
