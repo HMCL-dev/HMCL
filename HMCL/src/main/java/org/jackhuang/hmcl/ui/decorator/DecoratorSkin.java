@@ -324,12 +324,17 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
     private boolean setStageWidth(double width) {
         if (width >= primaryStage.getMinWidth() && width >= titleContainer.getMinWidth()) {
+            // Workaround for JDK-8344372 (https://github.com/openjdk/jfx/pull/1654)
+            // Width and height must be set simultaneously to avoid the bug
             primaryStage.setWidth(width);
+            primaryStage.setHeight(primaryStage.getHeight());
             initX = newX;
             return true;
         } else {
-            if (width >= primaryStage.getMinWidth() && width <= titleContainer.getMinWidth())
+            if (width >= primaryStage.getMinWidth() && width <= titleContainer.getMinWidth()) {
                 primaryStage.setWidth(titleContainer.getMinWidth());
+                primaryStage.setHeight(primaryStage.getHeight());
+            }
 
             return false;
         }
@@ -338,11 +343,14 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private boolean setStageHeight(double height) {
         if (height >= primaryStage.getMinHeight() && height >= titleContainer.getHeight()) {
             primaryStage.setHeight(height);
+            primaryStage.setWidth(primaryStage.getWidth());
             initY = newY;
             return true;
         } else {
-            if (height >= primaryStage.getMinHeight() && height <= titleContainer.getHeight())
+            if (height >= primaryStage.getMinHeight() && height <= titleContainer.getHeight()) {
                 primaryStage.setHeight(titleContainer.getHeight());
+                primaryStage.setWidth(primaryStage.getWidth());
+            }
 
             return false;
         }
