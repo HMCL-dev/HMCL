@@ -153,6 +153,6 @@ public final class NativePatcher {
     }
 
     public static Library getMesaLoader(JavaRuntime javaVersion, Renderer renderer) {
-        return getNatives(javaVersion.getPlatform()).get(renderer == Renderer.LLVMPIPE ? "software-renderer-loader" : "mesa-loader");
+        return getNatives(javaVersion.getPlatform()).get("mesa-loader");
     }
 }
