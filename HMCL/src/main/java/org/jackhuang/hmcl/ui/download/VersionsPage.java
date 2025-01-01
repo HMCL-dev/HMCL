@@ -21,12 +21,16 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXSpinner;
+import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -55,14 +59,18 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.StringUtils.isBlank;
 
 public final class VersionsPage extends BorderPane implements WizardPage, Refreshable {
     private final String gameVersion;
@@ -85,6 +93,11 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
     private final VersionList<?> versionList;
     private CompletableFuture<?> executor;
+
+    private final TransitionPane toolbarPane;
+    private final HBox searchBar;
+    private final JFXTextField searchField;
+    private boolean isSearching = false;
 
     public VersionsPage(Navigation navigation, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
@@ -187,6 +200,49 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             callback.run();
         });
 
+        {
+            toolbarPane = new TransitionPane();
+            searchBar = new HBox();
+            searchBar.setAlignment(Pos.CENTER);
+            searchBar.setPadding(new Insets(0, 5, 0, 5));
+            searchField = new JFXTextField();
+            searchField.setPromptText(i18n("search"));
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+
+            JFXButton closeSearchBar = new JFXButton();
+            closeSearchBar.getStyleClass().add("jfx-tool-bar-button");
+            closeSearchBar.setGraphic(wrap(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1)));
+            closeSearchBar.setOnAction(e -> {
+                toolbarPane.setContent(checkPane, ContainerAnimations.FADE);
+                isSearching = false;
+                searchField.clear();
+                list.getItems().setAll(loadVersions());
+            });
+
+            searchBar.getChildren().setAll(searchField, closeSearchBar);
+
+            JFXButton searchButton = new JFXButton(i18n("search"));
+            searchButton.getStyleClass().add("jfx-tool-bar-button");
+            searchButton.setGraphic(wrap(SVG.MAGNIFY.createIcon(Theme.blackFill(), -1, -1)));
+            searchButton.setOnAction(e -> {
+                toolbarPane.setContent(searchBar, ContainerAnimations.FADE);
+                searchField.requestFocus();
+            });
+
+            checkPane.getChildren().add(checkPane.getChildren().size() - 1, searchButton);
+            
+            centrePane.getContent().remove(checkPane);
+            toolbarPane.setContent(checkPane, ContainerAnimations.FADE);
+            centrePane.getContent().add(0, toolbarPane);
+
+            PauseTransition pause = new PauseTransition(Duration.millis(100));
+            pause.setOnFinished(e -> search());
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                pause.setRate(1);
+                pause.playFromStart();
+            });
+        }
+
         refresh();
     }
 
@@ -263,6 +319,37 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
     private void onSponsor() {
         FXUtils.openLink("https://bmclapidoc.bangbang93.com");
+    }
+
+    private void search() {
+        isSearching = true;
+        String queryString = searchField.getText(); 
+        
+        if (isBlank(queryString)) {
+            list.getItems().setAll(loadVersions());
+        } else {
+            list.getItems().clear();
+            
+            Predicate<String> predicate;
+            if (queryString.startsWith("regex:")) {
+                try {
+                    Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
+                    predicate = s -> pattern.matcher(s).find();
+                } catch (Throwable e) {
+                    LOG.warning("Illegal regular expression", e);
+                    return;
+                }
+            } else {
+                String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
+                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+            }
+
+            for (RemoteVersion version : loadVersions()) {
+                if (predicate.test(version.getSelfVersion())) {
+                    list.getItems().add(version);
+                }
+            }
+        }
     }
 
     private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
