@@ -66,6 +66,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
@@ -226,6 +227,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 searchField.clear();
                 list.getItems().setAll(loadVersions());
             });
+            onEscPressed(searchField, closeSearchBar::fire);
 
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
