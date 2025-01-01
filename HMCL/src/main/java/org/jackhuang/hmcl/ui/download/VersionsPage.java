@@ -176,7 +176,15 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         this.setCenter(root);
 
         versionList = downloadProvider.getVersionListById(libraryId);
-        if (versionList.hasType()) {
+        boolean hasType = versionList.hasType();
+        chkRelease.setManaged(hasType);
+        chkRelease.setVisible(hasType);
+        chkSnapshot.setManaged(hasType);
+        chkSnapshot.setVisible(hasType);
+        chkOld.setManaged(hasType);
+        chkOld.setVisible(hasType);
+
+        if (hasType) {
             centrePane.getContent().setAll(checkPane, list);
         } else {
             centrePane.getContent().setAll(list);
