@@ -12,7 +12,7 @@
 
 HMCL 是一款开源、跨平台的 Minecraft 启动器，支持模组管理、游戏自定义、游戏自动安装 (Forge、NeoForge、Fabric、Quilt、LiteLoader 和 OptiFine)、整合包创建、界面自定义等功能。
 
-HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS 等常见的操作系统，同时也支持 x86、ARM、MIPS 和 LoongArch 等不同的 CPU 架构。你可以使用 HMCL 在不同平台上轻松地游玩 Minecraft。
+HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS 等常见的操作系统，同时也支持 x86、ARM、MIPS、LoongArch 等不同的 CPU 架构。你可以使用 HMCL 在不同平台上轻松地游玩 Minecraft。
 
 如果你想要了解 HMCL 对不同平台的支持程度，请参见 [此表格](PLATFORM_cn.md)。
 
@@ -59,7 +59,7 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS �
 | 参数                                         | 简介                                                                 |
 | -------------------------------------------- | -------------------------------------------------------------------- |
 | `-Dhmcl.home=<path>`                         | 覆盖 HMCL 数据文件夹                                                 |
-| `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时绕过本体完整性检查                                         |
+| `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时不检查本体完整性                                           |
 | `-Dhmcl.bmclapi.override=<url>`              | 覆盖 BMCLAPI 的 API Root，默认值为 `https://bmclapi2.bangbang93.com` |
 | `-Dhmcl.font.override=<font family>`         | 覆盖字族                                                             |
 | `-Dhmcl.version.override=<version>`          | 覆盖版本号                                                           |
