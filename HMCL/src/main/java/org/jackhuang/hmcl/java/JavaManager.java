@@ -45,8 +45,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -174,6 +176,76 @@ public final class JavaManager {
                 updateAllJavaProperty(result);
             }
         }).start();
+    }
+
+    public static Task<List<JavaRuntime>> getSearchAndAddJavaTask(Path directory) {
+        return new Task<List<JavaRuntime>>() {
+
+            private final Path dir = directory;
+            { setName("Search Java"); }
+
+            @Override
+            public void execute() throws Exception {
+                setResult(searchJava());
+            }
+
+            private List<JavaRuntime> searchJava() throws IOException, InterruptedException {
+                final int maxDepth = 3;
+
+                List<JavaRuntime> binaryList = new ArrayList<>();
+                Queue<Path> fileQueue;
+                try(Stream<Path> subDirs = Files.list(dir)) {
+                    fileQueue = subDirs.filter(Files::isDirectory).filter(Files::isReadable)
+                            .collect(Collectors.toCollection(LinkedList::new));
+                }
+                fileQueue.add(null);
+                final Path relative = Paths.get("bin", OperatingSystem.CURRENT_OS.getJavaExecutable());
+                int depth = 1;
+                while(!fileQueue.isEmpty()) {
+                    final Path directory = fileQueue.poll();
+                    if(directory == null) {
+                        depth++;
+                        if(!fileQueue.isEmpty() && depth < maxDepth)
+                            fileQueue.add(null);
+                        continue;
+                    }
+                    if(isCancelled())
+                        throw new CancellationException("Cancelled by user");
+                    Path binary = directory.resolve(relative);
+                    if(Files.exists(binary)) {
+                        JavaRuntime java = JavaManager.getJava(binary);
+                        if(java.getParsedVersion() <= 8 && java.isJDK()) {
+                            binary = directory.resolve("jre").resolve(relative);
+                            if(Files.exists(binary))
+                                java = JavaManager.getJava(binary);
+                        }
+                        binaryList.add(java);
+                    } else if(depth < maxDepth)
+                        try(Stream<Path> subDirs = Files.list(directory)) {
+                            fileQueue.addAll(subDirs.filter(Files::isDirectory).filter(Files::isReadable)
+                                    .collect(Collectors.toList()));
+                        }
+                }
+                return Collections.unmodifiableList(binaryList);
+            }
+        }.thenApplyAsync("Add Java", Schedulers.javafx(), javaRuntimes -> {
+            ArrayList<JavaRuntime> failedJavaRuntimes = new ArrayList<>();
+            for(JavaRuntime javaRuntime: javaRuntimes) {
+                if(!JavaManager.isCompatible(javaRuntime.getPlatform()))
+                    failedJavaRuntimes.add(javaRuntime);
+                String pathString = javaRuntime.getBinary().toString();
+                ConfigHolder.globalConfig().getDisabledJava().remove(pathString);
+                if(ConfigHolder.globalConfig().getUserJava().add(pathString))
+                    addJava(javaRuntime);
+            }
+            if(!failedJavaRuntimes.isEmpty()) {
+                StringBuilder sb = new StringBuilder("Incompatible platform: ");
+                for(JavaRuntime javaRuntime :javaRuntimes)
+                    sb.append('\n').append(javaRuntime.getPlatform()).append(": ").append(javaRuntime.getBinary());
+                throw new UnsupportedPlatformException(sb.toString());
+            }
+            return javaRuntimes;
+        });
     }
 
     public static Task<JavaRuntime> getAddJavaTask(Path binary) {
