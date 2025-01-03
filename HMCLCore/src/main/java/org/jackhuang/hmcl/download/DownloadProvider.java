@@ -33,6 +33,8 @@ public interface DownloadProvider {
 
     String getVersionListURL();
 
+    String getUvmcListURL();
+
     String getAssetBaseURL();
 
     default List<URL> getAssetObjectCandidates(String assetObjectLocation) {
