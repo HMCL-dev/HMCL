@@ -131,6 +131,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                     });
 
+            onEscPressed(searchField, closeSearchBar::fire);
+
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
             // Toolbar Normal
