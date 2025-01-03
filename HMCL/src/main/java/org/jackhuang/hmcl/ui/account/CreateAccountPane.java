@@ -83,7 +83,6 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
-    private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
 
     private final Label lblErrorMessage;
@@ -105,17 +104,16 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     }
 
     public CreateAccountPane(AccountFactory<?> factory) {
+        boolean showMethodSwitcher = factory == null;
         if (factory == null) {
-            showMethodSwitcher = true;
             String preferred = config().getPreferredLoginType();
             try {
                 factory = Accounts.getAccountFactory(preferred);
             } catch (IllegalArgumentException e) {
                 factory = Accounts.FACTORY_OFFLINE;
             }
-        } else {
-            showMethodSwitcher = false;
         }
+
         this.factory = factory;
 
         {
@@ -285,62 +283,71 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             detailsContainer.getChildren().remove(detailsPane);
             lblErrorMessage.setText("");
         }
-        if (factory == Accounts.FACTORY_MICROSOFT) {
+
+        if (!factory.isAvailable()) {
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            hintPane.setSegment(i18n("account.methods.snapshot"));
+
+            JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.snapshot.website"));
+            officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
+
+            btnAccept.setDisable(true);
+            detailsPane = hintPane;
+        } else if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
-            if (!Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
-                    if (deviceCode != null) {
-                        FXUtils.copyText(deviceCode.getUserCode());
-                        hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
-                    } else {
-                        hintPane.setSegment(i18n("account.methods.microsoft.hint"));
-                    }
-                });
-                FXUtils.onClicked(hintPane, () -> {
-                    if (deviceCode.get() != null) {
-                        FXUtils.copyText(deviceCode.get().getUserCode());
-                    }
-                });
-
-                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
-                    runInFX(() -> deviceCode.set(value));
-                }));
-                FlowPane box = new FlowPane();
-                box.setHgap(8);
-                JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-                birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
-                JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
-                profileLink.setExternalLink("https://account.live.com/editprof.aspx");
-                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
-                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
-                JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
-                deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
-                JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
-                forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
-                JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
-                createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
-                GridPane.setColumnSpan(box, 2);
-
-                if (!IntegrityChecker.isOfficial()) {
-                    HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
-                    unofficialHint.setText(i18n("unofficial.hint"));
-                    vbox.getChildren().add(unofficialHint);
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
+                if (deviceCode != null) {
+                    FXUtils.copyText(deviceCode.getUserCode());
+                    hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getUserCode(), deviceCode.getVerificationUri()));
+                } else {
+                    hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                 }
+            });
+            FXUtils.onClicked(hintPane, () -> {
+                if (deviceCode.get() != null) {
+                    FXUtils.copyText(deviceCode.get().getUserCode());
+                }
+            });
 
-                vbox.getChildren().addAll(hintPane, box);
+            holder.add(Accounts.MICROSOFT_OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
+                runInFX(() -> deviceCode.set(value));
+            }));
+            FlowPane box = new FlowPane();
+            box.setHgap(8);
+            JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
+            birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
+            JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
+            profileLink.setExternalLink("https://account.live.com/editprof.aspx");
+            JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
+            purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
+            JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
+            deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
+            JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
+            forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
+            JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
+            createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
+            box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
+            GridPane.setColumnSpan(box, 2);
 
-                btnAccept.setDisable(false);
-            } else {
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
+            if (!IntegrityChecker.isOfficial()) {
+                HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+                unofficialHint.setText(i18n("unofficial.hint"));
+                vbox.getChildren().add(unofficialHint);
+            }
 
-                JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
-                officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
+            vbox.getChildren().addAll(hintPane, box);
 
-                vbox.getChildren().setAll(hintPane, officialWebsite);
-                btnAccept.setDisable(true);
+            btnAccept.setDisable(false);
+
+            detailsPane = vbox;
+        } else if (factory == Accounts.FACTORY_LITTLE_SKIN) {
+            VBox vbox = new VBox(8);
+
+            if (!IntegrityChecker.isOfficial()) {
+                HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+                unofficialHint.setText(i18n("unofficial.hint"));
+                vbox.getChildren().add(unofficialHint);
             }
 
             detailsPane = vbox;
@@ -722,5 +729,4 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
     }
 
-    private static final String MICROSOFT_ACCOUNT_EDIT_PROFILE_URL = "https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a";
 }

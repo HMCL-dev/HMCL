@@ -31,6 +31,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinService;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -115,12 +116,23 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
                     boxMethods.getChildren().add(microsoftItem);
 
+                    AdvancedListItem littleSkinItem = new AdvancedListItem();
+                    littleSkinItem.getStyleClass().add("navigation-drawer-item");
+                    littleSkinItem.setActionButtonVisible(false);
+                    littleSkinItem.setTitle("LittleSkin");
+                    littleSkinItem.setLeftGraphic(wrap(SVG.SERVER));
+                    littleSkinItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_LITTLE_SKIN)));
+                    boxMethods.getChildren().add(littleSkinItem);
+
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftGraphic(wrap(SVG.SERVER));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
+                        if (LittleSkinService.API_ROOT.equals(server.getUrl())) {
+                            item.setVisible(false);
+                        }
 
                         JFXButton btnRemove = new JFXButton();
                         btnRemove.setOnAction(e -> {

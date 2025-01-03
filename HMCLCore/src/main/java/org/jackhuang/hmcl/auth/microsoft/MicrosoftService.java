@@ -21,11 +21,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.OAuth;
-import org.jackhuang.hmcl.auth.ServerDisconnectException;
-import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -48,17 +48,21 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class MicrosoftService {
+public final class MicrosoftService extends OAuthService {
+    private static final OAuth OAUTH = new OAuth(
+            "https://login.live.com/oauth20_authorize.srf",
+            "https://login.live.com/oauth20_token.srf",
+            "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode",
+            "https://login.microsoftonline.com/consumers/oauth2/v2.0/token");
+
     private static final String SCOPE = "XboxLive.signin offline_access";
     private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10,
             TimeUnit.SECONDS);
 
-    private final OAuth.Callback callback;
-
     private final ObservableOptionalCache<UUID, CompleteGameProfile, AuthenticationException> profileRepository;
 
     public MicrosoftService(OAuth.Callback callback) {
-        this.callback = requireNonNull(callback);
+        super(OAUTH, SCOPE, callback);
         this.profileRepository = new ObservableOptionalCache<>(uuid -> {
             LOG.info("Fetching properties of " + uuid);
             return getCompleteGameProfile(uuid);
@@ -71,7 +75,7 @@ public class MicrosoftService {
 
     public MicrosoftSession authenticate() throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.authenticate(OAuth.GrantFlow.DEVICE, new OAuth.Options(SCOPE, callback));
+            OAuth.Result result = OAUTH.authenticate(OAuth.GrantFlow.DEVICE, this);
             return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
@@ -82,7 +86,7 @@ public class MicrosoftService {
 
     public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
+            OAuth.Result result = OAUTH.refresh(oldSession.getRefreshToken(), this);
             return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
