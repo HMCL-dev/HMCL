@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -46,7 +47,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
 
-    private static final String PREFIX = "https://api.modrinth.com";
+    private String PREFIX = "https://api.modrinth.com";
 
     private final String projectType;
 
@@ -74,6 +75,14 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             default:
                 throw new IllegalArgumentException("Unsupported sort type " + sortType);
         }
+    }
+
+    public void mcim(boolean enabled) {
+        if(enabled)
+            this.PREFIX = "https://mod.mcimirror.top/modrinth";
+        else
+            this.PREFIX = "https://api.modrinth.com";
+        return;
     }
 
     @Override
