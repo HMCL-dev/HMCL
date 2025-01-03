@@ -106,7 +106,11 @@ public class OAuth {
         options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
 
         // Microsoft OAuth Flow
-        options.callback.openBrowser(deviceTokenResponse.verificationURI);
+        String url = deviceTokenResponse.verificationURI;
+        if ("https://www.microsoft.com/link".equals(url)) {
+            url += "?otc=" + deviceTokenResponse.userCode;
+        }
+        options.callback.openBrowser(url);
 
         long startTime = System.nanoTime();
         long interval = TimeUnit.MILLISECONDS.convert(deviceTokenResponse.interval, TimeUnit.SECONDS);
