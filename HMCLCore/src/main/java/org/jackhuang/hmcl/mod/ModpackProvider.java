@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.task.Task;
@@ -44,7 +44,7 @@ public interface ModpackProvider {
      * @throws JsonParseException if the manifest.json is missing or malformed.
      * @return the manifest.
      */
-    Modpack readManifest(ZipFile zipFile, Path file, Charset encoding) throws IOException, JsonParseException;
+    Modpack readManifest(ZipArchiveReader zipFile, Path file, Charset encoding) throws IOException, JsonParseException;
 
     default void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
     }

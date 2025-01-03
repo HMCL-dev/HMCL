@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import com.google.gson.annotations.SerializedName;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -55,7 +55,7 @@ public final class MultiMCManifest {
      * @throws IOException if zip file is malformed
      * @throws com.google.gson.JsonParseException if manifest is malformed.
      */
-    public static MultiMCManifest readMultiMCModpackManifest(ZipFile zipFile, String rootEntryName) throws IOException {
+    public static MultiMCManifest readMultiMCModpackManifest(ZipArchiveReader zipFile, String rootEntryName) throws IOException {
         ZipArchiveEntry mmcPack = zipFile.getEntry(rootEntryName + "mmc-pack.json");
         if (mmcPack == null)
             return null;

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.java;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
+import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.util.KeyValuePairProperties;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
