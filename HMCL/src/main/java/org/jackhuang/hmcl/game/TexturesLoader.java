@@ -87,7 +87,7 @@ public final class TexturesLoader {
     }
 
     private static final ThreadPoolExecutor POOL = threadPool("TexturesDownload", true, 2, 10, TimeUnit.SECONDS);
-    private static final Path TEXTURES_DIR = Metadata.MINECRAFT_DIRECTORY.resolve("assets").resolve("skins");
+    private static final Path TEXTURES_DIR = Metadata.HMCL_DIRECTORY.resolve("skins");
 
     private static Path getTexturePath(Texture texture) {
         String url = texture.getUrl();

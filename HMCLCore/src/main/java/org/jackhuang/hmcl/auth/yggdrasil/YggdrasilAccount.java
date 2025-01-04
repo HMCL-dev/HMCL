@@ -203,8 +203,14 @@ public abstract class YggdrasilAccount extends ClassicAccount {
 
     }
 
-    public void uploadSkin(String model, Path file) throws AuthenticationException, UnsupportedOperationException {
-        service.uploadSkin(characterUUID, session.getAccessToken(), model, file);
+    @Override
+    public boolean canUploadSkin() {
+        return true;
+    }
+
+    @Override
+    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        service.uploadSkin(characterUUID, session.getAccessToken(), isSlim, file);
     }
 
     private static String randomClientToken() {

@@ -51,7 +51,7 @@ public class WorldListItem extends Control {
 
         subtitle.set(i18n("world.description", world.getFileName(), formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
 
-        setOnMouseClicked(event -> showInfo());
+        FXUtils.onClicked(this, this::showInfo);
     }
 
     @Override
@@ -102,10 +102,6 @@ public class WorldListItem extends Control {
     }
 
     public void showInfo() {
-        try {
-            Controllers.navigate(new WorldInfoPage(world));
-        } catch (Exception e) {
-            // TODO
-        }
+        Controllers.navigate(new WorldInfoPage(world));
     }
 }

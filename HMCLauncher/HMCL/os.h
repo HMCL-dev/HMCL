@@ -8,9 +8,13 @@
 const int MAX_KEY_LENGTH = 255;
 const int MAX_VALUE_NAME = 16383;
 
-#ifndef PROCESSOR_ARCHITECTURE_ARM64
-    #define PROCESSOR_ARCHITECTURE_ARM64 12
-#endif
+enum MyArchitecture {
+  X86,
+  X86_64,
+  ARM64
+};
+
+MyArchitecture MyGetArchitecture();
 
 // Query registry value of class root hKey, key path subKey, stores result in
 // parameter out.

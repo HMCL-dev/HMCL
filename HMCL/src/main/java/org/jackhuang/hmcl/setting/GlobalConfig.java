@@ -23,6 +23,8 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +33,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 @JsonAdapter(GlobalConfig.Serializer.class)
-public final class GlobalConfig implements Cloneable, Observable {
+public final class GlobalConfig implements Observable {
 
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
@@ -50,6 +52,10 @@ public final class GlobalConfig implements Cloneable, Observable {
     private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
 
     private final IntegerProperty logRetention = new SimpleIntegerProperty();
+
+    private final ObservableSet<String> userJava = FXCollections.observableSet(new LinkedHashSet<>());
+
+    private final ObservableSet<String> disabledJava = FXCollections.observableSet(new LinkedHashSet<>());
 
     private final Map<String, Object> unknownFields = new HashMap<>();
 
@@ -71,11 +77,6 @@ public final class GlobalConfig implements Cloneable, Observable {
 
     public String toJson() {
         return Config.CONFIG_GSON.toJson(this);
-    }
-
-    @Override
-    public GlobalConfig clone() {
-        return fromJson(this.toJson());
     }
 
     public int getAgreementVersion() {
@@ -114,11 +115,21 @@ public final class GlobalConfig implements Cloneable, Observable {
         this.logRetention.set(logRetention);
     }
 
+    public ObservableSet<String> getUserJava() {
+        return userJava;
+    }
+
+    public ObservableSet<String> getDisabledJava() {
+        return disabledJava;
+    }
+
     public static final class Serializer implements JsonSerializer<GlobalConfig>, JsonDeserializer<GlobalConfig> {
         private static final Set<String> knownFields = new HashSet<>(Arrays.asList(
                 "agreementVersion",
                 "platformPromptVersion",
-                "logRetention"
+                "logRetention",
+                "userJava",
+                "disabledJava"
         ));
 
         @Override
@@ -131,6 +142,12 @@ public final class GlobalConfig implements Cloneable, Observable {
             jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
             jsonObject.add("platformPromptVersion", context.serialize(src.getPlatformPromptVersion()));
             jsonObject.add("logRetention", context.serialize(src.getLogRetention()));
+            if (!src.getUserJava().isEmpty())
+                jsonObject.add("userJava", context.serialize(src.getUserJava()));
+
+            if (!src.getDisabledJava().isEmpty())
+                jsonObject.add("disabledJava", context.serialize(src.getDisabledJava()));
+
             for (Map.Entry<String, Object> entry : src.unknownFields.entrySet()) {
                 jsonObject.add(entry.getKey(), context.serialize(entry.getValue()));
             }
@@ -148,6 +165,20 @@ public final class GlobalConfig implements Cloneable, Observable {
             config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setPlatformPromptVersion(Optional.ofNullable(obj.get("platformPromptVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setLogRetention(Optional.ofNullable(obj.get("logRetention")).map(JsonElement::getAsInt).orElse(20));
+
+            JsonElement userJava = obj.get("userJava");
+            if (userJava != null && userJava.isJsonArray()) {
+                for (JsonElement element : userJava.getAsJsonArray()) {
+                    config.userJava.add(element.getAsString());
+                }
+            }
+
+            JsonElement disabledJava = obj.get("disabledJava");
+            if (disabledJava != null && disabledJava.isJsonArray()) {
+                for (JsonElement element : disabledJava.getAsJsonArray()) {
+                    config.disabledJava.add(element.getAsString());
+                }
+            }
 
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                 if (!knownFields.contains(entry.getKey())) {

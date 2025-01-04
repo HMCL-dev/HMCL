@@ -2,3 +2,4 @@ Debug
 Release
 .vs
 *.APS
+cmake-build-*/
