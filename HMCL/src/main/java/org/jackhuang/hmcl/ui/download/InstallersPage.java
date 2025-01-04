@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
@@ -121,8 +122,25 @@ public class InstallersPage extends Control implements WizardPage {
     }
 
     protected void onInstall() {
-        controller.getSettings().put("name", txtName.getText());
-        controller.onFinish();
+        String name = txtName.getText();
+
+        // Check for non-ASCII characters.
+        if (!StandardCharsets.US_ASCII.newEncoder().canEncode(name)) {
+            Controllers.dialog(new MessageDialogPane.Builder(
+                    i18n("install.name.invalid"),
+                    i18n("message.warning"),
+                    MessageDialogPane.MessageType.QUESTION)
+                    .yesOrNo(() -> {
+                        controller.getSettings().put("name", name);
+                        controller.onFinish();
+                    }, () -> {
+                        // The user selects Cancel and does nothing.
+                    })
+                    .build());
+        } else {
+            controller.getSettings().put("name", name);
+            controller.onFinish();
+        }
     }
 
     @Override
