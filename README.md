@@ -14,11 +14,11 @@ HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Mana
 
 HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, and macOS, but it also supports various CPU architectures such as x86, ARM, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
 
-For systems and CPU architectures supported by HMCL, see [this table](PLATFORM.md).
+For systems and CPU architectures supported by HMCL, please refer to [this table](PLATFORM.md).
 
 ## Download
 
-Download the latest version from [the official website](https://hmcl.huangyuhui.net/download).
+Download the latest version from the [official website](https://hmcl.huangyuhui.net/download).
 
 You can also find the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
 
