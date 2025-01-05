@@ -23,6 +23,6 @@ body:
     label: 原因 | Reason
     description: |
       请描述该功能带来的好处及原因。
-      Please describe why you want to add the feature/enhancement into HMCL.
+      Please describe why you want to add the feature or enhancement to HMCL.
   validations:
     required: true

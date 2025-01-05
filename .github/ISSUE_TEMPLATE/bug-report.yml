@@ -36,9 +36,9 @@ body:
       label: 问题描述 | Bug Description
       description: |
         请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。
-        Please describe the bug you met in as much detail as possible. Besides, please describe how to trigger this bug again.
+        Please describe the bug you met in as much detail as possible. Additionally, describe the steps to reproduce this bug.
       placeholder: |
-        1. 点击 HMCL 上的某个按钮 | Click a button named...
+        1. 点击 HMCL 上的某个按钮 | Click a button named ...
         2. 向下翻页 | Scroll down
         3. ...
     validations:
@@ -49,7 +49,7 @@ body:
       label: 启动器崩溃报告 / 启动器日志文件 | Launcher Crash Report / Launcher Log File
       description: |
         如果你的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
-        如果你的启动器没有崩溃，请在遇到问题后不要退出启动器，在启动器的 “设置 → 通用 → 调试” 一栏中点击 “导出启动器日志”，并将导出的日志拖到下方的输入栏中。
+        如果你的启动器没有崩溃，请在遇到问题后**不要退出启动器**，在启动器的 “设置 → 通用 → 调试” 一栏中点击 “导出启动器日志”，并将导出的日志拖到下方的输入栏中。
         **请注意：启动器崩溃报告或日志文件是诊断问题的重要依据，请务必上传！**
         
         If your launcher crashes, please fill in (or drag the file in) the following input field with the crash report.
