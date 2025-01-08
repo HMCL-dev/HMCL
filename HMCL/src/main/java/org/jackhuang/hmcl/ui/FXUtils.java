@@ -27,6 +27,9 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.value.*;
+import javafx.event.Event;
+import javafx.event.EventDispatcher;
+import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -86,6 +89,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -232,6 +236,21 @@ public final class FXUtils {
                     info.unbind();
                     node.getProperties().remove(key);
                 });
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Event> void ignoreEvent(Node node, EventType<T> type, Predicate<? super T> filter) {
+        EventDispatcher oldDispatcher = node.getEventDispatcher();
+        node.setEventDispatcher((event, tail) -> {
+            EventType<?> t = event.getEventType();
+            while (t != null && t != type)
+                t = t.getSuperType();
+            if (t == type && filter.test((T) event)) {
+                return tail.dispatchEvent(event);
+            } else {
+                return oldDispatcher.dispatchEvent(event, tail);
+            }
+        });
     }
 
     public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
