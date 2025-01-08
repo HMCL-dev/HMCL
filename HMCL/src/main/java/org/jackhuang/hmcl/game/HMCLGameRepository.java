@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -217,7 +218,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
         localVersionSettings.put(id, vs);
-        vs.addPropertyChangedListener(a -> saveVersionSetting(id));
+        vs.addListener(a -> saveVersionSetting(id));
         return vs;
     }
 
@@ -250,7 +251,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public VersionSetting getVersionSetting(String id) {
         VersionSetting vs = getLocalVersionSetting(id);
         if (vs == null || vs.isUsesGlobal()) {
-            profile.getGlobal().setGlobal(true); // always keep global.isGlobal = true
             profile.getGlobal().setUsesGlobal(true);
             return profile.getGlobal();
         } else
@@ -337,6 +337,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
             return false;
 
+        LOG.info("Saving version setting: " + id);
+
         try {
             FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
@@ -357,7 +359,12 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs = createLocalVersionSetting(id);
         if (vs == null)
             return null;
-        vs.setUsesGlobal(false);
+        VersionIconType versionIcon = vs.getVersionIcon();
+        if (vs.isUsesGlobal()) {
+            PropertyUtils.copyProperties(profile.getGlobal(), vs);
+            vs.setUsesGlobal(false);
+        }
+        vs.setVersionIcon(versionIcon); // versionIcon is preserved
         return vs;
     }
 

@@ -31,6 +31,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
@@ -75,7 +76,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -521,10 +521,12 @@ public final class FXUtils {
     }
 
     public static <T> void bind(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
-        textField.setText(converter == null ? (String) property.getValue() : converter.toString(property.getValue()));
-        TextFieldBindingListener<T> listener = new TextFieldBindingListener<>(textField, property, converter);
-        textField.focusedProperty().addListener((ChangeListener<Boolean>) listener);
-        property.addListener(listener);
+        TextFieldBinding<T> binding = new TextFieldBinding<>(textField, property, converter);
+        binding.updateTextField();
+        textField.getProperties().put("FXUtils.bind.binding", binding);
+        textField.focusedProperty().addListener(binding.focusedListener);
+        textField.sceneProperty().addListener(binding.sceneListener);
+        property.addListener(binding.propertyListener);
     }
 
     public static void bindInt(JFXTextField textField, Property<Number> property) {
@@ -536,68 +538,66 @@ public final class FXUtils {
     }
 
     public static void unbind(JFXTextField textField, Property<?> property) {
-        TextFieldBindingListener<?> listener = new TextFieldBindingListener<>(textField, property, null);
-        textField.focusedProperty().removeListener((ChangeListener<Boolean>) listener);
-        property.removeListener(listener);
+        TextFieldBinding<?> binding = (TextFieldBinding<?>) textField.getProperties().remove("FXUtils.bind.binding");
+        if (binding != null) {
+            textField.focusedProperty().removeListener(binding.focusedListener);
+            textField.sceneProperty().removeListener(binding.sceneListener);
+            property.removeListener(binding.propertyListener);
+        }
     }
 
-    private static final class TextFieldBindingListener<T> implements ChangeListener<Boolean>, InvalidationListener {
-        private final int hashCode;
-        private final WeakReference<JFXTextField> textFieldRef;
-        private final WeakReference<Property<T>> propertyRef;
+    private static final class TextFieldBinding<T> {
+        private final JFXTextField textField;
+        private final Property<T> property;
         private final StringConverter<T> converter;
 
-        TextFieldBindingListener(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
-            this.textFieldRef = new WeakReference<>(textField);
-            this.propertyRef = new WeakReference<>(property);
+        public final ChangeListener<Boolean> focusedListener;
+        public final ChangeListener<Scene> sceneListener;
+        public final InvalidationListener propertyListener;
+
+        public TextFieldBinding(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+            this.textField = textField;
+            this.property = property;
             this.converter = converter;
-            this.hashCode = System.identityHashCode(textField) ^ System.identityHashCode(property);
-        }
 
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean focused) { // On TextField changed
-            JFXTextField textField = textFieldRef.get();
-            Property<T> property = this.propertyRef.get();
-
-            if (textField != null && property != null && oldValue == Boolean.TRUE && focused == Boolean.FALSE) {
-                if (textField.validate()) {
-                    String newText = textField.getText();
-                    @SuppressWarnings("unchecked")
-                    T newValue = converter == null ? (T) newText : converter.fromString(newText);
-
-                    if (!Objects.equals(newValue, property.getValue()))
-                        property.setValue(newValue);
-                } else {
-                    // Rollback to old value
-                    invalidated(null);
+            focusedListener = (observable, oldFocused, newFocused) -> {
+                if (oldFocused && !newFocused) {
+                    if (textField.validate()) {
+                        uppdateProperty();
+                    } else {
+                        // Rollback to old value
+                        updateTextField();
+                    }
                 }
+            };
+
+            sceneListener = (observable, oldScene, newScene) -> {
+                if (oldScene != null && newScene == null) {
+                    // Component is being removed from scene
+                    if (textField.validate()) {
+                        uppdateProperty();
+                    }
+                }
+            };
+
+            propertyListener = observable -> {
+                updateTextField();
+            };
+        }
+
+        public void uppdateProperty() {
+            String newText = textField.getText();
+            @SuppressWarnings("unchecked")
+            T newValue = converter == null ? (T) newText : converter.fromString(newText);
+
+            if (!Objects.equals(newValue, property.getValue())) {
+                property.setValue(newValue);
             }
         }
 
-        @Override
-        public void invalidated(Observable observable) { // On property change
-            JFXTextField textField = textFieldRef.get();
-            Property<T> property = this.propertyRef.get();
-
-            if (textField != null && property != null) {
-                T value = property.getValue();
-                textField.setText(converter == null ? (String) value : converter.toString(value));
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof TextFieldBindingListener))
-                return false;
-            TextFieldBindingListener<?> other = (TextFieldBindingListener<?>) obj;
-            return this.hashCode == other.hashCode
-                    && this.textFieldRef.get() == other.textFieldRef.get()
-                    && this.propertyRef.get() == other.propertyRef.get();
+        public void updateTextField() {
+            T value = property.getValue();
+            textField.setText(converter == null ? (String) value : converter.toString(value));
         }
     }
 
