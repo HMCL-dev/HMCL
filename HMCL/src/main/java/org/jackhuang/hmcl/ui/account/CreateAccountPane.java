@@ -65,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -290,17 +291,19 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
                 FlowPane box = new FlowPane();
                 box.setHgap(8);
-                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
-                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
                 JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
                 birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
+                JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
+                profileLink.setExternalLink("https://account.live.com/editprof.aspx");
+                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
+                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
                 JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
                 deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
-                JFXHyperlink loginwithpasswordLink = new JFXHyperlink(i18n("account.methods.login_with_password"));
-                loginwithpasswordLink.setExternalLink("https://docs.hmcl.net/launcher/use-password-login-microsoft-account.html");
+                JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
+                forgotpasswordLink.setExternalLink("https://www.minecraft.net/password/forgot");
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                box.getChildren().setAll(purchaseLink, birthLink, deauthorizeLink, loginwithpasswordLink, createProfileLink);
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
                 FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
@@ -316,7 +319,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                     }
                 });
-                hintPane.setOnMouseClicked(e -> {
+                FXUtils.onClicked(hintPane, () -> {
                     if (deviceCode.get() != null) {
                         FXUtils.openLink(deviceCode.get().getVerificationUri());
                         FXUtils.copyText(deviceCode.get().getUserCode());
@@ -325,6 +328,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
                     runInFX(() -> deviceCode.set(value));
                 }));
+
 
                 if (!IntegrityChecker.isOfficial()) {
                     box.getChildren().remove(deauthorizeLink);
@@ -514,7 +518,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             if (factory instanceof OfflineAccountFactory) {
                 txtUsername.setPromptText(i18n("account.methods.offline.name.special_characters"));
-                runInFX(() -> FXUtils.installFastTooltip(txtUsername, i18n("account.methods.offline.name.special_characters")));
+                FXUtils.installFastTooltip(txtUsername, i18n("account.methods.offline.name.special_characters"));
 
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
                 purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
@@ -642,7 +646,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnAction(e -> latch.countDown());
 
-            listBox.startCategory(i18n("account.choose"));
+            listBox.startCategory(i18n("account.choose").toUpperCase(Locale.ROOT));
 
             setCenter(listBox);
 
@@ -662,7 +666,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     TexturesLoader.bindAvatar(portraitCanvas, service, profile.getId());
 
                     IconedItem accountItem = new IconedItem(portraitCanvas, profile.getName());
-                    accountItem.setOnMouseClicked(e -> {
+                    FXUtils.onClicked(accountItem, () -> {
                         selectedProfile = profile;
                         latch.countDown();
                     });

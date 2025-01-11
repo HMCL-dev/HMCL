@@ -58,7 +58,7 @@ public class OAuthAccountLoginDialog extends DialogPane {
                 );
             }
         });
-        hintPane.setOnMouseClicked(e -> {
+        FXUtils.onClicked(hintPane, () -> {
             if (deviceCode.get() != null) {
                 FXUtils.copyText(deviceCode.get().getUserCode());
             }

@@ -18,25 +18,13 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -229,7 +217,42 @@ public class Version implements Comparable<Version>, Validation {
 
     public AssetIndexInfo getAssetIndex() {
         String assetsId = assets == null ? "legacy" : assets;
-        return assetIndex == null ? new AssetIndexInfo(assetsId, Constants.DEFAULT_INDEX_URL + assetsId + ".json") : assetIndex;
+
+        if (assetIndex == null) {
+            String hash;
+            switch (assetsId) {
+                case "1.8":
+                    hash = "f6ad102bcaa53b1a58358f16e376d548d44933ec";
+                    break;
+                case "14w31a":
+                    hash = "10a2a0e75b03cfb5a7196abbdf43b54f7fa61deb";
+                    break;
+                case "14w25a":
+                    hash = "32ff354a3be1c4dd83027111e6d79ee4d701d2c0";
+                    break;
+                case "1.7.4":
+                    hash = "545510a60f526b9aa8a38f9c0bc7a74235d21675";
+                    break;
+                case "1.7.10":
+                    hash = "1863782e33ce7b584fc45b037325a1964e095d3e";
+                    break;
+                case "1.7.3":
+                    hash = "f6cf726f4747128d13887010c2cbc44ba83504d9";
+                    break;
+                case "pre-1.6":
+                    hash = "3d8e55480977e32acd9844e545177e69a52f594b";
+                    break;
+                case "legacy":
+                default:
+                    assetsId = "legacy";
+                    hash = "770572e819335b6c0a053f8378ad88eda189fc14";
+            }
+
+            String url = Constants.DEFAULT_INDEX_URL + hash + "/" + assetsId + ".json";
+            return new AssetIndexInfo(assetsId, url);
+        } else {
+            return assetIndex;
+        }
     }
 
     public boolean appliesToCurrentEnvironment() {

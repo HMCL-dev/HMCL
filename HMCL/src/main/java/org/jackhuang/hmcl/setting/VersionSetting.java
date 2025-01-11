@@ -20,44 +20,37 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.concurrent.CancellationException;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /**
- *
  * @author huangyuhui
  */
 @JsonAdapter(VersionSetting.Serializer.class)
-public final class VersionSetting implements Cloneable {
+public final class VersionSetting implements Cloneable, Observable {
 
-    private boolean global = false;
+    private transient ObservableHelper helper = new ObservableHelper(this);
 
-    public boolean isGlobal() {
-        return global;
-    }
-
-    public void setGlobal(boolean global) {
-        this.global = global;
+    public VersionSetting() {
+        PropertyUtils.attachListener(this, helper);
     }
 
     private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", true);
@@ -84,38 +77,43 @@ public final class VersionSetting implements Cloneable {
 
     // java
 
-    private final StringProperty javaProperty = new SimpleStringProperty(this, "java", "");
+    private final ObjectProperty<JavaVersionType> javaVersionTypeProperty = new SimpleObjectProperty<>(this, "javaVersionType", JavaVersionType.AUTO);
 
-    public StringProperty javaProperty() {
-        return javaProperty;
+    public ObjectProperty<JavaVersionType> javaVersionTypeProperty() {
+        return javaVersionTypeProperty;
     }
 
-    /**
-     * Java version or "Custom" if user customizes java directory, "Default" if the jvm that this app relies on.
-     */
-    public String getJava() {
-        return javaProperty.get();
+    public JavaVersionType getJavaVersionType() {
+        return javaVersionTypeProperty.get();
     }
 
-    public void setJava(String java) {
-        javaProperty.set(java);
+    public void setJavaVersionType(JavaVersionType javaVersionType) {
+        javaVersionTypeProperty.set(javaVersionType);
     }
 
-    public boolean isUsesCustomJavaDir() {
-        return "Custom".equals(getJava());
+    private final StringProperty javaVersionProperty = new SimpleStringProperty(this, "javaVersion", "");
+
+    public StringProperty javaVersionProperty() {
+        return javaVersionProperty;
+    }
+
+    public String getJavaVersion() {
+        return javaVersionProperty.get();
+    }
+
+    public void setJavaVersion(String java) {
+        javaVersionProperty.set(java);
     }
 
     public void setUsesCustomJavaDir() {
-        setJava("Custom");
+        setJavaVersionType(JavaVersionType.CUSTOM);
+        setJavaVersion("");
         setDefaultJavaPath(null);
     }
 
-    public boolean isJavaAutoSelected() {
-        return "Auto".equals(getJava());
-    }
-
     public void setJavaAutoSelected() {
-        setJava("Auto");
+        setJavaVersionType(JavaVersionType.AUTO);
+        setJavaVersion("");
         setDefaultJavaPath(null);
     }
 
@@ -644,127 +642,86 @@ public final class VersionSetting implements Cloneable {
         launcherVisibilityProperty.set(launcherVisibility);
     }
 
-    public Task<JavaVersion> getJavaVersion(GameVersionNumber gameVersion, Version version) {
-        return getJavaVersion(gameVersion, version, true);
-    }
+    public JavaRuntime getJava(GameVersionNumber gameVersion, Version version) throws InterruptedException {
+        switch (getJavaVersionType()) {
+            case DEFAULT:
+                return JavaRuntime.getDefault();
+            case AUTO:
+                return JavaManager.findSuitableJava(gameVersion, version);
+            case CUSTOM:
+                try {
+                    return JavaManager.getJava(Paths.get(getJavaDir()));
+                } catch (IOException | InvalidPathException e) {
+                    return null; // Custom Java not found
+                }
+            case VERSION: {
+                String javaVersion = getJavaVersion();
+                if (StringUtils.isBlank(javaVersion)) {
+                    return JavaManager.findSuitableJava(gameVersion, version);
+                }
 
-    public Task<JavaVersion> getJavaVersion(GameVersionNumber gameVersion, Version version, boolean checkJava) {
-        return Task.runAsync(Schedulers.javafx(), () -> {
-            if (StringUtils.isBlank(getJava())) {
-                setJava(StringUtils.isBlank(getJavaDir()) ? "Auto" : "Custom");
+                int majorVersion = -1;
+                try {
+                    majorVersion = Integer.parseInt(javaVersion);
+                } catch (NumberFormatException ignored) {
+                }
+
+                if (majorVersion < 0) {
+                    LOG.warning("Invalid Java version: " + javaVersion);
+                    return null;
+                }
+
+                final int finalMajorVersion = majorVersion;
+                Collection<JavaRuntime> allJava = JavaManager.getAllJava().stream()
+                        .filter(it -> it.getParsedVersion() == finalMajorVersion)
+                        .collect(Collectors.toList());
+                return JavaManager.findSuitableJava(allJava, gameVersion, version);
             }
-        }).thenSupplyAsync(() -> {
-            try {
-                if ("Default".equals(getJava())) {
-                    return JavaVersion.fromCurrentEnvironment();
-                } else if (isJavaAutoSelected()) {
-                    return JavaVersionConstraint.findSuitableJavaVersion(gameVersion, version);
-                } else if (isUsesCustomJavaDir()) {
-                    try {
-                        if (checkJava)
-                            return JavaVersion.fromExecutable(Paths.get(getJavaDir()));
-                        else
-                            return new JavaVersion(Paths.get(getJavaDir()), "", Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.UNKNOWN));
-                    } catch (IOException | InvalidPathException e) {
-                        return null; // Custom Java Directory not found,
+            case DETECTED: {
+                String javaVersion = getJavaVersion();
+                if (StringUtils.isBlank(javaVersion)) {
+                    return JavaManager.findSuitableJava(gameVersion, version);
+                }
+
+                try {
+                    String defaultJavaPath = getDefaultJavaPath();
+                    if (StringUtils.isNotBlank(defaultJavaPath)) {
+                        JavaRuntime java = JavaManager.getJava(Paths.get(defaultJavaPath).toRealPath());
+                        if (java != null && java.getVersion().equals(javaVersion)) {
+                            return java;
+                        }
                     }
-                } else if (StringUtils.isNotBlank(getJava())) {
-                    List<JavaVersion> matchedJava = JavaVersion.getJavas().stream()
-                            .filter(java -> java.getVersion().equals(getJava()))
-                            .collect(Collectors.toList());
-                    if (matchedJava.isEmpty()) {
-                        FXUtils.runInFX(() -> setJava("Auto"));
-                        return JavaVersion.fromCurrentEnvironment();
-                    } else {
-                        return matchedJava.stream()
-                                .filter(java -> java.getBinary().toString().equals(getDefaultJavaPath()))
-                                .findFirst()
-                                .orElse(matchedJava.get(0));
+                } catch (IOException | InvalidPathException ignored) {
+                }
+
+                for (JavaRuntime java : JavaManager.getAllJava()) {
+                    if (java.getVersion().equals(javaVersion)) {
+                        return java;
                     }
-                } else throw new Error();
-            } catch (InterruptedException e) {
-                throw new CancellationException();
+                }
+
+                return null;
             }
-        });
+            default:
+                throw new AssertionError("JavaVersionType: " + getJavaVersionType());
+        }
     }
 
-    public void setJavaVersion(JavaVersion java) {
-        setJava(java.getVersion());
-        setDefaultJavaPath(java.getBinary().toString());
+    @Override
+    public void addListener(InvalidationListener listener) {
+        helper.addListener(listener);
     }
 
-    public void addPropertyChangedListener(InvalidationListener listener) {
-        usesGlobalProperty.addListener(listener);
-        javaProperty.addListener(listener);
-        javaDirProperty.addListener(listener);
-        wrapperProperty.addListener(listener);
-        permSizeProperty.addListener(listener);
-        maxMemoryProperty.addListener(listener);
-        minMemoryProperty.addListener(listener);
-        autoMemory.addListener(listener);
-        preLaunchCommandProperty.addListener(listener);
-        postExitCommand.addListener(listener);
-        javaArgsProperty.addListener(listener);
-        minecraftArgsProperty.addListener(listener);
-        environmentVariablesProperty.addListener(listener);
-        noJVMArgsProperty.addListener(listener);
-        notCheckGameProperty.addListener(listener);
-        notCheckJVMProperty.addListener(listener);
-        notPatchNativesProperty.addListener(listener);
-        showLogsProperty.addListener(listener);
-        serverIpProperty.addListener(listener);
-        fullscreenProperty.addListener(listener);
-        widthProperty.addListener(listener);
-        heightProperty.addListener(listener);
-        gameDirTypeProperty.addListener(listener);
-        gameDirProperty.addListener(listener);
-        processPriorityProperty.addListener(listener);
-        rendererProperty.addListener(listener);
-        useNativeGLFW.addListener(listener);
-        useNativeOpenAL.addListener(listener);
-        launcherVisibilityProperty.addListener(listener);
-        defaultJavaPathProperty.addListener(listener);
-        nativesDirProperty.addListener(listener);
-        nativesDirTypeProperty.addListener(listener);
-        versionIcon.addListener(listener);
+    @Override
+    public void removeListener(InvalidationListener listener) {
+        helper.removeListener(listener);
     }
 
     @Override
     public VersionSetting clone() {
-        VersionSetting versionSetting = new VersionSetting();
-        versionSetting.setUsesGlobal(isUsesGlobal());
-        versionSetting.setJava(getJava());
-        versionSetting.setDefaultJavaPath(getDefaultJavaPath());
-        versionSetting.setJavaDir(getJavaDir());
-        versionSetting.setWrapper(getWrapper());
-        versionSetting.setPermSize(getPermSize());
-        versionSetting.setMaxMemory(getMaxMemory());
-        versionSetting.setMinMemory(getMinMemory());
-        versionSetting.setAutoMemory(isAutoMemory());
-        versionSetting.setPreLaunchCommand(getPreLaunchCommand());
-        versionSetting.setPostExitCommand(getPostExitCommand());
-        versionSetting.setJavaArgs(getJavaArgs());
-        versionSetting.setMinecraftArgs(getMinecraftArgs());
-        versionSetting.setEnvironmentVariables(getEnvironmentVariables());
-        versionSetting.setNoJVMArgs(isNoJVMArgs());
-        versionSetting.setNotCheckGame(isNotCheckGame());
-        versionSetting.setNotCheckJVM(isNotCheckJVM());
-        versionSetting.setNotPatchNatives(isNotPatchNatives());
-        versionSetting.setShowLogs(isShowLogs());
-        versionSetting.setServerIp(getServerIp());
-        versionSetting.setFullscreen(isFullscreen());
-        versionSetting.setWidth(getWidth());
-        versionSetting.setHeight(getHeight());
-        versionSetting.setGameDirType(getGameDirType());
-        versionSetting.setGameDir(getGameDir());
-        versionSetting.setProcessPriority(getProcessPriority());
-        versionSetting.setRenderer(getRenderer());
-        versionSetting.setUseNativeGLFW(isUseNativeGLFW());
-        versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
-        versionSetting.setLauncherVisibility(getLauncherVisibility());
-        versionSetting.setNativesDir(getNativesDir());
-        versionSetting.setVersionIcon(getVersionIcon());
-        return versionSetting;
+        VersionSetting cloned = new VersionSetting();
+        PropertyUtils.copyProperties(this, cloned);
+        return cloned;
     }
 
     public static class Serializer implements JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
@@ -787,7 +744,6 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("precalledCommand", src.getPreLaunchCommand());
             obj.addProperty("postExitCommand", src.getPostExitCommand());
             obj.addProperty("serverIp", src.getServerIp());
-            obj.addProperty("java", src.getJava());
             obj.addProperty("wrapper", src.getWrapper());
             obj.addProperty("fullscreen", src.isFullscreen());
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
@@ -805,6 +761,24 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("nativesDir", src.getNativesDir());
             obj.addProperty("nativesDirType", src.getNativesDirType().ordinal());
             obj.addProperty("versionIcon", src.getVersionIcon().ordinal());
+
+            obj.addProperty("javaVersionType", src.getJavaVersionType().name());
+            String java;
+            switch (src.getJavaVersionType()) {
+                case DEFAULT:
+                    java = "Default";
+                    break;
+                case AUTO:
+                    java = "Auto";
+                    break;
+                case CUSTOM:
+                    java = "Custom";
+                    break;
+                default:
+                    java = src.getJavaVersion();
+                    break;
+            }
+            obj.addProperty("java", java);
 
             obj.addProperty("renderer", src.getRenderer().name());
             if (src.getRenderer() == Renderer.LLVMPIPE)
@@ -846,7 +820,6 @@ public final class VersionSetting implements Cloneable {
             vs.setPreLaunchCommand(Optional.ofNullable(obj.get("precalledCommand")).map(JsonElement::getAsString).orElse(""));
             vs.setPostExitCommand(Optional.ofNullable(obj.get("postExitCommand")).map(JsonElement::getAsString).orElse(""));
             vs.setServerIp(Optional.ofNullable(obj.get("serverIp")).map(JsonElement::getAsString).orElse(""));
-            vs.setJava(Optional.ofNullable(obj.get("java")).map(JsonElement::getAsString).orElse(""));
             vs.setWrapper(Optional.ofNullable(obj.get("wrapper")).map(JsonElement::getAsString).orElse(""));
             vs.setGameDir(Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse(""));
             vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
@@ -864,6 +837,27 @@ public final class VersionSetting implements Cloneable {
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
             vs.setNativesDirType(getOrDefault(NativesDirectoryType.values(), obj.get("nativesDirType"), NativesDirectoryType.VERSION_FOLDER));
             vs.setVersionIcon(getOrDefault(VersionIconType.values(), obj.get("versionIcon"), VersionIconType.DEFAULT));
+
+            if (obj.get("javaVersionType") != null) {
+                JavaVersionType javaVersionType = parseJsonPrimitive(obj.getAsJsonPrimitive("javaVersionType"), JavaVersionType.class, JavaVersionType.AUTO);
+                vs.setJavaVersionType(javaVersionType);
+                vs.setJavaVersion(Optional.ofNullable(obj.get("java")).map(JsonElement::getAsString).orElse(null));
+            } else {
+                String java = Optional.ofNullable(obj.get("java")).map(JsonElement::getAsString).orElse("");
+                switch (java) {
+                    case "Default":
+                        vs.setJavaVersionType(JavaVersionType.DEFAULT);
+                        break;
+                    case "Auto":
+                        vs.setJavaVersionType(JavaVersionType.AUTO);
+                        break;
+                    case "Custom":
+                        vs.setJavaVersionType(JavaVersionType.CUSTOM);
+                        break;
+                    default:
+                        vs.setJavaVersion(java);
+                }
+            }
 
             vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
                     .flatMap(name -> {
@@ -891,6 +885,26 @@ public final class VersionSetting implements Cloneable {
                 return primitive.getAsInt();
             else
                 return Lang.parseInt(primitive.getAsString(), defaultValue);
+        }
+
+        private <E extends Enum<E>> E parseJsonPrimitive(JsonPrimitive primitive, Class<E> clazz, E defaultValue) {
+            if (primitive == null)
+                return defaultValue;
+            else {
+                E[] enumConstants = clazz.getEnumConstants();
+                if (primitive.isNumber()) {
+                    int index = primitive.getAsInt();
+                    return index >= 0 && index < enumConstants.length ? enumConstants[index] : defaultValue;
+                } else {
+                    String name = primitive.getAsString();
+                    for (E enumConstant : enumConstants) {
+                        if (enumConstant.name().equalsIgnoreCase(name)) {
+                            return enumConstant;
+                        }
+                    }
+                    return defaultValue;
+                }
+            }
         }
     }
 }

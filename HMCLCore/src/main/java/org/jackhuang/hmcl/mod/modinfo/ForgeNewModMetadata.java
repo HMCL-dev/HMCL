@@ -160,12 +160,17 @@ public final class ForgeNewModMetadata {
 
     private static ModLoaderType analyzeLoader(Toml toml, String modID, int loaderACC, ModLoaderType defaultLoader) throws IOException {
         List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
-        if (dependencies != null) {
-            for (HashMap<String, Object> dependency : dependencies) {
-                switch ((String) dependency.get("modId")) {
-                    case "forge": return checkLoaderACC(loaderACC, ACC_FORGE, ModLoaderType.FORGE);
-                    case "neoforge": return checkLoaderACC(loaderACC, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
-                }
+        if (dependencies == null) {
+            dependencies = toml.getList("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
+            if (dependencies == null) {
+                return defaultLoader;
+            }
+        }
+
+        for (HashMap<String, Object> dependency : dependencies) {
+            switch ((String) dependency.get("modId")) {
+                case "forge": return checkLoaderACC(loaderACC, ACC_FORGE, ModLoaderType.FORGE);
+                case "neoforge": return checkLoaderACC(loaderACC, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
             }
         }
 

@@ -17,12 +17,11 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -34,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -51,9 +51,7 @@ public final class NativePatcher {
         return natives.computeIfAbsent(platform, p -> {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(NativePatcher.class.getResourceAsStream("/assets/natives.json"), StandardCharsets.UTF_8)) {
-                Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, new TypeToken<Map<String, Map<String, Library>>>() {
-                }.getType());
-
+                Map<String, Map<String, Library>> natives = JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, Library.class)));
                 return natives.getOrDefault(p.toString(), Collections.emptyMap());
             } catch (IOException e) {
                 LOG.warning("Failed to load native library list", e);
@@ -62,7 +60,7 @@ public final class NativePatcher {
         });
     }
 
-    public static Version patchNative(Version version, String gameVersion, JavaVersion javaVersion, VersionSetting settings) {
+    public static Version patchNative(Version version, String gameVersion, JavaRuntime javaVersion, VersionSetting settings) {
         if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
@@ -154,7 +152,7 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static Library getMesaLoader(JavaVersion javaVersion, Renderer renderer) {
-        return getNatives(javaVersion.getPlatform()).get(renderer == Renderer.LLVMPIPE ? "software-renderer-loader" : "mesa-loader");
+    public static Library getMesaLoader(JavaRuntime javaVersion, Renderer renderer) {
+        return getNatives(javaVersion.getPlatform()).get("mesa-loader");
     }
 }

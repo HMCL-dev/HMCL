@@ -377,15 +377,15 @@ public final class StringUtils {
         return result.toString();
     }
 
-    public static int MAX_SHORT_STRING_LENGTH = 77;
+    public static String truncate(String str, int limit) {
+        assert limit > 5;
 
-    public static Optional<String> truncate(String str) {
-        if (str.length() <= MAX_SHORT_STRING_LENGTH) {
-            return Optional.empty();
+        if (str.length() <= limit) {
+            return str;
         }
 
-        final int halfLength = (MAX_SHORT_STRING_LENGTH - 5) / 2;
-        return Optional.of(str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength));
+        final int halfLength = (limit - 5) / 2;
+        return str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength);
     }
 
     public static boolean isASCII(String cs) {
