@@ -8,8 +8,8 @@
 Version J8(TEXT("8"));
 
 extern "C" {
-_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-_declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
+__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+__declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
 }
 
 LPCWSTR VENDOR_DIRS[] = {
@@ -75,12 +75,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
 
-  SYSTEM_INFO systemInfo;
-  GetNativeSystemInfo(&systemInfo);
-  // TODO: check whether the bundled JRE is valid.
+  MyArchitecture architecture = MyGetArchitecture();
+
   // First try the Java packaged together.
-  bool isX64   = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-  bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+  bool isX64   = architecture == MyArchitecture::X86_64;
+  bool isARM64 = architecture == MyArchitecture::ARM64;
 
   if (isARM64) {
     RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
@@ -143,7 +142,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   if (isARM64) {
     downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
-  } if (isX64) {
+  } else if (isX64) {
     downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
   } else {
     downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";

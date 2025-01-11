@@ -346,9 +346,15 @@ public final class StringUtils {
     }
 
     public static String parseEscapeSequence(String str) {
-        StringBuilder builder = new StringBuilder();
+        int idx = str.indexOf('\033');
+        if (idx < 0)
+            return str;
+
+        StringBuilder builder = new StringBuilder(str.length());
         boolean inEscape = false;
-        for (int i = 0; i < str.length(); i++) {
+
+        builder.append(str, 0, idx);
+        for (int i = idx; i < str.length(); i++) {
             char ch = str.charAt(i);
             if (ch == '\033') {
                 inEscape = true;
@@ -371,15 +377,15 @@ public final class StringUtils {
         return result.toString();
     }
 
-    public static int MAX_SHORT_STRING_LENGTH = 77;
+    public static String truncate(String str, int limit) {
+        assert limit > 5;
 
-    public static Optional<String> truncate(String str) {
-        if (str.length() <= MAX_SHORT_STRING_LENGTH) {
-            return Optional.empty();
+        if (str.length() <= limit) {
+            return str;
         }
 
-        final int halfLength = (MAX_SHORT_STRING_LENGTH - 5) / 2;
-        return Optional.of(str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength));
+        final int halfLength = (limit - 5) / 2;
+        return str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength);
     }
 
     public static boolean isASCII(String cs) {

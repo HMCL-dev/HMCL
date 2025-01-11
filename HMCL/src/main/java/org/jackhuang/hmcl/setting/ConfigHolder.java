@@ -197,7 +197,7 @@ public final class ConfigHolder {
         }
     }
 
-    static void markConfigDirty() {
+    private static void markConfigDirty() {
         configWriter.accept(configInstance.toJson());
     }
 
@@ -241,11 +241,7 @@ public final class ConfigHolder {
         }
     }
 
-    static void markGlobalConfigDirty() {
+    private static void markGlobalConfigDirty() {
         globalConfigWriter.accept(globalConfigInstance.toJson());
-    }
-
-    private static void saveGlobalConfigSync() throws IOException {
-        writeToConfig(globalConfigInstance.toJson());
     }
 }

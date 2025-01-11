@@ -30,7 +30,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
@@ -594,11 +593,9 @@ public class TabHeader extends Control implements TabControl, PageAware {
 
                 FXUtils.onChangeAndOperate(tab.selectedProperty(), selected -> inner.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, selected));
 
-                this.setOnMouseClicked(event -> {
-                    if (event.getButton() == MouseButton.PRIMARY) {
-                        this.setOpacity(1);
-                        getSkinnable().getSelectionModel().select(tab);
-                    }
+                FXUtils.onClicked(this, () -> {
+                    this.setOpacity(1);
+                    getSkinnable().getSelectionModel().select(tab);
                 });
             }
         }
