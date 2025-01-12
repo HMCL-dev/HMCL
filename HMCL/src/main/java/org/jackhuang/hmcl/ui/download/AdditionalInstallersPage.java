@@ -59,7 +59,7 @@ class AdditionalInstallersPage extends InstallersPage {
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals("game")) continue;
-            library.removeActionProperty().set(e -> {
+            library.setOnRemove(() -> {
                 controller.getSettings().put(libraryId, new UpdateInstallerWizardProvider.RemoveVersionAction(libraryId));
                 reload();
             });
