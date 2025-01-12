@@ -82,10 +82,6 @@ public class OAuthAccountLoginDialog extends DialogPane {
             }
         });
 
-        // holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
-        //     runInFX(() -> deviceCode.set(value));
-        // }));
-
         if (!IntegrityChecker.isOfficial()) {
             HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             unofficialHint.setText(i18n("unofficial.hint"));
