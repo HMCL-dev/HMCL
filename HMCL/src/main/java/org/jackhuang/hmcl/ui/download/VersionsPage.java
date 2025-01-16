@@ -29,6 +29,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -66,6 +68,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -149,6 +152,9 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     list = new JFXListView<>();
                     list.getStyleClass().add("jfx-list-view-float");
                     VBox.setVgrow(list, Priority.ALWAYS);
+
+                    // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
+                    ignoreEvent(list, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
                     centrePane.getContent().setAll(checkPane, list);
                 }
