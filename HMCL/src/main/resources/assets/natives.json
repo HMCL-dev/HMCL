@@ -5274,7 +5274,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl:3.3.1:natives": {
+    "org.lwjgl:lwjgl:3.3.1:natives-linux": {
       "name": "org.lwjgl:lwjgl:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5296,7 +5296,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-jemalloc:3.3.1:natives": {
+    "org.lwjgl:lwjgl-jemalloc:3.3.1:natives-linux": {
       "name": "org.lwjgl:lwjgl-jemalloc:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5318,7 +5318,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-openal:3.3.1:natives": {
+    "org.lwjgl:lwjgl-openal:3.3.1:natives-linux": {
       "name": "org.lwjgl:lwjgl-openal:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5340,7 +5340,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-opengl:3.3.1:natives": {
+    "org.lwjgl:lwjgl-opengl:3.3.1:natives-linux": {
       "name": "org.lwjgl:lwjgl-opengl:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5362,7 +5362,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-glfw:3.3.1:natives": {
+    "org.lwjgl:lwjgl-glfw:3.3.1:natives-linux": {
       "name": "org.lwjgl:lwjgl-glfw:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5384,7 +5384,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-stb:3.3.1:natives": {
+    "org.lwjgl:lwjgl-stb:3.3.1:natives-linux": {
       "name": "org.lwjgl:lwjgl-stb:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5406,7 +5406,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-tinyfd:3.3.1:natives": {
+    "org.lwjgl:lwjgl-tinyfd:3.3.1:natives-linux": {
       "name": "org.lwjgl:lwjgl-tinyfd:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5428,7 +5428,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl:3.3.2:natives": {
+    "org.lwjgl:lwjgl:3.3.2:natives-linux": {
       "name": "org.lwjgl:lwjgl:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5450,7 +5450,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-jemalloc:3.3.2:natives": {
+    "org.lwjgl:lwjgl-jemalloc:3.3.2:natives-linux": {
       "name": "org.lwjgl:lwjgl-jemalloc:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5472,7 +5472,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-openal:3.3.2:natives": {
+    "org.lwjgl:lwjgl-openal:3.3.2:natives-linux": {
       "name": "org.lwjgl:lwjgl-openal:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5494,7 +5494,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-opengl:3.3.2:natives": {
+    "org.lwjgl:lwjgl-opengl:3.3.2:natives-linux": {
       "name": "org.lwjgl:lwjgl-opengl:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5516,7 +5516,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-glfw:3.3.2:natives": {
+    "org.lwjgl:lwjgl-glfw:3.3.2:natives-linux": {
       "name": "org.lwjgl:lwjgl-glfw:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5538,7 +5538,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-stb:3.3.2:natives": {
+    "org.lwjgl:lwjgl-stb:3.3.2:natives-linux": {
       "name": "org.lwjgl:lwjgl-stb:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5560,7 +5560,7 @@
         }
       }
     },
-    "org.lwjgl:lwjgl-tinyfd:3.3.2:natives": {
+    "org.lwjgl:lwjgl-tinyfd:3.3.2:natives-linux": {
       "name": "org.lwjgl:lwjgl-tinyfd:3.3.4:natives-freebsd",
       "downloads": {
         "artifact": {
@@ -5568,6 +5568,182 @@
           "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.3.4/lwjgl-tinyfd-3.3.4-natives-freebsd.jar",
           "sha1": "acd5e1b9b9b99ce4d21867058ee468ee45a859e5",
           "size": 40104
+        }
+      }
+    },
+    "org.lwjgl:lwjgl:3.3.3": {
+      "name": "org.lwjgl:lwjgl:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.3.4/lwjgl-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.3.4/lwjgl-3.3.4.jar",
+          "sha1": "b86c3e4832426e8a6b466013b7cb34b40e9ce956",
+          "size": 800127
+        }
+      }
+    },
+    "org.lwjgl:lwjgl:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/3.3.4/lwjgl-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl/3.3.4/lwjgl-3.3.4-natives-freebsd.jar",
+          "sha1": "610d14530e637564d97d74af7cb98a737e70b77b",
+          "size": 96209
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.3.3": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.3.4/lwjgl-jemalloc-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.3.4/lwjgl-jemalloc-3.3.4.jar",
+          "sha1": "e3f5dcb8e13f3a5ed3f740fd30a114cee2a80bc4",
+          "size": 46430
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-jemalloc:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-jemalloc/3.3.4/lwjgl-jemalloc-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-jemalloc/3.3.4/lwjgl-jemalloc-3.3.4-natives-freebsd.jar",
+          "sha1": "5ee27f3bad4715067cef0630682da4bb5a1b88ac",
+          "size": 157297
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.3.3": {
+      "name": "org.lwjgl:lwjgl-openal:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.3.4/lwjgl-openal-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.3.4/lwjgl-openal-3.3.4.jar",
+          "sha1": "9b74d3ea380c83353d42af43ad9659e04dabe84a",
+          "size": 113103
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-openal:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-openal:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-openal/3.3.4/lwjgl-openal-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-openal/3.3.4/lwjgl-openal-3.3.4-natives-freebsd.jar",
+          "sha1": "3863f8268f5515c27f1364257f8a018f0c6afa79",
+          "size": 597486
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.3.3": {
+      "name": "org.lwjgl:lwjgl-opengl:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.3.4/lwjgl-opengl-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.3.4/lwjgl-opengl-3.3.4.jar",
+          "sha1": "2852ac7d9f6fc71349f1ce28e2708ff1977f18af",
+          "size": 931960
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-opengl:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-opengl:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-opengl/3.3.4/lwjgl-opengl-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-opengl/3.3.4/lwjgl-opengl-3.3.4-natives-freebsd.jar",
+          "sha1": "579071d2a3714f5662522f7d3edf58e941580587",
+          "size": 81028
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.3.3": {
+      "name": "org.lwjgl:lwjgl-glfw:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.3.4/lwjgl-glfw-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.3.4/lwjgl-glfw-3.3.4.jar",
+          "sha1": "7e46ecdec85db8738053cfde1414352cd62dab74",
+          "size": 147044
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-glfw:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-glfw:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-glfw/3.3.4/lwjgl-glfw-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-glfw/3.3.4/lwjgl-glfw-3.3.4-natives-freebsd.jar",
+          "sha1": "f67b9b6c29451d8fea66db17aaba2f65e908c7e9",
+          "size": 104415
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.3.3": {
+      "name": "org.lwjgl:lwjgl-stb:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.3.4/lwjgl-stb-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.3.4/lwjgl-stb-3.3.4.jar",
+          "sha1": "5821735d5ef23f6da8542887344e57eb181b7cac",
+          "size": 143112
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-stb:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-stb:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-stb/3.3.4/lwjgl-stb-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-stb/3.3.4/lwjgl-stb-3.3.4-natives-freebsd.jar",
+          "sha1": "f5551338a1e2035ff747053f0e985dc93db1235c",
+          "size": 226093
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.3.3": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.3.4/lwjgl-tinyfd-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.3.4/lwjgl-tinyfd-3.3.4.jar",
+          "sha1": "2d73789ffd8962b38d9d599cc38b2383ce818c7a",
+          "size": 15928
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-tinyfd:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-tinyfd:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-tinyfd/3.3.4/lwjgl-tinyfd-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-tinyfd/3.3.4/lwjgl-tinyfd-3.3.4-natives-freebsd.jar",
+          "sha1": "acd5e1b9b9b99ce4d21867058ee468ee45a859e5",
+          "size": 40104
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.3.3": {
+      "name": "org.lwjgl:lwjgl-freetype:3.3.4",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.3.4/lwjgl-freetype-3.3.4.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.3.4/lwjgl-freetype-3.3.4.jar",
+          "sha1": "23f7bf165068ef2ca80ae1b79fd905af20498600",
+          "size": 453489
+        }
+      }
+    },
+    "org.lwjgl:lwjgl-freetype:3.3.3:natives-linux": {
+      "name": "org.lwjgl:lwjgl-freetype:3.3.4:natives-freebsd",
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl-freetype/3.3.4/lwjgl-freetype-3.3.4-natives-freebsd.jar",
+          "url": "https://repo1.maven.org/maven2/org/lwjgl/lwjgl-freetype/3.3.4/lwjgl-freetype-3.3.4-natives-freebsd.jar",
+          "sha1": "67d6775292771087cb3d5ba1239bf9bf42fb3bd7",
+          "size": 1176759
         }
       }
     },
