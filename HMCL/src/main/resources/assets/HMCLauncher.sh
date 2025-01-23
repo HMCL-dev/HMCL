@@ -124,6 +124,11 @@ case "$_HMCL_ARCH" in
       exec "$_HMCL_DIR/jre-arm32/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
     fi
     ;;
+  riscv64)
+    if [ -x "$_HMCL_DIR/jre-riscv64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
+      exec "$_HMCL_DIR/jre-riscv64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
+    fi
+    ;;
   loongarch64)
     if [ -x "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" ]; then
       exec "$_HMCL_DIR/jre-loongarch64/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
@@ -139,6 +144,10 @@ fi
 # Find Java in PATH
 if [ -x "$(command -v $_HMCL_JAVA_EXE_NAME)" ]; then
   exec $_HMCL_JAVA_EXE_NAME $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
+fi
+
+if [ "$_HMCL_OS" == "freebsd" ] && [ -x "$(command -v javavm)" ]; then
+  exec javavm $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
 fi
 
 # Java not found
