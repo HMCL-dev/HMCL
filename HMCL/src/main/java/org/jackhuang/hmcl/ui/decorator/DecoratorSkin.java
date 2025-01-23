@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.svg.SVGGlyph;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
-import javafx.css.PseudoClass;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,11 +27,10 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -44,20 +41,14 @@ import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
-import org.jackhuang.hmcl.util.Lang;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
-    private static final PseudoClass TRANSPARENT = PseudoClass.getPseudoClass("transparent");
-    private static final SVGGlyph minus = Lang.apply(new SVGGlyph(0, "MINUS", "M804.571 420.571v109.714q0 22.857-16 38.857t-38.857 16h-694.857q-22.857 0-38.857-16t-16-38.857v-109.714q0-22.857 16-38.857t38.857-16h694.857q22.857 0 38.857 16t16 38.857z", Color.WHITE),
-        glyph -> { glyph.setSize(12, 2); glyph.setTranslateY(4); });
-
     private final StackPane root, parent;
     private final StackPane titleContainer;
     private final Stage primaryStage;
     private final TransitionPane navBarPane;
 
-    private double xOffset, yOffset, newX, newY, initX, initY;
-    private boolean titleBarTransparent = true;
+    private double mouseInitX, mouseInitY, stageInitX, stageInitY, stageInitWidth, stageInitHeight;
 
     /**
      * Constructor for all SkinBase instances.
@@ -69,14 +60,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         primaryStage = control.getPrimaryStage();
 
-        minus.fillProperty().bind(Theme.foregroundFillBinding());
-
         Decorator skinnable = getSkinnable();
         root = new StackPane();
         root.getStyleClass().add("window");
 
         StackPane shadowContainer = new StackPane();
         shadowContainer.getStyleClass().add("body");
+        shadowContainer.setEffect(new DropShadow(BlurType.ONE_PASS_BOX, Color.rgb(0, 0, 0, 0.4), 10, 0.3, 0.0, 0.0));
 
         parent = new StackPane();
         Rectangle clip = new Rectangle();
@@ -174,11 +164,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 if (s.isAnimate()) {
                     AnimationProducer animation;
                     if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.NEXT) {
-                        animation = ContainerAnimations.SWIPE_LEFT_FADE_SHORT.getAnimationProducer();
+                        animation = ContainerAnimations.SWIPE_LEFT_FADE_SHORT;
                     } else if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.PREVIOUS) {
-                        animation = ContainerAnimations.SWIPE_RIGHT_FADE_SHORT.getAnimationProducer();
+                        animation = ContainerAnimations.SWIPE_RIGHT_FADE_SHORT;
                     } else {
-                        animation = ContainerAnimations.FADE.getAnimationProducer();
+                        animation = ContainerAnimations.FADE;
                     }
                     skinnable.setNavigationDirection(Navigation.NavigationDirection.START);
                     navBarPane.setContent(node, animation);
@@ -202,9 +192,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnHelp.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
 
                 JFXButton btnMin = new JFXButton();
-                StackPane pane = new StackPane(minus);
-                pane.setAlignment(Pos.CENTER);
-                btnMin.setGraphic(pane);
+                btnMin.setGraphic(SVG.MINUS.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
@@ -310,13 +298,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         return navBar;
     }
 
-    private void updateInitMouseValues(MouseEvent mouseEvent) {
-        initX = mouseEvent.getScreenX();
-        initY = mouseEvent.getScreenY();
-        xOffset = mouseEvent.getSceneX();
-        yOffset = mouseEvent.getSceneY();
-    }
-
     private boolean isRightEdge(double x, double y, Bounds boundsInParent) {
         return x < root.getWidth() && x >= root.getWidth() - root.snappedLeftInset();
     }
@@ -333,146 +314,139 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         return x >= 0 && x <= root.snappedLeftInset();
     }
 
-    private boolean setStageWidth(double width) {
-        if (width >= primaryStage.getMinWidth() && width >= titleContainer.getMinWidth()) {
-            primaryStage.setWidth(width);
-            initX = newX;
-            return true;
-        } else {
-            if (width >= primaryStage.getMinWidth() && width <= titleContainer.getMinWidth())
-                primaryStage.setWidth(titleContainer.getMinWidth());
+    private void resizeStage(double newWidth, double newHeight) {
+        if (newWidth < 0)
+            newWidth = primaryStage.getWidth();
+        if (newWidth < primaryStage.getMinWidth())
+            newWidth = primaryStage.getMinWidth();
+        if (newWidth < titleContainer.getMinWidth())
+            newWidth = titleContainer.getMinWidth();
 
-            return false;
-        }
+        if (newHeight < 0)
+            newHeight = primaryStage.getHeight();
+        if (newHeight < primaryStage.getMinHeight())
+            newHeight = primaryStage.getMinHeight();
+        if (newHeight < titleContainer.getMinHeight())
+            newHeight = titleContainer.getMinHeight();
+
+        // Width and height must be set simultaneously to avoid JDK-8344372 (https://github.com/openjdk/jfx/pull/1654)
+        primaryStage.setWidth(newWidth);
+        primaryStage.setHeight(newHeight);
     }
 
-    private boolean setStageHeight(double height) {
-        if (height >= primaryStage.getMinHeight() && height >= titleContainer.getHeight()) {
-            primaryStage.setHeight(height);
-            initY = newY;
-            return true;
-        } else {
-            if (height >= primaryStage.getMinHeight() && height <= titleContainer.getHeight())
-                primaryStage.setHeight(titleContainer.getHeight());
-
-            return false;
-        }
-    }
-
-    // ====
-
-    protected void onMouseMoved(MouseEvent mouseEvent) {
-        if (!primaryStage.isFullScreen()) {
-            updateInitMouseValues(mouseEvent);
-            if (primaryStage.isResizable()) {
-                double x = mouseEvent.getX(), y = mouseEvent.getY();
-                Bounds boundsInParent = root.getBoundsInParent();
-                double diagonalSize = root.snappedLeftInset() + 10;
-                if (this.isRightEdge(x, y, boundsInParent)) {
-                    if (y < diagonalSize) {
-                        root.setCursor(Cursor.NE_RESIZE);
-                    } else if (y > root.getHeight() - diagonalSize) {
-                        root.setCursor(Cursor.SE_RESIZE);
-                    } else {
-                        root.setCursor(Cursor.E_RESIZE);
-                    }
-                } else if (this.isLeftEdge(x, y, boundsInParent)) {
-                    if (y < diagonalSize) {
-                        root.setCursor(Cursor.NW_RESIZE);
-                    } else if (y > root.getHeight() - diagonalSize) {
-                        root.setCursor(Cursor.SW_RESIZE);
-                    } else {
-                        root.setCursor(Cursor.W_RESIZE);
-                    }
-                } else if (this.isTopEdge(x, y, boundsInParent)) {
-                    if (x < diagonalSize) {
-                        root.setCursor(Cursor.NW_RESIZE);
-                    } else if (x > root.getWidth() - diagonalSize) {
-                        root.setCursor(Cursor.NE_RESIZE);
-                    } else {
-                        root.setCursor(Cursor.N_RESIZE);
-                    }
-                } else if (this.isBottomEdge(x, y, boundsInParent)) {
-                    if (x < diagonalSize) {
-                        root.setCursor(Cursor.SW_RESIZE);
-                    } else if (x > root.getWidth() - diagonalSize) {
-                        root.setCursor(Cursor.SE_RESIZE);
-                    } else {
-                        root.setCursor(Cursor.S_RESIZE);
-                    }
+    private void onMouseMoved(MouseEvent mouseEvent) {
+        if (!primaryStage.isFullScreen() && primaryStage.isResizable()) {
+            double x = mouseEvent.getX(), y = mouseEvent.getY();
+            Bounds boundsInParent = root.getBoundsInParent();
+            double diagonalSize = root.snappedLeftInset() + 10;
+            if (this.isRightEdge(x, y, boundsInParent)) {
+                if (y < diagonalSize) {
+                    root.setCursor(Cursor.NE_RESIZE);
+                } else if (y > root.getHeight() - diagonalSize) {
+                    root.setCursor(Cursor.SE_RESIZE);
                 } else {
-                    root.setCursor(Cursor.DEFAULT);
+                    root.setCursor(Cursor.E_RESIZE);
                 }
+            } else if (this.isLeftEdge(x, y, boundsInParent)) {
+                if (y < diagonalSize) {
+                    root.setCursor(Cursor.NW_RESIZE);
+                } else if (y > root.getHeight() - diagonalSize) {
+                    root.setCursor(Cursor.SW_RESIZE);
+                } else {
+                    root.setCursor(Cursor.W_RESIZE);
+                }
+            } else if (this.isTopEdge(x, y, boundsInParent)) {
+                if (x < diagonalSize) {
+                    root.setCursor(Cursor.NW_RESIZE);
+                } else if (x > root.getWidth() - diagonalSize) {
+                    root.setCursor(Cursor.NE_RESIZE);
+                } else {
+                    root.setCursor(Cursor.N_RESIZE);
+                }
+            } else if (this.isBottomEdge(x, y, boundsInParent)) {
+                if (x < diagonalSize) {
+                    root.setCursor(Cursor.SW_RESIZE);
+                } else if (x > root.getWidth() - diagonalSize) {
+                    root.setCursor(Cursor.SE_RESIZE);
+                } else {
+                    root.setCursor(Cursor.S_RESIZE);
+                }
+            } else {
+                root.setCursor(Cursor.DEFAULT);
             }
         } else {
             root.setCursor(Cursor.DEFAULT);
         }
     }
 
-    protected void onMouseReleased(MouseEvent mouseEvent) {
+    private void onMouseReleased(MouseEvent mouseEvent) {
         getSkinnable().setDragging(false);
     }
 
-    protected void onMouseDragged(MouseEvent mouseEvent) {
-        getSkinnable().setDragging(true);
-        if (mouseEvent.isPrimaryButtonDown() && (this.xOffset != -1.0 || this.yOffset != -1.0)) {
-            if (!this.primaryStage.isFullScreen() && !mouseEvent.isStillSincePress()) {
-                this.newX = mouseEvent.getScreenX();
-                this.newY = mouseEvent.getScreenY();
-                double deltaX = this.newX - this.initX;
-                double deltaY = this.newY - this.initY;
-                Cursor cursor = root.getCursor();
-                if (Cursor.E_RESIZE == cursor) {
-                    this.setStageWidth(this.primaryStage.getWidth() + deltaX);
-                    mouseEvent.consume();
-                } else if (Cursor.NE_RESIZE == cursor) {
-                    if (this.setStageHeight(this.primaryStage.getHeight() - deltaY)) {
-                        this.primaryStage.setY(this.primaryStage.getY() + deltaY);
-                    }
+    private void onMouseDragged(MouseEvent mouseEvent) {
+        if (!getSkinnable().isDragging()) {
+            getSkinnable().setDragging(true);
+            mouseInitX = mouseEvent.getScreenX();
+            mouseInitY = mouseEvent.getScreenY();
+            stageInitX = primaryStage.getX();
+            stageInitY = primaryStage.getY();
+            stageInitWidth = primaryStage.getWidth();
+            stageInitHeight = primaryStage.getHeight();
+        }
 
-                    this.setStageWidth(this.primaryStage.getWidth() + deltaX);
-                    mouseEvent.consume();
-                } else if (Cursor.SE_RESIZE == cursor) {
-                    this.setStageWidth(this.primaryStage.getWidth() + deltaX);
-                    this.setStageHeight(this.primaryStage.getHeight() + deltaY);
-                    mouseEvent.consume();
-                } else if (Cursor.S_RESIZE == cursor) {
-                    this.setStageHeight(this.primaryStage.getHeight() + deltaY);
-                    mouseEvent.consume();
-                } else if (Cursor.W_RESIZE == cursor) {
-                    if (this.setStageWidth(this.primaryStage.getWidth() - deltaX)) {
-                        this.primaryStage.setX(this.primaryStage.getX() + deltaX);
-                    }
+        if (primaryStage.isFullScreen() || !mouseEvent.isPrimaryButtonDown() || mouseEvent.isStillSincePress())
+            return;
 
-                    mouseEvent.consume();
-                } else if (Cursor.SW_RESIZE == cursor) {
-                    if (this.setStageWidth(this.primaryStage.getWidth() - deltaX)) {
-                        this.primaryStage.setX(this.primaryStage.getX() + deltaX);
-                    }
+        double dx = mouseEvent.getScreenX() - mouseInitX;
+        double dy = mouseEvent.getScreenY() - mouseInitY;
 
-                    this.setStageHeight(this.primaryStage.getHeight() + deltaY);
-                    mouseEvent.consume();
-                } else if (Cursor.NW_RESIZE == cursor) {
-                    if (this.setStageWidth(this.primaryStage.getWidth() - deltaX)) {
-                        this.primaryStage.setX(this.primaryStage.getX() + deltaX);
-                    }
+        Cursor cursor = root.getCursor();
+        if (getSkinnable().isAllowMove()) {
+            if (cursor == Cursor.DEFAULT) {
+                primaryStage.setX(stageInitX + dx);
+                primaryStage.setY(stageInitY + dy);
+                mouseEvent.consume();
+            }
+        }
 
-                    if (this.setStageHeight(this.primaryStage.getHeight() - deltaY)) {
-                        this.primaryStage.setY(this.primaryStage.getY() + deltaY);
-                    }
+        if (getSkinnable().isResizable()) {
+            if (cursor == Cursor.E_RESIZE) {
+                resizeStage(stageInitWidth + dx, -1);
+                mouseEvent.consume();
 
-                    mouseEvent.consume();
-                } else if (Cursor.N_RESIZE == cursor) {
-                    if (this.setStageHeight(this.primaryStage.getHeight() - deltaY)) {
-                        this.primaryStage.setY(this.primaryStage.getY() + deltaY);
-                    }
+            } else if (cursor == Cursor.S_RESIZE) {
+                resizeStage(-1, stageInitHeight + dy);
+                mouseEvent.consume();
 
-                    mouseEvent.consume();
-                } else if (getSkinnable().isAllowMove()) {
-                    this.primaryStage.setX(mouseEvent.getScreenX() - this.xOffset);
-                    this.primaryStage.setY(mouseEvent.getScreenY() - this.yOffset);
-                    mouseEvent.consume();
-                }
+            } else if (cursor == Cursor.W_RESIZE) {
+                resizeStage(stageInitWidth - dx, -1);
+                primaryStage.setX(stageInitX + stageInitWidth - primaryStage.getWidth());
+                mouseEvent.consume();
+
+            } else if (cursor == Cursor.N_RESIZE) {
+                resizeStage(-1, stageInitHeight - dy);
+                primaryStage.setY(stageInitY + stageInitHeight - primaryStage.getHeight());
+                mouseEvent.consume();
+
+            } else if (cursor == Cursor.SE_RESIZE) {
+                resizeStage(stageInitWidth + dx, stageInitHeight + dy);
+                mouseEvent.consume();
+
+            } else if (cursor == Cursor.SW_RESIZE) {
+                resizeStage(stageInitWidth - dx, stageInitHeight + dy);
+                primaryStage.setX(stageInitX + stageInitWidth - primaryStage.getWidth());
+                mouseEvent.consume();
+
+            } else if (cursor == Cursor.NW_RESIZE) {
+                resizeStage(stageInitWidth - dx, stageInitHeight - dy);
+                primaryStage.setX(stageInitX + stageInitWidth - primaryStage.getWidth());
+                primaryStage.setY(stageInitY + stageInitHeight - primaryStage.getHeight());
+                mouseEvent.consume();
+
+            } else if (cursor == Cursor.NE_RESIZE) {
+                resizeStage(stageInitWidth + dx, stageInitHeight - dy);
+                primaryStage.setY(stageInitY + stageInitHeight - primaryStage.getHeight());
+                mouseEvent.consume();
             }
         }
     }

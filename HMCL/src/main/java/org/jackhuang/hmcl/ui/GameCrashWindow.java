@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -43,6 +41,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.Pair;
@@ -66,7 +65,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -77,8 +75,6 @@ public class GameCrashWindow extends Stage {
     private final String total_memory;
     private final String java;
     private final LibraryAnalyzer analyzer;
-    private final StringProperty os = new SimpleStringProperty(OperatingSystem.SYSTEM_NAME);
-    private final StringProperty arch = new SimpleStringProperty(Architecture.SYSTEM_ARCH.getDisplayName());
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
@@ -89,9 +85,9 @@ public class GameCrashWindow extends Stage {
     private final LaunchOptions launchOptions;
     private final View view;
 
-    private final Collection<Pair<String, Log4jLevel>> logs;
+    private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, Collection<Pair<String, Log4jLevel>> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Log> logs) {
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.repository = repository;
@@ -124,7 +120,7 @@ public class GameCrashWindow extends Stage {
     private void analyzeCrashReport() {
         loading.set(true);
         Task.allOf(Task.supplyAsync(() -> {
-            String rawLog = logs.stream().map(Pair::getKey).collect(Collectors.joining("\n"));
+            String rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
 
             // Get the crash-report from the crash-reports/xxx, or the output of console.
             String crashReport = null;
@@ -264,20 +260,18 @@ public class GameCrashWindow extends Stage {
     private void showLogWindow() {
         LogWindow logWindow = new LogWindow(managedProcess);
 
-        logWindow.logLine(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO);
+        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO));
         if (managedProcess.getClasspath() != null)
-            logWindow.logLine("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO);
-        for (Map.Entry<String, Log4jLevel> entry : logs)
-            logWindow.logLine(entry.getKey(), entry.getValue());
-
-        logWindow.showNormal();
+            logWindow.logLine(new Log("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO));
+        logWindow.logLines(logs);
+        logWindow.show();
     }
 
     private void exportGameCrashInfo() {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
         CompletableFuture.supplyAsync(() ->
-                        logs.stream().map(Pair::getKey).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
+                        logs.stream().map(Log::getLog).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
                 .thenComposeAsync(logs ->
                         LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
                 .handleAsync((result, exception) -> {
@@ -358,12 +352,12 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem os = new TwoLineListItem();
                 os.getStyleClass().setAll("two-line-item-second-large");
                 os.setTitle(i18n("system.operating_system"));
-                os.subtitleProperty().bind(GameCrashWindow.this.os);
+                os.setSubtitle(Lang.requireNonNullElse(OperatingSystem.OS_RELEASE_NAME, OperatingSystem.SYSTEM_NAME));
 
                 TwoLineListItem arch = new TwoLineListItem();
                 arch.getStyleClass().setAll("two-line-item-second-large");
                 arch.setTitle(i18n("system.architecture"));
-                arch.subtitleProperty().bind(GameCrashWindow.this.arch);
+                arch.setSubtitle(Architecture.SYSTEM_ARCH.getDisplayName());
 
                 infoPane.getChildren().setAll(launcher, version, total_memory, memory, java, os, arch);
             }
@@ -392,13 +386,13 @@ public class GameCrashWindow extends Stage {
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
                 gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
-                runInFX(() -> FXUtils.installFastTooltip(gameDir, i18n("game.directory")));
+                FXUtils.installFastTooltip(gameDir, i18n("game.directory"));
 
                 TwoLineListItem javaDir = new TwoLineListItem();
                 javaDir.getStyleClass().setAll("two-line-item-second-large");
                 javaDir.setTitle(i18n("settings.game.java_directory"));
                 javaDir.setSubtitle(launchOptions.getJava().getBinary().toAbsolutePath().toString());
-                runInFX(() -> FXUtils.installFastTooltip(javaDir, i18n("settings.game.java_directory")));
+                FXUtils.installFastTooltip(javaDir, i18n("settings.game.java_directory"));
 
                 Label reasonTitle = new Label(i18n("game.crash.reason"));
                 reasonTitle.getStyleClass().add("two-line-item-second-large-title");
@@ -422,14 +416,14 @@ public class GameCrashWindow extends Stage {
             HBox toolBar = new HBox();
             {
                 JFXButton exportGameCrashInfoButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
-                exportGameCrashInfoButton.setOnMouseClicked(e -> exportGameCrashInfo());
+                exportGameCrashInfoButton.setOnAction(e -> exportGameCrashInfo());
 
                 JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
-                logButton.setOnMouseClicked(e -> showLogWindow());
+                logButton.setOnAction(e -> showLogWindow());
 
                 JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
                 helpButton.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
-                runInFX(() -> FXUtils.installFastTooltip(helpButton, i18n("logwindow.help")));
+                FXUtils.installFastTooltip(helpButton, i18n("logwindow.help"));
 
 
                 toolBar.setPadding(new Insets(8));

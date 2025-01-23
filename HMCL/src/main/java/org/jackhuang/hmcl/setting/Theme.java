@@ -24,9 +24,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,11 +35,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -57,34 +55,6 @@ public class Theme {
             Color.web("#9C27B0"), // purple
             Color.web("#B71C1C")  // red
     };
-
-    private static Charset cssCharset;
-
-    private static Charset getCssCharset() {
-        if (cssCharset != null)
-            return cssCharset;
-
-        Charset defaultCharset = Charset.defaultCharset();
-        if (defaultCharset != StandardCharsets.UTF_8) {
-            // https://bugs.openjdk.org/browse/JDK-8279328
-            // For JavaFX 17 or earlier, native encoding should be used
-            String jfxVersion = System.getProperty("javafx.version");
-            if (jfxVersion != null) {
-                Matcher matcher = Pattern.compile("^(?<version>[0-9]+)").matcher(jfxVersion);
-                if (matcher.find()) {
-                    int v = Lang.parseInt(matcher.group(), -1);
-                    if (v >= 18) {
-                        cssCharset = StandardCharsets.UTF_8;
-                    }
-                }
-            }
-        }
-
-        if (cssCharset == null)
-            cssCharset = defaultCharset;
-
-        return cssCharset;
-    }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private static Optional<Font> font;
@@ -145,6 +115,14 @@ public class Theme {
         return isLight() ? Color.BLACK : Color.WHITE;
     }
 
+    private static String rgba(Color color, double opacity) {
+        return String.format("rgba(%d, %d, %d, %.1f)",
+                (int) Math.ceil(color.getRed() * 256),
+                (int) Math.ceil(color.getGreen() * 256),
+                (int) Math.ceil(color.getBlue() * 256),
+                opacity);
+    }
+
     public String[] getStylesheets(String overrideFontFamily) {
         String css = "/assets/css/blue.css";
 
@@ -163,30 +141,44 @@ public class Theme {
 
         if (fontFamily != null || !this.color.equalsIgnoreCase(BLUE.color)) {
             Color textFill = getForegroundColor();
-            String fontCss = "";
-            if (fontFamily != null) {
-                fontCss = "-fx-font-family: \"" + fontFamily + "\";";
-                if (fontStyle != null && !fontStyle.isEmpty())
-                    fontCss += " -fx-font-style: \"" + fontStyle + "\";";
-            }
 
-            try {
-                File temp = File.createTempFile("hmcl", ".css");
-                String themeText = IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
-                        .replace("%base-color%", color)
-                        .replace("%base-red%", Integer.toString((int) Math.ceil(paint.getRed() * 256)))
-                        .replace("%base-green%", Integer.toString((int) Math.ceil(paint.getGreen() * 256)))
-                        .replace("%base-blue%", Integer.toString((int) Math.ceil(paint.getBlue() * 256)))
-                        .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
-                        .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
-                        .replace("%font-color%", getColorDisplayName(getForegroundColor()))
-                        .replace("%font%", fontCss);
-                FileUtils.writeText(temp, themeText, getCssCharset());
-                temp.deleteOnExit();
-                css = temp.toURI().toString();
-            } catch (IOException | NullPointerException e) {
-                LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
-            }
+            StringBuilder themeBuilder = new StringBuilder(512);
+            themeBuilder.append(".root {")
+                    .append("-fx-base-color:").append(color).append(';')
+                    .append("-fx-base-darker-color: derive(-fx-base-color, -10%);")
+                    .append("-fx-base-check-color: derive(-fx-base-color, 30%);")
+                    .append("-fx-rippler-color:").append(rgba(paint, 0.3)).append(';')
+                    .append("-fx-base-rippler-color: derive(").append(rgba(paint, 0.3)).append(", 100%);")
+                    .append("-fx-base-disabled-text-fill:").append(rgba(textFill, 0.7)).append(";")
+                    .append("-fx-base-text-fill:").append(getColorDisplayName(getForegroundColor())).append(";")
+                    .append("-theme-thumb:").append(rgba(paint, 0.7)).append(";");
+
+            if (fontFamily == null)
+                // https://github.com/HMCL-dev/HMCL/pull/3423
+                themeBuilder.append("-fx-font-family: -fx-base-font-family;");
+            else
+                themeBuilder.append("-fx-font-family:\"").append(fontFamily).append("\";");
+
+            if (fontStyle != null && !fontStyle.isEmpty())
+                themeBuilder.append("-fx-font-style:\"").append(fontStyle).append("\";");
+
+            themeBuilder.append('}');
+
+            if (FXUtils.JAVAFX_MAJOR_VERSION >= 17)
+                // JavaFX 17+ support loading stylesheets from data URIs
+                // https://bugs.openjdk.org/browse/JDK-8267554
+                css = "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(themeBuilder.toString().getBytes(StandardCharsets.UTF_8));
+            else
+                try {
+                    File temp = File.createTempFile("hmcl", ".css");
+                    // For JavaFX 17 or earlier, CssParser uses the default charset
+                    // https://bugs.openjdk.org/browse/JDK-8279328
+                    FileUtils.writeText(temp, themeBuilder.toString(), Charset.defaultCharset());
+                    temp.deleteOnExit();
+                    css = temp.toURI().toString();
+                } catch (IOException | NullPointerException e) {
+                    LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
+                }
         }
 
         return new String[]{css, "/assets/css/root.css"};
@@ -235,7 +227,7 @@ public class Theme {
     }
 
     public static String getColorDisplayName(Color c) {
-        return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase(Locale.ROOT) : null;
+        return c != null ? String.format("#%02X%02X%02X", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)) : null;
     }
 
     private static ObjectBinding<Color> FOREGROUND_FILL;

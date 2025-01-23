@@ -133,7 +133,7 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Xms", options.getMinMemory() + "m");
 
         if (options.getMetaspace() != null && options.getMetaspace() > 0)
-            if (options.getJava().getParsedVersion() < JavaVersion.JAVA_8)
+            if (options.getJava().getParsedVersion() < 8)
                 res.addDefault("-XX:PermSize=", options.getMetaspace() + "m");
             else
                 res.addDefault("-XX:MetaspaceSize=", options.getMetaspace() + "m");
@@ -186,7 +186,7 @@ public class DefaultLauncher extends Launcher {
                 res.addDefault("-Duser.home=", options.getGameDir().getParent());
 
             // Using G1GC with its settings by default
-            if (options.getJava().getParsedVersion() >= JavaVersion.JAVA_8
+            if (options.getJava().getParsedVersion() >= 8
                     && res.noneMatch(arg -> "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")))) {
                 res.addUnstableDefault("UnlockExperimentalVMOptions", true);
                 res.addUnstableDefault("UseG1GC", true);
@@ -206,7 +206,7 @@ public class DefaultLauncher extends Launcher {
                 res.addDefault("-Xss", "1m");
             }
 
-            if (options.getJava().getParsedVersion() == JavaVersion.JAVA_16)
+            if (options.getJava().getParsedVersion() == 16)
                 res.addDefault("--illegal-access=", "permit");
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
@@ -308,7 +308,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
-            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= JavaVersion.JAVA_9)
+            pair("-Xincgc", () -> options.getJava().getParsedVersion() >= 9)
     );
 
     protected Map<String, Supplier<Boolean>> getForbiddens() {
@@ -496,6 +496,13 @@ public class DefaultLauncher extends Launcher {
                         break;
                     case ZINK:
                         env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
+                        /**
+                         * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
+                         * Disable DRI3 to workaround this issue.
+                         *
+                         * Link: https://gitlab.freedesktop.org/mesa/mesa/-/issues/10093
+                         */
+                        env.put("LIBGL_KOPPER_DRI2", "1");
                         break;
                 }
             }

@@ -33,6 +33,8 @@ case "$(uname -m)" in
     _HMCL_ARCH="arm64";;
   arm|arm32|aarch32|armv7*)
     _HMCL_ARCH="arm32";;
+  riscv64)
+    _HMCL_ARCH="riscv64";;
   loongarch64)
     _HMCL_ARCH="loongarch64";;
   *)
@@ -121,7 +123,7 @@ else
 fi
 
 case "$_HMCL_OS-$_HMCL_ARCH" in
-  windows-x86|windows-x86_64|windows-arm64|linux-x86|linux-x86_64|linux-arm32|linux-arm64|linux-loongarch64|macos-x86_64|macos-arm64)
+  windows-x86|windows-x86_64|windows-arm64|linux-x86|linux-x86_64|linux-arm32|linux-arm64|linux-riscv64|linux-loongarch64|macos-x86_64|macos-arm64)
     _HMCL_JAVA_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_ARCH.html"
     ;;
 esac

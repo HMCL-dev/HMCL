@@ -30,11 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -199,7 +195,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -212,7 +208,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -590,5 +586,9 @@ public final class FileUtils {
         }
 
         Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static String printFileStructure(Path path, int maxDepth) throws IOException {
+        return DirectoryStructurePrinter.list(path, maxDepth);
     }
 }
