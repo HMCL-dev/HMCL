@@ -58,15 +58,42 @@ else
   _HMCL_VM_OPTIONS="-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"
 fi
 
+function show_warning_console() {
+    echo -e "\033[1;31m$1\033[0m" >&2
+}
+
+function show_warning_dialog() {
+  if [ -n "$3" ]; then
+    if [ -n "$(command -v xdg-open)" ]; then
+      if [ -n "$(command -v zenity)" ]; then
+        zenity --question --title="$1" --text="$2" && xdg-open "$3"
+      elif [ -n "$(command -v kdialog)" ]; then
+        kdialog --title "$1" --warningyesno "$2" && xdg-open "$3"
+      fi
+    fi
+  else
+    if [ -n "$(command -v zenity)" ]; then
+      zenity --info --title="$1" --text="$2"
+    elif [ -n "$(command -v kdialog)" ]; then
+      kdialog --title "$1" --msgbox "$2"
+    fi
+  fi
+}
+
+function show_warning() {
+    show_warning_console "$1: $2"
+    show_warning_dialog "$1" "$2"
+}
+
 # First, find Java in HMCL_JAVA_HOME
 if [ -n "${HMCL_JAVA_HOME+x}" ]; then
   if [ -x "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" ]; then
     exec "$HMCL_JAVA_HOME/bin/$_HMCL_JAVA_EXE_NAME" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
   else
     if [ "$_HMCL_USE_CHINESE" == true ]; then
-      show_message "错误" "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
+      show_warning "错误" "环境变量 HMCL_JAVA_HOME 的值无效，请设置为合法的 Java 路径。\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
     else
-      show_message "Error" "The value of the environment variable HMCL_JAVA_HOME is invalid, please set it to a valid Java path.\nYou can visit the https://docs.hmcl.net/help.html page for help."
+      show_warning "Error" "The value of the environment variable HMCL_JAVA_HOME is invalid, please set it to a valid Java path.\nYou can visit the https://docs.hmcl.net/help.html page for help."
     fi
     exit 1
   fi
@@ -129,36 +156,21 @@ case "$_HMCL_OS-$_HMCL_ARCH" in
 esac
 
 if [ "$_HMCL_USE_CHINESE" == true ]; then
-  _HMCL_WARNING_TITLE="错误"
-  _HMCL_WARNING_MESSAGE_BASE="运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。"
-  _HMCL_WARNING_MESSAGE1="$_HMCL_WARNING_MESSAGE_BASE\n你可以前往此处下载:\n$_HMCL_JAVA_DOWNLOAD_PAGE"
-  _HMCL_WARNING_MESSAGE2="$_HMCL_WARNING_MESSAGE_BASE\n\n是否要前往 Java 下载页面？"
-  _HMCL_WARNING_MESSAGE3="$_HMCL_WARNING_MESSAGE_BASE\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
-else
-  _HMCL_WARNING_TITLE="Error"
-  _HMCL_WARNING_MESSAGE_BASE="The Java runtime environment is required to run HMCL.\nPlease install Java and set the environment variables and try again."
-  _HMCL_WARNING_MESSAGE1="$_HMCL_WARNING_MESSAGE_BASE\nYou can download it from here:\n$_HMCL_JAVA_DOWNLOAD_PAGE"
-  _HMCL_WARNING_MESSAGE2="$_HMCL_WARNING_MESSAGE_BASE\n\nDo you want to go to the Java download page?"
-  _HMCL_WARNING_MESSAGE3="$_HMCL_WARNING_MESSAGE_BASE\nYou can visit the https://docs.hmcl.net/help.html page for help."
-fi
+  _HMCL_WARNING_MESSAGE="运行 HMCL 需要 Java 运行时环境，请安装 Java 并设置环境变量后重试。"
 
-if [ -n "$_HMCL_JAVA_DOWNLOAD_PAGE" ]; then
-  echo -e "$_HMCL_WARNING_TITLE: $_HMCL_WARNING_MESSAGE1"
-
-  if [ -n "$(command -v xdg-open)" ]; then
-    if [ -n "$(command -v zenity)" ]; then
-      zenity --question --title="$_HMCL_WARNING_TITLE" --text="$_HMCL_WARNING_MESSAGE2"
-    elif [ -n "$(command -v kdialog)" ]; then
-      kdialog --title "$_HMCL_WARNING_TITLE" --warningyesno "$_HMCL_WARNING_MESSAGE2"
-    fi
-    xdg-open "$_HMCL_JAVA_DOWNLOAD_PAGE"
+  if [ -n "$_HMCL_JAVA_DOWNLOAD_PAGE" ]; then
+    show_warning_console "错误: $_HMCL_WARNING_MESSAGE\n你可以前往此处下载:\n$_HMCL_JAVA_DOWNLOAD_PAGE"
+    show_warning_dialog  "错误" "$_HMCL_WARNING_MESSAGE\n\n是否要前往 Java 下载页面？" "$_HMCL_JAVA_DOWNLOAD_PAGE"
+  else
+    show_warning "错误" "$_HMCL_WARNING_MESSAGE\n你可以访问 https://docs.hmcl.net/help.html 页面寻求帮助。"
   fi
 else
-  echo -e "$_HMCL_WARNING_TITLE: $_HMCL_WARNING_MESSAGE3"
-  if [ -n "$(command -v zenity)" ]; then
-    zenity --info --title="$_HMCL_WARNING_TITLE" --text="$_HMCL_WARNING_MESSAGE3"
-  elif [ -n "$(command -v kdialog)" ]; then
-    kdialog --title "$_HMCL_WARNING_TITLE" --msgbox "$_HMCL_WARNING_MESSAGE3"
+  _HMCL_WARNING_MESSAGE="The Java runtime environment is required to run HMCL.\nPlease install Java and set the environment variables and try again."
+  if [ -n "$_HMCL_JAVA_DOWNLOAD_PAGE" ]; then
+    show_warning_console "Error: $_HMCL_WARNING_MESSAGE\nYou can download it from here:\n$_HMCL_JAVA_DOWNLOAD_PAGE"
+    show_warning_dialog  "Error" "$_HMCL_WARNING_MESSAGE\n\nDo you want to go to the Java download page?" "$_HMCL_JAVA_DOWNLOAD_PAGE"
+  else
+    show_warning "Error" "$_HMCL_WARNING_MESSAGE\nYou can visit the https://docs.hmcl.net/help.html page for help."
   fi
 fi
 
