@@ -177,7 +177,13 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                     for (Path patchJson : directoryStream) {
                         if (patchJson.toString().endsWith(".json")) {
                             // If json is malformed, we should stop installing this modpack instead of skipping it.
-                            MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(FileUtils.readText(patchJson), MultiMCInstancePatch.class);
+                            MultiMCInstancePatch multiMCPatch;
+
+                            try {
+                                multiMCPatch = JsonUtils.GSON.fromJson(FileUtils.readText(patchJson), MultiMCInstancePatch.class);
+                            } catch (JsonParseException e) {
+                                throw new IllegalArgumentException("Cannot parse MultiMC patch json: " + patchJson);
+                            }
 
                             List<String> arguments = new ArrayList<>();
                             for (String arg : multiMCPatch.getTweakers()) {
