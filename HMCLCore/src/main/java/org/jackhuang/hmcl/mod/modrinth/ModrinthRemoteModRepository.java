@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
@@ -93,8 +94,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                 pair("index", convertSortType(sort))
         );
         Response<ProjectSearchResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/v2/search", query))
-                .getJson(new TypeToken<Response<ProjectSearchResult>>() {
-                }.getType());
+                .getJson(Response.typeOf(ProjectSearchResult.class));
         return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
     }
 
@@ -132,13 +132,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
         id = StringUtils.removePrefix(id, "local-");
         List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
-                .getJson(new TypeToken<List<ProjectVersion>>() {
-                }.getType());
+                .getJson(listTypeOf(ProjectVersion.class));
         return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
     }
 
     public List<Category> getCategoriesImpl() throws IOException {
-        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<Category>>() {}.getType());
+        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
         return categories.stream().filter(category -> category.getProjectType().equals(projectType)).collect(Collectors.toList());
     }
 
@@ -696,6 +695,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     public static class Response<T> {
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(Class<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType);
+        }
+
         private final int offset;
 
         private final int limit;

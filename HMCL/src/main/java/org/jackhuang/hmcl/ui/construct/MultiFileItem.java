@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.property.*;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -114,6 +113,7 @@ public final class MultiFileItem<T> extends VBox {
     public static class Option<T> {
         protected final String title;
         protected String subtitle;
+        protected String tooltip;
         protected final T data;
         protected final BooleanProperty selected = new SimpleBooleanProperty();
         protected final JFXRadioButton left = new JFXRadioButton();
@@ -140,6 +140,11 @@ public final class MultiFileItem<T> extends VBox {
             return this;
         }
 
+        public Option<T> setTooltip(String tooltip) {
+            this.tooltip = tooltip;
+            return this;
+        }
+
         public boolean isSelected() {
             return left.isSelected();
         }
@@ -161,6 +166,8 @@ public final class MultiFileItem<T> extends VBox {
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             left.setToggleGroup(group);
             left.setUserData(data);
+            if (StringUtils.isNotBlank(tooltip))
+                FXUtils.installFastTooltip(left, tooltip);
             pane.setLeft(left);
 
             if (StringUtils.isNotBlank(subtitle)) {
@@ -268,8 +275,9 @@ public final class MultiFileItem<T> extends VBox {
             return this;
         }
 
-        public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
-            return selector.getExtensionFilters();
+        public FileOption<T> addExtensionFilter(FileChooser.ExtensionFilter filter) {
+            selector.getExtensionFilters().add(filter);
+            return this;
         }
 
         @Override

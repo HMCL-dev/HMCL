@@ -36,10 +36,14 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -60,9 +64,10 @@ import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.platform.Platform.*;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM;
+import static org.jackhuang.hmcl.util.platform.Platform.isCompatibleWithX86Java;
 
 public final class LauncherHelper {
 
@@ -178,6 +183,9 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
+
+                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModManager(selectedVersion).getModsDirectory(), 10));
+
                     return new HMCLGameLauncher(
                             repository,
                             version.get(),
@@ -244,9 +252,9 @@ public final class LauncherHelper {
                                 } else if (ex instanceof PermissionException) {
                                     message = i18n("launch.failed.executable_permission");
                                 } else if (ex instanceof ProcessCreationException) {
-                                    message = i18n("launch.failed.creating_process") + ex.getLocalizedMessage();
+                                    message = i18n("launch.failed.creating_process") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof NotDecompressingNativesException) {
-                                    message = i18n("launch.failed.decompressing_natives") + ex.getLocalizedMessage();
+                                    message = i18n("launch.failed.decompressing_natives") + "\n" + ex.getLocalizedMessage();
                                 } else if (ex instanceof LibraryDownloadException) {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().getName()) + "\n";
                                     if (ex.getCause() instanceof ResponseCodeException) {
@@ -521,6 +529,9 @@ public final class LauncherHelper {
                             break;
                         case MODDED_JAVA_17:
                             suggestions.add(i18n("launch.advice.modded_java", 17, gameVersion));
+                            break;
+                        case MODDED_JAVA_21:
+                            suggestions.add(i18n("launch.advice.modded_java", 21, gameVersion));
                             break;
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));
@@ -881,8 +892,8 @@ public final class LauncherHelper {
 
     }
 
-    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download";
-    private static final String OPENJDK_DOWNLOAD_LINK = "https://docs.microsoft.com/java/openjdk/download";
+    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download/";
+    private static final String OPENJDK_DOWNLOAD_LINK = "https://learn.microsoft.com/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 

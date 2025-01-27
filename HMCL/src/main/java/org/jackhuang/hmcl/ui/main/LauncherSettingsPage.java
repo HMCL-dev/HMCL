@@ -33,8 +33,9 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
 
+import java.util.Locale;
+
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
@@ -65,7 +66,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         gameTab.initializeIfNeeded();
         gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null);
         FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
+            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
         {
@@ -74,7 +75,6 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         settingsItem.setTitle(i18n("settings.type.global.manage"));
                         settingsItem.setLeftGraphic(wrap(SVG.GAMEPAD));
                         settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
-                        runInFX(() -> FXUtils.installFastTooltip(settingsItem, i18n("settings.type.global.manage")));
                         settingsItem.setOnAction(e -> tab.select(gameTab));
                     })
                     .addNavigationDrawerItem(javaItem -> {
@@ -83,7 +83,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         javaItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(javaManagementTab));
                         javaItem.setOnAction(e -> tab.select(javaManagementTab));
                     })
-                    .startCategory(i18n("launcher"))
+                    .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
                     .addNavigationDrawerItem(settingsItem -> {
                         settingsItem.setTitle(i18n("settings.launcher.general"));
                         settingsItem.setLeftGraphic(wrap(SVG.APPLICATION_OUTLINE));
@@ -102,7 +102,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                         downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(downloadTab));
                         downloadItem.setOnAction(e -> tab.select(downloadTab));
                     })
-                    .startCategory(i18n("help"))
+                    .startCategory(i18n("help").toUpperCase(Locale.ROOT))
                     .addNavigationDrawerItem(helpItem -> {
                         helpItem.setTitle(i18n("help"));
                         helpItem.setLeftGraphic(wrap(SVG.HELP_CIRCLE_OUTLINE));

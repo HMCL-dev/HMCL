@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
@@ -67,8 +66,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         ModpackConfiguration<Modpack> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<Modpack>>() {
-                }.getType());
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(Modpack.class));
 
                 if (!HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a HMCL modpack. Cannot update this version.");

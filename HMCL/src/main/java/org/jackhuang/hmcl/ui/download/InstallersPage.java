@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
@@ -52,6 +53,8 @@ public class InstallersPage extends Control implements WizardPage {
     protected JFXTextField txtName = new JFXTextField();
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
+    private boolean isNameModifiedByUser = false;
+
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
         this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
@@ -61,12 +64,13 @@ public class InstallersPage extends Control implements WizardPage {
                 new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
-        txtName.setText(gameVersion);
+
+        txtName.textProperty().addListener((obs, oldText, newText) -> isNameModifiedByUser = true);
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
-            library.installActionProperty().set(e -> {
+            library.setOnInstall(() -> {
                 if (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)) {
                     Controllers.dialog(i18n("install.installer.fabric-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
                 }
@@ -74,7 +78,7 @@ public class InstallersPage extends Control implements WizardPage {
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
                     controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
             });
-            library.removeActionProperty().set(e -> {
+            library.setOnRemove(() -> {
                 controller.getSettings().remove(libraryId);
                 reload();
             });
@@ -103,6 +107,9 @@ public class InstallersPage extends Control implements WizardPage {
                 library.versionProperty().set(null);
             }
         }
+        if (!isNameModifiedByUser) {
+            setTxtNameWithLoaders();
+        }
     }
 
     @Override
@@ -115,13 +122,73 @@ public class InstallersPage extends Control implements WizardPage {
     }
 
     protected void onInstall() {
-        controller.getSettings().put("name", txtName.getText());
-        controller.onFinish();
+        String name = txtName.getText();
+
+        // Check for non-ASCII characters.
+        if (!StandardCharsets.US_ASCII.newEncoder().canEncode(name)) {
+            Controllers.dialog(new MessageDialogPane.Builder(
+                    i18n("install.name.invalid"),
+                    i18n("message.warning"),
+                    MessageDialogPane.MessageType.QUESTION)
+                    .yesOrNo(() -> {
+                        controller.getSettings().put("name", name);
+                        controller.onFinish();
+                    }, () -> {
+                        // The user selects Cancel and does nothing.
+                    })
+                    .build());
+        } else {
+            controller.getSettings().put("name", name);
+            controller.onFinish();
+        }
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
         return new InstallersPageSkin(this);
+    }
+
+    private void setTxtNameWithLoaders() {
+        StringBuilder nameBuilder = new StringBuilder(group.getGame().versionProperty().get().getVersion());
+
+        for (InstallerItem library : group.getLibraries()) {
+            String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
+            if (!controller.getSettings().containsKey(libraryId)) {
+                continue;
+            }
+
+            LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
+            if (libraryType != null) {
+                String loaderName;
+                switch (libraryType) {
+                    case FORGE:
+                        loaderName = i18n("install.installer.forge");
+                        break;
+                    case NEO_FORGE:
+                        loaderName = i18n("install.installer.neoforge");
+                        break;
+                    case FABRIC:
+                        loaderName = i18n("install.installer.fabric");
+                        break;
+                    case LITELOADER:
+                        loaderName = i18n("install.installer.liteloader");
+                        break;
+                    case QUILT:
+                        loaderName = i18n("install.installer.quilt");
+                        break;
+                    case OPTIFINE:
+                        loaderName = i18n("install.installer.optifine");
+                        break;
+                    default:
+                        continue;
+                }
+
+                nameBuilder.append("-").append(loaderName);
+            }
+        }
+
+        txtName.setText(nameBuilder.toString());
+        isNameModifiedByUser = false;
     }
 
     protected static class InstallersPageSkin extends SkinBase<InstallersPage> {
@@ -173,7 +240,7 @@ public class InstallersPage extends Control implements WizardPage {
                 installButton.disableProperty().bind(control.installable.not());
                 installButton.setPrefWidth(100);
                 installButton.setPrefHeight(40);
-                installButton.setOnMouseClicked(e -> control.onInstall());
+                installButton.setOnAction(e -> control.onInstall());
                 BorderPane.setAlignment(installButton, Pos.CENTER_RIGHT);
                 root.setBottom(installButton);
             }

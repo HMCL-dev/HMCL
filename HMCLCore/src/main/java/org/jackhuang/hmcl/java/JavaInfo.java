@@ -126,9 +126,12 @@ public final class JavaInfo {
                 return "Azul";
             case "IBM Corporation":
             case "International Business Machines Corporation":
+            case "Eclipse OpenJ9":
                 return "IBM";
             case "Eclipse Adoptium":
                 return "Adoptium";
+            case "Amazon.com Inc.":
+                return "Amazon";
             default:
                 return vendor;
         }

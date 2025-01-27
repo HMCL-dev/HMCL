@@ -171,6 +171,10 @@ public final class DiscoJavaRemoteVersion implements JavaRemoteVersion {
         return termOfSupport;
     }
 
+    public boolean isLTS() {
+        return "lts".equals(termOfSupport);
+    }
+
     public String getOperatingSystem() {
         return operatingSystem;
     }
@@ -191,7 +195,7 @@ public final class DiscoJavaRemoteVersion implements JavaRemoteVersion {
         return packageType;
     }
 
-    public boolean isJavafxBundled() {
+    public boolean isJavaFXBundled() {
         return javafxBundled;
     }
 

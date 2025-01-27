@@ -17,16 +17,12 @@
  */
 package org.jackhuang.hmcl.download.java.mojang;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
 import org.jackhuang.hmcl.download.java.JavaRemoteVersion;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * @author Glavo
@@ -46,10 +42,5 @@ public final class MojangJavaDistribution implements JavaDistribution<JavaRemote
     @Override
     public Set<JavaPackageType> getSupportedPackageTypes() {
         return Collections.singleton(JavaPackageType.JRE);
-    }
-
-    @Override
-    public Task<TreeMap<Integer, JavaRemoteVersion>> getFetchJavaVersionsTask(DownloadProvider provider, Platform platform, JavaPackageType packageType) {
-        return null;
     }
 }

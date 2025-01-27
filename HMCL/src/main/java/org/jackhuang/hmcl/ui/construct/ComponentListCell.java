@@ -25,9 +25,6 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.event.ActionEvent;
-import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -139,7 +136,7 @@ final class ComponentListCell extends StackPane {
             container.getChildren().setAll(content);
             groupNode.getChildren().add(container);
 
-            EventHandler<Event> onExpand = e -> {
+            Runnable onExpand = () -> {
                 if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
                     expandAnimation.stop();
                 }
@@ -182,8 +179,8 @@ final class ComponentListCell extends StackPane {
                 });
             };
 
-            headerRippler.setOnMouseClicked(onExpand);
-            expandButton.setOnAction((EventHandler<ActionEvent>) (Object) onExpand);
+            FXUtils.onClicked(headerRippler, onExpand);
+            expandButton.setOnAction(e -> onExpand.run());
 
             expandedProperty().addListener((a, b, newValue) -> expandIcon.setRotate(newValue ? 180 : 0));
 

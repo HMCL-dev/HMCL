@@ -20,11 +20,14 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -42,16 +45,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 @JsonAdapter(VersionSetting.Serializer.class)
-public final class VersionSetting implements Cloneable {
+public final class VersionSetting implements Cloneable, Observable {
 
-    private boolean global = false;
+    private transient ObservableHelper helper = new ObservableHelper(this);
 
-    public boolean isGlobal() {
-        return global;
-    }
-
-    public void setGlobal(boolean global) {
-        this.global = global;
+    public VersionSetting() {
+        PropertyUtils.attachListener(this, helper);
     }
 
     private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", true);
@@ -708,79 +707,21 @@ public final class VersionSetting implements Cloneable {
         }
     }
 
-    public void addPropertyChangedListener(InvalidationListener listener) {
-        usesGlobalProperty.addListener(listener);
-        javaVersionProperty.addListener(listener);
-        javaDirProperty.addListener(listener);
-        wrapperProperty.addListener(listener);
-        permSizeProperty.addListener(listener);
-        maxMemoryProperty.addListener(listener);
-        minMemoryProperty.addListener(listener);
-        autoMemory.addListener(listener);
-        preLaunchCommandProperty.addListener(listener);
-        postExitCommand.addListener(listener);
-        javaArgsProperty.addListener(listener);
-        minecraftArgsProperty.addListener(listener);
-        environmentVariablesProperty.addListener(listener);
-        noJVMArgsProperty.addListener(listener);
-        notCheckGameProperty.addListener(listener);
-        notCheckJVMProperty.addListener(listener);
-        notPatchNativesProperty.addListener(listener);
-        showLogsProperty.addListener(listener);
-        serverIpProperty.addListener(listener);
-        fullscreenProperty.addListener(listener);
-        widthProperty.addListener(listener);
-        heightProperty.addListener(listener);
-        gameDirTypeProperty.addListener(listener);
-        gameDirProperty.addListener(listener);
-        processPriorityProperty.addListener(listener);
-        rendererProperty.addListener(listener);
-        useNativeGLFW.addListener(listener);
-        useNativeOpenAL.addListener(listener);
-        launcherVisibilityProperty.addListener(listener);
-        defaultJavaPathProperty.addListener(listener);
-        nativesDirProperty.addListener(listener);
-        nativesDirTypeProperty.addListener(listener);
-        versionIcon.addListener(listener);
+    @Override
+    public void addListener(InvalidationListener listener) {
+        helper.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(InvalidationListener listener) {
+        helper.removeListener(listener);
     }
 
     @Override
     public VersionSetting clone() {
-        VersionSetting versionSetting = new VersionSetting();
-        versionSetting.setUsesGlobal(isUsesGlobal());
-        versionSetting.setJavaVersionType(getJavaVersionType());
-        versionSetting.setJavaVersion(getJavaVersion());
-        versionSetting.setDefaultJavaPath(getDefaultJavaPath());
-        versionSetting.setJavaDir(getJavaDir());
-        versionSetting.setWrapper(getWrapper());
-        versionSetting.setPermSize(getPermSize());
-        versionSetting.setMaxMemory(getMaxMemory());
-        versionSetting.setMinMemory(getMinMemory());
-        versionSetting.setAutoMemory(isAutoMemory());
-        versionSetting.setPreLaunchCommand(getPreLaunchCommand());
-        versionSetting.setPostExitCommand(getPostExitCommand());
-        versionSetting.setJavaArgs(getJavaArgs());
-        versionSetting.setMinecraftArgs(getMinecraftArgs());
-        versionSetting.setEnvironmentVariables(getEnvironmentVariables());
-        versionSetting.setNoJVMArgs(isNoJVMArgs());
-        versionSetting.setNotCheckGame(isNotCheckGame());
-        versionSetting.setNotCheckJVM(isNotCheckJVM());
-        versionSetting.setNotPatchNatives(isNotPatchNatives());
-        versionSetting.setShowLogs(isShowLogs());
-        versionSetting.setServerIp(getServerIp());
-        versionSetting.setFullscreen(isFullscreen());
-        versionSetting.setWidth(getWidth());
-        versionSetting.setHeight(getHeight());
-        versionSetting.setGameDirType(getGameDirType());
-        versionSetting.setGameDir(getGameDir());
-        versionSetting.setProcessPriority(getProcessPriority());
-        versionSetting.setRenderer(getRenderer());
-        versionSetting.setUseNativeGLFW(isUseNativeGLFW());
-        versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
-        versionSetting.setLauncherVisibility(getLauncherVisibility());
-        versionSetting.setNativesDir(getNativesDir());
-        versionSetting.setVersionIcon(getVersionIcon());
-        return versionSetting;
+        VersionSetting cloned = new VersionSetting();
+        PropertyUtils.copyProperties(this, cloned);
+        return cloned;
     }
 
     public static class Serializer implements JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {

@@ -4,21 +4,19 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.google.code.gson:gson:2.10.1")
+        classpath("com.google.code.gson:gson:2.11.0")
     }
 }
 
-val jfxVersion = "19.0.2.1"
+val jfxVersion = "17.0.13"
+val oldJfxVersion = "19.0.2.1"
 
 data class Platform(
     val name: String,
     val classifier: String,
     val groupId: String = "org.openjfx",
-    val version: String = jfxVersion,
-    val unsupportedModules: List<String> = listOf()
+    val version: String = jfxVersion
 ) {
-    val modules: List<String> = jfxModules.filter { it !in unsupportedModules }
-
     fun fileUrl(
         module: String, classifier: String, ext: String,
         repo: String = "https://repo1.maven.org/maven2"
@@ -28,22 +26,22 @@ data class Platform(
         ).toURL()
 }
 
-val jfxModules = listOf("base", "graphics", "controls", "media", "web")
+val jfxModules = listOf("base", "graphics", "controls")
 val jfxMirrorRepos = listOf("https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
-val jfxDependenciesFile = project("HMCL").layout.buildDirectory.file("openjfx-dependencies.json").get().asFile
+val jfxDependenciesFile = project.file("HMCL/src/main/resources/assets/openjfx-dependencies.json")
 val jfxPlatforms = listOf(
-    Platform("windows-x86", "win-x86"),
+    Platform("windows-x86", "win-x86", version = oldJfxVersion),
     Platform("windows-x86_64", "win"),
-    Platform("windows-arm64", "win", groupId = "org.glavo.hmcl.openjfx", version = "18.0.2+1-arm64", unsupportedModules = listOf("media", "web")),
-    Platform("osx-x86_64", "mac"),
-    Platform("osx-arm64", "mac-aarch64"),
+    Platform("windows-arm64", "win", groupId = "org.glavo.hmcl.openjfx", version = "18.0.2+1-arm64"),
+    Platform("osx-x86_64", "mac", version = oldJfxVersion),
+    Platform("osx-arm64", "mac-aarch64", version = oldJfxVersion),
     Platform("linux-x86_64", "linux"),
-    Platform("linux-arm32", "linux-arm32-monocle", unsupportedModules = listOf("media", "web")),
-    Platform("linux-arm64", "linux-aarch64"),
+    Platform("linux-arm32", "linux-arm32-monocle", version = oldJfxVersion),
+    Platform("linux-arm64", "linux-aarch64", version = oldJfxVersion),
     Platform("linux-loongarch64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "17.0.8-loongarch64"),
-    Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64", unsupportedModules = listOf("media", "web")),
-    Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64", unsupportedModules = listOf("media", "web")),
-    Platform("freebsd-x86_64", "freebsd", groupId = "org.glavo.hmcl.openjfx", version = "14.0.2.1-freebsd", unsupportedModules = listOf("media", "web")),
+    Platform("linux-loongarch64_ow", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19-ea+10-loongson64"),
+    Platform("linux-riscv64", "linux", groupId = "org.glavo.hmcl.openjfx", version = "19.0.2.1-riscv64"),
+    Platform("freebsd-x86_64", "freebsd", groupId = "org.glavo.hmcl.openjfx", version = "14.0.2.1-freebsd"),
 )
 
 val jfxInClasspath =
@@ -89,11 +87,9 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
 }
 
 rootProject.tasks.create("generateOpenJFXDependencies") {
-    outputs.file(jfxDependenciesFile)
-
     doLast {
         val jfxDependencies = jfxPlatforms.associate { platform ->
-            platform.name to platform.modules.map { module ->
+            platform.name to jfxModules.map { module ->
                 mapOf(
                     "module" to "javafx.$module",
                     "groupId" to platform.groupId,
@@ -117,7 +113,7 @@ rootProject.tasks.create("preTouchOpenJFXDependencies") {
     doLast {
         for (repo in jfxMirrorRepos) {
             for (platform in jfxPlatforms) {
-                for (module in platform.modules) {
+                for (module in jfxModules) {
                     val url = platform.fileUrl(module, platform.classifier, "jar", repo = repo)
                     logger.quiet("Getting $url")
                     try {

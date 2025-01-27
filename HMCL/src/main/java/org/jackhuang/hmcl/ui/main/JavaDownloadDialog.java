@@ -21,7 +21,6 @@ import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
@@ -46,16 +45,18 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
@@ -118,6 +119,8 @@ public final class JavaDownloadDialog extends StackPane {
                 button.setUserData(version);
                 vbox.getChildren().add(button);
                 toggleGroup.getToggles().add(button);
+                if (JavaManager.REPOSITORY.isInstalled(platform, version))
+                    button.setDisable(true);
             }
 
             setBody(vbox);
@@ -166,19 +169,6 @@ public final class JavaDownloadDialog extends StackPane {
     }
 
     private final class DownloadDiscoJava extends JFXDialogLayout {
-
-        private boolean isLTS(int major) {
-            if (major <= 8) {
-                return true;
-            }
-
-            if (major < 21) {
-                return major == 11 || major == 17;
-            }
-
-            return major % 4 == 1;
-        }
-
         private final JFXComboBox<DiscoJavaDistribution> distributionBox;
         private final JFXComboBox<DiscoJavaRemoteVersion> remoteVersionBox;
         private final JFXComboBox<JavaPackageType> packageTypeBox;
@@ -189,11 +179,8 @@ public final class JavaDownloadDialog extends StackPane {
 
         private final DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
-        private final ObjectProperty<DiscoJavaVersionList> currentDiscoJavaVersionList = new SimpleObjectProperty<>();
-
-        private final Map<Pair<DiscoJavaDistribution, JavaPackageType>, DiscoJavaVersionList> javaVersionLists = new HashMap<>();
-
-        private boolean changingDistribution = false;
+        private final Map<DiscoJavaDistribution, DiscoJavaVersionList> javaVersionLists = new HashMap<>();
+        private final ObjectProperty<DiscoJavaVersionList> currentJavaVersionList = new SimpleObjectProperty<>();
 
         DownloadDiscoJava() {
             assert !distributions.isEmpty();
@@ -204,7 +191,7 @@ public final class JavaDownloadDialog extends StackPane {
             this.remoteVersionBox = new JFXComboBox<>();
             this.remoteVersionBox.setConverter(FXUtils.stringConverter(JavaRemoteVersion::getDistributionVersion));
 
-            this.packageTypeBox = new JFXComboBox<>();
+            this.packageTypeBox = new JFXComboBox<>(FXCollections.observableArrayList());
 
             this.downloadButton = new JFXButton(i18n("download"));
             downloadButton.setOnAction(e -> onDownload());
@@ -227,58 +214,87 @@ public final class JavaDownloadDialog extends StackPane {
             body.addRow(2, new Label(i18n("java.download.packageType")), packageTypeBox);
 
             distributionBox.setItems(FXCollections.observableList(new ArrayList<>(distributions)));
-            ChangeListener<DiscoJavaVersionList.Status> updateStatusListener = (observable, oldValue, newValue) -> updateStatus(newValue);
-            this.currentDiscoJavaVersionList.addListener((observable, oldValue, newValue) -> {
-                if (oldValue != null) {
-                    oldValue.status.removeListener(updateStatusListener);
+
+            FXUtils.onChange(packageTypeBox.getSelectionModel().selectedItemProperty(), packageType -> {
+                ObservableList<DiscoJavaRemoteVersion> versions;
+                if (packageType == null
+                        || currentJavaVersionList.get() == null
+                        || (versions = currentJavaVersionList.get().versions.get(packageType)) == null) {
+                    remoteVersionBox.setItems(null);
+                    return;
                 }
+
+                remoteVersionBox.setItems(versions);
+
+                for (int i = 0; i < versions.size(); i++) {
+                    DiscoJavaRemoteVersion version = versions.get(i);
+                    if (version.getJdkVersion() == GameJavaVersion.LATEST.getMajorVersion()) {
+                        remoteVersionBox.getSelectionModel().select(i);
+                        return;
+                    }
+                }
+
+                for (int i = 0; i < versions.size(); i++) {
+                    DiscoJavaRemoteVersion version = versions.get(i);
+                    if (version.isLTS()) {
+                        remoteVersionBox.getSelectionModel().select(i);
+                        return;
+                    }
+                }
+
+                remoteVersionBox.getSelectionModel().selectFirst();
+            });
+
+            Consumer<DiscoJavaVersionList> updateListStatus = list -> {
+                remoteVersionBox.setItems(null);
+                packageTypeBox.getItems().clear();
+                remoteVersionBox.setDisable(true);
+                packageTypeBox.setDisable(true);
+                warningLabel.setText(null);
+
+                if (list == null || (list.versions != null && list.versions.isEmpty()))
+                    downloadButtonPane.getChildren().setAll(downloadButton);
+                else if (list.status == DiscoJavaVersionList.Status.LOADING)
+                    downloadButtonPane.getChildren().setAll(new JFXSpinner());
+                else {
+                    downloadButtonPane.getChildren().setAll(downloadButton);
+
+                    if (list.status == DiscoJavaVersionList.Status.SUCCESS) {
+                        packageTypeBox.getItems().setAll(list.versions.keySet());
+                        packageTypeBox.getSelectionModel().selectFirst();
+
+                        remoteVersionBox.setDisable(false);
+                        packageTypeBox.setDisable(false);
+                    } else
+                        warningLabel.setText(i18n("java.download.load_list.failed"));
+                }
+            };
+
+            currentJavaVersionList.addListener((observable, oldValue, newValue) -> {
+                if (oldValue != null)
+                    oldValue.listener = null;
 
                 if (newValue != null) {
-                    newValue.status.addListener(updateStatusListener);
-                    updateStatus(newValue.status.get());
+                    updateListStatus.accept(newValue);
+
+                    if (newValue.status == DiscoJavaVersionList.Status.LOADING)
+                        newValue.listener = updateListStatus;
                 } else {
-                    updateStatus(null);
+                    currentJavaVersionList.set(null);
+                    updateListStatus.accept(null);
                 }
             });
 
-            packageTypeBox.getSelectionModel().selectedItemProperty().addListener(ignored -> updateVersions());
-            FXUtils.onChangeAndOperate(distributionBox.getSelectionModel().selectedItemProperty(), distribution -> {
-                if (distribution != null) {
-                    changingDistribution = true;
-                    packageTypeBox.setItems(FXCollections.observableList(new ArrayList<>(distribution.getSupportedPackageTypes())));
-                    packageTypeBox.getSelectionModel().select(0);
-                    changingDistribution = false;
-                    updateVersions();
-                    packageTypeBox.setDisable(false);
-                    remoteVersionBox.setDisable(false);
-                } else {
-                    packageTypeBox.setItems(null);
-                    updateVersions();
-                    remoteVersionBox.setItems(null);
-                    packageTypeBox.setDisable(true);
-                    remoteVersionBox.setDisable(true);
-                }
-            });
+            FXUtils.onChange(distributionBox.getSelectionModel().selectedItemProperty(),
+                    it -> currentJavaVersionList.set(getJavaVersionList(it)));
 
             setHeading(new Label(i18n("java.download")));
             setBody(body);
             setActions(warningLabel, downloadButtonPane, cancelButton);
-        }
-
-        private void updateStatus(DiscoJavaVersionList.Status status) {
-            if (status == DiscoJavaVersionList.Status.LOADING) {
-                downloadButtonPane.getChildren().setAll(new JFXSpinner());
-                remoteVersionBox.setDisable(true);
-                warningLabel.setText(null);
-            } else {
-                downloadButtonPane.getChildren().setAll(downloadButton);
-                if (status == DiscoJavaVersionList.Status.SUCCESS || status == null) {
-                    remoteVersionBox.setDisable(false);
-                    warningLabel.setText(null);
-                } else if (status == DiscoJavaVersionList.Status.FAILED) {
-                    remoteVersionBox.setDisable(true);
-                    warningLabel.setText(i18n("java.download.load_list.failed"));
-                }
+            if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {
+                JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
+                hyperlink.setExternalLink("https://www.zthread.cn/#product");
+                getActions().add(0, hyperlink);
             }
         }
 
@@ -287,6 +303,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             DiscoJavaDistribution distribution = distributionBox.getSelectionModel().getSelectedItem();
             DiscoJavaRemoteVersion version = remoteVersionBox.getSelectionModel().getSelectedItem();
+            JavaPackageType packageType = packageTypeBox.getSelectionModel().getSelectedItem();
 
             if (version == null)
                 return;
@@ -312,8 +329,15 @@ public final class JavaDownloadDialog extends StackPane {
                             getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), fileInfo.getChecksum()));
                         else if (StringUtils.isNotBlank(fileInfo.getChecksumUri()))
                             getIntegrityCheck = new GetTask(downloadProvider.injectURLWithCandidates(fileInfo.getChecksumUri()))
-                                    .thenApplyAsync(checksum ->
-                                            new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum.trim()));
+                                    .thenApplyAsync(checksum -> {
+                                        checksum = checksum.trim();
+
+                                        int idx = checksum.indexOf(' ');
+                                        if (idx > 0)
+                                            checksum = checksum.substring(0, idx);
+
+                                        return new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), checksum);
+                                    });
                         else
                             throw new IOException("Unable to get checksum for file");
 
@@ -336,7 +360,7 @@ public final class JavaDownloadDialog extends StackPane {
                             if (idx > 0) {
                                 javaVersion = javaVersion.substring(0, idx);
                             }
-                            String defaultName = distribution.getApiParameter() + "-" + javaVersion;
+                            String defaultName = distribution.getApiParameter() + "-" + javaVersion + "-" + packageType.name().toLowerCase(Locale.ROOT);
                             Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
                                     new JavaInstallPage(controller::onFinish, info, version, updateInfo, defaultName, result)));
                         } else {
@@ -350,65 +374,39 @@ public final class JavaDownloadDialog extends StackPane {
 
         }
 
-        private void updateVersions() {
-            if (changingDistribution) return;
+        private DiscoJavaVersionList getJavaVersionList(DiscoJavaDistribution distribution) {
+            if (distribution == null)
+                return null;
+            return javaVersionLists.computeIfAbsent(distribution, it -> {
+                DiscoJavaVersionList versionList = new DiscoJavaVersionList(it);
+                new DiscoFetchJavaListTask(downloadProvider, it, platform).setExecutor(Schedulers.io()).thenApplyAsync(versions -> {
+                    EnumMap<JavaPackageType, ObservableList<DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
+                    if (versions.isEmpty())
+                        return result;
 
-            DiscoJavaDistribution distribution = distributionBox.getSelectionModel().getSelectedItem();
-            if (distribution == null) {
-                this.currentDiscoJavaVersionList.set(null);
-                return;
-            }
+                    for (Map.Entry<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> entry : versions.entrySet())
+                        for (DiscoJavaRemoteVersion version : entry.getValue().values())
+                            if (version.isLTS()
+                                    || version.getJdkVersion() == entry.getValue().lastKey() // latest version
+                                    || version.getJdkVersion() == 16)
+                                result.computeIfAbsent(entry.getKey(), ignored -> FXCollections.observableArrayList())
+                                        .add(version);
 
-            JavaPackageType packageType = packageTypeBox.getSelectionModel().getSelectedItem();
-
-            DiscoJavaVersionList list = javaVersionLists.computeIfAbsent(Pair.pair(distribution, packageType), pair -> {
-                DiscoJavaVersionList res = new DiscoJavaVersionList();
-                new DiscoFetchJavaListTask(downloadProvider, distribution, platform, packageType).setExecutor(Schedulers.io()).thenApplyAsync(versions -> {
-                    if (versions.isEmpty()) return Collections.<DiscoJavaRemoteVersion>emptyList();
-
-                    int lastLTS = -1;
-                    for (int v : versions.keySet()) {
-                        if (isLTS(v)) {
-                            lastLTS = v;
-                        }
-                    }
-
-                    ArrayList<DiscoJavaRemoteVersion> remoteVersions = new ArrayList<>();
-                    for (Map.Entry<Integer, DiscoJavaRemoteVersion> entry : versions.entrySet()) {
-                        int v = entry.getKey();
-                        if (v >= lastLTS || isLTS(v) || v == 16) {
-                            remoteVersions.add(entry.getValue());
-                        }
-                    }
-                    Collections.reverse(remoteVersions);
-                    return remoteVersions;
+                    for (List<DiscoJavaRemoteVersion> l : result.values())
+                        Collections.reverse(l);
+                    return result;
                 }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
-                        res.status.set(DiscoJavaVersionList.Status.SUCCESS);
-                        res.versions.setAll(result);
-                        selectLTS(res);
+                        versionList.status = DiscoJavaVersionList.Status.SUCCESS;
+                        versionList.versions = result;
                     } else {
                         LOG.warning("Failed to load java list", exception);
-                        res.status.set(DiscoJavaVersionList.Status.FAILED);
+                        versionList.status = DiscoJavaVersionList.Status.FAILED;
                     }
+                    versionList.invalidate();
                 })).start();
-                return res;
+                return versionList;
             });
-            this.currentDiscoJavaVersionList.set(list);
-            this.remoteVersionBox.setItems(list.versions);
-            selectLTS(list);
-        }
-
-        private void selectLTS(DiscoJavaVersionList list) {
-            if (remoteVersionBox.getItems() == list.versions) {
-                for (int i = 0; i < list.versions.size(); i++) {
-                    JavaRemoteVersion item = list.versions.get(i);
-                    if (item.getJdkVersion() == GameJavaVersion.LATEST.getMajorVersion()) {
-                        remoteVersionBox.getSelectionModel().select(i);
-                        break;
-                    }
-                }
-            }
         }
     }
 
@@ -417,7 +415,19 @@ public final class JavaDownloadDialog extends StackPane {
             LOADING, SUCCESS, FAILED
         }
 
-        final ObservableList<DiscoJavaRemoteVersion> versions = FXCollections.observableArrayList();
-        final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
+        final DiscoJavaDistribution distribution;
+
+        Status status = Status.LOADING;
+        EnumMap<JavaPackageType, ObservableList<DiscoJavaRemoteVersion>> versions;
+        Consumer<DiscoJavaVersionList> listener;
+
+        DiscoJavaVersionList(DiscoJavaDistribution distribution) {
+            this.distribution = distribution;
+        }
+
+        void invalidate() {
+            if (listener != null)
+                listener.accept(this);
+        }
     }
 }

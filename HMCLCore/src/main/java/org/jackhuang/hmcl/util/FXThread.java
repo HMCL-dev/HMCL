@@ -1,6 +1,6 @@
-/**
+/*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,16 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-.root {
-    -fx-base-color: %base-color%;
-    -fx-base-darker-color: derive(-fx-base-color, -10%);
-    -fx-base-check-color: derive(-fx-base-color, 30%);
-    -fx-rippler-color: rgba(%base-red%, %base-green%, %base-blue%, 0.3);
-    -fx-base-rippler-color: derive(%base-rippler-color%, 100%);
-    -fx-base-disabled-text-fill: %disabled-font-color%;
-    -fx-base-text-fill: %font-color%;
+package org.jackhuang.hmcl.util;
 
-    -theme-thumb: rgba(%base-red%, %base-green%, %base-blue%, 0.7);
+import java.lang.annotation.*;
 
-    %font%
+/**
+ * Mark a method that can only be called on the JavaFX Application Thread,
+ * or mark a field that can only be read/modified on the JavaFX Application Thread.
+ *
+ * @author Glavo
+ */
+@Documented
+@Target({ElementType.METHOD, ElementType.FIELD})
+@Retention(RetentionPolicy.SOURCE)
+public @interface FXThread {
 }

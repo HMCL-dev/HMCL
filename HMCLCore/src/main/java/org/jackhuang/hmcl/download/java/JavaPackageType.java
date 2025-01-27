@@ -21,10 +21,10 @@ package org.jackhuang.hmcl.download.java;
  * @author Glavo
  */
 public enum JavaPackageType {
-    JDK(true, false),
     JRE(false, false),
-    JDKFX(true, true),
-    JREFX(false, true);
+    JDK(true, false),
+    JREFX(false, true),
+    JDKFX(true, true);
 
     private final boolean jdk;
     private final boolean javafx;
@@ -32,6 +32,13 @@ public enum JavaPackageType {
     JavaPackageType(boolean jdk, boolean javafx) {
         this.jdk = jdk;
         this.javafx = javafx;
+    }
+
+    public static JavaPackageType of(boolean jdk, boolean javafx) {
+        if (jdk)
+            return javafx ? JDKFX : JDK;
+        else
+            return javafx ? JREFX : JRE;
     }
 
     public boolean isJDK() {
