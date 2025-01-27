@@ -52,16 +52,16 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
         CompletableFuture<GameRemoteVersions> primaryFuture = HttpRequest.GET(downloadProvider.getVersionListURL())
                 .getJsonAsync(GameRemoteVersions.class);
 
-        CompletableFuture<GameRemoteVersions> uvmcFuture = HttpRequest.GET(downloadProvider.getUvmcListURL())
+        CompletableFuture<GameRemoteVersions> unlistedMinecraftFuture = HttpRequest.GET(downloadProvider.getUnlistedMinecraftURL())
                 .getJsonAsync(GameRemoteVersions.class);
 
-        return CompletableFuture.allOf(primaryFuture, uvmcFuture)
+        return CompletableFuture.allOf(primaryFuture, unlistedMinecraftFuture)
                 .thenAcceptAsync(ignored -> {
                     lock.writeLock().lock();
                     try {
                         versions.clear();
 
-                        Stream.of(primaryFuture.join(), uvmcFuture.join())
+                        Stream.of(primaryFuture.join(), unlistedMinecraftFuture.join())
                                 .flatMap(gameRemoteVersions -> gameRemoteVersions.getVersions().stream())
                                 .forEach(remoteVersion -> versions.put(
                                         remoteVersion.getGameVersion(),

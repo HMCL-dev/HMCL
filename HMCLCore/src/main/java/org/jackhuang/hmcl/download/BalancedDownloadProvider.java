@@ -40,7 +40,7 @@ public final class BalancedDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getUvmcListURL() {
+    public String getUnlistedMinecraftURL() {
         throw new UnsupportedOperationException();
     }
 

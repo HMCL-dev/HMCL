@@ -41,8 +41,8 @@ public class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getUvmcListURL() {
-        return versionListProvider.getUvmcListURL();
+    public String getUnlistedMinecraftURL() {
+        return versionListProvider.getUnlistedMinecraftURL();
     }
 
     @Override

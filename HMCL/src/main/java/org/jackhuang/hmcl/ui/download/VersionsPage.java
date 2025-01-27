@@ -320,7 +320,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         break;
                 }
                 if (remoteVersion.getUrls().stream().anyMatch(url -> url.contains("unlisted-versions-of-minecraft"))) {
-                    content.getTags().add("UVMC");
+                    content.getTags().add("Unlisted Minecraft");
                 }
             } else {
                 VersionIconType iconType;

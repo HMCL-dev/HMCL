@@ -63,7 +63,7 @@ public class MojangDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getUvmcListURL() {
+    public String getUnlistedMinecraftURL() {
         return "https://zkitefly.github.io/unlisted-versions-of-minecraft/version_manifest.json";
     }
 

@@ -49,8 +49,8 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getUvmcListURL() {
-        return getPreferredDownloadProvider().getUvmcListURL();
+    public String getUnlistedMinecraftURL() {
+        return getPreferredDownloadProvider().getUnlistedMinecraftURL();
     }
 
     @Override

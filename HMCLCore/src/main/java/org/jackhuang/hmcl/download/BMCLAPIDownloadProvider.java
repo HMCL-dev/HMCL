@@ -92,7 +92,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getUvmcListURL() {
+    public String getUnlistedMinecraftURL() {
         return "https://vip.123pan.cn/1821946486/unlisted-versions-of-minecraft/version_manifest.json";
     }
 

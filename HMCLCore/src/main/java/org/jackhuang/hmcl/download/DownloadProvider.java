@@ -33,7 +33,7 @@ public interface DownloadProvider {
 
     String getVersionListURL();
 
-    String getUvmcListURL();
+    String getUnlistedMinecraftURL();
 
     String getAssetBaseURL();
 
