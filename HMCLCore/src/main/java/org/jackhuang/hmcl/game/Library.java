@@ -17,11 +17,12 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.*;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -46,7 +47,7 @@ public class Library implements Comparable<Library>, Validation {
     private final String url;
     private final LibrariesDownloadInfo downloads;
     private final ExtractRules extract;
-    private final Map<OperatingSystem, String> natives;
+    private final Map<String, String> natives;
     private final List<CompatibilityRule> rules;
     private final List<String> checksums;
 
@@ -64,7 +65,7 @@ public class Library implements Comparable<Library>, Validation {
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
-    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
+    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<String, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
         this.artifact = artifact;
         this.url = url;
         this.downloads = downloads;
@@ -93,13 +94,33 @@ public class Library implements Comparable<Library>, Validation {
     }
 
     public String getClassifier() {
-        if (artifact.getClassifier() == null)
-            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS))
-                return natives.get(OperatingSystem.CURRENT_OS).replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
-            else
+        if (artifact.getClassifier() == null) {
+            if (natives == null) {
                 return null;
-        else
+            }
+
+            String current = natives.get(OperatingSystem.CURRENT_OS.getCheckedName());
+            if (current == null) {
+                for (String value : natives.values()) {
+                    int i = value.indexOf('-');
+                    if (i == -1) {
+                        continue;
+                    }
+
+                    Architecture architecture = JsonUtils.GSON.fromJson(value.substring(i + 1), Architecture.class);
+                    if (architecture == Architecture.SYSTEM_ARCH) {
+                        current = natives.get(value);
+                        break;
+                    }
+                }
+            }
+            if (current == null) {
+                return null;
+            }
+            return current.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
+        } else {
             return artifact.getClassifier();
+        }
     }
 
     public ExtractRules getExtract() {
@@ -159,6 +180,7 @@ public class Library implements Comparable<Library>, Validation {
 
     /**
      * Hint for how to locate the library file.
+     *
      * @return null for default, "local" for location in version/&lt;version&gt;/libraries/filename
      */
     @Nullable
@@ -168,6 +190,7 @@ public class Library implements Comparable<Library>, Validation {
 
     /**
      * Available when hint is "local"
+     *
      * @return the filename of the local library in version/&lt;version&gt;/libraries/$filename
      */
     @Nullable

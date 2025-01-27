@@ -182,7 +182,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                             try {
                                 multiMCPatch = JsonUtils.GSON.fromJson(FileUtils.readText(patchJson), MultiMCInstancePatch.class);
                             } catch (JsonParseException e) {
-                                throw new IllegalArgumentException("Cannot parse MultiMC patch json: " + patchJson);
+                                throw new IllegalArgumentException("Cannot parse MultiMC patch json: " + patchJson, e);
                             }
 
                             List<String> arguments = new ArrayList<>();
