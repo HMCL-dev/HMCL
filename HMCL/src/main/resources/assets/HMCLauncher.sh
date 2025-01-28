@@ -152,15 +152,15 @@ fi
 
 # Java not found
 
-if [ "$_HMCL_OS" == "osx" ]; then
-    _HMCL_DOWNLOAD_PAGE_OS="macos"
-else
-    _HMCL_DOWNLOAD_PAGE_OS="$_HMCL_OS"
-fi
-
 case "$_HMCL_OS-$_HMCL_ARCH" in
-  windows-x86|windows-x86_64|windows-arm64|linux-x86|linux-x86_64|linux-arm32|linux-arm64|linux-riscv64|linux-loongarch64|macos-x86_64|macos-arm64)
-    _HMCL_JAVA_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/$_HMCL_DOWNLOAD_PAGE_OS/$_HMCL_ARCH.html"
+  windows-x86|windows-x86_64|windows-arm64)
+    _HMCL_JAVA_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/windows/$_HMCL_ARCH.html"
+    ;;
+  linux-x86|linux-x86_64|linux-arm64|linux-arm32|linux-riscv64|linux-loongarch64)
+    _HMCL_JAVA_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/linux/$_HMCL_ARCH.html"
+    ;;
+  osx-x86_64|osx-arm64)
+    _HMCL_JAVA_DOWNLOAD_PAGE="https://docs.hmcl.net/downloads/macos/$_HMCL_ARCH.html"
     ;;
 esac
 
