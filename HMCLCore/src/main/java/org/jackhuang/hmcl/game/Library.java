@@ -146,6 +146,10 @@ public class Library implements Comparable<Library>, Validation {
         }
     }
 
+    public Artifact getArtifact() {
+        return artifact;
+    }
+
     public String getPath() {
         LibraryDownloadInfo temp = getRawDownloadInfo();
         if (temp != null && temp.getPath() != null)

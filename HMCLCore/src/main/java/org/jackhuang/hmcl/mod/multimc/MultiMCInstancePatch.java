@@ -44,6 +44,9 @@ public final class MultiMCInstancePatch {
     @SerializedName("+tweakers")
     private final List<String> tweakers;
 
+    @SerializedName("+jvmArgs")
+    private final List<String> jvmArgs;
+
     @SerializedName("+libraries")
     private final List<Library> _libraries;
 
@@ -51,16 +54,17 @@ public final class MultiMCInstancePatch {
     private final List<Library> libraries;
 
     public MultiMCInstancePatch() {
-        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     }
 
-    public MultiMCInstancePatch(String name, String version, String gameVersion, String mainClass, String fileId, List<String> tweakers, List<Library> _libraries, List<Library> libraries) {
+    public MultiMCInstancePatch(String name, String version, String gameVersion, String mainClass, String fileId, List<String> tweakers, List<String> jvmArgs, List<Library> _libraries, List<Library> libraries) {
         this.name = name;
         this.version = version;
         this.gameVersion = gameVersion;
         this.mainClass = mainClass;
         this.fileId = fileId;
         this.tweakers = new ArrayList<>(tweakers);
+        this.jvmArgs = new ArrayList<>(jvmArgs);
         this._libraries = new ArrayList<>(_libraries);
         this.libraries = new ArrayList<>(libraries);
     }
@@ -87,6 +91,10 @@ public final class MultiMCInstancePatch {
 
     public List<String> getTweakers() {
         return Collections.unmodifiableList(tweakers);
+    }
+
+    public List<String> getJvmArgs() {
+        return jvmArgs;
     }
 
     public List<Library> getLibraries() {

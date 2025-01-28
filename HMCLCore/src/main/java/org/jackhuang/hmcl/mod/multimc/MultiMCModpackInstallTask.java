@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod.multimc;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
@@ -44,7 +45,6 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- *
  * @author huangyuhui
  */
 public final class MultiMCModpackInstallTask extends Task<Void> {
@@ -141,13 +141,13 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             // /.minecraft
             if (Files.exists(fs.getPath("/.minecraft"))) {
                 subDirectory = "/.minecraft";
-            // /minecraft
+                // /minecraft
             } else if (Files.exists(fs.getPath("/minecraft"))) {
                 subDirectory = "/minecraft";
-            // /[name]/.minecraft
+                // /[name]/.minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/.minecraft";
-            // /[name]/minecraft
+                // /[name]/minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/minecraft";
             } else {
@@ -191,9 +191,24 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                                 arguments.add(arg);
                             }
 
-                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
+                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments).addJVMArguments(multiMCPatch.getJvmArgs()), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
                             version = version.addPatch(patch);
                         }
+                    }
+                }
+            }
+
+            if (version.getMinecraftArguments().isPresent()) {
+                List<Version> patches1 = version.getPatches();
+
+                for (int i = 0; i < patches1.size(); i++) {
+                    Version patch = patches1.get(i);
+                    if (patch.getId().equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) {
+                        ArrayList<Version> patches2 = new ArrayList<>(patches1);
+                        patches2.set(i, patch.setArguments(new Arguments(null, Arguments.DEFAULT_JVM_ARGUMENTS)));
+
+                        version = version.setPatches(patches2);
+                        break;
                     }
                 }
             }
