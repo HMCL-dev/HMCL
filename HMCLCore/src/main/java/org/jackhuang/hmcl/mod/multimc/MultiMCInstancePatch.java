@@ -21,13 +21,13 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -35,6 +35,7 @@ public final class MultiMCInstancePatch {
 
     private final String name;
     private final String version;
+    private final int order;
 
     @SerializedName("mcVersion")
     private final String gameVersion;
@@ -42,24 +43,25 @@ public final class MultiMCInstancePatch {
     private final String fileId;
 
     @SerializedName("+tweakers")
+    @Nullable
     private final List<String> tweakers;
 
     @SerializedName("+jvmArgs")
+    @Nullable
     private final List<String> jvmArgs;
 
     @SerializedName("+libraries")
+    @Nullable
     private final List<Library> _libraries;
 
     @SerializedName("libraries")
+    @Nullable
     private final List<Library> libraries;
 
-    public MultiMCInstancePatch() {
-        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
-    }
-
-    public MultiMCInstancePatch(String name, String version, String gameVersion, String mainClass, String fileId, List<String> tweakers, List<String> jvmArgs, List<Library> _libraries, List<Library> libraries) {
+    public MultiMCInstancePatch(String name, String version, int order, String gameVersion, String mainClass, String fileId, List<String> tweakers, List<String> jvmArgs, List<Library> _libraries, List<Library> libraries) {
         this.name = name;
         this.version = version;
+        this.order = order;
         this.gameVersion = gameVersion;
         this.mainClass = mainClass;
         this.fileId = fileId;
@@ -77,6 +79,10 @@ public final class MultiMCInstancePatch {
         return version;
     }
 
+    public int getOrder() {
+        return order;
+    }
+
     public String getGameVersion() {
         return gameVersion;
     }
@@ -90,15 +96,14 @@ public final class MultiMCInstancePatch {
     }
 
     public List<String> getTweakers() {
-        return Collections.unmodifiableList(tweakers);
+        return tweakers != null ? Collections.unmodifiableList(tweakers) : Collections.emptyList();
     }
 
     public List<String> getJvmArgs() {
-        return jvmArgs;
+        return jvmArgs != null ? Collections.unmodifiableList(jvmArgs) : Collections.emptyList();
     }
 
     public List<Library> getLibraries() {
         return Lang.merge(_libraries, libraries);
     }
-
 }

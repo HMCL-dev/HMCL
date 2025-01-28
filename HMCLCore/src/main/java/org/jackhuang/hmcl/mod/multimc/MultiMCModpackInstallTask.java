@@ -191,7 +191,8 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                                 arguments.add(arg);
                             }
 
-                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments).addJVMArguments(multiMCPatch.getJvmArgs()), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
+                            // 30000: Magic Number. Search 30000 directly in HMCL for more information.
+                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), multiMCPatch.getOrder() + 30000, new Arguments().addGameArguments(arguments).addJVMArguments(multiMCPatch.getJvmArgs()), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
                             version = version.addPatch(patch);
                         }
                     }
