@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -39,10 +40,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author huangyuhui
@@ -191,8 +189,26 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                                 arguments.add(arg);
                             }
 
-                            // 30000: Magic Number. Search 30000 directly in HMCL for more information.
-                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), multiMCPatch.getOrder() + 30000, new Arguments().addGameArguments(arguments).addJVMArguments(multiMCPatch.getJvmArgs()), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
+                            Version patch = new Version(
+                                    multiMCPatch.getName(), multiMCPatch.getVersion(), multiMCPatch.getOrder() + Version.PRIORITY_LOADER,
+                                    new Arguments().addGameArguments(arguments).addJVMArguments(multiMCPatch.getJvmArgs()), multiMCPatch.getMainClass(),
+                                    multiMCPatch.getLibraries()
+                            );
+
+                            int[] majors = multiMCPatch.getJavaMajors();
+                            if (majors != null) {
+                                majors = majors.clone();
+                                Arrays.sort(majors);
+
+                                for (int i = majors.length - 1; i >= 0; i--) {
+                                    GameJavaVersion jv = GameJavaVersion.get(majors[i]);
+                                    if (jv != null) {
+                                        patch.setJavaVersion(jv);
+                                        break;
+                                    }
+                                }
+                            }
+
                             version = version.addPatch(patch);
                         }
                     }

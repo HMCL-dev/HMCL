@@ -36,6 +36,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @Immutable
 public class Version implements Comparable<Version>, Validation {
 
+    /**
+     * Patches with higher priority can override info from other patches, such as mainClass.
+     */
+    public static final int PRIORITY_MC = 0, PRIORITY_LOADER = 30000;
+
     private final String id;
     private final String version;
     private final Integer priority;
@@ -393,6 +398,10 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public Version setMinecraftArguments(String minecraftArguments) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
+    public Version setJavaVersion(GameJavaVersion javaVersion) {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 
