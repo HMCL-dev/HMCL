@@ -210,8 +210,8 @@ public final class JavaDownloadDialog extends StackPane {
             body.setHgap(16);
 
             body.addRow(0, new Label(i18n("java.download.distribution")), distributionBox);
-            body.addRow(1, new Label(i18n("java.download.version")), remoteVersionBox);
-            body.addRow(2, new Label(i18n("java.download.packageType")), packageTypeBox);
+            body.addRow(1, new Label(i18n("java.download.packageType")), packageTypeBox);
+            body.addRow(2, new Label(i18n("java.download.version")), remoteVersionBox);
 
             distributionBox.setItems(FXCollections.observableList(new ArrayList<>(distributions)));
 
