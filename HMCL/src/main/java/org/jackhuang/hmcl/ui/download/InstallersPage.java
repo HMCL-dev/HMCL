@@ -159,7 +159,7 @@ public class InstallersPage extends Control implements WizardPage {
                 java.io.File versionRoot = repository.getVersionRoot(versionName);
                 switch (libraryType) {
                     case FORGE:
-                    case NEOFORGE:
+                    case NEO_FORGE:
                     case FABRIC:
                     case QUILT:
                     case LITELOADER:
