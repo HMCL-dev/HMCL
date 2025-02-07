@@ -164,9 +164,6 @@ public class InstallersPage extends Control implements WizardPage {
                     case LITELOADER:
                         new java.io.File(versionRoot, "mods").mkdirs();
                         break;
-                    case OPTIFINE:
-                        new java.io.File(versionRoot, "shaderpacks").mkdirs();
-                        break;
                 }
             }
         }
