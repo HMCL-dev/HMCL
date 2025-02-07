@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -216,6 +217,7 @@ public final class JavaDownloadDialog extends StackPane {
             distributionBox.setItems(FXCollections.observableList(new ArrayList<>(distributions)));
 
             FXUtils.onChange(packageTypeBox.getSelectionModel().selectedItemProperty(), packageType -> {
+
                 ObservableList<DiscoJavaRemoteVersion> versions;
                 if (packageType == null
                         || currentJavaVersionList.get() == null
@@ -224,7 +226,25 @@ public final class JavaDownloadDialog extends StackPane {
                     return;
                 }
 
+                DiscoJavaRemoteVersion oldVersion = remoteVersionBox.getSelectionModel().getSelectedItem();
                 remoteVersionBox.setItems(versions);
+
+                if (oldVersion != null) {
+                    for (int i = 0; i < versions.size(); i++) {
+                        DiscoJavaRemoteVersion version = versions.get(i);
+                        if (Objects.equals(version.getDistributionVersion(), oldVersion.getDistributionVersion())) {
+                            remoteVersionBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                    for (int i = 0; i < versions.size(); i++) {
+                        DiscoJavaRemoteVersion version = versions.get(i);
+                        if (version.getJdkVersion() == oldVersion.getJdkVersion()) {
+                            remoteVersionBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                }
 
                 for (int i = 0; i < versions.size(); i++) {
                     DiscoJavaRemoteVersion version = versions.get(i);
