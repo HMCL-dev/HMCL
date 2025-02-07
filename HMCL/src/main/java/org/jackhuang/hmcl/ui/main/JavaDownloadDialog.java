@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
