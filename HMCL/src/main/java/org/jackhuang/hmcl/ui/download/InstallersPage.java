@@ -48,6 +48,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InstallersPage extends Control implements WizardPage {
     protected final WizardController controller;
+    private final HMCLGameRepository repository;
 
     protected InstallerItem.InstallerItemGroup group;
     protected JFXTextField txtName = new JFXTextField();
@@ -57,6 +58,7 @@ public class InstallersPage extends Control implements WizardPage {
 
     public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
+        this.repository = repository;
         this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
 
         txtName.getValidators().addAll(
@@ -133,6 +135,7 @@ public class InstallersPage extends Control implements WizardPage {
                     .yesOrNo(() -> {
                         controller.getSettings().put("name", name);
                         controller.onFinish();
+                        createRequiredFolders(name);
                     }, () -> {
                         // The user selects Cancel and does nothing.
                     })
@@ -140,6 +143,32 @@ public class InstallersPage extends Control implements WizardPage {
         } else {
             controller.getSettings().put("name", name);
             controller.onFinish();
+            createRequiredFolders(name);
+        }
+    }
+
+    private void createRequiredFolders(String versionName) {
+        for (InstallerItem library : group.getLibraries()) {
+            String libraryId = library.getLibraryId();
+            if (!controller.getSettings().containsKey(libraryId)) {
+                continue;
+            }
+
+            LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
+            if (libraryType != null) {
+                java.io.File versionRoot = repository.getVersionRoot(versionName);
+                switch (libraryType) {
+                    case FORGE:
+                    case FABRIC:
+                    case QUILT:
+                    case LITELOADER:
+                        new java.io.File(versionRoot, "mods").mkdirs();
+                        break;
+                    case OPTIFINE:
+                        new java.io.File(versionRoot, "shaderpacks").mkdirs();
+                        break;
+                }
+            }
         }
     }
 
