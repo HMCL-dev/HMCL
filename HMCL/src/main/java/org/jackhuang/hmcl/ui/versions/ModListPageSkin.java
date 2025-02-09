@@ -463,11 +463,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            // 配置图标大小
             imageView.setFitWidth(24);
             imageView.setFitHeight(24);
             imageView.setPreserveRatio(true);
-            // 设置默认图标
             imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 24, 24, true, true));
 
             restoreButton.getStyleClass().add("toggle-icon4");
@@ -491,7 +489,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
             
-            // 加载 mod 图标
             if (StringUtils.isNotBlank(dataItem.getModInfo().getLogoPath())) {
                 Task.supplyAsync(() -> {
                     try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dataItem.getModInfo().getFile())) {
@@ -507,12 +504,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     if (stream != null) {
                         imageView.setImage(new Image(stream, 24, 24, true, true));
                     } else {
-                        // 如果无法加载自定义图标，根据模组类型设置默认图标
                         setDefaultModIcon(dataItem.getModInfo().getModLoaderType());
                     }
                 }).start();
             } else {
-                // 没有自定义图标，根据模组类型设置默认图标
                 setDefaultModIcon(dataItem.getModInfo().getModLoaderType());
             }
 
