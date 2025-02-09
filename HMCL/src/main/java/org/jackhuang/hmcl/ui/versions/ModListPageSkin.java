@@ -66,6 +66,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -256,19 +257,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             StringBuilder title = new StringBuilder(localModFile.getName());
             this.title = title.toString();
 
-            StringBuilder message = new StringBuilder(localModFile.getId());
+            List<String> parts = new ArrayList<>();
+            if (isNotBlank(localModFile.getId())) {
+                parts.add(localModFile.getId());
+            }
             if (isNotBlank(localModFile.getVersion())) {
-                if (isNotBlank(localModFile.getId())) {
-                    message.append(", ");
-                }
-                message.append(localModFile.getVersion());
+                parts.add(localModFile.getVersion());
             }
             if (isNotBlank(localModFile.getGameVersion())) {
-                if (isNotBlank(localModFile.getVersion())) {
-                    message.append(", ");
-                }
-                message.append(i18n("game.version")).append(": ").append(localModFile.getGameVersion());
+                parts.add(i18n("game.version") + ": " + localModFile.getGameVersion());
             }
+            String message = String.join(", ", parts);
             this.message = message.toString();
 
             this.mod = ModTranslations.MOD.getModById(localModFile.getId());
@@ -326,7 +325,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
             if (modInfo.getMod() != null) {
-                title.getTags().setAll(modInfo.mod.getModIds());
                 title.getTags().add(modInfo.getMod().getDisplayName());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
@@ -335,9 +333,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
                 title.getTags().add(modInfo.getModInfo().getVersion());
             }
-//            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
-//                title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
-//            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
+                title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
+            }
             title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
