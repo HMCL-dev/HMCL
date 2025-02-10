@@ -108,6 +108,13 @@ public abstract class ParseModDataTask extends DefaultTask {
                 String subName = mod.name.sub;
                 String abbr = mod.name.addr;
 
+                if (chineseName == null)
+                    chineseName = "";
+                if (subName == null)
+                    subName = "";
+                if (abbr == null)
+                    abbr = "";
+
                 if (skip.contains(subName)) {
                     continue;
                 }
@@ -155,7 +162,7 @@ public abstract class ParseModDataTask extends DefaultTask {
 
                 String modIds = String.join(MOD_SEPARATOR, modId);
 
-                writer.write(curseforgeId + S + mcmodId + S + modIds + S + chineseName + S + subName + abbr + "\n");
+                writer.write(curseforgeId + S + mcmodId + S + modIds + S + chineseName + S + subName + S + abbr + "\n");
             }
         }
     }
