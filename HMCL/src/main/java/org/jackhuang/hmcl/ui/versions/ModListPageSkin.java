@@ -272,6 +272,72 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
+    private static Task<Image> loadModIcon(LocalModFile modFile, int size) {
+        return Task.supplyAsync(() -> {
+            if (StringUtils.isNotBlank(modFile.getLogoPath())) {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+                    Path iconPath = fs.getPath(modFile.getLogoPath());
+                    if (Files.exists(iconPath)) {
+                        try (InputStream stream = Files.newInputStream(iconPath)) {
+                            Image image = new Image(stream, size, size, true, true);
+                            if (!image.isError() && image.getWidth() == image.getHeight())
+                                return image;
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to load image " + modFile.getLogoPath(), e);
+                }
+            }
+
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+                List<String> defaultPaths = new ArrayList<>(Arrays.asList(
+                        "icon.png",
+                        "logo.png", 
+                        "mod_logo.png",
+                        "pack.png",
+                        "logoFile.png"
+                ));
+
+                String id = modFile.getId();
+                if (StringUtils.isNotBlank(id)) {
+                    defaultPaths.addAll(Arrays.asList(
+                            "assets/" + id + "/icon.png",
+                            "assets/" + id.replace("-", "") + "/icon.png", 
+                            id + ".png",
+                            id + "-logo.png",
+                            id + "-icon.png",
+                            id + "_logo.png",
+                            id + "_icon.png"
+                    ));
+                }
+
+                for (String path : defaultPaths) {
+                    Path iconPath = fs.getPath(path);
+                    if (Files.exists(iconPath)) {
+                        try (InputStream stream = Files.newInputStream(iconPath)) {
+                            Image image = new Image(stream, size, size, true, true);
+                            if (!image.isError() && image.getWidth() == image.getHeight())
+                                return image;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load icon", e);
+            }
+
+            String iconPath;
+            switch (modFile.getModLoaderType()) {
+                case FORGE: iconPath = "/assets/img/forge.png"; break;
+                case NEO_FORGED: iconPath = "/assets/img/neoforge.png"; break; 
+                case FABRIC: iconPath = "/assets/img/fabric.png"; break;
+                case QUILT: iconPath = "/assets/img/quilt.png"; break;
+                case LITE_LOADER: iconPath = "/assets/img/liteloader.png"; break;
+                default: iconPath = "/assets/img/command.png"; break;
+            }
+            return FXUtils.newBuiltinImage(iconPath, size, size, true, true);
+        });
+    }
+
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
@@ -326,66 +392,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            ImageView imageView = new ImageView();
-            Task.supplyAsync(() -> {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
-                    String logoPath = modInfo.getModInfo().getLogoPath();
-                    if (StringUtils.isNotBlank(logoPath)) {
-                        Path iconPath = fs.getPath(logoPath);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
-                            } catch (Throwable e) {
-                                LOG.warning("Failed to load image " + logoPath, e);
-                            }
-                        }
-                    }
-
-                    List<String> defaultPaths = new ArrayList<>(Arrays.asList(
-                            "icon.png",
-                            "logo.png",
-                            "mod_logo.png",
-                            "pack.png",
-                            "logoFile.png"
-                    ));
-
-                    String id = modInfo.getModInfo().getId();
-                    if (StringUtils.isNotBlank(id)) {
-                        defaultPaths.addAll(Arrays.asList(
-                                "assets/" + id + "/icon.png",
-                                "assets/" + id.replace("-", "") + "/icon.png",
-                                id + ".png",
-                                id + "-logo.png",
-                                id + "-icon.png",
-                                id + "_logo.png",
-                                id + "_icon.png"
-                        ));
-                    }
-
-                    for (String path : defaultPaths) {
-                        Path iconPath = fs.getPath(path);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Failed to load icon", e);
-                }
-
-                return null;
-            }).whenComplete(Schedulers.javafx(), (image, exception) -> {
-                if (image != null) {
+            ImageView imageView = new ImageView(); 
+            loadModIcon(modInfo.getModInfo(), 40)
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
                     imageView.setImage(image);
-                } else {
-                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
-                }
-            }).start();
+                }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
@@ -502,6 +513,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
+        ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
@@ -518,6 +530,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
+            imageView.setFitWidth(24);
+            imageView.setFitHeight(24);
+            imageView.setPreserveRatio(true);
+            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 24, 24, true, true));
+
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
 
@@ -529,7 +546,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.INFORMATION_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -538,6 +555,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
+  
+            loadModIcon(dataItem.getModInfo(), 24)
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
+                    imageView.setImage(image);
+                }).start();
+            
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
             switch (dataItem.getModInfo().getModLoaderType()) {
