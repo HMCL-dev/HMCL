@@ -1,13 +1,3 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("com.google.code.gson:gson:2.11.0")
-    }
-}
-
 val jfxVersion = "17.0.13"
 val oldJfxVersion = "19.0.2.1"
 
