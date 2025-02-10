@@ -106,7 +106,7 @@ public abstract class ParseModDataTask extends DefaultTask {
             for (ModData mod : modDatas) {
                 String chineseName = mod.name.main;
                 String subName = mod.name.sub;
-                String abbr = mod.name.addr;
+                String abbr = mod.name.abbr;
 
                 if (chineseName == null)
                     chineseName = "";
@@ -179,7 +179,7 @@ public abstract class ParseModDataTask extends DefaultTask {
         public static final class Name {
             public String main;
             public String sub;
-            public String addr;
+            public String abbr;
         }
 
         public static final class Link {
