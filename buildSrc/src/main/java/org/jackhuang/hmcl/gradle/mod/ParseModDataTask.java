@@ -67,7 +67,7 @@ public abstract class ParseModDataTask extends DefaultTask {
     }
 
     private static final Pattern MCMOD_PATTERN =
-            Pattern.compile("^http(s)?://www\\.mcmod\\.cn/(class|modpack)/(?<modid>\\d+)\\.html$");
+            Pattern.compile("^https://www\\.mcmod\\.cn/(class|modpack)/(?<modid>\\d+)\\.html$");
 
     private static String parseMcMod(String url) {
         Matcher matcher = MCMOD_PATTERN.matcher(url);
