@@ -446,7 +446,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
@@ -463,11 +462,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageView.setFitWidth(24);
-            imageView.setFitHeight(24);
-            imageView.setPreserveRatio(true);
-            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 24, 24, true, true));
-
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
 
@@ -479,7 +473,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.INFORMATION_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -488,29 +482,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
-            
-            if (StringUtils.isNotBlank(dataItem.getModInfo().getLogoPath())) {
-                Task.supplyAsync(() -> {
-                    try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dataItem.getModInfo().getFile())) {
-                        Path iconPath = fs.getPath(dataItem.getModInfo().getLogoPath());
-                        if (Files.exists(iconPath)) {
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            Files.copy(iconPath, stream);
-                            return new ByteArrayInputStream(stream.toByteArray());
-                        }
-                    }
-                    return null;
-                }).whenComplete(Schedulers.javafx(), (stream, exception) -> {
-                    if (stream != null) {
-                        imageView.setImage(new Image(stream, 24, 24, true, true));
-                    } else {
-                        setDefaultModIcon(dataItem.getModInfo().getModLoaderType());
-                    }
-                }).start();
-            } else {
-                setDefaultModIcon(dataItem.getModInfo().getModLoaderType());
-            }
-
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
             switch (dataItem.getModInfo().getModLoaderType()) {
@@ -560,31 +531,6 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.setOnMouseClicked(e -> {
                 Controllers.dialog(new ModInfoDialog(dataItem));
             });
-        }
-
-        private void setDefaultModIcon(ModLoaderType modLoaderType) {
-            String iconPath;
-            switch (modLoaderType) {
-                case FORGE:
-                    iconPath = "/assets/img/forge.png";
-                    break;
-                case NEO_FORGED:
-                    iconPath = "/assets/img/neoforge.png";
-                    break;
-                case FABRIC:
-                    iconPath = "/assets/img/fabric.png";
-                    break;
-                case QUILT:
-                    iconPath = "/assets/img/quilt.png";
-                    break;
-                case LITE_LOADER:
-                    iconPath = "/assets/img/liteloader.png";
-                    break;
-                default:
-                    iconPath = "/assets/img/command.png";
-                    break;
-            }
-            imageView.setImage(FXUtils.newBuiltinImage(iconPath, 24, 24, true, true));
         }
     }
 }
