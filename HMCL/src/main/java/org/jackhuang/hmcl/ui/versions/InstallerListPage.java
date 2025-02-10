@@ -79,6 +79,12 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
             // Conventional libraries: game, fabric, forge, neoforge, liteloader, optifine
             for (InstallerItem item : group.getLibraries()) {
                 String libraryId = item.getLibraryId();
+
+                // Skip fabric-api and quilt-api
+                if (libraryId.contains("fabric-api") || libraryId.contains("quilt-api")) {
+                    continue;
+                }
+
                 String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
 
                 if (libraryVersion != null) {
@@ -91,11 +97,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                     item.versionProperty().set(null);
                 }
 
-                item.installActionProperty().set(e -> {
+                item.setOnInstall(() -> {
                     Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
                 });
 
-                item.removeActionProperty().set(e -> profile.getDependency().removeLibraryAsync(version, libraryId)
+                item.setOnRemove(() -> profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::saveAsync)
                         .withComposeAsync(profile.getRepository().refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))
@@ -115,7 +121,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
                 InstallerItem installerItem = new InstallerItem(libraryId, InstallerItem.Style.LIST_ITEM);
                 installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
-                installerItem.removeActionProperty().set(e -> profile.getDependency().removeLibraryAsync(version, libraryId)
+                installerItem.setOnRemove(() -> profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::saveAsync)
                         .withComposeAsync(profile.getRepository().refreshVersionsAsync())
                         .withRunAsync(Schedulers.javafx(), () -> loadVersion(this.profile, this.versionId))

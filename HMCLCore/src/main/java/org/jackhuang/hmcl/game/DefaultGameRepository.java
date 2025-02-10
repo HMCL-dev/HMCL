@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.event.*;
@@ -499,18 +498,16 @@ public class DefaultGameRepository implements GameRepository {
      * read modpack configuration for a version.
      *
      * @param version version installed as modpack
-     * @param <M>     manifest type of ModpackConfiguration
      * @return modpack configuration object, or null if this version is not a modpack.
      * @throws VersionNotFoundException if version does not exist.
      * @throws IOException              if an i/o error occurs.
      */
     @Nullable
-    public <M> ModpackConfiguration<M> readModpackConfiguration(String version) throws IOException, VersionNotFoundException {
+    public ModpackConfiguration<?> readModpackConfiguration(String version) throws IOException, VersionNotFoundException {
         if (!hasVersion(version)) throw new VersionNotFoundException(version);
         File file = getModpackConfiguration(version);
         if (!file.exists()) return null;
-        return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<M>>() {
-        }.getType());
+        return JsonUtils.GSON.fromJson(FileUtils.readText(file), ModpackConfiguration.class);
     }
 
     public boolean isModpack(String version) {

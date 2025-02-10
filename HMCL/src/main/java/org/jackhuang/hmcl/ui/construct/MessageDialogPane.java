@@ -166,6 +166,16 @@ public final class MessageDialogPane extends HBox {
             return this;
         }
 
+        public Builder addAction(String text, @Nullable Runnable action) {
+            JFXButton btnAction = new JFXButton(text);
+            btnAction.getStyleClass().add("dialog-accept");
+            if (action != null) {
+                btnAction.setOnAction(e -> action.run());
+            }
+            dialog.addButton(btnAction);
+            return this;
+        }
+
         public Builder ok(@Nullable Runnable ok) {
             JFXButton btnOk = new JFXButton(i18n("button.ok"));
             btnOk.getStyleClass().add("dialog-accept");
