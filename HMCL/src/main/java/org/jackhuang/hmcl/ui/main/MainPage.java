@@ -116,9 +116,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     content = i18n("update.channel.nightly.hint");
                 } else {
                     title = i18n("update.channel.dev.title");
-                    content = i18n("update.channel.dev.hint")
+                    content = i18n("update.channel.dev.hint");
                 }
-
 
                 announcementCard = new VBox();
 
