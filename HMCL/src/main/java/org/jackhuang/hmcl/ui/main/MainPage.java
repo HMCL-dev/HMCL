@@ -104,13 +104,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         setPadding(new Insets(20));
 
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
-            VBox announcementCard = null;
-
             if (Metadata.isNightly() || Metadata.isDev()) {
-
                 String title;
                 String content;
-
                 if (Metadata.isNightly()) {
                     title = i18n("update.channel.nightly.title");
                     content = i18n("update.channel.nightly.hint");
@@ -119,7 +115,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     content = i18n("update.channel.dev.hint");
                 }
 
-                announcementCard = new VBox();
+                VBox announcementCard  = new VBox();
 
                 BorderPane titleBar = new BorderPane();
                 titleBar.getStyleClass().add("title");
@@ -144,9 +140,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 announcementCard.getChildren().setAll(titleBar, body);
                 announcementCard.setSpacing(16);
                 announcementCard.getStyleClass().addAll("card", "announcement");
-            }
 
-            if (announcementCard != null) {
                 VBox announcementBox = new VBox(16);
                 announcementBox.getChildren().add(announcementCard);
 
