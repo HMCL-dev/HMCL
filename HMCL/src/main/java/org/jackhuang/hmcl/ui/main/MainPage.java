@@ -104,51 +104,49 @@ public final class MainPage extends StackPane implements DecoratorPage {
         setPadding(new Insets(20));
 
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
-            if (Metadata.isNightly() || Metadata.isDev()) {
-                String title;
-                String content;
-                if (Metadata.isNightly()) {
-                    title = i18n("update.channel.nightly.title");
-                    content = i18n("update.channel.nightly.hint");
-                } else {
-                    title = i18n("update.channel.dev.title");
-                    content = i18n("update.channel.dev.hint");
-                }
-
-                VBox announcementCard  = new VBox();
-
-                BorderPane titleBar = new BorderPane();
-                titleBar.getStyleClass().add("title");
-                titleBar.setLeft(new Label(title));
-
-                Node hideNode = SVG.CLOSE.createIcon(Theme.blackFill(), 20, 20);
-                hideNode.setCursor(Cursor.HAND);
-                titleBar.setRight(hideNode);
-                FXUtils.onClicked(hideNode, () -> {
-                    if (announcementPane != null) {
-                        if (Metadata.isDev()) {
-                            config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
-                        }
-
-                        announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
-                    }
-                });
-
-                TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
-                body.setLineSpacing(4);
-
-                announcementCard.getChildren().setAll(titleBar, body);
-                announcementCard.setSpacing(16);
-                announcementCard.getStyleClass().addAll("card", "announcement");
-
-                VBox announcementBox = new VBox(16);
-                announcementBox.getChildren().add(announcementCard);
-
-                announcementPane = new TransitionPane();
-                announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
-
-                getChildren().add(announcementPane);
+            String title;
+            String content;
+            if (Metadata.isNightly()) {
+                title = i18n("update.channel.nightly.title");
+                content = i18n("update.channel.nightly.hint");
+            } else {
+                title = i18n("update.channel.dev.title");
+                content = i18n("update.channel.dev.hint");
             }
+
+            VBox announcementCard = new VBox();
+
+            BorderPane titleBar = new BorderPane();
+            titleBar.getStyleClass().add("title");
+            titleBar.setLeft(new Label(title));
+
+            Node hideNode = SVG.CLOSE.createIcon(Theme.blackFill(), 20, 20);
+            hideNode.setCursor(Cursor.HAND);
+            titleBar.setRight(hideNode);
+            FXUtils.onClicked(hideNode, () -> {
+                if (announcementPane != null) {
+                    if (Metadata.isDev()) {
+                        config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
+                    }
+
+                    announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
+                }
+            });
+
+            TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
+            body.setLineSpacing(4);
+
+            announcementCard.getChildren().setAll(titleBar, body);
+            announcementCard.setSpacing(16);
+            announcementCard.getStyleClass().addAll("card", "announcement");
+
+            VBox announcementBox = new VBox(16);
+            announcementBox.getChildren().add(announcementCard);
+
+            announcementPane = new TransitionPane();
+            announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
+
+            getChildren().add(announcementPane);
         }
 
         updatePane = new StackPane();
