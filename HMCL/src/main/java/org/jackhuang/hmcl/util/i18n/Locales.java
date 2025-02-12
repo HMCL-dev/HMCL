@@ -37,7 +37,7 @@ public final class Locales {
     /**
      * English
      */
-    public static final SupportedLocale EN = new SupportedLocale(Locale.US);
+    public static final SupportedLocale EN = new SupportedLocale(Locale.ENGLISH);
 
     /**
      * Spanish
