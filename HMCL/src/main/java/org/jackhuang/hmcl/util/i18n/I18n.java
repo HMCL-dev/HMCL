@@ -77,7 +77,7 @@ public final class I18n {
     public static String formatDateTime(Instant instant) {
         DateTimeFormatter formatter = dateTimeFormatter;
         if (formatter == null) {
-            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("world.time")).withZone(ZoneId.systemDefault());
+            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format")).withZone(ZoneId.systemDefault());
         }
 
         return formatter.format(instant);
