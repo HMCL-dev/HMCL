@@ -17,18 +17,35 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -62,20 +79,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.logging.Level;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -252,7 +255,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             String[] headers = {
                     "File Name", "Name", "ID", "Version", "Mod Loader", "URL", "Authors",
                     "Logo Path", "Display Name", "Abbr", "Mcmod", "Subname", "Curseforge",
-                    "Status", "File Path", "File SHA-1"
+                    "Status", "File Path", "File SHA-1", "Remote Loader Types", "CurseForge ID", "Modrinth ID"
             };
 
             for (int j = 0; j < headers.length; j++) {
@@ -260,27 +263,32 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             List<CompletableFuture<String>> sha1Futures = new ArrayList<>();
+            List<CompletableFuture<List<ModLoaderType>>> loaderTypeFutures = new ArrayList<>();
+            List<CompletableFuture<String>> curseforgeIdFutures = new ArrayList<>();  
+            List<CompletableFuture<String>> modrinthIdFutures = new ArrayList<>();
             List<ModInfoObject> modInfoList = listView.getItems();
 
             for (int i = 0; i < modInfoList.size(); i++) {
                 ModInfoObject modInfo = modInfoList.get(i);
-                csvTable.set(0, i + 1, FileUtils.getName(modInfo.getModInfo().getFile()));
-                csvTable.set(1, i + 1, modInfo.getModInfo().getName());
-                csvTable.set(2, i + 1, modInfo.getModInfo().getId());
-                csvTable.set(3, i + 1, modInfo.getModInfo().getVersion());
-                csvTable.set(4, i + 1, modInfo.getModInfo().getModLoaderType().name());
-                csvTable.set(5, i + 1, modInfo.getModInfo().getUrl());
-                csvTable.set(6, i + 1, modInfo.getModInfo().getAuthors());
-                csvTable.set(7, i + 1, modInfo.getModInfo().getLogoPath());
+                int row = i + 1;
+                
+                csvTable.set(0, row, FileUtils.getName(modInfo.getModInfo().getFile()));
+                csvTable.set(1, row, modInfo.getModInfo().getName());
+                csvTable.set(2, row, modInfo.getModInfo().getId());
+                csvTable.set(3, row, modInfo.getModInfo().getVersion());
+                csvTable.set(4, row, modInfo.getModInfo().getModLoaderType().name());
+                csvTable.set(5, row, modInfo.getModInfo().getUrl());
+                csvTable.set(6, row, modInfo.getModInfo().getAuthors());
+                csvTable.set(7, row, modInfo.getModInfo().getLogoPath());
                 if (modInfo.getMod() != null) {
-                    csvTable.set(8, i + 1, modInfo.getMod().getDisplayName());
-                    csvTable.set(9, i + 1, modInfo.getMod().getAbbr());
-                    csvTable.set(10, i + 1, modInfo.getMod().getMcmod());
-                    csvTable.set(11, i + 1, modInfo.getMod().getSubname());
-                    csvTable.set(12, i + 1, modInfo.getMod().getCurseforge());
+                    csvTable.set(8, row, modInfo.getMod().getDisplayName());
+                    csvTable.set(9, row, modInfo.getMod().getAbbr());
+                    csvTable.set(10, row, modInfo.getMod().getMcmod());
+                    csvTable.set(11, row, modInfo.getMod().getSubname());
+                    csvTable.set(12, row, modInfo.getMod().getCurseforge());
                 }
-                csvTable.set(13, i + 1, modInfo.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
-                csvTable.set(14, i + 1, modInfo.getModInfo().getFile().toString());
+                csvTable.set(13, row, modInfo.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
+                csvTable.set(14, row, modInfo.getModInfo().getFile().toString());
 
                 sha1Futures.add(CompletableFuture.supplyAsync(() -> {
                     try {
@@ -290,14 +298,74 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         return "";
                     }
                 }));
+
+                loaderTypeFutures.add(CompletableFuture.supplyAsync(() -> {
+                    Set<ModLoaderType> loaderTypes = new LinkedHashSet<>();
+                    
+                    try {
+                        CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
+                                .ifPresent(version -> loaderTypes.addAll(version.getLoaders()));
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge loader types", e);
+                    }
+                    
+                    try {
+                        ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
+                                .ifPresent(version -> loaderTypes.addAll(version.getLoaders()));
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth loader types", e);
+                    }
+                    
+                    return new ArrayList<>(loaderTypes);
+                }));
+
+                curseforgeIdFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
+                                .map(version -> version.getModid())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge ID", e);
+                        return "";
+                    }
+                }));
+
+                modrinthIdFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
+                                .map(version -> version.getModid())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth ID", e);
+                        return "";
+                    }
+                }));
             }
 
             List<String> sha1Results = sha1Futures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            for (int i = 0; i < sha1Results.size(); i++) {
-                csvTable.set(15, i + 1, sha1Results.get(i));
+            List<List<ModLoaderType>> loaderResults = loaderTypeFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            List<String> curseforgeResults = curseforgeIdFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            List<String> modrinthResults = modrinthIdFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            for (int i = 0; i < modInfoList.size(); i++) {
+                int row = i + 1;
+                csvTable.set(15, row, sha1Results.get(i));
+                csvTable.set(16, row, loaderResults.get(i).stream()
+                        .map(ModLoaderType::name)
+                        .collect(Collectors.joining(",")));
+                csvTable.set(17, row, curseforgeResults.get(i));
+                csvTable.set(18, row, modrinthResults.get(i));
             }
 
             try (OutputStream os = Files.newOutputStream(path)) {
