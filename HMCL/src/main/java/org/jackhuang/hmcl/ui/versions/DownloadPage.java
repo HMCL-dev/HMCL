@@ -55,9 +55,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -388,7 +385,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.getName());
-                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
+                    content.setSubtitle(I18n.formatDateTime(dataItem.getDatePublished()));
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
@@ -527,8 +524,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
     }
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     public interface DownloadCallback {
         void download(Profile profile, @Nullable String version, RemoteMod.Version file);
