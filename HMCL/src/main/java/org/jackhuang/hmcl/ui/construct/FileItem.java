@@ -60,7 +60,7 @@ public class FileItem extends BorderPane {
         JFXButton right = new JFXButton();
         right.setGraphic(SVG.PENCIL.createIcon(Theme.blackFill(), 15, 15));
         right.getStyleClass().add("toggle-icon4");
-        right.setOnMouseClicked(e -> onExplore());
+        right.setOnAction(e -> onExplore());
         FXUtils.installFastTooltip(right, i18n("button.edit"));
         setRight(right);
 

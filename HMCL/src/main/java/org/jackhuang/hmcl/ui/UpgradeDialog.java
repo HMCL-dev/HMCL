@@ -19,58 +19,76 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import javafx.concurrent.Worker;
 import javafx.scene.control.Label;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
-import org.jackhuang.hmcl.Metadata;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.ScrollPane;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
+import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Node;
 
+import java.io.IOException;
+import java.net.URL;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class UpgradeDialog extends JFXDialogLayout {
+public final class UpgradeDialog extends JFXDialogLayout {
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
-        {
-            setHeading(new Label(i18n("update.changelog")));
-        }
+        maxWidthProperty().bind(Controllers.getScene().widthProperty().multiply(0.7));
+        maxHeightProperty().bind(Controllers.getScene().heightProperty().multiply(0.7));
 
-        {
-            String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html#nowchange";
-            try {
-                WebView webView = new WebView();
-                webView.getEngine().setUserDataDirectory(Metadata.HMCL_DIRECTORY.toFile());
-                WebEngine engine = webView.getEngine();
-                engine.load(url);
-                engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue == Worker.State.FAILED) {
-                        LOG.warning("Failed to load update log, trying to open it in browser");
-                        FXUtils.openLink(url);
-                        setBody();
-                    }
-                });
-                setBody(webView);
-            } catch (NoClassDefFoundError | UnsatisfiedLinkError e) {
-                LOG.warning("WebView is missing or initialization failed", e);
+        setHeading(new Label(i18n("update.changelog")));
+        setBody(new ProgressIndicator());
+
+        String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
+        Task.supplyAsync(Schedulers.io(), () -> {
+            Document document = Jsoup.parse(new URL(url), 30 * 1000);
+            Node node = document.selectFirst("#nowchange");
+            if (node == null)
+                throw new IOException("Cannot find #nowchange in document");
+
+            HTMLRenderer renderer = new HTMLRenderer(uri -> {
+                LOG.info("Open link: " + uri);
+                FXUtils.openLink(uri.toString());
+            });
+
+            do {
+                renderer.appendNode(node);
+                node = node.nextSibling();
+            } while (node != null);
+
+            return renderer.render();
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                ScrollPane scrollPane = new ScrollPane(result);
+                scrollPane.setFitToWidth(true);
+                setBody(scrollPane);
+            } else {
+                LOG.warning("Failed to load update log, trying to open it in browser");
                 FXUtils.openLink(url);
+                setBody();
             }
-        }
+        }).start();
 
-        {
-            JFXButton updateButton = new JFXButton(i18n("update.accept"));
-            updateButton.getStyleClass().add("dialog-accept");
-            updateButton.setOnMouseClicked(e -> updateRunnable.run());
+        JFXHyperlink openInBrowser = new JFXHyperlink(i18n("web.view_in_browser"));
+        openInBrowser.setExternalLink(url);
 
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-            cancelButton.getStyleClass().add("dialog-cancel");
-            cancelButton.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+        JFXButton updateButton = new JFXButton(i18n("update.accept"));
+        updateButton.getStyleClass().add("dialog-accept");
+        updateButton.setOnAction(e -> updateRunnable.run());
 
-            setActions(updateButton, cancelButton);
-            onEscPressed(this, cancelButton::fire);
-        }
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.getStyleClass().add("dialog-cancel");
+        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+        setActions(openInBrowser, updateButton, cancelButton);
+        onEscPressed(this, cancelButton::fire);
     }
 }

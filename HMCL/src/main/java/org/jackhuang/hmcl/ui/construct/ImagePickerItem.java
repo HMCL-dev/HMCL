@@ -23,12 +23,12 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -44,8 +44,8 @@ public final class ImagePickerItem extends BorderPane {
     private final ImageView imageView;
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final ObjectProperty<EventHandler<? super MouseEvent>> onSelectButtonClicked = new SimpleObjectProperty<>(this, "onSelectButtonClicked");
-    private final ObjectProperty<EventHandler<? super MouseEvent>> onDeleteButtonClicked = new SimpleObjectProperty<>(this, "onDeleteButtonClicked");
+    private final ObjectProperty<EventHandler<ActionEvent>> onSelectButtonClicked = new SimpleObjectProperty<>(this, "onSelectButtonClicked");
+    private final ObjectProperty<EventHandler<ActionEvent>> onDeleteButtonClicked = new SimpleObjectProperty<>(this, "onDeleteButtonClicked");
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
 
     public ImagePickerItem() {
@@ -55,12 +55,12 @@ public final class ImagePickerItem extends BorderPane {
 
         JFXButton selectButton = new JFXButton();
         selectButton.setGraphic(SVG.PENCIL.createIcon(Theme.blackFill(), 20, 20));
-        selectButton.onMouseClickedProperty().bind(onSelectButtonClicked);
+        selectButton.onActionProperty().bind(onSelectButtonClicked);
         selectButton.getStyleClass().add("toggle-icon4");
 
         JFXButton deleteButton = new JFXButton();
         deleteButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 20, 20));
-        deleteButton.onMouseClickedProperty().bind(onDeleteButtonClicked);
+        deleteButton.onActionProperty().bind(onDeleteButtonClicked);
         deleteButton.getStyleClass().add("toggle-icon4");
 
         FXUtils.installFastTooltip(selectButton, i18n("button.edit"));
@@ -93,27 +93,27 @@ public final class ImagePickerItem extends BorderPane {
         this.title.set(title);
     }
 
-    public EventHandler<? super MouseEvent> getOnSelectButtonClicked() {
+    public EventHandler<ActionEvent> getOnSelectButtonClicked() {
         return onSelectButtonClicked.get();
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> onSelectButtonClickedProperty() {
+    public ObjectProperty<EventHandler<ActionEvent>> onSelectButtonClickedProperty() {
         return onSelectButtonClicked;
     }
 
-    public void setOnSelectButtonClicked(EventHandler<? super MouseEvent> onSelectButtonClicked) {
+    public void setOnSelectButtonClicked(EventHandler<ActionEvent> onSelectButtonClicked) {
         this.onSelectButtonClicked.set(onSelectButtonClicked);
     }
 
-    public EventHandler<? super MouseEvent> getOnDeleteButtonClicked() {
+    public EventHandler<ActionEvent> getOnDeleteButtonClicked() {
         return onDeleteButtonClicked.get();
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> onDeleteButtonClickedProperty() {
+    public ObjectProperty<EventHandler<ActionEvent>> onDeleteButtonClickedProperty() {
         return onDeleteButtonClicked;
     }
 
-    public void setOnDeleteButtonClicked(EventHandler<? super MouseEvent> onDeleteButtonClicked) {
+    public void setOnDeleteButtonClicked(EventHandler<ActionEvent> onDeleteButtonClicked) {
         this.onDeleteButtonClicked.set(onDeleteButtonClicked);
     }
 

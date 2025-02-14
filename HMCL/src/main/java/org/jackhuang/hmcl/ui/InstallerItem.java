@@ -23,7 +23,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.PseudoClass;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -33,7 +32,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.Theme;
@@ -60,8 +59,8 @@ public class InstallerItem extends Control {
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
 
-    private final ObjectProperty<EventHandler<? super MouseEvent>> installActionProperty = new SimpleObjectProperty<>(this, "installAction");
-    private final ObjectProperty<EventHandler<? super MouseEvent>> removeActionProperty = new SimpleObjectProperty<>(this, "removeAction");
+    private final ObjectProperty<Runnable> onInstall = new SimpleObjectProperty<>(this, "onInstall");
+    private final ObjectProperty<Runnable> onRemove = new SimpleObjectProperty<>(this, "onRemove");
 
     public interface State {
     }
@@ -170,12 +169,28 @@ public class InstallerItem extends Control {
         return resolvedStateProperty;
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> installActionProperty() {
-        return installActionProperty;
+    public ObjectProperty<Runnable> onInstallProperty() {
+        return onInstall;
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> removeActionProperty() {
-        return removeActionProperty;
+    public Runnable getOnInstall() {
+        return onInstall.get();
+    }
+
+    public void setOnInstall(Runnable onInstall) {
+        this.onInstall.set(onInstall);
+    }
+
+    public ObjectProperty<Runnable> onRemoveProperty() {
+        return onRemove;
+    }
+
+    public Runnable getOnRemove() {
+        return onRemove.get();
+    }
+
+    public void setOnRemove(Runnable onRemove) {
+        this.onRemove.set(onRemove);
     }
 
     @Override
@@ -371,7 +386,11 @@ public class InstallerItem extends Control {
                 removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> control.resolvedStateProperty.get() instanceof InstalledState, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());
-            removeButton.onMouseClickedProperty().bind(control.removeActionProperty);
+            removeButton.setOnAction(e -> {
+                Runnable onRemove = control.getOnRemove();
+                if (onRemove != null)
+                    onRemove.run();
+            });
             buttonsContainer.getChildren().add(removeButton);
 
             JFXButton installButton = new JFXButton();
@@ -383,7 +402,7 @@ public class InstallerItem extends Control {
             ));
             installButton.getStyleClass().add("toggle-icon4");
             installButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
-                if (control.installActionProperty.get() == null) {
+                if (control.getOnInstall() == null) {
                     return false;
                 }
 
@@ -396,18 +415,27 @@ public class InstallerItem extends Control {
                 }
 
                 return false;
-            }, control.resolvedStateProperty, control.installActionProperty));
+            }, control.resolvedStateProperty, control.onInstall));
             installButton.managedProperty().bind(installButton.visibleProperty());
-            installButton.onMouseClickedProperty().bind(control.installActionProperty);
+            installButton.setOnAction(e -> {
+                Runnable onInstall = control.getOnInstall();
+                if (onInstall != null)
+                    onInstall.run();
+            });
             buttonsContainer.getChildren().add(installButton);
 
             FXUtils.onChangeAndOperate(installButton.visibleProperty(), clickable -> {
                 if (clickable) {
-                    container.onMouseClickedProperty().bind(control.installActionProperty);
+                    container.setOnMouseClicked(event -> {
+                        Runnable onInstall = control.getOnInstall();
+                        if (onInstall != null && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                            onInstall.run();
+                            event.consume();
+                        }
+                    });
                     pane.setCursor(Cursor.HAND);
                 } else {
-                    container.onMouseClickedProperty().unbind();
-                    container.onMouseClickedProperty().set(null);
+                    container.setOnMouseClicked(null);
                     pane.setCursor(Cursor.DEFAULT);
                 }
             });

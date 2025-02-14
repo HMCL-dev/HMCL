@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lazy;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
@@ -79,33 +78,33 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         right.setAlignment(Pos.CENTER_RIGHT);
         if (skinnable.canUpdate()) {
             JFXButton btnUpgrade = new JFXButton();
-            btnUpgrade.setOnMouseClicked(e -> skinnable.update());
+            btnUpgrade.setOnAction(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
             btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
-            runInFX(() -> FXUtils.installFastTooltip(btnUpgrade, i18n("version.update")));
+            FXUtils.installFastTooltip(btnUpgrade, i18n("version.update"));
             right.getChildren().add(btnUpgrade);
         }
 
         {
             JFXButton btnLaunch = new JFXButton();
-            btnLaunch.setOnMouseClicked(e -> skinnable.launch());
+            btnLaunch.setOnAction(e -> skinnable.launch());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
             btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
-            runInFX(() -> FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test")));
+            FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
         }
 
         {
             JFXButton btnManage = new JFXButton();
-            btnManage.setOnMouseClicked(e -> {
+            btnManage.setOnAction(e -> {
                 currentSkinnable = skinnable;
                 popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
             btnManage.setGraphic(FXUtils.limitingSize(SVG.DOTS_VERTICAL.createIcon(Theme.blackFill(), 24, 24), 24, 24));
-            runInFX(() -> FXUtils.installFastTooltip(btnManage, i18n("settings.game.management")));
+            FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }
 
