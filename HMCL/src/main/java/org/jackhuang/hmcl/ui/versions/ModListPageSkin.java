@@ -369,15 +369,19 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             this.active = localModFile.activeProperty();
 
             StringBuilder title = new StringBuilder(localModFile.getName());
-            if (isNotBlank(localModFile.getVersion()))
-                title.append(" ").append(localModFile.getVersion());
             this.title = title.toString();
 
-            StringBuilder message = new StringBuilder(localModFile.getFileName());
-            if (isNotBlank(localModFile.getGameVersion()))
-                message.append(", ").append(i18n("game.version")).append(": ").append(localModFile.getGameVersion());
-            if (isNotBlank(localModFile.getAuthors()))
-                message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
+            List<String> parts = new ArrayList<>();
+            if (isNotBlank(localModFile.getId())) {
+                parts.add(localModFile.getId());
+            }
+            if (isNotBlank(localModFile.getVersion())) {
+                parts.add(localModFile.getVersion());
+            }
+            if (isNotBlank(localModFile.getGameVersion())) {
+                parts.add(i18n("game.version") + ": " + localModFile.getGameVersion());
+            }
+            String message = String.join(", ", parts);
             this.message = message.toString();
 
             this.mod = ModTranslations.MOD.getModById(localModFile.getId());
@@ -474,8 +478,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
+            if (modInfo.getMod() != null) {
+                title.getTags().add(modInfo.getMod().getDisplayName());
+            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
+                title.getTags().add(i18n("game.version") + ": " + modInfo.getModInfo().getGameVersion());
+            }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                title.getTags().setAll(modInfo.getModInfo().getVersion());
+                title.getTags().add(modInfo.getModInfo().getVersion());
+            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
+                title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
             title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
 
@@ -643,9 +656,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     break;
             }
             if (dataItem.getMod() != null && I18n.isUseChinese()) {
-                content.getTags().add(dataItem.getMod().getDisplayName());
+                if (isNotBlank(dataItem.getSubtitle())) {
+                    content.setSubtitle(dataItem.getSubtitle() + ", " + dataItem.getMod().getDisplayName());
+                } else {
+                    content.setSubtitle(dataItem.getMod().getDisplayName());
+                }
+            } else {
+                content.setSubtitle(dataItem.getSubtitle());
             }
-            content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
