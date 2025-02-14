@@ -254,8 +254,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         Controllers.taskDialog(Task.runAsync(() -> {
             CSVTable csvTable = CSVTable.createEmpty();
 
-            String[] headers = {
-                    "fileName", "name", "modID", "version", "modLoader", "homePageURL", "authors", "logoPath", "displayName", "abbr", "mcmodID", "subName", "Curseforge", "status", "path", "SHA-1", "remoteLoaderTypes", "remoteCurseForgeID", "remoteModrinthID"
+            String[] headers = {"fileName", "name", "modID", "version", "modLoader", "homePageURL", "authors", "logoPath", "displayName", "abbr", "mcmodID", "subName", "Curseforge", "status", "path", "SHA-1", "remoteLoaderTypes", "remoteCurseForgeID", "remoteModrinthID", "CurseForgeFileFingerprints"
             };
 
             for (int j = 0; j < headers.length; j++) {
@@ -266,6 +265,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             List<CompletableFuture<List<ModLoaderType>>> loaderTypeFutures = new ArrayList<>();
             List<CompletableFuture<String>> curseforgeIdFutures = new ArrayList<>();  
             List<CompletableFuture<String>> modrinthIdFutures = new ArrayList<>();
+            List<CompletableFuture<Long>> murmurHashFutures = new ArrayList<>();
             List<ModInfoObject> modInfoList = listView.getItems();
 
             for (int i = 0; i < modInfoList.size(); i++) {
@@ -340,6 +340,16 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         return "";
                     }
                 }));
+
+                murmurHashFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        byte[] bytes = Files.readAllBytes(modInfo.getModInfo().getFile());
+                        return Integer.toUnsignedLong(MurmurHash2.hash32(bytes, bytes.length, 1));
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to calculate MurmurHash2", e);
+                        return 0L;
+                    }
+                }));
             }
 
             List<String> sha1Results = sha1Futures.stream()
@@ -358,6 +368,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
+            List<Long> murmurHashResults = murmurHashFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
             for (int i = 0; i < modInfoList.size(); i++) {
                 int row = i + 1;
                 csvTable.set(15, row, sha1Results.get(i));
@@ -366,6 +380,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         .collect(Collectors.joining(",")));
                 csvTable.set(17, row, curseforgeResults.get(i));
                 csvTable.set(18, row, modrinthResults.get(i));
+                csvTable.set(19, row, String.valueOf(murmurHashResults.get(i)));
             }
 
             try (OutputStream os = Files.newOutputStream(path)) {
