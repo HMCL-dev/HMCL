@@ -253,9 +253,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             CSVTable csvTable = CSVTable.createEmpty();
 
             String[] headers = {
-                    "File Name", "Name", "ID", "Version", "Mod Loader", "URL", "Authors",
-                    "Logo Path", "Display Name", "Abbr", "Mcmod", "Subname", "Curseforge",
-                    "Status", "File Path", "File SHA-1", "Remote Loader Types", "CurseForge ID", "Modrinth ID"
+                    "fileName", "name", "modID", "version", "modLoader", "homePageURL", "authors", "logoPath", "displayName", "abbr", "mcmodID", "subName", "Curseforge", "status", "path", "SHA-1", "remoteLoaderTypes", "remoteCurseForgeID", "remoteModrinthID"
             };
 
             for (int j = 0; j < headers.length; j++) {
