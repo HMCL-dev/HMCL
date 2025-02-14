@@ -30,6 +30,8 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -47,13 +49,10 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -144,6 +143,18 @@ public class DecoratorController {
 
         // press ESC to go back
         onEscPressed(navigator, this::back);
+
+        try {
+            // For JavaFX 12+
+            MouseButton button = MouseButton.valueOf("BACK");
+            navigator.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
+                if (e.getButton() == button) {
+                    back();
+                    e.consume();
+                }
+            });
+        } catch (IllegalArgumentException ignored) {
+        }
     }
 
     public Decorator getDecorator() {
@@ -166,23 +177,13 @@ public class DecoratorController {
             case CUSTOM:
                 String backgroundImage = config().getBackgroundImage();
                 if (backgroundImage != null)
-                    image = tryLoadImage(Paths.get(backgroundImage)).orElse(null);
+                    image = tryLoadImage(Paths.get(backgroundImage));
                 break;
             case NETWORK:
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        URLConnection connection = NetworkUtils.createConnection(new URL(backgroundImageUrl));
-                        if (connection instanceof HttpURLConnection) {
-                            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
-                        }
-
-                        try (InputStream input = connection.getInputStream()) {
-                            image = new Image(input);
-                            if (image.isError()) {
-                                throw image.getException();
-                            }
-                        }
+                        image = FXUtils.loadImage(new URL(backgroundImageUrl));
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -204,73 +205,57 @@ public class DecoratorController {
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
-        Optional<Image> image = randomImageIn(Paths.get("bg"));
-        if (!image.isPresent()) {
-            image = tryLoadImage(Paths.get("background.png"));
+        Image image = randomImageIn(Paths.get("bg"));
+        if (image != null)
+            return image;
+
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            image = tryLoadImage(Paths.get("background." + extension));
+            if (image != null)
+                return image;
         }
-        if (!image.isPresent()) {
-            image = tryLoadImage(Paths.get("background.jpg"));
-        }
-        if (!image.isPresent()) {
-            image = tryLoadImage(Paths.get("background.gif"));
-        }
-        return image.orElseGet(() -> newBuiltinImage("/assets/img/background.jpg"));
+
+        return newBuiltinImage("/assets/img/background.jpg");
     }
 
-    private Optional<Image> randomImageIn(Path imageDir) {
+    private @Nullable Image randomImageIn(Path imageDir) {
         if (!Files.isDirectory(imageDir)) {
-            return Optional.empty();
+            return null;
         }
 
         List<Path> candidates;
         try (Stream<Path> stream = Files.list(imageDir)) {
             candidates = stream
+                    .filter(it -> FXUtils.IMAGE_EXTENSIONS.contains(getExtension(it).toLowerCase(Locale.ROOT)))
                     .filter(Files::isReadable)
-                    .filter(it -> {
-                        String ext = getExtension(it).toLowerCase(Locale.ROOT);
-                        return ext.equals("png") || ext.equals("jpg") || ext.equals("gif");
-                    })
                     .collect(toList());
         } catch (IOException e) {
             LOG.warning("Failed to list files in ./bg", e);
-            return Optional.empty();
+            return null;
         }
 
         Random rnd = new Random();
-        while (candidates.size() > 0) {
+        while (!candidates.isEmpty()) {
             int selected = rnd.nextInt(candidates.size());
-            Optional<Image> loaded = tryLoadImage(candidates.get(selected));
-            if (loaded.isPresent()) {
+            Image loaded = tryLoadImage(candidates.get(selected));
+            if (loaded != null)
                 return loaded;
-            } else {
+            else
                 candidates.remove(selected);
-            }
         }
-        return Optional.empty();
+        return null;
     }
 
-    private Optional<Image> tryLoadImage(Path path) {
+    private @Nullable Image tryLoadImage(Path path) {
         if (!Files.isReadable(path))
-            return Optional.empty();
+            return null;
 
-        return tryLoadImage(path.toAbsolutePath().toUri().toString());
-    }
-
-    private Optional<Image> tryLoadImage(String url) {
-        Image img;
         try {
-            img = new Image(url);
-        } catch (IllegalArgumentException e) {
+            return FXUtils.loadImage(path);
+        } catch (Exception e) {
             LOG.warning("Couldn't load background image", e);
-            return Optional.empty();
+            return null;
         }
-
-        if (img.getException() != null) {
-            LOG.warning("Couldn't load background image", img.getException());
-            return Optional.empty();
-        }
-
-        return Optional.of(img);
     }
 
     // ==== Navigation ====
@@ -443,7 +428,7 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE.getAnimationProducer());
+        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE);
     }
 
     // ==== Authlib Injector DnD ====

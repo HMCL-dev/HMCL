@@ -431,7 +431,6 @@
 
 .jfx-layout-heading {
     -fx-font-size: 20.0px;
-    -fx-font-family: -fx-base-font-family;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
 }
@@ -449,18 +448,15 @@
 
 .dialog-error {
     -fx-text-fill: #d32f2f;
-    -fx-font-family: -fx-base-font-family;
     -fx-padding: 0.7em 0.8em;
 }
 
 .dialog-accept {
     -fx-text-fill: #03A9F4;
-    -fx-font-family: -fx-base-font-family;
     -fx-padding: 0.7em 0.8em;
 }
 
 .dialog-cancel {
-    -fx-font-family: -fx-base-font-family;
     -fx-padding: 0.7em 0.8em;
 }
 
@@ -1311,11 +1307,6 @@
     -fx-padding: 8;
 }
 
-.body {
-    -fx-border-radius: 5;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0.3, 0.0, 0.0);
-}
-
 .debug-border {
     -fx-border-color: red;
     -fx-border-width: 1;
@@ -1437,4 +1428,38 @@
 
 .fit-width {
     -fx-pref-width: 100%;
+}
+
+/*******************************************************************************
+*                                                                              *
+* HTML Renderer                                                                *
+*                                                                              *
+*******************************************************************************/
+
+.html {
+    -fx-font-size: 16;
+}
+
+.html-hyperlink {
+    -fx-fill: blue;
+}
+
+.html-h1 {
+    -fx-font-size: 22;
+}
+
+.html-h2 {
+    -fx-font-size: 20;
+}
+
+.html-h3 {
+    -fx-font-size: 18;
+}
+
+.html-bold {
+    -fx-font-weight: bold;
+}
+
+.html-italic {
+    -fx-font-style: italic;
 }

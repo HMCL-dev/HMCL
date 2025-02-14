@@ -1,6 +1,6 @@
-name: Bug 反馈 | Bug Feedback
+name: Bug 反馈 | Bug Report
 description: 
-  反馈一个 HMCL 错误。| Bug Feedback.
+  反馈一个 HMCL 错误。| File a bug report for HMCL.
 title: "[Bug] "
 labels: bug
 body:
@@ -8,29 +8,35 @@ body:
     attributes:
       value: |
         提交前请确认：
-        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
-        * 你的启动器版本是**最新的快照版本**，可以点击 [此处](https://zkitefly.github.io/HMCL-Snapshot-Update/) 下载最新快照版本。
-    
-        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 频道](https://discord.gg/jVvC7HfM6U) 中获取帮助。
-        
+
+        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
+        * 你的启动器版本是**最新的预览版本**，可以点击 [此处](https://zkitefly.github.io/HMCL-Snapshot-Update/) 下载最新预览版本。
+
+        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
+
         Before submitting, please confirm:
-        * The issue is indeed **an error of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
-        * Your launcher version is **the latest snapshot version**. You can click [here](https://github.com/burningtnt/HMCL-Snapshot-Update/raw/master/datas/HMCL-dev.jar) to download the latest snapshot version.
-        
-        If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord channel](https://discord.gg/jVvC7HfM6U) for help.
+
+        * The issue is indeed **a bug of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
+        * Your launcher is the **latest nightly build**. You can click [here](https://zkitefly.github.io/HMCL-Snapshot-Update/en) to download the latest nightly build.
+
+        If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
   - type: input
     id: platform
     attributes:
       label: 平台 | Platform
-      description: 请输入您遇到 BUG 的平台。 Please enter the platform on which you encountered the bug. 
+      description: |
+        请输入你遇到问题的平台。
+        Please enter the platform on which you encountered the bug.
       placeholder: e.g. Windows 11
     validations:
       required: true
   - type: textarea
     id: bug-report
     attributes:
-      label: 问题描述 | Problem Description
-      description: 请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。 Please describe the problem you met in as much detail as possible. Besides, please describe how to trigger this problem again.
+      label: 问题描述 | Bug Description
+      description: |
+        请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。
+        Please describe the bug you met in as much detail as possible. Additionally, describe the steps to reproduce this bug.
       placeholder: |
         1. 点击 HMCL 上的某个按钮 | Click a button named ...
         2. 向下翻页 | Scroll down
@@ -42,12 +48,12 @@ body:
     attributes:
       label: 启动器崩溃报告 / 启动器日志文件 | Launcher Crash Report / Launcher Log File
       description: |
-        如果您的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
-        如果您的启动器没有崩溃，请在遇到问题后不要退出启动器，在启动器的【设置】>【通用】>【调试】一栏中点击“导出启动器日志”，并将导出的日志拖到下方的输入栏中。 
+        如果你的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
+        如果你的启动器没有崩溃，请在遇到问题后**不要退出启动器**，在启动器的 “设置 → 通用 → 调试” 一栏中点击 “导出启动器日志”，并将导出的日志拖到下方的输入栏中。
         **请注意：启动器崩溃报告或日志文件是诊断问题的重要依据，请务必上传！**
         
-        If your launcher crashes, please fill it in (or drag the file in) below.
-        If your launcher doesn't crash, please DO NOT EXIT your launcher, click "Export Launcher Log" in the [Settings] > [General] > [Debug] column of the launcher, and drag the exported log to the input field below.
-        **Attention: The crash report or the log file is the key to solve the problem. Please update it!**
+        If your launcher crashes, please fill in (or drag the file in) the following input field with the crash report.
+        If your launcher does not crash, please DO NOT EXIT your launcher, click "Export Launcher Logs" in the "Settings → General → Debug" of the launcher, and drag the exported log to the following input field.
+        **ATTENTION: The crash report or log file is the key to resolving the bug. Please upload them!**
     validations:
       required: true

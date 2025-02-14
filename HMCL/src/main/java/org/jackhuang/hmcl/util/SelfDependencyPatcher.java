@@ -41,13 +41,13 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.ui.SwingUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
@@ -67,9 +67,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
 import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.platform.JavaVersion.CURRENT_JAVA;
 
 // From: https://github.com/Col-E/Recaf/blob/7378b397cee664ae81b7963b0355ef8ff013c3a7/src/main/java/me/coley/recaf/util/self/SelfDependencyPatcher.java
 public final class SelfDependencyPatcher {
@@ -104,28 +105,14 @@ public final class SelfDependencyPatcher {
         private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
-            ArrayList<DependencyDescriptor> dependencies;
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
-                Map<String, ArrayList<DependencyDescriptor>> allDependencies =
-                        new Gson().fromJson(reader, new TypeToken<Map<String, ArrayList<DependencyDescriptor>>>(){}.getType());
-                dependencies = allDependencies.get(Platform.getPlatform().toString());
+                Map<String, List<DependencyDescriptor>> allDependencies =
+                        JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class)));
+                return allDependencies.get(Platform.getPlatform().toString());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
-
-            if (dependencies == null) return null;
-
-            try {
-                ClassLoader classLoader = SelfDependencyPatcher.class.getClassLoader();
-                Class.forName("netscape.javascript.JSObject", false, classLoader);
-                Class.forName("org.w3c.dom.html.HTMLDocument", false, classLoader);
-            } catch (Throwable e) {
-                LOG.warning("Disable javafx.web because JRE is incomplete", e);
-                dependencies.removeIf(it -> "javafx.web".equals(it.module) || "javafx.media".equals(it.module));
-            }
-
-            return dependencies;
         }
 
         public String module;
@@ -188,7 +175,7 @@ public final class SelfDependencyPatcher {
         // So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
         // Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
         // So you're out of luck unless you change your JDK or update Java.
-        if (CURRENT_JAVA.getParsedVersion() < 11) {
+        if (JavaRuntime.CURRENT_VERSION < 11) {
             throw new IncompatibleVersionException();
         }
 

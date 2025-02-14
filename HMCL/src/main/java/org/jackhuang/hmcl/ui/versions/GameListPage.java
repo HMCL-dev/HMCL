@@ -126,29 +126,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
 
             AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                    .addNavigationDrawerItem(installNewGameItem -> {
-                        installNewGameItem.setTitle(i18n("install.new_game"));
-                        installNewGameItem.setLeftGraphic(VersionPage.wrap(SVG.PLUS_CIRCLE_OUTLINE));
-                        installNewGameItem.setOnAction(e -> Versions.addNewGame());
-                        runInFX(() -> FXUtils.installFastTooltip(installNewGameItem, i18n("install.new_game")));
-                    })
-                    .addNavigationDrawerItem(installModpackItem -> {
-                        installModpackItem.setTitle(i18n("install.modpack"));
-                        installModpackItem.setLeftGraphic(VersionPage.wrap(SVG.PACK));
-                        installModpackItem.setOnAction(e -> Versions.importModpack());
-                        runInFX(() -> FXUtils.installFastTooltip(installModpackItem, i18n("install.modpack")));
-                    })
-                    .addNavigationDrawerItem(refreshItem -> {
-                        refreshItem.setTitle(i18n("button.refresh"));
-                        refreshItem.setLeftGraphic(VersionPage.wrap(SVG.REFRESH));
-                        refreshItem.setOnAction(e -> gameList.refreshList());
-                    })
-                    .addNavigationDrawerItem(globalManageItem -> {
-                        globalManageItem.setTitle(i18n("settings.type.global.manage"));
-                        globalManageItem.setLeftGraphic(VersionPage.wrap(SVG.GEAR_OUTLINE));
-                        globalManageItem.setOnAction(e -> modifyGlobalGameSettings());
-                        runInFX(() -> FXUtils.installFastTooltip(globalManageItem, i18n("settings.type.global.manage")));
-                    });
+                    .addNavigationDrawerItem(i18n("install.new_game"), SVG.PLUS_CIRCLE_OUTLINE, Versions::addNewGame)
+                    .addNavigationDrawerItem(i18n("install.modpack"), SVG.PACK, Versions::importModpack)
+                    .addNavigationDrawerItem(i18n("button.refresh"), SVG.REFRESH, gameList::refreshList)
+                    .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.GEAR_OUTLINE, this::modifyGlobalGameSettings);
             FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
         }
