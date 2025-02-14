@@ -87,7 +87,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
-
+    private final ModListPage skinnable;
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
     private final HBox toolbarNormal;
@@ -101,6 +101,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
+        this.skinnable = skinnable;
 
         StackPane pane = new StackPane();
         pane.setPadding(new Insets(10));
@@ -136,7 +137,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
                         isSearching = false;
                         searchField.clear();
-                        Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
+                        Bindings.bindContent(listView.getItems(), skinnable.getItems());
                     });
 
             onEscPressed(searchField, closeSearchBar::fire);
@@ -144,14 +145,22 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
             // Toolbar Normal
+            JFXButton menuButton = createToolbarButton2(i18n("button.more"), SVG.DOTS_HORIZONTAL, null);
+            menuButton.setOnAction(e -> {
+                menu.get().getContent().setAll(
+                    new IconedMenuItem(SVG.UPDATE, i18n("mods.check_updates"), () -> skinnable.checkUpdates(), popup.get()),
+                    new IconedMenuItem(SVG.EXPORT, i18n("button.export"), () -> exportList(), popup.get())
+                );
+                popup.get().show(menuButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, menuButton.getHeight());
+            });
+
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.PLUS, skinnable::add),
                     createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
-                    createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar)),
-                    createToolbarButton2(i18n("button.export"), SVG.EXPORT, this::exportList)
+                    menuButton
             );
 
             // Toolbar Selecting
@@ -320,11 +329,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     private void search() {
         isSearching = true;
 
-        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
+        Bindings.unbindContent(listView.getItems(), skinnable.getItems());
 
         String queryString = searchField.getText();
         if (StringUtils.isBlank(queryString)) {
-            listView.getItems().setAll(getSkinnable().getItems());
+            listView.getItems().setAll(skinnable.getItems());
         } else {
             listView.getItems().clear();
 
@@ -343,7 +352,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             // Do we need to search in the background thread?
-            for (ModInfoObject item : getSkinnable().getItems()) {
+            for (ModInfoObject item : skinnable.getItems()) {
                 if (predicate.test(item.getModInfo().getFileName() +
                         item.getModInfo().getName() +
                         item.getModInfo().getVersion() +
@@ -553,7 +562,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                     Controllers.navigate(new DownloadPage(
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
-                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
+                                            new Profile.ProfileVersion(skinnable.getProfile(), skinnable.getVersionId()),
                                             null
                                     ));
                                 });
@@ -695,7 +704,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
-                                () -> getSkinnable().rollback(dataItem.getModInfo(), localModFile),
+                                () -> skinnable.rollback(dataItem.getModInfo(), localModFile),
                                 popup.get()))
                         .collect(Collectors.toList())
                 );
