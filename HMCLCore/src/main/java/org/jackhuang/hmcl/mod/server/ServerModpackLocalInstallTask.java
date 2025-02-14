@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.server;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -72,8 +71,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         ModpackConfiguration<ServerModpackManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<ServerModpackManifest>>() {
-                }.getType());
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");

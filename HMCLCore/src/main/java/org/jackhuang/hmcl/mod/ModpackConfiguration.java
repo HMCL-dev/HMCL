@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,11 @@ import java.util.List;
 
 @Immutable
 public final class ModpackConfiguration<T> implements Validation {
+
+    @SuppressWarnings("unchecked")
+    public static <T> TypeToken<ModpackConfiguration<T>> typeOf(Class<T> clazz) {
+        return (TypeToken<ModpackConfiguration<T>>) TypeToken.getParameterized(ModpackConfiguration.class, clazz);
+    }
 
     private final T manifest;
     private final String type;

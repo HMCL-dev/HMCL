@@ -9,13 +9,13 @@ import java.util.stream.Stream;
  * @author Glavo
  */
 final class CallerFinder {
-    private static final StackWalker WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
     private static final String PACKAGE_PREFIX = CallerFinder.class.getPackageName() + ".";
     private static final Predicate<StackWalker.StackFrame> PREDICATE = stackFrame -> !stackFrame.getClassName().startsWith(PACKAGE_PREFIX);
     private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
+    private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> frame.getClassName() + "." + frame.getMethodName();
 
     static String getCaller() {
-        return WALKER.walk(FUNCTION).map(it -> it.getClassName() + "." + it.getMethodName()).orElse(null);
+        return StackWalker.getInstance().walk(FUNCTION).map(FRAME_MAPPING).orElse(null);
     }
 
     private CallerFinder() {

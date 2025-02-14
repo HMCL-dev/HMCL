@@ -36,7 +36,7 @@ public abstract class DecoratorTabPage extends DecoratorTransitionPage implement
             if (newValue.getNode() != null) {
                 onNavigating(getCurrentPage());
                 if (getCurrentPage() != null) getCurrentPage().fireEvent(new Navigator.NavigationEvent(null, getCurrentPage(), Navigation.NavigationDirection.NEXT, Navigator.NavigationEvent.NAVIGATING));
-                navigate(newValue.getNode(), ContainerAnimations.FADE.getAnimationProducer());
+                navigate(newValue.getNode(), ContainerAnimations.FADE);
                 onNavigated(getCurrentPage());
                 if (getCurrentPage() != null) getCurrentPage().fireEvent(new Navigator.NavigationEvent(null, getCurrentPage(), Navigation.NavigationDirection.NEXT, Navigator.NavigationEvent.NAVIGATED));
             }

@@ -126,7 +126,7 @@ public class Navigator extends TransitionPane {
         if (obj instanceof AnimationProducer) {
             setContent(node, (AnimationProducer) obj);
         } else {
-            setContent(node, ContainerAnimations.NONE.getAnimationProducer());
+            setContent(node, ContainerAnimations.NONE);
         }
 
         NavigationEvent navigated = new NavigationEvent(this, node, Navigation.NavigationDirection.PREVIOUS, NavigationEvent.NAVIGATED);

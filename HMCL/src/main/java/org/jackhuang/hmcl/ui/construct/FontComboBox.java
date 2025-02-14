@@ -21,6 +21,7 @@ import static javafx.collections.FXCollections.emptyObservableList;
 import static javafx.collections.FXCollections.observableList;
 import static javafx.collections.FXCollections.singletonObservableList;
 
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import com.jfoenix.controls.JFXComboBox;
@@ -34,6 +35,8 @@ public class FontComboBox extends JFXComboBox<String> {
     private boolean loaded = false;
 
     public FontComboBox() {
+        setMinWidth(260);
+
         styleProperty().bind(Bindings.concat("-fx-font-family: \"", valueProperty(), "\""));
 
         setCellFactory(listView -> new JFXListCell<String>() {
@@ -51,7 +54,7 @@ public class FontComboBox extends JFXComboBox<String> {
         itemsProperty().bind(BindingMapping.of(valueProperty())
                         .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
 
-        setOnMouseClicked(e -> {
+        FXUtils.onClicked(this, () -> {
             if (loaded)
                 return;
             itemsProperty().unbind();

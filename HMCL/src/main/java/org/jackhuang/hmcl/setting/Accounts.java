@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.reflect.TypeToken;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
@@ -55,6 +54,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -171,14 +172,11 @@ public final class Accounts {
             config().getAccountStorages().setAll(portable);
     }
 
-    @SuppressWarnings("unchecked")
     private static void loadGlobalAccountStorages() {
         Path globalAccountsFile = Metadata.HMCL_DIRECTORY.resolve("accounts.json");
         if (Files.exists(globalAccountsFile)) {
             try (Reader reader = Files.newBufferedReader(globalAccountsFile)) {
-                globalAccountStorages.setAll((List<Map<Object, Object>>)
-                        Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
-                        }.getType()));
+                globalAccountStorages.setAll(Config.CONFIG_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class))));
             } catch (Throwable e) {
                 LOG.warning("Failed to load global accounts", e);
             }

@@ -22,11 +22,12 @@ import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WebPage;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,7 +44,6 @@ public final class RemoteModpackPage extends ModpackPage {
 
         manifest = tryCast(controller.getSettings().get(MODPACK_SERVER_MANIFEST), ServerModpackManifest.class)
                 .orElseThrow(() -> new IllegalStateException("MODPACK_SERVER_MANIFEST should exist"));
-        lblModpackLocation.setText(manifest.getFileApi());
 
         try {
             controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));
@@ -70,6 +70,8 @@ public final class RemoteModpackPage extends ModpackPage {
                     new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
                     new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         }
+
+        btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
     }
 
     @Override
@@ -84,7 +86,7 @@ public final class RemoteModpackPage extends ModpackPage {
     }
 
     protected void onDescribe() {
-        FXUtils.showWebDialog(i18n("modpack.description"), manifest.getDescription());
+        Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
     public static final String MODPACK_SERVER_MANIFEST = "MODPACK_SERVER_MANIFEST";

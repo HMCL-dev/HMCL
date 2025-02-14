@@ -25,8 +25,8 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -34,17 +34,19 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
@@ -54,14 +56,11 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-import static org.jackhuang.hmcl.util.StringUtils.parseEscapeSequence;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
@@ -69,128 +68,120 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  */
 public final class LogWindow extends Stage {
 
-    private final ArrayDeque<Log> logs = new ArrayDeque<>();
-    private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<Log4jLevel, SimpleIntegerProperty>(Log4jLevel.class) {
-        {
-            for (Log4jLevel level : Log4jLevel.values()) put(level, new SimpleIntegerProperty());
+    private static final Log4jLevel[] LEVELS = {Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
+
+    private final CircularArrayList<Log> logs;
+    private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<>(Log4jLevel.class);
+    private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<>(Log4jLevel.class);
+
+    {
+        for (Log4jLevel level : Log4jLevel.values()) {
+            levelCountMap.put(level, new SimpleIntegerProperty());
+            levelShownMap.put(level, new SimpleBooleanProperty(true));
         }
-    };
-    private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<Log4jLevel, SimpleBooleanProperty>(Log4jLevel.class) {
-        {
-            for (Log4jLevel level : Log4jLevel.values()) {
-                SimpleBooleanProperty property = new SimpleBooleanProperty(true);
-                put(level, property);
-            }
-        }
-    };
-    private final LogWindowImpl impl = new LogWindowImpl();
-    private final ChangeListener<Number> logLinesListener = FXUtils.onWeakChange(config().logLinesProperty(), logLines -> checkLogCount());
+    }
 
-    private Consumer<String> exportGameCrashInfoCallback;
-
-    private boolean stopCheckLogCount = false;
-
+    private final LogWindowImpl impl;
     private final ManagedProcess gameProcess;
 
     public LogWindow(ManagedProcess gameProcess) {
+        this(gameProcess, new CircularArrayList<>());
+    }
+
+    public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
+        this.logs = logs;
+        this.impl = new LogWindowImpl();
         setScene(new Scene(impl, 800, 480));
         getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
         setTitle(i18n("logwindow.title"));
         FXUtils.setIcon(this);
 
-        levelShownMap.values().forEach(property -> property.addListener((a, b, newValue) -> shakeLogs()));
+        for (SimpleBooleanProperty property : levelShownMap.values()) {
+            property.addListener(o -> shakeLogs());
+        }
 
         this.gameProcess = gameProcess;
     }
 
-    public void logLine(String filteredLine, Log4jLevel level) {
-        Log log = new Log(parseEscapeSequence(filteredLine), level);
+    public void logLine(Log log) {
+        Log4jLevel level = log.getLevel();
         logs.add(log);
         if (levelShownMap.get(level).get())
             impl.listView.getItems().add(log);
 
-        levelCountMap.get(level).setValue(levelCountMap.get(level).getValue() + 1);
-        if (!stopCheckLogCount) checkLogCount();
+        SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
+        property.set(property.get() + 1);
+        checkLogCount();
+        autoScroll();
     }
 
-    public void showGameCrashReport(Consumer<String> exportGameCrashInfoCallback) {
-        this.exportGameCrashInfoCallback = exportGameCrashInfoCallback;
-        this.impl.showCrashReport.set(true);
-        stopCheckLogCount = true;
-        for (Log log : impl.listView.getItems()) {
-            if (log.log.contains("Minecraft Crash Report")) {
-                Platform.runLater(() -> {
-                    impl.listView.scrollTo(log);
-                });
-                break;
-            }
+    public void logLines(List<Log> logs) {
+        for (Log log : logs) {
+            Log4jLevel level = log.getLevel();
+            this.logs.add(log);
+            if (levelShownMap.get(level).get())
+                impl.listView.getItems().add(log);
+
+            SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
+            property.set(property.get() + 1);
         }
-        show();
-    }
-
-    public void showNormal() {
-        this.impl.showCrashReport.set(false);
-        show();
+        checkLogCount();
+        autoScroll();
     }
 
     private void shakeLogs() {
-        impl.listView.getItems().setAll(logs.stream().filter(log -> levelShownMap.get(log.level).get()).collect(Collectors.toList()));
+        impl.listView.getItems().setAll(logs.stream().filter(log -> levelShownMap.get(log.getLevel()).get()).collect(Collectors.toList()));
+        autoScroll();
     }
 
     private void checkLogCount() {
-        while (logs.size() > config().getLogLines()) {
+        int nRemove = logs.size() - Log.getLogLines();
+        if (nRemove <= 0)
+            return;
+
+        ObservableList<Log> items = impl.listView.getItems();
+        int itemsSize = items.size();
+        int count = 0;
+
+        for (int i = 0; i < nRemove; i++) {
             Log removedLog = logs.removeFirst();
-            if (!impl.listView.getItems().isEmpty() && impl.listView.getItems().get(0) == removedLog) {
-                impl.listView.getItems().remove(0);
-            }
+            if (itemsSize > count && items.get(count) == removedLog)
+                count++;
         }
+
+        items.remove(0, count);
     }
 
-    private static class Log {
-        private final String log;
-        private final Log4jLevel level;
-        private boolean selected = false;
-
-        public Log(String log, Log4jLevel level) {
-            this.log = log;
-            this.level = level;
-        }
+    private void autoScroll() {
+        if (!impl.listView.getItems().isEmpty() && impl.autoScroll.get())
+            impl.listView.scrollTo(impl.listView.getItems().size() - 1);
     }
 
-    public class LogWindowImpl extends Control {
+    private final class LogWindowImpl extends Control {
 
         private final ListView<Log> listView = new JFXListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
-        private final List<StringProperty> buttonText = IntStream.range(0, 5).mapToObj(x -> new SimpleStringProperty()).collect(Collectors.toList());
-        private final List<BooleanProperty> showLevel = IntStream.range(0, 5).mapToObj(x -> new SimpleBooleanProperty(true)).collect(Collectors.toList());
-        private final JFXComboBox<String> cboLines = new JFXComboBox<>();
-        private final BooleanProperty showCrashReport = new SimpleBooleanProperty();
+        private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
+        private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
+        private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
 
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
-            listView.setItems(FXCollections.observableList(new CircularArrayList<>(config().getLogLines() + 1)));
+            listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
 
-            boolean flag = false;
-            cboLines.getItems().setAll("500", "2000", "5000", "10000");
-            for (String i : cboLines.getItems())
-                if (Integer.toString(config().getLogLines()).equals(i)) {
-                    cboLines.getSelectionModel().select(i);
-                    flag = true;
-                }
+            for (int i = 0; i < LEVELS.length; i++) {
+                buttonText[i] = new SimpleStringProperty();
+                showLevel[i] = new SimpleBooleanProperty(true);
+            }
 
-            if (!flag)
-                cboLines.getSelectionModel().select(2);
+            cboLines.getItems().setAll(500, 2000, 5000, 10000);
+            cboLines.setValue(Log.getLogLines());
+            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> config().setLogLines(newValue));
 
-            cboLines.getSelectionModel().selectedItemProperty().addListener((a, b, newValue) -> {
-                config().setLogLines(newValue == null ? 1000 : Integer.parseInt(newValue));
-            });
-
-            Log4jLevel[] levels = new Log4jLevel[]{Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
-            String[] suffix = new String[]{"fatals", "errors", "warns", "infos", "debugs"};
-            for (int i = 0; i < 5; ++i) {
-                buttonText.get(i).bind(Bindings.concat(levelCountMap.get(levels[i]), " " + suffix[i]));
-                levelShownMap.get(levels[i]).bind(showLevel.get(i));
+            for (int i = 0; i < LEVELS.length; ++i) {
+                buttonText[i].bind(Bindings.concat(levelCountMap.get(LEVELS[i]), " " + LEVELS[i].name().toLowerCase(Locale.ROOT) + "s"));
+                levelShownMap.get(LEVELS[i]).bind(showLevel[i]);
             }
         }
 
@@ -207,7 +198,7 @@ public final class LogWindow extends Stage {
             thread(() -> {
                 Path logFile = Paths.get("minecraft-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
                 try {
-                    Files.write(logFile, logs.stream().map(x -> x.log).collect(Collectors.toList()));
+                    Files.write(logFile, logs.stream().map(Log::getLog).collect(Collectors.toList()));
                 } catch (IOException e) {
                     LOG.warning("Failed to export logs", e);
                     return;
@@ -223,38 +214,31 @@ public final class LogWindow extends Stage {
             });
         }
 
-        private void onExportDump(JFXButton button) {
+        private void onExportDump(SpinnerPane pane) {
+            assert SystemUtils.supportJVMAttachment();
+
+            pane.setLoading(true);
+
             thread(() -> {
-                if (button.getText().equals(i18n("logwindow.export_dump.dependency_ok.button"))) {
-                    if (SystemUtils.supportJVMAttachment()) {
-                        Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.doing_button")));
+                Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
 
-                        Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
-
-                        try {
-                            if (gameProcess.isRunning()) {
-                                GameDumpGenerator.writeDumpTo(gameProcess.getPID(), dumpFile);
-                                FXUtils.showFileInExplorer(dumpFile);
-                            }
-                        } catch (Throwable e) {
-                            LOG.warning("Failed to create minecraft jstack dump", e);
-
-                            Platform.runLater(() -> {
-                                Alert alert = new Alert(Alert.AlertType.ERROR, i18n("logwindow.export_dump.dependency_ok.button"));
-                                alert.setTitle(i18n("message.error"));
-                                alert.showAndWait();
-                            });
-                        }
-
-                        Platform.runLater(() -> button.setText(i18n("logwindow.export_dump.dependency_ok.button")));
+                try {
+                    if (gameProcess.isRunning()) {
+                        GameDumpGenerator.writeDumpTo(gameProcess.getPID(), dumpFile);
+                        FXUtils.showFileInExplorer(dumpFile);
                     }
-                }
-            });
-        }
+                } catch (Throwable e) {
+                    LOG.warning("Failed to create minecraft jstack dump", e);
 
-        private void onExportGameCrashInfo() {
-            if (exportGameCrashInfoCallback == null) return;
-            exportGameCrashInfoCallback.accept(logs.stream().map(x -> x.log).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)));
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(Alert.AlertType.ERROR, i18n("logwindow.export_dump"));
+                        alert.setTitle(i18n("message.error"));
+                        alert.showAndWait();
+                    });
+                }
+
+                Platform.runLater(() -> pane.setLoading(false));
+            });
         }
 
         @Override
@@ -263,7 +247,7 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private static class LogWindowSkin extends SkinBase<LogWindowImpl> {
+    private static final class LogWindowSkin extends SkinBase<LogWindowImpl> {
         private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
         private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
         private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
@@ -275,17 +259,7 @@ public final class LogWindow extends Stage {
 
         private final Set<ListCell<Log>> selected = new HashSet<>();
 
-        private static ToggleButton createToggleButton(String backgroundColor, StringProperty buttonText, BooleanProperty showLevel) {
-            ToggleButton button = new ToggleButton();
-            button.setStyle("-fx-background-color: " + backgroundColor + ";");
-            button.getStyleClass().add("log-toggle");
-            button.textProperty().bind(buttonText);
-            button.setSelected(true);
-            showLevel.bind(button.selectedProperty());
-            return button;
-        }
-
-        protected LogWindowSkin(LogWindowImpl control) {
+        LogWindowSkin(LogWindowImpl control) {
             super(control);
 
             VBox vbox = new VBox(3);
@@ -310,13 +284,16 @@ public final class LogWindow extends Stage {
 
                 {
                     HBox hBox = new HBox(3);
-                    hBox.getChildren().setAll(
-                            createToggleButton("#F7A699", control.buttonText.get(0), control.showLevel.get(0)),
-                            createToggleButton("#FFCCBB", control.buttonText.get(1), control.showLevel.get(1)),
-                            createToggleButton("#FFEECC", control.buttonText.get(2), control.showLevel.get(2)),
-                            createToggleButton("#FBFBFB", control.buttonText.get(3), control.showLevel.get(3)),
-                            createToggleButton("#EEE9E0", control.buttonText.get(4), control.showLevel.get(4))
-                    );
+                    for (int i = 0; i < LEVELS.length; i++) {
+                        ToggleButton button = new ToggleButton();
+                        button.setStyle("-fx-background-color: " + FXUtils.toWeb(LEVELS[i].getColor()) + ";");
+                        button.getStyleClass().add("log-toggle");
+                        button.textProperty().bind(control.buttonText[i]);
+                        button.setSelected(true);
+                        control.showLevel[i].bind(button.selectedProperty());
+                        hBox.getChildren().add(button);
+                    }
+
                     borderPane.setRight(hBox);
                 }
 
@@ -346,12 +323,15 @@ public final class LogWindow extends Stage {
                         setGraphic(null);
 
                         setOnMouseClicked(event -> {
+                            if (event.getButton() != MouseButton.PRIMARY)
+                                return;
+
                             if (!event.isControlDown()) {
-                                for (ListCell<Log> logListCell: selected) {
+                                for (ListCell<Log> logListCell : selected) {
                                     if (logListCell != this) {
                                         logListCell.pseudoClassStateChanged(SELECTED, false);
                                         if (logListCell.getItem() != null) {
-                                            logListCell.getItem().selected = false;
+                                            logListCell.getItem().setSelected(false);
                                         }
                                     }
                                 }
@@ -362,8 +342,10 @@ public final class LogWindow extends Stage {
                             selected.add(this);
                             pseudoClassStateChanged(SELECTED, true);
                             if (getItem() != null) {
-                                getItem().selected = true;
+                                getItem().setSelected(true);
                             }
+
+                            event.consume();
                         });
                     }
 
@@ -377,18 +359,18 @@ public final class LogWindow extends Stage {
                         lastCell.value = this;
 
                         pseudoClassStateChanged(EMPTY, empty);
-                        pseudoClassStateChanged(FATAL, !empty && item.level == Log4jLevel.FATAL);
-                        pseudoClassStateChanged(ERROR, !empty && item.level == Log4jLevel.ERROR);
-                        pseudoClassStateChanged(WARN, !empty && item.level == Log4jLevel.WARN);
-                        pseudoClassStateChanged(INFO, !empty && item.level == Log4jLevel.INFO);
-                        pseudoClassStateChanged(DEBUG, !empty && item.level == Log4jLevel.DEBUG);
-                        pseudoClassStateChanged(TRACE, !empty && item.level == Log4jLevel.TRACE);
-                        pseudoClassStateChanged(SELECTED, !empty && item.selected);
+                        pseudoClassStateChanged(FATAL, !empty && item.getLevel() == Log4jLevel.FATAL);
+                        pseudoClassStateChanged(ERROR, !empty && item.getLevel() == Log4jLevel.ERROR);
+                        pseudoClassStateChanged(WARN, !empty && item.getLevel() == Log4jLevel.WARN);
+                        pseudoClassStateChanged(INFO, !empty && item.getLevel() == Log4jLevel.INFO);
+                        pseudoClassStateChanged(DEBUG, !empty && item.getLevel() == Log4jLevel.DEBUG);
+                        pseudoClassStateChanged(TRACE, !empty && item.getLevel() == Log4jLevel.TRACE);
+                        pseudoClassStateChanged(SELECTED, !empty && item.isSelected());
 
                         if (empty) {
                             setText(null);
                         } else {
-                            setText(item.log);
+                            setText(item.getLog());
                         }
                     }
                 });
@@ -398,10 +380,9 @@ public final class LogWindow extends Stage {
                         StringBuilder stringBuilder = new StringBuilder();
 
                         for (Log item : listView.getItems()) {
-                            if (item != null && item.selected) {
-                                if (item.log != null) {
-                                    stringBuilder.append(item.log);
-                                }
+                            if (item != null && item.isSelected()) {
+                                if (item.getLog() != null)
+                                    stringBuilder.append(item.getLog());
                                 stringBuilder.append('\n');
                             }
                         }
@@ -417,11 +398,6 @@ public final class LogWindow extends Stage {
             {
                 BorderPane bottom = new BorderPane();
 
-                JFXButton exportGameCrashInfoButton = new JFXButton(i18n("logwindow.export_game_crash_logs"));
-                exportGameCrashInfoButton.setOnMouseClicked(e -> getSkinnable().onExportGameCrashInfo());
-                exportGameCrashInfoButton.visibleProperty().bind(getSkinnable().showCrashReport);
-                bottom.setLeft(exportGameCrashInfoButton);
-
                 HBox hBox = new HBox(3);
                 bottom.setRight(hBox);
                 hBox.setAlignment(Pos.CENTER_RIGHT);
@@ -432,24 +408,24 @@ public final class LogWindow extends Stage {
                 control.autoScroll.bind(autoScrollCheckBox.selectedProperty());
 
                 JFXButton exportLogsButton = new JFXButton(i18n("button.export"));
-                exportLogsButton.setOnMouseClicked(e -> getSkinnable().onExportLogs());
+                exportLogsButton.setOnAction(e -> getSkinnable().onExportLogs());
 
                 JFXButton terminateButton = new JFXButton(i18n("logwindow.terminate_game"));
-                terminateButton.setOnMouseClicked(e -> getSkinnable().onTerminateGame());
+                terminateButton.setOnAction(e -> getSkinnable().onTerminateGame());
 
-                JFXButton exportDumpButton = new JFXButton();
+                SpinnerPane exportDumpPane = new SpinnerPane();
+                JFXButton exportDumpButton = new JFXButton(i18n("logwindow.export_dump"));
                 if (SystemUtils.supportJVMAttachment()) {
-                    exportDumpButton.setText(i18n("logwindow.export_dump.dependency_ok.button"));
-                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpButton));
+                    exportDumpButton.setOnAction(e -> getSkinnable().onExportDump(exportDumpPane));
                 } else {
-                    exportDumpButton.setText(i18n("logwindow.export_dump.no_dependency.button"));
-                    exportDumpButton.setTooltip(new Tooltip(i18n("logwindow.export_dump.no_dependency.tooltip")));
+                    exportDumpButton.setTooltip(new Tooltip(i18n("logwindow.export_dump.no_dependency")));
                     exportDumpButton.setDisable(true);
                 }
+                exportDumpPane.setContent(exportDumpButton);
 
                 JFXButton clearButton = new JFXButton(i18n("button.clear"));
-                clearButton.setOnMouseClicked(e -> getSkinnable().onClear());
-                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpButton, clearButton);
+                clearButton.setOnAction(e -> getSkinnable().onClear());
+                hBox.getChildren().setAll(autoScrollCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
                 vbox.getChildren().add(bottom);
             }
