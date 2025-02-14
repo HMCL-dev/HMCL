@@ -53,21 +53,26 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.logging.Level;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -145,7 +150,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
-                    createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar))
+                    createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar)),
+                    createToolbarButton2(i18n("button.export"), SVG.EXPORT, this::exportList)
             );
 
             // Toolbar Selecting
@@ -226,6 +232,79 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         });
 
         getChildren().setAll(pane);
+    }
+
+    private void exportList() {
+        Path path = Paths.get("hmcl-mod-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
+
+        Controllers.taskDialog(Task.runAsync(() -> {
+            CSVTable csvTable = CSVTable.createEmpty();
+
+            String[] headers = {
+                    "File Name", "Name", "ID", "Version", "Mod Loader", "URL", "Authors",
+                    "Logo Path", "Display Name", "Abbr", "Mcmod", "Subname", "Curseforge",
+                    "Status", "File Path", "File SHA-1"
+            };
+
+            for (int j = 0; j < headers.length; j++) {
+                csvTable.set(j, 0, headers[j]);
+            }
+
+            List<CompletableFuture<String>> sha1Futures = new ArrayList<>();
+            List<ModInfoObject> modInfoList = listView.getItems();
+
+            for (int i = 0; i < modInfoList.size(); i++) {
+                ModInfoObject modInfo = modInfoList.get(i);
+                csvTable.set(0, i + 1, FileUtils.getName(modInfo.getModInfo().getFile()));
+                csvTable.set(1, i + 1, modInfo.getModInfo().getName());
+                csvTable.set(2, i + 1, modInfo.getModInfo().getId());
+                csvTable.set(3, i + 1, modInfo.getModInfo().getVersion());
+                csvTable.set(4, i + 1, modInfo.getModInfo().getModLoaderType().name());
+                csvTable.set(5, i + 1, modInfo.getModInfo().getUrl());
+                csvTable.set(6, i + 1, modInfo.getModInfo().getAuthors());
+                csvTable.set(7, i + 1, modInfo.getModInfo().getLogoPath());
+                if (modInfo.getMod() != null) {
+                    csvTable.set(8, i + 1, modInfo.getMod().getDisplayName());
+                    csvTable.set(9, i + 1, modInfo.getMod().getAbbr());
+                    csvTable.set(10, i + 1, modInfo.getMod().getMcmod());
+                    csvTable.set(11, i + 1, modInfo.getMod().getSubname());
+                    csvTable.set(12, i + 1, modInfo.getMod().getCurseforge());
+                }
+                csvTable.set(13, i + 1, modInfo.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
+                csvTable.set(14, i + 1, modInfo.getModInfo().getFile().toString());
+
+                sha1Futures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return DigestUtils.digestToString("SHA-1", modInfo.getModInfo().getFile());
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to calculate SHA-1", e);
+                        return "";
+                    }
+                }));
+            }
+
+            List<String> sha1Results = sha1Futures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            for (int i = 0; i < sha1Results.size(); i++) {
+                csvTable.set(15, i + 1, sha1Results.get(i));
+            }
+
+            try (OutputStream os = Files.newOutputStream(path)) {
+                csvTable.write(os);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to write CSV file", e);
+            }
+
+            FXUtils.showFileInExplorer(path);
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception == null) {
+                Controllers.dialog(path.toString(), i18n("message.success"));
+            } else {
+                Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }), i18n("button.export"), TaskCancellationAction.NORMAL);
     }
 
     private void changeToolbar(HBox newToolbar) {
