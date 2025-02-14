@@ -78,7 +78,9 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.logging.Level;
 import org.jetbrains.annotations.NotNull;
-
+import javafx.scene.Node;
+import javafx.scene.control.SkinBase;
+import javafx.scene.layout.Region;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
