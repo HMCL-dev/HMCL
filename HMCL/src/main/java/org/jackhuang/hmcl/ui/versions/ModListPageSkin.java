@@ -393,9 +393,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
-                Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                Controllers.dialog(exception.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
-        }), i18n("button.export"), TaskCancellationAction.NORMAL);
+        }), i18n("button.export"), TaskCancellationAction.NO_CANCEL);
     }
 
     private void changeToolbar(HBox newToolbar) {
