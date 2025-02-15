@@ -44,6 +44,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.image.Image;
@@ -153,7 +155,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             menuButton.setOnAction(e -> {
                 menu.get().getContent().setAll(
                     new IconedMenuItem(SVG.UPDATE, i18n("mods.check_updates"), () -> skinnable.checkUpdates(), popup.get()),
-                    new IconedMenuItem(SVG.EXPORT, i18n("button.export"), () -> exportList(), popup.get())
+                    new IconedMenuItem(SVG.EXPORT, i18n("button.export"), () -> exportList(), popup.get()),
+                    new IconedMenuItem(SVG.ALERT, i18n("mods.check_duplicate_mods"), this::checkDuplicateModIds, popup.get())
                 );
                 popup.get().show(menuButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, menuButton.getHeight());
             });
@@ -445,6 +448,33 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     listView.getItems().add(item);
                 }
             }
+        }
+    }
+
+    private void checkDuplicateModIds() {
+        Map<String, List<String>> modIdMap = new HashMap<>();
+        for (ModInfoObject modInfo : skinnable.getItems()) {
+            if (modInfo.getModInfo().getFile().toString().endsWith(".disabled")) {
+                continue;
+            }
+            String modId = modInfo.getModInfo().getId();
+            String fileName = modInfo.getModInfo().getFileName();
+            modIdMap.computeIfAbsent(modId, k -> new ArrayList<>()).add(fileName);
+        }
+
+        List<String> duplicateMods = modIdMap.entrySet().stream()
+            .filter(entry -> entry.getValue().size() > 1)
+            .map(entry -> "Mod ID: " + entry.getKey() + "\nFiles: " + String.join(", ", entry.getValue()))
+            .collect(Collectors.toList());
+
+        if (duplicateMods.isEmpty()) {
+            Controllers.dialog(i18n("mods.check_duplicate_mods.empty"), i18n("mods.check_duplicate_mods"));
+        } else {
+            String duplicateInfo = String.join("\n---\n", duplicateMods);
+            JFXButton deleteButton = new JFXButton(i18n("button.copy"));
+            deleteButton.getStyleClass().add("dialog-info");
+            deleteButton.setOnAction(e -> FXUtils.copyText(duplicateInfo));
+            Controllers.confirmAction(duplicateInfo, i18n("mods.check_duplicate_mods"), MessageDialogPane.MessageType.INFO, deleteButton);
         }
     }
 
