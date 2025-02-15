@@ -468,7 +468,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             .collect(Collectors.toList());
 
         if (duplicateMods.isEmpty()) {
-            Controllers.dialog(i18n("mods.check_duplicate_mods.empty"), i18n("mods.check_duplicate_mods"));
+            Controllers.dialog(i18n("mods.check_duplicate_mods.empty"), i18n("message.info"));
         } else {
             String duplicateInfo = String.join("\n---\n", duplicateMods);
             JFXButton deleteButton = new JFXButton(i18n("button.copy"));
