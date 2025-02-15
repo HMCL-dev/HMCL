@@ -249,79 +249,122 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     }
 
     private void exportList() {
-        Path path = Paths.get("hmcl-mod-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
+        Path exportPath = Paths.get("hmcl-mod-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
 
         Controllers.taskDialog(Task.runAsync(() -> {
-            CSVTable csvTable = CSVTable.createEmpty();
+            CSVTable modDataTable = CSVTable.createEmpty();
 
-            String[] headers = {
-                    "fileName", "name", "modID", "version", "modLoader", "homePageURL", "authors", "logoPath", "displayName", "abbr", "mcmodID", "subName", "Curseforge", "status", "path", "SHA-1", "remoteLoaderTypes", "remoteCurseForgeID", "remoteModrinthID"
+            // Headers grouped by data type and source
+            String[] columnHeaders = {
+                // Local Basic Info
+                "fileName", "name", "modID", "version", "modLoader", "homePageURL", "authors", "logoPath",
+                
+                // Local HMCL Info
+                "displayName", "abbr", "mcmodID", "subName", "Curseforge",
+                
+                // Local File Info 
+                "status", "path", "SHA-1",
+                
+                // Remote Common Info
+                "remoteLoaderTypes",
+                
+                // Remote CurseForge Info
+                "remoteCurseForgeID",
+                "curseforgeDependencies", 
+                "curseforgeGameVersions",
+                "curseforgeVersionType",
+                
+                // Remote Modrinth Info 
+                "remoteModrinthID",
+                "modrinthDependencies",
+                "modrinthGameVersions", 
+                "modrinthVersionType"
             };
 
-            for (int j = 0; j < headers.length; j++) {
-                csvTable.set(j, 0, headers[j]);
+            // Initialize headers
+            for (int i = 0; i < columnHeaders.length; i++) {
+                modDataTable.set(i, 0, columnHeaders[i]);
             }
 
-            List<CompletableFuture<String>> sha1Futures = new ArrayList<>();
-            List<CompletableFuture<List<ModLoaderType>>> loaderTypeFutures = new ArrayList<>();
-            List<CompletableFuture<String>> curseforgeIdFutures = new ArrayList<>();  
+            // Future collections for async operations
+            // Local computations
+            List<CompletableFuture<String>> fileHashFutures = new ArrayList<>();
+            
+            // Common remote data
+            List<CompletableFuture<List<ModLoaderType>>> modLoadersFutures = new ArrayList<>();
+            
+            // CurseForge remote data
+            List<CompletableFuture<String>> curseForgeIdFutures = new ArrayList<>();
+            List<CompletableFuture<String>> curseForgeDependenciesFutures = new ArrayList<>();
+            List<CompletableFuture<List<String>>> curseForgeGameVersionsFutures = new ArrayList<>();
+            List<CompletableFuture<String>> curseForgeVersionTypeFutures = new ArrayList<>();
+            
+            // Modrinth remote data
             List<CompletableFuture<String>> modrinthIdFutures = new ArrayList<>();
-            List<ModInfoObject> modInfoList = listView.getItems();
+            List<CompletableFuture<String>> modrinthDependenciesFutures = new ArrayList<>();
+            List<CompletableFuture<List<String>>> modrinthGameVersionsFutures = new ArrayList<>();
+            List<CompletableFuture<String>> modrinthVersionTypeFutures = new ArrayList<>();
 
-            for (int i = 0; i < modInfoList.size(); i++) {
-                ModInfoObject modInfo = modInfoList.get(i);
-                int row = i + 1;
-                
-                csvTable.set(0, row, FileUtils.getName(modInfo.getModInfo().getFile()));
-                csvTable.set(1, row, modInfo.getModInfo().getName());
-                csvTable.set(2, row, modInfo.getModInfo().getId());
-                csvTable.set(3, row, modInfo.getModInfo().getVersion());
-                csvTable.set(4, row, modInfo.getModInfo().getModLoaderType().name());
-                csvTable.set(5, row, modInfo.getModInfo().getUrl());
-                csvTable.set(6, row, modInfo.getModInfo().getAuthors());
-                csvTable.set(7, row, modInfo.getModInfo().getLogoPath());
-                if (modInfo.getMod() != null) {
-                    csvTable.set(8, row, modInfo.getMod().getDisplayName());
-                    csvTable.set(9, row, modInfo.getMod().getAbbr());
-                    csvTable.set(10, row, modInfo.getMod().getMcmod());
-                    csvTable.set(11, row, modInfo.getMod().getSubname());
-                    csvTable.set(12, row, modInfo.getMod().getCurseforge());
+            List<ModInfoObject> modList = listView.getItems();
+
+            // Collect data for each mod
+            for (int i = 0; i < modList.size(); i++) {
+                ModInfoObject mod = modList.get(i);
+                int rowIndex = i + 1;
+
+                // Write local basic data
+                modDataTable.set(0, rowIndex, FileUtils.getName(mod.getModInfo().getFile()));
+                modDataTable.set(1, rowIndex, mod.getModInfo().getName());
+                modDataTable.set(2, rowIndex, mod.getModInfo().getId());
+                modDataTable.set(3, rowIndex, mod.getModInfo().getVersion());
+                modDataTable.set(4, rowIndex, mod.getModInfo().getModLoaderType().name());
+                modDataTable.set(5, rowIndex, mod.getModInfo().getUrl());
+                modDataTable.set(6, rowIndex, mod.getModInfo().getAuthors());
+                modDataTable.set(7, rowIndex, mod.getModInfo().getLogoPath());
+                if (mod.getMod() != null) {
+                    modDataTable.set(8, rowIndex, mod.getMod().getDisplayName());
+                    modDataTable.set(9, rowIndex, mod.getMod().getAbbr());
+                    modDataTable.set(10, rowIndex, mod.getMod().getMcmod());
+                    modDataTable.set(11, rowIndex, mod.getMod().getSubname());
+                    modDataTable.set(12, rowIndex, mod.getMod().getCurseforge());
                 }
-                csvTable.set(13, row, modInfo.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
-                csvTable.set(14, row, modInfo.getModInfo().getFile().toString());
+                modDataTable.set(13, rowIndex, mod.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
+                modDataTable.set(14, rowIndex, mod.getModInfo().getFile().toString());
 
-                sha1Futures.add(CompletableFuture.supplyAsync(() -> {
+                // Initialize async operations
+                fileHashFutures.add(CompletableFuture.supplyAsync(() -> {
                     try {
-                        return DigestUtils.digestToString("SHA-1", modInfo.getModInfo().getFile());
+                        return DigestUtils.digestToString("SHA-1", mod.getModInfo().getFile());
                     } catch (IOException e) {
                         LOG.log(Level.WARNING, "Failed to calculate SHA-1", e);
                         return "";
                     }
                 }));
 
-                loaderTypeFutures.add(CompletableFuture.supplyAsync(() -> {
-                    Set<ModLoaderType> loaderTypes = new LinkedHashSet<>();
+                modLoadersFutures.add(CompletableFuture.supplyAsync(() -> {
+                    Set<ModLoaderType> loaders = new LinkedHashSet<>();
                     
                     try {
-                        CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
-                                .ifPresent(version -> loaderTypes.addAll(version.getLoaders()));
+                        CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .ifPresent(version -> loaders.addAll(version.getLoaders()));
                     } catch (Exception e) {
                         LOG.log(Level.WARNING, "Failed to get CurseForge loader types", e);
                     }
                     
                     try {
-                        ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
-                                .ifPresent(version -> loaderTypes.addAll(version.getLoaders()));
+                        ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .ifPresent(version -> loaders.addAll(version.getLoaders()));
                     } catch (Exception e) {
                         LOG.log(Level.WARNING, "Failed to get Modrinth loader types", e);
                     }
                     
-                    return new ArrayList<>(loaderTypes);
+                    return new ArrayList<>(loaders);
                 }));
 
-                curseforgeIdFutures.add(CompletableFuture.supplyAsync(() -> {
+                // Initialize CurseForge data futures
+                curseForgeIdFutures.add(CompletableFuture.supplyAsync(() -> {
                     try {
-                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
                                 .map(version -> version.getModid())
                                 .orElse("");
                     } catch (Exception e) {
@@ -330,9 +373,45 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     }
                 }));
 
+                curseForgeDependenciesFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getDependencies().stream()
+                                        .map(dep -> dep.getType() + ": " + dep.getId())
+                                        .collect(Collectors.joining(", ")))
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge dependencies", e);
+                        return "";
+                    }
+                }));
+
+                curseForgeGameVersionsFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getGameVersions())
+                                .orElse(Collections.emptyList());
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge game versions", e);
+                        return Collections.emptyList();
+                    }
+                }));
+
+                curseForgeVersionTypeFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getVersionType().name())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge version type", e);
+                        return "";
+                    }
+                }));
+
+                // Initialize Modrinth data futures  
                 modrinthIdFutures.add(CompletableFuture.supplyAsync(() -> {
                     try {
-                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile())
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
                                 .map(version -> version.getModid())
                                 .orElse("");
                     } catch (Exception e) {
@@ -340,44 +419,114 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         return "";
                     }
                 }));
+
+                modrinthDependenciesFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getDependencies().stream()
+                                        .map(dep -> dep.getType() + ": " + dep.getId())
+                                        .collect(Collectors.joining(", ")))
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth dependencies", e);
+                        return "";
+                    }
+                }));
+
+                modrinthGameVersionsFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getGameVersions())
+                                .orElse(Collections.emptyList());
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth game versions", e);
+                        return Collections.emptyList();
+                    }
+                }));
+
+                modrinthVersionTypeFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getVersionType().name())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth version type", e);
+                        return "";
+                    }
+                }));
             }
 
-            List<String> sha1Results = sha1Futures.stream()
+            // Collect results
+            List<String> fileHashes = fileHashFutures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            List<List<ModLoaderType>> loaderResults = loaderTypeFutures.stream()
+            List<List<ModLoaderType>> modLoaders = modLoadersFutures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            List<String> curseforgeResults = curseforgeIdFutures.stream()
+            // CurseForge results
+            List<String> curseForgeIds = curseForgeIdFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<String> curseForgeDependencies = curseForgeDependenciesFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<List<String>> curseForgeGameVersions = curseForgeGameVersionsFutures.stream()
+                    .map(CompletableFuture::join) 
+                    .collect(Collectors.toList());
+            List<String> curseForgeVersionTypes = curseForgeVersionTypeFutures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            List<String> modrinthResults = modrinthIdFutures.stream()
+            // Modrinth results
+            List<String> modrinthIds = modrinthIdFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<String> modrinthDependencies = modrinthDependenciesFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<List<String>> modrinthGameVersions = modrinthGameVersionsFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<String> modrinthVersionTypes = modrinthVersionTypeFutures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            for (int i = 0; i < modInfoList.size(); i++) {
-                int row = i + 1;
-                csvTable.set(15, row, sha1Results.get(i));
-                csvTable.set(16, row, loaderResults.get(i).stream()
+            // Write collected data to CSV
+            for (int i = 0; i < modList.size(); i++) {
+                int rowIndex = i + 1;
+                
+                // Write file hash
+                modDataTable.set(15, rowIndex, fileHashes.get(i));
+                
+                // Write mod loaders
+                modDataTable.set(16, rowIndex, modLoaders.get(i).stream()
                         .map(ModLoaderType::name)
-                        .collect(Collectors.joining(",")));
-                csvTable.set(17, row, curseforgeResults.get(i));
-                csvTable.set(18, row, modrinthResults.get(i));
+                        .collect(Collectors.joining(", ")));
+                        
+                // Write remote data
+                modDataTable.set(17, rowIndex, curseForgeIds.get(i));
+                modDataTable.set(18, rowIndex, modrinthIds.get(i));
+                modDataTable.set(19, rowIndex, curseForgeDependencies.get(i));
+                modDataTable.set(20, rowIndex, modrinthDependencies.get(i));
+                modDataTable.set(21, rowIndex, String.join(", ", curseForgeGameVersions.get(i)));
+                modDataTable.set(22, rowIndex, String.join(", ", modrinthGameVersions.get(i)));
+                modDataTable.set(23, rowIndex, curseForgeVersionTypes.get(i));
+                modDataTable.set(24, rowIndex, modrinthVersionTypes.get(i));
             }
 
-            try (OutputStream os = Files.newOutputStream(path)) {
-                csvTable.write(os);
+            // Save CSV file
+            try (OutputStream outputStream = Files.newOutputStream(exportPath)) {
+                modDataTable.write(outputStream);
             } catch (IOException e) {
                 LOG.log(Level.WARNING, "Failed to write CSV file", e);
             }
 
-            FXUtils.showFileInExplorer(path);
+            FXUtils.showFileInExplorer(exportPath);
         }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception == null) {
-                Controllers.dialog(path.toString(), i18n("message.success"));
+                Controllers.dialog(exportPath.toString(), i18n("message.success"));
             } else {
                 Controllers.dialog(exception.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             }
