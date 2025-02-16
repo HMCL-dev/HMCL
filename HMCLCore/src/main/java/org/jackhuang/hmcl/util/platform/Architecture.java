@@ -85,8 +85,6 @@ public enum Architecture {
         return this == X86 || this == X86_64;
     }
 
-    public static final String CURRENT_ARCH_NAME;
-    public static final String SYSTEM_ARCH_NAME;
     public static final Architecture CURRENT_ARCH;
     public static final Architecture SYSTEM_ARCH;
 
@@ -192,8 +190,7 @@ public enum Architecture {
     }
 
     static {
-        CURRENT_ARCH_NAME = System.getProperty("os.arch");
-        CURRENT_ARCH = parseArchName(CURRENT_ARCH_NAME);
+        CURRENT_ARCH = parseArchName(System.getProperty("os.arch"));
 
         String sysArchName = null;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -219,12 +216,6 @@ public enum Architecture {
         }
 
         Architecture sysArch = parseArchName(sysArchName);
-        if (sysArch == UNKNOWN) {
-            SYSTEM_ARCH_NAME = CURRENT_ARCH_NAME;
-            SYSTEM_ARCH = CURRENT_ARCH;
-        } else {
-            SYSTEM_ARCH_NAME = sysArchName;
-            SYSTEM_ARCH = sysArch;
-        }
+        SYSTEM_ARCH = sysArch == UNKNOWN ? CURRENT_ARCH : sysArch;
     }
 }
