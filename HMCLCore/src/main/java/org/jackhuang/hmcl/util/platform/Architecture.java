@@ -104,6 +104,7 @@ public enum Architecture {
             case "ia32e":
             case "em64t":
             case "x64":
+            case "intel64":
                 return X86_64;
             case "x8632":
             case "x86-32":
