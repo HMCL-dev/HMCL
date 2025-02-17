@@ -155,7 +155,7 @@ public final class LauncherHelper {
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
                                 if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getMesaLoader(java, renderer);
+                                    Library lib = NativePatcher.getMesaLoader(java);
                                     if (lib == null)
                                         return null;
                                     File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);

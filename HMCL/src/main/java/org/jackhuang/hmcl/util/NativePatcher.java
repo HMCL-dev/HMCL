@@ -152,7 +152,7 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static Library getMesaLoader(JavaRuntime javaVersion, Renderer renderer) {
+    public static Library getMesaLoader(JavaRuntime javaVersion) {
         return getNatives(javaVersion.getPlatform()).get("mesa-loader");
     }
 }
