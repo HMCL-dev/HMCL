@@ -71,7 +71,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
-        settings.put("title", i18n("install.change_version"));
+        settings.put("title", i18n("install.change_version.process"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
 
