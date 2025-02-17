@@ -217,10 +217,6 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
 
-        if (analyzer.hasModLoader()) {
-            res.addDefault("-Dsodium.checks.issue2561=", "false");
-        }
-
         Set<String> classpath = repository.getClasspath(version);
 
         File jar = repository.getVersionJar(version);
