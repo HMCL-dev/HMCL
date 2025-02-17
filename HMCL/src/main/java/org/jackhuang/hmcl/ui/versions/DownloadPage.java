@@ -439,7 +439,9 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModVersion extends JFXDialogLayout {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
-            this.setHeading(new HBox(new Label(i18n("mods.download.title", version.getName()))));
+            boolean isModpack = selfPage.repository.getType() == RemoteModRepository.Type.MODPACK;
+
+            this.setHeading(new HBox(new Label(i18n(isModpack ? "modpack.download.title" : "mods.download.title", version.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -461,9 +463,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(selfPage.repository.getType() == RemoteModRepository.Type.MODPACK
-                    ? i18n("install.modpack")
-                    : i18n("mods.install"));
+            JFXButton downloadButton = new JFXButton(isModpack ? i18n("install.modpack") : i18n("mods.install"));
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.setOnAction(e -> {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
