@@ -305,7 +305,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                         ComponentList sublist = new ComponentList(() -> {
                             ArrayList<ModItem> items = new ArrayList<>(versions.size());
-                            for (RemoteMod.Version v: versions) {
+                            for (RemoteMod.Version v : versions) {
                                 items.add(new ModItem(v, control));
                             }
                             return items;
@@ -466,7 +466,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             JFXButton downloadButton = new JFXButton(isModpack ? i18n("install.modpack") : i18n("mods.install"));
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.setOnAction(e -> {
-                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                if (isModpack || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                     fireEvent(new DialogCloseEvent());
                 }
                 selfPage.download(version);
