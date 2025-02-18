@@ -90,18 +90,14 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final JFXCheckBox chkRelease;
     private final JFXCheckBox chkSnapshot;
     private final JFXCheckBox chkOld;
-    private final JFXButton btnRefresh;
-    private final HBox checkPane;
     private final ComponentList centrePane;
     private final StackPane center;
 
     private final VersionList<?> versionList;
     private CompletableFuture<?> executor;
 
-    private final TransitionPane toolbarPane;
     private final HBox searchBar;
     private final JFXTextField searchField;
-    private boolean isSearching = false;
 
     public VersionsPage(Navigation navigation, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
@@ -117,6 +113,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         this.setTop(hintPane);
 
         root = new TransitionPane();
+        BorderPane toolbarPane = new BorderPane();
+        JFXButton btnRefresh;
         {
             spinner = new JFXSpinner();
 
@@ -126,7 +124,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 centrePane = new ComponentList();
                 centrePane.getStyleClass().add("no-padding");
                 {
-                    checkPane = new HBox();
+                    HBox checkPane = new HBox();
                     checkPane.setSpacing(10);
                     {
                         chkRelease = new JFXCheckBox(i18n("version.game.releases"));
@@ -139,24 +137,70 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         chkOld = new JFXCheckBox(i18n("version.game.old"));
                         HBox.setMargin(chkOld, new Insets(10, 0, 10, 0));
 
-                        HBox pane = new HBox();
-                        HBox.setHgrow(pane, Priority.ALWAYS);
-
-                        btnRefresh = new JFXButton(i18n("button.refresh"));
-                        btnRefresh.getStyleClass().add("jfx-tool-bar-button");
-                        btnRefresh.setOnAction(e -> onRefresh());
-
-                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld, pane, btnRefresh);
+                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld);
                     }
 
                     list = new JFXListView<>();
                     list.getStyleClass().add("jfx-list-view-float");
                     VBox.setVgrow(list, Priority.ALWAYS);
 
+                    TransitionPane rightToolbarPane = new TransitionPane();
+                    {
+                        HBox refreshBox = new HBox();
+
+                        btnRefresh = new JFXButton(i18n("button.refresh"));
+                        btnRefresh.getStyleClass().add("jfx-tool-bar-button");
+                        btnRefresh.setOnAction(e -> onRefresh());
+
+                        JFXButton btnSearch = new JFXButton(i18n("search"));
+                        btnSearch.getStyleClass().add("jfx-tool-bar-button");
+                        btnSearch.setGraphic(wrap(SVG.MAGNIFY.createIcon(Theme.blackFill(), -1, -1)));
+
+                        searchBar = new HBox();
+                        {
+                            searchBar.setAlignment(Pos.CENTER);
+                            searchBar.setPadding(new Insets(0, 5, 0, 5));
+
+                            searchField = new JFXTextField();
+                            searchField.setPromptText(i18n("search"));
+                            HBox.setHgrow(searchField, Priority.ALWAYS);
+
+                            JFXButton closeSearchBar = new JFXButton();
+                            closeSearchBar.getStyleClass().add("jfx-tool-bar-button");
+                            closeSearchBar.setGraphic(wrap(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1)));
+                            closeSearchBar.setOnAction(e -> {
+                                rightToolbarPane.setContent(refreshBox, ContainerAnimations.FADE);
+                                searchField.clear();
+                                list.getItems().setAll(loadVersions());
+                            });
+                            onEscPressed(searchField, closeSearchBar::fire);
+                            PauseTransition pause = new PauseTransition(Duration.millis(100));
+                            pause.setOnFinished(e -> search());
+                            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                                pause.setRate(1);
+                                pause.playFromStart();
+                            });
+
+                            searchBar.getChildren().setAll(searchField, closeSearchBar);
+                        }
+
+                        btnSearch.setOnAction(e -> {
+                            rightToolbarPane.setContent(searchBar, ContainerAnimations.FADE);
+                            searchField.requestFocus();
+                        });
+
+                        refreshBox.getChildren().setAll(btnSearch, btnRefresh);
+                        rightToolbarPane.setContent(refreshBox, ContainerAnimations.NONE);
+                    }
+
                     // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                     ignoreEvent(list, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
-                    centrePane.getContent().setAll(checkPane, list);
+                    toolbarPane.setLeft(checkPane);
+                    toolbarPane.setRight(rightToolbarPane);
+
+
+                    centrePane.getContent().setAll(toolbarPane, list);
                 }
 
                 center.getChildren().setAll(centrePane);
@@ -192,7 +236,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkOld.setVisible(hasType);
 
         if (hasType) {
-            centrePane.getContent().setAll(checkPane, list);
+            centrePane.getContent().setAll(toolbarPane, list);
         } else {
             centrePane.getContent().setAll(list);
         }
@@ -214,50 +258,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             navigation.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem());
             callback.run();
         });
-
-        {
-            toolbarPane = new TransitionPane();
-            searchBar = new HBox();
-            searchBar.setAlignment(Pos.CENTER);
-            searchBar.setPadding(new Insets(0, 5, 0, 5));
-            searchField = new JFXTextField();
-            searchField.setPromptText(i18n("search"));
-            HBox.setHgrow(searchField, Priority.ALWAYS);
-
-            JFXButton closeSearchBar = new JFXButton();
-            closeSearchBar.getStyleClass().add("jfx-tool-bar-button");
-            closeSearchBar.setGraphic(wrap(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1)));
-            closeSearchBar.setOnAction(e -> {
-                toolbarPane.setContent(checkPane, ContainerAnimations.FADE);
-                isSearching = false;
-                searchField.clear();
-                list.getItems().setAll(loadVersions());
-            });
-            onEscPressed(searchField, closeSearchBar::fire);
-
-            searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-            JFXButton searchButton = new JFXButton(i18n("search"));
-            searchButton.getStyleClass().add("jfx-tool-bar-button");
-            searchButton.setGraphic(wrap(SVG.MAGNIFY.createIcon(Theme.blackFill(), -1, -1)));
-            searchButton.setOnAction(e -> {
-                toolbarPane.setContent(searchBar, ContainerAnimations.FADE);
-                searchField.requestFocus();
-            });
-
-            checkPane.getChildren().add(checkPane.getChildren().size() - 1, searchButton);
-            
-            centrePane.getContent().remove(checkPane);
-            toolbarPane.setContent(checkPane, ContainerAnimations.FADE);
-            centrePane.getContent().add(0, toolbarPane);
-
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> search());
-            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                pause.setRate(1);
-                pause.playFromStart();
-            });
-        }
 
         refresh();
     }
@@ -338,8 +338,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     }
 
     private void search() {
-        isSearching = true;
-        String queryString = searchField.getText(); 
+        String queryString = searchField.getText();
         
         if (isBlank(queryString)) {
             list.getItems().setAll(loadVersions());
