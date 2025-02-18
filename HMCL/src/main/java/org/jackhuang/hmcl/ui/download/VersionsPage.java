@@ -148,7 +148,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
                     TransitionPane rightToolbarPane = new TransitionPane();
                     {
-                        HBox refreshBox = new HBox();
+                        HBox refreshPane = new HBox();
+                        refreshPane.setAlignment(Pos.CENTER_RIGHT);
 
                         btnRefresh = new JFXButton(i18n("button.refresh"));
                         btnRefresh.getStyleClass().add("jfx-tool-bar-button");
@@ -171,8 +172,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             closeSearchBar.getStyleClass().add("jfx-tool-bar-button");
                             closeSearchBar.setGraphic(wrap(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1)));
                             closeSearchBar.setOnAction(e -> {
-                                rightToolbarPane.setContent(refreshBox, ContainerAnimations.FADE);
                                 searchField.clear();
+                                rightToolbarPane.setContent(refreshPane, ContainerAnimations.FADE);
                             });
                             onEscPressed(searchField, closeSearchBar::fire);
                             PauseTransition pause = new PauseTransition(Duration.millis(100));
@@ -190,8 +191,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             });
                         }
 
-                        refreshBox.getChildren().setAll(btnSearch, btnRefresh);
-                        rightToolbarPane.setContent(refreshBox, ContainerAnimations.NONE);
+                        refreshPane.getChildren().setAll(new HBox(btnSearch, btnRefresh));
+                        rightToolbarPane.setContent(refreshPane, ContainerAnimations.NONE);
                     }
 
                     // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
