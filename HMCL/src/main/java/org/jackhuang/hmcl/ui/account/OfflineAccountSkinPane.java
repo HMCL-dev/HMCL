@@ -101,6 +101,9 @@ public class OfflineAccountSkinPane extends StackPane {
         VBox optionPane = new VBox(skinItem, skinOptionPane);
         pane.setRight(optionPane);
 
+        skinSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
+        capeSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
+
         layout.setBody(pane);
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
