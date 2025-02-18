@@ -201,6 +201,13 @@ public class OfflineAccountSkinPane extends StackPane {
     }
 
     private Skin getSkin() {
-        return new Skin(skinItem.getSelectedData(), cslApiField.getText(), modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
+        Skin.Type type = skinItem.getSelectedData();
+
+        if (type == Skin.Type.LOCAL_FILE) {
+            return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
+        } else {
+            String cslApi = type == Skin.Type.CUSTOM_SKIN_LOADER_API ? cslApiField.getText() : null;
+            return new Skin(type, cslApi, null, null, null);
+        }
     }
 }
