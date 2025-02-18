@@ -61,8 +61,9 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -75,9 +76,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.StringUtils.isBlank;
 
 public final class VersionsPage extends BorderPane implements WizardPage, Refreshable {
     private final String gameVersion;
@@ -162,7 +161,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         searchBar = new HBox();
                         {
                             searchBar.setAlignment(Pos.CENTER);
-                            searchBar.setPadding(new Insets(0, 5, 0, 5));
+                            searchBar.setPadding(new Insets(0, 5, 0, 0));
 
                             JFXTextField searchField = new JFXTextField();
                             searchField.setPromptText(i18n("search"));
@@ -174,7 +173,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             closeSearchBar.setOnAction(e -> {
                                 rightToolbarPane.setContent(refreshBox, ContainerAnimations.FADE);
                                 searchField.clear();
-                                list.getItems().setAll(loadVersions());
                             });
                             onEscPressed(searchField, closeSearchBar::fire);
                             PauseTransition pause = new PauseTransition(Duration.millis(100));
@@ -247,7 +245,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         InvalidationListener listener = o -> {
             List<RemoteVersion> versions = loadVersions();
             String query = queryString.get();
-            if (!isBlank(query)) {
+            if (!StringUtils.isBlank(query)) {
                 Predicate<RemoteVersion> predicate;
                 if (query.startsWith("regex:")) {
                     try {
@@ -400,7 +398,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
             content.setTitle(remoteVersion.getSelfVersion());
             if (remoteVersion.getReleaseDate() != null) {
-                content.setSubtitle(formatDateTime(remoteVersion.getReleaseDate()));
+                content.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
                 content.setSubtitle(null);
             }
