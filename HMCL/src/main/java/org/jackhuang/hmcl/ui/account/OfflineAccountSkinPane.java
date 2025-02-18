@@ -202,7 +202,6 @@ public class OfflineAccountSkinPane extends StackPane {
 
     private Skin getSkin() {
         Skin.Type type = skinItem.getSelectedData();
-
         if (type == Skin.Type.LOCAL_FILE) {
             return new Skin(type, cslApiField.getText(), modelCombobox.getValue(), skinSelector.getValue(), capeSelector.getValue());
         } else {
