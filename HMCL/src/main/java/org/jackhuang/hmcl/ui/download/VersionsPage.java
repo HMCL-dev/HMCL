@@ -25,6 +25,8 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -60,6 +62,7 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -97,7 +100,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private CompletableFuture<?> executor;
 
     private final HBox searchBar;
-    private final JFXTextField searchField;
+    private final StringProperty queryString = new SimpleStringProperty();
 
     public VersionsPage(Navigation navigation, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
@@ -161,7 +164,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             searchBar.setAlignment(Pos.CENTER);
                             searchBar.setPadding(new Insets(0, 5, 0, 5));
 
-                            searchField = new JFXTextField();
+                            JFXTextField searchField = new JFXTextField();
                             searchField.setPromptText(i18n("search"));
                             HBox.setHgrow(searchField, Priority.ALWAYS);
 
@@ -175,19 +178,19 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             });
                             onEscPressed(searchField, closeSearchBar::fire);
                             PauseTransition pause = new PauseTransition(Duration.millis(100));
-                            pause.setOnFinished(e -> search());
+                            pause.setOnFinished(e -> queryString.set(searchField.getText()));
                             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
                                 pause.setRate(1);
                                 pause.playFromStart();
                             });
 
                             searchBar.getChildren().setAll(searchField, closeSearchBar);
-                        }
 
-                        btnSearch.setOnAction(e -> {
-                            rightToolbarPane.setContent(searchBar, ContainerAnimations.FADE);
-                            searchField.requestFocus();
-                        });
+                            btnSearch.setOnAction(e -> {
+                                rightToolbarPane.setContent(searchBar, ContainerAnimations.FADE);
+                                searchField.requestFocus();
+                            });
+                        }
 
                         refreshBox.getChildren().setAll(btnSearch, btnRefresh);
                         rightToolbarPane.setContent(refreshBox, ContainerAnimations.NONE);
@@ -198,7 +201,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
                     toolbarPane.setLeft(checkPane);
                     toolbarPane.setRight(rightToolbarPane);
-
 
                     centrePane.getContent().setAll(toolbarPane, list);
                 }
@@ -242,10 +244,33 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         }
         ComponentList.setVgrow(list, Priority.ALWAYS);
 
-        InvalidationListener listener = o -> list.getItems().setAll(loadVersions());
+        InvalidationListener listener = o -> {
+            List<RemoteVersion> versions = loadVersions();
+            String query = queryString.get();
+            if (!isBlank(query)) {
+                Predicate<RemoteVersion> predicate;
+                if (query.startsWith("regex:")) {
+                    try {
+                        Pattern pattern = Pattern.compile(query.substring("regex:".length()));
+                        predicate = it -> pattern.matcher(it.getSelfVersion()).find();
+                    } catch (Throwable e) {
+                        LOG.warning("Illegal regular expression", e);
+                        return;
+                    }
+                } else {
+                    String lowerQueryString = query.toLowerCase(Locale.ROOT);
+                    predicate = it -> it.getSelfVersion().toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                }
+
+                versions = versions.stream().filter(predicate).collect(Collectors.toList());
+            }
+
+            list.getItems().setAll(versions);
+        };
         chkRelease.selectedProperty().addListener(listener);
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
+        queryString.addListener(listener);
 
         btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1)));
 
@@ -331,40 +356,12 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         refresh();
     }
 
-    private void onBack() { navigation.onPrev(true); }
+    private void onBack() {
+        navigation.onPrev(true);
+    }
 
     private void onSponsor() {
         FXUtils.openLink("https://bmclapidoc.bangbang93.com");
-    }
-
-    private void search() {
-        String queryString = searchField.getText();
-        
-        if (isBlank(queryString)) {
-            list.getItems().setAll(loadVersions());
-        } else {
-            list.getItems().clear();
-            
-            Predicate<String> predicate;
-            if (queryString.startsWith("regex:")) {
-                try {
-                    Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                    predicate = s -> pattern.matcher(s).find();
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-            } else {
-                String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
-            }
-
-            for (RemoteVersion version : loadVersions()) {
-                if (predicate.test(version.getSelfVersion())) {
-                    list.getItems().add(version);
-                }
-            }
-        }
     }
 
     private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
