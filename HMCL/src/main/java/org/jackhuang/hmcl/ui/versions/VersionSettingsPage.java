@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -65,6 +66,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     private static final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
     private static TimerTask memoryStatusUpdateTask;
+
     private static void initMemoryStatusUpdateTask() {
         FXUtils.checkFxUserThread();
         if (memoryStatusUpdateTask != null)
@@ -189,6 +191,28 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         {
             componentList = new ComponentList();
             componentList.setDepth(1);
+
+            if (!globalSetting) {
+                BorderPane copyGlobalPane = new BorderPane();
+                {
+                    Label label = new Label(i18n("settings.game.copy_global"));
+                    copyGlobalPane.setLeft(label);
+                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+                    JFXButton button = new JFXButton(i18n("settings.game.copy_global.copy_all"));
+                    copyGlobalPane.setRight(button);
+                    button.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
+                        VersionIconType icon = lastVersionSetting.getVersionIcon();
+                        PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting);
+                        lastVersionSetting.setUsesGlobal(false);
+                        lastVersionSetting.setVersionIcon(icon); // versionIcon is preserved
+                    }, null));
+                    button.getStyleClass().add("jfx-button-border");
+                    BorderPane.setAlignment(button, Pos.CENTER_RIGHT);
+                }
+
+                componentList.getContent().add(copyGlobalPane);
+            }
 
             javaItem = new MultiFileItem<>();
             javaSublist = new ComponentSublist();
@@ -446,7 +470,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 showAdvancedSettingPane.setRight(button);
             }
 
-            componentList.getContent().setAll(
+            componentList.getContent().addAll(
                     javaSublist,
                     gameDirSublist,
                     maxMemoryPane,
