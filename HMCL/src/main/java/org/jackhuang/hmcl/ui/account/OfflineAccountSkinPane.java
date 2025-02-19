@@ -108,8 +108,8 @@ public class OfflineAccountSkinPane extends StackPane {
 
         skinItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
-                new MultiFileItem.Option<>("Steve", Skin.Type.STEVE),
-                new MultiFileItem.Option<>("Alex", Skin.Type.ALEX),
+                new MultiFileItem.Option<>(i18n("account.skin.type.steve"), Skin.Type.STEVE),
+                new MultiFileItem.Option<>(i18n("account.skin.type.alex"), Skin.Type.ALEX),
                 new MultiFileItem.Option<>(i18n("account.skin.type.local_file"), Skin.Type.LOCAL_FILE),
                 new MultiFileItem.Option<>("LittleSkin", Skin.Type.LITTLE_SKIN),
                 new MultiFileItem.Option<>(i18n("account.skin.type.csl_api"), Skin.Type.CUSTOM_SKIN_LOADER_API)
