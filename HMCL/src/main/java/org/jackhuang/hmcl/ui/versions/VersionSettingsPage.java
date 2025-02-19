@@ -135,10 +135,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         rootPane.getStyleClass().add("card-list");
 
         if (globalSetting) {
-            HintPane skinHint = new HintPane(MessageDialogPane.MessageType.INFO);
-            skinHint.setText(i18n("settings.skin"));
-            rootPane.getChildren().add(skinHint);
-
             HintPane specificSettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             Text text = new Text();
             text.textProperty().bind(BindingMapping.of(selectedVersion)
