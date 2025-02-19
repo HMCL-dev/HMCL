@@ -202,10 +202,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     JFXButton button = new JFXButton(i18n("settings.game.copy_global.copy_all"));
                     copyGlobalPane.setRight(button);
                     button.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
-                        VersionIconType icon = lastVersionSetting.getVersionIcon();
-                        PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting);
-                        lastVersionSetting.setUsesGlobal(false);
-                        lastVersionSetting.setVersionIcon(icon); // versionIcon is preserved
+                        Set<String> ignored = new HashSet<>(Arrays.asList(
+                                "usesGlobal",
+                                "versionIcon"
+                        ));
+
+                        PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
                     }, null));
                     button.getStyleClass().add("jfx-button-border");
                     BorderPane.setAlignment(button, Pos.CENTER_RIGHT);
