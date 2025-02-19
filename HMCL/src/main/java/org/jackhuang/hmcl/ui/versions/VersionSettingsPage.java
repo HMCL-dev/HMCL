@@ -553,8 +553,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbindBoolean(chkAutoAllocate, lastVersionSetting.autoMemoryProperty());
             FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
-            FXUtils.unbindEnum(cboLauncherVisibility);
-            FXUtils.unbindEnum(cboProcessPriority);
+            FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
+            FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
 
             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
             lastVersionSetting.javaVersionTypeProperty().removeListener(javaListener);
