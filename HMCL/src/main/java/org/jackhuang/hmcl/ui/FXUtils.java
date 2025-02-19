@@ -584,7 +584,7 @@ public final class FXUtils {
             focusedListener = (observable, oldFocused, newFocused) -> {
                 if (oldFocused && !newFocused) {
                     if (textField.validate()) {
-                        uppdateProperty();
+                        updateProperty();
                     } else {
                         // Rollback to old value
                         updateTextField();
@@ -596,7 +596,7 @@ public final class FXUtils {
                 if (oldScene != null && newScene == null) {
                     // Component is being removed from scene
                     if (textField.validate()) {
-                        uppdateProperty();
+                        updateProperty();
                     }
                 }
             };
@@ -606,7 +606,7 @@ public final class FXUtils {
             };
         }
 
-        public void uppdateProperty() {
+        public void updateProperty() {
             String newText = textField.getText();
             @SuppressWarnings("unchecked")
             T newValue = converter == null ? (T) newText : converter.fromString(newText);
