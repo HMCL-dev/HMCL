@@ -24,6 +24,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.WeakListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.value.*;
@@ -79,6 +80,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -636,26 +638,100 @@ public final class FXUtils {
         checkBox.selectedProperty().unbindBidirectional(property);
     }
 
+    private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
+        private final WeakReference<JFXComboBox<E>> comboBoxRef;
+        private final WeakReference<Property<E>> propertyRef;
+        private final int hashCode;
+
+        private boolean updating = false;
+
+        private EnumBidirectionalBinding(JFXComboBox<E> comboBox, Property<E> property) {
+            this.comboBoxRef = new WeakReference<>(comboBox);
+            this.propertyRef = new WeakReference<>(property);
+            this.hashCode = System.identityHashCode(comboBox) ^ System.identityHashCode(property);
+        }
+
+        @Override
+        public void invalidated(Observable sourceProperty) {
+            if (!updating) {
+                final JFXComboBox<E> comboBox = comboBoxRef.get();
+                final Property<E> property = propertyRef.get();
+
+                if (comboBox == null || property == null) {
+                    if (comboBox != null) {
+                        comboBox.getSelectionModel().selectedItemProperty().removeListener(this);
+                    }
+
+                    if (property != null) {
+                        property.removeListener(this);
+                    }
+                } else {
+                    updating = true;
+                    try {
+                        if (property == sourceProperty) {
+                            E newValue = property.getValue();
+                            comboBox.getSelectionModel().select(newValue);
+                        } else {
+                            E newValue = comboBox.getSelectionModel().getSelectedItem();
+                            property.setValue(newValue);
+                        }
+                    } finally {
+                        updating = false;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return comboBoxRef.get() == null || propertyRef.get() == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof EnumBidirectionalBinding))
+                return false;
+
+            EnumBidirectionalBinding<?> that = (EnumBidirectionalBinding<?>) o;
+
+            final JFXComboBox<E> comboBox = this.comboBoxRef.get();
+            final Property<E> property = this.propertyRef.get();
+
+            final JFXComboBox<?> thatComboBox = that.comboBoxRef.get();
+            final Property<?> thatProperty = that.propertyRef.get();
+
+            if (comboBox == null || property == null || thatComboBox == null || thatProperty == null)
+                return false;
+
+            return comboBox == thatComboBox && property == thatProperty;
+        }
+    }
+
     /**
      * Bind combo box selection with given enum property bidirectionally.
      * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
      *
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
-     * @see #unbindEnum(JFXComboBox)
+     * @see #unbindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
     public static <T extends Enum<T>> void bindEnum(JFXComboBox<T> comboBox, Property<T> property) {
-        unbindEnum(comboBox);
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
 
-        T currentValue = property.getValue();
-        @SuppressWarnings("unchecked")
-        T[] enumConstants = (T[]) currentValue.getClass().getEnumConstants();
-        ChangeListener<Number> listener = (a, b, newValue) -> property.setValue(enumConstants[newValue.intValue()]);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
 
-        comboBox.getSelectionModel().select(currentValue.ordinal());
-        comboBox.getProperties().put("FXUtils.bindEnum.listener", listener);
-        comboBox.getSelectionModel().selectedIndexProperty().addListener(listener);
+        comboBox.getSelectionModel().select(property.getValue());
+        comboBox.getSelectionModel().selectedItemProperty().addListener(binding);
+        property.addListener(binding);
     }
 
     /**
@@ -666,11 +742,10 @@ public final class FXUtils {
      * @see #bindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
-    public static void unbindEnum(JFXComboBox<? extends Enum<?>> comboBox) {
-        @SuppressWarnings("unchecked")
-        ChangeListener<Number> listener = (ChangeListener<Number>) comboBox.getProperties().remove("FXUtils.bindEnum.listener");
-        if (listener != null)
-            comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
+    public static <T extends Enum<T>> void unbindEnum(JFXComboBox<T> comboBox, Property<T> property) {
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
     }
 
     public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
