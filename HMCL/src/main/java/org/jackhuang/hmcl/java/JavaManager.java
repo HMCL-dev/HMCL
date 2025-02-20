@@ -193,20 +193,19 @@ public final class JavaManager {
                 final int maxDepth = 3;
 
                 List<JavaRuntime> binaryList = new ArrayList<>();
-                Queue<Path> fileQueue;
+                Queue<Path> queue = new ArrayDeque<>(64);
                 try(Stream<Path> subDirs = Files.list(dir)) {
-                    fileQueue = subDirs.filter(Files::isDirectory).filter(Files::isReadable)
-                            .collect(Collectors.toCollection(LinkedList::new));
+                    subDirs.filter(Files::isDirectory).filter(Files::isReadable).forEach(queue::add);
                 }
-                fileQueue.add(null);
                 final Path relative = Paths.get("bin", OperatingSystem.CURRENT_OS.getJavaExecutable());
+                queue.add(relative); // relative also as a sign of the end of the layer
                 int depth = 1;
-                while(!fileQueue.isEmpty()) {
-                    final Path directory = fileQueue.poll();
-                    if(directory == null) {
+                while(!queue.isEmpty()) {
+                    final Path directory = queue.poll();
+                    if(directory == relative) {
                         depth++;
-                        if(!fileQueue.isEmpty() && depth < maxDepth)
-                            fileQueue.add(null);
+                        if(!queue.isEmpty() && depth < maxDepth)
+                            queue.add(relative);
                         continue;
                     }
                     if(isCancelled())
@@ -222,8 +221,7 @@ public final class JavaManager {
                         binaryList.add(java);
                     } else if(depth < maxDepth)
                         try(Stream<Path> subDirs = Files.list(directory)) {
-                            fileQueue.addAll(subDirs.filter(Files::isDirectory).filter(Files::isReadable)
-                                    .collect(Collectors.toList()));
+                            subDirs.filter(Files::isDirectory).filter(Files::isReadable).forEach(queue::add);
                         }
                 }
                 return Collections.unmodifiableList(binaryList);
