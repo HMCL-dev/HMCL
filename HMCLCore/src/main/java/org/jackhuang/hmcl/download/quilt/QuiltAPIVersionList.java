@@ -30,10 +30,7 @@ import static org.jackhuang.hmcl.util.Lang.wrap;
 
 public class QuiltAPIVersionList extends VersionList<QuiltAPIRemoteVersion> {
 
-    private final DownloadProvider downloadProvider;
-
     public QuiltAPIVersionList(DownloadProvider downloadProvider) {
-        this.downloadProvider = downloadProvider;
     }
 
     @Override

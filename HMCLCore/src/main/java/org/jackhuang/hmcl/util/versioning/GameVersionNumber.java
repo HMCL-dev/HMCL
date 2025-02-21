@@ -503,7 +503,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             List<Snapshot> snapshots = new ArrayList<>(1024);
             List<Release> snapshotPrev = new ArrayList<>(1024);
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt")), StandardCharsets.US_ASCII))) {
                 Release currentRelease = null;
                 GameVersionNumber prev = null;
 

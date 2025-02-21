@@ -54,6 +54,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -341,7 +342,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         @Override
         public void execute() throws Exception {
             if (!isDependentsSucceeded())
-                throw getException();
+                throw Objects.requireNonNull(getException());
         }
     }
 }

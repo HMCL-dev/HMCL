@@ -10,8 +10,8 @@ import java.util.function.Function;
 
 public class SkinTransition extends Transition {
 
-    protected Function<Double, Double> expression;
-    protected List<WritableValue<Number>> observables;
+    protected final Function<Double, Double> expression;
+    protected final List<WritableValue<Number>> observables;
     protected boolean fix;
     protected int count;
 

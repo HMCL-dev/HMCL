@@ -77,9 +77,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
         tab.select(versionSettingsTab);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
-        });
+        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE));
 
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
     }
@@ -308,16 +306,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 );
 
                 AdvancedListBox toolbar = new AdvancedListBox()
-                        .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
-                            upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
-                        })
+                        .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> upgradeItem.visibleProperty().bind(control.currentVersionUpgradable))
                         .addNavigationDrawerItem(i18n("version.launch.test"), SVG.ROCKET_LAUNCH_OUTLINE, control::testGame)
-                        .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OUTLINE, null, browseMenuItem -> {
-                            browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
-                        })
-                        .addNavigationDrawerItem(i18n("settings.game.management"), SVG.WRENCH_OUTLINE, null, managementItem -> {
-                            managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
-                        });
+                        .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OUTLINE, null, browseMenuItem -> browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0)))
+                        .addNavigationDrawerItem(i18n("settings.game.management"), SVG.WRENCH_OUTLINE, null, managementItem -> managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0)));
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");
                 FXUtils.setLimitHeight(toolbar, 40 * 4 + 12 * 2);
 

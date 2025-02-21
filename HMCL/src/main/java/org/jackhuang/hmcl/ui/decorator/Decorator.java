@@ -194,7 +194,7 @@ public class Decorator extends Control {
     }
 
     public boolean isDragging() {
-        return dragging.get();
+        return !dragging.get();
     }
 
     public ReadOnlyBooleanProperty draggingProperty() {
@@ -249,7 +249,7 @@ public class Decorator extends Control {
     public void capableDraggingWindow(Node node) {
         node.addEventHandler(MouseEvent.MOUSE_MOVED, e -> allowMove.set(true));
         node.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
-            if (!isDragging()) allowMove.set(false);
+            if (isDragging()) allowMove.set(false);
         });
     }
 

@@ -55,7 +55,7 @@ public final class AuthlibInjectorServers implements Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
+    public void validate() throws JsonParseException {
         if (this.urls == null) {
             throw new JsonParseException("authlib-injectors.json -> urls cannot be null.");
         }

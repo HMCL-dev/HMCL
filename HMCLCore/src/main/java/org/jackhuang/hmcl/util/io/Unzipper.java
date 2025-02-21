@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -73,10 +75,10 @@ public final class Unzipper {
 
     /**
      * Will only uncompress files in the "subDirectory", their path will be also affected.
-     *
+     * <p>
      * For example, if you set subDirectory to /META-INF, files in /META-INF/ will be
      * uncompressed to the destination directory without creating META-INF folder.
-     *
+     * <p>
      * Default value: "/"
      */
     public Unzipper setSubDirectory(String subDirectory) {
@@ -111,11 +113,11 @@ public final class Unzipper {
 
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs) throws IOException {
+                public @NotNull FileVisitResult visitFile(Path file,
+                                                          @NotNull BasicFileAttributes attrs) throws IOException {
                     String relativePath = root.relativize(file).toString();
                     Path destFile = dest.resolve(relativePath);
-                    if (filter != null && !filter.accept(file, false, destFile, relativePath))
+                    if (filter != null && filter.accept(file, false, destFile, relativePath))
                         return FileVisitResult.CONTINUE;
                     try {
                         Files.copy(file, destFile, replaceExistentFile ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
@@ -127,11 +129,11 @@ public final class Unzipper {
                 }
 
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir,
-                                                         BasicFileAttributes attrs) throws IOException {
+                public @NotNull FileVisitResult preVisitDirectory(Path dir,
+                                                                  @NotNull BasicFileAttributes attrs) throws IOException {
                     String relativePath = root.relativize(dir).toString();
                     Path dirToCreate = dest.resolve(relativePath);
-                    if (filter != null && !filter.accept(dir, true, dirToCreate, relativePath))
+                    if (filter != null && filter.accept(dir, true, dirToCreate, relativePath))
                         return FileVisitResult.SKIP_SUBTREE;
                     Files.createDirectories(dirToCreate);
                     return FileVisitResult.CONTINUE;

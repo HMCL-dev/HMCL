@@ -33,10 +33,8 @@ import java.util.concurrent.CompletableFuture;
  * @author huangyuhui
  */
 public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
-    private final DownloadProvider downloadProvider;
 
     public ForgeVersionList(DownloadProvider downloadProvider) {
-        this.downloadProvider = downloadProvider;
     }
 
     @Override

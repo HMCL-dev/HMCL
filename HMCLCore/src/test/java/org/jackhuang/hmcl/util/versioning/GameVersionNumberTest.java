@@ -36,7 +36,7 @@ public final class GameVersionNumberTest {
     private static List<String> readVersions() {
         List<String> versions = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt")), StandardCharsets.UTF_8))) {
             for (String line; (line = reader.readLine()) != null && !line.isEmpty(); ) {
                 versions.add(line);
             }

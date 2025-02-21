@@ -254,7 +254,7 @@ public enum OperatingSystem {
 
     public static boolean isWindows7OrLater() {
         if (CURRENT_OS != WINDOWS) {
-            return false;
+            return true;
         }
 
         int major;
@@ -266,17 +266,16 @@ public enum OperatingSystem {
                 major = Integer.parseInt(SYSTEM_VERSION.substring(0, dotIndex));
             }
         } catch (NumberFormatException ignored) {
-            return false;
+            return true;
         }
 
         // Windows XP:      NT 5.1~5.2
         // Windows Vista:   NT 6.0
         // Windows 7:       NT 6.1
 
-        return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
+        return major < 6 || SYSTEM_VERSION.startsWith("6.0");
     }
 
-    @SuppressWarnings("deprecation")
     public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
             try {
@@ -318,7 +317,6 @@ public enum OperatingSystem {
         return PhysicalMemoryStatus.INVALID;
     }
 
-    @SuppressWarnings("removal")
     public static void forceGC() {
         System.gc();
         try {
@@ -374,8 +372,7 @@ public enum OperatingSystem {
                 return false;
             if (Arrays.binarySearch(INVALID_RESOURCE_FULLNAMES, name.toLowerCase(Locale.ROOT)) >= 0)
                 return false;
-            if (INVALID_RESOURCE_CHARACTERS.matcher(name).find())
-                return false;
+            return !INVALID_RESOURCE_CHARACTERS.matcher(name).find();
         }
 
         return true;

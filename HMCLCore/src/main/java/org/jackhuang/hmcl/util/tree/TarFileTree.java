@@ -110,7 +110,7 @@ public final class TarFileTree extends ArchiveFileTree<TarFile, TarArchiveEntry>
     }
 
     @Override
-    public String getLink(TarArchiveEntry entry) throws IOException {
+    public String getLink(TarArchiveEntry entry) {
         return entry.getLinkName();
     }
 

@@ -77,7 +77,6 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
-    private TaskExecutor executor;
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final List<StageNode> stageNodes = new ArrayList<>();
@@ -91,7 +90,6 @@ public final class TaskListPane extends StackPane {
 
     public void setExecutor(TaskExecutor executor) {
         List<String> stages = Lang.removingDuplicates(executor.getStages());
-        this.executor = executor;
         executor.addTaskListener(new TaskListener() {
             @Override
             public void onStart() {
@@ -109,9 +107,7 @@ public final class TaskListPane extends StackPane {
             @Override
             public void onReady(Task<?> task) {
                 if (task.getStage() != null) {
-                    Platform.runLater(() -> {
-                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::begin);
-                    });
+                    Platform.runLater(() -> stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::begin));
                 }
             }
 
@@ -177,9 +173,7 @@ public final class TaskListPane extends StackPane {
             @Override
             public void onFinished(Task<?> task) {
                 if (task.getStage() != null) {
-                    Platform.runLater(() -> {
-                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::succeed);
-                    });
+                    Platform.runLater(() -> stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::succeed));
                 }
 
                 Platform.runLater(() -> {
@@ -194,41 +188,31 @@ public final class TaskListPane extends StackPane {
             @Override
             public void onFailed(Task<?> task, Throwable throwable) {
                 if (task.getStage() != null) {
-                    Platform.runLater(() -> {
-                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::fail);
-                    });
+                    Platform.runLater(() -> stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::fail));
                 }
                 ProgressListNode node = nodes.remove(task);
                 if (node == null)
                     return;
-                Platform.runLater(() -> {
-                    node.setThrowable(throwable);
-                });
+                Platform.runLater(() -> node.setThrowable(throwable));
             }
 
             @Override
             public void onPropertiesUpdate(Task<?> task) {
                 if (task instanceof Task.CountTask) {
-                    runInFX(() -> {
-                        stageNodes.stream()
-                                .filter(x -> x.stage.equals(((Task<?>.CountTask) task).getCountStage()))
-                                .findAny()
-                                .ifPresent(StageNode::count);
-                    });
+                    runInFX(() -> stageNodes.stream()
+                            .filter(x -> x.stage.equals(((Task<?>.CountTask) task).getCountStage()))
+                            .findAny()
+                            .ifPresent(StageNode::count));
 
                     return;
                 }
 
                 if (task.getStage() != null) {
                     int total = tryCast(task.getProperties().get("total"), Integer.class).orElse(0);
-                    runInFX(() -> {
-                        stageNodes.stream()
-                                .filter(x -> x.stage.equals(task.getStage()))
-                                .findAny()
-                                .ifPresent(stageNode -> {
-                                    stageNode.setTotal(total);
-                                });
-                    });
+                    runInFX(() -> stageNodes.stream()
+                            .filter(x -> x.stage.equals(task.getStage()))
+                            .findAny()
+                            .ifPresent(stageNode -> stageNode.setTotal(total)));
                 }
             }
         });
@@ -306,14 +290,11 @@ public final class TaskListPane extends StackPane {
 
     private class ProgressListNode extends BorderPane {
         private final JFXProgressBar bar = new JFXProgressBar();
-        private final Label title = new Label();
         private final Label state = new Label();
-        private final DoubleBinding binding = Bindings.createDoubleBinding(() ->
-                        getWidth() - getPadding().getLeft() - getPadding().getRight() - getInsets().getLeft() - getInsets().getRight(),
-                paddingProperty(), widthProperty());
 
         public ProgressListNode(Task<?> task) {
             bar.progressProperty().bind(task.progressProperty());
+            Label title = new Label();
             title.setText(task.getName());
             state.textProperty().bind(task.messageProperty());
 
@@ -321,6 +302,9 @@ public final class TaskListPane extends StackPane {
             setRight(state);
             setBottom(bar);
 
+            DoubleBinding binding = Bindings.createDoubleBinding(() ->
+                            getWidth() - getPadding().getLeft() - getPadding().getRight() - getInsets().getLeft() - getInsets().getRight(),
+                    paddingProperty(), widthProperty());
             bar.minWidthProperty().bind(binding);
             bar.prefWidthProperty().bind(binding);
             bar.maxWidthProperty().bind(binding);

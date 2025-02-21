@@ -109,11 +109,11 @@ public final class MappedObservableList {
 
     /**
      * This methods creates a mapping of {@code origin}, using {@code mapper} as the converter.
-     *
+     * <p>
      * If an item is added to {@code origin}, {@code mapper} will be invoked to create a corresponding item, which will also be added to the returned {@code ObservableList}.
      * If an item is removed from {@code origin}, the corresponding item in the returned {@code ObservableList} will also be removed.
      * If {@code origin} is permutated, the returned {@code ObservableList} will also be permutated in the same way.
-     *
+     * <p>
      * The returned {@code ObservableList} is unmodifiable.
      */
     public static <T, U> ObservableList<U> create(ObservableList<T> origin, Function<T, U> mapper) {

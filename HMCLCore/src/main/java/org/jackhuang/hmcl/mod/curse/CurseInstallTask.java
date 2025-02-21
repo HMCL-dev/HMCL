@@ -41,10 +41,7 @@ import java.util.List;
  */
 public final class CurseInstallTask extends Task<Void> {
 
-    private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final File zipFile;
-    private final Modpack modpack;
     private final CurseManifest manifest;
     private final String name;
     private final File run;
@@ -62,9 +59,6 @@ public final class CurseInstallTask extends Task<Void> {
      * @see CurseManifest#readCurseForgeModpackManifest
      */
     public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, CurseManifest manifest, String name) {
-        this.dependencyManager = dependencyManager;
-        this.zipFile = zipFile;
-        this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();

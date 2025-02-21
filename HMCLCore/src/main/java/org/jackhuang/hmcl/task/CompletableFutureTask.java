@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutionException;
 public abstract class CompletableFutureTask<T> extends Task<T> {
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
     }
 
     public abstract CompletableFuture<T> getFuture(TaskCompletableFuture executor);

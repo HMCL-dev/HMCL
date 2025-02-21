@@ -27,7 +27,7 @@ public class SkinMultipleCubes extends Group {
                         Box pixel = supplier.get();
                         consumer.accept(pixel, new Point2D(x, y));
                         pixel.setMaterial(createMaterial(Color.rgb(
-                                (argb >> 16) & 0xFF, (argb >> 8) & 0xFF, (argb >> 0) & 0xFF)));
+                                (argb >> 16) & 0xFF, (argb >> 8) & 0xFF, (argb) & 0xFF)));
                         getChildren().add(pixel);
                     }
                 }

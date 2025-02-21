@@ -67,7 +67,7 @@ public abstract class FetchTask<T> extends Task<T> {
         this.repository = repository;
     }
 
-    protected void beforeDownload(URL url) throws IOException {}
+    protected void beforeDownload(URL url) {}
 
     protected abstract void useCachedResult(Path cachedFile) throws IOException;
 
@@ -231,7 +231,7 @@ public abstract class FetchTask<T> extends Task<T> {
         }
 
         protected boolean isSuccess() {
-            return success;
+            return !success;
         }
     }
 
@@ -278,7 +278,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
     }
 
-    public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
+    public static final int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
     private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
     private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
 

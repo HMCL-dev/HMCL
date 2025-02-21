@@ -91,7 +91,7 @@ public final class TexturesLoader {
 
     private static Path getTexturePath(Texture texture) {
         String url = texture.getUrl();
-        int slash = url.lastIndexOf('/');
+        int slash = requireNonNull(url).lastIndexOf('/');
         int dot = url.lastIndexOf('.');
         if (dot < slash) {
             dot = url.length();

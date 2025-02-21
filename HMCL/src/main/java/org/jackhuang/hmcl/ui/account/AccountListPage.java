@@ -87,8 +87,6 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
 
     private static class AccountListPageSkin extends DecoratorAnimatedPageSkin<AccountListPage> {
 
-        private final ObservableList<AdvancedListItem> authServerItems;
-
         public AccountListPageSkin(AccountListPage skinnable) {
             super(skinnable);
 
@@ -116,7 +114,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     boxMethods.getChildren().add(microsoftItem);
 
                     VBox boxAuthServers = new VBox();
-                    authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
+                    ObservableList<AdvancedListItem> authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftGraphic(wrap(SVG.SERVER));
@@ -124,9 +122,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
 
                         JFXButton btnRemove = new JFXButton();
                         btnRemove.setOnAction(e -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                skinnable.authServersProperty().remove(server);
-                            }, null);
+                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> skinnable.authServersProperty().remove(server), null);
                             e.consume();
                         });
                         btnRemove.getStyleClass().add("toggle-icon4");

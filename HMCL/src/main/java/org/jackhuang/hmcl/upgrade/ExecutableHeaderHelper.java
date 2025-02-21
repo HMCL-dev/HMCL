@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 final class ExecutableHeaderHelper {
     private ExecutableHeaderHelper() {}
 
-    private static Map<String, String> suffix2header = mapOf(
+    private static final Map<String, String> suffix2header = mapOf(
             pair("exe", "assets/HMCLauncher.exe"),
             pair("sh", "assets/HMCLauncher.sh")
     );

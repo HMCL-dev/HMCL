@@ -296,12 +296,8 @@ public final class ModManager {
                 return true;
             }
 
-            if (Files.exists(fs.getPath("pack.mcmeta"))) {
-                // resource pack, data pack
-                return true;
-            }
-
-            return false;
+            // resource pack, data pack
+            return Files.exists(fs.getPath("pack.mcmeta"));
         } catch (IOException e) {
             return false;
         }

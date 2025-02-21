@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,11 +74,11 @@ public class ForgeOldInstallTask extends Task<Version> {
             // unpack the universal jar in the installer file.
             Library forgeLibrary = new Library(installProfile.getInstall().getPath());
             File forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary);
-            if (!FileUtils.makeFile(forgeFile))
+            if (FileUtils.makeFile(forgeFile))
                 throw new IOException("Cannot make directory " + forgeFile.getParent());
 
             ZipEntry forgeEntry = zipFile.getEntry(installProfile.getInstall().getFilePath());
-            try (InputStream is = zipFile.getInputStream(forgeEntry); OutputStream os = new FileOutputStream(forgeFile)) {
+            try (InputStream is = zipFile.getInputStream(forgeEntry); OutputStream os = Files.newOutputStream(forgeFile.toPath())) {
                 IOUtils.copyTo(is, os);
             }
 

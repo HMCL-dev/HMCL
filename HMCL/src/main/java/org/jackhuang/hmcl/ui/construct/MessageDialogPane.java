@@ -138,7 +138,7 @@ public final class MessageDialogPane extends HBox {
         cancelButton = btn;
     }
 
-    public ButtonBase getCancelButton() {
+    public @Nullable ButtonBase getCancelButton() {
         return cancelButton;
     }
 
@@ -237,9 +237,7 @@ public final class MessageDialogPane extends HBox {
                 public void run() {
                     if (timeout <= 0) {
                         cancel();
-                        runInFX(() -> {
-                            cancelButton.fire();
-                        });
+                        runInFX(cancelButton::fire);
                         return;
                     }
                     timeout -= 1000;

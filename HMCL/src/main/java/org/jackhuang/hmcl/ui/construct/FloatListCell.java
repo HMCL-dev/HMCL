@@ -41,9 +41,7 @@ public abstract class FloatListCell<T> extends ListCell<T> {
         setPadding(new Insets(9, 9, 0, 9));
         JFXDepthManager.setDepth(pane, 1);
 
-        FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
-            pane.pseudoClassStateChanged(SELECTED, selected);
-        });
+        FXUtils.onChangeAndOperate(selectedProperty(), selected -> pane.pseudoClassStateChanged(SELECTED, selected));
 
         Region clippedContainer = (Region) listView.lookup(".clipped-container");
         setPrefWidth(0);

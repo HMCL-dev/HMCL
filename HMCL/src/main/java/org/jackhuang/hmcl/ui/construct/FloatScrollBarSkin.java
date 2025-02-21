@@ -31,8 +31,8 @@ import org.jackhuang.hmcl.util.Lang;
 public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private ScrollBar scrollBar;
     private Region group;
-    private Rectangle track = new Rectangle();
-    private Rectangle thumb = new Rectangle();
+    private final Rectangle track = new Rectangle();
+    private final Rectangle thumb = new Rectangle();
 
     public FloatScrollBarSkin(final ScrollBar scrollBar) {
         this.scrollBar = scrollBar;
@@ -43,8 +43,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
             Point2D dragStart;
             double preDragThumbPos;
 
-            NumberBinding range = Bindings.subtract(scrollBar.maxProperty(), scrollBar.minProperty());
-            NumberBinding position = Bindings.divide(Bindings.subtract(scrollBar.valueProperty(), scrollBar.minProperty()), range);
+            final NumberBinding range = Bindings.subtract(scrollBar.maxProperty(), scrollBar.minProperty());
+            final NumberBinding position = Bindings.divide(Bindings.subtract(scrollBar.valueProperty(), scrollBar.minProperty()), range);
 
             {
                 // Children are added unmanaged because for some reason the height of the bar keeps changing

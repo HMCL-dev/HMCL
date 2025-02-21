@@ -49,9 +49,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class InstallersPage extends Control implements WizardPage {
     protected final WizardController controller;
 
-    protected InstallerItem.InstallerItemGroup group;
-    protected JFXTextField txtName = new JFXTextField();
-    protected BooleanProperty installable = new SimpleBooleanProperty();
+    protected final InstallerItem.InstallerItemGroup group;
+    protected final JFXTextField txtName = new JFXTextField();
+    protected final BooleanProperty installable = new SimpleBooleanProperty();
 
     private boolean isNameModifiedByUser = false;
 
@@ -61,7 +61,7 @@ public class InstallersPage extends Control implements WizardPage {
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
-                new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
+                new Validator(i18n("install.new_game.already_exists"), str -> repository.versionIdConflicts(str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
@@ -119,6 +119,7 @@ public class InstallersPage extends Control implements WizardPage {
 
     @Override
     public void cleanup(Map<String, Object> settings) {
+        WizardPage.super.cleanup(settings);
     }
 
     protected void onInstall() {

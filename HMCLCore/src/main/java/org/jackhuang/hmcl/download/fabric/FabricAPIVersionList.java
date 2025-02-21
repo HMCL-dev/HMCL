@@ -30,10 +30,7 @@ import static org.jackhuang.hmcl.util.Lang.wrap;
 
 public class FabricAPIVersionList extends VersionList<FabricAPIRemoteVersion> {
 
-    private final DownloadProvider downloadProvider;
-
     public FabricAPIVersionList(DownloadProvider downloadProvider) {
-        this.downloadProvider = downloadProvider;
     }
 
     @Override

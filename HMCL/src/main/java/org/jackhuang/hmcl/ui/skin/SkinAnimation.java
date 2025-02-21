@@ -10,7 +10,7 @@ import java.util.List;
 public class SkinAnimation {
 
     protected int weight, left;
-    protected List<SkinTransition> transitions;
+    protected final List<SkinTransition> transitions;
 
     public SkinAnimation() {
         this.transitions = new ArrayList<>();

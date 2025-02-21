@@ -54,9 +54,7 @@ public class TaskTest {
     public void testWhenComplete() {
         boolean result = Task.supplyAsync(() -> {
             throw new IllegalStateException();
-        }).whenComplete(exception -> {
-            assertInstanceOf(IllegalStateException.class, exception);
-        }).test();
+        }).whenComplete(exception -> assertInstanceOf(IllegalStateException.class, exception)).test();
 
         assertFalse(result, "Task should fail at this case");
     }
@@ -66,9 +64,7 @@ public class TaskTest {
         AtomicBoolean bool = new AtomicBoolean();
         boolean success = Task.supplyAsync(() -> {
             throw new IllegalStateException();
-        }).withRunAsync(() -> {
-            bool.set(true);
-        }).test();
+        }).withRunAsync(() -> bool.set(true)).test();
 
         assertTrue(success, "Task should success because withRunAsync will ignore previous exception");
         assertTrue(bool.get(), "withRunAsync should be executed");
@@ -178,9 +174,7 @@ public class TaskTest {
         Schedulers.defaultScheduler();
         Schedulers.shutdown();
 
-        Task<?> task = Task.runAsync(() -> {
-            Thread.sleep(1000);
-        });
+        Task<?> task = Task.runAsync(() -> Thread.sleep(1000));
 
         boolean result = task.test();
 

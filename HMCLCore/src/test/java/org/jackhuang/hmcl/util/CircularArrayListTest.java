@@ -14,10 +14,10 @@ public class CircularArrayListTest {
     private static void assertEmpty(CircularArrayList<?> list) {
         assertEquals(0, list.size());
         assertTrue(list.isEmpty());
-        assertThrows(NoSuchElementException.class, () -> list.getFirst());
-        assertThrows(NoSuchElementException.class, () -> list.getLast());
-        assertThrows(NoSuchElementException.class, () -> list.removeFirst());
-        assertThrows(NoSuchElementException.class, () -> list.removeLast());
+        assertThrows(NoSuchElementException.class, list::getFirst);
+        assertThrows(NoSuchElementException.class, list::getLast);
+        assertThrows(NoSuchElementException.class, list::removeFirst);
+        assertThrows(NoSuchElementException.class, list::removeLast);
         assertThrows(IndexOutOfBoundsException.class, () -> list.get(0));
         assertThrows(IndexOutOfBoundsException.class, () -> list.get(10));
         assertThrows(IndexOutOfBoundsException.class, () -> list.get(-1));

@@ -92,7 +92,7 @@ public class LibraryDownloadTask extends Task<Void> {
             else if (t instanceof CancellationException)
                 throw new CancellationException();
             else
-                throw new LibraryDownloadException(library, t);
+                throw new LibraryDownloadException(library, Objects.requireNonNull(t));
         }
     }
 
@@ -131,7 +131,7 @@ public class LibraryDownloadTask extends Task<Void> {
     }
 
     @Override
-    public void postExecute() throws Exception {
+    public void postExecute() {
         if (!cached) {
             try {
                 cacheRepository.cacheLibrary(library, jar.toPath(), false);
@@ -178,7 +178,7 @@ public class LibraryDownloadTask extends Task<Void> {
             boolean failed = !checksums.contains(files.get("checksums.sha1"));
             if (!failed) {
                 for (String hash : hashes) {
-                    if ((!hash.trim().equals("")) && (hash.contains(" "))) {
+                    if ((!hash.trim().isEmpty()) && (hash.contains(" "))) {
                         String[] e = hash.split(" ");
                         String validChecksum = e[0];
                         String target = hash.substring(validChecksum.length() + 1);

@@ -41,32 +41,30 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings")));
     private final TabHeader tab;
     private final TabHeader.Tab<VersionSettingsPage> gameTab = new TabHeader.Tab<>("versionSettingsPage");
-    private final TabControl.Tab<JavaManagementPage> javaManagementTab = new TabControl.Tab<>("javaManagementPage");
-    private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
-    private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
-    private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
-    private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
-    private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
     private final TabHeader.Tab<FeedbackPage> feedbackTab = new TabHeader.Tab<>("feedbackPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
         gameTab.setNodeSupplier(() -> new VersionSettingsPage(true));
+        TabControl.Tab<JavaManagementPage> javaManagementTab = new TabControl.Tab<>("javaManagementPage");
         javaManagementTab.setNodeSupplier(JavaManagementPage::new);
+        TabControl.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
         settingsTab.setNodeSupplier(SettingsPage::new);
+        TabControl.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
         personalizationTab.setNodeSupplier(PersonalizationPage::new);
+        TabControl.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
         downloadTab.setNodeSupplier(DownloadSettingsPage::new);
+        TabControl.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
         helpTab.setNodeSupplier(HelpPage::new);
         feedbackTab.setNodeSupplier(FeedbackPage::new);
+        TabControl.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
         aboutTab.setNodeSupplier(AboutPage::new);
         tab = new TabHeader(gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
         gameTab.initializeIfNeeded();
         gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
-        });
+        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE));
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.GAMEPAD)

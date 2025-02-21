@@ -235,7 +235,7 @@ public class DefaultCacheRepository extends CacheRepository {
         }
 
         @Override
-        public void validate() throws JsonParseException, TolerableValidationException {
+        public void validate() throws JsonParseException {
             if (libraries == null)
                 throw new JsonParseException("Index.libraries cannot be null");
         }
@@ -272,7 +272,7 @@ public class DefaultCacheRepository extends CacheRepository {
         }
 
         @Override
-        public void validate() throws JsonParseException, TolerableValidationException {
+        public void validate() throws JsonParseException {
             if (name == null || hash == null || type == null)
                 throw new JsonParseException("Index.LibraryIndex.* cannot be null");
         }

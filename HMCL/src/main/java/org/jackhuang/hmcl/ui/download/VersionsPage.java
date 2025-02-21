@@ -92,7 +92,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final JFXCheckBox chkRelease;
     private final JFXCheckBox chkSnapshot;
     private final JFXCheckBox chkOld;
-    private final ComponentList centrePane;
     private final StackPane center;
 
     private final VersionList<?> versionList;
@@ -117,6 +116,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         root = new TransitionPane();
         BorderPane toolbarPane = new BorderPane();
         JFXButton btnRefresh;
+        ComponentList centrePane;
         {
             spinner = new JFXSpinner();
 
@@ -312,7 +312,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 List<RemoteVersion> items = loadVersions();
 
                 Platform.runLater(() -> {
-                    if (versionList != currentVersionList) return;
                     if (currentVersionList.getVersions(gameVersion).isEmpty()) {
                         root.setContent(emptyPane, ContainerAnimations.FADE);
                     } else {
@@ -329,7 +328,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             } else {
                 LOG.warning("Failed to fetch versions list", exception);
                 Platform.runLater(() -> {
-                    if (versionList != currentVersionList) return;
                     root.setContent(failedPane, ContainerAnimations.FADE);
                 });
             }

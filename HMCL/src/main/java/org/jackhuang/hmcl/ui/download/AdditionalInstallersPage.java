@@ -113,5 +113,6 @@ class AdditionalInstallersPage extends InstallersPage {
 
     @Override
     public void cleanup(Map<String, Object> settings) {
+        super.cleanup(settings);
     }
 }

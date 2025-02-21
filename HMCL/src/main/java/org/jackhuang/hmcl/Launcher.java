@@ -206,7 +206,7 @@ public final class Launcher extends Application {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         Controllers.onApplicationStop();
         LOG.shutdown();
     }

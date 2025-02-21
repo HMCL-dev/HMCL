@@ -63,11 +63,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 
@@ -83,7 +79,6 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
-    private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
 
     private final Label lblErrorMessage;
@@ -105,6 +100,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     }
 
     public CreateAccountPane(AccountFactory<?> factory) {
+        boolean showMethodSwitcher;
         if (factory == null) {
             showMethodSwitcher = true;
             String preferred = config().getPreferredLoginType();
@@ -303,9 +299,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     }
                 });
 
-                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
-                    runInFX(() -> deviceCode.set(value));
-                }));
+                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> runInFX(() -> deviceCode.set(value))));
                 FlowPane box = new FlowPane();
                 box.setHgap(8);
                 JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
@@ -323,7 +317,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
                 GridPane.setColumnSpan(box, 2);
 
-                if (!IntegrityChecker.isOfficial()) {
+                if (IntegrityChecker.isOfficial()) {
                     HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
                     unofficialHint.setText(i18n("unofficial.hint"));
                     vbox.getChildren().add(unofficialHint);
@@ -400,7 +394,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             int rowIndex = 0;
 
-            if (!IntegrityChecker.isOfficial() && !(factory instanceof OfflineAccountFactory)) {
+            if (IntegrityChecker.isOfficial() && !(factory instanceof OfflineAccountFactory)) {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
                 hintPane.setSegment(i18n("unofficial.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
@@ -441,7 +435,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 bindContent(cboServers.getItems(), config().getAuthlibInjectorServers());
                 cboServers.getItems().addListener(onInvalidating(
                         () -> Platform.runLater( // the selection will not be updated as expected if we call it immediately
-                                cboServers.getSelectionModel()::selectFirst)));
+                                Objects.requireNonNull(cboServers).getSelectionModel()::selectFirst)));
                 cboServers.getSelectionModel().selectFirst();
                 cboServers.setPromptText(i18n("account.injector.empty"));
                 BooleanBinding noServers = createBooleanBinding(cboServers.getItems()::isEmpty, cboServers.getItems());
@@ -462,9 +456,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 JFXButton btnAddServer = new JFXButton();
                 btnAddServer.setGraphic(SVG.PLUS.createIcon(Theme.blackFill(), 20, 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
-                btnAddServer.setOnAction(e -> {
-                    Controllers.dialog(new AddAuthlibInjectorServerPane());
-                });
+                btnAddServer.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
 
                 HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer);
                 add(boxServers, 1, rowIndex);
@@ -575,9 +567,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         return false;
                     if (txtPassword != null && !txtPassword.validate())
                         return false;
-                    if (txtUUID != null && !txtUUID.validate())
-                        return false;
-                    return true;
+                    return txtUUID == null || txtUUID.validate();
                 }
             };
         }
@@ -626,7 +616,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static class DialogCharacterSelector extends BorderPane implements CharacterSelector {
 
         private final AdvancedListBox listBox = new AdvancedListBox();
-        private final JFXButton cancel = new JFXButton();
 
         private final CountDownLatch latch = new CountDownLatch(1);
         private GameProfile selectedProfile = null;
@@ -634,6 +623,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         public DialogCharacterSelector() {
             setStyle("-fx-padding: 8px;");
 
+            JFXButton cancel = new JFXButton();
             cancel.setText(i18n("button.cancel"));
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnAction(e -> latch.countDown());

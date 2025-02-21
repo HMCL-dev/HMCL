@@ -50,9 +50,9 @@ public class AuthlibInjectorArtifactInfo {
         }
     }
 
-    private int buildNumber;
-    private String version;
-    private Path location;
+    private final int buildNumber;
+    private final String version;
+    private final Path location;
 
     public AuthlibInjectorArtifactInfo(int buildNumber, String version, Path location) {
         this.buildNumber = buildNumber;

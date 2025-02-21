@@ -129,14 +129,10 @@ public class ComponentList extends Control {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
-        private final ObservableList<Node> list;
-        private final ObjectBinding<Node> firstItem;
-        private final ObjectBinding<Node> lastItem;
-
         Skin(ComponentList control) {
             super(control);
 
-            list = MappedObservableList.create(control.getContent(), node -> {
+            ObservableList<Node> list = MappedObservableList.create(control.getContent(), node -> {
                 ComponentListCell cell = new ComponentListCell(node);
                 cell.getStyleClass().add("options-list-item");
                 if (node.getProperties().containsKey("ComponentList.vgrow")) {
@@ -148,7 +144,7 @@ public class ComponentList extends Control {
                 return cell;
             });
 
-            firstItem = Bindings.valueAt(list, 0);
+            ObjectBinding<Node> firstItem = Bindings.valueAt(list, 0);
             firstItem.addListener((observable, oldValue, newValue) -> {
                 if (newValue != null)
                     newValue.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
@@ -158,7 +154,7 @@ public class ComponentList extends Control {
             if (!list.isEmpty())
                 list.get(0).pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
 
-            lastItem = Bindings.valueAt(list, Bindings.subtract(Bindings.size(list), 1));
+            ObjectBinding<Node> lastItem = Bindings.valueAt(list, Bindings.subtract(Bindings.size(list), 1));
             lastItem.addListener((observable, oldValue, newValue) -> {
                 if (newValue != null)
                     newValue.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);

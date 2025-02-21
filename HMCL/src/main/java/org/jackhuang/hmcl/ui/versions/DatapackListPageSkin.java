@@ -61,11 +61,7 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
             toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh));
             toolbar.getChildren().add(createToolbarButton(i18n("datapack.add"), SVG.PLUS, skinnable::add));
-            toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG.DELETE, () -> {
-                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                }, null);
-            }));
+            toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG.DELETE, () -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> skinnable.removeSelected(listView.getSelectionModel().getSelectedItems()), null)));
             toolbar.getChildren().add(createToolbarButton(i18n("mods.enable"), SVG.CHECK, () ->
                     skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())));
             toolbar.getChildren().add(createToolbarButton(i18n("mods.disable"), SVG.CLOSE, () ->
@@ -79,8 +75,8 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.loadingProperty().bind(skinnable.loadingProperty());
 
             listView.setCellFactory(x -> new FloatListCell<DatapackInfoObject>(listView) {
-                JFXCheckBox checkBox = new JFXCheckBox();
-                TwoLineListItem content = new TwoLineListItem();
+                final JFXCheckBox checkBox = new JFXCheckBox();
+                final TwoLineListItem content = new TwoLineListItem();
                 BooleanProperty booleanProperty;
 
                 {

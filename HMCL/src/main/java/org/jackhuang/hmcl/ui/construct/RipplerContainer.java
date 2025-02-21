@@ -57,7 +57,7 @@ public class RipplerContainer extends StackPane {
         protected Node getMask() {
             StackPane mask = new StackPane();
             mask.shapeProperty().bind(buttonContainer.shapeProperty());
-            mask.backgroundProperty().bind(Bindings.createObjectBinding(() -> new Background(new BackgroundFill(Color.WHITE, buttonContainer.getBackground() != null && buttonContainer.getBackground().getFills().size() > 0 ? buttonContainer.getBackground().getFills().get(0).getRadii() : defaultRadii, buttonContainer.getBackground() != null && buttonContainer.getBackground().getFills().size() > 0 ? buttonContainer.getBackground().getFills().get(0).getInsets() : Insets.EMPTY)), buttonContainer.backgroundProperty()));
+            mask.backgroundProperty().bind(Bindings.createObjectBinding(() -> new Background(new BackgroundFill(Color.WHITE, buttonContainer.getBackground() != null && !buttonContainer.getBackground().getFills().isEmpty() ? buttonContainer.getBackground().getFills().get(0).getRadii() : defaultRadii, buttonContainer.getBackground() != null && !buttonContainer.getBackground().getFills().isEmpty() ? buttonContainer.getBackground().getFills().get(0).getInsets() : Insets.EMPTY)), buttonContainer.backgroundProperty()));
             mask.resize(buttonContainer.getWidth() - buttonContainer.snappedRightInset() - buttonContainer.snappedLeftInset(), buttonContainer.getHeight() - buttonContainer.snappedBottomInset() - buttonContainer.snappedTopInset());
             return mask;
         }
@@ -103,35 +103,31 @@ public class RipplerContainer extends StackPane {
             rectangle.heightProperty().bind(heightProperty());
         }));
 
-        setOnMouseEntered(e -> {
-            new Transition() {
-                {
-                    setCycleCount(1);
-                    setCycleDuration(Duration.millis(200));
-                    setInterpolator(Interpolator.EASE_IN);
-                }
+        setOnMouseEntered(e -> new Transition() {
+            {
+                setCycleCount(1);
+                setCycleDuration(Duration.millis(200));
+                setInterpolator(Interpolator.EASE_IN);
+            }
 
-                @Override
-                protected void interpolate(double frac) {
-                    interpolateBackground(frac);
-                }
-            }.play();
-        });
+            @Override
+            protected void interpolate(double frac) {
+                interpolateBackground(frac);
+            }
+        }.play());
 
-        setOnMouseExited(e -> {
-            new Transition() {
-                {
-                    setCycleCount(1);
-                    setCycleDuration(Duration.millis(200));
-                    setInterpolator(Interpolator.EASE_OUT);
-                }
+        setOnMouseExited(e -> new Transition() {
+            {
+                setCycleCount(1);
+                setCycleDuration(Duration.millis(200));
+                setInterpolator(Interpolator.EASE_OUT);
+            }
 
-                @Override
-                protected void interpolate(double frac) {
-                    interpolateBackground(1 - frac);
-                }
-            }.play();
-        });
+            @Override
+            protected void interpolate(double frac) {
+                interpolateBackground(1 - frac);
+            }
+        }.play());
     }
 
     private void interpolateBackground(double frac) {

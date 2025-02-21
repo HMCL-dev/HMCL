@@ -115,19 +115,19 @@ public enum ModTranslations {
     }
 
     private boolean loadFromResource() {
-        if (mods != null) return true;
+        if (mods != null) return false;
         if (StringUtils.isBlank(resourceName)) {
             mods = Collections.emptyList();
-            return true;
+            return false;
         }
 
         try {
             String modData = IOUtils.readFullyAsString(ModTranslations.class.getResourceAsStream(resourceName));
             mods = Arrays.stream(modData.split("\n")).filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());
-            return true;
+            return false;
         } catch (Exception e) {
             LOG.warning("Failed to load " + resourceName, e);
-            return false;
+            return true;
         }
     }
 
@@ -137,7 +137,7 @@ public enum ModTranslations {
         }
 
         if (mods == null) {
-            if (!loadFromResource()) return false;
+            if (loadFromResource()) return false;
         }
 
         curseForgeMap = new HashMap<>();
@@ -155,7 +155,7 @@ public enum ModTranslations {
         }
 
         if (mods == null) {
-            if (!loadFromResource()) return false;
+            if (loadFromResource()) return false;
         }
 
         modIdMap = new HashMap<>();
@@ -175,7 +175,7 @@ public enum ModTranslations {
         }
 
         if (mods == null) {
-            if (!loadFromResource()) return false;
+            if (loadFromResource()) return false;
         }
 
         keywords = new ArrayList<>();

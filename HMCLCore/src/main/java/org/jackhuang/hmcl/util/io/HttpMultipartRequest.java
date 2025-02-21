@@ -33,7 +33,7 @@ public final class HttpMultipartRequest implements Closeable {
     private final HttpURLConnection urlConnection;
     private final ByteArrayOutputStream stream;
 
-    public HttpMultipartRequest(HttpURLConnection urlConnection) throws IOException {
+    public HttpMultipartRequest(HttpURLConnection urlConnection) {
         this.urlConnection = urlConnection;
         urlConnection.setDoOutput(true);
         urlConnection.setUseCaches(false);

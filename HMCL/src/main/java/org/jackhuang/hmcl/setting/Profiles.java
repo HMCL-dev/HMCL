@@ -61,7 +61,7 @@ public final class Profiles {
     private static final ObservableList<Profile> profiles = observableArrayList(profile -> new Observable[] { profile });
     private static final ReadOnlyListWrapper<Profile> profilesWrapper = new ReadOnlyListWrapper<>(profiles);
 
-    private static ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
+    private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
         {
             profiles.addListener(onInvalidating(this::invalidated));
         }
@@ -165,16 +165,14 @@ public final class Profiles {
                             .orElse(profiles.get(0)));
         });
 
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
-            runInFX(() -> {
-                Profile profile = selectedProfile.get();
-                if (profile != null && profile.getRepository() == event.getSource()) {
-                    selectedVersion.bind(profile.selectedVersionProperty());
-                    for (Consumer<Profile> listener : versionsListeners)
-                        listener.accept(profile);
-                }
-            });
-        });
+        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> runInFX(() -> {
+            Profile profile = selectedProfile.get();
+            if (profile != null && profile.getRepository() == event.getSource()) {
+                selectedVersion.bind(profile.selectedVersionProperty());
+                for (Consumer<Profile> listener : versionsListeners)
+                    listener.accept(profile);
+            }
+        }));
     }
 
     public static ObservableList<Profile> getProfiles() {

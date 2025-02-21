@@ -34,16 +34,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
     private final ImageView imageView;
-    private final WeakListenerHolder holder = new WeakListenerHolder();
     private Profile profile;
-    @SuppressWarnings("unused")
-    private Consumer<Event> onVersionIconChangedListener;
 
     public GameAdvancedListItem() {
         Pair<Node, ImageView> view = createImageView(null);
         setLeftGraphic(view.getKey());
         imageView = view.getValue();
 
+        WeakListenerHolder holder = new WeakListenerHolder();
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
 
         setActionButtonVisible(false);
@@ -53,9 +51,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
         if (Profiles.getSelectedProfile() != profile) {
             profile = Profiles.getSelectedProfile();
             if (profile != null) {
-                onVersionIconChangedListener = profile.getRepository().onVersionIconChanged.registerWeak(event -> {
-                    this.loadVersion(Profiles.getSelectedVersion());
-                });
+                Consumer<Event> onVersionIconChangedListener = profile.getRepository().onVersionIconChanged.registerWeak(event -> this.loadVersion(Profiles.getSelectedVersion()));
             }
         }
         if (version != null && Profiles.getSelectedProfile() != null &&

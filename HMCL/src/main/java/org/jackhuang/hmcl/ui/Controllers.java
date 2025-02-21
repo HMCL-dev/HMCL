@@ -386,11 +386,9 @@ public final class Controllers {
 
     public static void onHyperlinkAction(String href) {
         if (href.startsWith("hmcl://")) {
-            switch (href) {
-                case "hmcl://settings/feedback":
-                    Controllers.getSettingsPage().showFeedback();
-                    Controllers.navigate(Controllers.getSettingsPage());
-                    break;
+            if (href.equals("hmcl://settings/feedback")) {
+                Controllers.getSettingsPage().showFeedback();
+                Controllers.navigate(Controllers.getSettingsPage());
             }
         } else {
             FXUtils.openLink(href);
@@ -398,7 +396,7 @@ public final class Controllers {
     }
 
     public static boolean isStopped() {
-        return decorator == null;
+        return decorator != null;
     }
 
     public static void shutdown() {

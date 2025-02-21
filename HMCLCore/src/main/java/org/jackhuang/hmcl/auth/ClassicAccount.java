@@ -21,7 +21,7 @@ public abstract class ClassicAccount extends Account {
 
     /**
      * Login with specified password.
-     *
+     * <p>
      * When credentials expired, the auth server will ask you to login with password to refresh
      * credentials.
      */

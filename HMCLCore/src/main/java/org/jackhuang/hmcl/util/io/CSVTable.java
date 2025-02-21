@@ -51,7 +51,7 @@ public final class CSVTable {
         row.set(x, txt);
     }
 
-    public void write(OutputStream outputStream) throws IOException {
+    public void write(OutputStream outputStream) {
         try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
                 outputStream, StandardCharsets.UTF_8)), false
         )) {

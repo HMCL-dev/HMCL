@@ -217,9 +217,7 @@ public class PersonalizationPage extends StackPane {
                 lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
                         () -> Font.font(config().getLauncherFontFamily(), 12),
                         config().launcherFontFamilyProperty()));
-                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
-                    Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue));
-                });
+                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue)));
 
                 vbox.getChildren().add(lblFontDisplay);
 

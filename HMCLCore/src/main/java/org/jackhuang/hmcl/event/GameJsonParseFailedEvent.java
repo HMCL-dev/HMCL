@@ -25,7 +25,7 @@ import java.io.File;
  * This event gets fired when json of a game version is malformed. You can do something here.
  * auto making up for the missing json, don't forget to set result to {@link Event.Result#ALLOW}.
  * and even asking for removing the redundant version folder.
- *
+ * <p>
  * The result ALLOW means you have corrected the json.
  */
 public final class GameJsonParseFailedEvent extends Event {

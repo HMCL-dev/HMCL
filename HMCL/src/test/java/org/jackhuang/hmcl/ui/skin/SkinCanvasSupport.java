@@ -77,7 +77,7 @@ public abstract class SkinCanvasSupport implements Consumer<SkinCanvas> {
 
     public static class Drag extends SkinCanvasSupport {
 
-        private String title;
+        private final String title;
 
         public Drag(String title) {
             this.title = title;

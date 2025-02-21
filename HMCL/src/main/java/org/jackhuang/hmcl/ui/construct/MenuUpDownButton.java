@@ -86,9 +86,7 @@ public class MenuUpDownButton extends Control {
 
             JFXButton button = new JFXButton();
             button.setGraphic(content);
-            button.setOnAction(e -> {
-                control.selected.set(!control.isSelected());
-            });
+            button.setOnAction(e -> control.selected.set(!control.isSelected()));
 
             FXUtils.onChangeAndOperate(control.selected, selected -> {
                 if (selected) {

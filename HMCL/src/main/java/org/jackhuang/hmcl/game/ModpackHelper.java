@@ -111,7 +111,7 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
-    public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws IOException, UnsupportedModpackException {
+    public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws UnsupportedModpackException {
         Path root = fs.getPath("/");
         if (isMinecraftDirectory(root)) return root;
         try (Stream<Path> firstLayer = Files.list(root)) {
@@ -221,13 +221,11 @@ public final class ModpackHelper {
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
-        switch (configuration.getType()) {
-            case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
-                        .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
-            default:
-                throw new UnsupportedModpackException();
+        if (configuration.getType().equals(ServerModpackRemoteInstallTask.MODPACK_TYPE)) {
+            return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
+                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
         }
+        throw new UnsupportedModpackException();
     }
 
     public static Task<?> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {

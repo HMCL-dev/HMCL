@@ -33,22 +33,21 @@ public class SkinCube extends MeshView {
         public static float[] createTexCoords(float width, float height, float depth, float scaleX, float scaleY,
                 float startX, float startY, boolean isSlim) {
             float x = (width + depth) * 2, y = height + depth, half_width = width / x * scaleX, half_depth = depth / x * scaleX,
-                    top_x = depth / x * scaleX + startX, top_y = startY, arm4 = isSlim ? half_depth : half_width,
-                    bottom_x = startX, middle_y = depth / y * scaleY + top_y, bottom_y = scaleY + top_y;
+                    top_x = depth / x * scaleX + startX, arm4 = isSlim ? half_depth : half_width, middle_y = depth / y * scaleY + startY, bottom_y = scaleY + startY;
             return new float[]{
-                    top_x, top_y,                                    // T0  ---
-                    top_x + half_width, top_y,                       // T1   |
-                    top_x + half_width * 2, top_y,                   // T2  ---
-                    bottom_x, middle_y,                              // T3  ---
-                    bottom_x + half_depth, middle_y,                 // T4   |
-                    bottom_x + half_depth + half_width, middle_y,    // T5   |
-                    bottom_x + scaleX - arm4, middle_y,              // T6   |
-                    bottom_x + scaleX, middle_y,                     // T7  ---
-                    bottom_x, bottom_y,                              // T8  ---
-                    bottom_x + half_depth, bottom_y,                 // T9   |
-                    bottom_x + half_depth + half_width, bottom_y,    // T10  |
-                    bottom_x + scaleX - arm4, bottom_y,              // T11  |
-                    bottom_x + scaleX, bottom_y                      // T12 ---
+                    top_x, startY,                                    // T0  ---
+                    top_x + half_width, startY,                       // T1   |
+                    top_x + half_width * 2, startY,                   // T2  ---
+                    startX, middle_y,                              // T3  ---
+                    startX + half_depth, middle_y,                 // T4   |
+                    startX + half_depth + half_width, middle_y,    // T5   |
+                    startX + scaleX - arm4, middle_y,              // T6   |
+                    startX + scaleX, middle_y,                     // T7  ---
+                    startX, bottom_y,                              // T8  ---
+                    startX + half_depth, bottom_y,                 // T9   |
+                    startX + half_depth + half_width, bottom_y,    // T10  |
+                    startX + scaleX - arm4, bottom_y,              // T11  |
+                    startX + scaleX, bottom_y                      // T12 ---
             };
         }
 
@@ -97,7 +96,7 @@ public class SkinCube extends MeshView {
     }
 
     private double width, height, depth;
-    private boolean isSlim;
+    private final boolean isSlim;
     private Mesh model;
 
     public SkinCube(float width, float height, float depth, float scaleX, float scaleY, float startX, float startY, float enlarge, boolean isSlim) {

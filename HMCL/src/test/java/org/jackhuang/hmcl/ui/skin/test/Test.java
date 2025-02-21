@@ -24,7 +24,7 @@ public class Test extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage stage) {
         stage.setTitle(TITLE);
         Scene scene = new Scene(createSkinCanvas());
         stage.setScene(scene);

@@ -41,7 +41,7 @@ public class YggdrasilSession {
     @Nullable
     private final Map<String, String> userProperties;
 
-    public YggdrasilSession(String clientToken, String accessToken, GameProfile selectedProfile, List<GameProfile> availableProfiles, Map<String, String> userProperties) {
+    public YggdrasilSession(String clientToken, String accessToken, GameProfile selectedProfile, List<GameProfile> availableProfiles, @Nullable Map<String, String> userProperties) {
         this.clientToken = clientToken;
         this.accessToken = accessToken;
         this.selectedProfile = selectedProfile;
@@ -73,7 +73,7 @@ public class YggdrasilSession {
         return availableProfiles;
     }
 
-    public Map<String, String> getUserProperties() {
+    public @Nullable Map<String, String> getUserProperties() {
         return userProperties;
     }
 

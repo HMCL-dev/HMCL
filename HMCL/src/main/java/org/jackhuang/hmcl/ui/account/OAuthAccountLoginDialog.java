@@ -31,8 +31,6 @@ public class OAuthAccountLoginDialog extends DialogPane {
     private final Runnable failed;
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
 
-    private final WeakListenerHolder holder = new WeakListenerHolder();
-
     public OAuthAccountLoginDialog(OAuthAccount account, Consumer<AuthInfo> success, Runnable failed) {
         this.account = account;
         this.success = success;
@@ -77,13 +75,12 @@ public class OAuthAccountLoginDialog extends DialogPane {
         vbox.getChildren().setAll(usernameLabel, hintPane, box);
         setBody(vbox);
 
+        WeakListenerHolder holder = new WeakListenerHolder();
         holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(this::onGrantDeviceCode));
     }
 
     private void onGrantDeviceCode(OAuthServer.GrantDeviceCodeEvent event) {
-        FXUtils.runInFX(() -> {
-            deviceCode.set(event);
-        });
+        FXUtils.runInFX(() -> deviceCode.set(event));
     }
 
     @Override

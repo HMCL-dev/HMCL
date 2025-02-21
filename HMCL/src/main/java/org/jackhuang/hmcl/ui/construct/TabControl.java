@@ -61,7 +61,7 @@ public interface TabControl {
                         }
                     }
                 }
-                if (getSelectedIndex() == -1 && getSelectedItem() == null && tabHeader.getTabs().size() > 0) {
+                if (getSelectedIndex() == -1 && getSelectedItem() == null && !tabHeader.getTabs().isEmpty()) {
                     // we go looking for the first non-disabled tab, as opposed to
                     // just selecting the first tab (fix for RT-36908)
                     findNearestAvailableTab(0, true);
@@ -88,7 +88,7 @@ public interface TabControl {
 
             setSelectedIndex(index);
 
-            Tab tab = getModelItem(index);
+            Tab<?> tab = getModelItem(index);
             if (tab != null) {
                 setSelectedItem(tab);
             }
@@ -106,7 +106,7 @@ public interface TabControl {
             final int itemCount = getItemCount();
 
             for (int i = 0; i < itemCount; i++) {
-                final Tab value = getModelItem(i);
+                final Tab<?> value = getModelItem(i);
                 if (value != null && value.equals(tab)) {
                     select(i);
                     return;

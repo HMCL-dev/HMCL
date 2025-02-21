@@ -633,7 +633,6 @@ public class CurseAddon implements RemoteMod.IMod {
             return releaseType;
         }
 
-        @Nullable
         public int getGameVersionTypeId() {
             return gameVersionTypeId;
         }

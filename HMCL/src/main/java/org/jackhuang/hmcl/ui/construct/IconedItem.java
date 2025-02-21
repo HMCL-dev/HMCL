@@ -23,7 +23,7 @@ import javafx.scene.layout.HBox;
 
 public class IconedItem extends RipplerContainer {
 
-    private Label label;
+    private final Label label;
 
     public IconedItem(Node icon, String text) {
         this(icon);

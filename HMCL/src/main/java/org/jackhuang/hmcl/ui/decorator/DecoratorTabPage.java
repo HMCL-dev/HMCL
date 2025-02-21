@@ -50,7 +50,7 @@ public abstract class DecoratorTabPage extends DecoratorTransitionPage implement
         }
     }
 
-    private ObservableList<TabHeader.Tab<?>> tabs = FXCollections.observableArrayList();
+    private final ObservableList<TabHeader.Tab<?>> tabs = FXCollections.observableArrayList();
 
     @Override
     public ObservableList<TabHeader.Tab<?>> getTabs() {

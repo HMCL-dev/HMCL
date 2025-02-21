@@ -28,10 +28,7 @@ public class CrashReport {
         if (!stackTrace.contains("org.jackhuang"))
             return false;
 
-        if (throwable instanceof VirtualMachineError)
-            return false;
-
-        return true;
+        return !(throwable instanceof VirtualMachineError);
     }
 
     public String getDisplayText() {

@@ -82,7 +82,7 @@ public final class GetTask extends FetchTask<String> {
 
             @Override
             public void close() throws IOException {
-                if (!isSuccess()) return;
+                if (isSuccess()) return;
 
                 String result = baos.toString(charset.name());
                 setResult(result);

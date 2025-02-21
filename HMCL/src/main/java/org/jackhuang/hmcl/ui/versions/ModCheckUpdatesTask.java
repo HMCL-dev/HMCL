@@ -25,13 +25,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
-    private final String gameVersion;
-    private final Collection<LocalModFile> mods;
     private final Collection<Collection<Task<LocalModFile.ModUpdate>>> dependents;
 
     public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
-        this.gameVersion = gameVersion;
-        this.mods = mods;
 
         dependents = mods.stream()
                 .map(mod ->
@@ -70,7 +66,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         setResult(dependents.stream()
                 .map(tasks -> tasks.stream()
                         .filter(task -> task.getResult() != null)

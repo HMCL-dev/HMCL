@@ -240,7 +240,7 @@ public final class LauncherHelper {
                 runLater(() -> {
                     // Check if the application has stopped
                     // because onStop will be invoked if tasks fail when the executor service shut down.
-                    if (!Controllers.isStopped()) {
+                    if (Controllers.isStopped()) {
                         launchingStepsPane.fireEvent(new DialogCloseEvent());
                         if (!success) {
                             Exception ex = executor.getException();
@@ -428,12 +428,10 @@ public final class LauncherHelper {
                 if (java == null || !violatedMandatoryConstraints.isEmpty()) {
                     JavaRuntime suggestedJava = JavaManager.findSuitableJava(gameVersion, version);
                     if (suggestedJava != null) {
-                        FXUtils.runInFX(() -> {
-                            Controllers.confirm(i18n("launch.advice.java.auto"), i18n("message.warning"), () -> {
-                                setting.setJavaAutoSelected();
-                                future.complete(suggestedJava);
-                            }, breakAction);
-                        });
+                        FXUtils.runInFX(() -> Controllers.confirm(i18n("launch.advice.java.auto"), i18n("message.warning"), () -> {
+                            setting.setJavaAutoSelected();
+                            future.complete(suggestedJava);
+                        }, breakAction));
                         return result;
                     } else if (java == null) {
                         FXUtils.runInFX(() -> Controllers.dialog(
@@ -650,9 +648,7 @@ public final class LauncherHelper {
                         }
                     });
                     JFXButton retryButton = new JFXButton(i18n("account.login.retry"));
-                    retryButton.setOnAction(event -> {
-                        future.complete(logIn(account));
-                    });
+                    retryButton.setOnAction(event -> future.complete(logIn(account)));
                     Controllers.dialog(new MessageDialogPane.Builder(i18n("account.failed.server_disconnected"), i18n("account.failed"), MessageType.ERROR)
                             .addAction(loginOfflineButton)
                             .addAction(retryButton)
@@ -668,10 +664,8 @@ public final class LauncherHelper {
     private void checkExit() {
         switch (launcherVisibility) {
             case HIDE_AND_REOPEN:
-                runLater(() -> {
-                    Optional.ofNullable(Controllers.getStage())
-                            .ifPresent(Stage::show);
-                });
+                runLater(() -> Optional.ofNullable(Controllers.getStage())
+                        .ifPresent(Stage::show));
                 break;
             case KEEP:
                 // No operations here

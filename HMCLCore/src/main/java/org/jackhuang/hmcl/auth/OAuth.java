@@ -112,6 +112,7 @@ public class OAuth {
         long interval = TimeUnit.MILLISECONDS.convert(deviceTokenResponse.interval, TimeUnit.SECONDS);
 
         while (true) {
+            //noinspection BusyWait
             Thread.sleep(Math.max(interval, 1));
 
             // We stop waiting if user does not respond our authentication request in 15 minutes.
@@ -179,19 +180,16 @@ public class OAuth {
             return;
         }
 
-        switch (response.error) {
-            case "invalid_grant":
-                if (response.errorDescription.contains("AADSTS70000")) {
-                    throw new CredentialExpiredException();
-                }
-                break;
+        if (response.error.equals("invalid_grant")) {
+            if (response.errorDescription.contains("AADSTS70000")) {
+                throw new CredentialExpiredException();
+            }
         }
 
         throw new RemoteAuthenticationException(response.error, response.errorDescription, "");
     }
 
     public static class Options {
-        private String userAgent;
         private final String scope;
         private final Callback callback;
 
@@ -201,7 +199,6 @@ public class OAuth {
         }
 
         public Options setUserAgent(String userAgent) {
-            this.userAgent = userAgent;
             return this;
         }
     }
@@ -239,7 +236,7 @@ public class OAuth {
          *
          * @param url OAuth url.
          */
-        void openBrowser(String url) throws IOException;
+        void openBrowser(String url);
 
         String getClientId();
 

@@ -107,7 +107,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = target.resolve(entry.getKey() + ".tmp");
-                        try (LZMAInputStream input = new LZMAInputStream(new FileInputStream(tempFile))) {
+                        try (LZMAInputStream input = new LZMAInputStream(Files.newInputStream(tempFile.toPath()))) {
                             Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
@@ -152,7 +152,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     }
 
     @Override
-    public void postExecute() throws Exception {
+    public void postExecute() {
         setResult(new Result(download, javaDownloadsTask.getResult()));
     }
 

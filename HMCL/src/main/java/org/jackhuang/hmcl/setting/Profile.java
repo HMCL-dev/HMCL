@@ -48,7 +48,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
  */
 @JsonAdapter(Profile.Serializer.class)
 public final class Profile implements Observable {
-    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final HMCLGameRepository repository;
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
@@ -103,7 +102,7 @@ public final class Profile implements Observable {
         this.name.set(name);
     }
 
-    private BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
+    private final BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
 
     public BooleanProperty useRelativePathProperty() {
         return useRelativePath;
@@ -139,6 +138,7 @@ public final class Profile implements Observable {
 
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
+        WeakListenerHolder listenerHolder = new WeakListenerHolder();
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
 
         addPropertyChangedListener(onInvalidating(this::invalidate));
@@ -192,7 +192,7 @@ public final class Profile implements Observable {
         selectedVersion.addListener(listener);
     }
 
-    private ObservableHelper observableHelper = new ObservableHelper(this);
+    private final ObservableHelper observableHelper = new ObservableHelper(this);
 
     @Override
     public void addListener(InvalidationListener listener) {

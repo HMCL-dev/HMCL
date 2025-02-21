@@ -238,7 +238,7 @@ public abstract class Task<T> {
 
     /**
      * Returns the result of this task.
-     *
+     * <p>
      * The result will be generated only if the execution is completed.
      */
     public T getResult() {
@@ -286,7 +286,7 @@ public abstract class Task<T> {
 
     /**
      * This method will be called after dependency tasks terminated all together.
-     *
+     * <p>
      * You can check whether dependencies succeed in this method by calling
      * {@link Task#isDependenciesSucceeded()} no matter when
      * {@link Task#isRelyingOnDependencies()} returns true or false.
@@ -1146,6 +1146,7 @@ public abstract class Task<T> {
                 while (!done.getAsBoolean()) {
                     updateProgressImmediately(-k / ((System.currentTimeMillis() - start) / 1000D + k2) + MAX_VALUE);
 
+                    //noinspection BusyWait
                     Thread.sleep(1000);
                 }
             }
@@ -1173,7 +1174,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public void execute() throws Exception {
+        public void execute() {
             setResult(Task.this.getResult());
         }
 
@@ -1183,7 +1184,7 @@ public abstract class Task<T> {
         }
 
         @Override
-        public void postExecute() throws Exception {
+        public void postExecute() {
             notifyPropertiesChanged();
         }
     }

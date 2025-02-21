@@ -25,11 +25,12 @@ public class SkinCanvas extends Group {
     protected Image srcSkin, skin, srcCape, cape;
     protected boolean isSlim;
 
-    protected double preW, preH;
-    protected boolean msaa;
+    protected final double preW;
+    protected final double preH;
+    protected final boolean msaa;
 
     protected SubScene subScene;
-    protected Group root = new Group();
+    protected final Group root = new Group();
 
     public final SkinMultipleCubes headOuter = new SkinMultipleCubes(8, 8, 8, 32F / 64F, 0F, 1.125, 0.2);
     public final SkinMultipleCubes bodyOuter = new SkinMultipleCubes(8, 12, 4, 16F / 64F, 32F / 64F, 1, 0.2);
@@ -62,7 +63,7 @@ public class SkinCanvas extends Group {
     public final SkinGroup larm = new SkinGroup(
             new Rotate(0, 0, -larmInside.getHeight() / 2, 0, Rotate.X_AXIS),
             new Rotate(0, Rotate.Y_AXIS),
-            new Rotate(0, +larmInside.getWidth() / 2, -larmInside.getHeight() / 2, 0, Rotate.Z_AXIS),
+            new Rotate(0, larmInside.getWidth() / 2, -larmInside.getHeight() / 2, 0, Rotate.Z_AXIS),
             larmOuter, larmInside
     );
     public final SkinGroup rarm = new SkinGroup(
@@ -91,15 +92,15 @@ public class SkinCanvas extends Group {
             capeCube
     );
 
-    protected PerspectiveCamera camera = new PerspectiveCamera(true);
+    protected final PerspectiveCamera camera = new PerspectiveCamera(true);
 
-    protected Rotate xRotate = new Rotate(0, Rotate.X_AXIS);
-    protected Rotate yRotate = new Rotate(180, Rotate.Y_AXIS);
-    protected Rotate zRotate = new Rotate(0, Rotate.Z_AXIS);
-    protected Translate translate = new Translate(0, 0, -80);
-    protected Scale scale = new Scale(1, 1);
+    protected final Rotate xRotate = new Rotate(0, Rotate.X_AXIS);
+    protected final Rotate yRotate = new Rotate(180, Rotate.Y_AXIS);
+    protected final Rotate zRotate = new Rotate(0, Rotate.Z_AXIS);
+    protected final Translate translate = new Translate(0, 0, -80);
+    protected final Scale scale = new Scale(1, 1);
 
-    protected SkinAnimationPlayer animationPlayer = new SkinAnimationPlayer();
+    protected final SkinAnimationPlayer animationPlayer = new SkinAnimationPlayer();
 
     public SkinAnimationPlayer getAnimationPlayer() {
         return animationPlayer;
@@ -133,7 +134,7 @@ public class SkinCanvas extends Group {
         FunctionHelper.alwaysB(SkinCube::setWidth, isSlim ? 3D : 4D, larmInside, rarmInside);
 
         FunctionHelper.alwaysB(Node::setTranslateX, -(bodyInside.getWidth() + larmInside.getWidth()) / 2, larm);
-        FunctionHelper.alwaysB(Node::setTranslateX, +(bodyInside.getWidth() + rarmInside.getWidth()) / 2, rarm);
+        FunctionHelper.alwaysB(Node::setTranslateX, (bodyInside.getWidth() + rarmInside.getWidth()) / 2, rarm);
         if (isSlim) {
             larmInside.setModel(ALEX_LARM.getModel());
             rarmInside.setModel(ALEX_RARM.getModel());
@@ -143,7 +144,7 @@ public class SkinCanvas extends Group {
         }
 
         larm.getZRotate().setPivotX(-larmInside.getWidth() / 2);
-        rarm.getZRotate().setPivotX(+rarmInside.getWidth() / 2);
+        rarm.getZRotate().setPivotX(rarmInside.getWidth() / 2);
 
         capeGroup.setVisible(hasCape);
     }
@@ -178,15 +179,15 @@ public class SkinCanvas extends Group {
         head.setTranslateY(-(bodyInside.getHeight() + headInside.getHeight()) / 2);
 
         larm.setTranslateX(-(bodyInside.getWidth() + larmInside.getWidth()) / 2);
-        rarm.setTranslateX(+(bodyInside.getWidth() + rarmInside.getWidth()) / 2);
+        rarm.setTranslateX((bodyInside.getWidth() + rarmInside.getWidth()) / 2);
 
         lleg.setTranslateX(-(bodyInside.getWidth() - llegInside.getWidth()) / 2);
-        rleg.setTranslateX(+(bodyInside.getWidth() - rlegInside.getWidth()) / 2);
+        rleg.setTranslateX((bodyInside.getWidth() - rlegInside.getWidth()) / 2);
 
-        lleg.setTranslateY(+(bodyInside.getHeight() + llegInside.getHeight()) / 2);
-        rleg.setTranslateY(+(bodyInside.getHeight() + rlegInside.getHeight()) / 2);
+        lleg.setTranslateY((bodyInside.getHeight() + llegInside.getHeight()) / 2);
+        rleg.setTranslateY((bodyInside.getHeight() + rlegInside.getHeight()) / 2);
 
-        capeGroup.setTranslateY(+(capeCube.getHeight() - bodyOuter.getHeight()) / 2);
+        capeGroup.setTranslateY((capeCube.getHeight() - bodyOuter.getHeight()) / 2);
         capeGroup.setTranslateZ(-(bodyInside.getDepth() + bodyOuter.getDepth()) / 2);
 
         capeGroup.getTransforms().addAll(new Rotate(180, Rotate.Y_AXIS), new Rotate(10, Rotate.X_AXIS));

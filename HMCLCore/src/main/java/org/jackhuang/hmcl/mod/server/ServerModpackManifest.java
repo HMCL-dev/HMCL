@@ -92,7 +92,7 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
+    public void validate() throws JsonParseException {
         if (fileApi == null)
             throw new JsonParseException("ServerModpackManifest.fileApi cannot be blank");
         if (files == null)

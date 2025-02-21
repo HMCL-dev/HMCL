@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import java.util.function.Consumer;
 
 public final class TaskCancellationAction {
-    public static TaskCancellationAction NO_CANCEL = new TaskCancellationAction((Consumer<TaskExecutorDialogPane>) null);
-    public static TaskCancellationAction NORMAL = new TaskCancellationAction(() -> {
+    public static final TaskCancellationAction NO_CANCEL = new TaskCancellationAction((Consumer<TaskExecutorDialogPane>) null);
+    public static final TaskCancellationAction NORMAL = new TaskCancellationAction(() -> {
     });
 
     private final Consumer<TaskExecutorDialogPane> cancellationAction;

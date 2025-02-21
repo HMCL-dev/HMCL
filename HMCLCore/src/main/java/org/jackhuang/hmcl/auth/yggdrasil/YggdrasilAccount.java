@@ -73,11 +73,10 @@ public abstract class YggdrasilAccount extends ClassicAccount {
         addProfilePropertiesListener();
     }
 
-    private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
     private void addProfilePropertiesListener() {
         // binding() is thread-safe
         // hold the binding so that it won't be garbage-collected
-        profilePropertiesBinding = service.getProfileRepository().binding(characterUUID, true);
+        ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding = service.getProfileRepository().binding(characterUUID, true);
         // and it's safe to add a listener to an ObjectBinding which does not have any listener attached before (maybe tricky)
         profilePropertiesBinding.addListener((a, b, c) -> this.invalidate());
     }
@@ -230,9 +229,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj == null || obj.getClass() != YggdrasilAccount.class)
-            return false;
-        YggdrasilAccount another = (YggdrasilAccount) obj;
-        return isPortable() == another.isPortable() && characterUUID.equals(another.characterUUID);
+        return false;
     }
 }

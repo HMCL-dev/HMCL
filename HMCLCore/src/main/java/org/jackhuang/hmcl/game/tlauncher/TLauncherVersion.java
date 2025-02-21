@@ -74,7 +74,7 @@ public class TLauncherVersion implements Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
+    public void validate() throws JsonParseException {
         Validation.requireNonNull(tlauncherVersion, "Not TLauncher version json format");
     }
 

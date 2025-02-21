@@ -85,7 +85,7 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         dependencies.add(new ServerModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
     }
 

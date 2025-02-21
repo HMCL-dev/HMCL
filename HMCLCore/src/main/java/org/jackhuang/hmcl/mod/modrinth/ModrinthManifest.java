@@ -88,7 +88,7 @@ public class ModrinthManifest implements ModpackManifest, Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
+    public void validate() throws JsonParseException {
         if (dependencies == null || dependencies.get("minecraft") == null) {
             throw new JsonParseException("missing Modrinth.dependencies.minecraft");
         }

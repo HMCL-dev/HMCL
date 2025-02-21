@@ -27,7 +27,7 @@ public class ModpackExportInfo {
 
     private String authlibInjectorServer;
 
-    private List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
+    private final List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
 
     public ModpackExportInfo() {}
 
@@ -79,7 +79,7 @@ public class ModpackExportInfo {
 
     /**
      * Description of this modpack.
-     *
+     * <p>
      * Supports plain HTML text.
      */
     public String getDescription() {

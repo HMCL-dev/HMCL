@@ -118,7 +118,7 @@ public class ForgeNewInstallProfile implements Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
+    public void validate() throws JsonParseException {
         if (minecraft == null || json == null || version == null)
             throw new JsonParseException("ForgeNewInstallProfile is malformed");
     }
@@ -190,7 +190,7 @@ public class ForgeNewInstallProfile implements Validation {
         }
 
         @Override
-        public void validate() throws JsonParseException, TolerableValidationException {
+        public void validate() throws JsonParseException {
             if (jar == null)
                 throw new JsonParseException("Processor::jar cannot be null");
         }

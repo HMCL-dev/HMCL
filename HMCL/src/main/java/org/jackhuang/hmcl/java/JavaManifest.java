@@ -54,11 +54,11 @@ public final class JavaManifest {
         return info;
     }
 
-    public Map<String, Object> getUpdate() {
+    public @Nullable Map<String, Object> getUpdate() {
         return update;
     }
 
-    public Map<String, JavaLocalFiles.Local> getFiles() {
+    public @Nullable Map<String, JavaLocalFiles.Local> getFiles() {
         return files;
     }
 

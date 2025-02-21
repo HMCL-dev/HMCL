@@ -39,7 +39,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
     private static GameListItem currentSkinnable;
-    private static Lazy<JFXPopup> popup = new Lazy<>(() -> {
+    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 

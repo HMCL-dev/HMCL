@@ -119,9 +119,7 @@ public class PromptDialogPane extends DialogPane {
         builder.callback.call(builder.questions, () -> {
             future.complete(builder.questions);
             runInFX(this::onSuccess);
-        }, msg -> {
-            runInFX(() -> onFailure(msg));
-        });
+        }, msg -> runInFX(() -> onFailure(msg)));
     }
 
     public CompletableFuture<List<Builder.Question<?>>> getCompletableFuture() {

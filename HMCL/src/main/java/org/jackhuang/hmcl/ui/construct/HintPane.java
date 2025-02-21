@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import java.util.Locale;
 
 public class HintPane extends VBox {
-    private final Text label = new Text();
     private final StringProperty text = new SimpleStringProperty(this, "text");
     private final TextFlow flow = new TextFlow();
 
@@ -69,6 +68,7 @@ public class HintPane extends VBox {
 
         HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16, 16), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);
+        Text label = new Text();
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);
         label.textProperty().bind(text);

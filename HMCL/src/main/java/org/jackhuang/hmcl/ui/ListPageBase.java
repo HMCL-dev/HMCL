@@ -79,7 +79,7 @@ public class ListPageBase<T> extends Control {
         return onFailedActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
+    private final ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
         @Override
         protected void invalidated() {
             setEventHandler(FAILED_ACTION, get());

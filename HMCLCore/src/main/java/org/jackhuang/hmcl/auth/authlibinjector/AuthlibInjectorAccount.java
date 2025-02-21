@@ -38,7 +38,7 @@ import static java.util.Collections.unmodifiableSet;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final AuthlibInjectorServer server;
-    private AuthlibInjectorArtifactProvider downloader;
+    private final AuthlibInjectorArtifactProvider downloader;
 
     public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, String password, CharacterSelector selector) throws AuthenticationException {
         super(server.getYggdrasilService(), username, password, selector);

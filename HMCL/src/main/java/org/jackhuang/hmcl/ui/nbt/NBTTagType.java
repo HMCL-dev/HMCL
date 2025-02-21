@@ -23,7 +23,7 @@ public enum NBTTagType {
     public static NBTTagType typeOf(Tag tag) {
         NBTTagType type = lookupTable.get(tag.getClass().getSimpleName());
         if (type == null) {
-            throw new IllegalArgumentException("Unknown tag: " + type);
+            throw new IllegalArgumentException("Unknown tag: " + null);
         }
         return type;
     }

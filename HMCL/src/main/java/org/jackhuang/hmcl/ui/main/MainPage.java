@@ -82,7 +82,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
-    private final ObservableList<Node> versionNodes;
     private Profile profile;
 
     private TransitionPane announcementPane;
@@ -263,7 +262,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         menu.setMaxWidth(545);
         menu.setAlwaysShowingVBar(true);
         FXUtils.onClicked(menu, popup::hide);
-        versionNodes = MappedObservableList.create(versions, version -> {
+        ObservableList<Node> versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
             FXUtils.onClicked(node, () -> profile.setSelectedVersion(version.getId()));
             return node;

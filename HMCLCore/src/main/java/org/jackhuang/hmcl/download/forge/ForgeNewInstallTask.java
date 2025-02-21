@@ -67,8 +67,8 @@ public class ForgeNewInstallTask extends Task<Version> {
 
     private class ProcessorTask extends Task<Void> {
 
-        private Processor processor;
-        private Map<String, String> vars;
+        private final Processor processor;
+        private final Map<String, String> vars;
 
         public ProcessorTask(@NotNull Processor processor, @NotNull Map<String, String> vars) {
             this.processor = processor;
@@ -154,7 +154,7 @@ public class ForgeNewInstallTask extends Task<Version> {
 
             command.addAll(args);
 
-            LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
+            LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command));
             int exitCode = SystemUtils.callExternalProcess(command);
             if (exitCode != 0)
                 throw new IOException("Game processor exited abnormally with code " + exitCode);
@@ -190,7 +190,7 @@ public class ForgeNewInstallTask extends Task<Version> {
     private final String selfVersion;
 
     private Path tempDir;
-    private AtomicInteger processorDoneCount = new AtomicInteger(0);
+    private final AtomicInteger processorDoneCount = new AtomicInteger(0);
 
     public ForgeNewInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;

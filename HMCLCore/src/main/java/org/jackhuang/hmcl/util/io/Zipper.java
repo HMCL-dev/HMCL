@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.function.ExceptionalPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.File;
@@ -90,12 +91,12 @@ public final class Zipper implements Closeable {
         String root = normalize(targetDir);
         Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 if (".DS_Store".equals(file.getFileName().toString())) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 String relativePath = normalize(source.relativize(file).normalize().toString());
-                if (filter != null && !filter.test(relativePath)) {
+                if (filter != null && filter.test(relativePath)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 putFile(file, resolve(root, relativePath));
@@ -103,9 +104,9 @@ public final class Zipper implements Closeable {
             }
 
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult preVisitDirectory(Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
                 String relativePath = normalize(source.relativize(dir).normalize().toString());
-                if (filter != null && !filter.test(relativePath)) {
+                if (filter != null && filter.test(relativePath)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 try {

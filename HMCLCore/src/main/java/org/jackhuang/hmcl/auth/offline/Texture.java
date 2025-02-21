@@ -76,7 +76,7 @@ public final class Texture {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 putInt(buf, pos, reader.getArgb(x, y));
-                if (buf[pos + 0] == 0) {
+                if (buf[pos] == 0) {
                     buf[pos + 1] = buf[pos + 2] = buf[pos + 3] = 0;
                 }
                 pos += 4;
@@ -94,10 +94,10 @@ public final class Texture {
     }
 
     private static void putInt(byte[] array, int offset, int x) {
-        array[offset + 0] = (byte) (x >> 24 & 0xff);
+        array[offset] = (byte) (x >> 24 & 0xff);
         array[offset + 1] = (byte) (x >> 16 & 0xff);
         array[offset + 2] = (byte) (x >> 8 & 0xff);
-        array[offset + 3] = (byte) (x >> 0 & 0xff);
+        array[offset + 3] = (byte) (x & 0xff);
     }
 
     public static Texture loadTexture(InputStream in) throws IOException {

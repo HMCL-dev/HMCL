@@ -127,15 +127,8 @@ public class YggdrasilService {
     public boolean validate(String accessToken, String clientToken) throws AuthenticationException {
         Objects.requireNonNull(accessToken);
 
-        try {
-            requireEmpty(request(provider.getValidationURL(), createRequestWithCredentials(accessToken, clientToken)));
-            return true;
-        } catch (RemoteAuthenticationException e) {
-            if ("ForbiddenOperationException".equals(e.getRemoteName())) {
-                return false;
-            }
-            throw e;
-        }
+        requireEmpty(request(provider.getValidationURL(), createRequestWithCredentials(accessToken, clientToken)));
+        return true;
     }
 
     public void invalidate(String accessToken) throws AuthenticationException {
@@ -168,7 +161,7 @@ public class YggdrasilService {
 
     /**
      * Get complete game profile.
-     *
+     * <p>
      * Game profile provided from authentication is not complete (no skin data in properties).
      *
      * @param uuid the uuid that the character corresponding to.

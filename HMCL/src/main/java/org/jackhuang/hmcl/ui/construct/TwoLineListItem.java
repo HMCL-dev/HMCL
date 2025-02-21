@@ -38,9 +38,6 @@ public class TwoLineListItem extends VBox {
     private final ObservableList<String> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
-    private final ObservableList<Node> tagLabels;
-    private final AggregatedObservableList<Node> firstLineChildren;
-
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
 
@@ -58,14 +55,14 @@ public class TwoLineListItem extends VBox {
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
-        tagLabels = MappedObservableList.create(tags, tag -> {
+        ObservableList<Node> tagLabels = MappedObservableList.create(tags, tag -> {
             Label tagLabel = new Label();
             tagLabel.getStyleClass().add("tag");
             tagLabel.setText(tag);
             HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
             return tagLabel;
         });
-        firstLineChildren = new AggregatedObservableList<>();
+        AggregatedObservableList<Node> firstLineChildren = new AggregatedObservableList<>();
         firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
         firstLineChildren.appendList(tagLabels);
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());

@@ -30,9 +30,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
     public AdvancedListItemSkin(AdvancedListItem skinnable) {
         super(skinnable);
 
-        FXUtils.onChangeAndOperate(skinnable.activeProperty(), active -> {
-            skinnable.pseudoClassStateChanged(SELECTED, active);
-        });
+        FXUtils.onChangeAndOperate(skinnable.activeProperty(), active -> skinnable.pseudoClassStateChanged(SELECTED, active));
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("container");

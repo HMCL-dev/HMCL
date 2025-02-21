@@ -71,7 +71,7 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         String json = fetchPackagesTask.getResult();
         List<DiscoJavaRemoteVersion> list = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoJavaRemoteVersion.class)).getResult();
         EnumMap<JavaPackageType, TreeMap<Integer, DiscoJavaRemoteVersion>> result = new EnumMap<>(JavaPackageType.class);
@@ -82,7 +82,7 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
                     || !archiveType.equals(version.getArchiveType()))
                 continue;
 
-            if (!distribution.testVersion(version))
+            if (distribution.testVersion(version))
                 continue;
 
             JavaPackageType packageType = JavaPackageType.of("jdk".equals(version.getPackageType()), version.isJavaFXBundled());

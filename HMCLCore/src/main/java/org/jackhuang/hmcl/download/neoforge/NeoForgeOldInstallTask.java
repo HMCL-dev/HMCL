@@ -150,7 +150,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
             command.addAll(args);
 
-            LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
+            LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command));
             int exitCode = SystemUtils.callExternalProcess(command);
             if (exitCode != 0)
                 throw new IOException("Game processor exited abnormally with code " + exitCode);
@@ -186,7 +186,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
     private final String selfVersion;
 
     private Path tempDir;
-    private AtomicInteger processorDoneCount = new AtomicInteger(0);
+    private final AtomicInteger processorDoneCount = new AtomicInteger(0);
 
     NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
         this.dependencyManager = dependencyManager;

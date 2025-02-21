@@ -74,112 +74,112 @@ public final class Config implements Observable {
     }
 
     @SerializedName("last")
-    private StringProperty selectedProfile = new SimpleStringProperty("");
+    private final StringProperty selectedProfile = new SimpleStringProperty("");
 
     @SerializedName("backgroundType")
-    private ObjectProperty<EnumBackgroundImage> backgroundImageType = new SimpleObjectProperty<>(EnumBackgroundImage.DEFAULT);
+    private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new SimpleObjectProperty<>(EnumBackgroundImage.DEFAULT);
 
     @SerializedName("bgpath")
-    private StringProperty backgroundImage = new SimpleStringProperty();
+    private final StringProperty backgroundImage = new SimpleStringProperty();
 
     @SerializedName("bgurl")
-    private StringProperty backgroundImageUrl = new SimpleStringProperty();
+    private final StringProperty backgroundImageUrl = new SimpleStringProperty();
 
     @SerializedName("commonDirType")
-    private ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
+    private final ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
 
     @SerializedName("commonpath")
-    private StringProperty commonDirectory = new SimpleStringProperty(Metadata.MINECRAFT_DIRECTORY.toString());
+    private final StringProperty commonDirectory = new SimpleStringProperty(Metadata.MINECRAFT_DIRECTORY.toString());
 
     @SerializedName("hasProxy")
-    private BooleanProperty hasProxy = new SimpleBooleanProperty();
+    private final BooleanProperty hasProxy = new SimpleBooleanProperty();
 
     @SerializedName("hasProxyAuth")
-    private BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
+    private final BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
 
     @SerializedName("proxyType")
-    private ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.HTTP);
+    private final ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.HTTP);
 
     @SerializedName("proxyHost")
-    private StringProperty proxyHost = new SimpleStringProperty();
+    private final StringProperty proxyHost = new SimpleStringProperty();
 
     @SerializedName("proxyPort")
-    private IntegerProperty proxyPort = new SimpleIntegerProperty();
+    private final IntegerProperty proxyPort = new SimpleIntegerProperty();
 
     @SerializedName("proxyUserName")
-    private StringProperty proxyUser = new SimpleStringProperty();
+    private final StringProperty proxyUser = new SimpleStringProperty();
 
     @SerializedName("proxyPassword")
-    private StringProperty proxyPass = new SimpleStringProperty();
+    private final StringProperty proxyPass = new SimpleStringProperty();
 
     @SerializedName("x")
-    private DoubleProperty x = new SimpleDoubleProperty();
+    private final DoubleProperty x = new SimpleDoubleProperty();
 
     @SerializedName("y")
-    private DoubleProperty y = new SimpleDoubleProperty();
+    private final DoubleProperty y = new SimpleDoubleProperty();
 
     @SerializedName("width")
-    private DoubleProperty width = new SimpleDoubleProperty();
+    private final DoubleProperty width = new SimpleDoubleProperty();
 
     @SerializedName("height")
-    private DoubleProperty height = new SimpleDoubleProperty();
+    private final DoubleProperty height = new SimpleDoubleProperty();
 
     @SerializedName("theme")
-    private ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
+    private final ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
 
     @SerializedName("localization")
-    private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
+    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
     @SerializedName("autoDownloadThreads")
-    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
+    private final BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
     @SerializedName("downloadThreads")
-    private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
+    private final IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
 
     @SerializedName("downloadType")
-    private StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
+    private final StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
 
     @SerializedName("autoChooseDownloadType")
-    private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
+    private final BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
 
     @SerializedName("versionListSource")
-    private StringProperty versionListSource = new SimpleStringProperty("balanced");
+    private final StringProperty versionListSource = new SimpleStringProperty("balanced");
 
     @SerializedName("configurations")
-    private SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
+    private final SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
 
     @SerializedName("selectedAccount")
-    private StringProperty selectedAccount = new SimpleStringProperty();
+    private final StringProperty selectedAccount = new SimpleStringProperty();
 
     @SerializedName("accounts")
-    private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
+    private final ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
 
     @SerializedName("fontFamily")
-    private StringProperty fontFamily = new SimpleStringProperty();
+    private final StringProperty fontFamily = new SimpleStringProperty();
 
     @SerializedName("fontSize")
-    private DoubleProperty fontSize = new SimpleDoubleProperty(12);
+    private final DoubleProperty fontSize = new SimpleDoubleProperty(12);
 
     @SerializedName("launcherFontFamily")
-    private StringProperty launcherFontFamily = new SimpleStringProperty();
+    private final StringProperty launcherFontFamily = new SimpleStringProperty();
 
     @SerializedName("logLines")
-    private ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
+    private final ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
 
     @SerializedName("titleTransparent")
-    private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
+    private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
 
     @SerializedName("authlibInjectorServers")
-    private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
+    private final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
 
     @SerializedName("addedLittleSkin")
-    private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
+    private final BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
 
     @SerializedName("promptedVersion")
-    private StringProperty promptedVersion = new SimpleStringProperty();
+    private final StringProperty promptedVersion = new SimpleStringProperty();
 
     @SerializedName("_version")
-    private IntegerProperty configVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
     /**
      * The version of UI that the user have last used.
@@ -189,21 +189,21 @@ public final class Config implements Observable {
      * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
      */
     @SerializedName("uiVersion")
-    private IntegerProperty uiVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty uiVersion = new SimpleIntegerProperty(0);
 
     /**
      * The preferred login type to use when the user wants to add an account.
      */
     @SerializedName("preferredLoginType")
-    private StringProperty preferredLoginType = new SimpleStringProperty();
+    private final StringProperty preferredLoginType = new SimpleStringProperty();
 
     @SerializedName("animationDisabled")
-    private BooleanProperty animationDisabled = new SimpleBooleanProperty();
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty();
 
     @SerializedName("shownTips")
-    private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
+    private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
-    private transient ObservableHelper helper = new ObservableHelper(this);
+    private final transient ObservableHelper helper = new ObservableHelper(this);
 
     public Config() {
         PropertyUtils.attachListener(this, helper);

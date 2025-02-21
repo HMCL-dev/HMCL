@@ -150,11 +150,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             // Toolbar Selecting
             toolbarSelecting.getChildren().setAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
-                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                        }, null);
-                    }),
+                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> skinnable.removeSelected(listView.getSelectionModel().getSelectedItems()), null)),
                     createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
@@ -501,11 +497,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
-        JFXCheckBox checkBox = new JFXCheckBox();
-        TwoLineListItem content = new TwoLineListItem();
-        JFXButton restoreButton = new JFXButton();
-        JFXButton infoButton = new JFXButton();
-        JFXButton revealButton = new JFXButton();
+        final JFXCheckBox checkBox = new JFXCheckBox();
+        final TwoLineListItem content = new TwoLineListItem();
+        final JFXButton restoreButton = new JFXButton();
+        final JFXButton infoButton = new JFXButton();
+        final JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
 
         ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {

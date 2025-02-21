@@ -10,12 +10,12 @@ import java.util.Random;
 public class SkinAnimationPlayer {
 
     protected final Random random = new Random();
-    protected List<SkinAnimation> animations = new ArrayList<>();
+    protected final List<SkinAnimation> animations = new ArrayList<>();
     protected SkinAnimation playing;
     protected boolean running;
     protected int weightedSum = 0;
     protected long lastPlayTime = -1L, interval = 10_000_000_000L;
-    protected AnimationTimer animationTimer = new AnimationTimer() {
+    protected final AnimationTimer animationTimer = new AnimationTimer() {
         @Override
         public void handle(long now) {
             if (playing == null || !playing.isPlaying() && now - lastPlayTime > interval) {
@@ -28,8 +28,6 @@ public class SkinAnimationPlayer {
                         break;
                 }
                 playing = tmp;
-                if (playing == null && animations.size() > 0)
-                    playing = animations.get(animations.size() - 1);
                 if (playing != null) {
                     playing.playFromStart();
                     lastPlayTime = now;

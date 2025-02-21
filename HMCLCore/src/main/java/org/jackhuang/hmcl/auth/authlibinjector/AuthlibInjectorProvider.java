@@ -35,22 +35,22 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
-    public URL getAuthenticationURL() throws AuthenticationException {
+    public URL getAuthenticationURL() {
         return toURL(apiRoot + "authserver/authenticate");
     }
 
     @Override
-    public URL getRefreshmentURL() throws AuthenticationException {
+    public URL getRefreshmentURL() {
         return toURL(apiRoot + "authserver/refresh");
     }
 
     @Override
-    public URL getValidationURL() throws AuthenticationException {
+    public URL getValidationURL() {
         return toURL(apiRoot + "authserver/validate");
     }
 
     @Override
-    public URL getInvalidationURL() throws AuthenticationException {
+    public URL getInvalidationURL() {
         return toURL(apiRoot + "authserver/invalidate");
     }
 
@@ -60,7 +60,7 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
-    public URL getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
+    public URL getProfilePropertiesURL(UUID uuid) {
         return toURL(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
     }
 

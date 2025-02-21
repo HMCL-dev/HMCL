@@ -25,14 +25,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class NBTEditorPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state;
-    private final File file;
     private final NBTFileType type;
 
     public NBTEditorPage(File file) throws IOException {
         getStyleClass().add("gray-background");
 
         this.state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("nbt.title", file.getAbsolutePath())));
-        this.file = file;
         this.type = NBTFileType.ofFile(file);
 
         if (type == null) {
@@ -49,12 +47,7 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
         saveButton.getStyleClass().add("jfx-button-raised");
         saveButton.setButtonType(JFXButton.ButtonType.RAISED);
         saveButton.setOnAction(e -> {
-            try {
-                save();
-            } catch (IOException ex) {
-                LOG.warning("Failed to save NBT file", ex);
-                Controllers.dialog(i18n("nbt.save.failed") + "\n\n" + StringUtils.getStackTrace(ex));
-            }
+            save();
         });
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
@@ -79,7 +72,7 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
                 }, Schedulers.javafx());
     }
 
-    public void save() throws IOException {
+    public void save() {
         // TODO
     }
 

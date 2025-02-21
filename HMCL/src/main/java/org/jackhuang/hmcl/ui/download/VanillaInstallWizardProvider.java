@@ -75,13 +75,11 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        switch (step) {
-            case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", downloadProvider, "game",
-                        () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider)));
-            default:
-                throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+        if (step == 0) {
+            return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", downloadProvider, "game",
+                    () -> controller.onNext(new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider)));
         }
+        throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
     }
 
     @Override

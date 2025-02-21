@@ -47,7 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable, Observable {
 
-    private transient ObservableHelper helper = new ObservableHelper(this);
+    private final transient ObservableHelper helper = new ObservableHelper(this);
 
     public VersionSetting() {
         PropertyUtils.attachListener(this, helper);
@@ -687,7 +687,7 @@ public final class VersionSetting implements Cloneable, Observable {
                     String defaultJavaPath = getDefaultJavaPath();
                     if (StringUtils.isNotBlank(defaultJavaPath)) {
                         JavaRuntime java = JavaManager.getJava(Paths.get(defaultJavaPath).toRealPath());
-                        if (java != null && java.getVersion().equals(javaVersion)) {
+                        if (java.getVersion().equals(javaVersion)) {
                             return java;
                         }
                     }
@@ -717,6 +717,7 @@ public final class VersionSetting implements Cloneable, Observable {
         helper.removeListener(listener);
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public VersionSetting clone() {
         VersionSetting cloned = new VersionSetting();

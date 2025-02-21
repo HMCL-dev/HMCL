@@ -40,8 +40,6 @@ import java.util.Optional;
 public class McbbsModpackLocalInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final File zipFile;
-    private final Modpack modpack;
     private final McbbsModpackManifest manifest;
     private final String name;
     private final boolean update;
@@ -52,8 +50,6 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
 
     public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, McbbsModpackManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
-        this.zipFile = zipFile;
-        this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();

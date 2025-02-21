@@ -38,7 +38,7 @@ public final class Schedulers {
     /**
      * Get singleton instance of the thread pool for I/O operations,
      * usually for reading files from disk, or Internet connections.
-     *
+     * <p>
      * This thread pool has no more than 4 threads, and number of threads will get
      * reduced if concurrency is less than thread number.
      *

@@ -73,12 +73,10 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     }
 
     private static final class OfficialAPIResult {
-        private final boolean isSnapshot;
 
         private final List<String> versions;
 
         public OfficialAPIResult(boolean isSnapshot, List<String> versions) {
-            this.isSnapshot = isSnapshot;
             this.versions = versions;
         }
     }

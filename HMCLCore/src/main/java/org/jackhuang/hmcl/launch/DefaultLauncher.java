@@ -181,9 +181,7 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
                 repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
-                        .ifPresent(minecraftIcns -> {
-                            res.addDefault("-Xdock:icon=", minecraftIcns.toAbsolutePath().toString());
-                        });
+                        .ifPresent(minecraftIcns -> res.addDefault("-Xdock:icon=", minecraftIcns.toAbsolutePath().toString()));
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
@@ -382,7 +380,7 @@ public class DefaultLauncher extends Launcher {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
         }
 
-        try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
+        try (InputStream input = source; OutputStream output = Files.newOutputStream(targetFile.toPath())) {
             IOUtils.copyTo(input, output);
         }
     }
@@ -574,7 +572,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (!FileUtils.makeFile(scriptFile))
+        if (FileUtils.makeFile(scriptFile))
             throw new IOException("Script file: " + scriptFile + " cannot be created.");
 
         try (OutputStream outputStream = Files.newOutputStream(scriptFile.toPath())) {

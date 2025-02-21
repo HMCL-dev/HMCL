@@ -102,7 +102,7 @@ public class PackMcMeta implements Validation {
                 }
             } else if (json.isJsonArray()) {
                 JsonArray arr = json.getAsJsonArray();
-                if (arr.size() == 0) {
+                if (arr.isEmpty()) {
                     return "";
                 } else {
                     return parseText(arr.get(0));

@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -256,7 +257,7 @@ public final class FileUtils {
     public static void copyDirectory(Path src, Path dest, Predicate<String> filePredicate) throws IOException {
         Files.walkFileTree(src, new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 if (!filePredicate.test(src.relativize(file).toString())) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
@@ -267,7 +268,7 @@ public final class FileUtils {
             }
 
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult preVisitDirectory(Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
                 if (!filePredicate.test(src.relativize(dir).toString())) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
@@ -514,7 +515,7 @@ public final class FileUtils {
     }
 
     public static boolean makeFile(File file) {
-        return makeDirectory(file.getAbsoluteFile().getParentFile()) && (file.exists() || Lang.test(file::createNewFile));
+        return !makeDirectory(file.getAbsoluteFile().getParentFile()) || (!file.exists() && !Lang.test(file::createNewFile));
     }
 
     public static List<File> listFilesByExtension(File file, String extension) {

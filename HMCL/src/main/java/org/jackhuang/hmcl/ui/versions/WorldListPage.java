@@ -54,9 +54,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
     private String gameVersion;
 
     public WorldListPage() {
-        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
-            installWorld(modpacks.get(0));
-        });
+        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> installWorld(modpacks.get(0)));
 
         showAll.addListener(e -> {
             if (worlds != null)
@@ -122,22 +120,18 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
         Task.supplyAsync(() -> new World(zipFile.toPath()))
-                .whenComplete(Schedulers.javafx(), world -> {
-                    Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
-                        Task.runAsync(() -> world.install(savesDir, name))
-                                .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
-                                    resolve.run();
-                                }, e -> {
-                                    if (e instanceof FileAlreadyExistsException)
-                                        reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
-                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                        reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
-                                    else
-                                        reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
-                                }).start();
-                    }, world.getWorldName());
-                }, e -> {
+                .whenComplete(Schedulers.javafx(), world -> Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> Task.runAsync(() -> world.install(savesDir, name))
+                        .whenComplete(Schedulers.javafx(), () -> {
+                            itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
+                            resolve.run();
+                        }, e -> {
+                            if (e instanceof FileAlreadyExistsException)
+                                reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
+                            else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
+                            else
+                                reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                        }).start(), world.getWorldName()), e -> {
                     LOG.warning("Unable to parse world file " + zipFile, e);
                     Controllers.dialog(i18n("world.import.invalid"));
                 }).start();

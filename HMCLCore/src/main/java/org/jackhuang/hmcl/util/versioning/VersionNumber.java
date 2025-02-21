@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * Copied from org.apache.maven.artifact.versioning.ComparableVersion
  * Apache License 2.0
- *
+ * <p>
  * Maybe we can migrate to org.jenkins-ci:version-number:1.7?
  * @see <a href="http://maven.apache.org/pom.html#Version_Order_Specification">Specification</a>
  */
@@ -325,7 +325,7 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                         Item r = right.hasNext() ? right.next() : null;
 
                         // if this is shorter, then invert the compare and mul with -1
-                        int result = l == null ? (r == null ? 0 : -1 * r.compareTo(l)) : l.compareTo(r);
+                        int result = l == null ? (r == null ? 0 : -1 * r.compareTo(null)) : l.compareTo(r);
 
                         if (result != 0) {
                             return result;

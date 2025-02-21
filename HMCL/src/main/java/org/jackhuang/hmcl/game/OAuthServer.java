@@ -148,7 +148,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         }
 
         @Override
-        public void openBrowser(String url) throws IOException {
+        public void openBrowser(String url) {
             lastlyOpenedURL = url;
             FXUtils.openLink(url);
 

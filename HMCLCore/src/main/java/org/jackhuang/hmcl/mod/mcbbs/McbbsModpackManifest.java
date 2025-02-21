@@ -109,7 +109,7 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
         return description;
     }
 
-    public String getFileApi() {
+    public @Nullable String getFileApi() {
         return fileApi;
     }
 
@@ -155,7 +155,7 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
+    public void validate() throws JsonParseException {
         if (!MANIFEST_TYPE.equals(manifestType))
             throw new JsonParseException("McbbsModpackManifest.manifestType must be 'minecraftModpack'");
 //        if (manifestVersion > 1)

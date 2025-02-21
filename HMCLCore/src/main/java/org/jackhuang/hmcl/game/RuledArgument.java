@@ -55,6 +55,7 @@ public class RuledArgument implements Argument {
         return Collections.unmodifiableList(value);
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public Object clone() {
         return new RuledArgument(

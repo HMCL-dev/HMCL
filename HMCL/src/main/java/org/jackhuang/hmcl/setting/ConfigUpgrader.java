@@ -57,25 +57,21 @@ final class ConfigUpgrader {
 
         if (configVersion < 1) {
             // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
-            tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> {
-                tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
-                    String selected = rawJson.containsKey("selectedAccount") ? null
-                            : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
+            tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
+                String selected = rawJson.containsKey("selectedAccount") ? null
+                        : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
 
-                    tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> {
-                        ((Map<?, ?>) uuidMap).forEach((key, value) -> {
-                            Map<Object, Object> storage = new HashMap<>();
-                            storage.put("type", "offline");
-                            storage.put("username", key);
-                            storage.put("uuid", value);
-                            if (key.equals(selected)) {
-                                storage.put("selected", true);
-                            }
-                            deserialized.getAccountStorages().add(storage);
-                        });
-                    });
-                });
-            });
+                tryCast(offline.get("uuidMap"), Map.class).ifPresent(uuidMap -> ((Map<?, ?>) uuidMap).forEach((key, value) -> {
+                    Map<Object, Object> storage = new HashMap<>();
+                    storage.put("type", "offline");
+                    storage.put("username", key);
+                    storage.put("uuid", value);
+                    if (key.equals(selected)) {
+                        storage.put("selected", true);
+                    }
+                    deserialized.getAccountStorages().add(storage);
+                }));
+            }));
 
             // Upgrade configuration of HMCL earlier than 3.1.70
             if (!rawJson.containsKey("commonDirType"))

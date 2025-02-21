@@ -40,7 +40,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class FileItem extends BorderPane {
-    private final Label lblPath = new Label();
 
     private final SimpleStringProperty name = new SimpleStringProperty(this, "name");
     private final SimpleStringProperty title = new SimpleStringProperty(this, "title");
@@ -52,6 +51,7 @@ public class FileItem extends BorderPane {
         VBox left = new VBox();
         Label name = new Label();
         name.textProperty().bind(nameProperty());
+        Label lblPath = new Label();
         lblPath.getStyleClass().addAll("subtitle-label");
         lblPath.textProperty().bind(path);
         left.getChildren().addAll(name, lblPath);

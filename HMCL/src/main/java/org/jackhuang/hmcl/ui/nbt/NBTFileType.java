@@ -9,6 +9,7 @@ import org.apache.commons.compress.utils.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
@@ -18,7 +19,7 @@ public enum NBTFileType {
     COMPRESSED("dat", "dat_old") {
         @Override
         public Tag read(File file) throws IOException {
-            try (BufferedInputStream fileInputStream = new BufferedInputStream(new FileInputStream(file))) {
+            try (BufferedInputStream fileInputStream = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
                 fileInputStream.mark(3);
                 byte[] header = new byte[3];
                 if (fileInputStream.read(header) < 3) {
@@ -56,7 +57,7 @@ public enum NBTFileType {
         public Tag read(File file) throws IOException {
             try (RandomAccessFile r = new RandomAccessFile(file, "r")) {
                 byte[] header = new byte[4096];
-                byte[] buffer = new byte[1 * 1024 * 1024]; // The maximum size of each chunk is 1MiB
+                byte[] buffer = new byte[1024 * 1024]; // The maximum size of each chunk is 1MiB
                 Inflater inflater = new Inflater();
 
                 ListTag tag = new ListTag(file.getName(), CompoundTag.class);

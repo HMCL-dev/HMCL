@@ -71,7 +71,6 @@ final class ComponentListCell extends StackPane {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void updateLayout() {
         if (content instanceof ComponentList) {
             ComponentList list = (ComponentList) content;

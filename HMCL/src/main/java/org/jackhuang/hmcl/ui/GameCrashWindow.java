@@ -83,7 +83,6 @@ public class GameCrashWindow extends Stage {
     private final DefaultGameRepository repository;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
-    private final View view;
 
     private final List<Log> logs;
 
@@ -104,7 +103,7 @@ public class GameCrashWindow extends Stage {
                 ? launchOptions.getJava().getVersion()
                 : launchOptions.getJava().getVersion() + " (" + launchOptions.getJava().getArchitecture().getDisplayName() + ")";
 
-        this.view = new View();
+        View view = new View();
 
         this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 

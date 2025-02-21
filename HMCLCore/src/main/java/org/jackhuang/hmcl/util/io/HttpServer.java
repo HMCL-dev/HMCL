@@ -96,8 +96,8 @@ public class HttpServer extends NanoHTTPD {
     }
 
     public static abstract class Route {
-        Method method;
-        Pattern pathPattern;
+        final Method method;
+        final Pattern pathPattern;
 
         public Route(Method method, Pattern pathPattern) {
             this.method = method;
@@ -137,9 +137,9 @@ public class HttpServer extends NanoHTTPD {
     }
 
     public static class Request {
-        Matcher pathVariables;
-        Map<String, String> query;
-        NanoHTTPD.IHTTPSession session;
+        final Matcher pathVariables;
+        final Map<String, String> query;
+        final NanoHTTPD.IHTTPSession session;
 
         public Request(Matcher pathVariables, Map<String, String> query, NanoHTTPD.IHTTPSession session) {
             this.pathVariables = pathVariables;

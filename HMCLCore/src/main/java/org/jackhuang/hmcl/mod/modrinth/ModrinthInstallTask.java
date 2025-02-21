@@ -34,10 +34,7 @@ import java.util.*;
 
 public class ModrinthInstallTask extends Task<Void> {
 
-    private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final File zipFile;
-    private final Modpack modpack;
     private final ModrinthManifest manifest;
     private final String name;
     private final File run;
@@ -46,9 +43,6 @@ public class ModrinthInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public ModrinthInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ModrinthManifest manifest, String name) {
-        this.dependencyManager = dependencyManager;
-        this.zipFile = zipFile;
-        this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();

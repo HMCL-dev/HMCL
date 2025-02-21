@@ -29,13 +29,11 @@ import java.nio.file.Paths;
 
 public class ManuallyCreatedModpackInstallTask extends Task<Path> {
 
-    private final Profile profile;
     private final Path zipFile;
     private final Charset charset;
     private final String name;
 
     public ManuallyCreatedModpackInstallTask(Profile profile, Path zipFile, Charset charset, String name) {
-        this.profile = profile;
         this.zipFile = zipFile;
         this.charset = charset;
         this.name = name;

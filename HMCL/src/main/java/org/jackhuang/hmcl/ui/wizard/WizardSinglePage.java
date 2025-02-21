@@ -32,5 +32,6 @@ public abstract class WizardSinglePage extends Control implements WizardPage {
 
     @Override
     public void cleanup(Map<String, Object> settings) {
+        WizardPage.super.cleanup(settings);
     }
 }

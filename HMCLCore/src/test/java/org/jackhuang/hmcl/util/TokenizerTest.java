@@ -3,6 +3,7 @@ package org.jackhuang.hmcl.util;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public final class TokenizerTest {
                 StringUtils.tokenize("Text with empty part ''")
         );
         assertEquals(
-                Arrays.asList("headabc\n`\"$end"),
+                Collections.singletonList("headabc\n`\"$end"),
                 StringUtils.tokenize("head\"abc`n```\"\"$end")
         );
 

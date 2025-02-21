@@ -58,8 +58,6 @@ public class OfflineAccountSkinPane extends StackPane {
     private final FileSelector skinSelector = new FileSelector();
     private final FileSelector capeSelector = new FileSelector();
 
-    private final InvalidationListener skinBinding;
-
     public OfflineAccountSkinPane(OfflineAccount account) {
         this.account = account;
 
@@ -129,29 +127,27 @@ public class OfflineAccountSkinPane extends StackPane {
             capeSelector.setValue(account.getSkin().getLocalCapePath());
         }
 
-        skinBinding = FXUtils.observeWeak(() -> {
-            getSkin().load(account.getUsername())
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception != null) {
-                            LOG.warning("Failed to load skin", exception);
-                            Controllers.showToast(i18n("message.failed"));
-                        } else {
-                            UUID uuid = this.account.getUUID();
-                            if (result == null || result.getSkin() == null && result.getCape() == null) {
-                                canvas.updateSkin(
-                                        TexturesLoader.getDefaultSkin(uuid).getImage(),
-                                        TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
-                                        null
-                                );
-                                return;
-                            }
+        InvalidationListener skinBinding = FXUtils.observeWeak(() -> getSkin().load(account.getUsername())
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null) {
+                        LOG.warning("Failed to load skin", exception);
+                        Controllers.showToast(i18n("message.failed"));
+                    } else {
+                        UUID uuid = this.account.getUUID();
+                        if (result == null || result.getSkin() == null && result.getCape() == null) {
                             canvas.updateSkin(
-                                    result.getSkin() != null ? result.getSkin().getImage() : TexturesLoader.getDefaultSkin(uuid).getImage(),
-                                    result.getModel() == TextureModel.SLIM,
-                                    result.getCape() != null ? result.getCape().getImage() : null);
+                                    TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                    TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
+                                    null
+                            );
+                            return;
                         }
-                    }).start();
-        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
+                        canvas.updateSkin(
+                                result.getSkin() != null ? result.getSkin().getImage() : TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                result.getModel() == TextureModel.SLIM,
+                                result.getCape() != null ? result.getCape().getImage() : null);
+                    }
+                }).start(), skinItem.selectedDataProperty(), cslApiField.textProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             GridPane gridPane = new GridPane();

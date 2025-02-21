@@ -12,8 +12,8 @@ public final class SkinHelper {
 
     public static class PixelCopier {
 
-        protected Image srcImage;
-        protected WritableImage newImage;
+        protected final Image srcImage;
+        protected final WritableImage newImage;
 
         public PixelCopier(Image srcImage, WritableImage newImage) {
             this.srcImage = srcImage;

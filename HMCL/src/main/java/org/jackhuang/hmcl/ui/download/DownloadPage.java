@@ -95,9 +95,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Profiles.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
-        });
+        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE));
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
@@ -303,12 +301,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-            switch (step) {
-                case 0:
-                    return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
-                default:
-                    throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+            if (step == 0) {
+                return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
             }
+            throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
         }
 
         @Override

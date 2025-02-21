@@ -63,7 +63,7 @@ public class GameInstallTask extends Task<Version> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
         Version patch = JsonUtils.fromNonNullJson(downloadTask.getResult(), Version.class)
                 .setId(MINECRAFT.getPatchId()).setVersion(remote.getGameVersion()).setJar(null).setPriority(0);
         setResult(patch);

@@ -255,7 +255,7 @@ public class Skin {
 
                 @Override
                 public void close() throws IOException {
-                    if (!isSuccess()) return;
+                    if (isSuccess()) return;
 
                     setResult(new ByteArrayInputStream(baos.toByteArray()));
 
@@ -295,7 +295,6 @@ public class Skin {
         private final String username;
         private final String skin;
         private final String cape;
-        private final String elytra;
 
         @SerializedName(value = "textures", alternate = { "skins" })
         private final TextureJson textures;
@@ -304,7 +303,6 @@ public class Skin {
             this.username = username;
             this.skin = skin;
             this.cape = cape;
-            this.elytra = elytra;
             this.textures = textures;
         }
 
@@ -359,13 +357,11 @@ public class Skin {
 
             private final String slim;
             private final String cape;
-            private final String elytra;
 
             public TextureJson(String defaultSkin, String slim, String cape, String elytra) {
                 this.defaultSkin = defaultSkin;
                 this.slim = slim;
                 this.cape = cape;
-                this.elytra = elytra;
             }
         }
     }

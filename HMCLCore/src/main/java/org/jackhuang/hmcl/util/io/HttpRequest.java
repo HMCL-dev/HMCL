@@ -217,7 +217,7 @@ public abstract class HttpRequest {
         return GET(NetworkUtils.withQuery(url, mapOf(query)));
     }
 
-    public static HttpPostRequest POST(String url) throws MalformedURLException {
+    public static HttpPostRequest POST(String url) {
         return new HttpPostRequest(url);
     }
 

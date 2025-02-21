@@ -211,7 +211,7 @@ public class Library implements Comparable<Library>, Validation {
     }
 
     @Override
-    public void validate() throws JsonParseException, TolerableValidationException {
+    public void validate() throws JsonParseException {
         if (artifact == null)
             throw new JsonParseException("Library.name cannot be null");
     }

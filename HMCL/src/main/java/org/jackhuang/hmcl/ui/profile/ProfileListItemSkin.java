@@ -42,9 +42,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         root.setPickOnBounds(false);
         RipplerContainer container = new RipplerContainer(root);
 
-        FXUtils.onChangeAndOperate(skinnable.selectedProperty(), active -> {
-            skinnable.pseudoClassStateChanged(SELECTED, active);
-        });
+        FXUtils.onChangeAndOperate(skinnable.selectedProperty(), active -> skinnable.pseudoClassStateChanged(SELECTED, active));
 
         FXUtils.onClicked(getSkinnable(), () -> getSkinnable().setSelected(true));
 

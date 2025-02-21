@@ -48,8 +48,8 @@ public class TabHeader extends Control implements TabControl, PageAware {
         }
     }
 
-    private ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
-    private ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
+    private final ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
+    private final ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
 
     @Override
     public ObservableList<Tab<?>> getTabs() {
@@ -172,12 +172,11 @@ public class TabHeader extends Control implements TabControl, PageAware {
 
         protected class HeaderContainer extends StackPane {
             private Timeline timeline;
-            private StackPane selectedTabLine;
-            private HeadersRegion headersRegion;
-            private Scale scale = new Scale(1, 1, 0, 0);
-            private Rotate rotate = new Rotate(0, 0, 1);
+            private final StackPane selectedTabLine;
+            private final HeadersRegion headersRegion;
+            private final Scale scale = new Scale(1, 1, 0, 0);
+            private final Rotate rotate = new Rotate(0, 0, 1);
             private double selectedTabLineOffset;
-            private ObservableList<Node> binding;
 
             public HeaderContainer() {
                 getStyleClass().add("tab-header-area");
@@ -200,6 +199,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
                 rotate.pivotXProperty().bind(Bindings.createDoubleBinding(() -> getSkinnable().getSide().isHorizontal() ? 0.0 : 1, getSkinnable().sideProperty()));
                 rotate.pivotYProperty().bind(Bindings.createDoubleBinding(() -> getSkinnable().getSide().isHorizontal() ? 1.0 : 0, getSkinnable().sideProperty()));
 
+                ObservableList<Node> binding;
                 Bindings.bindContent(headersRegion.getChildren(), binding = MappedObservableList.create(getSkinnable().getTabs(), tab -> {
                     TabHeaderContainer container = new TabHeaderContainer(tab);
                     container.setVisible(true);
@@ -573,20 +573,18 @@ public class TabHeader extends Control implements TabControl, PageAware {
         protected class TabHeaderContainer extends StackPane {
 
             private final Tab<?> tab;
-            private final Label tabText;
             private final BorderPane inner;
-            private final JFXRippler rippler;
 
             public TabHeaderContainer(Tab<?> tab) {
                 this.tab = tab;
 
-                tabText = new Label();
+                Label tabText = new Label();
                 tabText.textProperty().bind(tab.textProperty());
                 tabText.getStyleClass().add("tab-label");
                 inner = new BorderPane();
                 inner.setCenter(tabText);
                 inner.getStyleClass().add("tab-container");
-                rippler = new JFXRippler(inner, JFXRippler.RipplerPos.FRONT);
+                JFXRippler rippler = new JFXRippler(inner, JFXRippler.RipplerPos.FRONT);
                 rippler.getStyleClass().add("tab-rippler");
                 rippler.setRipplerFill(ripplerColor);
                 getChildren().setAll(rippler);

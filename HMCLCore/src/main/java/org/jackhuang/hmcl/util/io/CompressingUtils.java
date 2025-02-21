@@ -59,7 +59,7 @@ public final class CompressingUtils {
         }
     }
 
-    public static boolean testEncoding(ZipFile zipFile, Charset encoding) throws IOException {
+    public static boolean testEncoding(ZipFile zipFile, Charset encoding) {
         Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
         CharsetDecoder cd = newCharsetDecoder(encoding);
         CharBuffer cb = CharBuffer.allocate(32);

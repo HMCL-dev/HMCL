@@ -186,9 +186,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         nextPane.showSpinner();
         addServerPane.setDisable(true);
 
-        Task.runAsync(() -> {
-            serverBeingAdded = AuthlibInjectorServer.locateServer(url);
-        }).whenComplete(Schedulers.javafx(), exception -> {
+        Task.runAsync(() -> serverBeingAdded = AuthlibInjectorServer.locateServer(url)).whenComplete(Schedulers.javafx(), exception -> {
             addServerPane.setDisable(false);
             nextPane.hideSpinner();
 

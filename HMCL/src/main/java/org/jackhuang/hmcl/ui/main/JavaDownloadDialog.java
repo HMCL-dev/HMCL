@@ -154,15 +154,13 @@ public final class JavaDownloadDialog extends StackPane {
                 return;
 
             if (JavaManager.REPOSITORY.isInstalled(platform, javaVersion))
-                Controllers.confirm(i18n("download.java.override"), null, () -> {
-                    Controllers.taskDialog(Task.supplyAsync(() -> JavaManager.REPOSITORY.getJavaExecutable(platform, javaVersion))
-                            .thenComposeAsync(Schedulers.javafx(), realPath -> {
-                                if (realPath != null) {
-                                    JavaManager.removeJava(realPath);
-                                }
-                                return downloadTask(javaVersion);
-                            }), i18n("download.java"), TaskCancellationAction.NORMAL);
-                }, null);
+                Controllers.confirm(i18n("download.java.override"), null, () -> Controllers.taskDialog(Task.supplyAsync(() -> JavaManager.REPOSITORY.getJavaExecutable(platform, javaVersion))
+                        .thenComposeAsync(Schedulers.javafx(), realPath -> {
+                            if (realPath != null) {
+                                JavaManager.removeJava(realPath);
+                            }
+                            return downloadTask(javaVersion);
+                        }), i18n("download.java"), TaskCancellationAction.NORMAL), null);
             else
                 Controllers.taskDialog(downloadTask(javaVersion), i18n("download.java"), TaskCancellationAction.NORMAL);
         }

@@ -81,7 +81,7 @@ public class Version implements Comparable<Version>, Validation {
         this(false, id, version, priority, null, arguments, mainClass, null, null, null, null, null, null, libraries, null, null, null, null, null, null, null, null, null, null);
     }
 
-    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, GameJavaVersion javaVersion, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Instant time, Instant releaseTime, Integer minimumLauncherVersion, Boolean hidden, Boolean root, List<Version> patches) {
+    public Version(boolean resolved, String id, String version, Integer priority, String minecraftArguments, Arguments arguments, String mainClass, String inheritsFrom, String jar, AssetIndexInfo assetIndex, String assets, Integer complianceLevel, @Nullable GameJavaVersion javaVersion, List<Library> libraries, List<CompatibilityRule> compatibilityRules, Map<DownloadType, DownloadInfo> downloads, Map<DownloadType, LoggingInfo> logging, ReleaseType type, Instant time, Instant releaseTime, Integer minimumLauncherVersion, Boolean hidden, Boolean root, List<Version> patches) {
         this.resolved = resolved;
         this.id = id;
         this.version = version;
@@ -166,16 +166,16 @@ public class Version implements Comparable<Version>, Validation {
         return complianceLevel;
     }
 
-    public GameJavaVersion getJavaVersion() {
+    public @Nullable GameJavaVersion getJavaVersion() {
         return javaVersion;
     }
 
     public boolean isHidden() {
-        return hidden == null ? false : hidden;
+        return hidden != null && hidden;
     }
 
     public boolean isRoot() {
-        return root == null ? false : root;
+        return root != null && root;
     }
 
     public boolean isResolved() {
@@ -473,16 +473,16 @@ public class Version implements Comparable<Version>, Validation {
             throw new JsonParseException("Version ID cannot be blank");
         if (downloads != null)
             for (Map.Entry<DownloadType, DownloadInfo> entry : downloads.entrySet()) {
-                if (!(entry.getKey() instanceof DownloadType))
+                if (entry.getKey() == null)
                     throw new JsonParseException("Version downloads key must be DownloadType");
-                if (!(entry.getValue() instanceof DownloadInfo))
+                if (entry.getValue() == null)
                     throw new JsonParseException("Version downloads value must be DownloadInfo");
             }
         if (logging != null)
             for (Map.Entry<DownloadType, LoggingInfo> entry : logging.entrySet()) {
-                if (!(entry.getKey() instanceof DownloadType))
+                if (entry.getKey() == null)
                     throw new JsonParseException("Version logging key must be DownloadType");
-                if (!(entry.getValue() instanceof LoggingInfo))
+                if (entry.getValue() == null)
                     throw new JsonParseException("Version logging value must be LoggingInfo");
             }
     }

@@ -112,7 +112,7 @@ public final class ExtendedProperties {
 
         InvalidationListener onTogglesChanged = any -> {
             Optional<T> pendingItem = pendingItemHolder.get();
-            if (pendingItem != null) {
+            if (pendingItem.isPresent()) {
                 itemSelector.accept(pendingItem.orElse(null));
             }
         };
@@ -128,7 +128,7 @@ public final class ExtendedProperties {
     public static ObjectProperty<Boolean> reversedSelectedPropertyFor(CheckBox checkbox) {
         return (ObjectProperty<Boolean>) checkbox.getProperties().computeIfAbsent(
                 PROP_PREFIX + ".checkbox.reservedSelected",
-                any -> new MappedProperty<Boolean, Boolean>(checkbox, "ext.reservedSelected",
+                any -> new MappedProperty<>(checkbox, "ext.reservedSelected",
                         checkbox.selectedProperty(), it -> !it, it -> !it));
     }
     // ====

@@ -72,7 +72,7 @@ public final class UpdateHandler {
         }
 
         if (args.length == 2 && args[0].equals("--apply-to")) {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && OperatingSystem.isWindows7OrLater()) {
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL));
                 return true;
             }
@@ -97,7 +97,7 @@ public final class UpdateHandler {
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && OperatingSystem.isWindows7OrLater()) {
             Controllers.dialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL), i18n("message.error"), MessageType.ERROR);
             return;
         }
@@ -138,7 +138,7 @@ public final class UpdateHandler {
                     if (e instanceof CancellationException) {
                         Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
                     } else {
-                        Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
+                        Platform.runLater(() -> Controllers.dialog(Objects.requireNonNull(e).toString(), i18n("update.failed"), MessageType.ERROR));
                     }
                 }
             });
@@ -254,9 +254,7 @@ public final class UpdateHandler {
         Path currentPath = JarUtils.thisJarPath();
         if (currentPath != null) {
             Path updated = Metadata.HMCL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
-            if (currentPath.equals(updated.toAbsolutePath())) {
-                return true;
-            }
+            return currentPath.equals(updated.toAbsolutePath());
         }
         return false;
     }

@@ -70,7 +70,7 @@ public final class LocalModpackPage extends ModpackPage {
                 if (installAsVersion) {
                     txtModpackName.getValidators().setAll(
                             new RequiredValidator(),
-                            new Validator(i18n("install.new_game.already_exists"), str -> !profile.getRepository().versionIdConflicts(str)),
+                            new Validator(i18n("install.new_game.already_exists"), str -> profile.getRepository().versionIdConflicts(str)),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
                 } else {
                     txtModpackName.getValidators().setAll(

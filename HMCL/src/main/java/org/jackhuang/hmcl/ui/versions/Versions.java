@@ -188,7 +188,7 @@ public final class Versions {
     }
 
     public static void generateLaunchScript(Profile profile, String id) {
-        if (!checkVersionForLaunching(profile, id))
+        if (checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
             GameRepository repository = profile.getRepository();
@@ -215,7 +215,7 @@ public final class Versions {
     }
 
     public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
-        if (!checkVersionForLaunching(profile, id))
+        if (checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
             LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
@@ -231,12 +231,10 @@ public final class Versions {
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {
         if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id)) {
-            Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                Controllers.navigate(Controllers.getDownloadPage());
-            });
-            return false;
-        } else {
+            Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> Controllers.navigate(Controllers.getDownloadPage()));
             return true;
+        } else {
+            return false;
         }
     }
 

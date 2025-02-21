@@ -36,14 +36,12 @@ import java.util.List;
 public final class LiteLoaderInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
     private final LiteLoaderRemoteVersion remote;
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public LiteLoaderInstallTask(DefaultDependencyManager dependencyManager, Version version, LiteLoaderRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
         this.remote = remoteVersion;
     }
 

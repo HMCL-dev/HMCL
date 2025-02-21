@@ -37,19 +37,11 @@ import java.util.List;
 
 public class ServerModpackLocalInstallTask extends Task<Void> {
 
-    private final File zipFile;
-    private final Modpack modpack;
-    private final ServerModpackManifest manifest;
-    private final String name;
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
     public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
-        this.zipFile = zipFile;
-        this.modpack = modpack;
-        this.manifest = manifest;
-        this.name = name;
         this.repository = dependencyManager.getGameRepository();
         File run = repository.getRunDirectory(name);
 
@@ -93,6 +85,6 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     }
 
     @Override
-    public void execute() throws Exception {
+    public void execute() {
     }
 }

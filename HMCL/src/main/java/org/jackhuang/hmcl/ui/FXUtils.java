@@ -36,8 +36,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -85,7 +83,6 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
@@ -601,9 +598,7 @@ public final class FXUtils {
                 }
             };
 
-            propertyListener = observable -> {
-                updateTextField();
-            };
+            propertyListener = observable -> updateTextField();
         }
 
         public void updateProperty() {
@@ -1108,7 +1103,7 @@ public final class FXUtils {
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        if (!Controllers.isStopped()) {
+        if (Controllers.isStopped()) {
             Controllers.showToast(i18n("message.copied"));
         }
     }

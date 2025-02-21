@@ -197,9 +197,7 @@ public final class SelfDependencyPatcher {
         // Add the dependencies
         try {
             patcher.loadFromCache();
-        } catch (IOException ex) {
-            throw new PatchException("Failed to load JavaFX cache", ex);
-        } catch (ReflectiveOperationException | NoClassDefFoundError ex) {
+        } catch (NoClassDefFoundError ex) {
             throw new PatchException("Failed to add dependencies to classpath!", ex);
         }
         LOG.info(" - Done!");
@@ -245,10 +243,8 @@ public final class SelfDependencyPatcher {
     /**
      * Inject them into the current classpath.
      *
-     * @throws IOException                  When the locally cached dependency urls cannot be resolved.
-     * @throws ReflectiveOperationException When the call to add these urls to the system classpath failed.
      */
-    private void loadFromCache() throws IOException, ReflectiveOperationException {
+    private void loadFromCache() {
         LOG.info(" - Loading dependencies...");
 
         Set<String> modules = dependencies.stream()
@@ -370,7 +366,7 @@ public final class SelfDependencyPatcher {
         return missing;
     }
 
-    private void verifyChecksum(DependencyDescriptor dependency) throws IOException, ChecksumMismatchException {
+    private void verifyChecksum(DependencyDescriptor dependency) throws IOException {
         digest.reset();
         try (InputStream is = Files.newInputStream(dependency.localPath())) {
             int read;

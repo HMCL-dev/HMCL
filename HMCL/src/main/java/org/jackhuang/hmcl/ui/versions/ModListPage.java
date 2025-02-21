@@ -54,7 +54,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private ModManager modManager;
-    private LibraryAnalyzer libraryAnalyzer;
     private Profile profile;
     private String versionId;
 
@@ -87,7 +86,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         HMCLGameRepository repository = profile.getRepository();
         Version resolved = repository.getResolvedPreservingPatchesVersion(id);
-        libraryAnalyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
+        LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
         modded.set(libraryAnalyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
     }

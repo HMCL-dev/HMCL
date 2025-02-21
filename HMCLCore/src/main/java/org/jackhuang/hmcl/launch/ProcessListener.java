@@ -34,7 +34,7 @@ public interface ProcessListener {
 
     /**
      * Called when receiving a log from stdout/stderr.
-     *
+     * <p>
      * Does not guarantee that this method is thread safe.
      *
      * @param log the log

@@ -192,6 +192,7 @@ public final class ConfigHolder {
 
     private static void writeToConfig(String content) throws IOException {
         LOG.info("Saving config");
+        //noinspection SynchronizeOnNonFinalField
         synchronized (configLocation) {
             FileUtils.saveSafely(configLocation, content);
         }

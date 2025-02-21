@@ -30,7 +30,7 @@ import java.util.Set;
 
 /**
  * Supports operations on versioning.
- *
+ * <p>
  * Note that game repository will not do any operations which need connection with Internet, if do,
  * see {@link org.jackhuang.hmcl.download.DependencyManager}
  *
@@ -79,7 +79,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Load version list.
-     *
+     * <p>
      * This method should be called before launching a version.
      * A time-costly operation.
      * You'd better execute this method in a new thread.
@@ -118,7 +118,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Get the directory that native libraries will be unzipped to.
-     *
+     * <p>
      * You'd better return a unique directory.
      * Or if it returns a temporary directory, {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript} will fail.
      * If you do want to return a temporary directory, make {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript}
@@ -140,7 +140,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Detect game version.
-     *
+     * <p>
      * This method is time-consuming, but the result will be cached.
      * Consider running this job in IO scheduler.
      *
@@ -151,7 +151,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Detect game version.
-     *
+     * <p>
      * This method is time-consuming, but the result will be cached.
      * Consider running this job in IO scheduler.
      *

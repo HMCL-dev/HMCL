@@ -177,6 +177,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
 
     @Override
     public void cleanup(Map<String, Object> settings) {
+        WizardPage.super.cleanup(settings);
     }
 
     @Override

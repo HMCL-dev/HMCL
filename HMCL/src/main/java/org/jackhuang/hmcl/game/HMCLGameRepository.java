@@ -498,12 +498,12 @@ public class HMCLGameRepository extends DefaultGameRepository {
             // on Windows, filenames are case-insensitive
             for (String existingId : versions.keySet()) {
                 if (existingId.equalsIgnoreCase(id)) {
-                    return true;
+                    return false;
                 }
             }
-            return false;
+            return true;
         } else {
-            return versions.containsKey(id);
+            return !versions.containsKey(id);
         }
     }
 

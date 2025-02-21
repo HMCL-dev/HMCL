@@ -6,7 +6,9 @@ import javafx.scene.transform.Rotate;
 
 public class SkinGroup extends Group {
 
-    protected Rotate xRotate, yRotate, zRotate;
+    protected final Rotate xRotate;
+    protected final Rotate yRotate;
+    protected final Rotate zRotate;
 
     public SkinGroup(Rotate xRotate, Rotate yRotate, Rotate zRotate, Node... nodes) {
         this.xRotate = xRotate;

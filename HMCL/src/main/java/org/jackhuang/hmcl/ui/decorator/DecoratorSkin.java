@@ -43,7 +43,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
-    private final StackPane root, parent;
+    private final StackPane root;
     private final StackPane titleContainer;
     private final Stage primaryStage;
     private final TransitionPane navBarPane;
@@ -68,7 +68,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         shadowContainer.getStyleClass().add("body");
         shadowContainer.setEffect(new DropShadow(BlurType.ONE_PASS_BOX, Color.rgb(0, 0, 0, 0.4), 10, 0.3, 0.0, 0.0));
 
-        parent = new StackPane();
+        StackPane parent = new StackPane();
         Rectangle clip = new Rectangle();
         clip.widthProperty().bind(parent.widthProperty());
         clip.heightProperty().bind(parent.heightProperty());
@@ -228,7 +228,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 backNavButton.getStyleClass().add("jfx-decorator-button");
                 backNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
-                backNavButton.visibleProperty().set(canBack);
+                backNavButton.visibleProperty().set(true);
 
                 navLeft.getChildren().add(backNavButton);
             }
@@ -384,7 +384,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     }
 
     private void onMouseDragged(MouseEvent mouseEvent) {
-        if (!getSkinnable().isDragging()) {
+        if (getSkinnable().isDragging()) {
             getSkinnable().setDragging(true);
             mouseInitX = mouseEvent.getScreenX();
             mouseInitY = mouseEvent.getScreenY();

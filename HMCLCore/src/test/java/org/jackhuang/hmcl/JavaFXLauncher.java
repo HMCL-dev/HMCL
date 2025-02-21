@@ -57,6 +57,6 @@ public final class JavaFXLauncher {
     }
 
     public static boolean isStarted() {
-        return started;
+        return !started;
     }
 }

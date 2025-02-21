@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +66,7 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
                 if (Files.exists(root))
                     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                         @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                             String relativePath = root.relativize(file).normalize().toString().replace(File.separatorChar, '/');
                             overrides.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
                             return FileVisitResult.CONTINUE;

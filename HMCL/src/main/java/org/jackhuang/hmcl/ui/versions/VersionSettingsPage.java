@@ -32,9 +32,6 @@ import javafx.scene.control.Toggle;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
@@ -86,14 +83,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     private VersionSetting lastVersionSetting = null;
     private Profile profile;
-    private WeakListenerHolder listenerHolder;
     private String versionId;
 
-    private final VBox rootPane;
     private final JFXTextField txtWidth;
     private final JFXTextField txtHeight;
     private final JFXTextField txtServerIP;
-    private final ComponentList componentList;
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
@@ -110,7 +104,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final OptionToggleButton showLogsPane;
     private final ImagePickerItem iconPickerItem;
 
-    private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
     private final InvalidationListener usesGlobalListener;
     private final ChangeListener<Boolean> specificSettingsListener;
     private final InvalidationListener javaListener = any -> initJavaSubtitle();
@@ -130,7 +123,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         getChildren().setAll(scrollPane);
 
-        rootPane = new VBox();
+        VBox rootPane = new VBox();
         rootPane.setFillWidth(true);
         scrollPane.setContent(rootPane);
         FXUtils.smoothScrolling(scrollPane);
@@ -184,6 +177,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             editGlobalSettingsButton.setOnAction(e -> editGlobalSettings());
         }
 
+        ComponentList componentList;
         {
             componentList = new ComponentList();
             componentList.setDepth(1);
@@ -226,7 +220,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
                 javaCustomOption.addExtensionFilter(new FileChooser.ExtensionFilter("Java", "java.exe"));
 
-            javaListChangeListener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
+            ChangeListener<Collection<JavaRuntime>> javaListChangeListener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), allJava -> {
                 List<MultiFileItem.Option<Pair<JavaVersionType, JavaRuntime>>> options = new ArrayList<>();
                 options.add(javaAutoDeterminedOption);
                 options.add(javaVersionOption);
@@ -342,9 +336,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     Label lblPhysicalMemory = new Label();
                     lblPhysicalMemory.getStyleClass().add("memory-label");
                     digitalPane.setLeft(lblPhysicalMemory);
-                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> {
-                        return i18n("settings.memory.used_per_total", memoryStatus.get().getUsedGB(), memoryStatus.get().getTotalGB());
-                    }, memoryStatus));
+                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> i18n("settings.memory.used_per_total", memoryStatus.get().getUsedGB(), memoryStatus.get().getTotalGB()), memoryStatus));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
@@ -516,7 +508,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     public void loadVersion(Profile profile, String versionId) {
         this.profile = profile;
         this.versionId = versionId;
-        this.listenerHolder = new WeakListenerHolder();
+        WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
         if (versionId == null) {
             enableSpecificSettings.set(true);

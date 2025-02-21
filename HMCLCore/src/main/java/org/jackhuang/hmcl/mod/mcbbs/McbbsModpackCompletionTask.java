@@ -101,9 +101,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     // skip this phase
                     throw new CustomException();
                 }
-            })).thenComposeAsync(wrap(unused1 -> {
-                return executor.one(new GetTask(new URL(manifest.getFileApi() + "/manifest.json")));
-            })).thenComposeAsync(wrap(remoteManifestJson -> {
+            })).thenComposeAsync(wrap(unused1 -> executor.one(new GetTask(new URL(manifest.getFileApi() + "/manifest.json"))))).thenComposeAsync(wrap(remoteManifestJson -> {
                 McbbsModpackManifest remoteManifest;
                 // We needs to update modpack from online server.
                 try {

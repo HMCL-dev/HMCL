@@ -56,16 +56,16 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS �
 
 ## JVM 选项 (用于调试)
 
-| 参数                                         | 简介                                                                 |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | 覆盖 HMCL 数据文件夹                                                 |
-| `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时不检查本体完整性                                           |
+| 参数                                           | 简介                                                           |
+|----------------------------------------------|--------------------------------------------------------------|
+| `-Dhmcl.home=<path>`                         | 覆盖 HMCL 数据文件夹                                                |
+| `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时不检查本体完整性                                                |
 | `-Dhmcl.bmclapi.override=<url>`              | 覆盖 BMCLAPI 的 API Root，默认值为 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 覆盖字族                                                             |
-| `-Dhmcl.version.override=<version>`          | 覆盖版本号                                                           |
-| `-Dhmcl.update_source.override=<url>`        | 覆盖 HMCL 更新源                                                     |
-| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下载一个)                           |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用于下载 OpenJFX 的自定义 Maven 仓库                             |
-| `-Dhmcl.native.encoding=<encoding>`          | 覆盖原生编码                                                         |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆盖 Microsoft OAuth App ID                                          |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆盖 Microsoft OAuth App 密钥                                        |
+| `-Dhmcl.font.override=<font family>`         | 覆盖字族                                                         |
+| `-Dhmcl.version.override=<version>`          | 覆盖版本号                                                        |
+| `-Dhmcl.update_source.override=<url>`        | 覆盖 HMCL 更新源                                                  |
+| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下载一个)                              |
+| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用于下载 OpenJFX 的自定义 Maven 仓库                                 |
+| `-Dhmcl.native.encoding=<encoding>`          | 覆盖原生编码                                                       |
+| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆盖 Microsoft OAuth App ID                                    |
+| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆盖 Microsoft OAuth App 密钥                                    |

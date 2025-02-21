@@ -211,7 +211,7 @@ public class FileDownloadTask extends FetchTask<Void> {
                     LOG.warning("Failed to close file: " + rFile, e);
                 }
 
-                if (!isSuccess()) {
+                if (isSuccess()) {
                     try {
                         Files.delete(temp);
                     } catch (IOException e) {

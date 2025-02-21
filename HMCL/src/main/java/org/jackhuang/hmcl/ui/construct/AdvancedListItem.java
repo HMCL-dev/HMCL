@@ -128,7 +128,7 @@ public class AdvancedListItem extends Control {
         return onActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
+    private final ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
         @Override
         protected void invalidated() {
             setEventHandler(ActionEvent.ACTION, get());

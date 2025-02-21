@@ -53,8 +53,6 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemProp
 
 public final class SettingsPage extends SettingsView {
 
-    private InvalidationListener updateListener;
-
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
 
@@ -71,7 +69,7 @@ public final class SettingsPage extends SettingsView {
 
         // ==== Update ====
         FXUtils.installFastTooltip(btnUpdate, i18n("update.tooltip"));
-        updateListener = any -> {
+        InvalidationListener updateListener = any -> {
             btnUpdate.setVisible(UpdateChecker.isOutdated());
 
             if (UpdateChecker.isOutdated()) {
@@ -106,9 +104,7 @@ public final class SettingsPage extends SettingsView {
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
         ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
         updateChannel.set(UpdateChannel.getChannel());
-        updateChannel.addListener((a, b, newValue) -> {
-            UpdateChecker.requestCheckUpdate(newValue);
-        });
+        updateChannel.addListener((a, b, newValue) -> UpdateChecker.requestCheckUpdate(newValue));
         // ====
     }
 

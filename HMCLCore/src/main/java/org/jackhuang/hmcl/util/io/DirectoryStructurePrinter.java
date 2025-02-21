@@ -1,5 +1,7 @@
 package org.jackhuang.hmcl.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -36,7 +38,7 @@ final class DirectoryStructurePrinter {
                 private int depth = 1;
 
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                public @NotNull FileVisitResult preVisitDirectory(Path dir, @NotNull BasicFileAttributes attrs) {
                     isFolderEmpty = true;
 
                     pushFile(output, dir, depth);
@@ -50,7 +52,7 @@ final class DirectoryStructurePrinter {
                 }
 
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) {
                     isFolderEmpty = false;
 
                     pushFile(output, file, depth);
@@ -58,7 +60,7 @@ final class DirectoryStructurePrinter {
                 }
 
                 @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                public @NotNull FileVisitResult visitFileFailed(Path file, @NotNull IOException exc) {
                     visitFile(file, null);
 
                     pushMessage(output, exc.toString(), depth);
@@ -66,7 +68,7 @@ final class DirectoryStructurePrinter {
                 }
 
                 @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) {
                     if (isFolderEmpty) {
                         pushMessage(output, "empty directory", depth);
                     }

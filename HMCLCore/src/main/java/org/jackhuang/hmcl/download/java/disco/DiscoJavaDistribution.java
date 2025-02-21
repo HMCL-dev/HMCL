@@ -48,11 +48,11 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             pair(OSX, EnumSet.of(X86_64, ARM64))) {
         @Override
         public boolean testVersion(DiscoJavaRemoteVersion version) {
-            if (!super.testVersion(version))
-                return false;
+            if (super.testVersion(version))
+                return true;
 
             String fileName = version.getFileName();
-            return !fileName.endsWith("-lite.tar.gz") && !fileName.endsWith("-lite.zip");
+            return fileName.endsWith("-lite.tar.gz") || fileName.endsWith("-lite.zip");
         }
     },
     ZULU("Azul Zulu", "zulu", "Azul",
@@ -130,6 +130,6 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
     }
 
     public boolean testVersion(DiscoJavaRemoteVersion version) {
-        return this.getApiParameter().equals(version.getDistribution());
+        return !this.getApiParameter().equals(version.getDistribution());
     }
 }

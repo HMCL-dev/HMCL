@@ -97,9 +97,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
                     item.versionProperty().set(null);
                 }
 
-                item.setOnInstall(() -> {
-                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion));
-                });
+                item.setOnInstall(() -> Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(profile, gameVersion, version, libraryId, libraryVersion)));
 
                 item.setOnRemove(() -> profile.getDependency().removeLibraryAsync(version, libraryId)
                         .thenComposeAsync(profile.getRepository()::saveAsync)

@@ -76,73 +76,69 @@ public final class PropertyUtils {
         propertyMethods.keySet().forEach(collectionGetMethods::remove);
 
         Map<String, Function<Object, PropertyHandle>> result = new LinkedHashMap<>();
-        propertyMethods.forEach((propertyName, method) -> {
-            result.put(propertyName, instance -> {
-                Property returnValue;
-                try {
-                    returnValue = (Property<?>) method.invoke(instance);
-                } catch (ReflectiveOperationException e) {
-                    throw new IllegalStateException(e);
-                }
-                return new PropertyHandle(returnValue, returnValue);
-            });
-        });
+        propertyMethods.forEach((propertyName, method) -> result.put(propertyName, instance -> {
+            Property returnValue;
+            try {
+                returnValue = (Property<?>) method.invoke(instance);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException(e);
+            }
+            return new PropertyHandle(returnValue, returnValue);
+        }));
 
-        collectionGetMethods.forEach((propertyName, method) -> {
-            result.put(propertyName, instance -> {
-                Object returnValue;
-                try {
-                    returnValue = method.invoke(instance);
-                } catch (ReflectiveOperationException e) {
-                    throw new IllegalStateException(e);
-                }
-                WritableValue<Object> accessor;
-                if (returnValue instanceof ObservableList) {
-                    accessor = new WritableValue<Object>() {
-                        @Override
-                        public Object getValue() {
-                            return returnValue;
-                        }
+        collectionGetMethods.forEach((propertyName, method) -> result.put(propertyName, instance -> {
+            Object returnValue;
+            try {
+                returnValue = method.invoke(instance);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException(e);
+            }
+            WritableValue<Object> accessor;
+            if (returnValue instanceof ObservableList) {
+                accessor = new WritableValue<Object>() {
+                    @Override
+                    public Object getValue() {
+                        return returnValue;
+                    }
 
-                        @Override
-                        public void setValue(Object value) {
-                            ((ObservableList) returnValue).setAll((List) value);
-                        }
-                    };
-                } else if (returnValue instanceof ObservableSet) {
-                    accessor = new WritableValue<Object>() {
-                        @Override
-                        public Object getValue() {
-                            return returnValue;
-                        }
+                    @Override
+                    public void setValue(Object value) {
+                        ((ObservableList) returnValue).setAll((List) value);
+                    }
+                };
+            } else if (returnValue instanceof ObservableSet) {
+                accessor = new WritableValue<Object>() {
+                    @Override
+                    public Object getValue() {
+                        return returnValue;
+                    }
 
-                        @Override
-                        public void setValue(Object value) {
-                            ObservableSet target = (ObservableSet) returnValue;
-                            target.clear();
-                            target.addAll((Set) value);
-                        }
-                    };
-                } else if (returnValue instanceof ObservableMap) {
-                    accessor = new WritableValue<Object>() {
-                        @Override
-                        public Object getValue() {
-                            return returnValue;
-                        }
+                    @Override
+                    public void setValue(Object value) {
+                        ObservableSet target = (ObservableSet) returnValue;
+                        target.clear();
+                        target.addAll((Set) value);
+                    }
+                };
+            } else if (returnValue instanceof ObservableMap) {
+                accessor = new WritableValue<Object>() {
+                    @Override
+                    public Object getValue() {
+                        return returnValue;
+                    }
 
-                        @Override
-                        public void setValue(Object value) {
-                            ObservableMap target = (ObservableMap) returnValue;
-                            target.clear();
-                            target.putAll((Map) value);
-                        }
-                    };
-                } else {
-                    throw new IllegalStateException();
-                }
-                return new PropertyHandle(accessor, (Observable) returnValue);
-            });
-        });
+                    @Override
+                    public void setValue(Object value) {
+                        ObservableMap target = (ObservableMap) returnValue;
+                        target.clear();
+                        target.putAll((Map) value);
+                    }
+                };
+            } else {
+                throw new IllegalStateException();
+            }
+            return new PropertyHandle(accessor, (Observable) returnValue);
+        }));
         return result;
     }
 

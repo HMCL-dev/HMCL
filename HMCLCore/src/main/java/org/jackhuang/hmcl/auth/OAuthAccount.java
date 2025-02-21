@@ -23,10 +23,10 @@ public abstract class OAuthAccount extends Account {
 
     /**
      * Fully login.
-     *
+     * <p>
      * OAuth server may ask us to do fully login because too frequent action to log in, IP changed,
      * or some other vulnerabilities detected.
-     *
+     * <p>
      * Difference between logIn & logInWhenCredentialsExpired.
      * logIn only update access token by refresh token, and will not ask user to login by opening the authorization
      * page in web browser.

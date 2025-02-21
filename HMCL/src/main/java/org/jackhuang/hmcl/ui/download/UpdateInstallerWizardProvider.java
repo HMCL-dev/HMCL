@@ -97,22 +97,20 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        switch (step) {
-            case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
-                    if (oldLibraryVersion == null) {
-                        controller.onFinish();
-                    } else if ("game".equals(libraryId)) {
-                        String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), downloadProvider));
-                    } else {
-                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
-                                i18n("install.change_version"), controller::onFinish, controller::onCancel);
-                    }
-                });
-            default:
-                throw new IllegalStateException();
+        if (step == 0) {
+            return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
+                if (oldLibraryVersion == null) {
+                    controller.onFinish();
+                } else if ("game".equals(libraryId)) {
+                    String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
+                    controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), downloadProvider));
+                } else {
+                    Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
+                            i18n("install.change_version"), controller::onFinish, controller::onCancel);
+                }
+            });
         }
+        throw new IllegalStateException();
     }
 
     @Override
@@ -157,13 +155,10 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof UnsupportedInstallationException) {
-            switch (((UnsupportedInstallationException) exception).getReason()) {
-                case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2:
-                    Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-                    break;
-                default:
-                    Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
-                    break;
+            if (((UnsupportedInstallationException) exception).getReason() == UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2) {
+                Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
+            } else {
+                Controllers.dialog(i18n("install.failed.optifine_conflict"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof DefaultDependencyManager.UnsupportedLibraryInstallerException) {
             Controllers.dialog(i18n("install.failed.install_online"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);

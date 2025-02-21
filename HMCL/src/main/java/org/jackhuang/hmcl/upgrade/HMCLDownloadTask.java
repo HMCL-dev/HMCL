@@ -30,7 +30,7 @@ import java.util.jar.JarOutputStream;
 
 class HMCLDownloadTask extends FileDownloadTask {
 
-    private RemoteVersion.Type archiveFormat;
+    private final RemoteVersion.Type archiveFormat;
 
     public HMCLDownloadTask(RemoteVersion version, Path target) {
         super(NetworkUtils.toURL(version.getUrl()), target.toFile(), version.getIntegrityCheck());

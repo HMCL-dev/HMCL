@@ -319,17 +319,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 categoryComboBox.setPromptText(i18n("mods.category"));
                 categoryComboBox.getSelectionModel().select(0);
                 categoryComboBox.setConverter(stringConverter(getSkinnable()::getLocalizedCategoryIndent));
-                FXUtils.onChangeAndOperate(getSkinnable().downloadSource, downloadSource -> {
-                    Task.supplyAsync(() -> getSkinnable().repository.getCategories())
-                            .thenAcceptAsync(Schedulers.javafx(), categories -> {
-                                List<CategoryIndented> result = new ArrayList<>();
-                                result.add(new CategoryIndented(0, null));
-                                for (RemoteModRepository.Category category : Lang.toIterable(categories)) {
-                                    resolveCategory(category, 0, result);
-                                }
-                                categoryComboBox.getItems().setAll(result);
-                            }).start();
-                });
+                FXUtils.onChangeAndOperate(getSkinnable().downloadSource, downloadSource -> Task.supplyAsync(() -> getSkinnable().repository.getCategories())
+                        .thenAcceptAsync(Schedulers.javafx(), categories -> {
+                            List<CategoryIndented> result = new ArrayList<>();
+                            result.add(new CategoryIndented(0, null));
+                            for (RemoteModRepository.Category category : Lang.toIterable(categories)) {
+                                resolveCategory(category, 0, result);
+                            }
+                            categoryComboBox.getItems().setAll(result);
+                        }).start());
 
                 StackPane sortStackPane = new StackPane();
                 JFXComboBox<RemoteModRepository.SortType> sortComboBox = new JFXComboBox<>();
@@ -496,8 +494,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
                 listView.setCellFactory(x -> new FloatListCell<RemoteMod>(listView) {
-                    TwoLineListItem content = new TwoLineListItem();
-                    ImageView imageView = new ImageView();
+                    final TwoLineListItem content = new TwoLineListItem();
+                    final ImageView imageView = new ImageView();
 
                     {
                         HBox container = new HBox(8);

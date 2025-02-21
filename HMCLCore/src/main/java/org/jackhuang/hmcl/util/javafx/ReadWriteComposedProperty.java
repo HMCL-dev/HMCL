@@ -34,7 +34,7 @@ public final class ReadWriteComposedProperty<T> extends SimpleObjectProperty<T> 
     private final Consumer<T> writeTarget;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private ChangeListener<T> listener;
+    private final ChangeListener<T> listener;
 
     public ReadWriteComposedProperty(ObservableValue<T> readSource, Consumer<T> writeTarget) {
         this(null, "", readSource, writeTarget);

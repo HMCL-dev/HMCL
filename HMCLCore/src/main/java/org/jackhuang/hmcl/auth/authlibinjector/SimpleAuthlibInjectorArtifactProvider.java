@@ -25,7 +25,7 @@ import java.util.Optional;
 
 public class SimpleAuthlibInjectorArtifactProvider implements AuthlibInjectorArtifactProvider {
 
-    private Path location;
+    private final Path location;
 
     public SimpleAuthlibInjectorArtifactProvider(Path location) {
         this.location = location;

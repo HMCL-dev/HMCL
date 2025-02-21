@@ -33,7 +33,7 @@ public abstract class TaskListener implements EventListener {
 
     /**
      * Executed before the task's pre-execution and dependents execution.
-     *
+     * <p>
      * TaskState of this task is READY.
      *
      * @param task the task that gets ready.
@@ -43,7 +43,7 @@ public abstract class TaskListener implements EventListener {
 
     /**
      * Executed when the task's execution starts.
-     *
+     * <p>
      * TaskState of this task is RUNNING.
      *
      * @param task the task which is being run.
@@ -53,7 +53,7 @@ public abstract class TaskListener implements EventListener {
 
     /**
      * Executed after the task's dependencies and post-execution finished.
-     *
+     * <p>
      * TaskState of the task is EXECUTED.
      *
      * @param task the task which finishes its work.

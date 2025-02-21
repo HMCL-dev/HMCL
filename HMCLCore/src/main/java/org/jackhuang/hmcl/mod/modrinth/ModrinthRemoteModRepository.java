@@ -124,7 +124,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
+    public RemoteMod.File getModFile(String modId, String fileId) {
         throw new UnsupportedOperationException();
     }
 
@@ -485,7 +485,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                 type = RemoteMod.VersionType.Release;
             }
 
-            if (files.size() == 0) {
+            if (files.isEmpty()) {
                 return Optional.empty();
             }
 

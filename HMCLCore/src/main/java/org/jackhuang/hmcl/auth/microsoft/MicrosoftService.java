@@ -96,7 +96,7 @@ public class MicrosoftService {
             throw new XboxAuthorizationException(response.errorCode, response.redirectUrl);
         }
 
-        if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.size() == 0 || !response.displayClaims.xui.get(0).containsKey("uhs")) {
+        if (response.displayClaims == null || response.displayClaims.xui == null || response.displayClaims.xui.isEmpty() || !response.displayClaims.xui.get(0).containsKey("uhs")) {
             LOG.warning("Unrecognized xbox authorization response " + GSON.toJson(response));
             throw new NoXuiException();
         }
@@ -113,38 +113,30 @@ public class MicrosoftService {
     private MicrosoftSession authenticateViaLiveAccessToken(String liveAccessToken, String liveRefreshToken) throws IOException, JsonParseException, AuthenticationException {
         String uhs;
         XBoxLiveAuthenticationResponse xboxResponse, minecraftXstsResponse;
-        try {
-            // Authenticate with XBox Live
-            xboxResponse = HttpRequest
-                    .POST("https://user.auth.xboxlive.com/user/authenticate")
-                    .json(mapOf(
-                            pair("Properties",
-                                    mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
-                                            pair("RpsTicket", "d=" + liveAccessToken))),
-                            pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
-                    .retry(5)
-                    .accept("application/json")
-                    .getJson(XBoxLiveAuthenticationResponse.class);
+        // Authenticate with XBox Live
+        xboxResponse = HttpRequest
+                .POST("https://user.auth.xboxlive.com/user/authenticate")
+                .json(mapOf(
+                        pair("Properties",
+                                mapOf(pair("AuthMethod", "RPS"), pair("SiteName", "user.auth.xboxlive.com"),
+                                        pair("RpsTicket", "d=" + liveAccessToken))),
+                        pair("RelyingParty", "http://auth.xboxlive.com"), pair("TokenType", "JWT")))
+                .retry(5)
+                .accept("application/json")
+                .getJson(XBoxLiveAuthenticationResponse.class);
 
-            uhs = getUhs(xboxResponse, null);
+        uhs = getUhs(xboxResponse, null);
 
-            minecraftXstsResponse = HttpRequest
-                    .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
-                    .json(mapOf(
-                            pair("Properties",
-                                    mapOf(pair("SandboxId", "RETAIL"),
-                                            pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
-                            pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
-                    .ignoreHttpErrorCode(401)
-                    .retry(5)
-                    .getJson(XBoxLiveAuthenticationResponse.class);
-        } catch (ResponseCodeException e) {
-            if (e.getResponseCode() == 400) {
-                throw new XBox400Exception();
-            }
-
-            throw e;
-        }
+        minecraftXstsResponse = HttpRequest
+                .POST("https://xsts.auth.xboxlive.com/xsts/authorize")
+                .json(mapOf(
+                        pair("Properties",
+                                mapOf(pair("SandboxId", "RETAIL"),
+                                        pair("UserTokens", Collections.singletonList(xboxResponse.token)))),
+                        pair("RelyingParty", "rp://api.minecraftservices.com/"), pair("TokenType", "JWT")))
+                .ignoreHttpErrorCode(401)
+                .retry(5)
+                .getJson(XBoxLiveAuthenticationResponse.class);
 
         getUhs(minecraftXstsResponse, uhs);
 
@@ -350,7 +342,7 @@ public class MicrosoftService {
      * "xui":[ { "uhs":"userhash" } ] } }
      * <p>
      * Error response: { "Identity":"0", "XErr":2148916238, "Message":"",
-     * "Redirect":"https://start.ui.xboxlive.com/AddChildToFamily" }
+     * "Redirect":"<a href="https://start.ui.xboxlive.com/AddChildToFamily">...</a>" }
      * <p>
      * XErr Candidates: 2148916233 = missing XBox account 2148916238 = child account
      * not linked to a family
@@ -412,7 +404,7 @@ public class MicrosoftService {
         public String alias;
 
         @Override
-        public void validate() throws JsonParseException, TolerableValidationException {
+        public void validate() throws JsonParseException {
             Validation.requireNonNull(id, "id cannot be null");
             Validation.requireNonNull(state, "state cannot be null");
             Validation.requireNonNull(url, "url cannot be null");
@@ -435,7 +427,7 @@ public class MicrosoftService {
         List<MinecraftProfileResponseCape> capes;
 
         @Override
-        public void validate() throws JsonParseException, TolerableValidationException {
+        public void validate() throws JsonParseException {
             Validation.requireNonNull(id, "id cannot be null");
             Validation.requireNonNull(name, "name cannot be null");
             Validation.requireNonNull(skins, "skins cannot be null");

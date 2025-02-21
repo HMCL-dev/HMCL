@@ -73,12 +73,9 @@ public class Datapack {
         if (isMultiple) {
             new Unzipper(path, worldPath)
                     .setReplaceExistentFile(true)
-                    .setFilter(new Unzipper.FileFilter() {
-                        @Override
-                        public boolean accept(Path destPath, boolean isDirectory, Path zipEntry, String entryPath) {
-                            // We will merge resources.zip instead of replacement.
-                            return !entryPath.equals("resources.zip");
-                        }
+                    .setFilter((destPath, isDirectory, zipEntry, entryPath) -> {
+                        // We will merge resources.zip instead of replacement.
+                        return !entryPath.equals("resources.zip");
                     })
                     .unzip();
 

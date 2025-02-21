@@ -57,7 +57,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInfoPage extends Control implements WizardPage {
     private final WizardController controller;
-    private final HMCLGameRepository gameRepository;
     private final ModpackExportInfo.Options options;
     private final String versionName;
     private final boolean canIncludeLauncher;
@@ -80,7 +79,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
     public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
         this.controller = controller;
-        this.gameRepository = gameRepository;
         this.options = tryCast(controller.getSettings().get(MODPACK_INFO_OPTION), ModpackExportInfo.Options.class)
                 .orElseThrow(() -> new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required"));
         this.versionName = version;

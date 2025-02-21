@@ -78,9 +78,7 @@ public abstract class MDListCell<T> extends ListCell<T> {
     }
 
     protected void setSelectable() {
-        FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
-            root.pseudoClassStateChanged(SELECTED, selected);
-        });
+        FXUtils.onChangeAndOperate(selectedProperty(), selected -> root.pseudoClassStateChanged(SELECTED, selected));
     }
 
     protected abstract void updateControl(T item, boolean empty);

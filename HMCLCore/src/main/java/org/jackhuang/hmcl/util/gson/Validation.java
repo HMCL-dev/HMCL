@@ -30,7 +30,7 @@ public interface Validation {
      * 1. Check some non-null fields and;
      * 2. Check strings and;
      * 3. Check generic type of lists &lt;T&gt; and maps &lt;K, V&gt; are correct.
-     *
+     * <p>
      * Will be called immediately after initialization.
      * Throw an exception when values are malformed.
      *

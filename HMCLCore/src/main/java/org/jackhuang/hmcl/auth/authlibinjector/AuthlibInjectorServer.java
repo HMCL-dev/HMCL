@@ -103,7 +103,7 @@ public class AuthlibInjectorServer implements Observable {
         return a.equals(b);
     }
 
-    private String url;
+    private final String url;
     @Nullable
     private String metadataResponse;
     private long metadataTimestamp;
@@ -193,14 +193,12 @@ public class AuthlibInjectorServer implements Observable {
                     .map(linksObject -> {
                         Map<String, String> converted = new LinkedHashMap<>();
                         linksObject.entrySet().forEach(
-                                entry -> tryCast(entry.getValue(), JsonPrimitive.class).ifPresent(element -> {
-                                    converted.put(entry.getKey(), element.getAsString());
-                                }));
+                                entry -> tryCast(entry.getValue(), JsonPrimitive.class).ifPresent(element -> converted.put(entry.getKey(), element.getAsString())));
                         return converted;
                     })
                     .orElse(emptyMap());
             this.nonEmailLogin = metaObject.flatMap(meta -> tryCast(meta.get("feature.non_email_login"), JsonPrimitive.class))
-                    .map(it -> it.getAsBoolean())
+                    .map(JsonPrimitive::getAsBoolean)
                     .orElse(false);
         }
     }

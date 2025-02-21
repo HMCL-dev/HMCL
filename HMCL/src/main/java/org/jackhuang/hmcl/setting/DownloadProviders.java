@@ -82,10 +82,8 @@ public final class DownloadProviders {
                 pair("balanced", new AutoDownloadProvider(balanced, fileProvider)),
                 pair("mirror", new AutoDownloadProvider(BMCLAPI, fileProvider)));
 
-        observer = FXUtils.observeWeak(() -> {
-            FetchTask.setDownloadExecutorConcurrency(
-                    config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
-        }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
+        observer = FXUtils.observeWeak(() -> FetchTask.setDownloadExecutorConcurrency(
+                config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads()), config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
     }
 
     static void init() {

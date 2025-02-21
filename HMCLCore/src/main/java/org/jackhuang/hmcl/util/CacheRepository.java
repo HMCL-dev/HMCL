@@ -243,8 +243,8 @@ public class CacheRepository {
     }
 
     private static class CacheResult {
-        public String hash;
-        public Path cachedFile;
+        public final String hash;
+        public final Path cachedFile;
 
         public CacheResult(String hash, Path cachedFile) {
             this.hash = hash;
@@ -277,9 +277,7 @@ public class CacheRepository {
         Stream<ETagItem> stream = Arrays.stream(indexes).filter(Objects::nonNull).map(Collection::stream)
                 .reduce(Stream.empty(), Stream::concat);
 
-        stream.forEach(eTag -> {
-            eTags.compute(eTag.url, updateEntity(eTag));
-        });
+        stream.forEach(eTag -> eTags.compute(eTag.url, updateEntity(eTag)));
 
         return eTags;
     }

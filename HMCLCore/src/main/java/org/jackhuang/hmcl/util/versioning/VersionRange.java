@@ -78,7 +78,7 @@ public final class VersionRange<T extends Comparable<T>> {
         if (this.maximum == null)
             return that.maximum == null || that.maximum.compareTo(this.minimum) >= 0;
 
-        return that.contains(minimum) || that.contains(maximum) || (that.minimum != null && contains(that.minimum));
+        return that.contains(minimum) || that.contains(maximum) || (contains(that.minimum));
     }
 
     public VersionRange<T> intersectionWith(VersionRange<T> that) {

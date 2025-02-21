@@ -320,14 +320,13 @@ public class DefaultGameRepository implements GameRepository {
 
                 if (!id.equals(version.getId())) {
                     try {
-                        String from = id;
                         String to = version.getId();
-                        Path fromDir = getVersionRoot(from).toPath();
+                        Path fromDir = getVersionRoot(id).toPath();
                         Path toDir = getVersionRoot(to).toPath();
                         Files.move(fromDir, toDir);
 
-                        Path fromJson = toDir.resolve(from + ".json");
-                        Path fromJar = toDir.resolve(from + ".jar");
+                        Path fromJson = toDir.resolve(id + ".json");
+                        Path fromJar = toDir.resolve(id + ".jar");
                         Path toJson = toDir.resolve(to + ".json");
                         Path toJar = toDir.resolve(to + ".jar");
 
