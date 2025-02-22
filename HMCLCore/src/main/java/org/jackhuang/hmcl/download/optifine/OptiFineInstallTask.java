@@ -82,7 +82,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                 new Artifact("optifine", "OptiFine", mavenVersion, "installer"), null,
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(
                         "optifine/OptiFine/" + mavenVersion + "/OptiFine-" + mavenVersion + "-installer.jar",
-                        remote.getUrls().get(0).toString()))
+                        remote.getUrls().get(0)))
         );
     }
 

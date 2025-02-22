@@ -129,7 +129,6 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                         dependencies.add(task);
                     }
                 } else {
-                    continue;
                 }
             } else if (entry.getValue() instanceof MojangJavaRemoteFiles.RemoteDirectory) {
                 Files.createDirectories(dest);

@@ -449,7 +449,7 @@ public class DefaultGameRepository implements GameRepository {
             Path resourcesDir = getRunDirectory(version).toPath().resolve("resources");
 
             int cnt = 0;
-            int tot = index.getObjects().entrySet().size();
+            int tot = index.getObjects().size();
             for (Map.Entry<String, AssetObject> entry : index.getObjects().entrySet()) {
                 Path target = virtualRoot.resolve(entry.getKey());
                 Path original = getAssetObject(version, assetsDir, entry.getValue());

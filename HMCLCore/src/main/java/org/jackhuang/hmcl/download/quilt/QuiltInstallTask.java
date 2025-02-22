@@ -126,8 +126,6 @@ public final class QuiltInstallTask extends Task<Version> {
     private static String getMavenRepositoryByGroup(String maven) {
         Artifact artifact = Artifact.fromDescriptor(maven);
         switch (artifact.getGroup()) {
-            case "net.fabricmc":
-                return "https://maven.fabricmc.net/";
             case "org.quiltmc":
                 return "https://maven.quiltmc.org/repository/release/";
             default:

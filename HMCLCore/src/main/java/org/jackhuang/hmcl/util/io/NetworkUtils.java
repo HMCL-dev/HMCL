@@ -73,7 +73,7 @@ public final class NetworkUtils {
             scanner.useDelimiter("&");
             while (scanner.hasNext()) {
                 String[] nameValue = scanner.next().split(NAME_VALUE_SEPARATOR);
-                if (nameValue.length <= 0 || nameValue.length > 2) {
+                if (nameValue.length == 0 || nameValue.length > 2) {
                     throw new IllegalArgumentException("bad query string");
                 }
 

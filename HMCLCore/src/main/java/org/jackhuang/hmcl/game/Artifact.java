@@ -87,7 +87,7 @@ public final class Artifact {
             throw new IllegalArgumentException("Artifact name is malformed");
         }
 
-        return new Artifact(arr[0].replace('\\', '/'), arr[1], arr[2], arr.length >= 4 ? arr[3] : null, ext);
+        return new Artifact(arr[0].replace('\\', '/'), arr[1], arr[2], arr.length == 4 ? arr[3] : null, ext);
     }
 
     public String getGroup() {
