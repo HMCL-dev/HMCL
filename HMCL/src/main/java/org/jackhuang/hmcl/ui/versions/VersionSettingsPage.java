@@ -190,6 +190,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             if (!globalSetting) {
                 BorderPane copyGlobalPane = new BorderPane();
+                copyGlobalPane.disableProperty().bind(modpack);
                 {
                     Label label = new Label(i18n("settings.game.copy_global"));
                     copyGlobalPane.setLeft(label);
