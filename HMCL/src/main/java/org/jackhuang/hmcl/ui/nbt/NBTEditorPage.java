@@ -46,9 +46,7 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
         JFXButton saveButton = new JFXButton(i18n("button.save"));
         saveButton.getStyleClass().add("jfx-button-raised");
         saveButton.setButtonType(JFXButton.ButtonType.RAISED);
-        saveButton.setOnAction(e -> {
-            save();
-        });
+        saveButton.setOnAction(e -> save());
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("jfx-button-raised");

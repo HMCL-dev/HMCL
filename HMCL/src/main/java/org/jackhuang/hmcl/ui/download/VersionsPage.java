@@ -327,9 +327,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 });
             } else {
                 LOG.warning("Failed to fetch versions list", exception);
-                Platform.runLater(() -> {
-                    root.setContent(failedPane, ContainerAnimations.FADE);
-                });
+                Platform.runLater(() -> root.setContent(failedPane, ContainerAnimations.FADE));
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/938

@@ -61,7 +61,7 @@ public class InstallersPage extends Control implements WizardPage {
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
-                new Validator(i18n("install.new_game.already_exists"), str -> repository.versionIdConflicts(str)),
+                new Validator(i18n("install.new_game.already_exists"), repository::versionIdConflicts),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
