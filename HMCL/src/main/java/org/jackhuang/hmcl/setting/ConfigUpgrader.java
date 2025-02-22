@@ -57,7 +57,7 @@ final class ConfigUpgrader {
 
         if (configVersion < 1) {
             // Upgrade configuration of HMCL 2.x: Convert OfflineAccounts whose stored uuid is important.
-            tryCast(rawJson.get("auth"), Map.class).ifPresent(auth -> tryCast(auth.get("offline"), Map.class).ifPresent(offline -> {
+            tryCast(rawJson.get("auth"), Map.class).flatMap(auth -> tryCast(auth.get("offline"), Map.class)).ifPresent(offline -> {
                 String selected = rawJson.containsKey("selectedAccount") ? null
                         : tryCast(offline.get("IAuthenticator_UserName"), String.class).orElse(null);
 
@@ -71,7 +71,7 @@ final class ConfigUpgrader {
                     }
                     deserialized.getAccountStorages().add(storage);
                 }));
-            }));
+            });
 
             // Upgrade configuration of HMCL earlier than 3.1.70
             if (!rawJson.containsKey("commonDirType"))

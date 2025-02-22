@@ -95,7 +95,7 @@ public enum ModTranslations {
     public List<Mod> searchMod(String query) {
         if (!loadKeywords()) return Collections.emptyList();
 
-        StringBuilder newQuery = ((CharSequence) query).chars()
+        StringBuilder newQuery = query.chars()
                 .filter(ch -> !Character.isSpaceChar(ch))
                 .collect(StringBuilder::new, (sb, value) -> sb.append((char) value), StringBuilder::append);
         query = newQuery.toString();

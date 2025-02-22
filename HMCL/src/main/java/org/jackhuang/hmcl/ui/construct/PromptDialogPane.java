@@ -82,15 +82,15 @@ public class PromptDialogPane extends DialogPane {
                 JFXCheckBox checkBox = new JFXCheckBox();
                 hBox.getChildren().setAll(checkBox);
                 HBox.setMargin(checkBox, new Insets(0, 0, 0, -10));
-                checkBox.setSelected(((Builder.BooleanQuestion) question).value);
-                checkBox.selectedProperty().addListener((a, b, newValue) -> ((Builder.BooleanQuestion) question).value = newValue);
+                checkBox.setSelected(question.value);
+                checkBox.selectedProperty().addListener((a, b, newValue) -> question.value = newValue);
                 checkBox.setText(question.question.get());
                 body.addRow(rowIndex++, hBox);
             } else if (question instanceof Builder.CandidatesQuestion) {
                 JFXComboBox<String> comboBox = new JFXComboBox<>();
                 comboBox.getItems().setAll(((Builder.CandidatesQuestion) question).candidates);
                 comboBox.getSelectionModel().selectedIndexProperty().addListener((a, b, newValue) ->
-                        ((Builder.CandidatesQuestion) question).value = newValue.intValue());
+                        question.value = newValue.intValue());
                 comboBox.getSelectionModel().select(0);
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, new Label(question.question.get()), comboBox);

@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.io.File;

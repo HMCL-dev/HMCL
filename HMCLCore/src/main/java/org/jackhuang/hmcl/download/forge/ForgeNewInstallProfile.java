@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
-import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.*;

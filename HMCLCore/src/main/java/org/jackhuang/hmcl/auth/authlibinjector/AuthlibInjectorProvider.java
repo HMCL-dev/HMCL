@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 
 import static org.jackhuang.hmcl.util.io.NetworkUtils.toURL;
 
-import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 

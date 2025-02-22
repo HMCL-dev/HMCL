@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.game.tlauncher;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.gson.JsonMap;
-import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 

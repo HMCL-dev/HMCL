@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.auth.yggdrasil;
 
-import org.jackhuang.hmcl.auth.AuthenticationException;
-
 import java.net.URL;
 import java.util.UUID;
 

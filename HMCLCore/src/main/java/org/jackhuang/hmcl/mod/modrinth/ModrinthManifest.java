@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.mod.modrinth;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
