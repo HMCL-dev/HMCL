@@ -189,9 +189,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     copyGlobalPane.setLeft(label);
                     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                    JFXButton button = new JFXButton(i18n("settings.game.copy_global.copy_all"));
-                    copyGlobalPane.setRight(button);
-                    button.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
+                    JFXButton copyAll = new JFXButton(i18n("settings.game.copy_global.copy_all"));
+                    copyAll.disableProperty().bind(modpack);
+                    copyGlobalPane.setRight(copyAll);
+                    copyAll.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
                         Set<String> ignored = new HashSet<>(Arrays.asList(
                                 "usesGlobal",
                                 "versionIcon"
@@ -199,8 +200,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                         PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
                     }, null));
-                    button.getStyleClass().add("jfx-button-border");
-                    BorderPane.setAlignment(button, Pos.CENTER_RIGHT);
+                    copyAll.getStyleClass().add("jfx-button-border");
+                    BorderPane.setAlignment(copyAll, Pos.CENTER_RIGHT);
                 }
 
                 componentList.getContent().add(copyGlobalPane);
