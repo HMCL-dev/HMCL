@@ -308,25 +308,14 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 );
 
                 AdvancedListBox toolbar = new AdvancedListBox()
-                        .addNavigationDrawerItem(upgradeItem -> {
-                            upgradeItem.setTitle(i18n("version.update"));
-                            upgradeItem.setLeftGraphic(wrap(SVG.UPDATE));
+                        .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
-                            upgradeItem.setOnAction(e -> control.updateGame());
                         })
-                        .addNavigationDrawerItem(testGameItem -> {
-                            testGameItem.setTitle(i18n("version.launch.test"));
-                            testGameItem.setLeftGraphic(wrap(SVG.ROCKET_LAUNCH_OUTLINE));
-                            testGameItem.setOnAction(e -> control.testGame());
-                        })
-                        .addNavigationDrawerItem(browseMenuItem -> {
-                            browseMenuItem.setTitle(i18n("settings.game.exploration"));
-                            browseMenuItem.setLeftGraphic(wrap(SVG.FOLDER_OUTLINE));
+                        .addNavigationDrawerItem(i18n("version.launch.test"), SVG.ROCKET_LAUNCH_OUTLINE, control::testGame)
+                        .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OUTLINE, null, browseMenuItem -> {
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
                         })
-                        .addNavigationDrawerItem(managementItem -> {
-                            managementItem.setTitle(i18n("settings.game.management"));
-                            managementItem.setLeftGraphic(wrap(SVG.WRENCH_OUTLINE));
+                        .addNavigationDrawerItem(i18n("settings.game.management"), SVG.WRENCH_OUTLINE, null, managementItem -> {
                             managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
                         });
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");

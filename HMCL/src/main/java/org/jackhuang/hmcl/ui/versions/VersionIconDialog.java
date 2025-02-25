@@ -72,7 +72,7 @@ public class VersionIconDialog extends DialogPane {
 
     private void exploreIcon() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png", "*.jpg", "*.bmp", "*.gif"));
+        chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
             try {

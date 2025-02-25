@@ -27,6 +27,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -38,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -109,6 +112,9 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             });
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
+
+            // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
+            ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             center.setContent(listView);
             root.setCenter(center);

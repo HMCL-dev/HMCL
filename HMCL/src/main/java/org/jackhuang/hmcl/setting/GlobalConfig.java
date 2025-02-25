@@ -33,7 +33,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 @JsonAdapter(GlobalConfig.Serializer.class)
-public final class GlobalConfig implements Cloneable, Observable {
+public final class GlobalConfig implements Observable {
 
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
@@ -77,11 +77,6 @@ public final class GlobalConfig implements Cloneable, Observable {
 
     public String toJson() {
         return Config.CONFIG_GSON.toJson(this);
-    }
-
-    @Override
-    public GlobalConfig clone() {
-        return fromJson(this.toJson());
     }
 
     public int getAgreementVersion() {

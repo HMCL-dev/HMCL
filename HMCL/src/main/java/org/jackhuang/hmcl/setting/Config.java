@@ -47,7 +47,7 @@ import java.net.Proxy;
 import java.util.Map;
 import java.util.TreeMap;
 
-public final class Config implements Cloneable, Observable {
+public final class Config implements Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
 
@@ -221,11 +221,6 @@ public final class Config implements Cloneable, Observable {
 
     public String toJson() {
         return CONFIG_GSON.toJson(this);
-    }
-
-    @Override
-    public Config clone() {
-        return fromJson(this.toJson());
     }
 
     // Getters & Setters & Properties

@@ -48,6 +48,8 @@ import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
@@ -214,6 +216,7 @@ public final class JavaDownloadDialog extends StackPane {
             distributionBox.setItems(FXCollections.observableList(new ArrayList<>(distributions)));
 
             FXUtils.onChange(packageTypeBox.getSelectionModel().selectedItemProperty(), packageType -> {
+
                 ObservableList<DiscoJavaRemoteVersion> versions;
                 if (packageType == null
                         || currentJavaVersionList.get() == null
@@ -222,7 +225,25 @@ public final class JavaDownloadDialog extends StackPane {
                     return;
                 }
 
+                DiscoJavaRemoteVersion oldVersion = remoteVersionBox.getSelectionModel().getSelectedItem();
                 remoteVersionBox.setItems(versions);
+
+                if (oldVersion != null) {
+                    for (int i = 0; i < versions.size(); i++) {
+                        DiscoJavaRemoteVersion version = versions.get(i);
+                        if (Objects.equals(version.getDistributionVersion(), oldVersion.getDistributionVersion())) {
+                            remoteVersionBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                    for (int i = 0; i < versions.size(); i++) {
+                        DiscoJavaRemoteVersion version = versions.get(i);
+                        if (version.getJdkVersion() == oldVersion.getJdkVersion()) {
+                            remoteVersionBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                }
 
                 for (int i = 0; i < versions.size(); i++) {
                     DiscoJavaRemoteVersion version = versions.get(i);
@@ -289,6 +310,11 @@ public final class JavaDownloadDialog extends StackPane {
             setHeading(new Label(i18n("java.download")));
             setBody(body);
             setActions(warningLabel, downloadButtonPane, cancelButton);
+            if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {
+                JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
+                hyperlink.setExternalLink("https://www.zthread.cn/#product");
+                getActions().add(0, hyperlink);
+            }
         }
 
         private void onDownload() {

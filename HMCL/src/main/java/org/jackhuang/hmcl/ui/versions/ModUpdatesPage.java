@@ -139,7 +139,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedMods().isEmpty()) {
-                        Controllers.dialog(i18n("mods.check_updates.failed") + "\n" +
+                        Controllers.dialog(i18n("mods.check_updates.failed_download") + "\n" +
                                         task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
