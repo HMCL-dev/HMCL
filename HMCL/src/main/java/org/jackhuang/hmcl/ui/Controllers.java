@@ -283,7 +283,7 @@ public final class Controllers {
                             new KeyValue(node.scaleXProperty(), 0.3, ease),
                             new KeyValue(node.scaleYProperty(), 0.3, ease)
                     ),
-                    new KeyFrame(Duration.millis(600),
+                    new KeyFrame(Duration.millis(800),
                             new KeyValue(node.opacityProperty(), 1, ease),
                             new KeyValue(node.scaleXProperty(), 1, ease),
                             new KeyValue(node.scaleYProperty(), 1, ease)
