@@ -19,6 +19,10 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXSnackbar;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
@@ -35,6 +39,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
@@ -42,6 +47,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
@@ -49,6 +55,7 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -81,7 +88,30 @@ public class DecoratorController {
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.setOnCloseButtonAction(Launcher::stopApplication);
+        decorator.setOnCloseButtonAction(() -> {
+            if (AnimationUtils.isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                Interpolator ease = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+
+                Timeline timeline = (new Timeline(
+                        new KeyFrame(Duration.millis(0),
+                                new KeyValue(decorator.opacityProperty(), 1, ease),
+                                new KeyValue(decorator.scaleXProperty(), 1, ease),
+                                new KeyValue(decorator.scaleYProperty(), 1, ease),
+                                new KeyValue(decorator.scaleZProperty(), 0.3, ease)
+                        ),
+                        new KeyFrame(Duration.millis(400),
+                                new KeyValue(decorator.opacityProperty(), 0, ease),
+                                new KeyValue(decorator.scaleXProperty(), 0.7, ease),
+                                new KeyValue(decorator.scaleYProperty(), 0.7, ease),
+                                new KeyValue(decorator.scaleZProperty(), 0.7, ease)
+                        )
+                ));
+                timeline.setOnFinished(event -> Launcher.stopApplication());
+                timeline.play();
+            } else {
+                Launcher.stopApplication();
+            }
+        });
         decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
 
         navigator = new Navigator();
