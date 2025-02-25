@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public class NBTEditorPage extends SpinnerPane implements DecoratorPage {
+public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state;
     private final Path file;
     private final NBTFileType type;

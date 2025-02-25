@@ -77,11 +77,14 @@ public enum NBTFileType {
         @Override
         public Tag read(Path file) throws IOException {
             try (RandomAccessFile r = new RandomAccessFile(file.toFile(), "r")) {
+                ListTag tag = new ListTag(file.getFileName().toString(), CompoundTag.class);
+                if (r.length() == 0) {
+                    return tag;
+                }
+
                 byte[] header = new byte[4096];
                 byte[] buffer = new byte[1 * 1024 * 1024]; // The maximum size of each chunk is 1MiB
                 Inflater inflater = new Inflater();
-
-                ListTag tag = new ListTag(file.getFileName().toString(), CompoundTag.class);
 
                 r.readFully(header);
                 for (int i = 0; i < 4096; i += 4) {
