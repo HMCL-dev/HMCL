@@ -23,7 +23,6 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -35,8 +34,9 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class CurseModpackProvider implements ModpackProvider {
     public static final CurseModpackProvider INSTANCE = new CurseModpackProvider();
@@ -92,10 +92,10 @@ public final class CurseModpackProvider implements ModpackProvider {
                                     RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
                                     return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl()).withMod(mod);
                                 } catch (FileNotFoundException fof) {
-                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
+                                    LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
                                     return file;
                                 } catch (IOException | JsonParseException e) {
-                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
+                                    LOG.warning("Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
                                     return file;
                                 }
                             } else {

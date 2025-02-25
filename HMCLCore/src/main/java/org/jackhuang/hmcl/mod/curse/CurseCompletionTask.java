@@ -154,7 +154,7 @@ public final class CurseCompletionTask extends Task<Void> {
         dependencies = newManifest.getFiles()
                 .stream().parallel()
                 .filter(f -> f.getFileName() != null)
-                .filter(f -> selectedFiles == null || selectedFiles.contains(file))
+                .filter(f -> selectedFiles == null || selectedFiles.contains(f))
                 .flatMap(f -> {
                     try {
                         File path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);

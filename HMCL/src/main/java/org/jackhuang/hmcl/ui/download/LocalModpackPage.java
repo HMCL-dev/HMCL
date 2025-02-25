@@ -162,7 +162,7 @@ public final class LocalModpackPage extends ModpackPage {
                     optionalFiles.setOptionalFileList(files);
                     waitingForOptionalFiles.set(false);
                     if (exception != null || files.stream().anyMatch(s -> s.isOptional() && (s.getMod() == null || s.getFileName() == null))) {
-                        LOG.log(Level.WARNING, "Failed to load optional files", exception);
+                        LOG.warning("Failed to load optional files", exception);
                         optionalFiles.setRetry(() -> pendingOptionalFiles(manifest));
                     }
                 }).start();

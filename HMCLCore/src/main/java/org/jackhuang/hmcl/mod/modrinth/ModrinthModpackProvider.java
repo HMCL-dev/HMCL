@@ -22,7 +22,6 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
@@ -33,8 +32,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModrinthModpackProvider implements ModpackProvider {
     public static final ModrinthModpackProvider INSTANCE = new ModrinthModpackProvider();
@@ -84,10 +84,10 @@ public final class ModrinthModpackProvider implements ModpackProvider {
                     RemoteMod mod = ModrinthRemoteModRepository.MODS.getModById(version.getModid());
                     return file.withMod(Optional.ofNullable(mod));
                 } catch (FileNotFoundException fof) {
-                    Logging.LOG.log(Level.WARNING, "Could not query modrinth for deleted mods: " + file.getFileName(), fof);
+                    LOG.warning("Could not query modrinth for deleted mods: " + file.getFileName(), fof);
                     return file;
                 } catch (IOException | JsonParseException e) {
-                    Logging.LOG.log(Level.WARNING, "Unable to fetch the modid for" + file.getFileName(), e);
+                    LOG.warning("Unable to fetch the modid for" + file.getFileName(), e);
                     return file;
                 }
             } else {
