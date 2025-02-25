@@ -1085,6 +1085,8 @@ public final class FXUtils {
         }
     };
 
+    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
