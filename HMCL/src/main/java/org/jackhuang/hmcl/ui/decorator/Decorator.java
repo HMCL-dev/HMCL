@@ -76,7 +76,7 @@ public class Decorator extends Control {
         primaryStage.initStyle(StageStyle.UNDECORATED);
 
         FXUtils.onChange(primaryStage.iconifiedProperty(), iconified -> {
-            if (!iconified && AnimationUtils.isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            if (!iconified && AnimationUtils.playWindowAnimation()) {
                 this.setOpacity(0);
                 Timeline timeline = new Timeline(
                         new KeyFrame(Duration.millis(0),
