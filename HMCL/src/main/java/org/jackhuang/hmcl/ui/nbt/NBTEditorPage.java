@@ -22,7 +22,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -30,10 +29,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.*;
+import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -42,15 +43,17 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public class NBTEditorPage extends BorderPane implements DecoratorPage {
+public class NBTEditorPage extends SpinnerPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state;
-    private final File file;
+    private final Path file;
     private final NBTFileType type;
 
-    public NBTEditorPage(File file) throws IOException {
+    private final BorderPane root = new BorderPane();
+
+    public NBTEditorPage(Path file) throws IOException {
         getStyleClass().add("gray-background");
 
-        this.state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("nbt.title", file.getAbsolutePath())));
+        this.state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("nbt.title", file.toString())));
         this.file = file;
         this.type = NBTFileType.ofFile(file);
 
@@ -58,7 +61,8 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
             throw new IOException("Unknown type of file " + file);
         }
 
-        setCenter(new ProgressIndicator());
+        setContent(root);
+        setLoading(true);
 
         HBox actions = new HBox(8);
         actions.setPadding(new Insets(8));
@@ -87,7 +91,8 @@ public class NBTEditorPage extends BorderPane implements DecoratorPage {
         Task.supplyAsync(() -> type.readAsTree(file))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        setCenter(new NBTTreeView(result));
+                        setLoading(false);
+                        root.setCenter(new NBTTreeView(result));
                     } else {
                         LOG.warning("Fail to open nbt file", exception);
                         Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(exception), null, MessageDialogPane.MessageType.WARNING, cancelButton::fire);
