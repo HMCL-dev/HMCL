@@ -19,6 +19,10 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
@@ -34,18 +38,19 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -56,7 +61,6 @@ import org.jackhuang.hmcl.ui.versions.VersionPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -64,10 +68,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.*;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
+    public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
     public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageX = new SimpleDoubleProperty();
@@ -167,7 +173,7 @@ public final class Controllers {
     }
 
     public static void initialize(Stage stage) {
-        Logging.LOG.info("Start initializing application");
+        LOG.info("Start initializing application");
 
         Controllers.stage = stage;
 
@@ -205,35 +211,37 @@ public final class Controllers {
 
         WeakInvalidationListener weakListener = new WeakInvalidationListener(stageSizeChangeListener);
 
-        double initHeight = config().getHeight();
-        double initWidth = config().getWidth();
-        double initX = config().getX() * SCREEN.getBounds().getWidth();
-        double initY = config().getY() * SCREEN.getBounds().getHeight();
+        double initWidth = Math.max(MIN_WIDTH, config().getWidth());
+        double initHeight = Math.max(MIN_HEIGHT, config().getHeight());
 
         {
+            double initX = config().getX() * SCREEN.getBounds().getWidth();
+            double initY = config().getY() * SCREEN.getBounds().getHeight();
+
             boolean invalid = true;
             double border = 20D;
             for (Screen screen : Screen.getScreens()) {
                 Rectangle2D bound = screen.getBounds();
 
-                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY + initHeight && initY <= bound.getMaxY() - border) {
+                if (bound.getMinX() + border <= initX + initWidth && initX <= bound.getMaxX() - border && bound.getMinY() + border <= initY && initY <= bound.getMaxY() - border) {
                     invalid = false;
                     break;
                 }
             }
 
             if (invalid) {
-                initX = (0.5D - initWidth / Controllers.SCREEN.getBounds().getWidth() / 2) * SCREEN.getBounds().getWidth();
-                initY = (0.5D - initHeight / Controllers.SCREEN.getBounds().getHeight() / 2) * SCREEN.getBounds().getHeight();
+                initX = (0.5D - initWidth / SCREEN.getBounds().getWidth() / 2) * SCREEN.getBounds().getWidth();
+                initY = (0.5D - initHeight / SCREEN.getBounds().getHeight() / 2) * SCREEN.getBounds().getHeight();
             }
+
+            stage.setX(initX);
+            stage.setY(initY);
+            stageX.set(initX);
+            stageY.set(initY);
         }
 
-        stage.setX(initX);
-        stage.setY(initY);
         stage.setHeight(initHeight);
         stage.setWidth(initWidth);
-        stageX.set(initX);
-        stageY.set(initY);
         stageHeight.set(initHeight);
         stageWidth.set(initWidth);
         stage.xProperty().addListener(weakListener);
@@ -251,20 +259,38 @@ public final class Controllers {
             dialog(i18n("launcher.cache_directory.invalid"));
         }
 
-        Task.runAsync(JavaVersion::initialize).start();
+        Lang.thread(JavaManager::initialize, "Search Java", true);
 
         scene = new Scene(decorator.getDecorator());
         scene.setFill(Color.TRANSPARENT);
-        stage.setMinHeight(450 + 2 + 40 + 16); // bg height + border width*2 + toolbar height + shadow width*2
-        stage.setMinWidth(800 + 2 + 16); // bg width + border width*2 + shadow width*2
+        stage.setMinWidth(MIN_WIDTH);
+        stage.setMinHeight(MIN_HEIGHT);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
         scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
 
-        stage.getIcons().add(newBuiltinImage("/assets/img/icon.png"));
+        FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
+
+        if (AnimationUtils.isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            Decorator node = decorator.getDecorator();
+            Interpolator ease = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.millis(0),
+                            new KeyValue(node.opacityProperty(), 0, ease),
+                            new KeyValue(node.scaleXProperty(), 0.3, ease),
+                            new KeyValue(node.scaleYProperty(), 0.3, ease)
+                    ),
+                    new KeyFrame(Duration.millis(800),
+                            new KeyValue(node.opacityProperty(), 1, ease),
+                            new KeyValue(node.scaleXProperty(), 1, ease),
+                            new KeyValue(node.scaleYProperty(), 1, ease)
+                    )
+            );
+            timeline.play();
+        }
 
         if (!Architecture.SYSTEM_ARCH.isX86() && globalConfig().getPlatformPromptVersion() < 1) {
             Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
@@ -298,7 +324,7 @@ public final class Controllers {
             });
             JFXButton noButton = new JFXButton(i18n("launcher.agreement.decline"));
             noButton.getStyleClass().add("dialog-cancel");
-            noButton.setOnAction(e -> System.exit(1));
+            noButton.setOnAction(e -> javafx.application.Platform.exit());
             agreementPane.setActions(agreementLink, yesButton, noButton);
             Controllers.dialog(agreementPane);
         }
@@ -389,9 +415,6 @@ public final class Controllers {
                 case "hmcl://settings/feedback":
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
-                    break;
-                case "hmcl://hide-announcement":
-                    Controllers.getRootPage().getMainPage().hideAnnouncementPane();
                     break;
             }
         } else {

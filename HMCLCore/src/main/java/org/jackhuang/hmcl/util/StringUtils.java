@@ -207,93 +207,135 @@ public final class StringUtils {
         return false;
     }
 
-    public static List<String> tokenize(String str) {
-        if (isBlank(str)) {
-            return new ArrayList<>();
-        } else {
-            // Split the string with ' and space cleverly.
-            ArrayList<String> parts = new ArrayList<>();
-
-            boolean hasValue = false;
-            StringBuilder current = new StringBuilder(str.length());
-            for (int i = 0; i < str.length(); ) {
-                char c = str.charAt(i);
-                if (c == '\'') {
-                    hasValue = true;
-                    int end = str.indexOf(c, i + 1);
-                    if (end < 0) {
-                        end = str.length();
-                    }
-                    current.append(str, i + 1, end);
-                    i = end + 1;
-
-                } else if (c == '"') {
-                    hasValue = true;
-                    i++;
-                    while (i < str.length()) {
-                        c = str.charAt(i++);
-                        if (c == '"') {
-                            break;
-                        } else if (c == '\\' && i < str.length()) {
-                            c = str.charAt(i++);
-                            switch (c) {
-                                case 'n':
-                                    c = '\n';
-                                    break;
-                                case 'r':
-                                    c = '\r';
-                                    break;
-                                case 't':
-                                    c = '\t';
-                                    break;
-                                case 'v':
-                                    c = '\u000b';
-                                    break;
-                                case 'a':
-                                    c = '\u0007';
-                                    break;
-                            }
-                            current.append(c);
-                        } else {
-                            current.append(c);
-                        }
-                    }
-                } else if (c == ' ') {
-                    if (hasValue) {
-                        parts.add(current.toString());
-                        current.setLength(0);
-                        hasValue = false;
-                    }
-                    i++;
-                } else {
-                    hasValue = true;
-                    current.append(c);
-                    i++;
-                }
-            }
-            if (hasValue) {
-                parts.add(current.toString());
-            }
-
-            return parts;
-        }
+    private static boolean isVarNameStart(char ch) {
+        return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
     }
 
-    public static List<String> parseCommand(String command, Map<String, String> env) {
-        StringBuilder stringBuilder = new StringBuilder(command);
-        for (Map.Entry<String, String> entry : env.entrySet()) {
-            String key = "$" + entry.getKey();
-            int i = 0;
-            while (true) {
-                i = stringBuilder.indexOf(key, i);
-                if (i == -1) {
+    private static boolean isVarNamePart(char ch) {
+        return isVarNameStart(ch) || (ch >= '0' && ch <= '9');
+    }
+
+    private static int findVarEnd(String str, int offset) {
+        if (offset < str.length() - 1 && isVarNameStart(str.charAt(offset))) {
+            int end = offset + 1;
+            while (end < str.length()) {
+                if (!isVarNamePart(str.charAt(end))) {
                     break;
                 }
-                stringBuilder.replace(i, i + key.length(), entry.getValue());
+                end++;
             }
+            return end;
         }
 
-        return tokenize(stringBuilder.toString());
+        return -1;
+    }
+
+    public static List<String> tokenize(String str) {
+        return tokenize(str, null);
+    }
+
+    public static List<String> tokenize(String str, Map<String, String> vars) {
+        if (isBlank(str)) {
+            return new ArrayList<>();
+        }
+
+        if (vars == null) {
+            vars = Collections.emptyMap();
+        }
+
+        // Split the string with ' and space cleverly.
+        ArrayList<String> parts = new ArrayList<>();
+        int varEnd;
+
+        boolean hasValue = false;
+        StringBuilder current = new StringBuilder(str.length());
+        for (int i = 0; i < str.length(); ) {
+            char c = str.charAt(i);
+            if (c == '\'') {
+                hasValue = true;
+                int end = str.indexOf(c, i + 1);
+                if (end < 0) {
+                    end = str.length();
+                }
+                current.append(str, i + 1, end);
+                i = end + 1;
+
+            } else if (c == '"') {
+                hasValue = true;
+                i++;
+                while (i < str.length()) {
+                    c = str.charAt(i++);
+                    if (c == '"') {
+                        break;
+                    } else if (c == '`' && i < str.length()) {
+                        c = str.charAt(i++);
+                        switch (c) {
+                            case 'a':
+                                c = '\u0007';
+                                break;
+                            case 'b':
+                                c = '\b';
+                                break;
+                            case 'f':
+                                c = '\f';
+                                break;
+                            case 'n':
+                                c = '\n';
+                                break;
+                            case 'r':
+                                c = '\r';
+                                break;
+                            case 't':
+                                c = '\t';
+                                break;
+                            case 'v':
+                                c = '\u000b';
+                                break;
+                        }
+                        current.append(c);
+                    } else if (c == '$' && (varEnd = findVarEnd(str, i)) >= 0) {
+                        String key = str.substring(i, varEnd);
+                        String value = vars.get(key);
+                        if (value != null) {
+                            current.append(value);
+                        } else {
+                            current.append('$').append(key);
+                        }
+
+                        i = varEnd;
+                    } else {
+                        current.append(c);
+                    }
+                }
+            } else if (c == ' ') {
+                if (hasValue) {
+                    parts.add(current.toString());
+                    current.setLength(0);
+                    hasValue = false;
+                }
+                i++;
+            } else if (c == '$' && (varEnd = findVarEnd(str, i + 1)) >= 0) {
+                hasValue = true;
+                String key = str.substring(i + 1, varEnd);
+                String value = vars.get(key);
+                if (value != null) {
+                    current.append(value);
+                } else {
+                    current.append('$').append(key);
+                }
+
+                i = varEnd;
+            } else {
+                hasValue = true;
+                current.append(c);
+                i++;
+            }
+        }
+        if (hasValue) {
+            parts.add(current.toString());
+        }
+
+        return parts;
     }
 
     public static String parseColorEscapes(String original) {
@@ -304,9 +346,15 @@ public final class StringUtils {
     }
 
     public static String parseEscapeSequence(String str) {
-        StringBuilder builder = new StringBuilder();
+        int idx = str.indexOf('\033');
+        if (idx < 0)
+            return str;
+
+        StringBuilder builder = new StringBuilder(str.length());
         boolean inEscape = false;
-        for (int i = 0; i < str.length(); i++) {
+
+        builder.append(str, 0, idx);
+        for (int i = idx; i < str.length(); i++) {
             char ch = str.charAt(i);
             if (ch == '\033') {
                 inEscape = true;
@@ -329,15 +377,15 @@ public final class StringUtils {
         return result.toString();
     }
 
-    public static int MAX_SHORT_STRING_LENGTH = 77;
+    public static String truncate(String str, int limit) {
+        assert limit > 5;
 
-    public static Optional<String> truncate(String str) {
-        if (str.length() <= MAX_SHORT_STRING_LENGTH) {
-            return Optional.empty();
+        if (str.length() <= limit) {
+            return str;
         }
 
-        final int halfLength = (MAX_SHORT_STRING_LENGTH - 5) / 2;
-        return Optional.of(str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength));
+        final int halfLength = (limit - 5) / 2;
+        return str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength);
     }
 
     public static boolean isASCII(String cs) {
@@ -357,36 +405,66 @@ public final class StringUtils {
         return true;
     }
 
-    public static class DynamicCommonSubsequence {
-        private LongestCommonSubsequence calculator;
+    public static class LevCalculator {
+        private int[][] lev;
 
-        public DynamicCommonSubsequence(int intLengthA, int intLengthB) {
-            if (intLengthA > intLengthB) {
-                calculator = new LongestCommonSubsequence(intLengthA, intLengthB);
-            } else {
-                calculator = new LongestCommonSubsequence(intLengthB, intLengthA);
+        public LevCalculator() {
+        }
+
+        public LevCalculator(int length1, int length2) {
+            allocate(length1, length2);
+        }
+
+        private void allocate(int length1, int length2) {
+            length1 += 1;
+            length2 += 1;
+            lev = new int[length1][length2];
+            for (int i = 1; i < length1; i++) {
+                lev[i][0] = i;
+            }
+            int[] cache = lev[0];
+            for (int i = 0; i < length2; i++) {
+                cache[i] = i;
             }
         }
 
+        public int getLength1() {
+            return lev.length;
+        }
+
+        public int getLength2() {
+            return lev[0].length;
+        }
+
+        private int min(int a, int b, int c) {
+            return Math.min(a, Math.min(b, c));
+        }
+
         public int calc(CharSequence a, CharSequence b) {
-            if (a.length() < b.length()) {
-                CharSequence t = a;
-                a = b;
-                b = t;
+            if (lev == null || a.length() >= lev.length || b.length() >= lev[0].length) {
+                allocate(a.length(), b.length());
             }
 
-            if (calculator.maxLengthA < a.length() || calculator.maxLengthB < b.length()) {
-                calculator = new LongestCommonSubsequence(a.length(), b.length());
+            int lengthA = a.length() + 1, lengthB = b.length() + 1;
+
+            for (int i = 1; i < lengthA; i++) {
+                for (int j = 1; j < lengthB; j++) {
+                    lev[i][j] = min(
+                            lev[i][j - 1] + 1, // insert
+                            lev[i - 1][j] + 1, // del
+                            a.charAt(i - 1) == b.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1 // replace
+                    );
+                }
             }
 
-            return calculator.calc(a, b);
+            return lev[a.length()][b.length()];
         }
     }
 
     /**
      * Class for computing the longest common subsequence between strings.
      */
-    public static class LongestCommonSubsequence {
+    public static final class LongestCommonSubsequence {
         // We reuse dynamic programming storage array here to reduce allocations.
         private final int[][] f;
         private final int maxLengthA;

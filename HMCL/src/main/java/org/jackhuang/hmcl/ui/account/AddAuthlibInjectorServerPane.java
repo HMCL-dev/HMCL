@@ -35,11 +35,10 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AddAuthlibInjectorServerPane extends TransitionPane implements DialogAware {
@@ -148,7 +147,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
             confirmServerPane.setActions(prevButton, cancelButton, finishButton);
         }
 
-        this.setContent(addServerPane, ContainerAnimations.NONE.getAnimationProducer());
+        this.setContent(addServerPane, ContainerAnimations.NONE);
 
         lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
         btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
@@ -199,9 +198,9 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
                 lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverBeingAdded.getUrl()).getProtocol()));
 
-                this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT.getAnimationProducer());
+                this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT);
             } else {
-                LOG.log(Level.WARNING, "Failed to resolve auth server: " + url, exception);
+                LOG.warning("Failed to resolve auth server: " + url, exception);
                 lblCreationWarning.setText(resolveFetchExceptionMessage(exception));
             }
         }).start();
@@ -209,7 +208,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     private void onAddPrev() {
-        this.setContent(addServerPane, ContainerAnimations.SWIPE_RIGHT.getAnimationProducer());
+        this.setContent(addServerPane, ContainerAnimations.SWIPE_RIGHT);
     }
 
     private void onAddFinish() {

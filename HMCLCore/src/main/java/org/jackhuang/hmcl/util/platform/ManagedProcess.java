@@ -17,12 +17,13 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import net.burningtnt.bcigenerator.api.BytecodeImpl;
-import net.burningtnt.bcigenerator.api.BytecodeImplError;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Consumer;
@@ -35,7 +36,7 @@ import java.util.function.Predicate;
  * @see org.jackhuang.hmcl.launch.ExitWaiter
  * @see org.jackhuang.hmcl.launch.StreamPump
  */
-public class ManagedProcess {
+public final class ManagedProcess {
     private final Process process;
     private final List<String> commands;
     private final String classpath;
@@ -90,9 +91,15 @@ public class ManagedProcess {
      * @return PID
      */
     public long getPID() throws UnsupportedOperationException {
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9) {
+        if (JavaRuntime.CURRENT_VERSION >= 9) {
             // Method Process.pid() is provided (Java 9 or later). Invoke it to get the pid.
-            return getPID0(process);
+            try {
+                return (long) MethodHandles.publicLookup()
+                        .findVirtual(Process.class, "pid", MethodType.methodType(long.class))
+                        .invokeExact(process);
+            } catch (Throwable e) {
+                throw new UnsupportedOperationException("Cannot get the pid", e);
+            }
         } else {
             // Method Process.pid() is not provided. (Java 8).
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
@@ -100,7 +107,7 @@ public class ManagedProcess {
                 // However, this method is supplied since Java 9.
                 // So, there is no ways to get the pid.
                 throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on Windows.");
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 // On Linux or Mac, we can get field UnixProcess.pid field to get the pid.
                 // All the Java version is accepted.
                 // See https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/solaris/classes/java/lang/UNIXProcess.java.linux
@@ -116,23 +123,6 @@ public class ManagedProcess {
                 throw new UnsupportedOperationException(String.format("Cannot get the pid of a Process on Java 8 on Unknown Operating System (%s).", System.getProperty("os.name")));
             }
         }
-    }
-
-    /**
-     * Get the PID of a process with BytecodeImplGenerator
-     */
-    @BytecodeImpl({
-            "LABEL METHOD_HEAD",
-            "ALOAD 0",
-            "INVOKEVIRTUAL Ljava/lang/Process;pid()J",
-            "LABEL RELEASE_PARAMETER",
-            "LRETURN",
-            "LOCALVARIABLE process [Ljava/lang/Process; METHOD_HEAD RELEASE_PARAMETER 0",
-            "MAXS 2 1"
-    })
-    @SuppressWarnings("unused")
-    private static long getPID0(Process process) {
-        throw new BytecodeImplError();
     }
 
     /**

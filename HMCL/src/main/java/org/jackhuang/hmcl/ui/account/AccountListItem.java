@@ -32,17 +32,14 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
-import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
@@ -54,11 +51,10 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.logging.Level;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AccountListItem extends RadioButton {
@@ -109,31 +105,27 @@ public class AccountListItem extends RadioButton {
                 } catch (CancellationException e1) {
                     // ignore cancellation
                 } catch (Exception e1) {
-                    LOG.log(Level.WARNING, "Failed to refresh " + account + " with password", e1);
+                    LOG.warning("Failed to refresh " + account + " with password", e1);
                     throw e1;
                 }
             } catch (AuthenticationException e) {
-                LOG.log(Level.WARNING, "Failed to refresh " + account + " with token", e);
+                LOG.warning("Failed to refresh " + account + " with token", e);
                 throw e;
             }
         });
     }
 
     public ObservableBooleanValue canUploadSkin() {
-        if (account instanceof YggdrasilAccount) {
-            if (account instanceof AuthlibInjectorAccount) {
-                AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
-                ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
-                return createBooleanBinding(() -> {
-                    Set<TextureType> uploadableTextures = profile.get()
-                            .map(AuthlibInjectorAccount::getUploadableTextures)
-                            .orElse(emptySet());
-                    return uploadableTextures.contains(TextureType.SKIN);
-                }, profile);
-            } else {
-                return createBooleanBinding(() -> true);
-            }
-        } else if (account instanceof OfflineAccount || account instanceof MicrosoftAccount) {
+        if (account instanceof AuthlibInjectorAccount) {
+            AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
+            ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
+            return createBooleanBinding(() -> {
+                Set<TextureType> uploadableTextures = profile.get()
+                        .map(AuthlibInjectorAccount::getUploadableTextures)
+                        .orElse(emptySet());
+                return uploadableTextures.contains(TextureType.SKIN);
+            }, profile);
+        } else if (account instanceof OfflineAccount || account.canUploadSkin()) {
             return createBooleanBinding(() -> true);
         } else {
             return createBooleanBinding(() -> false);
@@ -149,11 +141,7 @@ public class AccountListItem extends RadioButton {
             Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
             return null;
         }
-        if (account instanceof MicrosoftAccount) {
-            FXUtils.openLink("https://www.minecraft.net/msaprofile/mygames/editskin");
-            return null;
-        }
-        if (!(account instanceof YggdrasilAccount)) {
+        if (!account.canUploadSkin()) {
             return null;
         }
 
@@ -179,7 +167,7 @@ public class AccountListItem extends RadioButton {
                     NormalizedSkin skin = new NormalizedSkin(skinImg);
                     String model = skin.isSlim() ? "slim" : "";
                     LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    ((YggdrasilAccount) account).uploadSkin(model, selectedFile.toPath());
+                    account.uploadSkin(skin.isSlim(), selectedFile.toPath());
                 })
                 .thenComposeAsync(refreshAsync())
                 .whenComplete(Schedulers.javafx(), e -> {

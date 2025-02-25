@@ -35,7 +35,7 @@ subprojects {
     }
 
     dependencies {
-        "testImplementation"("org.junit.jupiter:junit-jupiter:5.9.1")
+        "testImplementation"("org.junit.jupiter:junit-jupiter:5.10.2")
     }
 
     tasks.withType<Test> {
@@ -90,6 +90,13 @@ tasks.create("checkTranslations") {
         zh_CN.forEach {
             if (it.value.toString().contains("帐户")) {
                 project.logger.warn("The misspelled '帐户' in '${it.key}' should be replaced by '账户'")
+                success = false
+            }
+        }
+
+        zh_CN.forEach {
+            if (it.value.toString().contains("其它")) {
+                project.logger.warn("The misspelled '其它' in '${it.key}' should be replaced by '其他'")
                 success = false
             }
         }

@@ -32,9 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvider {
 
@@ -44,7 +43,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     private final Supplier<DownloadProvider> downloadProvider;
 
     /**
-     * @param artifactsDirectory where to save authlib-injector artifacts
+     * @param artifactLocation where to save authlib-injector artifacts
      */
     public AuthlibInjectorDownloader(Path artifactLocation, Supplier<DownloadProvider> downloadProvider) {
         this.artifactLocation = artifactLocation;
@@ -97,7 +96,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         }
 
         try {
-            new FileDownloadTask(new URL(downloadProvider.get().injectURL(latest.downloadUrl)), artifactLocation.toFile(),
+            new FileDownloadTask(downloadProvider.get().injectURLWithCandidates(latest.downloadUrl), artifactLocation.toFile(),
                     Optional.ofNullable(latest.checksums.get("sha256"))
                             .map(checksum -> new IntegrityCheck("SHA-256", checksum))
                             .orElse(null))
@@ -110,11 +109,22 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
     }
 
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
-        try {
-            return HttpRequest.GET(downloadProvider.get().injectURL(LATEST_BUILD_URL)).getJson(AuthlibInjectorVersionInfo.class);
-        } catch (JsonParseException e) {
-            throw new IOException("Malformed response", e);
+        IOException exception = null;
+        for (URL url : downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL)) {
+            try {
+                return HttpRequest.GET(url.toExternalForm()).getJson(AuthlibInjectorVersionInfo.class);
+            } catch (IOException | JsonParseException e) {
+                if (exception == null) {
+                    exception = new IOException("Failed to fetch authlib-injector artifact info");
+                }
+                exception.addSuppressed(e);
+            }
         }
+
+        if (exception == null) {
+            exception = new IOException("No authlib-injector download providers available");
+        }
+        throw exception;
     }
 
     private Optional<AuthlibInjectorArtifactInfo> getLocalArtifact() {
@@ -128,12 +138,12 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         try {
             return Optional.of(AuthlibInjectorArtifactInfo.from(path));
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Bad authlib-injector artifact", e);
+            LOG.warning("Bad authlib-injector artifact", e);
             return Optional.empty();
         }
     }
 
-    private static class AuthlibInjectorVersionInfo {
+    private static final class AuthlibInjectorVersionInfo {
         @SerializedName("build_number")
         public int buildNumber;
 

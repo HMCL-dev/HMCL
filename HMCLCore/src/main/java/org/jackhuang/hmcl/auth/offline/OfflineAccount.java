@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LaunchOptions;
@@ -101,14 +100,7 @@ public class OfflineAccount extends Account {
     }
 
     protected boolean loadAuthlibInjector(Skin skin) {
-        if (skin == null) return false;
-        if (skin.getType() == Skin.Type.DEFAULT) return false;
-        TextureModel defaultModel = TextureModel.detectUUID(getUUID());
-        if (skin.getType() == Skin.Type.ALEX && defaultModel == TextureModel.ALEX ||
-            skin.getType() == Skin.Type.STEVE && defaultModel == TextureModel.STEVE) {
-            return false;
-        }
-        return true;
+        return skin != null && skin.getType() != Skin.Type.DEFAULT;
     }
 
     @Override

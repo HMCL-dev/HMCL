@@ -30,6 +30,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -37,6 +38,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.util.Arrays;
@@ -71,7 +73,7 @@ public abstract class SettingsView extends StackPane {
                     {
                         StackPane sponsorPane = new StackPane();
                         sponsorPane.setCursor(Cursor.HAND);
-                        sponsorPane.setOnMouseClicked(e -> onSponsor());
+                        FXUtils.onClicked(sponsorPane, this::onSponsor);
                         sponsorPane.setPadding(new Insets(8, 0, 8, 0));
 
                         GridPane gridPane = new GridPane();
@@ -119,7 +121,7 @@ public abstract class SettingsView extends StackPane {
 
                     {
                         btnUpdate = new JFXButton();
-                        btnUpdate.setOnMouseClicked(e -> onUpdate());
+                        btnUpdate.setOnAction(e -> onUpdate());
                         btnUpdate.getStyleClass().add("toggle-icon4");
                         btnUpdate.setGraphic(SVG.UPDATE.createIcon(Theme.blackFill(), 20, 20));
 
@@ -159,7 +161,7 @@ public abstract class SettingsView extends StackPane {
 
                     {
                         JFXButton cleanButton = new JFXButton(i18n("launcher.cache_directory.clean"));
-                        cleanButton.setOnMouseClicked(e -> clearCacheDirectory());
+                        cleanButton.setOnAction(e -> clearCacheDirectory());
                         cleanButton.getStyleClass().add("jfx-button-border");
 
                         fileCommonLocationSublist.setHeaderRight(cleanButton);
@@ -176,8 +178,8 @@ public abstract class SettingsView extends StackPane {
                     languagePane.setLeft(left);
 
                     cboLanguage = new JFXComboBox<>();
-                    cboLanguage.setConverter(stringConverter(locale -> locale.getName(config().getLocalization().getResourceBundle())));
-                    FXUtils.setLimitWidth(cboLanguage, 400);
+                    cboLanguage.setConverter(stringConverter(I18n::getName));
+                    FXUtils.setLimitWidth(cboLanguage, 300);
                     languagePane.setRight(cboLanguage);
 
                     settingsPane.getContent().add(languagePane);
@@ -190,10 +192,19 @@ public abstract class SettingsView extends StackPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     debugPane.setLeft(left);
 
+                    JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
+                    openLogFolderButton.setOnAction(e -> openLogFolder());
+                    openLogFolderButton.getStyleClass().add("jfx-button-border");
+
                     JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
-                    logButton.setOnMouseClicked(e -> onExportLogs());
+                    logButton.setOnAction(e -> onExportLogs());
                     logButton.getStyleClass().add("jfx-button-border");
-                    debugPane.setRight(logButton);
+
+                    HBox buttonBox = new HBox();
+                    buttonBox.setSpacing(10);
+                    buttonBox.getChildren().addAll(openLogFolderButton, logButton);
+                    BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
+                    debugPane.setRight(buttonBox);
 
                     settingsPane.getContent().add(debugPane);
                 }
@@ -202,6 +213,10 @@ public abstract class SettingsView extends StackPane {
             }
             scroll.setContent(rootPane);
         }
+    }
+
+    public void openLogFolder() {
+        FXUtils.openFolder(Metadata.HMCL_DIRECTORY.resolve("logs").toFile());
     }
 
     protected abstract void onUpdate();

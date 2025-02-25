@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download.quilt;
 
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -25,13 +24,13 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class QuiltVersionList extends VersionList<QuiltRemoteVersion> {
     private final DownloadProvider downloadProvider;
@@ -68,9 +67,9 @@ public final class QuiltVersionList extends VersionList<QuiltRemoteVersion> {
     private static final String GAME_META_URL = "https://meta.quiltmc.org/v3/versions/game";
 
     private List<String> getGameVersions(String metaUrl) throws IOException {
-        String json = NetworkUtils.doGet(NetworkUtils.toURL(downloadProvider.injectURL(metaUrl)));
-        return JsonUtils.GSON.<ArrayList<GameVersion>>fromJson(json, new TypeToken<ArrayList<GameVersion>>() {
-        }.getType()).stream().map(GameVersion::getVersion).collect(Collectors.toList());
+        String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
+        return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
+                .stream().map(GameVersion::getVersion).collect(Collectors.toList());
     }
 
     private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {

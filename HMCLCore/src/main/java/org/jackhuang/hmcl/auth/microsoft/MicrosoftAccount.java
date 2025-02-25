@@ -24,16 +24,16 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Level;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class MicrosoftAccount extends OAuthAccount {
+public final class MicrosoftAccount extends OAuthAccount {
 
     protected final MicrosoftService service;
     protected UUID characterUUID;
@@ -84,16 +84,20 @@ public class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || !service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
-            MicrosoftSession acquiredSession = service.refresh(session);
-            if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
-                throw new ServerResponseMalformedException("Selected profile changed");
+        if (!authenticated) {
+            if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
+                authenticated = true;
+            } else {
+                MicrosoftSession acquiredSession = service.refresh(session);
+                if (!Objects.equals(acquiredSession.getProfile().getId(), session.getProfile().getId())) {
+                    throw new ServerResponseMalformedException("Selected profile changed");
+                }
+
+                session = acquiredSession;
+
+                authenticated = true;
+                invalidate();
             }
-
-            session = acquiredSession;
-
-            authenticated = true;
-            invalidate();
         }
 
         return session.toAuthInfo();
@@ -123,6 +127,16 @@ public class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
+    public boolean canUploadSkin() {
+        return true;
+    }
+
+    @Override
+    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        service.uploadSkin(session.getAccessToken(), isSlim, file);
+    }
+
+    @Override
     public Map<Object, Object> toStorage() {
         return session.toStorage();
     }
@@ -138,7 +152,7 @@ public class MicrosoftAccount extends OAuthAccount {
                     try {
                         return YggdrasilService.getTextures(it);
                     } catch (ServerResponseMalformedException e) {
-                        LOG.log(Level.WARNING, "Failed to parse texture payload", e);
+                        LOG.warning("Failed to parse texture payload", e);
                         return Optional.empty();
                     }
                 }));
@@ -147,6 +161,7 @@ public class MicrosoftAccount extends OAuthAccount {
     @Override
     public void clearCache() {
         authenticated = false;
+        service.getProfileRepository().invalidate(characterUUID);
     }
 
     @Override

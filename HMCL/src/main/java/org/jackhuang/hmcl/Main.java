@@ -20,11 +20,9 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
-import org.jackhuang.hmcl.util.FractureiserDetector;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -43,10 +41,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.concurrent.CancellationException;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Main {
@@ -55,26 +52,30 @@ public final class Main {
     }
 
     public static void main(String[] args) {
-        System.setProperty("java.net.useSystemProxies", "true");
-        System.setProperty("javafx.autoproxy.disable", "true");
+        System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
+        System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
+
+        LOG.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
 
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9)
+        if (JavaRuntime.CURRENT_VERSION < 9)
             // This environment check will take ~300ms
             thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
             initIcon();
 
-        Logging.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
-
         checkJavaFX();
         verifyJavaFX();
-        detectFractureiser();
 
         Launcher.main(args);
+    }
+
+    public static void exit(int exitCode) {
+        LOG.shutdown();
+        System.exit(exitCode);
     }
 
     private static void initIcon() {
@@ -91,25 +92,18 @@ public final class Main {
         }
     }
 
-    private static void detectFractureiser() {
-        if (FractureiserDetector.detect()) {
-            LOG.log(Level.SEVERE, "Detected that this computer is infected by fractureiser");
-            showErrorAndExit(i18n("fatal.fractureiser"));
-        }
-    }
-
     private static void checkJavaFX() {
         try {
             SelfDependencyPatcher.patch();
         } catch (SelfDependencyPatcher.PatchException e) {
-            LOG.log(Level.SEVERE, "unable to patch JVM", e);
+            LOG.error("unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.missing"));
         } catch (SelfDependencyPatcher.IncompatibleVersionException e) {
-            LOG.log(Level.SEVERE, "unable to patch JVM", e);
+            LOG.error("unable to patch JVM", e);
             showErrorAndExit(i18n("fatal.javafx.incompatible"));
         } catch (CancellationException e) {
-            LOG.log(Level.SEVERE, "User cancels downloading JavaFX", e);
-            System.exit(0);
+            LOG.error("User cancels downloading JavaFX", e);
+            exit(0);
         }
     }
 
@@ -136,13 +130,13 @@ public final class Main {
         try {
             if (Platform.isFxApplicationThread()) {
                 new Alert(Alert.AlertType.ERROR, message).showAndWait();
-                System.exit(1);
+                exit(1);
             }
         } catch (Throwable ignored) {
         }
 
         SwingUtils.showErrorDialog(message);
-        System.exit(1);
+        exit(1);
     }
 
     /**
@@ -192,7 +186,7 @@ public final class Main {
             LOG.info("Added Lets Encrypt root certificates as additional trust");
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException |
                  KeyManagementException e) {
-            LOG.log(Level.SEVERE, "Failed to load lets encrypt certificate. Expect problems", e);
+            LOG.error("Failed to load lets encrypt certificate. Expect problems", e);
         }
     }
 }

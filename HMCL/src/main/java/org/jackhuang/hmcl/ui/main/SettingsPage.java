@@ -27,27 +27,27 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.upgrade.hmcl.RemoteVersion;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChannel;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateHandler;
-import org.jackhuang.hmcl.util.Logging;
+import org.jackhuang.hmcl.upgrade.RemoteVersion;
+import org.jackhuang.hmcl.upgrade.UpdateChannel;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-import java.util.logging.Level;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
@@ -129,11 +129,11 @@ public final class SettingsPage extends SettingsView {
             Path logFile = Paths.get("hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
 
             LOG.info("Exporting logs to " + logFile);
-            try {
-                Files.write(logFile, Logging.getRawLogs());
+            try (OutputStream output = Files.newOutputStream(logFile)) {
+                LOG.exportLogs(output);
             } catch (IOException e) {
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + e, null, MessageType.ERROR));
-                LOG.log(Level.WARNING, "Failed to export logs", e);
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
+                LOG.warning("Failed to export logs", e);
                 return;
             }
 
@@ -144,7 +144,7 @@ public final class SettingsPage extends SettingsView {
 
     @Override
     protected void onSponsor() {
-        FXUtils.openLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+        FXUtils.openLink("https://github.com/HMCL-dev/HMCL");
     }
 
     @Override

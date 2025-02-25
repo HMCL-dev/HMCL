@@ -42,10 +42,10 @@ public class FeedbackPage extends SpinnerPane {
         ComponentList community = new ComponentList();
         {
             IconedTwoLineListItem users = new IconedTwoLineListItem();
-            users.setImage(FXUtils.newBuiltinImage("/assets/img/craft_table.png"));
+            users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             users.setTitle(i18n("feedback.qq_group"));
             users.setSubtitle(i18n("feedback.qq_group.statement"));
-            users.setExternalLink("https://hmcl.huangyuhui.net/api/redirect/sponsor");
+            users.setExternalLink("https://docs.hmcl.net/groups.html");
 
             IconedTwoLineListItem github = new IconedTwoLineListItem();
             github.setImage(FXUtils.newBuiltinImage("/assets/img/github.png"));
@@ -59,13 +59,7 @@ public class FeedbackPage extends SpinnerPane {
             discord.setSubtitle(i18n("feedback.discord.statement"));
             discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
 
-            IconedTwoLineListItem kookapp = new IconedTwoLineListItem();
-            kookapp.setImage(FXUtils.newBuiltinImage("/assets/img/kookapp.png"));
-            kookapp.setTitle(i18n("feedback.kookapp"));
-            kookapp.setSubtitle(i18n("feedback.kookapp.statement"));
-            kookapp.setExternalLink("https://kook.top/Kx7n3t");
-
-            community.getContent().setAll(users, github, discord, kookapp);
+            community.getContent().setAll(users, github, discord);
         }
 
         content.getChildren().addAll(

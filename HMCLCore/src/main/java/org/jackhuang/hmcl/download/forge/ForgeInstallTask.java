@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -100,19 +100,11 @@ public final class ForgeInstallTask extends Task<Version> {
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         String originalMainClass = version.resolve(dependencyManager.getGameRepository()).getMainClass();
-        if (VersionNumber.VERSION_COMPARATOR.compare("1.13", remote.getGameVersion()) <= 0) {
+        if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
-            if (!LibraryAnalyzer.VANILLA_MAIN.equals(originalMainClass)
-                    && !LibraryAnalyzer.MOD_LAUNCHER_MAIN.equals(originalMainClass)
-                    && !LibraryAnalyzer.LAUNCH_WRAPPER_MAIN.equals(originalMainClass)
-                    && !LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass))
+            if (!LibraryAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
-        } else {
-            // Forge 1.12 and older versions is compatible with vanilla and launchwrapper.
-            // if (!"net.minecraft.client.main.Main".equals(originalMainClass) && !"net.minecraft.launchwrapper.Launch".equals(originalMainClass))
-            //     throw new OptiFineInstallTask.UnsupportedOptiFineInstallationException();
         }
-
 
         if (detectForgeInstallerType(dependencyManager, version, installer))
             dependency = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);

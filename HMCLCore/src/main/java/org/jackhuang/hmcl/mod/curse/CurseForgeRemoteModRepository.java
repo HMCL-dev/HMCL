@@ -38,13 +38,14 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
-    private static final int WORD_PERFECT_MATCH_WEIGHT = 50;
+    private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
     public static boolean isAvailable() {
         return !apiKey.isEmpty();
@@ -94,6 +95,10 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         return "asc";
     }
 
+    private int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {
+        return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
+    }
+
     @Override
     public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
@@ -109,11 +114,9 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                         pair("index", Integer.toString(pageOffset * pageSize)),
                         pair("pageSize", Integer.toString(pageSize)))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon>>>() {
-                }.getType());
-        Stream<RemoteMod> res = response.getData().stream().map(CurseAddon::toMod);
-        if (sortType != SortType.NAME || searchFilter.length() == 0) {
-            return new SearchResult(res, (int)Math.ceil((double)response.pagination.totalCount / pageSize));
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
+        if (searchFilter.isEmpty()) {
+            return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
         }
 
         // https://github.com/HMCL-dev/HMCL/issues/1549
@@ -123,25 +126,11 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             searchFilterWords.put(s, searchFilterWords.getOrDefault(s, 0) + 1);
         }
 
-        return new SearchResult(res.map(remoteMod -> {
-            String lowerCaseResult = remoteMod.getTitle().toLowerCase();
-            int[][] lev = new int[lowerCaseSearchFilter.length() + 1][lowerCaseResult.length() + 1];
-            for (int i = 0; i < lowerCaseResult.length() + 1; i++) {
-                lev[0][i] = i;
-            }
-            for (int i = 0; i < lowerCaseSearchFilter.length() + 1; i++) {
-                lev[i][0] = i;
-            }
-            for (int i = 1; i < lowerCaseSearchFilter.length() + 1; i++) {
-                for (int j = 1; j < lowerCaseResult.length() + 1; j++) {
-                    int countByInsert = lev[i][j - 1] + 1;
-                    int countByDel = lev[i - 1][j] + 1;
-                    int countByReplace = lowerCaseSearchFilter.charAt(i - 1) == lowerCaseResult.charAt(j - 1) ? lev[i - 1][j - 1] : lev[i - 1][j - 1] + 1;
-                    lev[i][j] = Math.min(countByInsert, Math.min(countByDel, countByReplace));
-                }
-            }
+        StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-            int diff = lev[lowerCaseSearchFilter.length()][lowerCaseResult.length()];
+        return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
+            String lowerCaseResult = remoteMod.getTitle().toLowerCase();
+            int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
             for (String s : StringUtils.tokenize(lowerCaseResult)) {
                 if (searchFilterWords.containsKey(s)) {
@@ -150,7 +139,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
 
             return pair(remoteMod, diff);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), res, response.pagination.totalCount);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
     }
 
     @Override
@@ -171,11 +160,10 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
 
-        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints")
+        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<FingerprintMatchesResult>>() {
-                }.getType());
+                .getJson(Response.typeOf(FingerprintMatchesResult.class));
 
         if (response.getData().getExactMatches() == null || response.getData().getExactMatches().isEmpty()) {
             return Optional.empty();
@@ -188,8 +176,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod getModById(String id) throws IOException {
         Response<CurseAddon> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id)
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<CurseAddon>>() {
-                }.getType());
+                .getJson(Response.typeOf(CurseAddon.class));
         return response.data.toMod();
     }
 
@@ -197,8 +184,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
         Response<CurseAddon.LatestFile> response = HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<CurseAddon.LatestFile>>() {
-                }.getType());
+                .getJson(Response.typeOf(CurseAddon.LatestFile.class));
         return response.getData().toVersion().getFile();
     }
 
@@ -207,16 +193,14 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         Response<List<CurseAddon.LatestFile>> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
                         pair("pageSize", "10000"))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon.LatestFile>>>() {
-                }.getType());
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
         return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
     }
 
     public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
         Response<List<CurseAddon.Category>> categories = HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432"))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon.Category>>>() {
-                }.getType());
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
         return reorganizeCategories(categories.getData(), section);
     }
 
@@ -295,6 +279,17 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     public static class Response<T> {
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(Class<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType);
+        }
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(TypeToken<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType.getType());
+        }
+
         private final T data;
         private final Pagination pagination;
 

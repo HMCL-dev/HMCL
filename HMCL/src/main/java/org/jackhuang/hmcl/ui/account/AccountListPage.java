@@ -44,10 +44,10 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.net.URI;
-import java.util.logging.Level;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
@@ -96,7 +96,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                 VBox boxMethods = new VBox();
                 {
                     boxMethods.getStyleClass().add("advanced-list-box-content");
-                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create")));
+                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT)));
                     FXUtils.setLimitWidth(boxMethods, 200);
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
@@ -106,14 +106,6 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     offlineItem.setLeftGraphic(wrap(SVG.ACCOUNT));
                     offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
                     boxMethods.getChildren().add(offlineItem);
-
-                    AdvancedListItem mojangItem = new AdvancedListItem();
-                    mojangItem.getStyleClass().add("navigation-drawer-item");
-                    mojangItem.setActionButtonVisible(false);
-                    mojangItem.setTitle(i18n("account.methods.yggdrasil"));
-                    mojangItem.setLeftGraphic(wrap(SVG.MOJANG));
-                    mojangItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MOJANG)));
-                    boxMethods.getChildren().add(mojangItem);
 
                     AdvancedListItem microsoftItem = new AdvancedListItem();
                     microsoftItem.getStyleClass().add("navigation-drawer-item");
@@ -132,7 +124,9 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
 
                         JFXButton btnRemove = new JFXButton();
                         btnRemove.setOnAction(e -> {
-                            skinnable.authServersProperty().remove(server);
+                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                                skinnable.authServersProperty().remove(server);
+                            }, null);
                             e.consume();
                         });
                         btnRemove.getStyleClass().add("toggle-icon4");
@@ -145,7 +139,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         try {
                             host = URI.create(server.getUrl()).getHost();
                         } catch (IllegalArgumentException e) {
-                            LOG.log(Level.WARNING, "Unparsable authlib-injector server url " + server.getUrl(), e);
+                            LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
                         }
                         item.subtitleProperty().set(host);
                         Tooltip tooltip = new Tooltip();

@@ -20,28 +20,30 @@ package org.jackhuang.hmcl.mod.modrinth;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ModrinthCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
+    private final ModManager modManager;
     private final String version;
     private Set<? extends ModpackFile> selectedFiles;
     private ModrinthManifest manifest;
@@ -71,6 +73,7 @@ public class ModrinthCompletionTask extends Task<Void> {
     public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest, Set<? extends ModpackFile> selectedFiles) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
+        this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
         this.selectedFiles = selectedFiles;
@@ -86,7 +89,7 @@ public class ModrinthCompletionTask extends Task<Void> {
                     this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
                 }
             } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Unable to read Modrinth modpack manifest.json", e);
+                LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
 
         setStage("hmcl.modpack.download");
@@ -107,19 +110,32 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = repository.getRunDirectory(version).toPath();
+        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path modsDirectory = runDirectory.resolve("mods");
+
         FileUtils.writeText(new File(repository.getVersionRoot(version), "files.json"), JsonUtils.GSON.toJson(selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList())));
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
                 continue;
-            Path filePath = runDirectory.resolve(file.getPath());
-            if ((selectedFiles == null || selectedFiles.contains(file)) && !Files.exists(filePath) && !file.getDownloads().isEmpty()) {
-                FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
-                task.setCacheRepository(dependency.getCacheRepository());
-                task.setCaching(true);
-                dependencies.add(task.withCounter("hmcl.modpack.download"));
-            }
+            if (file.getDownloads().isEmpty())
+                continue;
+            if (selectedFiles != null && !selectedFiles.contains(file))
+                continue;
+
+            Path filePath = runDirectory.resolve(file.getPath()).toAbsolutePath().normalize();
+            if (!filePath.startsWith(runDirectory))
+                throw new IOException("Unsecure path: " + file.getPath());
+
+            if (Files.exists(filePath))
+                continue;
+            if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
+                continue;
+
+            FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
+            task.setCacheRepository(dependency.getCacheRepository());
+            task.setCaching(true);
+            dependencies.add(task.withCounter("hmcl.modpack.download"));
         }
 
         if (!dependencies.isEmpty()) {

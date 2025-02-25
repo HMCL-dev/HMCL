@@ -1,0 +1,20 @@
+[authlib-injector] [INFO] Logging file: F:\.minecraft\authlib-injector.log
+[authlib-injector] [INFO] Version: 1.2.1
+[authlib-injector] [INFO] Authentication server: https://littleskin.cn/api/yggdrasil/
+2022-12-08 13:15:41,589 main ERROR Error processing element Queue ([Appenders: null]): CLASS_NOT_FOUND
+[13:15:43] [main/INFO]: ModLauncher running: args [--username, 哎呀呀呀, --version, 1.16.2, --gameDir, F:\\.minecraft, --assetsDir, F:\.minecraft\assets, --assetIndex, 1.16, --uuid, e3c2fb57f8764ecfa1564c1cc92143f2, --accessToken, ❄❄❄❄❄❄❄❄, --userType, mojang, --versionType, HMCL 3.5.3.228, --width, 854, --height, 480, --launchTarget, fmlclient, --fml.forgeVersion, 33.0.61, --fml.mcVersion, 1.16.2, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20200812.004259]
+[13:15:43] [main/INFO]: ModLauncher 7.0.1+78+master.e9771d8 starting: java version 17.0.4.1 by Oracle Corporation
+java.lang.NoSuchFieldException: ucp
+	at java.base/java.lang.Class.getDeclaredField(Class.java:2610)
+	at cpw.mods.gross.Java9ClassLoaderUtil.getSystemClassPathURLs(Java9ClassLoaderUtil.java:28)
+	at cpw.mods.modlauncher.TransformationServicesHandler.discoverServices(TransformationServicesHandler.java:139)
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:74)
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:65)
+Exception in thread "main" java.lang.NullPointerException: Cannot read the array length because "urls" is null
+	at java.base/jdk.internal.loader.URLClassPath.<init>(URLClassPath.java:155)
+	at java.base/jdk.internal.loader.URLClassPath.<init>(URLClassPath.java:176)
+	at java.base/java.net.URLClassLoader.<init>(URLClassLoader.java:152)
+	at cpw.mods.modlauncher.TransformationServicesHandler$TransformerClassLoader.<init>(TransformationServicesHandler.java:159)
+	at cpw.mods.modlauncher.TransformationServicesHandler.discoverServices(TransformationServicesHandler.java:139)
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:74)
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:65)

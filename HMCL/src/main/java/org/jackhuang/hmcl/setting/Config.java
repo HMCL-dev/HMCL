@@ -47,7 +47,7 @@ import java.net.Proxy;
 import java.util.Map;
 import java.util.TreeMap;
 
-public final class Config implements Cloneable, Observable {
+public final class Config implements Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
 
@@ -131,13 +131,13 @@ public final class Config implements Cloneable, Observable {
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
     @SerializedName("autoDownloadThreads")
-    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(false);
+    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
 
     @SerializedName("downloadThreads")
     private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
 
     @SerializedName("downloadType")
-    private StringProperty downloadType = new SimpleStringProperty("mcbbs");
+    private StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
 
     @SerializedName("autoChooseDownloadType")
     private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
@@ -164,7 +164,7 @@ public final class Config implements Cloneable, Observable {
     private StringProperty launcherFontFamily = new SimpleStringProperty();
 
     @SerializedName("logLines")
-    private IntegerProperty logLines = new SimpleIntegerProperty(1000);
+    private ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
 
     @SerializedName("titleTransparent")
     private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
@@ -221,11 +221,6 @@ public final class Config implements Cloneable, Observable {
 
     public String toJson() {
         return CONFIG_GSON.toJson(this);
-    }
-
-    @Override
-    public Config clone() {
-        return fromJson(this.toJson());
     }
 
     // Getters & Setters & Properties
@@ -393,8 +388,8 @@ public final class Config implements Cloneable, Observable {
         return x;
     }
 
-    public void setX(double height) {
-        this.x.set(height);
+    public void setX(double x) {
+        this.x.set(x);
     }
 
     public double getY() {
@@ -405,8 +400,8 @@ public final class Config implements Cloneable, Observable {
         return y;
     }
 
-    public void setY(double height) {
-        this.y.set(height);
+    public void setY(double y) {
+        this.y.set(y);
     }
 
     public double getWidth() {
@@ -573,15 +568,15 @@ public final class Config implements Cloneable, Observable {
         this.launcherFontFamily.set(launcherFontFamily);
     }
 
-    public int getLogLines() {
+    public Integer getLogLines() {
         return logLines.get();
     }
 
-    public void setLogLines(int logLines) {
+    public void setLogLines(Integer logLines) {
         this.logLines.set(logLines);
     }
 
-    public IntegerProperty logLinesProperty() {
+    public ObjectProperty<Integer> logLinesProperty() {
         return logLines;
     }
 

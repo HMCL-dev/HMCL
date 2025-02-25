@@ -28,9 +28,8 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
-import org.jackhuang.hmcl.upgrade.hmcl.UpdateChecker;
+import org.jackhuang.hmcl.upgrade.UpdateChecker;
 
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
@@ -54,7 +53,7 @@ public class CrashWindow extends Stage {
 
         Button btnContact = new Button();
         btnContact.setText(i18n("launcher.contact"));
-        btnContact.setOnMouseClicked(event -> FXUtils.openLink(Metadata.CONTACT_URL));
+        btnContact.setOnAction(event -> FXUtils.openLink(Metadata.CONTACT_URL));
         HBox box = new HBox();
         box.setStyle("-fx-padding: 8px;");
         box.getChildren().add(btnContact);
@@ -70,10 +69,10 @@ public class CrashWindow extends Stage {
 
         Scene scene = new Scene(pane, 800, 480);
         setScene(scene);
-        getIcons().add(newBuiltinImage("/assets/img/icon.png"));
+        FXUtils.setIcon(this);
         setTitle(i18n("message.error"));
 
-        setOnCloseRequest(e -> System.exit(1));
+        setOnCloseRequest(e -> javafx.application.Platform.exit());
     }
 
 }

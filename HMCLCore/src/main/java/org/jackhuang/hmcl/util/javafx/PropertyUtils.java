@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -36,7 +37,7 @@ public final class PropertyUtils {
     private PropertyUtils() {
     }
 
-    public static class PropertyHandle {
+    public static final class PropertyHandle {
         public final WritableValue<Object> accessor;
         public final Observable observable;
 
@@ -158,10 +159,23 @@ public final class PropertyUtils {
                 });
     }
 
+    public static void copyProperties(Object from, Object to, Predicate<String> predicate) {
+        Class<?> type = from.getClass();
+        while (!type.isInstance(to))
+            type = type.getSuperclass();
+
+        getPropertyHandleFactories(type)
+                .forEach((name, factory) -> {
+                    if (predicate.test(name)) {
+                        PropertyHandle src = factory.apply(from);
+                        PropertyHandle target = factory.apply(to);
+                        target.accessor.setValue(src.accessor.getValue());
+                    }
+                });
+    }
+
     public static void attachListener(Object instance, InvalidationListener listener) {
         getPropertyHandleFactories(instance.getClass())
-                .forEach((name, factory) -> {
-                    factory.apply(instance).observable.addListener(listener);
-                });
+                .forEach((name, factory) -> factory.apply(instance).observable.addListener(listener));
     }
 }

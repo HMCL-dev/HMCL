@@ -70,7 +70,7 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         return new AsyncMappedBinding<>(this, mapper, initial);
     }
 
-    private static class SimpleBinding<T> extends BindingMapping<T, T> {
+    private static final class SimpleBinding<T> extends BindingMapping<T, T> {
 
         public SimpleBinding(ObservableValue<T> predecessor) {
             super(predecessor);
@@ -92,7 +92,7 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         }
     }
 
-    private static class MappedBinding<T, U> extends BindingMapping<T, U> {
+    private static final class MappedBinding<T, U> extends BindingMapping<T, U> {
 
         private final Function<? super T, ? extends U> mapper;
 
@@ -107,7 +107,7 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         }
     }
 
-    private static class FlatMappedBinding<T extends ObservableValue<? extends U>, U> extends BindingMapping<T, U> {
+    private static final class FlatMappedBinding<T extends ObservableValue<? extends U>, U> extends BindingMapping<T, U> {
 
         private final Supplier<? extends U> nullAlternative;
         private T lastObservable = null;
@@ -142,7 +142,7 @@ public abstract class BindingMapping<T, U> extends ObjectBinding<U> {
         }
     }
 
-    private static class AsyncMappedBinding<T, U> extends BindingMapping<T, U> {
+    private static final class AsyncMappedBinding<T, U> extends BindingMapping<T, U> {
 
         private boolean initialized = false;
         private T prev;

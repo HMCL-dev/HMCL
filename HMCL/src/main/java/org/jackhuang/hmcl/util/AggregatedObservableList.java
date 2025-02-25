@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class AggregatedObservableList<T> {
+public final class AggregatedObservableList<T> {
 
     protected final List<ObservableList<T>> lists = new ArrayList<>();
     final private List<Integer> sizes = new ArrayList<>();
@@ -126,7 +126,7 @@ public class AggregatedObservableList<T> {
         return startIndex + sizes.get(index) - 1;
     }
 
-    private class InternalListModificationListener implements ListChangeListener<T> {
+    private final class InternalListModificationListener implements ListChangeListener<T> {
 
         @NotNull
         private final ObservableList<T> list;

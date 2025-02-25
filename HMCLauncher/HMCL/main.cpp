@@ -8,8 +8,8 @@
 Version J8(TEXT("8"));
 
 extern "C" {
-_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-_declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
+__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+__declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
 }
 
 LPCWSTR VENDOR_DIRS[] = {
@@ -75,29 +75,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   bool useChinese = GetUserDefaultUILanguage() == 2052; // zh-CN
 
-  OSVERSIONINFOEX osvi;
-  DWORDLONG dwlConditionMask = 0;
-  int op = VER_GREATER_EQUAL;
+  MyArchitecture architecture = MyGetArchitecture();
 
-  // Initialize the OSVERSIONINFOEX structure.
-  ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-  osvi.dwMajorVersion = 6;
-  osvi.dwMinorVersion = 1;
-
-  // Initialize the condition mask.
-  VER_SET_CONDITION(dwlConditionMask, VER_MAJORVERSION, op);
-  VER_SET_CONDITION(dwlConditionMask, VER_MINORVERSION, op);
-
-  // Try downloading Java on Windows 7 or later
-  bool isWin7OrLater = VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
-
-  SYSTEM_INFO systemInfo;
-  GetNativeSystemInfo(&systemInfo);
-  // TODO: check whether the bundled JRE is valid.
   // First try the Java packaged together.
-  bool isX64   = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-  bool isARM64 = (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+  bool isX64   = architecture == MyArchitecture::X86_64;
+  bool isARM64 = architecture == MyArchitecture::ARM64;
 
   if (isARM64) {
     RawLaunchJVM(L"jre-arm64\\bin\\javaw.exe", workdir, exeName, jvmOptions);
@@ -156,19 +138,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     FindJavaInDirAndLaunchJVM(hmclJavaDir, workdir, exeName, jvmOptions);
   }
 
-error:
   LPCWSTR downloadLink;
 
-  if (isWin7OrLater) {
-    if (isARM64) {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
-    } if (isX64) {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
-    } else {
-      downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
-    }
+  if (isARM64) {
+    downloadLink = L"https://docs.hmcl.net/downloads/windows/arm64.html";
+  } else if (isX64) {
+    downloadLink = L"https://docs.hmcl.net/downloads/windows/x86_64.html";
   } else {
-    downloadLink = L"https://docs.hmcl.net/downloads/java.html";
+    downloadLink = L"https://docs.hmcl.net/downloads/windows/x86.html";
   }
 
   if (IDOK == MessageBox(NULL, useChinese ? ERROR_PROMPT_ZH : ERROR_PROMPT, useChinese ? ERROR_TITLE_ZH : ERROR_TITLE, MB_ICONWARNING | MB_OKCANCEL)) {

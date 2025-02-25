@@ -33,11 +33,12 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -46,14 +47,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
-import static org.jackhuang.hmcl.util.Logging.LOG;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class HMCLGameRepository extends DefaultGameRepository {
@@ -102,7 +102,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public Stream<Version> getDisplayVersions() {
         return getVersions().stream()
                 .filter(v -> !v.isHidden())
-                .sorted(Comparator.comparing((Version v) -> v.getReleaseTime() == null ? new Date(0L) : v.getReleaseTime())
+                .sorted(Comparator.comparing((Version v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
                         .thenComparing(v -> VersionNumber.asVersion(v.getId())));
     }
 
@@ -122,7 +122,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             if (!file.exists() && !versions.isEmpty())
                 FileUtils.writeText(file, PROFILE);
         } catch (IOException ex) {
-            LOG.log(Level.WARNING, "Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
+            LOG.warning("Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
 
         // https://github.com/HMCL-dev/HMCL/issues/938
@@ -217,7 +217,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
         localVersionSettings.put(id, vs);
-        vs.addPropertyChangedListener(a -> saveVersionSetting(id));
+        vs.addListener(a -> saveVersionSetting(id));
         return vs;
     }
 
@@ -250,49 +250,82 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public VersionSetting getVersionSetting(String id) {
         VersionSetting vs = getLocalVersionSetting(id);
         if (vs == null || vs.isUsesGlobal()) {
-            profile.getGlobal().setGlobal(true); // always keep global.isGlobal = true
             profile.getGlobal().setUsesGlobal(true);
             return profile.getGlobal();
         } else
             return vs;
     }
 
-    public File getVersionIconFile(String id) {
-        return new File(getVersionRoot(id), "icon.png");
+    public Optional<File> getVersionIconFile(String id) {
+        File root = getVersionRoot(id);
+
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            File file = new File(root, "icon." + extension);
+            if (file.exists()) {
+                return Optional.of(file);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    public void setVersionIconFile(String id, File iconFile) throws IOException {
+        String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
+        if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
+            throw new IllegalArgumentException("Unsupported icon file: " + ext);
+        }
+
+        deleteIconFile(id);
+
+        FileUtils.copyFile(iconFile, new File(getVersionRoot(id), "icon." + ext));
+    }
+
+    public void deleteIconFile(String id) {
+        File root = getVersionRoot(id);
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            new File(root, "icon." + extension).delete();
+        }
     }
 
     public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return newBuiltinImage("/assets/img/grass.png");
+            return VersionIconType.DEFAULT.getIcon();
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
-        VersionIconType iconType = Optional.ofNullable(vs).map(VersionSetting::getVersionIcon).orElse(VersionIconType.DEFAULT);
+        VersionIconType iconType = vs != null ? Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
-            File iconFile = getVersionIconFile(id);
-            if (iconFile.exists())
-                return new Image("file:" + iconFile.getAbsolutePath());
-            else if (LibraryAnalyzer.isModded(this, version)) {
-                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version);
+            Optional<File> iconFile = getVersionIconFile(id);
+            if (iconFile.isPresent()) {
+                try {
+                    return FXUtils.loadImage(iconFile.get().toPath());
+                } catch (Exception e) {
+                    LOG.warning("Failed to load version icon of " + id, e);
+                }
+            }
+
+            if (LibraryAnalyzer.isModded(this, version)) {
+                LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return newBuiltinImage("/assets/img/fabric.png");
+                    return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return newBuiltinImage("/assets/img/forge.png");
+                    return VersionIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return newBuiltinImage("/assets/img/neoforge.png");
+                    return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return newBuiltinImage("/assets/img/quilt.png");
+                    return VersionIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return newBuiltinImage("/assets/img/command.png");
+                    return VersionIconType.OPTIFINE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return newBuiltinImage("/assets/img/chicken.png");
+                    return VersionIconType.CHICKEN.getIcon();
                 else
-                    return newBuiltinImage("/assets/img/furnace.png");
-            } else
-                return newBuiltinImage("/assets/img/grass.png");
+                    return VersionIconType.FURNACE.getIcon();
+            }
+
+            return VersionIconType.DEFAULT.getIcon();
         } else {
-            return newBuiltinImage(iconType.getResourceUrl());
+            return iconType.getIcon();
         }
     }
 
@@ -303,11 +336,13 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
             return false;
 
+        LOG.info("Saving version setting: " + id);
+
         try {
             FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
         } catch (IOException e) {
-            LOG.log(Level.SEVERE, "Unable to save version setting of " + id, e);
+            LOG.error("Unable to save version setting of " + id, e);
             return false;
         }
     }
@@ -323,7 +358,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs = createLocalVersionSetting(id);
         if (vs == null)
             return null;
-        vs.setUsesGlobal(false);
+        if (vs.isUsesGlobal()) {
+            vs.setUsesGlobal(false);
+        }
         return vs;
     }
 
@@ -333,7 +370,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaVersion javaVersion, File gameDir, List<String> javaAgents, boolean makeLaunchScript) {
+    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, File gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -346,7 +383,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
                 .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
-                        OperatingSystem.getPhysicalMemoryStatus().orElse(OperatingSystem.PhysicalMemoryStatus.INVALID).getAvailable(),
+                        OperatingSystem.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())
@@ -376,7 +413,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
-                .setJavaAgents(javaAgents);
+                .setJavaAgents(javaAgents)
+                .setJavaArguments(javaArguments);
         if (config().hasProxy()) {
             builder.setProxy(ProxyManager.getProxy());
             if (config().hasProxyAuth()) {

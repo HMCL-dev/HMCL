@@ -21,16 +21,16 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Level;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -71,7 +71,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
         }
 
-        if (I18n.getCurrentLocale().getLocale() != Locale.CHINA) {
+        if (!I18n.isUseChinese()) {
             return;
         }
 
@@ -83,9 +83,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             1.11 ~ 12：zh_cn 时正常，zh_CN 时虽然显示了中文但语言设置会错误地显示选择英文
             1.13+    ：zh_cn 时正常，zh_CN 时自动切换为英文
          */
-        if (this.version.compareTo(new Version("1.1")) < 0) {
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
+        if (gameVersion.compareTo("1.1") < 0) {
             lang = null;
-        } else if (this.version.compareTo(new Version("1.10")) <= 0) {
+        } else if (gameVersion.compareTo("1.11") < 0) {
             lang = "zh_CN";
         } else {
             lang = "zh_cn";
@@ -95,7 +96,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             try {
                 FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
             } catch (IOException e) {
-                Logging.LOG.log(Level.WARNING, "Unable to generate options.txt", e);
+                LOG.warning("Unable to generate options.txt", e);
             }
         }
     }

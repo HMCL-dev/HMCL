@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -39,10 +38,10 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
@@ -139,7 +138,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
                                 }).start();
                     }, world.getWorldName());
                 }, e -> {
-                    Logging.LOG.log(Level.WARNING, "Unable to parse world file " + zipFile, e);
+                    LOG.warning("Unable to parse world file " + zipFile, e);
                     Controllers.dialog(i18n("world.import.invalid"));
                 }).start();
     }
@@ -171,7 +170,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
             return Arrays.asList(chkShowAll,
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("world.add"), SVG.PLUS, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG.PLUS, skinnable::download));
+                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD_OUTLINE, skinnable::download));
         }
     }
 }

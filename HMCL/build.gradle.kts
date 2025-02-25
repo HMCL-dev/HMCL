@@ -1,6 +1,4 @@
-import com.google.gson.Gson
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
+import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -9,16 +7,6 @@ import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("com.google.code.gson:gson:2.10.1")
-    }
-}
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -38,7 +26,7 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
 }
-val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"
+val versionRoot = System.getenv("VERSION_ROOT") ?: "3.6"
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
@@ -50,13 +38,13 @@ version = "$versionRoot.$buildNumber"
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
+    implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
-        "MD5" to "md5",
         "SHA-1" to "sha1",
         "SHA-256" to "sha256",
         "SHA-512" to "sha512"
@@ -94,62 +82,6 @@ fun attachSignature(jar: File) {
     }
 }
 
-tasks.getByName<JavaCompile>("compileJava") {
-    dependsOn(tasks.create("computeDynamicResources") {
-        this@create.inputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"))
-        this@create.outputs.file(rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json"))
-
-        doLast {
-            Gson().also { gsonInstance ->
-                Files.newBufferedReader(
-                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources-raw.json"),
-                    Charsets.UTF_8
-                ).use { br ->
-                    (gsonInstance.fromJson(br, JsonElement::class.java) as JsonObject)
-                }.also { data ->
-                    data.asMap().forEach { (namespace, namespaceData) ->
-                        (namespaceData as JsonObject).asMap().forEach { (name, nameData) ->
-                            (nameData as JsonObject).asMap().forEach { (version, versionData) ->
-                                require(versionData is JsonObject)
-                                val localPath =
-                                    (versionData.get("local_path") as com.google.gson.JsonPrimitive).asString
-                                val sha1 = (versionData.get("sha1") as com.google.gson.JsonPrimitive).asString
-
-                                val currentSha1 = digest(
-                                    "SHA-1",
-                                    Files.readAllBytes(rootProject.rootDir.toPath().resolve(localPath))
-                                ).joinToString(separator = "") { "%02x".format(it) }
-
-                                if (!sha1.equals(currentSha1, ignoreCase = true)) {
-                                    throw IllegalStateException("Mismatched SHA-1 in $.${namespace}.${name}.${version} of dynamic remote resources detected. Require ${currentSha1}, but found $sha1")
-                                }
-                            }
-                        }
-                    }
-
-                    rootProject.rootDir.toPath().resolve("data-json/dynamic-remote-resources.json").also { zippedPath ->
-                        gsonInstance.toJson(data).also { expectedData ->
-                            if (Files.exists(zippedPath)) {
-                                Files.readString(zippedPath, Charsets.UTF_8).also { rawData ->
-                                    if (!rawData.equals(expectedData)) {
-                                        if (System.getenv("GITHUB_SHA") == null) {
-                                            Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
-                                        } else {
-                                            throw IllegalStateException("Mismatched zipped dynamic-remote-resources json file!")
-                                        }
-                                    }
-                                }
-                            } else {
-                                Files.writeString(zippedPath, expectedData, Charsets.UTF_8)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    })
-}
-
 val java11 = sourceSets.create("java11") {
     java {
         srcDir("src/main/java11")
@@ -180,6 +112,9 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     exclude("**/package-info.class")
     exclude("META-INF/maven/**")
 
+    exclude("META-INF/services/javax.imageio.spi.ImageReaderSpi")
+    exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
+
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
         exclude(dependency("libs:JFoenix:.*"))
@@ -187,7 +122,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2023 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
             "Main-Class" to "org.jackhuang.hmcl.Main",
             "Multi-Release" to "true",
             "Implementation-Version" to project.version,
@@ -236,33 +171,10 @@ fun createExecutable(suffix: String, header: String) {
 }
 
 tasks.processResources {
-    fun convertToBSS(resource: String) {
-        doFirst {
-            val cssFile = File(projectDir, "src/main/resources/$resource")
-            val bssFile = File(projectDir, "build/compiled-resources/${resource.substring(0, resource.length - 4)}.bss")
-            bssFile.parentFile.mkdirs()
-            javaexec {
-                classpath = sourceSets["main"].compileClasspath
-                mainClass.set("com.sun.javafx.css.parser.Css2Bin")
-                args(cssFile, bssFile)
-            }
-        }
-    }
-
-    from("build/compiled-resources")
-
-    convertToBSS("assets/css/root.css")
-    convertToBSS("assets/css/blue.css")
-
     into("META-INF/versions/11") {
         from(sourceSets["java11"].output)
     }
     dependsOn(tasks["java11Classes"])
-
-    into("assets") {
-        from(project.layout.buildDirectory.file("openjfx-dependencies.json"))
-    }
-    dependsOn(rootProject.tasks["generateOpenJFXDependencies"])
 }
 
 val makeExecutables = tasks.create("makeExecutables") {
@@ -277,6 +189,56 @@ tasks.build {
     dependsOn(makeExecutables)
 }
 
+fun parseToolOptions(options: String?): List<String> {
+    if (options == null)
+        return listOf()
+
+    val builder = StringBuilder()
+    val result = mutableListOf<String>()
+
+    var offset = 0
+
+    loop@ while (offset < options.length) {
+        val ch = options[offset]
+        if (Character.isWhitespace(ch)) {
+            if (builder.isNotEmpty()) {
+                result += builder.toString()
+                builder.clear()
+            }
+
+            while (offset < options.length && Character.isWhitespace(options[offset])) {
+                offset++
+            }
+
+            continue@loop
+        }
+
+        if (ch == '\'' || ch == '"') {
+            offset++
+
+            while (offset < options.length) {
+                val ch2 = options[offset++]
+                if (ch2 != ch) {
+                    builder.append(ch2)
+                } else {
+                    continue@loop
+                }
+            }
+
+            throw GradleException("Unmatched quote in $options")
+        }
+
+        builder.append(ch)
+        offset++
+    }
+
+    if (builder.isNotEmpty()) {
+        result += builder.toString()
+    }
+
+    return result
+}
+
 tasks.create<JavaExec>("run") {
     dependsOn(tasks.jar)
 
@@ -284,4 +246,23 @@ tasks.create<JavaExec>("run") {
 
     classpath = files(jarPath)
     workingDir = rootProject.rootDir
+
+    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    jvmArgs(vmOptions)
+
+    doFirst {
+        logger.quiet("HMCL_JAVA_OPTS: $vmOptions")
+    }
+}
+
+// mcmod data
+
+tasks.register<ParseModDataTask>("parseModData") {
+    inputFile.set(layout.projectDirectory.file("mod.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/mod_data.txt"))
+}
+
+tasks.register<ParseModDataTask>("parseModPackData") {
+    inputFile.set(layout.projectDirectory.file("modpack.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
 }

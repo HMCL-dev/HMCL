@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class ChecksumMismatchException extends ArtifactMalformedException {
+public final class ChecksumMismatchException extends ArtifactMalformedException {
 
     private final String algorithm;
     private final String expectedChecksum;

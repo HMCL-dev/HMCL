@@ -1,0 +1,78 @@
+[
+  {
+    "image" : "/assets/img/yushijinhun.png",
+    "title" : "yushijinhun",
+    "subtitleLocalized" : "about.thanks_to.yushijinhun.statement",
+    "externalLink" : "https://github.com/yushijinhun"
+  },
+  {
+    "image" : "/assets/img/bangbang93.png",
+    "title" : "bangbang93",
+    "subtitleLocalized" : "about.thanks_to.bangbang93.statement",
+    "externalLink" : "https://www.bangbang93.com"
+  },
+  {
+    "image" : "/assets/img/glavo.png",
+    "title" : "Glavo",
+    "subtitleLocalized" : "about.thanks_to.glavo.statement",
+    "externalLink" : "https://github.com/Glavo"
+  },
+  {
+    "image" : "/assets/img/zekerzhayard.png",
+    "title" : "ZekerZhayard",
+    "subtitleLocalized" : "about.thanks_to.zekerzhayard.statement",
+    "externalLink" : "https://github.com/ZekerZhayard"
+  },
+  {
+    "image" : "/assets/img/zkitefly.png",
+    "title" : "Zkitefly",
+    "subtitleLocalized" : "about.thanks_to.zkitefly.statement",
+    "externalLink" : "https://github.com/zkitefly"
+  },
+  {
+    "image" : "/assets/img/burningtnt.png",
+    "title" : "Burning_TNT",
+    "subtitleLocalized" : "about.thanks_to.burningtnt.statement",
+    "externalLink" : "https://github.com/burningtnt"
+  },
+  {
+    "image" : "/assets/img/ShulkerSakura.png",
+    "title" : "ShulkerSakura",
+    "subtitleLocalized" : "about.thanks_to.shulkersakura.statement",
+    "externalLink" : "https://github.com/ShulkerSakura"
+  },
+  {
+    "image" : "/assets/img/gamerteam.png",
+    "title" : "gamerteam",
+    "subtitleLocalized" : "about.thanks_to.gamerteam.statement",
+    "externalLink" : "https://github.com/ZhaiSoul"
+  },
+  {
+    "image" : "/assets/img/red_lnn.png",
+    "title" : "Red_lnn",
+    "subtitleLocalized" : "about.thanks_to.red_lnn.statement"
+  },
+  {
+    "image" : "/assets/img/mcmod.png",
+    "titleLocalized" : "about.thanks_to.mcmod",
+    "subtitleLocalized" : "about.thanks_to.mcmod.statement",
+    "externalLink" : "https://www.mcmod.cn"
+  },
+  {
+    "image" : "/assets/img/chest.png",
+    "titleLocalized" : "about.thanks_to.mcbbs",
+    "subtitleLocalized" : "about.thanks_to.mcbbs.statement"
+  },
+  {
+    "image" : "/assets/img/github.png",
+    "titleLocalized" : "about.thanks_to.contributors",
+    "subtitleLocalized" : "about.thanks_to.contributors.statement",
+    "externalLink" : "https://github.com/HMCL-dev/HMCL/graphs/contributors"
+  },
+  {
+    "image" : "/assets/img/icon.png",
+    "titleLocalized" : "about.thanks_to.users",
+    "subtitleLocalized" : "about.thanks_to.users.statement",
+    "externalLink" : "https://docs.hmcl.net/groups.html"
+  }
+]

@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.Arguments;
@@ -78,6 +77,12 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                     builder.version("forge", c.getVersion());
             });
 
+            Optional<MultiMCManifest.MultiMCManifestComponent> neoForge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.neoforged")).findAny();
+            neoForge.ifPresent(c -> {
+                if (c.getVersion() != null)
+                    builder.version("neoforge", c.getVersion());
+            });
+
             Optional<MultiMCManifest.MultiMCManifestComponent> liteLoader = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("com.mumfrey.liteloader")).findAny();
             liteLoader.ifPresent(c -> {
                 if (c.getVersion() != null)
@@ -122,8 +127,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), new TypeToken<ModpackConfiguration<MultiMCInstanceConfiguration>>() {
-                }.getType());
+                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                 if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
@@ -195,6 +199,14 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             Path jarmods = root.resolve("jarmods");
             if (Files.exists(jarmods))
                 FileUtils.copyDirectory(jarmods, repository.getVersionRoot(name).toPath().resolve("jarmods"));
+
+            String iconKey = this.manifest.getIconKey();
+            if (iconKey != null) {
+                Path iconFile = root.resolve(iconKey + ".png");
+                if (Files.exists(iconFile)) {
+                    FileUtils.copyFile(iconFile, repository.getVersionRoot(name).toPath().resolve("icon.png"));
+                }
+            }
         }
 
         dependencies.add(repository.saveAsync(version));

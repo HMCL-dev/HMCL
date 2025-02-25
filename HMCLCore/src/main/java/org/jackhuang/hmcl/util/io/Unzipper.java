@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
-public class Unzipper {
+public final class Unzipper {
     private final Path zipFile, dest;
     private boolean replaceExistentFile = false;
     private boolean terminateIfSubDirectoryNotExists = false;

@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -38,8 +37,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Complete the CurseForge version.
@@ -54,7 +55,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final String version;
     private CurseManifest manifest;
     private Set<? extends ModpackFile> selectedFiles;
-    private final List<Task<?>> dependencies = new ArrayList<>();
+    private List<Task<?>> dependencies;
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
     private final AtomicInteger finished = new AtomicInteger(0);
@@ -96,7 +97,7 @@ public final class CurseCompletionTask extends Task<Void> {
                     this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
                 }
             } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Unable to read CurseForge modpack manifest.json", e);
+                LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
 
         setStage("hmcl.modpack.download");
@@ -130,11 +131,11 @@ public final class CurseCompletionTask extends Task<Void> {
                                     RemoteMod.File remoteFile = CurseForgeRemoteModRepository.MODS.getModFile(Integer.toString(file.getProjectID()), Integer.toString(file.getFileID()));
                                     return file.withFileName(remoteFile.getFilename()).withURL(remoteFile.getUrl());
                                 } catch (FileNotFoundException fof) {
-                                    Logging.LOG.log(Level.WARNING, "Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
+                                    LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.getProjectID() + ", " + file.getFileID(), fof);
                                     notFound.set(true);
                                     return file;
                                 } catch (IOException | JsonParseException e) {
-                                    Logging.LOG.log(Level.WARNING, "Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
+                                    LOG.warning("Unable to fetch the file name projectID=" + file.getProjectID() + ", fileID=" + file.getFileID(), e);
                                     allNameKnown.set(false);
                                     return file;
                                 }
@@ -147,35 +148,63 @@ public final class CurseCompletionTask extends Task<Void> {
         FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
         FileUtils.writeText(new File(root, "files.json"), JsonUtils.GSON.toJson(selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList())));
 
-        File resourcePacks = new File(repository.getVersionRoot(modManager.getVersion()), "resourcepacks");
-        for (CurseManifestFile file : newManifest.getFiles()) {
-            if (selectedFiles != null && !selectedFiles.contains(file))
-                continue; // Not selected
-            if (StringUtils.isNotBlank(file.getFileName())) {
-                RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
-                File target;
-                if (((CurseAddon) mod.getData()).getClassId() == 12) {
-                    target = new File(resourcePacks, file.getFileName());
-                    if (target.exists()) {
-                        continue;
-                    }
-                } else {
-                    if (modManager.hasSimpleMod(file.getFileName())) {
-                        continue;
-                    }
-                    target = modManager.getSimpleModPath(file.getFileName()).toFile();
-                }
+        File versionRoot = repository.getVersionRoot(modManager.getVersion());
+        File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
+        finished.set(0);
+        dependencies = newManifest.getFiles()
+                .stream().parallel()
+                .filter(f -> f.getFileName() != null)
+                .filter(f -> selectedFiles == null || selectedFiles.contains(file))
+                .flatMap(f -> {
+                    try {
+                        File path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
+                        if (path == null) {
+                            return Stream.empty();
+                        }
 
-                FileDownloadTask task = new FileDownloadTask(file.getUrl(), target);
-                task.setCacheRepository(dependency.getCacheRepository());
-                task.setCaching(true);
-                dependencies.add(task.withCounter("hmcl.modpack.download"));
-            }
-        }
+                        FileDownloadTask task = new FileDownloadTask(f.getUrl(), path);
+                        task.setCacheRepository(dependency.getCacheRepository());
+                        task.setCaching(true);
+                        return Stream.of(task.withCounter("hmcl.modpack.download"));
+                    } catch (IOException e) {
+                        LOG.warning("Could not query api.curseforge.com for mod: " + f.getProjectID() + ", " + f.getFileID(), e);
+                        return Stream.empty(); // Ignore this file.
+                    } finally {
+                        updateProgress(finished.incrementAndGet(), newManifest.getFiles().size());
+                    }
+                })
+                .collect(Collectors.toList());
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
             notifyPropertiesChanged();
+        }
+    }
+
+    /**
+     * Guess where to store the file.
+     * @param file The file.
+     * @param resourcePacksRoot ./resourcepacks.
+     * @param shaderPacksRoot ./shaderpacks.
+     * @return ./resourcepacks/$filename or ./shaderpacks/$filename or ./mods/$filename if the file doesn't exist. null if the file existed.
+     * @throws IOException If IOException was encountered during getting data from CurseForge.
+     */
+    private File guessFilePath(CurseManifestFile file, File resourcePacksRoot, File shaderPacksRoot) throws IOException {
+        RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
+        int classID = ((CurseAddon) mod.getData()).getClassId();
+        String fileName = file.getFileName();
+        switch (classID) {
+            case 12: // Resource pack
+            case 6552: { // Shader pack
+                File res = new File(classID == 12 ? resourcePacksRoot : shaderPacksRoot, fileName);
+                return res.exists() ? null : res;
+            }
+            default: {
+                if (modManager.hasSimpleMod(fileName)) {
+                    return null;
+                }
+                return modManager.getSimpleModPath(fileName).toFile();
+            }
         }
     }
 

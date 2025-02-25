@@ -20,19 +20,21 @@ package org.jackhuang.hmcl.util.io;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huang
@@ -193,7 +195,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -206,7 +208,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -277,6 +279,33 @@ public final class FileUtils {
         });
     }
 
+    public static boolean hasKnownDesktop() {
+        if (!OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+            return true;
+
+        String desktops = System.getenv("XDG_CURRENT_DESKTOP");
+        if (desktops == null) {
+            desktops = System.getenv("XDG_SESSION_DESKTOP");
+        }
+
+        if (desktops == null) {
+            return false;
+        }
+        for (String desktop : desktops.split(":")) {
+            switch (desktop.toLowerCase(Locale.ROOT)) {
+                case "gnome":
+                case "xfce":
+                case "kde":
+                case "mate":
+                case "deepin":
+                case "x-cinnamon":
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Move file to trash.
      * <p>
@@ -293,6 +322,56 @@ public final class FileUtils {
      * @see FileUtils#isMovingToTrashSupported()
      */
     public static boolean moveToTrash(File file) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
+            if (!file.exists()) {
+                return false;
+            }
+
+            String xdgData = System.getenv("XDG_DATA_HOME");
+
+            Path trashDir;
+            if (StringUtils.isNotBlank(xdgData)) {
+                trashDir = Paths.get(xdgData, "Trash");
+            } else {
+                trashDir = Paths.get(System.getProperty("user.home"), ".local/share/Trash");
+            }
+
+            Path infoDir = trashDir.resolve("info");
+            Path filesDir = trashDir.resolve("files");
+
+            try {
+                Files.createDirectories(infoDir);
+                Files.createDirectories(filesDir);
+
+                String name = file.getName();
+
+                Path infoFile = infoDir.resolve(name + ".trashinfo");
+                Path targetFile = filesDir.resolve(name);
+
+                int n = 0;
+                while (Files.exists(infoFile) || Files.exists(targetFile)) {
+                    n++;
+                    infoFile = infoDir.resolve(name + "." + n + ".trashinfo");
+                    targetFile = filesDir.resolve(name + "." + n);
+                }
+
+                String time = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+                if (file.isDirectory()) {
+                    FileUtils.copyDirectory(file.toPath(), targetFile);
+                } else {
+                    FileUtils.copyFile(file.toPath(), targetFile);
+                }
+
+                FileUtils.writeText(infoFile, "[Trash Info]\nPath=" + file.getAbsolutePath() + "\nDeletionDate=" + time + "\n");
+                FileUtils.forceDelete(file);
+            } catch (IOException e) {
+                LOG.warning("Failed to move " + file + " to trash", e);
+                return false;
+            }
+
+            return true;
+        }
+
         try {
             java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
             Method moveToTrash = desktop.getClass().getMethod("moveToTrash", File.class);
@@ -309,6 +388,10 @@ public final class FileUtils {
      * @return true if the method exists.
      */
     public static boolean isMovingToTrashSupported() {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
+            return true;
+        }
+
         try {
             java.awt.Desktop.class.getMethod("moveToTrash", File.class);
             return true;
@@ -503,5 +586,9 @@ public final class FileUtils {
         }
 
         Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static String printFileStructure(Path path, int maxDepth) throws IOException {
+        return DirectoryStructurePrinter.list(path, maxDepth);
     }
 }

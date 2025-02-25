@@ -1,0 +1,46 @@
+name: Build HMCLauncher
+
+on:
+  push:
+    paths:
+      - 'HMCLauncher/**'
+      - '.github/workflows/build-launcher.yml'
+  pull_request:
+    paths:
+      - 'HMCLauncher/**'
+      - '.github/workflows/build-launcher.yml'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x86
+      - name: Build HMCLauncher
+        run: msbuild /p:Configuration=Release /t:Rebuild /verbosity:detailed .\HMCLauncher\
+      - name: Copy HMCLauncher to assets
+        run: Copy-Item .\HMCLauncher\Release\HMCLauncher.exe -Destination .\HMCL\src\main\resources\assets\HMCLauncher.exe
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+          java-package: 'jdk+fx'
+      - name: Build with Gradle
+        run: .\gradlew makeExecutables --no-daemon
+        env:
+          MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
+          MICROSOFT_AUTH_SECRET: ${{ secrets.MICROSOFT_AUTH_SECRET }}
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+      - name: Get short SHA
+        run: echo "SHORT_SHA=$("${{ github.sha }}".SubString(0, 7))" >> $env:GITHUB_ENV
+      - name: Copy HMCLauncher to libs
+        run: Copy-Item .\HMCLauncher\Release\HMCLauncher.exe -Destination .\HMCL\build\libs\HMCLauncher.exe
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: HMCLauncher-${{ env.SHORT_SHA }}
+          path: HMCL/build/libs/*.exe

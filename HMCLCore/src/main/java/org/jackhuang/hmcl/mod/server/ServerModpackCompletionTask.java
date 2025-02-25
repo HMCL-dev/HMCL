@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.server;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -27,7 +26,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Logging;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -40,8 +38,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ServerModpackCompletionTask extends Task<Void> {
 
@@ -66,11 +65,10 @@ public class ServerModpackCompletionTask extends Task<Void> {
             try {
                 File manifestFile = repository.getModpackConfiguration(version);
                 if (manifestFile.exists()) {
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), new TypeToken<ModpackConfiguration<ServerModpackManifest>>() {
-                    }.getType());
+                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModpackConfiguration.typeOf(ServerModpackManifest.class));
                 }
             } catch (Exception e) {
-                Logging.LOG.log(Level.WARNING, "Unable to read Server modpack manifest.json", e);
+                LOG.warning("Unable to read Server modpack manifest.json", e);
             }
         } else {
             this.manifest = manifest;

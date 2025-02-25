@@ -32,7 +32,6 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 @DefaultProperty("content")
 public class SpinnerPane extends Control {
@@ -101,18 +100,19 @@ public class SpinnerPane extends Control {
         return onFailedActionProperty().get();
     }
 
-    private ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
+    private final ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
         @Override
         protected void invalidated() {
             setEventHandler(FAILED_ACTION, get());
         }
     };
+
     @Override
-    protected Skin createDefaultSkin() {
+    protected SkinBase<SpinnerPane> createDefaultSkin() {
         return new Skin(this);
     }
 
-    private static class Skin extends SkinBase<SpinnerPane> {
+    private static final class Skin extends SkinBase<SpinnerPane> {
         private final JFXSpinner spinner = new JFXSpinner();
         private final StackPane contentPane = new StackPane();
         private final StackPane topPane = new StackPane();
@@ -122,20 +122,18 @@ public class SpinnerPane extends Control {
         @SuppressWarnings("FieldCanBeLocal") // prevent from gc.
         private final InvalidationListener observer;
 
-        protected Skin(SpinnerPane control) {
+        Skin(SpinnerPane control) {
             super(control);
 
             topPane.getChildren().setAll(spinner);
             topPane.getStyleClass().add("notice-pane");
             failedPane.getStyleClass().add("notice-pane");
             failedPane.getChildren().setAll(failedReasonLabel);
-            failedPane.onMouseClickedProperty().bind(
-                    BindingMapping.of(control.onFailedAction)
-                            .map(actionHandler -> (e -> {
-                                if (actionHandler != null) {
-                                    actionHandler.handle(new Event(FAILED_ACTION));
-                                }
-                            })));
+            FXUtils.onClicked(failedPane, () -> {
+                EventHandler<Event> action = control.getOnFailedAction();
+                if (action != null)
+                    action.handle(new Event(FAILED_ACTION));
+            });
 
             FXUtils.onChangeAndOperate(getSkinnable().content, newValue -> {
                 if (newValue == null) {
@@ -148,12 +146,12 @@ public class SpinnerPane extends Control {
 
             observer = FXUtils.observeWeak(() -> {
                 if (getSkinnable().getFailedReason() != null) {
-                    root.setContent(failedPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(failedPane, ContainerAnimations.FADE);
                     failedReasonLabel.setText(getSkinnable().getFailedReason());
                 } else if (getSkinnable().isLoading()) {
-                    root.setContent(topPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(topPane, ContainerAnimations.FADE);
                 } else {
-                    root.setContent(contentPane, ContainerAnimations.FADE.getAnimationProducer());
+                    root.setContent(contentPane, ContainerAnimations.FADE);
                 }
             }, getSkinnable().loadingProperty(), getSkinnable().failedReasonProperty());
         }

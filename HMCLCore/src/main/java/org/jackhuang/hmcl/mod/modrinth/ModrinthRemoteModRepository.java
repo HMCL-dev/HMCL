@@ -32,12 +32,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
@@ -92,9 +94,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                 pair("index", convertSortType(sort))
         );
         Response<ProjectSearchResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/v2/search", query))
-                .getJson(new TypeToken<Response<ProjectSearchResult>>() {
-                }.getType());
-        return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int)Math.ceil((double)response.totalHits / pageSize));
+                .getJson(Response.typeOf(ProjectSearchResult.class));
+        return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
     }
 
     @Override
@@ -133,13 +134,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
         id = StringUtils.removePrefix(id, "local-");
         List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
-                .getJson(new TypeToken<List<ProjectVersion>>() {
-                }.getType());
+                .getJson(listTypeOf(ProjectVersion.class));
         return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
     }
 
     public List<Category> getCategoriesImpl() throws IOException {
-        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(new TypeToken<List<Category>>() {}.getType());
+        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
         return categories.stream().filter(category -> category.getProjectType().equals(projectType)).collect(Collectors.toList());
     }
 
@@ -212,13 +212,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final String team;
 
-        private final Date published;
+        private final Instant published;
 
-        private final Date updated;
+        private final Instant updated;
 
         private final List<String> versions;
 
-        public Project(String slug, String title, String description, List<String> categories, String body, String projectType, int downloads, String iconUrl, String id, String team, Date published, Date updated, List<String> versions) {
+        public Project(String slug, String title, String description, List<String> categories, String body, String projectType, int downloads, String iconUrl, String id, String team, Instant published, Instant updated, List<String> versions) {
             this.slug = slug;
             this.title = title;
             this.description = description;
@@ -274,11 +274,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return team;
         }
 
-        public Date getPublished() {
+        public Instant getPublished() {
             return published;
         }
 
-        public Date getUpdated() {
+        public Instant getUpdated() {
             return updated;
         }
 
@@ -383,7 +383,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final String authorId;
 
         @SerializedName("date_published")
-        private final Date datePublished;
+        private final Instant datePublished;
 
         private final int downloads;
 
@@ -392,7 +392,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final List<ProjectVersionFile> files;
 
-        public ProjectVersion(String name, String versionNumber, String changelog, List<Dependency> dependencies, List<String> gameVersions, String versionType, List<String> loaders, boolean featured, String id, String projectId, String authorId, Date datePublished, int downloads, String changelogUrl, List<ProjectVersionFile> files) {
+        public ProjectVersion(String name, String versionNumber, String changelog, List<Dependency> dependencies, List<String> gameVersions, String versionType, List<String> loaders, boolean featured, String id, String projectId, String authorId, Instant datePublished, int downloads, String changelogUrl, List<ProjectVersionFile> files) {
             this.name = name;
             this.versionNumber = versionNumber;
             this.changelog = changelog;
@@ -454,7 +454,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return authorId;
         }
 
-        public Date getDatePublished() {
+        public Instant getDatePublished() {
             return datePublished;
         }
 
@@ -589,15 +589,15 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final List<String> versions;
 
         @SerializedName("date_created")
-        private final Date dateCreated;
+        private final Instant dateCreated;
 
         @SerializedName("date_modified")
-        private final Date dateModified;
+        private final Instant dateModified;
 
         @SerializedName("latest_version")
         private final String latestVersion;
 
-        public ProjectSearchResult(String slug, String title, String description, List<String> categories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Date dateCreated, Date dateModified, String latestVersion) {
+        public ProjectSearchResult(String slug, String title, String description, List<String> categories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Instant dateCreated, Instant dateModified, String latestVersion) {
             this.slug = slug;
             this.title = title;
             this.description = description;
@@ -653,11 +653,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return versions;
         }
 
-        public Date getDateCreated() {
+        public Instant getDateCreated() {
             return dateCreated;
         }
 
-        public Date getDateModified() {
+        public Instant getDateModified() {
             return dateModified;
         }
 
@@ -697,6 +697,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     public static class Response<T> {
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(Class<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType);
+        }
+
         private final int offset;
 
         private final int limit;
