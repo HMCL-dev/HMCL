@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,7 +38,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 public class Decorator extends Control {
     private final ListProperty<Node> drawer = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -67,6 +74,29 @@ public class Decorator extends Control {
         setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
+
+        FXUtils.onChange(primaryStage.iconifiedProperty(), iconified -> {
+            if (!iconified && AnimationUtils.isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                this.setOpacity(0);
+                Timeline timeline = new Timeline(
+                        new KeyFrame(Duration.millis(0),
+                                new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
+                                new KeyValue(this.translateYProperty(), 200, FXUtils.EASE),
+                                new KeyValue(this.scaleXProperty(), 0.3, FXUtils.EASE),
+                                new KeyValue(this.scaleYProperty(), 0.3, FXUtils.EASE),
+                                new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
+                        ),
+                        new KeyFrame(Duration.millis(200),
+                                new KeyValue(this.opacityProperty(), 1, FXUtils.EASE),
+                                new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
+                                new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
+                                new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
+                                new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
+                        )
+                );
+                timeline.play();
+            }
+        });
     }
 
     public Stage getPrimaryStage() {
@@ -239,7 +269,28 @@ public class Decorator extends Control {
     }
 
     public void minimize() {
-        primaryStage.setIconified(true);
+        if (AnimationUtils.playWindowAnimation()) {
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.millis(0),
+                            new KeyValue(this.opacityProperty(), 1, FXUtils.EASE),
+                            new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
+                            new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
+                            new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
+                            new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
+                    ),
+                    new KeyFrame(Duration.millis(200),
+                            new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
+                            new KeyValue(this.translateYProperty(), 200, FXUtils.EASE),
+                            new KeyValue(this.scaleXProperty(), 0.3, FXUtils.EASE),
+                            new KeyValue(this.scaleYProperty(), 0.3, FXUtils.EASE),
+                            new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
+                    )
+            );
+            timeline.setOnFinished(event -> primaryStage.setIconified(true));
+            timeline.play();
+        } else {
+            primaryStage.setIconified(true);
+        }
     }
 
     public void close() {

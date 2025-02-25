@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXSnackbar;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -55,7 +54,6 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.StackContainerPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -89,8 +87,8 @@ public class DecoratorController {
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
         decorator.setOnCloseButtonAction(() -> {
-            if (AnimationUtils.isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-                Timeline timeline = (new Timeline(
+            if (AnimationUtils.playWindowAnimation()) {
+                Timeline timeline = new Timeline(
                         new KeyFrame(Duration.millis(0),
                                 new KeyValue(decorator.opacityProperty(), 1, FXUtils.EASE),
                                 new KeyValue(decorator.translateYProperty(), 0, FXUtils.EASE),
@@ -105,7 +103,7 @@ public class DecoratorController {
                                 new KeyValue(decorator.scaleYProperty(), 0.3, FXUtils.EASE),
                                 new KeyValue(decorator.scaleZProperty(), 0.3, FXUtils.EASE)
                         )
-                ));
+                );
                 timeline.setOnFinished(event -> Launcher.stopApplication());
                 timeline.play();
             } else {

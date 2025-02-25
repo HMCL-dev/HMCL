@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -50,7 +49,6 @@ import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -274,19 +272,17 @@ public final class Controllers {
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
 
-        if (AnimationUtils.isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-            Decorator node = decorator.getDecorator();
-            Interpolator ease = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+        if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
-                            new KeyValue(node.opacityProperty(), 0, ease),
-                            new KeyValue(node.scaleXProperty(), 0.3, ease),
-                            new KeyValue(node.scaleYProperty(), 0.3, ease)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.3, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.3, FXUtils.EASE)
                     ),
                     new KeyFrame(Duration.millis(800),
-                            new KeyValue(node.opacityProperty(), 1, ease),
-                            new KeyValue(node.scaleXProperty(), 1, ease),
-                            new KeyValue(node.scaleYProperty(), 1, ease)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE)
                     )
             );
             timeline.play();

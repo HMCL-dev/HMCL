@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.animation;
 
 import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 /**
  * @author Glavo
@@ -39,5 +40,9 @@ public final class AnimationUtils {
 
     public static boolean isAnimationEnabled() {
         return enabled;
+    }
+
+    public static boolean playWindowAnimation() {
+        return isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
     }
 }
