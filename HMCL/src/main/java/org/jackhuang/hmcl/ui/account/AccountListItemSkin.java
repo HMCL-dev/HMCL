@@ -60,6 +60,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         BorderPane.setAlignment(chkSelected, Pos.CENTER);
         chkSelected.selectedProperty().bind(skinnable.selectedProperty());
         root.setLeft(chkSelected);
+        FXUtils.onClicked(root, skinnable::fire);
 
         HBox center = new HBox();
         center.setSpacing(8);
