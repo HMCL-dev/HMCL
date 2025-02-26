@@ -97,9 +97,9 @@ public class DecoratorController {
                         ),
                         new KeyFrame(Duration.millis(200),
                                 new KeyValue(decorator.opacityProperty(), 0, FXUtils.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 0.7, FXUtils.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 0.7, FXUtils.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.7, FXUtils.EASE)
+                                new KeyValue(decorator.scaleXProperty(), 0.8, FXUtils.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 0.8, FXUtils.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.8, FXUtils.EASE)
                         )
                 );
                 timeline.setOnFinished(event -> Launcher.stopApplication());

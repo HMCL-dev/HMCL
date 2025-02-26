@@ -67,6 +67,8 @@ public class Decorator extends Control {
     private final ReadOnlyBooleanWrapper allowMove = new ReadOnlyBooleanWrapper();
     private final ReadOnlyBooleanWrapper dragging = new ReadOnlyBooleanWrapper();
 
+    private boolean playRestoreMinimizeAnimation = false;
+
     public Decorator(Stage primaryStage) {
         this.primaryStage = primaryStage;
 
@@ -74,28 +76,31 @@ public class Decorator extends Control {
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
 
-        FXUtils.onChange(primaryStage.iconifiedProperty(), iconified -> {
-            if (!iconified && AnimationUtils.playWindowAnimation()) {
-                this.setOpacity(0);
-                Timeline timeline = new Timeline(
-                        new KeyFrame(Duration.millis(0),
-                                new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
-                                new KeyValue(this.translateYProperty(), 200, FXUtils.EASE),
-                                new KeyValue(this.scaleXProperty(), 0.3, FXUtils.EASE),
-                                new KeyValue(this.scaleYProperty(), 0.3, FXUtils.EASE),
-                                new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
-                        ),
-                        new KeyFrame(Duration.millis(200),
-                                new KeyValue(this.opacityProperty(), 1, FXUtils.EASE),
-                                new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
-                                new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
-                                new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
-                                new KeyValue(this.scaleZProperty(), 1, FXUtils.EASE)
-                        )
-                );
-                timeline.play();
-            }
-        });
+        if (AnimationUtils.isAnimationEnabled()) {
+            FXUtils.onChange(primaryStage.iconifiedProperty(), iconified -> {
+                if (playRestoreMinimizeAnimation && !iconified) {
+                    playRestoreMinimizeAnimation = false;
+                    Timeline timeline = new Timeline(
+                            new KeyFrame(Duration.millis(0),
+                                    new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
+                                    new KeyValue(this.translateYProperty(), 200, FXUtils.EASE),
+                                    new KeyValue(this.scaleXProperty(), 0.4, FXUtils.EASE),
+                                    new KeyValue(this.scaleYProperty(), 0.4, FXUtils.EASE),
+                                    new KeyValue(this.scaleZProperty(), 0.4, FXUtils.EASE)
+                            ),
+                            new KeyFrame(Duration.millis(200),
+                                    new KeyValue(this.opacityProperty(), 1, FXUtils.EASE),
+                                    new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
+                                    new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
+                                    new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
+                                    new KeyValue(this.scaleZProperty(), 1, FXUtils.EASE)
+                            )
+                    );
+                    timeline.play();
+                }
+            });
+        }
+
     }
 
     public Stage getPrimaryStage() {
@@ -280,12 +285,15 @@ public class Decorator extends Control {
                     new KeyFrame(Duration.millis(200),
                             new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
                             new KeyValue(this.translateYProperty(), 200, FXUtils.EASE),
-                            new KeyValue(this.scaleXProperty(), 0.3, FXUtils.EASE),
-                            new KeyValue(this.scaleYProperty(), 0.3, FXUtils.EASE),
-                            new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
+                            new KeyValue(this.scaleXProperty(), 0.4, FXUtils.EASE),
+                            new KeyValue(this.scaleYProperty(), 0.4, FXUtils.EASE),
+                            new KeyValue(this.scaleZProperty(), 0.4, FXUtils.EASE)
                     )
             );
-            timeline.setOnFinished(event -> primaryStage.setIconified(true));
+            timeline.setOnFinished(event -> {
+                playRestoreMinimizeAnimation = true;
+                primaryStage.setIconified(true);
+            });
             timeline.play();
         } else {
             primaryStage.setIconified(true);

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -275,14 +276,16 @@ public final class Controllers {
         if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.3, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.3, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, Interpolator.EASE_OUT),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.7, Interpolator.EASE_OUT),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.7, Interpolator.EASE_OUT),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.7, Interpolator.EASE_OUT)
                     ),
                     new KeyFrame(Duration.millis(600),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, Interpolator.EASE_OUT),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, Interpolator.EASE_OUT),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, Interpolator.EASE_OUT),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, Interpolator.EASE_OUT)
                     )
             );
             timeline.play();
