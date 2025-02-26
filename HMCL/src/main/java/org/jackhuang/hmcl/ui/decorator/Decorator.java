@@ -291,9 +291,7 @@ public class Decorator extends Control {
                             new KeyValue(this.scaleZProperty(), 0.4, FXUtils.EASE)
                     )
             );
-            timeline.setOnFinished(event -> {
-                primaryStage.setIconified(true);
-            });
+            timeline.setOnFinished(event -> primaryStage.setIconified(true));
             timeline.play();
         } else {
             primaryStage.setIconified(true);
