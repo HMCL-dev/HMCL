@@ -281,7 +281,7 @@ public class Decorator extends Control {
                             new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
                             new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
                             new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
-                            new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
+                            new KeyValue(this.scaleZProperty(), 1, FXUtils.EASE)
                     ),
                     new KeyFrame(Duration.millis(200),
                             new KeyValue(this.opacityProperty(), 0, FXUtils.EASE),
