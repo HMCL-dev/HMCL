@@ -274,6 +274,7 @@ public class Decorator extends Control {
 
     public void minimize() {
         if (AnimationUtils.playWindowAnimation()) {
+            playRestoreMinimizeAnimation = true;
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
                             new KeyValue(this.opacityProperty(), 1, FXUtils.EASE),
@@ -291,7 +292,6 @@ public class Decorator extends Control {
                     )
             );
             timeline.setOnFinished(event -> {
-                playRestoreMinimizeAnimation = true;
                 primaryStage.setIconified(true);
             });
             timeline.play();
