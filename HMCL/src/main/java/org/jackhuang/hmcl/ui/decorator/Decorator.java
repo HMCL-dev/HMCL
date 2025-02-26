@@ -76,7 +76,7 @@ public class Decorator extends Control {
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
 
-        if (AnimationUtils.isAnimationEnabled()) {
+        if (AnimationUtils.playWindowAnimation()) {
             FXUtils.onChange(primaryStage.iconifiedProperty(), iconified -> {
                 if (playRestoreMinimizeAnimation && !iconified) {
                     playRestoreMinimizeAnimation = false;
