@@ -91,17 +91,15 @@ public class DecoratorController {
                 Timeline timeline = new Timeline(
                         new KeyFrame(Duration.millis(0),
                                 new KeyValue(decorator.opacityProperty(), 1, FXUtils.EASE),
-                                new KeyValue(decorator.translateYProperty(), 0, FXUtils.EASE),
                                 new KeyValue(decorator.scaleXProperty(), 1, FXUtils.EASE),
                                 new KeyValue(decorator.scaleYProperty(), 1, FXUtils.EASE),
                                 new KeyValue(decorator.scaleZProperty(), 0.3, FXUtils.EASE)
                         ),
-                        new KeyFrame(Duration.millis(400),
+                        new KeyFrame(Duration.millis(200),
                                 new KeyValue(decorator.opacityProperty(), 0, FXUtils.EASE),
-                                new KeyValue(decorator.translateYProperty(), 200, FXUtils.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 0.3, FXUtils.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 0.3, FXUtils.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.3, FXUtils.EASE)
+                                new KeyValue(decorator.scaleXProperty(), 0.7, FXUtils.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 0.7, FXUtils.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.7, FXUtils.EASE)
                         )
                 );
                 timeline.setOnFinished(event -> Launcher.stopApplication());

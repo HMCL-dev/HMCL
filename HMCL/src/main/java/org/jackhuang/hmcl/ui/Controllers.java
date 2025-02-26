@@ -279,7 +279,7 @@ public final class Controllers {
                             new KeyValue(decorator.getDecorator().scaleXProperty(), 0.3, FXUtils.EASE),
                             new KeyValue(decorator.getDecorator().scaleYProperty(), 0.3, FXUtils.EASE)
                     ),
-                    new KeyFrame(Duration.millis(800),
+                    new KeyFrame(Duration.millis(600),
                             new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
                             new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
                             new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE)

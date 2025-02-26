@@ -42,7 +42,6 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 public class Decorator extends Control {
     private final ListProperty<Node> drawer = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -91,7 +90,7 @@ public class Decorator extends Control {
                                 new KeyValue(this.translateYProperty(), 0, FXUtils.EASE),
                                 new KeyValue(this.scaleXProperty(), 1, FXUtils.EASE),
                                 new KeyValue(this.scaleYProperty(), 1, FXUtils.EASE),
-                                new KeyValue(this.scaleZProperty(), 0.3, FXUtils.EASE)
+                                new KeyValue(this.scaleZProperty(), 1, FXUtils.EASE)
                         )
                 );
                 timeline.play();
