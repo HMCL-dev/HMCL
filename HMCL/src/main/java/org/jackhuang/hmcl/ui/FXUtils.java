@@ -1111,8 +1111,8 @@ public final class FXUtils {
                 String text = label.getText();
                 if (text != null && !text.isEmpty()) {
                     copyText(label.getText());
+                    e.consume();
                 }
-                e.consume();
             }
         });
     }
