@@ -31,7 +31,6 @@ import javafx.beans.value.*;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -253,20 +252,6 @@ public final class FXUtils {
                 return oldDispatcher.dispatchEvent(event, tail);
             }
         });
-    }
-
-    public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
-        });
-    }
-
-    public static Node wrapMargin(Node node, Insets insets) {
-        StackPane.setMargin(node, insets);
-        return new StackPane(node);
     }
 
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
@@ -620,22 +605,6 @@ public final class FXUtils {
             T value = property.getValue();
             textField.setText(converter == null ? (String) value : converter.toString(value));
         }
-    }
-
-    public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().unbindBidirectional(property);
-    }
-
-    public static void bindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().unbindBidirectional(property);
     }
 
     private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
