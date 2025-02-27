@@ -276,15 +276,6 @@ public final class FXUtils {
         });
     }
 
-    public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
-        });
-    }
-
     public static Node wrapMargin(Node node, Insets insets) {
         StackPane.setMargin(node, insets);
         return new StackPane(node);
