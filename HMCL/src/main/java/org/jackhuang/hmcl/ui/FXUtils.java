@@ -96,8 +96,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -1100,6 +1099,18 @@ public final class FXUtils {
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
+                e.consume();
+            }
+        });
+    }
+
+    public static void copyOnDoubleClick(Labeled label) {
+        label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                String text = label.getText();
+                if (text != null && !text.isEmpty()) {
+                    copyText(label.getText());
+                }
                 e.consume();
             }
         });
