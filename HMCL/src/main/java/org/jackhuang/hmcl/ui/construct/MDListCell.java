@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.binding.DoubleBinding;
 import javafx.css.PseudoClass;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.Region;
@@ -45,9 +46,11 @@ public abstract class MDListCell<T> extends ListCell<T> {
         Region clippedContainer = (Region) listView.lookup(".clipped-container");
         setPrefWidth(0);
         if (clippedContainer != null) {
-            maxWidthProperty().bind(clippedContainer.widthProperty());
-            prefWidthProperty().bind(clippedContainer.widthProperty());
-            minWidthProperty().bind(clippedContainer.widthProperty());
+            DoubleBinding converted = clippedContainer.widthProperty().subtract(1);
+
+            maxWidthProperty().bind(converted);
+            prefWidthProperty().bind(converted);
+            minWidthProperty().bind(converted);
         }
     }
 

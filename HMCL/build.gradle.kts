@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -25,7 +26,7 @@ val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
         if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
     }
 }
-val versionRoot = System.getenv("VERSION_ROOT") ?: "3.5"
+val versionRoot = System.getenv("VERSION_ROOT") ?: "3.6"
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
@@ -36,6 +37,7 @@ version = "$versionRoot.$buildNumber"
 
 dependencies {
     implementation(project(":HMCLCore"))
+    implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
     // implementation("com.jfoenix:jfoenix:9.0.10")
 }
 
@@ -43,7 +45,6 @@ fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getIn
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
-        "MD5" to "md5",
         "SHA-1" to "sha1",
         "SHA-256" to "sha256",
         "SHA-512" to "sha512"
@@ -115,6 +116,9 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     exclude("**/package-info.class")
     exclude("META-INF/maven/**")
 
+    exclude("META-INF/services/javax.imageio.spi.ImageReaderSpi")
+    exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
+
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
         // exclude(dependency("com.jfoenix:.*:.*"))
@@ -122,7 +126,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2024 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
             "Main-Class" to "org.jackhuang.hmcl.Main",
             "Multi-Release" to "true",
             "Implementation-Version" to project.version,
@@ -254,4 +258,16 @@ tasks.create<JavaExec>("run") {
     doFirst {
         logger.quiet("HMCL_JAVA_OPTS: $vmOptions")
     }
+}
+
+// mcmod data
+
+tasks.register<ParseModDataTask>("parseModData") {
+    inputFile.set(layout.projectDirectory.file("mod.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/mod_data.txt"))
+}
+
+tasks.register<ParseModDataTask>("parseModPackData") {
+    inputFile.set(layout.projectDirectory.file("modpack.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
 }

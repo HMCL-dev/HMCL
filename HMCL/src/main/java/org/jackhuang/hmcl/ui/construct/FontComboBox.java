@@ -35,6 +35,8 @@ public class FontComboBox extends JFXComboBox<String> {
     private boolean loaded = false;
 
     public FontComboBox() {
+        setMinWidth(260);
+
         styleProperty().bind(Bindings.concat("-fx-font-family: \"", valueProperty(), "\""));
 
         setCellFactory(listView -> new JFXListCell<String>() {

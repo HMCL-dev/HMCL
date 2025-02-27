@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -27,6 +28,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ public class ModrinthCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
+    private final ModManager modManager;
     private final String version;
     private ModrinthManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -69,6 +72,7 @@ public class ModrinthCompletionTask extends Task<Void> {
     public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
+        this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
 
@@ -99,18 +103,28 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = repository.getRunDirectory(version).toPath();
+        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path modsDirectory = runDirectory.resolve("mods");
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
                 continue;
-            Path filePath = runDirectory.resolve(file.getPath());
-            if (!Files.exists(filePath) && !file.getDownloads().isEmpty()) {
-                FileDownloadTask task = new FileDownloadTask(file.getDownloads().get(0), filePath.toFile());
-                task.setCacheRepository(dependency.getCacheRepository());
-                task.setCaching(true);
-                dependencies.add(task.withCounter("hmcl.modpack.download"));
-            }
+            if (file.getDownloads().isEmpty())
+                continue;
+
+            Path filePath = runDirectory.resolve(file.getPath()).toAbsolutePath().normalize();
+            if (!filePath.startsWith(runDirectory))
+                throw new IOException("Unsecure path: " + file.getPath());
+
+            if (Files.exists(filePath))
+                continue;
+            if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
+                continue;
+
+            FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
+            task.setCacheRepository(dependency.getCacheRepository());
+            task.setCaching(true);
+            dependencies.add(task.withCounter("hmcl.modpack.download"));
         }
 
         if (!dependencies.isEmpty()) {

@@ -31,6 +31,8 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -70,6 +72,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -131,6 +134,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                     });
 
+            onEscPressed(searchField, closeSearchBar::fire);
+
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
             // Toolbar Normal
@@ -168,6 +173,16 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             changeToolbar(toolbarSelecting);
                     });
             root.getContent().add(toolbarPane);
+
+            // Clear selection when pressing ESC
+            root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    }
+                }
+            });
         }
 
         {
@@ -193,6 +208,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     Controllers.dialog(new ModInfoDialog(selectedItem));
                 }
             });
+
+            // ListViewBehavior would consume ESC pressed event, preventing us from handling it
+            // So we ignore it here
+            ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             center.setContent(listView);
             root.getContent().add(center);

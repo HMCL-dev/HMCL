@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.FutureCallback;
 
 import java.util.concurrent.CompletableFuture;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class InputDialogPane extends JFXDialogLayout {
@@ -68,6 +69,8 @@ public class InputDialogPane extends JFXDialogLayout {
                 lblCreationWarning.setText(msg);
             });
         });
+
+        onEscPressed(this, cancelButton::fire);
     }
 
     public CompletableFuture<String> getCompletableFuture() {

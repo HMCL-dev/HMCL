@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
 
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
@@ -69,61 +68,19 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
-        {
-            AdvancedListBox sideBar = new AdvancedListBox()
-                    .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("settings.type.global.manage"));
-                        settingsItem.setLeftGraphic(wrap(SVG.GAMEPAD));
-                        settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(gameTab));
-                        settingsItem.setOnAction(e -> tab.select(gameTab));
-                    })
-                    .addNavigationDrawerItem(javaItem -> {
-                        javaItem.setTitle(i18n("java.management"));
-                        javaItem.setLeftGraphic(wrap(SVG.WRENCH_OUTLINE));
-                        javaItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(javaManagementTab));
-                        javaItem.setOnAction(e -> tab.select(javaManagementTab));
-                    })
-                    .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
-                    .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("settings.launcher.general"));
-                        settingsItem.setLeftGraphic(wrap(SVG.APPLICATION_OUTLINE));
-                        settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(settingsTab));
-                        settingsItem.setOnAction(e -> tab.select(settingsTab));
-                    })
-                    .addNavigationDrawerItem(personalizationItem -> {
-                        personalizationItem.setTitle(i18n("settings.launcher.appearance"));
-                        personalizationItem.setLeftGraphic(wrap(SVG.STYLE_OUTLINE));
-                        personalizationItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(personalizationTab));
-                        personalizationItem.setOnAction(e -> tab.select(personalizationTab));
-                    })
-                    .addNavigationDrawerItem(downloadItem -> {
-                        downloadItem.setTitle(i18n("download"));
-                        downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD_OUTLINE));
-                        downloadItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(downloadTab));
-                        downloadItem.setOnAction(e -> tab.select(downloadTab));
-                    })
-                    .startCategory(i18n("help").toUpperCase(Locale.ROOT))
-                    .addNavigationDrawerItem(helpItem -> {
-                        helpItem.setTitle(i18n("help"));
-                        helpItem.setLeftGraphic(wrap(SVG.HELP_CIRCLE_OUTLINE));
-                        helpItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(helpTab));
-                        helpItem.setOnAction(e -> tab.select(helpTab));
-                    })
-                    .addNavigationDrawerItem(feedbackItem -> {
-                        feedbackItem.setTitle(i18n("feedback"));
-                        feedbackItem.setLeftGraphic(wrap(SVG.MESSAGE_ALERT_OUTLINE));
-                        feedbackItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(feedbackTab));
-                        feedbackItem.setOnAction(e -> tab.select(feedbackTab));
-                    })
-                    .addNavigationDrawerItem(aboutItem -> {
-                        aboutItem.setTitle(i18n("about"));
-                        aboutItem.setLeftGraphic(wrap(SVG.INFORMATION_OUTLINE));
-                        aboutItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(aboutTab));
-                        aboutItem.setOnAction(e -> tab.select(aboutTab));
-                    });
-            FXUtils.setLimitWidth(sideBar, 200);
-            setLeft(sideBar);
-        }
+        AdvancedListBox sideBar = new AdvancedListBox()
+                .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.GAMEPAD)
+                .addNavigationDrawerTab(tab, javaManagementTab, i18n("java.management"), SVG.WRENCH_OUTLINE)
+                .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
+                .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.APPLICATION_OUTLINE)
+                .addNavigationDrawerTab(tab, personalizationTab, i18n("settings.launcher.appearance"), SVG.STYLE_OUTLINE)
+                .addNavigationDrawerTab(tab, downloadTab, i18n("download"), SVG.DOWNLOAD_OUTLINE)
+                .startCategory(i18n("help").toUpperCase(Locale.ROOT))
+                .addNavigationDrawerTab(tab, helpTab, i18n("help"), SVG.HELP_CIRCLE_OUTLINE)
+                .addNavigationDrawerTab(tab, feedbackTab, i18n("feedback"), SVG.MESSAGE_ALERT_OUTLINE)
+                .addNavigationDrawerTab(tab, aboutTab, i18n("about"), SVG.INFORMATION_OUTLINE);
+        FXUtils.setLimitWidth(sideBar, 200);
+        setLeft(sideBar);
 
         setCenter(transitionPane);
     }

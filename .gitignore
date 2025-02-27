@@ -20,6 +20,7 @@ minecraft-exported-crash-info*
 /HMCLCore/build/
 /HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
+/buildSrc/build/
 
 # idea
 .idea

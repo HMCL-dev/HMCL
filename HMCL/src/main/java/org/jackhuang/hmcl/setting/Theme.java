@@ -24,7 +24,10 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
@@ -56,29 +59,41 @@ public class Theme {
             Color.web("#B71C1C")  // red
     };
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private static Optional<Font> font;
+    private static final Lazy<Font> FONT = new Lazy<>(() -> {
+        String[] fileNames = {"font.ttf", "font.otf", "font.woff"};
 
-    private static Optional<Font> tryLoadFont() {
-        //noinspection OptionalAssignedToNull
-        if (font != null) {
-            return font;
-        }
+        for (String fileName : fileNames) {
+            Path path = Paths.get(fileName).toAbsolutePath();
+            if (Files.isRegularFile(path)) {
+                try {
+                    Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);
+                    if (font != null) {
+                        return font;
+                    }
+                } catch (MalformedURLException ignored) {
+                }
 
-        Path path = Paths.get("font.ttf");
-        if (!Files.isRegularFile(path)) {
-            path = Paths.get("font.otf");
-        }
-
-        if (Files.isRegularFile(path)) {
-            try {
-                return font = Optional.ofNullable(Font.loadFont(path.toAbsolutePath().toUri().toURL().toExternalForm(), 0));
-            } catch (MalformedURLException ignored) {
+                LOG.warning("Failed to load font " + path);
             }
         }
 
-        return font = Optional.empty();
-    }
+        for (String fileName : fileNames) {
+            Path path = Metadata.HMCL_DIRECTORY.resolve(fileName);
+            if (Files.isRegularFile(path)) {
+                try {
+                    Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);
+                    if (font != null) {
+                        return font;
+                    }
+                } catch (MalformedURLException ignored) {
+                }
+
+                LOG.warning("Failed to load font " + path);
+            }
+        }
+
+        return null;
+    });
 
     public static Theme getTheme() {
         Theme theme = config().getTheme();
@@ -123,6 +138,45 @@ public class Theme {
                 opacity);
     }
 
+    private static Pair<String, String> parseFontStyle(String style) {
+        if (style == null) {
+            return null;
+        }
+
+        style = style.toLowerCase(Locale.ROOT);
+
+        String weight;
+        String posture;
+
+        if (style.contains("thin")) {
+            weight = "100";
+        } else if (style.contains("extralight") || style.contains("extra light") || style.contains("ultralight") | style.contains("ultra light")) {
+            weight = "200";
+        } else if (style.contains("medium")) {
+            weight = "500";
+        } else if (style.contains("semibold") || style.contains("semi bold") || style.contains("demibold") || style.contains("demi bold")) {
+            weight = "600";
+        } else if (style.contains("extrabold") || style.contains("extra bold") || style.contains("ultrabold") || style.contains("ultra bold")) {
+            weight = "800";
+        } else if (style.contains("black") || style.contains("heavy")) {
+            weight = "900";
+        } else if (style.contains("light")) {
+            weight = "lighter";
+        } else if (style.contains("bold")) {
+            weight = "bold";
+        } else {
+            weight = null;
+        }
+
+        if (style.contains("italic") || style.contains("oblique")) {
+            posture = "italic";
+        } else {
+            posture = null;
+        }
+
+        return Pair.pair(weight, posture);
+    }
+
     public String[] getStylesheets(String overrideFontFamily) {
         String css = "/assets/css/blue.css";
 
@@ -130,12 +184,12 @@ public class Theme {
                 ? System.getProperty("hmcl.font.override", System.getenv("HMCL_FONT"))
                 : overrideFontFamily;
 
-        String fontStyle = null;
+        Pair<String, String> fontStyle = null;
         if (fontFamily == null) {
-            Optional<Font> font = tryLoadFont();
-            if (font.isPresent()) {
-                fontFamily = font.get().getFamily();
-                fontStyle = font.get().getStyle();
+            Font font = FONT.get();
+            if (font != null) {
+                fontFamily = font.getFamily();
+                fontStyle = parseFontStyle(font.getStyle());
             }
         }
 
@@ -153,10 +207,18 @@ public class Theme {
                     .append("-fx-base-text-fill:").append(getColorDisplayName(getForegroundColor())).append(";")
                     .append("-theme-thumb:").append(rgba(paint, 0.7)).append(";");
 
-            if (fontFamily != null) {
+            if (fontFamily == null)
+                // https://github.com/HMCL-dev/HMCL/pull/3423
+                themeBuilder.append("-fx-font-family: -fx-base-font-family;");
+            else
                 themeBuilder.append("-fx-font-family:\"").append(fontFamily).append("\";");
-                if (fontStyle != null && !fontStyle.isEmpty())
-                    themeBuilder.append("-fx-font-style:\"").append(fontStyle).append("\";");
+
+            if (fontStyle != null) {
+                if (fontStyle.getKey() != null)
+                    themeBuilder.append("-fx-font-weight:").append(fontStyle.getKey()).append(";");
+
+                if (fontStyle.getValue() != null)
+                    themeBuilder.append("-fx-font-style:").append(fontStyle.getValue()).append(";");
             }
 
             themeBuilder.append('}');
