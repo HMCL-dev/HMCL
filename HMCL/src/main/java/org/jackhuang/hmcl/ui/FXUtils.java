@@ -1105,6 +1105,18 @@ public final class FXUtils {
         });
     }
 
+    public static void copyOnDoubleClick(Labeled label) {
+        label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                String text = label.getText();
+                if (text != null && !text.isEmpty()) {
+                    copyText(label.getText());
+                    e.consume();
+                }
+            }
+        });
+    }
+
     public static void copyText(String text) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);

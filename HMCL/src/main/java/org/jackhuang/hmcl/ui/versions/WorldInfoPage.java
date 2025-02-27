@@ -103,6 +103,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
                 Label worldNameLabel = new Label();
+                FXUtils.copyOnDoubleClick(worldNameLabel);
                 worldNameLabel.setText(world.getWorldName());
                 BorderPane.setAlignment(worldNameLabel, Pos.CENTER_RIGHT);
                 worldNamePane.setRight(worldNameLabel);
@@ -115,6 +116,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 gameVersionPane.setLeft(label);
 
                 Label gameVersionLabel = new Label();
+                FXUtils.copyOnDoubleClick(gameVersionLabel);
                 gameVersionLabel.setText(world.getGameVersion());
                 BorderPane.setAlignment(gameVersionLabel, Pos.CENTER_RIGHT);
                 gameVersionPane.setRight(gameVersionLabel);
@@ -127,6 +129,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 randomSeedPane.setLeft(label);
 
                 Label randomSeedLabel = new Label();
+                FXUtils.copyOnDoubleClick(randomSeedLabel);
                 BorderPane.setAlignment(randomSeedLabel, Pos.CENTER_RIGHT);
                 randomSeedPane.setRight(randomSeedLabel);
 
@@ -143,6 +146,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 lastPlayedPane.setLeft(label);
 
                 Label lastPlayedLabel = new Label();
+                FXUtils.copyOnDoubleClick(lastPlayedLabel);
                 lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
                 BorderPane.setAlignment(lastPlayedLabel, Pos.CENTER_RIGHT);
                 lastPlayedPane.setRight(lastPlayedLabel);
@@ -155,6 +159,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 timePane.setLeft(label);
 
                 Label timeLabel = new Label();
+                FXUtils.copyOnDoubleClick(timeLabel);
                 BorderPane.setAlignment(timeLabel, Pos.CENTER_RIGHT);
                 timePane.setRight(timeLabel);
 
@@ -258,6 +263,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 locationPane.setLeft(label);
 
                 Label locationLabel = new Label();
+                FXUtils.copyOnDoubleClick(locationLabel);
                 BorderPane.setAlignment(locationLabel, Pos.CENTER_RIGHT);
                 locationPane.setRight(locationLabel);
 
@@ -276,6 +282,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 lastDeathLocationPane.setLeft(label);
 
                 Label lastDeathLocationLabel = new Label();
+                FXUtils.copyOnDoubleClick(lastDeathLocationLabel);
                 BorderPane.setAlignment(lastDeathLocationLabel, Pos.CENTER_RIGHT);
                 lastDeathLocationPane.setRight(lastDeathLocationLabel);
 
@@ -297,6 +304,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 spawnPane.setLeft(label);
 
                 Label spawnLabel = new Label();
+                FXUtils.copyOnDoubleClick(spawnLabel);
                 BorderPane.setAlignment(spawnLabel, Pos.CENTER_RIGHT);
                 spawnPane.setRight(spawnLabel);
 
