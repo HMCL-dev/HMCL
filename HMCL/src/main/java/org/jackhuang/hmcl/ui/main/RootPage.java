@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
+
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -179,7 +181,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             chatItem.setLeftGraphic(wrap(SVG.CHAT));
             chatItem.setActionButtonVisible(false);
             chatItem.setTitle(i18n("chat"));
-            chatItem.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/groups.html"));
+            chatItem.setOnAction(e -> FXUtils.openLink(Metadata.GROUPS_URL));
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
