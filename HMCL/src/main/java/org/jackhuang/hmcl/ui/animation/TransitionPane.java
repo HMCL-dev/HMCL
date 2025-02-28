@@ -26,6 +26,8 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TransitionPane extends StackPane implements AnimationHandler {
+    private static final Duration DEFAULT_DURATION = Duration.millis(200);
+
     private Duration duration;
     private Node previousNode, currentNode;
 
@@ -55,7 +57,7 @@ public class TransitionPane extends StackPane implements AnimationHandler {
     }
 
     public void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, Duration.millis(160));
+        setContent(newView, transition, DEFAULT_DURATION);
     }
 
     public void setContent(Node newView, AnimationProducer transition, Duration duration) {
