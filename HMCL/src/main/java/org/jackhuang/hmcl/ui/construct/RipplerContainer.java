@@ -129,7 +129,7 @@ public class RipplerContainer extends StackPane {
                     interpolateBackground(1 - frac);
                 }
             }.play());
-        } else{
+        } else {
             setOnMouseEntered(e -> interpolateBackground(1));
             setOnMouseExited(e -> interpolateBackground(0));
         }
