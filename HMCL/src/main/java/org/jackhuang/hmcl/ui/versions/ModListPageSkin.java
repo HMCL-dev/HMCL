@@ -398,6 +398,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
+            FXUtils.copyOnDoubleClick(description);
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
