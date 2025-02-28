@@ -51,7 +51,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.Navigator;
-import org.jackhuang.hmcl.ui.construct.StackContainerPane;
+import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,7 @@ public class DecoratorController {
     private final Navigator navigator;
 
     private JFXDialog dialog;
-    private StackContainerPane dialogPane;
+    private JFXDialogPane dialogPane;
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
@@ -380,7 +380,7 @@ public class DecoratorController {
                 return;
             }
             dialog = new JFXDialog();
-            dialogPane = new StackContainerPane();
+            dialogPane = new JFXDialogPane();
 
             dialog.setContent(dialogPane);
             decorator.capableDraggingWindow(dialog);
@@ -423,18 +423,21 @@ public class DecoratorController {
                 .ifPresent(handler -> node.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
 
         if (dialog != null) {
-            dialogPane.pop(node);
+            JFXDialogPane pane = dialogPane;
 
-            if (node instanceof DialogAware) {
-                ((DialogAware) node).onDialogClosed();
-            }
-
-            if (dialogPane.getChildren().isEmpty()) {
+            if (pane.size() == 1 && pane.peek().orElse(null) == node) {
+                dialog.setOnDialogClosed(e -> pane.pop(node));
                 dialog.close();
                 dialog = null;
                 dialogPane = null;
 
                 navigator.setDisable(false);
+            } else {
+                pane.pop(node);
+            }
+
+            if (node instanceof DialogAware) {
+                ((DialogAware) node).onDialogClosed();
             }
         }
     }
