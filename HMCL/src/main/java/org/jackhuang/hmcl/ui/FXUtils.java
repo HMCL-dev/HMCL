@@ -30,6 +30,7 @@ import javafx.beans.property.Property;
 import javafx.beans.value.*;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -187,6 +188,17 @@ public final class FXUtils {
         }
         runnable.run();
         return originalListener;
+    }
+
+    public static void onPreTouch(Node node, Runnable action) {
+        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                LOG.info("Pre-touch " + node);
+                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
+                action.run();
+            }
+        });
     }
 
     public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {
