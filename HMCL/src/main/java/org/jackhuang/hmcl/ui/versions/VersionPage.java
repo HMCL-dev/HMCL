@@ -77,7 +77,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
         tab.select(versionSettingsTab);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
+        transitionPane.setContent(versionSettingsTab.getNode(), ContainerAnimations.NONE);
+        FXUtils.onChange(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
