@@ -30,7 +30,6 @@ import javafx.beans.property.Property;
 import javafx.beans.value.*;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
-import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
