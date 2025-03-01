@@ -71,7 +71,7 @@ public class TransitionPane extends StackPane implements AnimationHandler {
             return;
         }
 
-        if (AnimationUtils.isAnimationEnabled()) {
+        if (AnimationUtils.isAnimationEnabled() && transition != ContainerAnimations.NONE) {
             transition.init(this);
 
             // runLater or "init" will not work
