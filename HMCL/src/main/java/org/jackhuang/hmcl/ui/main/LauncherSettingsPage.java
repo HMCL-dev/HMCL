@@ -62,9 +62,9 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab = new TabHeader(gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
-        gameTab.initializeIfNeeded();
         gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
+        transitionPane.setContent(gameTab.getNode(), ContainerAnimations.NONE);
+        FXUtils.onChange(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
