@@ -551,8 +551,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
             FXUtils.unbind(txtServerIP, lastVersionSetting.serverIpProperty());
-            FXUtils.unbindBoolean(chkAutoAllocate, lastVersionSetting.autoMemoryProperty());
-            FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
+            chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
+            chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
             FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
@@ -586,8 +586,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
         gameDirCustomOption.bindBidirectional(versionSetting.gameDirProperty());
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
-        FXUtils.bindBoolean(chkAutoAllocate, versionSetting.autoMemoryProperty());
-        FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
+        chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
+        chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());

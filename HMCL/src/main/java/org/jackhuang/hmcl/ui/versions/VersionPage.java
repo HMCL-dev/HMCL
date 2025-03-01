@@ -66,7 +66,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
     private String preferredVersionName = null;
 
-    {
+    public VersionPage() {
         versionSettingsTab.setNodeSupplier(loadVersionFor(() -> new VersionSettingsPage(false)));
         installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
         modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
@@ -77,7 +77,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
         tab.select(versionSettingsTab);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
+        transitionPane.setContent(versionSettingsTab.getNode(), ContainerAnimations.NONE);
+        FXUtils.onChange(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 

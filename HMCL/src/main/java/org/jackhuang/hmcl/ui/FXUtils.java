@@ -31,7 +31,6 @@ import javafx.beans.value.*;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -274,11 +273,6 @@ public final class FXUtils {
                 return oldDispatcher.dispatchEvent(event, tail);
             }
         });
-    }
-
-    public static Node wrapMargin(Node node, Insets insets) {
-        StackPane.setMargin(node, insets);
-        return new StackPane(node);
     }
 
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
@@ -632,22 +626,6 @@ public final class FXUtils {
             T value = property.getValue();
             textField.setText(converter == null ? (String) value : converter.toString(value));
         }
-    }
-
-    public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().unbindBidirectional(property);
-    }
-
-    public static void bindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().unbindBidirectional(property);
     }
 
     private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
@@ -1113,6 +1091,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void copyOnDoubleClick(Labeled label) {
+        label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                String text = label.getText();
+                if (text != null && !text.isEmpty()) {
+                    copyText(label.getText());
+                    e.consume();
+                }
             }
         });
     }
