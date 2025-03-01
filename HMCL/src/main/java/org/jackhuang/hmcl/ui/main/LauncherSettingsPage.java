@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import org.jackhuang.hmcl.setting.Profile;

@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.event.EventHandler;
-import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -153,7 +151,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     Versions.modifyGameSettings(profile, version);
                 }
             });
-            FXUtils.onPreTouch(gameListItem, Controllers::getVersionPage);
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -176,7 +173,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
-            FXUtils.onPreTouch(launcherSettingsItem, Controllers::getSettingsPage);
 
             // sixth item in left sidebar
             AdvancedListItem chatItem = new AdvancedListItem();

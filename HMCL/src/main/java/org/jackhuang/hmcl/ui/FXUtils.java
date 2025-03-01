@@ -190,17 +190,6 @@ public final class FXUtils {
         return originalListener;
     }
 
-    public static void onPreTouch(Node node, Runnable action) {
-        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                LOG.info("Pre-touch " + node);
-                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
-                action.run();
-            }
-        });
-    }
-
     public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {
         if (condition.getAsBoolean()) Platform.runLater(() -> runLaterIf(condition, runnable));
         else runnable.run();
