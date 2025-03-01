@@ -227,6 +227,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
             if (canBack) {
                 JFXButton backNavButton = new JFXButton();
+                backNavButton.setFocusTraversable(false);
                 backNavButton.setGraphic(SVG.BACK.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 backNavButton.getStyleClass().add("jfx-decorator-button");
                 backNavButton.ripplerFillProperty().set(Theme.whiteFill());
@@ -238,6 +239,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
             if (canClose) {
                 JFXButton closeNavButton = new JFXButton();
+                closeNavButton.setFocusTraversable(false);
                 closeNavButton.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 closeNavButton.getStyleClass().add("jfx-decorator-button");
                 closeNavButton.ripplerFillProperty().set(Theme.whiteFill());
