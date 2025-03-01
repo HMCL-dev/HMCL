@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.mod.multimc;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.ModpackProvider;
-import org.jackhuang.hmcl.mod.ModpackUpdateTask;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -34,6 +31,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public final class MultiMCModpackProvider implements ModpackProvider {
@@ -50,7 +48,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
@@ -105,7 +103,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
             MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, instanceStream, manifest);
             return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg) {
                 @Override
-                public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+                public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name, Set<? extends ModpackFile> selectedFiles) {
                     return new MultiMCModpackInstallTask(dependencyManager, zipFile, this, cfg, name);
                 }
             };
