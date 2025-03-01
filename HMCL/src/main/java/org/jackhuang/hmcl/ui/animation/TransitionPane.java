@@ -77,11 +77,11 @@ public class TransitionPane extends StackPane implements AnimationHandler {
             // runLater or "init" will not work
             Platform.runLater(() -> {
                 Timeline newAnimation = new Timeline();
-                newAnimation.getKeyFrames().addAll(transition.animate(this));
-                newAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
+                newAnimation.getKeyFrames().setAll(transition.animate(this));
+                newAnimation.setOnFinished(e -> {
                     setMouseTransparent(false);
                     getChildren().remove(previousNode);
-                }));
+                });
                 FXUtils.playAnimation(this, "transition_pane", newAnimation);
             });
         } else {
