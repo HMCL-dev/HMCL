@@ -66,12 +66,12 @@ public class TransitionPane extends StackPane implements AnimationHandler {
         updateContent(newView);
 
         if (previousNode == EMPTY_PANE) {
-            setMouseTransparent(false);
             getChildren().setAll(newView);
             return;
         }
 
         if (AnimationUtils.isAnimationEnabled() && transition != ContainerAnimations.NONE) {
+            setMouseTransparent(true);
             transition.init(this);
 
             // runLater or "init" will not work
@@ -85,7 +85,6 @@ public class TransitionPane extends StackPane implements AnimationHandler {
                 FXUtils.playAnimation(this, "transition_pane", newAnimation);
             });
         } else {
-            setMouseTransparent(false);
             getChildren().remove(previousNode);
         }
     }
@@ -100,8 +99,6 @@ public class TransitionPane extends StackPane implements AnimationHandler {
 
         if (previousNode == newView)
             previousNode = EMPTY_PANE;
-
-        setMouseTransparent(true);
 
         currentNode = newView;
 
