@@ -58,7 +58,7 @@ public class HintPane extends VBox {
                 svg = SVG.CHECK_CIRCLE;
                 break;
             case WARNING:
-                svg = SVG.ALERT_OUTLINE;
+                svg = SVG.WARNING;
                 break;
             case QUESTION:
                 svg = SVG.HELP;

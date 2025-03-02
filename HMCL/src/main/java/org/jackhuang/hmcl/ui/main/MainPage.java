@@ -247,10 +247,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setOnAction(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));
             StackPane graphic = new StackPane();
-            Node svg = SVG.TRIANGLE.createIcon(Theme.foregroundFillBinding(), 10, 10);
+            Node svg = SVG.ARROW_DROP_UP.createIcon(Theme.foregroundFillBinding(), 32, 32);
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
-            graphic.setTranslateX(12);
+            graphic.setTranslateX(5);
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(graphic);
 

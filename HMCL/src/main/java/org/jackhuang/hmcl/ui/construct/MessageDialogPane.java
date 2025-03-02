@@ -83,7 +83,7 @@ public final class MessageDialogPane extends HBox {
                 svg = SVG.CHECK_CIRCLE;
                 break;
             case WARNING:
-                svg = SVG.ALERT;
+                svg = SVG.WARNING;
                 break;
             case QUESTION:
                 svg = SVG.HELP;
