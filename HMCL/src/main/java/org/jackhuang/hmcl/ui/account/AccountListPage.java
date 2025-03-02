@@ -119,7 +119,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
-                        item.setLeftGraphic(wrap(SVG.HOST));
+                        item.setLeftGraphic(wrap(SVG.DRESSER));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
 
                         JFXButton btnRemove = new JFXButton();
