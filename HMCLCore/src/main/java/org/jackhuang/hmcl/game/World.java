@@ -69,7 +69,9 @@ public class World {
         if (Files.isRegularFile(iconFile)) {
             try (InputStream inputStream = Files.newInputStream(iconFile)) {
                 icon = new Image(inputStream, 64, 64, true, false);
-            } catch (Throwable e) {
+                if (icon.isError())
+                    throw icon.getException();
+            } catch (Exception e) {
                 LOG.warning("Failed to load world icon", e);
             }
         }
@@ -114,7 +116,9 @@ public class World {
         if (Files.isRegularFile(iconFile)) {
             try (InputStream inputStream = Files.newInputStream(iconFile)) {
                 icon = new Image(inputStream, 64, 64, true, false);
-            } catch (Throwable e) {
+                if (icon.isError())
+                    throw icon.getException();
+            } catch (Exception e) {
                 LOG.warning("Failed to load world icon", e);
             }
         }
