@@ -154,7 +154,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG.LIST));
+            gameItem.setLeftGraphic(wrap(SVG.FORMAT_LIST_BULLETED));
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
