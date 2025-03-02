@@ -91,7 +91,7 @@ public final class MessageDialogPane extends HBox {
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
-        graphic.setGraphic(svg.createIcon(Theme.blackFill(), 40, 40));
+        graphic.setGraphic(svg.createIcon(Theme.blackFill(), 40));
 
         VBox vbox = new VBox();
         HBox.setHgrow(vbox, Priority.ALWAYS);

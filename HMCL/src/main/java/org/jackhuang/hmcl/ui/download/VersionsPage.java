@@ -157,7 +157,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
                         JFXButton btnSearch = new JFXButton(i18n("search"));
                         btnSearch.getStyleClass().add("jfx-tool-bar-button");
-                        btnSearch.setGraphic(wrap(SVG.SEARCH.createIcon(Theme.blackFill(), -1, -1)));
+                        btnSearch.setGraphic(wrap(SVG.SEARCH.createIcon(Theme.blackFill(), -1)));
 
                         searchBar = new HBox();
                         {
@@ -170,7 +170,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
                             JFXButton closeSearchBar = new JFXButton();
                             closeSearchBar.getStyleClass().add("jfx-tool-bar-button");
-                            closeSearchBar.setGraphic(wrap(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1)));
+                            closeSearchBar.setGraphic(wrap(SVG.CLOSE.createIcon(Theme.blackFill(), -1)));
                             closeSearchBar.setOnAction(e -> {
                                 searchField.clear();
                                 rightToolbarPane.setContent(refreshPane, ContainerAnimations.FADE);
@@ -271,7 +271,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkOld.selectedProperty().addListener(listener);
         queryString.addListener(listener);
 
-        btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1)));
+        btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1)));
 
         Holder<RemoteVersionListCell> lastCell = new Holder<>();
         list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, libraryId));
@@ -373,7 +373,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, String libraryId) {
             this.lastCell = lastCell;
             if ("game".equals(libraryId)) {
-                content.getExternalLinkButton().setGraphic(SVG.PUBLIC.createIcon(Theme.blackFill(), -1, -1));
+                content.getExternalLinkButton().setGraphic(SVG.PUBLIC.createIcon(Theme.blackFill(), -1));
                 FXUtils.installFastTooltip(content.getExternalLinkButton(), i18n("wiki.tooltip"));
             }
 

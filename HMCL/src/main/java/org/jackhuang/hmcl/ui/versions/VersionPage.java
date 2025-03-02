@@ -346,7 +346,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon((Paint) null, 20, 20));
+        return wrap(svg.createIcon((Paint) null, 20));
     }
 
     public interface VersionLoadable {

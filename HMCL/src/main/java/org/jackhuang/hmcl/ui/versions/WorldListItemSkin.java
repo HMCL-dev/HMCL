@@ -79,7 +79,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         btnManage.setOnAction(e -> popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight()));
         btnManage.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnManage, Pos.CENTER);
-        btnManage.setGraphic(SVG.MORE_VERT.createIcon(Theme.blackFill(), -1, -1));
+        btnManage.setGraphic(SVG.MORE_VERT.createIcon(Theme.blackFill(), -1));
         right.getChildren().add(btnManage);
         root.setRight(right);
 

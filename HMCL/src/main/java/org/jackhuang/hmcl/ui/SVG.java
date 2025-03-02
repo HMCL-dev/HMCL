@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
@@ -92,6 +90,8 @@ public enum SVG {
     WB_SUNNY("M11 4V1H13V4H11ZM11 23V20H13V23H11ZM20 13V11H23V13H20ZM1 13V11H4V13H1ZM18.7 6.7 17.3 5.3 19.05 3.5 20.5 4.95 18.7 6.7ZM4.95 20.5 3.5 19.05 5.3 17.3 6.7 18.7 4.95 20.5ZM19.05 20.5 17.3 18.7 18.7 17.3 20.5 19.05 19.05 20.5ZM5.3 6.7 3.5 4.95 4.95 3.5 6.7 5.3 5.3 6.7ZM12 18Q9.5 18 7.75 16.25T6 12Q6 9.5 7.75 7.75T12 6Q14.5 6 16.25 7.75T18 12Q18 14.5 16.25 16.25T12 18ZM12 16Q13.675 16 14.8375 14.8375T16 12Q16 10.325 14.8375 9.1625T12 8Q10.325 8 9.1625 9.1625T8 12Q8 13.675 9.1625 14.8375T12 16ZM12 12Z"),
     ;
 
+    public static final double DEFAULT_SIZE = 24;
+
     private final String path;
 
     SVG(String path) {
@@ -102,39 +102,37 @@ public enum SVG {
         return path;
     }
 
-    private static Node createIcon(SVGPath path, double width, double height) {
-        if (width < 0 || height < 0) {
-            StackPane pane = new StackPane(path);
-            pane.setAlignment(Pos.CENTER);
-            return pane;
-        }
+    private static Node createIcon(SVGPath path, double size) {
+        if (size < 0)
+            size = DEFAULT_SIZE;
 
         Group svg = new Group(path);
-        double scale = Math.min(width / 24, height / 24);
+        FXUtils.limitingSize(svg, size, size);
+        double scale = size / DEFAULT_SIZE;
         svg.setScaleX(scale);
         svg.setScaleY(scale);
 
         return svg;
     }
 
-    public Node createIcon(ObservableValue<? extends Paint> fill, double width, double height) {
+    public Node createIcon(ObservableValue<? extends Paint> fill, double size) {
         SVGPath p = new SVGPath();
         p.getStyleClass().add("svg");
         p.setContent(path);
         if (fill != null)
             p.fillProperty().bind(fill);
 
-        return createIcon(p, width, height);
+        return createIcon(p, size);
     }
 
-    public Node createIcon(Paint fill, double width, double height) {
+    public Node createIcon(Paint fill, double size) {
         SVGPath p = new SVGPath();
         p.getStyleClass().add("svg");
         p.setContent(path);
         if (fill != null)
             p.fillProperty().set(fill);
 
-        return createIcon(p, width, height);
+        return createIcon(p, size);
     }
 
 }
