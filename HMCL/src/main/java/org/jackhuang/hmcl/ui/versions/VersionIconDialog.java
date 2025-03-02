@@ -90,7 +90,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createCustomIcon() {
-        Node shape = SVG.PLUS_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 32, 32);
+        Node shape = SVG.ADD_CIRCLE.createIcon(Theme.blackFill(), 32);
         shape.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);
