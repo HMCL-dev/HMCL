@@ -24,7 +24,12 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
 /**
- *
+ * All vector icons used in the launcher.
+ * <p>
+ * Unless otherwise stated,
+ * these icons are from <a href="https://fonts.google.com/icons?icon.size=24&icon.color=%235f6368&icon.query=list&icon.set=Material+Symbols">Material Symbols</a>.
+ * <p>
+ * The default size for all icons is 24 px, the view box for these icons is {@code 0 0 24 24}.
  */
 public enum SVG {
     ADD("M11 13H5V11H11V5H13V11H19V13H13V19H11V13Z"),
