@@ -69,7 +69,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         });
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.GAMEPAD)
+                .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER)
                 .addNavigationDrawerTab(tab, javaManagementTab, i18n("java.management"), SVG.LOCAL_CAFE)
                 .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.TUNE)

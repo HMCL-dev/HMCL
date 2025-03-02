@@ -281,7 +281,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 PopupMenu browseList = new PopupMenu();
                 JFXPopup browsePopup = new JFXPopup(browseList);
                 browseList.getContent().setAll(
-                        new IconedMenuItem(SVG.GAMEPAD, i18n("folder.game"), () -> control.onBrowse(""), browsePopup),
+                        new IconedMenuItem(SVG.STADIA_CONTROLLER, i18n("folder.game"), () -> control.onBrowse(""), browsePopup),
                         new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
                         new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
                         new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),

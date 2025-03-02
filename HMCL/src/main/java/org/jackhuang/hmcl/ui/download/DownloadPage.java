@@ -101,7 +101,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.GAMEPAD)
+                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER)
                 .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2)
                 .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION)
