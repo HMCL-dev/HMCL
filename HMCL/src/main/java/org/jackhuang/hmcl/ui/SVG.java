@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.value.ObservableValue;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
