@@ -67,7 +67,7 @@ public class HintPane extends VBox {
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
 
-        HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16), new Text(type.getDisplayName()));
+        HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 12), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);

@@ -111,18 +111,12 @@ public enum SVG {
     }
 
     private static Node createIcon(SVGPath path, double size) {
-        Node node;
-
-        if (size < 0 || size == DEFAULT_SIZE)
-            node = path;
-        else {
-            node = new Group(path);
+        if (size > 0 && size != DEFAULT_SIZE) {
             double scale = size / DEFAULT_SIZE;
-            node.setScaleX(scale);
-            node.setScaleY(scale);
+            path.setScaleX(scale);
+            path.setScaleY(scale);
         }
-
-        return FXUtils.limitingSize(node, size, size);
+        return path;
     }
 
     public Node createIcon(ObservableValue<? extends Paint> fill, double size) {
