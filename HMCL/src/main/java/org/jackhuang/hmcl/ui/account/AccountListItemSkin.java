@@ -118,7 +118,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             btnMove.setGraphic(SVG.PUBLIC.createIcon(Theme.blackFill(), -1));
             FXUtils.installFastTooltip(btnMove, i18n("account.move_to_global"));
         } else {
-            btnMove.setGraphic(SVG.TRIP.createIcon(Theme.blackFill(), -1));
+            btnMove.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
             FXUtils.installFastTooltip(btnMove, i18n("account.move_to_portable"));
         }
         spinnerMove.setContent(btnMove);
