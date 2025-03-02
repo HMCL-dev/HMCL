@@ -52,7 +52,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), () -> currentSkinnable.rename(), popup),
                 new IconedMenuItem(SVG.CONTENT_COPY, i18n("version.manage.duplicate"), () -> currentSkinnable.duplicate(), popup),
                 new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), () -> currentSkinnable.remove(), popup),
-                new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), () -> currentSkinnable.export(), popup),
+                new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), () -> currentSkinnable.export(), popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.FOLDER, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
         return popup;

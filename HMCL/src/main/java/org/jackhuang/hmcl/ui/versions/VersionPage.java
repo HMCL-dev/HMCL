@@ -285,7 +285,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
                         new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
                         new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
-                        new IconedMenuItem(SVG.APPLICATION, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
+                        new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
                         new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
                         new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
                         new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup)
@@ -300,7 +300,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), control::rename, managementPopup),
                         new IconedMenuItem(SVG.CONTENT_COPY, i18n("version.manage.duplicate"), control::duplicate, managementPopup),
                         new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), control::remove, managementPopup),
-                        new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), control::export, managementPopup),
+                        new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), control::export, managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("version.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("version.manage.remove_assets"), control::clearAssets, managementPopup),
@@ -316,7 +316,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER, null, browseMenuItem -> {
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
                         })
-                        .addNavigationDrawerItem(i18n("settings.game.management"), SVG.WRENCH, null, managementItem -> {
+                        .addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managementItem -> {
                             managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
                         });
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");

@@ -72,7 +72,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.GAMEPAD)
                 .addNavigationDrawerTab(tab, javaManagementTab, i18n("java.management"), SVG.LOCAL_CAFE)
                 .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.APPLICATION)
+                .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.TUNE)
                 .addNavigationDrawerTab(tab, personalizationTab, i18n("settings.launcher.appearance"), SVG.STYLE)
                 .addNavigationDrawerTab(tab, downloadTab, i18n("download"), SVG.DOWNLOAD)
                 .startCategory(i18n("help").toUpperCase(Locale.ROOT))
