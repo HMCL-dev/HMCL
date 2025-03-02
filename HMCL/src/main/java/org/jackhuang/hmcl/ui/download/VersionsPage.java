@@ -373,7 +373,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, String libraryId) {
             this.lastCell = lastCell;
             if ("game".equals(libraryId)) {
-                content.getExternalLinkButton().setGraphic(SVG.PUBLIC.createIcon(Theme.blackFill(), -1));
+                content.getExternalLinkButton().setGraphic(SVG.GLOBE_BOOK.createIcon(Theme.blackFill(), -1));
                 FXUtils.installFastTooltip(content.getExternalLinkButton(), i18n("wiki.tooltip"));
             }
 
