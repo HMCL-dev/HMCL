@@ -82,7 +82,7 @@ public class ForgeOldInstallTask extends Task<Version> {
             }
 
             setResult(installProfile.getVersionInfo()
-                    .setPriority(30000)
+                    .setPriority(Version.PRIORITY_LOADER)
                     .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
                     .setVersion(selfVersion));
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo(), true));
