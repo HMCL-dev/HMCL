@@ -54,7 +54,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), () -> currentSkinnable.remove(), popup),
                 new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), () -> currentSkinnable.export(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.FOLDER, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
         return popup;
     });
 

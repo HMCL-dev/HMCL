@@ -313,7 +313,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
                         })
                         .addNavigationDrawerItem(i18n("version.launch.test"), SVG.ROCKET_LAUNCH, control::testGame)
-                        .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER, null, browseMenuItem -> {
+                        .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
                         })
                         .addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managementItem -> {

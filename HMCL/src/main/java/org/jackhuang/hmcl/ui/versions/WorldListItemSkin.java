@@ -70,7 +70,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         menu.getContent().setAll(
                 new IconedMenuItem(SVG.SETTINGS, i18n("world.datapack"), skinnable::manageDatapacks, popup),
                 new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), skinnable::export, popup),
-                new IconedMenuItem(SVG.FOLDER, i18n("world.reveal"), skinnable::reveal, popup));
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("world.reveal"), skinnable::reveal, popup));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
