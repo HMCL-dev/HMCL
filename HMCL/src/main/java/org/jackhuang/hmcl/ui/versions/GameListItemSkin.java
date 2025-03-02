@@ -44,17 +44,17 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
-                new IconedMenuItem(SVG.ROCKET_LAUNCH_OUTLINE, i18n("version.launch.test"), () -> currentSkinnable.launch(), popup),
+                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), () -> currentSkinnable.launch(), popup),
                 new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> currentSkinnable.generateLaunchScript(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("version.manage.manage"), () -> currentSkinnable.modifyGameSettings(), popup),
+                new IconedMenuItem(SVG.SETTINGS, i18n("version.manage.manage"), () -> currentSkinnable.modifyGameSettings(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.PENCIL_OUTLINE, i18n("version.manage.rename"), () -> currentSkinnable.rename(), popup),
-                new IconedMenuItem(SVG.COPY, i18n("version.manage.duplicate"), () -> currentSkinnable.duplicate(), popup),
-                new IconedMenuItem(SVG.DELETE_OUTLINE, i18n("version.manage.remove"), () -> currentSkinnable.remove(), popup),
+                new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), () -> currentSkinnable.rename(), popup),
+                new IconedMenuItem(SVG.CONTENT_COPY, i18n("version.manage.duplicate"), () -> currentSkinnable.duplicate(), popup),
+                new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), () -> currentSkinnable.remove(), popup),
                 new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), () -> currentSkinnable.export(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.FOLDER_OUTLINE, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
+                new IconedMenuItem(SVG.FOLDER, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
         return popup;
     });
 
@@ -90,7 +90,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnLaunch.setOnAction(e -> skinnable.launch());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(Theme.blackFill(), 24, 24), 24, 24));
             FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
         }
@@ -103,7 +103,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
-            btnManage.setGraphic(FXUtils.limitingSize(SVG.DOTS_VERTICAL.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            btnManage.setGraphic(FXUtils.limitingSize(SVG.MORE_VERT.createIcon(Theme.blackFill(), 24, 24), 24, 24));
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }

@@ -48,7 +48,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
         FXUtils.onClicked(getSkinnable(), () -> getSkinnable().setSelected(true));
 
-        Node left = VersionPage.wrap(SVG.FOLDER_OUTLINE);
+        Node left = VersionPage.wrap(SVG.FOLDER);
         root.setLeft(left);
         BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 

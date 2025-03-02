@@ -157,7 +157,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
                         JFXButton btnSearch = new JFXButton(i18n("search"));
                         btnSearch.getStyleClass().add("jfx-tool-bar-button");
-                        btnSearch.setGraphic(wrap(SVG.MAGNIFY.createIcon(Theme.blackFill(), -1, -1)));
+                        btnSearch.setGraphic(wrap(SVG.SEARCH.createIcon(Theme.blackFill(), -1, -1)));
 
                         searchBar = new HBox();
                         {
@@ -373,7 +373,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, String libraryId) {
             this.lastCell = lastCell;
             if ("game".equals(libraryId)) {
-                content.getExternalLinkButton().setGraphic(SVG.EARTH.createIcon(Theme.blackFill(), -1, -1));
+                content.getExternalLinkButton().setGraphic(SVG.PUBLIC.createIcon(Theme.blackFill(), -1, -1));
                 FXUtils.installFastTooltip(content.getExternalLinkButton(), i18n("wiki.tooltip"));
             }
 

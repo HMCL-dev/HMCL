@@ -49,19 +49,19 @@ public class HintPane extends VBox {
         SVG svg;
         switch (type) {
             case INFO:
-                svg = SVG.INFORMATION_OUTLINE;
+                svg = SVG.INFO;
                 break;
             case ERROR:
-                svg = SVG.CLOSE_CIRCLE_OUTLINE;
+                svg = SVG.ERROR;
                 break;
             case SUCCESS:
-                svg = SVG.CHECK_CIRCLE_OUTLINE;
+                svg = SVG.CHECK_CIRCLE;
                 break;
             case WARNING:
                 svg = SVG.ALERT_OUTLINE;
                 break;
             case QUESTION:
-                svg = SVG.HELP_CIRCLE_OUTLINE;
+                svg = SVG.HELP;
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);

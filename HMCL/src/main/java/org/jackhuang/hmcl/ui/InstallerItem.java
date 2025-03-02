@@ -396,7 +396,7 @@ public class InstallerItem extends Control {
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
-                                    SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1) :
+                                    SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), -1, -1) :
                                     SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1),
                     control.resolvedStateProperty
             ));

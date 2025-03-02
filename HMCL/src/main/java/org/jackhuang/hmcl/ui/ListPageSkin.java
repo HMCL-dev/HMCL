@@ -69,7 +69,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 FXUtils.setLimitHeight(btnAdd, 40);
                 btnAdd.getStyleClass().add("jfx-button-raised-round");
                 btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
-                btnAdd.setGraphic(SVG.PLUS.createIcon(Theme.whiteFill(), -1, -1));
+                btnAdd.setGraphic(SVG.ADD.createIcon(Theme.whiteFill(), -1, -1));
                 btnAdd.setOnAction(e -> skinnable.add());
 
                 JFXButton btnRefresh = new JFXButton();

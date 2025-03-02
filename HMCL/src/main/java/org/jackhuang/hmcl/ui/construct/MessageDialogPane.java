@@ -74,10 +74,10 @@ public final class MessageDialogPane extends HBox {
         SVG svg;
         switch (type) {
             case INFO:
-                svg = SVG.INFO_CIRCLE;
+                svg = SVG.INFO;
                 break;
             case ERROR:
-                svg = SVG.CLOSE_CIRCLE;
+                svg = SVG.ERROR;
                 break;
             case SUCCESS:
                 svg = SVG.CHECK_CIRCLE;
@@ -86,7 +86,7 @@ public final class MessageDialogPane extends HBox {
                 svg = SVG.ALERT;
                 break;
             case QUESTION:
-                svg = SVG.HELP_CIRCLE;
+                svg = SVG.HELP;
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);

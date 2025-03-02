@@ -270,13 +270,13 @@ public final class TaskListPane extends StackPane {
             BorderPane.setMargin(title, new Insets(0, 0, 0, 8));
             setPadding(new Insets(0, 0, 8, 4));
             setCenter(title);
-            setLeft(FXUtils.limitingSize(SVG.DOTS_HORIZONTAL.createIcon(Theme.blackFill(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.MORE_HORIZ.createIcon(Theme.blackFill(), 14, 14), 14, 14));
         }
 
         public void begin() {
             if (started) return;
             started = true;
-            setLeft(FXUtils.limitingSize(SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), 14, 14), 14, 14));
         }
 
         public void fail() {

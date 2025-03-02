@@ -188,13 +188,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             {
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
-                btnHelp.setGraphic(SVG.HELP_CIRCLE_OUTLINE.createIcon(Theme.foregroundFillBinding(), -1, -1));
+                btnHelp.setGraphic(SVG.HELP.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 btnHelp.getStyleClass().add("jfx-decorator-button");
                 btnHelp.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
 
                 JFXButton btnMin = new JFXButton();
                 btnMin.setFocusTraversable(false);
-                btnMin.setGraphic(SVG.MINUS.createIcon(Theme.foregroundFillBinding(), -1, -1));
+                btnMin.setGraphic(SVG.MINIMIZE.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
@@ -228,7 +228,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             if (canBack) {
                 JFXButton backNavButton = new JFXButton();
                 backNavButton.setFocusTraversable(false);
-                backNavButton.setGraphic(SVG.BACK.createIcon(Theme.foregroundFillBinding(), -1, -1));
+                backNavButton.setGraphic(SVG.ARROW_BACK.createIcon(Theme.foregroundFillBinding(), -1, -1));
                 backNavButton.getStyleClass().add("jfx-decorator-button");
                 backNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
