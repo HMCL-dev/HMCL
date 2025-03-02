@@ -50,7 +50,7 @@ public final class AboutPage extends StackPane {
             launcher.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
-            launcher.setExternalLink("https://hmcl.huangyuhui.net");
+            launcher.setExternalLink(Metadata.PUBLISH_URL);
 
             IconedTwoLineListItem author = new IconedTwoLineListItem();
             author.setImage(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
@@ -70,7 +70,7 @@ public final class AboutPage extends StackPane {
             IconedTwoLineListItem copyright = new IconedTwoLineListItem();
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
-            copyright.setExternalLink("https://hmcl.huangyuhui.net/about/");
+            copyright.setExternalLink(Metadata.ABOUT_URL);
 
             IconedTwoLineListItem claim = new IconedTwoLineListItem();
             claim.setTitle(i18n("about.claim"));
