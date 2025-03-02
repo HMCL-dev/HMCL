@@ -61,7 +61,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());
         BorderPane.setAlignment(item, Pos.CENTER);
-        center.getChildren().setAll(imageView, item);
+        center.getChildren().setAll(imageViewContainer, item);
         root.setCenter(center);
 
         PopupMenu menu = new PopupMenu();

@@ -22,6 +22,7 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
@@ -46,6 +47,7 @@ public class World {
     private String worldName;
     private String gameVersion;
     private long lastPlayed;
+    private Image icon;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -62,6 +64,15 @@ public class World {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");
         getWorldName(levelDat);
+
+        Path iconFile = file.resolve("icon.png");
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                icon = new Image(inputStream, 64, 64, true, false);
+            } catch (Throwable e) {
+                LOG.warning("Failed to load world icon", e);
+            }
+        }
     }
 
     public Path getFile() {
@@ -88,12 +99,25 @@ public class World {
         return gameVersion;
     }
 
+    public Image getIcon() {
+        return icon;
+    }
+
     private void loadFromZipImpl(Path root) throws IOException {
         Path levelDat = root.resolve("level.dat");
         if (!Files.exists(levelDat))
             throw new IOException("Not a valid world zip file since level.dat cannot be found.");
 
         getWorldName(levelDat);
+
+        Path iconFile = root.resolve("icon.png");
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                icon = new Image(inputStream, 64, 64, true, false);
+            } catch (Throwable e) {
+                LOG.warning("Failed to load world icon", e);
+            }
+        }
     }
 
     private void loadFromZip() throws IOException {
