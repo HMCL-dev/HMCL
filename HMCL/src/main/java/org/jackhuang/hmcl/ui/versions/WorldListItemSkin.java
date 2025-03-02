@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -37,6 +39,9 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListItemSkin extends SkinBase<WorldListItem> {
+
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private final ChangeListener<Image> iconListener;
 
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
@@ -54,7 +59,8 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(skinnable.imageProperty());
+        iconListener = FXUtils.onWeakChangeAndOperate(skinnable.imageProperty(), image ->
+                imageView.setImage(image == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : image));
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
