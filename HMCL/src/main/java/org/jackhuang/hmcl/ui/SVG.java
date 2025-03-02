@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
@@ -113,12 +116,17 @@ public enum SVG {
     }
 
     private static Node createIcon(SVGPath path, double size) {
-        if (size > 0 && size != DEFAULT_SIZE) {
-            double scale = size / DEFAULT_SIZE;
-            path.setScaleX(scale);
-            path.setScaleY(scale);
+        if (size < 0) {
+            StackPane pane = new StackPane(path);
+            pane.setAlignment(Pos.CENTER);
+            return pane;
         }
-        return path;
+
+        Group svg = new Group(path);
+        double scale = size / 24;
+        svg.setScaleX(scale);
+        svg.setScaleY(scale);
+        return svg;
     }
 
     public Node createIcon(ObservableValue<? extends Paint> fill, double size) {
