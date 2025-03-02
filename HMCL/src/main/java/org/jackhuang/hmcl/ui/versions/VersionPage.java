@@ -297,7 +297,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), control::testGame, managementPopup),
                         new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), control::generateLaunchScript, managementPopup),
                         new MenuSeparator(),
-                        new IconedMenuItem(SVG.PENCIL, i18n("version.manage.rename"), control::rename, managementPopup),
+                        new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), control::rename, managementPopup),
                         new IconedMenuItem(SVG.CONTENT_COPY, i18n("version.manage.duplicate"), control::duplicate, managementPopup),
                         new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), control::remove, managementPopup),
                         new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), control::export, managementPopup),

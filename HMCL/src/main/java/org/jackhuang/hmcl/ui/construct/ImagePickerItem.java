@@ -54,7 +54,7 @@ public final class ImagePickerItem extends BorderPane {
         imageView.setPreserveRatio(true);
 
         JFXButton selectButton = new JFXButton();
-        selectButton.setGraphic(SVG.PENCIL.createIcon(Theme.blackFill(), 20, 20));
+        selectButton.setGraphic(SVG.EDIT.createIcon(Theme.blackFill(), 20, 20));
         selectButton.onActionProperty().bind(onSelectButtonClicked);
         selectButton.getStyleClass().add("toggle-icon4");
 
