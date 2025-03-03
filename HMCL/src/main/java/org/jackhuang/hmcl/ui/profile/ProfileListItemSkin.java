@@ -48,7 +48,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
         FXUtils.onClicked(getSkinnable(), () -> getSkinnable().setSelected(true));
 
-        Node left = VersionPage.wrap(SVG.FOLDER_OUTLINE);
+        Node left = VersionPage.wrap(SVG.FOLDER);
         root.setLeft(left);
         BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 
@@ -64,7 +64,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         btnRemove.setOnAction(e -> skinnable.remove());
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14));
+        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

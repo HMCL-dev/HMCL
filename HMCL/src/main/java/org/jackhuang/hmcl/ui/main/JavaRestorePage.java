@@ -160,7 +160,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             {
                 JFXButton revealButton = new JFXButton();
                 revealButton.getStyleClass().add("toggle-icon4");
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
                 revealButton.setOnAction(e -> skinnable.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("java.reveal"));
 
@@ -169,7 +169,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
 
                     JFXButton removeButton = new JFXButton();
                     removeButton.getStyleClass().add("toggle-icon4");
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(Theme.blackFill(), 24), 24, 24));
                     removeButton.setOnAction(e -> skinnable.onRemove());
                     FXUtils.installFastTooltip(removeButton, i18n("java.disabled.management.remove"));
 
@@ -177,7 +177,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
                 } else {
                     JFXButton restoreButton = new JFXButton();
                     restoreButton.getStyleClass().add("toggle-icon4");
-                    restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                    restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
                     restoreButton.setOnAction(e -> skinnable.onRestore());
                     FXUtils.installFastTooltip(restoreButton, i18n("java.disabled.management.restore"));
 

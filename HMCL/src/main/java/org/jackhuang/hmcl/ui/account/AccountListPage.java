@@ -103,7 +103,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     offlineItem.getStyleClass().add("navigation-drawer-item");
                     offlineItem.setActionButtonVisible(false);
                     offlineItem.setTitle(i18n("account.methods.offline"));
-                    offlineItem.setLeftGraphic(wrap(SVG.ACCOUNT));
+                    offlineItem.setLeftGraphic(wrap(SVG.PERSON));
                     offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
                     boxMethods.getChildren().add(offlineItem);
 
@@ -119,7 +119,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
-                        item.setLeftGraphic(wrap(SVG.SERVER));
+                        item.setLeftGraphic(wrap(SVG.DRESSER));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
 
                         JFXButton btnRemove = new JFXButton();
@@ -130,7 +130,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                             e.consume();
                         });
                         btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14));
+                        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14));
                         item.setRightGraphic(btnRemove);
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
@@ -158,7 +158,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     addAuthServerItem.setTitle(i18n("account.injector.add"));
                     addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
                     addAuthServerItem.setActionButtonVisible(false);
-                    addAuthServerItem.setLeftGraphic(wrap(SVG.PLUS_CIRCLE_OUTLINE));
+                    addAuthServerItem.setLeftGraphic(wrap(SVG.ADD_CIRCLE));
                     addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
                     VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
                 }

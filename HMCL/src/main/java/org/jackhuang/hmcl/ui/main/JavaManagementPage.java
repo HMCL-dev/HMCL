@@ -262,7 +262,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
             {
                 JFXButton revealButton = new JFXButton();
                 revealButton.getStyleClass().add("toggle-icon4");
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
                 revealButton.setOnAction(e -> control.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("java.reveal"));
 
@@ -275,12 +275,12 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
                         null
                 ));
                 if (java.isManaged()) {
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), 24), 24, 24));
                     FXUtils.installFastTooltip(removeButton, i18n("java.uninstall"));
                     if (JavaRuntime.CURRENT_JAVA != null && java.getBinary().equals(JavaRuntime.CURRENT_JAVA.getBinary()))
                         removeButton.setDisable(true);
                 } else {
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.CLOSE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(Theme.blackFill(), 24), 24, 24));
                     FXUtils.installFastTooltip(removeButton, i18n("java.disable"));
                 }
 
@@ -307,11 +307,11 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
 
             res.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, JavaManager::refresh));
             if (skinnable.onInstallJava != null) {
-                res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD_OUTLINE, skinnable.onInstallJava));
+                res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
-            res.add(createToolbarButton2(i18n("java.add"), SVG.PLUS, skinnable::onAddJava));
+            res.add(createToolbarButton2(i18n("java.add"), SVG.ADD, skinnable::onAddJava));
 
-            JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.VIEW_LIST, skinnable::onShowRestoreJavaPage);
+            JFXButton disableJava = createToolbarButton2(i18n("java.disabled.management"), SVG.FORMAT_LIST_BULLETED, skinnable::onShowRestoreJavaPage);
             disableJava.disableProperty().bind(Bindings.isEmpty(ConfigHolder.globalConfig().getDisabledJava()));
             res.add(disableJava);
 

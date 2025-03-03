@@ -378,7 +378,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = new JFXButton();
-            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1));
+            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1));
             removeButton.getStyleClass().add("toggle-icon4");
             if (control.id.equals(MINECRAFT.getPatchId())) {
                 removeButton.setVisible(false);
@@ -396,8 +396,8 @@ public class InstallerItem extends Control {
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
-                                    SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1) :
-                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1),
+                                    SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), -1) :
+                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1),
                     control.resolvedStateProperty
             ));
             installButton.getStyleClass().add("toggle-icon4");
