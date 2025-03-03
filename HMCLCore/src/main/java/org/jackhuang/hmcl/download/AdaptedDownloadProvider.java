@@ -49,6 +49,11 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     }
 
     @Override
+    public String getUnlistedMinecraftURL() {
+        return getPreferredDownloadProvider().getUnlistedMinecraftURL();
+    }
+
+    @Override
     public String getAssetBaseURL() {
         return getPreferredDownloadProvider().getAssetBaseURL();
     }
