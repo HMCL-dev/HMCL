@@ -25,14 +25,11 @@ import javafx.animation.Animation.Status;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.EventHandler;
-import javafx.geometry.Bounds;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.util.Duration;
-
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import org.jackhuang.hmcl.util.Holder;
 
 /**
  * Utility class for ScrollPanes.
@@ -142,23 +139,23 @@ final class ScrollUtils {
         smoothScroll(scrollPane, speed, trackPadAdjustment);
     }
 
+    private static final double[] FRICTIONS = {0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001};
+    private static final Duration DURATION = Duration.millis(3);
+
     private static void smoothScroll(ScrollPane scrollPane, double speed, double trackPadAdjustment) {
-        final double[] frictions = {0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001};
-        final double[] derivatives = new double[frictions.length];
-        AtomicReference<Double> atomicSpeed = new AtomicReference<>(speed);
+        final double[] derivatives = new double[FRICTIONS.length];
 
         Timeline timeline = new Timeline();
-        AtomicReference<ScrollDirection> scrollDirection = new AtomicReference<>();
+        Holder<ScrollDirection> scrollDirectionHolder = new Holder<>();
         final EventHandler<MouseEvent> mouseHandler = event -> timeline.stop();
         final EventHandler<ScrollEvent> scrollHandler = event -> {
             if (event.getEventType() == ScrollEvent.SCROLL) {
-                scrollDirection.set(determineScrollDirection(event));
-                if (isTrackPad(event, scrollDirection.get())) {
-                    atomicSpeed.set(speed / trackPadAdjustment);
-                } else {
-                    atomicSpeed.set(speed);
-                }
-                derivatives[0] += scrollDirection.get().intDirection * atomicSpeed.get();
+                ScrollDirection scrollDirection = determineScrollDirection(event);
+                scrollDirectionHolder.value = scrollDirection;
+
+                double currentSpeed = isTrackPad(event, scrollDirection) ? speed / trackPadAdjustment : speed;
+
+                derivatives[0] += scrollDirection.intDirection * currentSpeed;
                 if (timeline.getStatus() == Status.STOPPED) {
                     timeline.play();
                 }
@@ -180,28 +177,26 @@ final class ScrollUtils {
             }
         });
 
-        timeline.getKeyFrames().add(new KeyFrame(Duration.millis(3), event -> {
+        timeline.getKeyFrames().add(new KeyFrame(DURATION, event -> {
             for (int i = 0; i < derivatives.length; i++) {
-                derivatives[i] *= frictions[i];
+                derivatives[i] *= FRICTIONS[i];
             }
             for (int i = 1; i < derivatives.length; i++) {
                 derivatives[i] += derivatives[i - 1];
             }
 
             double dy = derivatives[derivatives.length - 1];
-            Function<Bounds, Double> sizeFunction = (scrollDirection.get() == ScrollDirection.UP || scrollDirection.get() == ScrollDirection.DOWN) ? Bounds::getHeight : Bounds::getWidth;
-            double size = sizeFunction.apply(scrollPane.getContent().getLayoutBounds());
-            double value;
-            switch (scrollDirection.get()) {
+            double size;
+            switch (scrollDirectionHolder.value) {
                 case LEFT:
                 case RIGHT:
-                    value = Math.min(Math.max(scrollPane.hvalueProperty().get() + dy / size, 0), 1);
-                    scrollPane.hvalueProperty().set(value);
+                    size = scrollPane.getContent().getLayoutBounds().getWidth();
+                    scrollPane.setHvalue(Math.min(Math.max(scrollPane.getHvalue() + dy / size, 0), 1));
                     break;
                 case UP:
                 case DOWN:
-                    value = Math.min(Math.max(scrollPane.vvalueProperty().get() + dy / size, 0), 1);
-                    scrollPane.vvalueProperty().set(value);
+                    size = scrollPane.getContent().getLayoutBounds().getHeight();
+                    scrollPane.setVvalue(Math.min(Math.max(scrollPane.getVvalue() + dy / size, 0), 1));
                     break;
             }
 
