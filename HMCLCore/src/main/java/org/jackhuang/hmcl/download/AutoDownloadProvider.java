@@ -41,6 +41,11 @@ public class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
+    public String getUnlistedMinecraftURL() {
+        return versionListProvider.getUnlistedMinecraftURL();
+    }
+
+    @Override
     public String getAssetBaseURL() {
         return fileProvider.getAssetBaseURL();
     }
