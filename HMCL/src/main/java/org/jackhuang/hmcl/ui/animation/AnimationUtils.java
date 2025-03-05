@@ -37,8 +37,7 @@ public final class AnimationUtils {
     }
 
     private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled();
-    private static final boolean PLAY_WINDOW_ANIMATION = ENABLED
-            && (!OperatingSystem.CURRENT_OS.isLinuxOrBSD() || "DDE".equals(System.getenv("XDG_CURRENT_DESKTOP")));
+    private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
 
     public static boolean isAnimationEnabled() {
         return ENABLED;
