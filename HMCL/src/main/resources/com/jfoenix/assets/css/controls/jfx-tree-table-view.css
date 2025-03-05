@@ -1,0 +1,130 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+.jfx-tree-table-view {
+    -fx-tree-table-color: rgba(82, 100, 174, 0.4);
+    -fx-tree-table-rippler-color: rgba(82, 100, 174, 0.6);
+    -jfx-header-color: #949494;
+}
+.jfx-tree-table-view:focused {
+    -fx-background-color: TRANSPARENT, -fx-box-border, -fx-control-inner-background;
+    -fx-background-insets: -1.4, 0, 1;
+    -fx-background-radius: 1.4, 0, 0;
+    -fx-padding: 1; /* 0.083333em; */
+}
+
+.jfx-tree-table-view:focused > .virtual-flow > .clipped-container > .sheet > .tree-table-row-cell:filled:selected {
+    -fx-background-color: -fx-tree-table-color;
+    -fx-table-cell-border-color: -fx-tree-table-color;
+    -fx-text-fill: BLACK;
+}
+
+.jfx-tree-table-view:focused .tree-table-row-cell:selected .tree-table-cell {
+    -fx-text-fill: BLACK;
+}
+
+.jfx-tree-table-view .column-header,
+.jfx-tree-table-view .column-header-background,
+.jfx-tree-table-view .column-header-background .filler {
+    -fx-background-color: TRANSPARENT;
+}
+
+.jfx-tree-table-view .column-header {
+    -fx-border-width: 0 1 0 1;
+    -fx-border-color: #F3F3F3;
+}
+
+.jfx-tree-table-view .column-header .label {
+    -fx-text-fill: -jfx-header-color;
+    -fx-padding: 16 0 16 0;
+}
+
+.jfx-tree-table-view .column-header .arrow,
+.jfx-tree-table-view .column-header .sort-order-dot {
+    -fx-background-color: -jfx-header-color;
+}
+
+.jfx-tree-table-view .column-header:last-visible {
+    -fx-border-width: 0 2 0 1;
+}
+
+.jfx-tree-table-view .column-header-background {
+    -fx-border-width: 0 0.0 1 0;
+    -fx-border-color: #F3F3F3;
+}
+
+.jfx-tree-table-view .tree-table-cell {
+    -fx-border-width: 0 0 0 0;
+    -fx-pref-height: 48px;
+    -fx-alignment: center-left;
+}
+
+.jfx-tree-table-view .column-overlay {
+    -fx-background-color: -fx-tree-table-color;
+}
+
+.jfx-tree-table-view .column-resize-line, .jfx-tree-table-view .column-drag-header {
+    -fx-background-color: -fx-tree-table-rippler-color;
+}
+
+
+.tree-table-row-cell .tree-table-cell > .tree-disclosure-node > .arrow {
+    -fx-background-color: -fx-text-fill;
+    -fx-padding: 0.333333em 0.229em 0.333333em 0.229em; /* 4 */
+    -fx-shape: "M 0 -3.5 L 4 0 L 0 3.5 z";
+}
+
+.tree-table-row-cell:expanded .tree-table-cell > .tree-disclosure-node > .arrow {
+    -fx-rotate: 90;
+}
+
+.tree-table-row-cell .jfx-text-field,
+.tree-table-row-cell .jfx-password-field,
+.tree-table-row-cell .jfx-text-area {
+    -jfx-focus-color: rgb(82, 100, 174);
+    -fx-background-color: transparent;
+}
+
+.tree-table-row-cell .jfx-text-field:error {
+    -jfx-focus-color: #D34336;
+    -jfx-unfocus-color: #D34336;
+}
+
+.tree-table-row-cell .jfx-text-field .error-label {
+    -fx-text-fill: #D34336;
+    -fx-font-size: 0.75em;
+}
+
+.tree-table-row-cell .jfx-text-field .error-icon {
+    -fx-fill: #D34336;
+    -fx-font-size: 1.0em;
+}
+
+.tree-table-row-cell:grouped {
+    -fx-background-color: rgb(230, 230, 230);
+}
+
+.jfx-tree-table-view .menu-item:focused {
+    -fx-background-color: -fx-tree-table-color;
+
+}
+
+.jfx-tree-table-view .menu-item .label {
+    -fx-padding: 5 0 5 0;
+}
