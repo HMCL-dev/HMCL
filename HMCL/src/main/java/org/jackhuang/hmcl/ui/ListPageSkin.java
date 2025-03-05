@@ -69,7 +69,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 FXUtils.setLimitHeight(btnAdd, 40);
                 btnAdd.getStyleClass().add("jfx-button-raised-round");
                 btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
-                btnAdd.setGraphic(SVG.PLUS.createIcon(Theme.whiteFill(), -1, -1));
+                btnAdd.setGraphic(SVG.ADD.createIcon(Theme.whiteFill(), -1));
                 btnAdd.setOnAction(e -> skinnable.add());
 
                 JFXButton btnRefresh = new JFXButton();
@@ -77,7 +77,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 FXUtils.setLimitHeight(btnRefresh, 40);
                 btnRefresh.getStyleClass().add("jfx-button-raised-round");
                 btnRefresh.setButtonType(JFXButton.ButtonType.RAISED);
-                btnRefresh.setGraphic(SVG.REFRESH.createIcon(Theme.whiteFill(), -1, -1));
+                btnRefresh.setGraphic(SVG.REFRESH.createIcon(Theme.whiteFill(), -1));
                 btnRefresh.setOnAction(e -> skinnable.refresh());
 
                 vBox.getChildren().setAll(btnAdd);
