@@ -262,7 +262,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     MessageDialogPane.MessageType.WARNING,
                     doCreate,
                     () -> {
-                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid.tip"));
                         body.setDisable(false);
                         spinner.hideSpinner();
                     }
