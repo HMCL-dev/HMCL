@@ -46,22 +46,28 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         World world = skinnable.getWorld();
 
         BorderPane root = new BorderPane();
+        root.getStyleClass().add("md-list-cell");
+        root.setPadding(new Insets(8));
 
-        StackPane imageViewContainer = new StackPane();
-        root.setLeft(imageViewContainer);
-        imageViewContainer.setPadding(new Insets(0, 8, 0, 0));
+        {
+            StackPane left = new StackPane();
+            root.setLeft(left);
+            left.setPadding(new Insets(0, 8, 0, 0));
 
-        ImageView imageView = new ImageView();
-        imageViewContainer.getChildren().add(imageView);
-        FXUtils.limitSize(imageView, 32, 32);
-        imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+            ImageView imageView = new ImageView();
+            left.getChildren().add(imageView);
+            FXUtils.limitSize(imageView, 32, 32);
+            imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+        }
 
-        TwoLineListItem item = new TwoLineListItem();
-        item.getTags().add(world.getGameVersion());
-        item.setTitle(parseColorEscapes(skinnable.getWorld().getWorldName()));
-        item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
-        BorderPane.setAlignment(item, Pos.CENTER);
-        root.setCenter(item);
+        {
+            TwoLineListItem item = new TwoLineListItem();
+            root.setCenter(item);
+            item.getTags().add(world.getGameVersion());
+            item.setTitle(parseColorEscapes(skinnable.getWorld().getWorldName()));
+            item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+            BorderPane.setAlignment(item, Pos.CENTER);
+        }
 
         {
             HBox right = new HBox(8);
@@ -96,9 +102,6 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
             btnInfo.setGraphic(SVG.INFO.createIcon(Theme.blackFill(), -1));
             btnInfo.setOnAction(event -> skinnable.showInfo());
         }
-
-        root.getStyleClass().add("md-list-cell");
-        root.setPadding(new Insets(8));
 
         getChildren().setAll(new RipplerContainer(root));
     }
