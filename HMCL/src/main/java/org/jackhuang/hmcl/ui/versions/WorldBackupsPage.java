@@ -167,7 +167,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 if (outputStream == null)
                     throw new IOException("Too many attempts");
 
-                try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
                     String rootName = world.getFileName();
                     Path rootDir = this.world.getFile();
                     Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
@@ -296,12 +296,14 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
                 JFXButton btnReveal = new JFXButton();
                 right.getChildren().add(btnReveal);
+                FXUtils.installFastTooltip(btnReveal, i18n("world.reveal"));
                 btnReveal.getStyleClass().add("toggle-icon4");
                 btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
                 btnReveal.setOnAction(event -> skinnable.onReveal());
 
                 JFXButton btnDelete = new JFXButton();
                 right.getChildren().add(btnDelete);
+                FXUtils.installFastTooltip(btnDelete, i18n("world.backup.delete"));
                 btnDelete.getStyleClass().add("toggle-icon4");
                 btnDelete.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1));
                 btnDelete.setOnAction(event ->
