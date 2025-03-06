@@ -101,7 +101,11 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
         if (!Files.isDirectory(world.getFile()))
             throw new IOException("Not a valid world directory");
 
-        sessionLockChannel = world.lock();
+        try {
+            sessionLockChannel = world.lock();
+        } catch (IOException ignored) {
+        }
+
         return world.readLevelDat();
     }
 

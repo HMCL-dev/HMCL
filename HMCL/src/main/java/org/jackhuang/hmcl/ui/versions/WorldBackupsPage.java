@@ -37,19 +37,28 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
@@ -107,7 +116,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                         count = Integer.parseInt(matcher.group("count"));
                                     }
 
-                                    result.add(new BackupInfo(path, world, new World(path), time, count));
+                                    result.add(new BackupInfo(path, new World(path), time, count));
                                 }
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load backup file " + path, e);
@@ -136,6 +145,55 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         return new WorldBackupsPageSkin();
     }
 
+    private Pair<Path, OutputStream> openNewBackupFile() throws IOException {
+        Files.createDirectories(backupsDir);
+        String baseName = LocalDateTime.now().format(TIME_FORMATTER) + "_" + world.getFileName();
+        for (int i = 0; i < 256; i++) {
+            Path file = backupsDir.resolve(baseName + (i == 0 ? "" : " " + i) + ".zip");
+            try {
+                return Pair.pair(file, Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
+            } catch (FileAlreadyExistsException ignored) {
+            }
+        }
+
+        throw new IOException("Too many attempts");
+    }
+
+    void createBackup() {
+        Task.supplyAsync(() -> {
+            try (FileChannel lockChannel = world.lock()) {
+                Pair<Path, OutputStream> pair = openNewBackupFile();
+
+                try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(pair.getValue()))) {
+                    String rootName = world.getFileName();
+                    Path rootDir = this.world.getFile();
+                    Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
+                        @Override
+                        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                            if (path.endsWith("session.lock")) {
+                                return FileVisitResult.CONTINUE;
+                            }
+                            zipOutputStream.putNextEntry(new ZipEntry(rootName + "/" + rootDir.relativize(path).toString().replace('\\', '/')));
+                            Files.copy(path, zipOutputStream);
+                            zipOutputStream.closeEntry();
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+
+                    return pair.getKey();
+                }
+            }
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                WorldBackupsPage.this.refresh();
+                Controllers.dialog(i18n("world.backup.create.success", result), null, MessageDialogPane.MessageType.INFO);
+            } else {
+                LOG.warning("Failed to create backup", exception);
+                Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+            }
+        }).start();
+    }
+
     private final class WorldBackupsPageSkin extends ToolbarListPageSkin<WorldBackupsPage> {
 
         WorldBackupsPageSkin() {
@@ -145,32 +203,23 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         @Override
         protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
             return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("world.backup"), SVG.ARCHIVE, skinnable::createBackup)
             );
         }
     }
 
     public final class BackupInfo extends Control implements Comparable<BackupInfo> {
         private final Path file;
-        private final World sourceWorld;
         private final World backupWorld;
         private final LocalDateTime backupTime;
         private final int count;
 
-        public BackupInfo(Path file, World sourceWorld, World backupWorld, LocalDateTime backupTime, int count) {
+        public BackupInfo(Path file, World backupWorld, LocalDateTime backupTime, int count) {
             this.file = file;
-            this.sourceWorld = sourceWorld;
             this.backupWorld = backupWorld;
             this.backupTime = backupTime;
             this.count = count;
-        }
-
-        public WorldBackupsPage getBackupsPage() {
-            return WorldBackupsPage.this;
-        }
-
-        public World getSourceWorld() {
-            return sourceWorld;
         }
 
         public World getBackupWorld() {
@@ -197,8 +246,6 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
         @Override
         public int compareTo(@NotNull WorldBackupsPage.BackupInfo that) {
-            assert this.sourceWorld == that.sourceWorld;
-
             int c = this.backupTime.compareTo(that.backupTime);
             return c != 0 ? c : Integer.compare(this.count, that.count);
         }

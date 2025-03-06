@@ -259,14 +259,12 @@ public class World {
             if (fileLock != null) {
                 return channel;
             } else {
-                LOG.info("The world " + getFile() + " has been locked");
                 IOUtils.closeQuietly(channel);
-                return null;
+                throw new IOException("The world " + getFile() + " has been locked");
             }
         } catch (IOException e) {
-            LOG.info("The world " + getFile() + " has been locked", e);
             IOUtils.closeQuietly(channel);
-            return null;
+            throw e;
         }
     }
 
