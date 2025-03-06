@@ -36,10 +36,7 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -56,6 +53,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -76,13 +74,18 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 "(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_"
                         + Pattern.quote(world.getFileName())
                         + "( (?<count>[0-9]+))?\\.zip");
-
+        this.state.set(State.fromTitle(i18n("world.backup.title", world.getWorldName())));
         loadBackups();
     }
 
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state;
+    }
+
+    @Override
+    public void refresh() {
+        loadBackups();
     }
 
     private void loadBackups() {
@@ -141,11 +144,13 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
         @Override
         protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            return Collections.emptyList();
+            return Arrays.asList(
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
+            );
         }
     }
 
-    public static final class BackupInfo extends Control implements Comparable<BackupInfo> {
+    public final class BackupInfo extends Control implements Comparable<BackupInfo> {
         private final Path file;
         private final World sourceWorld;
         private final World backupWorld;
@@ -158,6 +163,10 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             this.backupWorld = backupWorld;
             this.backupTime = backupTime;
             this.count = count;
+        }
+
+        public WorldBackupsPage getBackupsPage() {
+            return WorldBackupsPage.this;
         }
 
         public World getSourceWorld() {
@@ -177,8 +186,13 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             return new BackupInfoSkin(this);
         }
 
-        void reveal() {
+        void onReveal() {
             FXUtils.showFileInExplorer(file);
+        }
+
+        void onDelete() {
+            WorldBackupsPage.this.getItems().remove(this);
+            Task.runAsync(() -> Files.delete(file)).start();
         }
 
         @Override
@@ -233,7 +247,14 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 right.getChildren().add(btnReveal);
                 btnReveal.getStyleClass().add("toggle-icon4");
                 btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
-                btnReveal.setOnAction(event -> skinnable.reveal());
+                btnReveal.setOnAction(event -> skinnable.onReveal());
+
+                JFXButton btnDelete = new JFXButton();
+                right.getChildren().add(btnDelete);
+                btnDelete.getStyleClass().add("toggle-icon4");
+                btnDelete.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1));
+                btnDelete.setOnAction(event ->
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
             }
 
             getChildren().setAll(new RipplerContainer(root));
