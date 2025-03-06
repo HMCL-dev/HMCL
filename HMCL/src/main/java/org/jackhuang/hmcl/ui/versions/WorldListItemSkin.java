@@ -64,9 +64,14 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         {
             TwoLineListItem item = new TwoLineListItem();
             root.setCenter(item);
-            item.getTags().add(world.getGameVersion());
-            item.setTitle(parseColorEscapes(skinnable.getWorld().getWorldName()));
+            if (world.getWorldName() != null)
+                item.setTitle(parseColorEscapes(world.getWorldName()));
             item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+
+            if (world.getGameVersion() != null)
+                item.getTags().add(world.getGameVersion());
+            if (world.isLocked())
+                item.getTags().add(i18n("world.locked"));
         }
 
         {
