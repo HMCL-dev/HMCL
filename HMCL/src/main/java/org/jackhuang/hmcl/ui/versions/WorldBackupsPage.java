@@ -145,26 +145,29 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         return new WorldBackupsPageSkin();
     }
 
-    private Pair<Path, OutputStream> openNewBackupFile() throws IOException {
-        Files.createDirectories(backupsDir);
-        String baseName = LocalDateTime.now().format(TIME_FORMATTER) + "_" + world.getFileName();
-        for (int i = 0; i < 256; i++) {
-            Path file = backupsDir.resolve(baseName + (i == 0 ? "" : " " + i) + ".zip");
-            try {
-                return Pair.pair(file, Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
-            } catch (FileAlreadyExistsException ignored) {
-            }
-        }
-
-        throw new IOException("Too many attempts");
-    }
-
     void createBackup() {
         Task.supplyAsync(() -> {
             try (FileChannel lockChannel = world.lock()) {
-                Pair<Path, OutputStream> pair = openNewBackupFile();
+                Files.createDirectories(backupsDir);
+                String time = LocalDateTime.now().format(TIME_FORMATTER);
+                String baseName = time + "_" + world.getFileName();
+                Path backupFile = null;
+                OutputStream outputStream = null;
 
-                try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(pair.getValue()))) {
+                int count;
+                for (count = 0; count < 256; count++) {
+                    try {
+                        backupFile = backupsDir.resolve(baseName + (count == 0 ? "" : " " + count) + ".zip");
+                        outputStream = Files.newOutputStream(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+                        break;
+                    } catch (FileAlreadyExistsException ignored) {
+                    }
+                }
+
+                if (outputStream == null)
+                    throw new IOException("Too many attempts");
+
+                try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
                     String rootName = world.getFileName();
                     Path rootDir = this.world.getFile();
                     Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
@@ -179,14 +182,15 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                             return FileVisitResult.CONTINUE;
                         }
                     });
-
-                    return pair.getKey();
                 }
+
+                return Pair.pair(backupFile, new BackupInfo(world.getFile(), new World(backupFile), LocalDateTime.parse(time, TIME_FORMATTER), count));
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                WorldBackupsPage.this.refresh();
-                Controllers.dialog(i18n("world.backup.create.success", result), null, MessageDialogPane.MessageType.INFO);
+                WorldBackupsPage.this.getItems().add(result.getValue());
+                WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
+                Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageDialogPane.MessageType.INFO);
             } else {
                 LOG.warning("Failed to create backup", exception);
                 Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
