@@ -51,6 +51,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         {
             StackPane left = new StackPane();
+            FXUtils.installSlowTooltip(left, world.getFile().toString());
             root.setLeft(left);
             left.setPadding(new Insets(0, 8, 0, 0));
 
@@ -66,7 +67,6 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
             item.getTags().add(world.getGameVersion());
             item.setTitle(parseColorEscapes(skinnable.getWorld().getWorldName()));
             item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
-            BorderPane.setAlignment(item, Pos.CENTER);
         }
 
         {
@@ -92,7 +92,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
             right.getChildren().add(btnDatapack);
             FXUtils.installFastTooltip(btnDatapack, i18n("world.datapack"));
             btnDatapack.getStyleClass().add("toggle-icon4");
-            btnDatapack.setGraphic(SVG.PACKAGE.createIcon(Theme.blackFill(), -1));
+            btnDatapack.setGraphic(SVG.EXTENSION.createIcon(Theme.blackFill(), -1));
             btnDatapack.setOnAction(event -> skinnable.manageDatapacks());
 
             JFXButton btnInfo = new JFXButton();
