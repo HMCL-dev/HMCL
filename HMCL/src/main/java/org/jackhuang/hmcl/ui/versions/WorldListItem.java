@@ -79,4 +79,8 @@ public class WorldListItem extends Control {
     public void showInfo() {
         Controllers.navigate(new WorldInfoPage(world));
     }
+
+    public void showBackupPage() {
+        // TODO
+    }
 }
