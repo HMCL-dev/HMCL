@@ -36,10 +36,7 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.DoubleValidator;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import java.io.IOException;
@@ -55,7 +52,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public final class WorldInfoPage extends StackPane implements DecoratorPage {
+public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
     private final World world;
     private CompoundTag levelDat;
 
@@ -65,15 +62,16 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
         this.world = world;
         this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(i18n("world.info.title", world.getWorldName())));
 
-        this.getChildren().add(new ProgressIndicator());
+        this.setLoading(true);
         Task.supplyAsync(world::readLevelDat)
                 .whenComplete(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
                         this.levelDat = result;
                         loadWorldInfo();
+                        setLoading(false);
                     } else {
                         LOG.warning("Failed to load level.dat", exception);
-                        this.getChildren().setAll(new Label(i18n("world.info.failed")));
+                        setFailedReason(i18n("world.info.failed"));
                     }
                 })).start();
     }
@@ -86,7 +84,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        getChildren().setAll(scrollPane);
+        setContent(scrollPane);
 
         VBox rootPane = new VBox();
         rootPane.setFillWidth(true);
