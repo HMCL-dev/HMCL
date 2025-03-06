@@ -36,8 +36,6 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
@@ -81,17 +79,36 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
                 new IconedMenuItem(SVG.SETTINGS, i18n("world.datapack"), skinnable::manageDatapacks, popup),
                 new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), skinnable::export, popup),
                 new IconedMenuItem(SVG.FOLDER_OPEN, i18n("world.reveal"), skinnable::reveal, popup));
+        {
+            HBox right = new HBox(8);
+            root.setRight(right);
+            right.setAlignment(Pos.CENTER_RIGHT);
 
-        HBox right = new HBox();
-        right.setAlignment(Pos.CENTER_RIGHT);
+            JFXButton btnDatapack = new JFXButton();
+            right.getChildren().add(btnDatapack);
+            btnDatapack.getStyleClass().add("toggle-icon4");
+            btnDatapack.setGraphic(SVG.SETTINGS.createIcon(Theme.blackFill(), -1));
+            btnDatapack.setOnAction(event -> skinnable.manageDatapacks());
+
+            JFXButton btnExport = new JFXButton();
+            right.getChildren().add(btnExport);
+            btnExport.getStyleClass().add("toggle-icon4");
+            btnExport.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
+            btnExport.setOnAction(event -> skinnable.export());
+
+            JFXButton btnReveal = new JFXButton();
+            right.getChildren().add(btnReveal);
+            btnReveal.getStyleClass().add("toggle-icon4");
+            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+            btnReveal.setOnAction(event -> skinnable.reveal());
+        }
 
         JFXButton btnManage = new JFXButton();
         btnManage.setOnAction(e -> popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight()));
         btnManage.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnManage, Pos.CENTER);
         btnManage.setGraphic(SVG.MORE_VERT.createIcon(Theme.blackFill(), -1));
-        right.getChildren().add(btnManage);
-        root.setRight(right);
+
 
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8));
