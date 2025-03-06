@@ -157,7 +157,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 int count;
                 for (count = 0; count < 256; count++) {
                     try {
-                        backupFile = backupsDir.resolve(baseName + (count == 0 ? "" : " " + count) + ".zip");
+                        backupFile = backupsDir.resolve(baseName + (count == 0 ? "" : " " + count) + ".zip").toAbsolutePath();
                         outputStream = Files.newOutputStream(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
                         break;
                     } catch (FileAlreadyExistsException ignored) {
