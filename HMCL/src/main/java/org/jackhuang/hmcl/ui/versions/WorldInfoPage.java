@@ -27,10 +27,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -40,6 +38,8 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.Arrays;
@@ -58,16 +58,37 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
 
     private final ObjectProperty<State> stateProperty;
 
+    private FileChannel sessionLockChannel;
+
+    @Override
+    public boolean back() {
+        closePage();
+        return true;
+    }
+
+    @Override
+    public void closePage() {
+        if (sessionLockChannel != null) {
+            try {
+                sessionLockChannel.close();
+            } catch (IOException e) {
+                LOG.warning("Failed to close session lock channel", e);
+            }
+
+            sessionLockChannel = null;
+        }
+    }
+
     public WorldInfoPage(World world) {
         this.world = world;
         this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(i18n("world.info.title", world.getWorldName())));
 
         this.setLoading(true);
-        Task.supplyAsync(world::readLevelDat)
+        Task.supplyAsync(this::loadWorldInfo)
                 .whenComplete(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
                         this.levelDat = result;
-                        loadWorldInfo();
+                        updateControls();
                         setLoading(false);
                     } else {
                         LOG.warning("Failed to load level.dat", exception);
@@ -76,7 +97,19 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
                 })).start();
     }
 
-    private void loadWorldInfo() {
+    private CompoundTag loadWorldInfo() throws IOException {
+        if (!Files.isDirectory(world.getFile()))
+            throw new IOException("Not a valid world directory");
+
+        sessionLockChannel = world.lock();
+        return world.readLevelDat();
+    }
+
+    private boolean isReadOnly() {
+        return sessionLockChannel == null;
+    }
+
+    private void updateControls() {
         CompoundTag dataTag = levelDat.get("Data");
         CompoundTag worldGenSettings = dataTag.get("WorldGenSettings");
 
@@ -171,6 +204,7 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
             OptionToggleButton allowCheatsButton = new OptionToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
+                allowCheatsButton.setDisable(isReadOnly());
                 Tag tag = dataTag.get("allowCommands");
 
                 if (tag instanceof ByteTag) {
@@ -193,6 +227,7 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
             OptionToggleButton generateFeaturesButton = new OptionToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
+                generateFeaturesButton.setDisable(isReadOnly());
                 Tag tag = worldGenSettings != null ? worldGenSettings.get("generate_features") : dataTag.get("MapFeatures");
 
                 if (tag instanceof ByteTag) {
@@ -219,6 +254,7 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
                 difficultyPane.setLeft(label);
 
                 JFXComboBox<Difficulty> difficultyBox = new JFXComboBox<>(Difficulty.items);
+                difficultyBox.setDisable(isReadOnly());
                 BorderPane.setAlignment(difficultyBox, Pos.CENTER_RIGHT);
                 difficultyPane.setRight(difficultyBox);
 
@@ -324,6 +360,7 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
                 playerGameTypePane.setLeft(label);
 
                 JFXComboBox<GameType> gameTypeBox = new JFXComboBox<>(GameType.items);
+                gameTypeBox.setDisable(isReadOnly());
                 BorderPane.setAlignment(gameTypeBox, Pos.CENTER_RIGHT);
                 playerGameTypePane.setRight(gameTypeBox);
 
@@ -354,6 +391,7 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
                 healthPane.setLeft(label);
 
                 JFXTextField healthField = new JFXTextField();
+                healthField.setDisable(isReadOnly());
                 healthField.setPrefWidth(50);
                 healthField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(healthField, Pos.CENTER_RIGHT);
@@ -387,6 +425,7 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
                 foodLevelPane.setLeft(label);
 
                 JFXTextField foodLevelField = new JFXTextField();
+                foodLevelField.setDisable(isReadOnly());
                 foodLevelField.setPrefWidth(50);
                 foodLevelField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(foodLevelField, Pos.CENTER_RIGHT);
@@ -420,6 +459,7 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
                 xpLevelPane.setLeft(label);
 
                 JFXTextField xpLevelField = new JFXTextField();
+                xpLevelField.setDisable(isReadOnly());
                 xpLevelField.setPrefWidth(50);
                 xpLevelField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(xpLevelField, Pos.CENTER_RIGHT);

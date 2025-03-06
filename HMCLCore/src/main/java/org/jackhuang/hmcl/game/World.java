@@ -23,14 +23,15 @@ import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.Unzipper;
-import org.jackhuang.hmcl.util.io.Zipper;
+import org.jackhuang.hmcl.util.io.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +49,7 @@ public class World {
     private String gameVersion;
     private long lastPlayed;
     private Image icon;
+    private boolean isLocked;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -64,6 +66,7 @@ public class World {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");
         getWorldName(levelDat);
+        isLocked = isLocked(getSessionLockFile());
 
         Path iconFile = file.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -93,6 +96,10 @@ public class World {
         return file.resolve("level.dat");
     }
 
+    public Path getSessionLockFile() {
+        return file.resolve("session.lock");
+    }
+
     public long getLastPlayed() {
         return lastPlayed;
     }
@@ -103,6 +110,10 @@ public class World {
 
     public Image getIcon() {
         return icon;
+    }
+
+    public boolean isLocked() {
+        return isLocked;
     }
 
     private void loadFromZipImpl(Path root) throws IOException {
@@ -125,6 +136,7 @@ public class World {
     }
 
     private void loadFromZip() throws IOException {
+        isLocked = false;
         try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
             Path cur = fs.getPath("/level.dat");
             if (Files.isRegularFile(cur)) {
@@ -237,6 +249,27 @@ public class World {
         return parseLevelDat(getLevelDatFile());
     }
 
+    public FileChannel lock() throws IOException {
+        Path lockFile = getSessionLockFile();
+        FileChannel channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        try {
+            channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
+            channel.force(true);
+            FileLock fileLock = channel.tryLock();
+            if (fileLock != null) {
+                return channel;
+            } else {
+                LOG.info("The world " + getFile() + " has been locked");
+                IOUtils.closeQuietly(channel);
+                return null;
+            }
+        } catch (IOException e) {
+            LOG.info("The world " + getFile() + " has been locked", e);
+            IOUtils.closeQuietly(channel);
+            return null;
+        }
+    }
+
     public void writeLevelDat(CompoundTag nbt) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
@@ -255,6 +288,19 @@ public class World {
                 return (CompoundTag) nbt;
             else
                 throw new IOException("level.dat malformed");
+        }
+    }
+
+    private static boolean isLocked(Path sessionLockFile) {
+        try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
+            return fileChannel.tryLock() == null;
+        } catch (AccessDeniedException accessDeniedException) {
+            return true;
+        } catch (NoSuchFileException noSuchFileException) {
+            return false;
+        } catch (IOException e) {
+            LOG.warning("Failed to open the lock file " + sessionLockFile, e);
+            return false;
         }
     }
 
