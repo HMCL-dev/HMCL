@@ -38,7 +38,7 @@ import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class WorldListItemSkin extends SkinBase<WorldListItem> {
+public final class WorldListItemSkin extends SkinBase<WorldListItem> {
 
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
