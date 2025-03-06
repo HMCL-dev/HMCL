@@ -17,13 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -32,24 +27,14 @@ import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
-import java.time.Instant;
 
-import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
-import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListItem extends Control {
-    private final StringProperty title = new SimpleStringProperty();
-    private final StringProperty subtitle = new SimpleStringProperty();
-    private final ObjectProperty<Image> image = new SimpleObjectProperty<>();
     private final World world;
 
     public WorldListItem(World world) {
         this.world = world;
-
-        title.set(parseColorEscapes(world.getWorldName()));
-        subtitle.set(i18n("world.description", world.getFileName(), formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
-        image.set(world.getIcon());
 
         FXUtils.onClicked(this, this::showInfo);
     }
@@ -59,16 +44,8 @@ public class WorldListItem extends Control {
         return new WorldListItemSkin(this);
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
-    public ObjectProperty<Image> imageProperty() {
-        return image;
+    public World getWorld() {
+        return world;
     }
 
     public void export() {

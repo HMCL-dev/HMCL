@@ -19,15 +19,14 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
-import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -36,20 +35,25 @@ import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
+import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
+import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private final ChangeListener<Image> iconListener;
-
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
+
+        World world = skinnable.getWorld();
 
         BorderPane root = new BorderPane();
 
         HBox center = new HBox();
-        center.setMouseTransparent(true);
+        FXUtils.installSlowTooltip(center, world.getFile().toString());
         center.setSpacing(8);
         center.setAlignment(Pos.CENTER_LEFT);
 
@@ -59,13 +63,13 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
-        iconListener = FXUtils.onWeakChangeAndOperate(skinnable.imageProperty(), image ->
-                imageView.setImage(image == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : image));
+        imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
-        item.titleProperty().bind(skinnable.titleProperty());
-        item.subtitleProperty().bind(skinnable.subtitleProperty());
+        item.getTags().add(world.getGameVersion());
+        item.setTitle(parseColorEscapes(skinnable.getWorld().getWorldName()));
+        item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
         BorderPane.setAlignment(item, Pos.CENTER);
         center.getChildren().setAll(imageViewContainer, item);
         root.setCenter(center);

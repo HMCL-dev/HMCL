@@ -309,7 +309,7 @@ public class World {
             if (Files.exists(savesDir)) {
                 return Files.list(savesDir).flatMap(world -> {
                     try {
-                        return Stream.of(new World(world));
+                        return Stream.of(new World(world.toAbsolutePath()));
                     } catch (IOException e) {
                         LOG.warning("Failed to read world " + world, e);
                         return Stream.empty();
