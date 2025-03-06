@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXPopup;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
@@ -30,8 +29,6 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
@@ -50,65 +47,55 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         BorderPane root = new BorderPane();
 
-        HBox center = new HBox();
-        FXUtils.installSlowTooltip(center, world.getFile().toString());
-        center.setSpacing(8);
-        center.setAlignment(Pos.CENTER_LEFT);
-
         StackPane imageViewContainer = new StackPane();
-        FXUtils.setLimitWidth(imageViewContainer, 32);
-        FXUtils.setLimitHeight(imageViewContainer, 32);
+        root.setLeft(imageViewContainer);
+        imageViewContainer.setPadding(new Insets(0, 8, 0, 0));
 
         ImageView imageView = new ImageView();
+        imageViewContainer.getChildren().add(imageView);
         FXUtils.limitSize(imageView, 32, 32);
         imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
-        imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
         item.getTags().add(world.getGameVersion());
         item.setTitle(parseColorEscapes(skinnable.getWorld().getWorldName()));
         item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
         BorderPane.setAlignment(item, Pos.CENTER);
-        center.getChildren().setAll(imageViewContainer, item);
-        root.setCenter(center);
+        root.setCenter(item);
 
-        PopupMenu menu = new PopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
-
-        menu.getContent().setAll(
-                new IconedMenuItem(SVG.SETTINGS, i18n("world.datapack"), skinnable::manageDatapacks, popup),
-                new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), skinnable::export, popup),
-                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("world.reveal"), skinnable::reveal, popup));
         {
             HBox right = new HBox(8);
             root.setRight(right);
             right.setAlignment(Pos.CENTER_RIGHT);
 
-            JFXButton btnDatapack = new JFXButton();
-            right.getChildren().add(btnDatapack);
-            btnDatapack.getStyleClass().add("toggle-icon4");
-            btnDatapack.setGraphic(SVG.SETTINGS.createIcon(Theme.blackFill(), -1));
-            btnDatapack.setOnAction(event -> skinnable.manageDatapacks());
+            JFXButton btnReveal = new JFXButton();
+            right.getChildren().add(btnReveal);
+            FXUtils.installFastTooltip(btnReveal, i18n("world.reveal"));
+            btnReveal.getStyleClass().add("toggle-icon4");
+            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+            btnReveal.setOnAction(event -> skinnable.reveal());
 
             JFXButton btnExport = new JFXButton();
             right.getChildren().add(btnExport);
+            FXUtils.installFastTooltip(btnExport, i18n("world.export"));
             btnExport.getStyleClass().add("toggle-icon4");
             btnExport.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
             btnExport.setOnAction(event -> skinnable.export());
 
-            JFXButton btnReveal = new JFXButton();
-            right.getChildren().add(btnReveal);
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
-            btnReveal.setOnAction(event -> skinnable.reveal());
+            JFXButton btnDatapack = new JFXButton();
+            right.getChildren().add(btnDatapack);
+            FXUtils.installFastTooltip(btnDatapack, i18n("world.datapack"));
+            btnDatapack.getStyleClass().add("toggle-icon4");
+            btnDatapack.setGraphic(SVG.PACKAGE.createIcon(Theme.blackFill(), -1));
+            btnDatapack.setOnAction(event -> skinnable.manageDatapacks());
+
+            JFXButton btnInfo = new JFXButton();
+            right.getChildren().add(btnInfo);
+            FXUtils.installFastTooltip(btnInfo, i18n("world.info"));
+            btnInfo.getStyleClass().add("toggle-icon4");
+            btnInfo.setGraphic(SVG.INFO.createIcon(Theme.blackFill(), -1));
+            btnInfo.setOnAction(event -> skinnable.showInfo());
         }
-
-        JFXButton btnManage = new JFXButton();
-        btnManage.setOnAction(e -> popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight()));
-        btnManage.getStyleClass().add("toggle-icon4");
-        BorderPane.setAlignment(btnManage, Pos.CENTER);
-        btnManage.setGraphic(SVG.MORE_VERT.createIcon(Theme.blackFill(), -1));
-
 
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8));

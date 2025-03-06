@@ -35,8 +35,6 @@ public class WorldListItem extends Control {
 
     public WorldListItem(World world) {
         this.world = world;
-
-        FXUtils.onClicked(this, this::showInfo);
     }
 
     @Override
