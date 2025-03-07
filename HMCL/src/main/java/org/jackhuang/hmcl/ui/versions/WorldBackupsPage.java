@@ -33,6 +33,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -79,10 +80,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
     public WorldBackupsPage(World world, Path backupsDir) {
         this.backupsDir = backupsDir;
         this.world = world;
-        this.backupFileNamePattern = Pattern.compile(
-                "(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_"
-                        + Pattern.quote(world.getFileName())
-                        + "( (?<count>[0-9]+))?\\.zip");
+        this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
         this.state.set(State.fromTitle(i18n("world.backup.title", world.getWorldName())));
         loadBackups();
     }
@@ -146,56 +144,32 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
     }
 
     void createBackup() {
-        Task.supplyAsync(() -> {
-            try (FileChannel lockChannel = world.lock()) {
-                Files.createDirectories(backupsDir);
-                String time = LocalDateTime.now().format(TIME_FORMATTER);
-                String baseName = time + "_" + world.getFileName();
-                Path backupFile = null;
-                OutputStream outputStream = null;
-
-                int count;
-                for (count = 0; count < 256; count++) {
-                    try {
-                        backupFile = backupsDir.resolve(baseName + (count == 0 ? "" : " " + count) + ".zip").toAbsolutePath();
-                        outputStream = Files.newOutputStream(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                        break;
-                    } catch (FileAlreadyExistsException ignored) {
-                    }
-                }
-
-                if (outputStream == null)
-                    throw new IOException("Too many attempts");
-
-                try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
-                    String rootName = world.getFileName();
-                    Path rootDir = this.world.getFile();
-                    Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
-                        @Override
-                        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
-                            if (path.endsWith("session.lock")) {
-                                return FileVisitResult.CONTINUE;
-                            }
-                            zipOutputStream.putNextEntry(new ZipEntry(rootName + "/" + rootDir.relativize(path).toString().replace('\\', '/')));
-                            Files.copy(path, zipOutputStream);
-                            zipOutputStream.closeEntry();
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-                }
-
-                return Pair.pair(backupFile, new BackupInfo(world.getFile(), new World(backupFile), LocalDateTime.parse(time, TIME_FORMATTER), count));
+        Controllers.taskDialog(new WorldBackupTask(world, backupsDir).setName(i18n("world.backup")).thenApplyAsync(path -> {
+            Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
+            if (!matcher.matches()) {
+                throw new AssertionError("Wrong backup file name" + path);
             }
+
+            LocalDateTime time = LocalDateTime.parse(matcher.group("datetime"), TIME_FORMATTER);
+            int count = 0;
+
+            if (matcher.group("count") != null) {
+                count = Integer.parseInt(matcher.group("count"));
+            }
+
+            return Pair.pair(path, new BackupInfo(world.getFile(), new World(path), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
                 WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
                 Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageDialogPane.MessageType.INFO);
+            } else if (exception instanceof WorldLockedException) {
+                Controllers.dialog(i18n("world.backup.create.locked"), null, MessageDialogPane.MessageType.WARNING);
             } else {
                 LOG.warning("Failed to create backup", exception);
                 Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
             }
-        }).start();
+        }), i18n("world.backup"), null);
     }
 
     private final class WorldBackupsPageSkin extends ToolbarListPageSkin<WorldBackupsPage> {
@@ -206,10 +180,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
         @Override
         protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.backup"), SVG.ARCHIVE, skinnable::createBackup)
-            );
+            return Arrays.asList(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh), createToolbarButton2(i18n("world.backup"), SVG.ARCHIVE, skinnable::createBackup));
         }
     }
 
@@ -285,8 +256,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                     item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
-                if (world.getGameVersion() != null)
-                    item.getTags().add(world.getGameVersion());
+                if (world.getGameVersion() != null) item.getTags().add(world.getGameVersion());
             }
 
             {
@@ -306,8 +276,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 FXUtils.installFastTooltip(btnDelete, i18n("world.backup.delete"));
                 btnDelete.getStyleClass().add("toggle-icon4");
                 btnDelete.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1));
-                btnDelete.setOnAction(event ->
-                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
+                btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
             }
 
             getChildren().setAll(new RipplerContainer(root));

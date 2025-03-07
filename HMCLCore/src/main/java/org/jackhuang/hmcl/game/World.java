@@ -249,10 +249,11 @@ public class World {
         return parseLevelDat(getLevelDatFile());
     }
 
-    public FileChannel lock() throws IOException {
+    public FileChannel lock() throws WorldLockedException {
         Path lockFile = getSessionLockFile();
-        FileChannel channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        FileChannel channel = null;
         try {
+            channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
             channel.force(true);
             FileLock fileLock = channel.tryLock();
@@ -260,11 +261,11 @@ public class World {
                 return channel;
             } else {
                 IOUtils.closeQuietly(channel);
-                throw new IOException("The world " + getFile() + " has been locked");
+                throw new WorldLockedException("The world " + getFile() + " has been locked");
             }
         } catch (IOException e) {
             IOUtils.closeQuietly(channel);
-            throw e;
+            throw new WorldLockedException(e);
         }
     }
 
