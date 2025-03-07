@@ -1,0 +1,181 @@
+package org.jackhuang.hmcl.mod.modrinth;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.mod.ModAdviser;
+import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackExportInfo;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.Zipper;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+
+import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+public class ModrinthModpackExportTask extends Task<Void> {
+    private final DefaultGameRepository repository;
+    private final String version;
+    private final ModpackExportInfo info;
+    private final File modpackFile;
+
+    public ModrinthModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo info, File modpackFile) {
+        this.repository = repository;
+        this.version = version;
+        this.info = info.validate();
+        this.modpackFile = new File(modpackFile.getParentFile(), modpackFile.getName());
+
+        onDone().register(event -> {
+            if (event.isFailed()) modpackFile.delete();
+        });
+    }
+
+    private ModrinthManifest.File tryGetRemoteFile(Path file, String relativePath) throws IOException {
+        if (info.isNoCreateRemoteFiles()) {
+            return null;
+        }
+
+        String fileName = file.getFileName().toString().toLowerCase();
+        boolean isDisabled = fileName.endsWith(".disabled");
+        if (isDisabled) {
+            relativePath = relativePath.replace(".disabled", "");
+        }
+
+        LocalModFile localModFile = null;
+        Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
+        Optional<RemoteMod.Version> curseForgeVersion = Optional.empty();
+
+        try {
+            modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(localModFile, file);
+        } catch (IOException e) {
+            LOG.warning("Failed to get version from Modrinth for: " + file);
+        }
+
+        if (!info.isSkipCurseForgeRemoteFiles() && CurseForgeRemoteModRepository.isAvailable()) {
+            try {
+                curseForgeVersion = CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(localModFile, file);
+            } catch (IOException e) {
+                LOG.warning("Failed to get version from CurseForge for: " + file);
+            }
+        }
+
+        if (!modrinthVersion.isPresent() && !curseForgeVersion.isPresent()) {
+            return null;
+        }
+
+        Map<String, String> hashes = new HashMap<>();
+        hashes.put("sha1", DigestUtils.digestToString("SHA-1", file));
+        hashes.put("sha512", DigestUtils.digestToString("SHA-512", file));
+
+        Map<String, String> env = null;
+        if (isDisabled) {
+            env = new HashMap<>();
+            env.put("client", "optional");
+            env.put("server", "optional"); 
+        }
+
+        List<URL> downloads = new ArrayList<>();
+        if (modrinthVersion.isPresent())
+            downloads.add(URI.create(modrinthVersion.get().getFile().getUrl()).toURL());
+        if (curseForgeVersion.isPresent())
+            downloads.add(URI.create(curseForgeVersion.get().getFile().getUrl()).toURL());
+
+        return new ModrinthManifest.File(
+            relativePath,
+            hashes,
+            env,
+            downloads,
+            (int) Files.size(file)
+        );
+    }
+
+    @Override
+    public void execute() throws Exception {
+        ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
+        blackList.add(version + ".jar");
+        blackList.add(version + ".json");
+        LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
+        try (Zipper zip = new Zipper(modpackFile.toPath())) {
+            Path runDirectory = repository.getRunDirectory(version).toPath();
+            List<ModrinthManifest.File> files = new ArrayList<>();
+            Set<String> filesInManifest = new HashSet<>();
+
+            String[] additionalDirs = {"resourcepacks", "shaderpacks", "mods"};
+            for (String dir : additionalDirs) {
+                Path dirPath = runDirectory.resolve(dir);
+                if (Files.exists(dirPath)) {
+                    Files.walk(dirPath)
+                        .filter(Files::isRegularFile)
+                        .forEach(file -> {
+                            try {
+                                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                                
+                                if (!info.getWhitelist().contains(relativePath)) {
+                                    return;
+                                }
+                                
+                                ModrinthManifest.File fileEntry = tryGetRemoteFile(file, relativePath);
+                                if (fileEntry != null) {
+                                    files.add(fileEntry);
+                                    filesInManifest.add(relativePath);
+                                }
+                            } catch (IOException e) {
+                                LOG.warning("Failed to process file: " + file, e);
+                            }
+                        });
+                }
+            }
+
+            zip.putDirectory(runDirectory, "overrides", path -> {
+                String relativePath = path.toString().replace(File.separatorChar, '/');
+                if (filesInManifest.contains(relativePath)) {
+                    return false;
+                }
+                return Modpack.acceptFile(path, blackList, info.getWhitelist());
+            });
+
+            String gameVersion = repository.getGameVersion(version)
+                    .orElseThrow(() -> new IOException("Cannot parse the version of " + version));
+            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(version), gameVersion);
+
+            Map<String, String> dependencies = new HashMap<>();
+            dependencies.put("minecraft", gameVersion);
+            
+            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
+                    dependencies.put("forge", forgeVersion));
+            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
+                    dependencies.put("neoforge", neoForgeVersion));
+            analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
+                    dependencies.put("fabric-loader", fabricVersion));
+            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
+                    dependencies.put("quilt-loader", quiltVersion));
+
+            ModrinthManifest manifest = new ModrinthManifest(
+                    "minecraft",
+                    1,
+                    info.getVersion(),
+                    info.getName(),
+                    info.getDescription(),
+                    files,
+                    dependencies
+            );
+
+            zip.putTextFile(JsonUtils.GSON.toJson(manifest), "modrinth.index.json");
+        }
+    }
+
+    public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
+            .requireNoCreateRemoteFiles()
+            .requireSkipCurseForgeRemoteFiles();
+}
