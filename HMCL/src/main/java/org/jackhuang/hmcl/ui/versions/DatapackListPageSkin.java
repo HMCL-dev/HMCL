@@ -60,7 +60,7 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             toolbar.setPickOnBounds(false);
 
             toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh));
-            toolbar.getChildren().add(createToolbarButton(i18n("datapack.add"), SVG.PLUS, skinnable::add));
+            toolbar.getChildren().add(createToolbarButton(i18n("datapack.add"), SVG.ADD, skinnable::add));
             toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG.DELETE, () -> {
                 Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                     skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());

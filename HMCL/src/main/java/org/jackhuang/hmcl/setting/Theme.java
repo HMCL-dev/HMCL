@@ -24,7 +24,9 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -57,29 +59,41 @@ public class Theme {
             Color.web("#B71C1C")  // red
     };
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private static Optional<Font> font;
+    private static final Lazy<Font> FONT = new Lazy<>(() -> {
+        String[] fileNames = {"font.ttf", "font.otf", "font.woff"};
 
-    private static Optional<Font> tryLoadFont() {
-        //noinspection OptionalAssignedToNull
-        if (font != null) {
-            return font;
-        }
+        for (String fileName : fileNames) {
+            Path path = Paths.get(fileName).toAbsolutePath();
+            if (Files.isRegularFile(path)) {
+                try {
+                    Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);
+                    if (font != null) {
+                        return font;
+                    }
+                } catch (MalformedURLException ignored) {
+                }
 
-        Path path = Paths.get("font.ttf");
-        if (!Files.isRegularFile(path)) {
-            path = Paths.get("font.otf");
-        }
-
-        if (Files.isRegularFile(path)) {
-            try {
-                return font = Optional.ofNullable(Font.loadFont(path.toAbsolutePath().toUri().toURL().toExternalForm(), 0));
-            } catch (MalformedURLException ignored) {
+                LOG.warning("Failed to load font " + path);
             }
         }
 
-        return font = Optional.empty();
-    }
+        for (String fileName : fileNames) {
+            Path path = Metadata.HMCL_DIRECTORY.resolve(fileName);
+            if (Files.isRegularFile(path)) {
+                try {
+                    Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);
+                    if (font != null) {
+                        return font;
+                    }
+                } catch (MalformedURLException ignored) {
+                }
+
+                LOG.warning("Failed to load font " + path);
+            }
+        }
+
+        return null;
+    });
 
     public static Theme getTheme() {
         Theme theme = config().getTheme();
@@ -172,10 +186,10 @@ public class Theme {
 
         Pair<String, String> fontStyle = null;
         if (fontFamily == null) {
-            Optional<Font> font = tryLoadFont();
-            if (font.isPresent()) {
-                fontFamily = font.get().getFamily();
-                fontStyle = parseFontStyle(font.get().getStyle());
+            Font font = FONT.get();
+            if (font != null) {
+                fontFamily = font.getFamily();
+                fontStyle = parseFontStyle(font.getStyle());
             }
         }
 

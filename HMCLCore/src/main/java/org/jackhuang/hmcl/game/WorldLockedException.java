@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.construct;
+package org.jackhuang.hmcl.game;
 
-import javafx.scene.control.Hyperlink;
-import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
+import java.io.IOException;
 
-public final class JFXHyperlink extends Hyperlink {
-
-    public JFXHyperlink(String text) {
-        super(text);
-
-        setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), 16));
+/**
+ * @author Glavo
+ */
+public final class WorldLockedException extends IOException {
+    public WorldLockedException() {
     }
 
-    public void setExternalLink(String externalLink) {
-        this.setOnAction(e -> FXUtils.openLink(externalLink));
+    public WorldLockedException(String message) {
+        super(message);
+    }
+
+    public WorldLockedException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public WorldLockedException(Throwable cause) {
+        super(cause);
     }
 }
-

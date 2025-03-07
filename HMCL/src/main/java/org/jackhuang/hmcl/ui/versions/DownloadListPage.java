@@ -95,11 +95,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private Runnable retrySearch;
 
     public DownloadListPage(RemoteModRepository repository) {
-        this(repository, null);
-    }
-
-    public DownloadListPage(RemoteModRepository repository, DownloadPage.DownloadCallback callback) {
-        this(repository, callback, false);
+        this(repository, null, false);
     }
 
     public DownloadListPage(RemoteModRepository repository, DownloadPage.DownloadCallback callback, boolean versionSelection) {
