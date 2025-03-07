@@ -164,7 +164,7 @@ public final class JavaDownloadDialog extends StackPane {
                             }), i18n("download.java"), TaskCancellationAction.NORMAL);
                 }, null);
             else
-                Controllers.taskDialog(downloadTask(javaVersion), i18n("download.java"), TaskCancellationAction.NORMAL);
+                Controllers.taskDialog(downloadTask(javaVersion), i18n("download.java.process"), TaskCancellationAction.NORMAL);
         }
     }
 
