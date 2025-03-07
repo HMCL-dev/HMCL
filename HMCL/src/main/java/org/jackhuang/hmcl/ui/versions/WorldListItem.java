@@ -48,8 +48,8 @@ public class WorldListItem extends Control {
         this.world = world;
 
         title.set(parseColorEscapes(world.getWorldName()));
-
         subtitle.set(i18n("world.description", world.getFileName(), formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+        image.set(world.getIcon());
 
         FXUtils.onClicked(this, this::showInfo);
     }

@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXSnackbar;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
@@ -35,6 +38,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
@@ -42,11 +46,12 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.Navigator;
-import org.jackhuang.hmcl.ui.construct.StackContainerPane;
+import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jetbrains.annotations.Nullable;
@@ -77,11 +82,32 @@ public class DecoratorController {
     private final Navigator navigator;
 
     private JFXDialog dialog;
-    private StackContainerPane dialogPane;
+    private JFXDialogPane dialogPane;
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
-        decorator.setOnCloseButtonAction(Launcher::stopApplication);
+        decorator.setOnCloseButtonAction(() -> {
+            if (AnimationUtils.playWindowAnimation()) {
+                Timeline timeline = new Timeline(
+                        new KeyFrame(Duration.millis(0),
+                                new KeyValue(decorator.opacityProperty(), 1, FXUtils.EASE),
+                                new KeyValue(decorator.scaleXProperty(), 1, FXUtils.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 1, FXUtils.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.3, FXUtils.EASE)
+                        ),
+                        new KeyFrame(Duration.millis(200),
+                                new KeyValue(decorator.opacityProperty(), 0, FXUtils.EASE),
+                                new KeyValue(decorator.scaleXProperty(), 0.8, FXUtils.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 0.8, FXUtils.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.8, FXUtils.EASE)
+                        )
+                );
+                timeline.setOnFinished(event -> Launcher.stopApplication());
+                timeline.play();
+            } else {
+                Launcher.stopApplication();
+            }
+        });
         decorator.titleTransparentProperty().bind(config().titleTransparentProperty());
 
         navigator = new Navigator();
@@ -354,7 +380,7 @@ public class DecoratorController {
                 return;
             }
             dialog = new JFXDialog();
-            dialogPane = new StackContainerPane();
+            dialogPane = new JFXDialogPane();
 
             dialog.setContent(dialogPane);
             decorator.capableDraggingWindow(dialog);
@@ -397,18 +423,21 @@ public class DecoratorController {
                 .ifPresent(handler -> node.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
 
         if (dialog != null) {
-            dialogPane.pop(node);
+            JFXDialogPane pane = dialogPane;
 
-            if (node instanceof DialogAware) {
-                ((DialogAware) node).onDialogClosed();
-            }
-
-            if (dialogPane.getChildren().isEmpty()) {
+            if (pane.size() == 1 && pane.peek().orElse(null) == node) {
+                dialog.setOnDialogClosed(e -> pane.pop(node));
                 dialog.close();
                 dialog = null;
                 dialogPane = null;
 
                 navigator.setDisable(false);
+            } else {
+                pane.pop(node);
+            }
+
+            if (node instanceof DialogAware) {
+                ((DialogAware) node).onDialogClosed();
             }
         }
     }

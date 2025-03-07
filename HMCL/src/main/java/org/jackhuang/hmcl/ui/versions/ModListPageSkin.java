@@ -31,6 +31,8 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -70,6 +72,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -138,11 +141,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             // Toolbar Normal
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("mods.add"), SVG.PLUS, skinnable::add),
+                    createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
-                    createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
-                    createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar))
+                    createToolbarButton2(i18n("download"), SVG.DOWNLOAD, skinnable::download),
+                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
             // Toolbar Selecting
@@ -170,6 +173,16 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                             changeToolbar(toolbarSelecting);
                     });
             root.getContent().add(toolbarPane);
+
+            // Clear selection when pressing ESC
+            root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    }
+                }
+            });
         }
 
         {
@@ -195,6 +208,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     Controllers.dialog(new ModInfoDialog(selectedItem));
                 }
             });
+
+            // ListViewBehavior would consume ESC pressed event, preventing us from handling it
+            // So we ignore it here
+            ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             center.setContent(listView);
             root.getContent().add(center);
@@ -381,6 +398,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
+            FXUtils.copyOnDoubleClick(description);
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
@@ -502,15 +520,15 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setSelectable();
 
             restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(Theme.blackFill(), 24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFORMATION_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
 
             container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
 

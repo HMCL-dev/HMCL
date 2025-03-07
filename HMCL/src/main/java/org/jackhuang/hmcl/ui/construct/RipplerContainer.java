@@ -39,6 +39,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.List;
@@ -46,6 +47,7 @@ import java.util.List;
 @DefaultProperty("container")
 public class RipplerContainer extends StackPane {
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
+    private static final Duration DURATION = Duration.millis(200);
 
     private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
     private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL,this, "ripplerFill", null);
@@ -103,11 +105,10 @@ public class RipplerContainer extends StackPane {
             rectangle.heightProperty().bind(heightProperty());
         }));
 
-        setOnMouseEntered(e -> {
-            new Transition() {
+        if (AnimationUtils.isAnimationEnabled()) {
+            setOnMouseEntered(e -> new Transition() {
                 {
-                    setCycleCount(1);
-                    setCycleDuration(Duration.millis(200));
+                    setCycleDuration(DURATION);
                     setInterpolator(Interpolator.EASE_IN);
                 }
 
@@ -115,14 +116,11 @@ public class RipplerContainer extends StackPane {
                 protected void interpolate(double frac) {
                     interpolateBackground(frac);
                 }
-            }.play();
-        });
+            }.play());
 
-        setOnMouseExited(e -> {
-            new Transition() {
+            setOnMouseExited(e -> new Transition() {
                 {
-                    setCycleCount(1);
-                    setCycleDuration(Duration.millis(200));
+                    setCycleDuration(DURATION);
                     setInterpolator(Interpolator.EASE_OUT);
                 }
 
@@ -130,8 +128,11 @@ public class RipplerContainer extends StackPane {
                 protected void interpolate(double frac) {
                     interpolateBackground(1 - frac);
                 }
-            }.play();
-        });
+            }.play());
+        } else {
+            setOnMouseEntered(e -> interpolateBackground(1));
+            setOnMouseExited(e -> interpolateBackground(0));
+        }
     }
 
     private void interpolateBackground(double frac) {

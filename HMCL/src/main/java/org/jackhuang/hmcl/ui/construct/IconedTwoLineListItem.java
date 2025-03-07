@@ -110,7 +110,7 @@ public class IconedTwoLineListItem extends HBox {
         if (externalLinkButton == null) {
             externalLinkButton = new JFXButton();
             externalLinkButton.getStyleClass().add("toggle-icon4");
-            externalLinkButton.setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), -1, -1));
+            externalLinkButton.setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), -1));
             externalLinkButton.setOnAction(e -> FXUtils.openLink(externalLink.get()));
         }
         return externalLinkButton;

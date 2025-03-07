@@ -74,24 +74,24 @@ public final class MessageDialogPane extends HBox {
         SVG svg;
         switch (type) {
             case INFO:
-                svg = SVG.INFO_CIRCLE;
+                svg = SVG.INFO;
                 break;
             case ERROR:
-                svg = SVG.CLOSE_CIRCLE;
+                svg = SVG.ERROR;
                 break;
             case SUCCESS:
                 svg = SVG.CHECK_CIRCLE;
                 break;
             case WARNING:
-                svg = SVG.ALERT;
+                svg = SVG.WARNING;
                 break;
             case QUESTION:
-                svg = SVG.HELP_CIRCLE;
+                svg = SVG.HELP;
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
-        graphic.setGraphic(svg.createIcon(Theme.blackFill(), 40, 40));
+        graphic.setGraphic(svg.createIcon(Theme.blackFill(), 40));
 
         VBox vbox = new VBox();
         HBox.setHgrow(vbox, Priority.ALWAYS);

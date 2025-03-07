@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class DecoratorAnimationProducer implements AnimationProducer {
+public final class DecoratorAnimationProducer implements AnimationProducer {
     @Override
     public void init(AnimationHandler handler) {
     }

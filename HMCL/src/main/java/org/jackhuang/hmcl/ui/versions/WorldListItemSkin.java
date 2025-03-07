@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -37,6 +39,9 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class WorldListItemSkin extends SkinBase<WorldListItem> {
+
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private final ChangeListener<Image> iconListener;
 
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
@@ -54,23 +59,24 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(skinnable.imageProperty());
+        iconListener = FXUtils.onWeakChangeAndOperate(skinnable.imageProperty(), image ->
+                imageView.setImage(image == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : image));
         imageViewContainer.getChildren().setAll(imageView);
 
         TwoLineListItem item = new TwoLineListItem();
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());
         BorderPane.setAlignment(item, Pos.CENTER);
-        center.getChildren().setAll(imageView, item);
+        center.getChildren().setAll(imageViewContainer, item);
         root.setCenter(center);
 
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
-                new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("world.datapack"), skinnable::manageDatapacks, popup),
-                new IconedMenuItem(SVG.EXPORT, i18n("world.export"), skinnable::export, popup),
-                new IconedMenuItem(SVG.FOLDER_OUTLINE, i18n("world.reveal"), skinnable::reveal, popup));
+                new IconedMenuItem(SVG.SETTINGS, i18n("world.datapack"), skinnable::manageDatapacks, popup),
+                new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), skinnable::export, popup),
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("world.reveal"), skinnable::reveal, popup));
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER_RIGHT);
@@ -79,7 +85,7 @@ public class WorldListItemSkin extends SkinBase<WorldListItem> {
         btnManage.setOnAction(e -> popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight()));
         btnManage.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnManage, Pos.CENTER);
-        btnManage.setGraphic(SVG.DOTS_VERTICAL.createIcon(Theme.blackFill(), -1, -1));
+        btnManage.setGraphic(SVG.MORE_VERT.createIcon(Theme.blackFill(), -1));
         right.getChildren().add(btnManage);
         root.setRight(right);
 

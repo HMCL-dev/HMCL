@@ -28,13 +28,16 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.Version;
@@ -47,7 +50,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -102,23 +104,49 @@ public final class MainPage extends StackPane implements DecoratorPage {
         setPadding(new Insets(20));
 
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
-            AnnouncementCard announcementCard = null;
-
+            String title;
+            String content;
             if (Metadata.isNightly()) {
-                announcementCard = new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint"), null);
-            } else if (Metadata.isDev()) {
-                announcementCard = new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint"), this::hideAnnouncementPane);
+                title = i18n("update.channel.nightly.title");
+                content = i18n("update.channel.nightly.hint");
+            } else {
+                title = i18n("update.channel.dev.title");
+                content = i18n("update.channel.dev.hint");
             }
 
-            if (announcementCard != null) {
-                VBox announcementBox = new VBox(16);
-                announcementBox.getChildren().add(announcementCard);
+            VBox announcementCard = new VBox();
 
-                announcementPane = new TransitionPane();
-                announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
+            BorderPane titleBar = new BorderPane();
+            titleBar.getStyleClass().add("title");
+            titleBar.setLeft(new Label(title));
 
-                getChildren().add(announcementPane);
-            }
+            Node hideNode = SVG.CLOSE.createIcon(Theme.blackFill(), 20);
+            hideNode.setCursor(Cursor.HAND);
+            titleBar.setRight(hideNode);
+            FXUtils.onClicked(hideNode, () -> {
+                if (announcementPane != null) {
+                    if (Metadata.isDev()) {
+                        config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
+                    }
+
+                    announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
+                }
+            });
+
+            TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
+            body.setLineSpacing(4);
+
+            announcementCard.getChildren().setAll(titleBar, body);
+            announcementCard.setSpacing(16);
+            announcementCard.getStyleClass().addAll("card", "announcement");
+
+            VBox announcementBox = new VBox(16);
+            announcementBox.getChildren().add(announcementCard);
+
+            announcementPane = new TransitionPane();
+            announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
+
+            getChildren().add(announcementPane);
         }
 
         updatePane = new StackPane();
@@ -138,7 +166,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
             {
                 Label lblIcon = new Label();
-                lblIcon.setGraphic(SVG.UPDATE.createIcon(Theme.whiteFill(), 20, 20));
+                lblIcon.setGraphic(SVG.UPDATE.createIcon(Theme.whiteFill(), 20));
 
                 TwoLineListItem prompt = new TwoLineListItem();
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
@@ -150,7 +178,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }
 
             JFXButton closeUpdateButton = new JFXButton();
-            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(Theme.whiteFill(), 10, 10));
+            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(Theme.whiteFill(), 10));
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
             StackPane.setMargin(closeUpdateButton, new Insets(5));
@@ -219,10 +247,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setOnAction(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));
             StackPane graphic = new StackPane();
-            Node svg = SVG.TRIANGLE.createIcon(Theme.foregroundFillBinding(), 10, 10);
+            Node svg = SVG.ARROW_DROP_UP.createIcon(Theme.foregroundFillBinding(), 30);
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
-            graphic.setTranslateX(12);
+            graphic.setTranslateX(6);
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(graphic);
 
@@ -295,13 +323,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void closeUpdateBubble() {
         showUpdate.unbind();
         showUpdate.set(false);
-    }
-
-    public void hideAnnouncementPane() {
-        if (announcementPane != null) {
-            config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
-            announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
-        }
     }
 
     @Override
