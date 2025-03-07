@@ -255,9 +255,9 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }
     }
 
-    public static final class BackupInfoSkin extends SkinBase<BackupInfo> {
+    private static final class BackupInfoSkin extends SkinBase<BackupInfo> {
 
-        public BackupInfoSkin(BackupInfo skinnable) {
+        BackupInfoSkin(BackupInfo skinnable) {
             super(skinnable);
 
             World world = skinnable.getBackupWorld();
