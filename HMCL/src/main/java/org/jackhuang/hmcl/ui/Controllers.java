@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.DoubleProperty;
@@ -34,6 +37,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -42,6 +46,7 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
@@ -267,6 +272,24 @@ public final class Controllers {
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
 
+        if (AnimationUtils.playWindowAnimation()) {
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.millis(0),
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, FXUtils.EASE)
+                    ),
+                    new KeyFrame(Duration.millis(600),
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, FXUtils.EASE)
+                    )
+            );
+            timeline.play();
+        }
+
         if (!Architecture.SYSTEM_ARCH.isX86() && globalConfig().getPlatformPromptVersion() < 1) {
             Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
 
@@ -368,10 +391,7 @@ public final class Controllers {
 
     public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
-        pane.setTitle(title);
-        pane.setExecutor(executor);
-        dialog(pane);
+        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
         return pane;
     }

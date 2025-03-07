@@ -62,23 +62,23 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab = new TabHeader(gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
-        gameTab.initializeIfNeeded();
         gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
+        transitionPane.setContent(gameTab.getNode(), ContainerAnimations.NONE);
+        FXUtils.onChange(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.GAMEPAD)
-                .addNavigationDrawerTab(tab, javaManagementTab, i18n("java.management"), SVG.WRENCH_OUTLINE)
+                .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER)
+                .addNavigationDrawerTab(tab, javaManagementTab, i18n("java.management"), SVG.LOCAL_CAFE)
                 .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.APPLICATION_OUTLINE)
-                .addNavigationDrawerTab(tab, personalizationTab, i18n("settings.launcher.appearance"), SVG.STYLE_OUTLINE)
-                .addNavigationDrawerTab(tab, downloadTab, i18n("download"), SVG.DOWNLOAD_OUTLINE)
+                .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.TUNE)
+                .addNavigationDrawerTab(tab, personalizationTab, i18n("settings.launcher.appearance"), SVG.STYLE)
+                .addNavigationDrawerTab(tab, downloadTab, i18n("download"), SVG.DOWNLOAD)
                 .startCategory(i18n("help").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, helpTab, i18n("help"), SVG.HELP_CIRCLE_OUTLINE)
-                .addNavigationDrawerTab(tab, feedbackTab, i18n("feedback"), SVG.MESSAGE_ALERT_OUTLINE)
-                .addNavigationDrawerTab(tab, aboutTab, i18n("about"), SVG.INFORMATION_OUTLINE);
+                .addNavigationDrawerTab(tab, helpTab, i18n("help"), SVG.HELP)
+                .addNavigationDrawerTab(tab, feedbackTab, i18n("feedback"), SVG.FEEDBACK)
+                .addNavigationDrawerTab(tab, aboutTab, i18n("about"), SVG.INFO);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 
