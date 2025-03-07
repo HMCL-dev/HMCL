@@ -49,7 +49,10 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -119,7 +122,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                     return result;
                 }
             } else {
-                return Collections.<BackupInfo>emptyList();
+                return new ArrayList<BackupInfo>();
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             this.setLoading(false);
