@@ -64,7 +64,7 @@ public interface ModAdviser {
         "modtranslations", // Mod translations
         "schematics", // Schematics mod
         "journeymap/data", // JourneyMap
-        "mods/.connector" // XinYa Connection
+        "mods/.connector" // Sinytra Connector
     );
 
     List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
