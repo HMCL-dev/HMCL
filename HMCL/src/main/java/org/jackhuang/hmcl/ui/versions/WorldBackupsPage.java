@@ -153,7 +153,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(world.getFile(), new World(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, new World(path), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
