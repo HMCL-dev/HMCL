@@ -25,7 +25,7 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class JFXDialogPane extends StackPane {
+public class JFXDialogPane extends StackPane {
     private final ArrayList<Node> stack = new ArrayList<>();
 
     public int size() {
