@@ -64,8 +64,7 @@ public interface ModAdviser {
         "modtranslations", // Mod translations
         "schematics", // Schematics mod
         "journeymap/data", // JourneyMap
-        "mods/.connector", // XinYa Connection
-        "essential/microsoft_accounts.json" // Essential Mod
+        "mods/.connector" // XinYa Connection
     );
 
     List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
