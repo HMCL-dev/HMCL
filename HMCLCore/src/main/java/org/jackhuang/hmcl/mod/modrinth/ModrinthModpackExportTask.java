@@ -110,8 +110,8 @@ public class ModrinthModpackExportTask extends Task<Void> {
             List<ModrinthManifest.File> files = new ArrayList<>();
             Set<String> filesInManifest = new HashSet<>();
 
-            String[] additionalDirs = {"resourcepacks", "shaderpacks", "mods"};
-            for (String dir : additionalDirs) {
+            String[] resourceDirs = {"resourcepacks", "shaderpacks", "mods"};
+            for (String dir : resourceDirs) {
                 Path dirPath = runDirectory.resolve(dir);
                 if (Files.exists(dirPath)) {
                     Files.walk(dirPath)
