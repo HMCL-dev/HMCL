@@ -188,7 +188,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     borderPane.setTop(hyperlink);
                 } if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    pane.setText(i18n(i18n("modpack.wizard.step.initialization.modrinth.warning")));
+                    pane.setText(i18n("modpack.wizard.step.initialization.modrinth.warning"));
                     borderPane.setTop(pane);
                 } else {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
