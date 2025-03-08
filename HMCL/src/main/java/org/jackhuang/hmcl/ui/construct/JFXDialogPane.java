@@ -44,7 +44,6 @@ public final class JFXDialogPane extends StackPane {
         stack.add(node);
         getChildren().setAll(node);
 
-
         LOG.info(this + " " + stack);
     }
 
