@@ -400,7 +400,7 @@ public class GameCrashWindow extends Stage {
                 ScrollPane reasonPane = new ScrollPane(reasonTextFlow);
                 reasonPane.setFitToWidth(true);
                 reasonPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-                reasonPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                reasonPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);
