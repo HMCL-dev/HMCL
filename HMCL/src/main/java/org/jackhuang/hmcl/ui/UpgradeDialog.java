@@ -69,6 +69,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
             if (exception == null) {
                 ScrollPane scrollPane = new ScrollPane(result);
                 scrollPane.setFitToWidth(true);
+                FXUtils.smoothScrolling(scrollPane);
                 setBody(scrollPane);
             } else {
                 LOG.warning("Failed to load update log, trying to open it in browser");
