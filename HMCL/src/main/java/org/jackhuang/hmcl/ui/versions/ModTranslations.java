@@ -67,7 +67,7 @@ public enum ModTranslations {
 
     private final String resourceName;
     private List<Mod> mods;
-    private Map<String, Mod> modIdMap; // mod id -> mod
+    private Map<String, Mod> modMap; // mod id and subname -> mod
     private Map<String, Mod> curseForgeMap; // curseforge id -> mod
     private List<Pair<String, Mod>> keywords;
     private int maxKeywordLength = -1;
@@ -84,10 +84,19 @@ public enum ModTranslations {
     }
 
     @Nullable
-    public Mod getModById(String id) {
-        if (StringUtils.isBlank(id) || !loadModIdMap()) return null;
+    public Mod getMod(String subname, String id) {
+        if (!loadModMap()) return null;
 
-        return modIdMap.get(id);
+        if (StringUtils.isNotBlank(subname)) {
+            String filteredSubName = "subname-" + subname.replaceAll("[^a-zA-Z]", "");
+            return modMap.get(filteredSubName);
+        }
+
+        if (StringUtils.isNotBlank(id)) {
+            return modMap.get(id);
+        }
+
+        return null;
     }
 
     public abstract String getMcmodUrl(Mod mod);
@@ -149,8 +158,8 @@ public enum ModTranslations {
         return true;
     }
 
-    private boolean loadModIdMap() {
-        if (modIdMap != null) {
+    private boolean loadModMap() {
+        if (modMap != null) {
             return true;
         }
 
@@ -158,11 +167,18 @@ public enum ModTranslations {
             if (!loadFromResource()) return false;
         }
 
-        modIdMap = new HashMap<>();
+        modMap = new HashMap<>();
         for (Mod mod : mods) {
+            String subname = mod.getSubname();
+            if (StringUtils.isNotBlank(subname) && !"examplemod".equals(subname)) {
+                String filteredSubName = "subname-" + subname.replaceAll("[^a-zA-Z]", "");
+                if (!filteredSubName.isEmpty()) {
+                    modMap.put(filteredSubName, mod);
+                }
+            }
             for (String id : mod.getModIds()) {
                 if (StringUtils.isNotBlank(id) && !"examplemod".equals(id)) {
-                    modIdMap.put(id, mod);
+                    modMap.put(id, mod);
                 }
             }
         }
