@@ -59,6 +59,8 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 versionId == null ? i18n("settings.advanced") : i18n("settings.advanced.title", versionId)
         ));
 
+        this.getStyleClass().add("gray-background");
+
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
@@ -240,7 +242,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.unbind(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.unbind(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.unbind(txtPostExitCommand, versionSetting.postExitCommandProperty());
-        FXUtils.unbindEnum(cboRenderer);
+        FXUtils.unbindEnum(cboRenderer, versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());

@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -121,7 +122,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2024 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
             "Main-Class" to "org.jackhuang.hmcl.Main",
             "Multi-Release" to "true",
             "Implementation-Version" to project.version,
@@ -252,4 +253,16 @@ tasks.create<JavaExec>("run") {
     doFirst {
         logger.quiet("HMCL_JAVA_OPTS: $vmOptions")
     }
+}
+
+// mcmod data
+
+tasks.register<ParseModDataTask>("parseModData") {
+    inputFile.set(layout.projectDirectory.file("mod.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/mod_data.txt"))
+}
+
+tasks.register<ParseModDataTask>("parseModPackData") {
+    inputFile.set(layout.projectDirectory.file("modpack.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
 }

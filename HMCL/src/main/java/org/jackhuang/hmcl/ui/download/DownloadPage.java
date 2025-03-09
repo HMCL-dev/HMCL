@@ -60,7 +60,6 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -100,43 +99,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
-        {
-            AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("game"));
-                        item.setLeftGraphic(wrap(SVG.GAMEPAD));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
-                        item.setOnAction(e -> tab.select(newGameTab));
-                    })
-                    .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("modpack"));
-                        settingsItem.setLeftGraphic(wrap(SVG.PACK));
-                        settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
-                        settingsItem.setOnAction(e -> tab.select(modpackTab));
-                    })
-                    .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("mods"));
-                        item.setLeftGraphic(wrap(SVG.PUZZLE));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modTab));
-                        item.setOnAction(e -> tab.select(modTab));
-                    })
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("resourcepack"));
-                        item.setLeftGraphic(wrap(SVG.TEXTURE_BOX));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
-                        item.setOnAction(e -> tab.select(resourcePackTab));
-                    })
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("world"));
-                        item.setLeftGraphic(wrap(SVG.EARTH));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
-                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(worldTab));
-                    });
-            FXUtils.setLimitWidth(sideBar, 200);
-            setLeft(sideBar);
-        }
+        AdvancedListBox sideBar = new AdvancedListBox()
+                .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
+                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER)
+                .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2)
+                .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
+                .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION)
+                .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
+                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
+        FXUtils.setLimitWidth(sideBar, 200);
+        setLeft(sideBar);
 
         setCenter(transitionPane);
     }
