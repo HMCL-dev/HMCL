@@ -59,6 +59,8 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 versionId == null ? i18n("settings.advanced") : i18n("settings.advanced.title", versionId)
         ));
 
+        this.getStyleClass().add("gray-background");
+
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
