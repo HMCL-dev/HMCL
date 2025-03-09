@@ -83,6 +83,8 @@ public final class WorldInfoPage extends SpinnerPane implements DecoratorPage {
         this.world = world;
         this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(i18n("world.info.title", world.getWorldName())));
 
+        this.getStyleClass().add("gray-background");
+
         this.setLoading(true);
         Task.supplyAsync(this::loadWorldInfo)
                 .whenComplete(Schedulers.javafx(), ((result, exception) -> {
