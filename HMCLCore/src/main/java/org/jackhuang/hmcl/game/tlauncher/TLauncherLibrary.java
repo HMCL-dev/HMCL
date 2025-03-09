@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Immutable
 public class TLauncherLibrary {
@@ -58,7 +59,9 @@ public class TLauncherLibrary {
                 new LibrariesDownloadInfo(artifact, classifiers),
                 checksums,
                 extract,
-                natives,
+                natives.entrySet().stream().collect(Collectors.toMap(
+                        entry -> entry.getKey().getCheckedName(), Map.Entry::getValue
+                )),
                 rules,
                 null,
                 null
