@@ -113,9 +113,8 @@ public class SpinnerPane extends Control {
     }
 
     private static final class Skin extends SkinBase<SpinnerPane> {
-        private final JFXSpinner spinner = new JFXSpinner();
         private final StackPane contentPane = new StackPane();
-        private final StackPane topPane = new StackPane();
+        private final StackPane topPane = new StackPane(new JFXSpinner());
         private final TransitionPane root = new TransitionPane();
         private final StackPane failedPane = new StackPane();
         private final Label failedReasonLabel = new Label();
@@ -125,7 +124,6 @@ public class SpinnerPane extends Control {
         Skin(SpinnerPane control) {
             super(control);
 
-            topPane.getChildren().setAll(spinner);
             topPane.getStyleClass().add("notice-pane");
             failedPane.getStyleClass().add("notice-pane");
             failedPane.getChildren().setAll(failedReasonLabel);
