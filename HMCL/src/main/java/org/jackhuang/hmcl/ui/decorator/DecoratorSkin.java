@@ -34,6 +34,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -190,7 +192,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Theme.foregroundFillBinding(), -1));
                 btnHelp.getStyleClass().add("jfx-decorator-button");
-                btnHelp.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/help.html"));
+                btnHelp.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
 
                 JFXButton btnMin = new JFXButton();
                 btnMin.setFocusTraversable(false);

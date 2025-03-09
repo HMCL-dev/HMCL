@@ -35,6 +35,8 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -337,7 +339,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
 
                 JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
-                officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
+                officialWebsite.setExternalLink(Metadata.PUBLISH_URL);
 
                 vbox.getChildren().setAll(hintPane, officialWebsite);
                 btnAccept.setDisable(true);
