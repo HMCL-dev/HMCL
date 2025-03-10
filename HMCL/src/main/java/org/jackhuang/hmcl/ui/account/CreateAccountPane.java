@@ -262,7 +262,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     MessageDialogPane.MessageType.WARNING,
                     doCreate,
                     () -> {
-                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid.tip"));
                         body.setDisable(false);
                         spinner.hideSpinner();
                     }
@@ -460,7 +460,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.PLUS.createIcon(Theme.blackFill(), 20, 20));
+                btnAddServer.setGraphic(SVG.ADD.createIcon(Theme.blackFill(), 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());

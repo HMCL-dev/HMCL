@@ -398,21 +398,22 @@ public class DecoratorController {
         node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
         node.addEventHandler(DialogCloseEvent.CLOSE, handler);
 
-        if (node instanceof DialogAware) {
-            DialogAware dialogAware = (DialogAware) node;
-            if (dialog.isVisible()) {
-                dialogAware.onDialogShown();
-            } else {
-                dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                        if (newValue) {
-                            dialogAware.onDialogShown();
-                            observable.removeListener(this);
-                        }
+        if (dialog.isVisible()) {
+            dialog.requestFocus();
+            if (node instanceof DialogAware)
+                ((DialogAware) node).onDialogShown();
+        } else {
+            dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                    if (newValue) {
+                        dialog.requestFocus();
+                        if (node instanceof DialogAware)
+                            ((DialogAware) node).onDialogShown();
+                        observable.removeListener(this);
                     }
-                });
-            }
+                }
+            });
         }
     }
 
