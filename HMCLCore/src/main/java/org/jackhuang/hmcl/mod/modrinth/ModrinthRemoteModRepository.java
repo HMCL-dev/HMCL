@@ -27,9 +27,9 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -107,8 +107,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                             pair("algorithm", "sha1"))
                     .getJson(ProjectVersion.class);
             return mod.toVersion();
-        } catch (FileNotFoundException e) {
-            return Optional.empty();
+        } catch (ResponseCodeException e) {
+            if (e.getResponseCode() == 404) {
+                return Optional.empty();
+            } else {
+                throw e;
+            }
         }
     }
 
