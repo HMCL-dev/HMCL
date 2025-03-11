@@ -17,6 +17,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -198,8 +199,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             workaroundPane.getContent().setAll(
                     nativesDirSublist, rendererPane,
-                    noJVMArgsPane, noGameCheckPane, noJVMCheckPane, noNativesPatchPane,
-                    useNativeGLFWPane, useNativeOpenALPane);
+                    noJVMArgsPane, noGameCheckPane, noJVMCheckPane, noNativesPatchPane);
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                workaroundPane.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
+            }
         }
 
         rootPane.getChildren().addAll(
