@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
@@ -113,6 +114,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             } else {
                 throw e;
             }
+        } catch (NoSuchFileException e) {
+            return Optional.empty();
         }
     }
 
