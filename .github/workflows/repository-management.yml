@@ -1,0 +1,23 @@
+name: Repository Management Utils
+
+on:
+  issue_comment:
+    types: [ created, edited ]
+
+jobs:
+  process:
+    if: ${{ startsWith(github.event.comment.body, '/management title ') && contains(fromJSON('["COLLABORATOR", "MEMBER", "OWNER"]'), github.event.comment.author_association) }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Rename the Issue or PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HMCL_TARGET_ID: ${{ github.event.issue.number }}
+          HMCL_TARGET_COMMAND: ${{ github.event.comment.body }}
+        run: |
+          echo "Editing the title of issue $HMCL_TARGET_ID to ${HMCL_TARGET_COMMAND:18}"
+          gh issue edit $HMCL_TARGET_ID --title "${HMCL_TARGET_COMMAND:18}" --repo $GITHUB_REPOSITORY
