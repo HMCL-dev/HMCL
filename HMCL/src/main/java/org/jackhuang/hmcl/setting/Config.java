@@ -34,6 +34,8 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
@@ -142,6 +144,9 @@ public final class Config implements Observable {
     @SerializedName("autoChooseDownloadType")
     private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
 
+    @SerializedName("enableMCIM")
+    private BooleanProperty mcimEnablement = new SimpleBooleanProperty(false);
+
     @SerializedName("versionListSource")
     private StringProperty versionListSource = new SimpleStringProperty("balanced");
 
@@ -207,6 +212,17 @@ public final class Config implements Observable {
 
     public Config() {
         PropertyUtils.attachListener(this, helper);
+        mcimEnablement.addListener((observableValue, previous, now) -> {
+            ModrinthRemoteModRepository.MODS.mcim(now);
+            ModrinthRemoteModRepository.MODPACKS.mcim(now);
+            ModrinthRemoteModRepository.RESOURCE_PACKS.mcim(now);
+
+            CurseForgeRemoteModRepository.MODS.mcim(now);
+            CurseForgeRemoteModRepository.MODPACKS.mcim(now);
+            CurseForgeRemoteModRepository.RESOURCE_PACKS.mcim(now);
+
+            return;
+        });
     }
 
     @Override
@@ -499,6 +515,8 @@ public final class Config implements Observable {
     public void setAutoChooseDownloadType(boolean autoChooseDownloadType) {
         this.autoChooseDownloadType.set(autoChooseDownloadType);
     }
+
+    public BooleanProperty getMCIMEnablementProperty() { return mcimEnablement; }
 
     public String getVersionListSource() {
         return versionListSource.get();
