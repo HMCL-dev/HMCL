@@ -227,6 +227,7 @@ public final class Launcher extends Application {
                     : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')'));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 LOG.info("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER"));
+                LOG.info("Code Page: " + OperatingSystem.CODE_PAGE);
             }
             LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName());
             LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName());
