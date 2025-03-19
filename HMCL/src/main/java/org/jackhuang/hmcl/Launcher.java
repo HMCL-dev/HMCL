@@ -230,6 +230,7 @@ public final class Launcher extends Application {
             }
             LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName());
             LOG.info("Native Encoding: " + OperatingSystem.NATIVE_CHARSET);
+            LOG.info("JNU Encoding: " + System.getProperty("sun.jnu.encoding"));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 LOG.info("Code Page: " + OperatingSystem.CODE_PAGE);
             }
