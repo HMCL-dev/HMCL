@@ -72,7 +72,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                                 return;
 
                             if (executor.getException() instanceof CancellationException) {
-                                onCancel();
+                                onEnd();
                                 return;
                             }
 
