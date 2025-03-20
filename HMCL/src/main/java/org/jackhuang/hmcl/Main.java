@@ -20,6 +20,7 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.util.ModuleHelper;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -31,6 +32,7 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.Module;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -69,6 +71,7 @@ public final class Main {
 
         checkJavaFX();
         verifyJavaFX();
+        addEnableNativeAccess();
 
         Launcher.main(args);
     }
@@ -117,6 +120,15 @@ public final class Main {
             Class.forName("javafx.scene.control.Skin");    // javafx.controls
         } catch (Exception e) {
             showErrorAndExit(i18n("fatal.javafx.incomplete"));
+        }
+    }
+
+    private static void addEnableNativeAccess() {
+        if (JavaRuntime.CURRENT_VERSION > 21) {
+            try {
+                ModuleHelper.addEnableNativeAccess(Class.forName("javafx.stage.Stage")); // javafx.graphics
+            } catch (ClassNotFoundException ignored) {
+            }
         }
     }
 
