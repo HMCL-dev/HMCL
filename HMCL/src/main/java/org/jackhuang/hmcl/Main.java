@@ -118,6 +118,7 @@ public final class Main {
             Class.forName("javafx.stage.Stage");           // javafx.graphics
             Class.forName("javafx.scene.control.Skin");    // javafx.controls
         } catch (Exception e) {
+            e.printStackTrace(System.err);
             showErrorAndExit(i18n("fatal.javafx.incomplete"));
         }
     }
@@ -126,7 +127,9 @@ public final class Main {
         if (JavaRuntime.CURRENT_VERSION > 21) {
             try {
                 ModuleHelper.addEnableNativeAccess(Class.forName("javafx.stage.Stage")); // javafx.graphics
-            } catch (ClassNotFoundException ignored) {
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                showErrorAndExit(i18n("fatal.javafx.incomplete"));
             }
         }
     }
