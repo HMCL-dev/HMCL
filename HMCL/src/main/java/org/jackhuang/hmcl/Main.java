@@ -32,6 +32,7 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -71,6 +72,7 @@ public final class Main {
         checkJavaFX();
         verifyJavaFX();
         addEnableNativeAccess();
+        enableUnsafeMemoryAccess();
 
         Launcher.main(args);
     }
@@ -130,6 +132,20 @@ public final class Main {
             } catch (ClassNotFoundException e) {
                 e.printStackTrace(System.err);
                 showErrorAndExit(i18n("fatal.javafx.incomplete"));
+            }
+        }
+    }
+
+    private static void enableUnsafeMemoryAccess() {
+        // https://openjdk.org/jeps/498
+        if (JavaRuntime.CURRENT_VERSION == 24 || JavaRuntime.CURRENT_VERSION == 25) {
+            try {
+                Class<?> clazz = Class.forName("sun.misc.Unsafe");
+                Method trySetMemoryAccessWarned = clazz.getDeclaredMethod("trySetMemoryAccessWarned");
+                trySetMemoryAccessWarned.setAccessible(true);
+                trySetMemoryAccessWarned.invoke(null);
+            } catch (Throwable e) {
+                e.printStackTrace(System.err);
             }
         }
     }
