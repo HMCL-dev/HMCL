@@ -229,6 +229,11 @@ public final class Launcher extends Application {
                 LOG.info("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER"));
             }
             LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName());
+            LOG.info("Native Encoding: " + OperatingSystem.NATIVE_CHARSET);
+            LOG.info("JNU Encoding: " + System.getProperty("sun.jnu.encoding"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                LOG.info("Code Page: " + OperatingSystem.CODE_PAGE);
+            }
             LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName());
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
