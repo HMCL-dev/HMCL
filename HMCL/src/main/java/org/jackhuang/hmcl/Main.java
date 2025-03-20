@@ -20,6 +20,7 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.util.ModuleHelper;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -69,6 +70,7 @@ public final class Main {
 
         checkJavaFX();
         verifyJavaFX();
+        addEnableNativeAccess();
 
         Launcher.main(args);
     }
@@ -116,7 +118,19 @@ public final class Main {
             Class.forName("javafx.stage.Stage");           // javafx.graphics
             Class.forName("javafx.scene.control.Skin");    // javafx.controls
         } catch (Exception e) {
+            e.printStackTrace(System.err);
             showErrorAndExit(i18n("fatal.javafx.incomplete"));
+        }
+    }
+
+    private static void addEnableNativeAccess() {
+        if (JavaRuntime.CURRENT_VERSION > 21) {
+            try {
+                ModuleHelper.addEnableNativeAccess(Class.forName("javafx.stage.Stage")); // javafx.graphics
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                showErrorAndExit(i18n("fatal.javafx.incomplete"));
+            }
         }
     }
 
