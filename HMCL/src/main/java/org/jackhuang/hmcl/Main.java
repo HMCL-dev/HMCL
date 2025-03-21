@@ -83,7 +83,7 @@ public final class Main {
     }
 
     private static void initIcon() {
-        String Icon = "/assets/img/icon-mac@8x.png";
+        String Icon = "/assets/img/icon-mac.png";
         java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Main.class.getResource(Icon));
         AwtUtils.setAppleIcon(image);
     }
