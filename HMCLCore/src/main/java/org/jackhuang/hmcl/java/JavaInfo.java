@@ -45,18 +45,13 @@ public final class JavaInfo {
 
         while (endIndex < version.length()) {
             char ch = version.charAt(endIndex);
-            if (ch >= '0' && ch <= '9') {
+            if (ch >= '0' && ch <= '9')
                 endIndex++;
-            } else {
+            else
                 break;
-            }
         }
 
-        if (endIndex > startIndex) {
-            return Integer.parseInt(version.substring(startIndex, endIndex));
-        } else {
-            return -1;
-        }
+        return endIndex > startIndex ? Integer.parseInt(version.substring(startIndex, endIndex)) : -1;
     }
 
     public static JavaInfo fromReleaseFile(BufferedReader reader) throws IOException {
