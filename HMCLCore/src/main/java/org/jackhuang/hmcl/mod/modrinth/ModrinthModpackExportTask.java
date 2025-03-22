@@ -2,7 +2,6 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -86,9 +85,9 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         List<URL> downloads = new ArrayList<>();
         if (modrinthVersion.isPresent())
-            downloads.add(URI.create(modrinthVersion.get().getFile().getUrl()).toURL());
+            downloads.add(new URL(modrinthVersion.get().getFile().getUrl()));
         if (curseForgeVersion.isPresent())
-            downloads.add(URI.create(curseForgeVersion.get().getFile().getUrl()).toURL());
+            downloads.add(new URL(curseForgeVersion.get().getFile().getUrl()));
 
         return new ModrinthManifest.File(
             relativePath,
