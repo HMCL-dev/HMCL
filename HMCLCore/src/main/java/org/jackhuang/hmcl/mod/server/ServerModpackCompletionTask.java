@@ -155,31 +155,30 @@ public class ServerModpackCompletionTask extends Task<Void> {
             if (download) {
                 total++;
                 
-                URL downloadUrl = new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath()));
-                
+                FileDownloadTask task;
                 if (remoteManifest.isCreateRemoteFiles()) {
                     String path = file.getPath();
                     if (path.startsWith("mods/") || path.startsWith("resourcepacks/") || path.startsWith("shaderpacks/")) {
                         try {
                             Optional<RemoteMod.Version> modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByHash(file.getHash(), "sha1");
-                            if (modrinthVersion.isPresent()) {
-                                RemoteMod.File modrinthFile = modrinthVersion.get().getFile();
-                                if (modrinthFile != null) {
-                                    URL modrinthUrl = new URL(modrinthFile.getUrl());
-                                    FileDownloadTask task = new FileDownloadTask(modrinthUrl, actualPath.toFile());
-                                    task.setCacheRepository(dependencyManager.getCacheRepository());
-                                    task.setCaching(true); 
-                                    dependencies.add(0, task.withCounter("hmcl.modpack.download"));
-                                    continue;
-                                }
+                            if (modrinthVersion.isPresent() && modrinthVersion.get().getFile() != null) {
+                                task = new FileDownloadTask(
+                                    new URL(modrinthVersion.get().getFile().getUrl()), 
+                                    actualPath.toFile()
+                                );
+                                task.setCacheRepository(dependencyManager.getCacheRepository());
+                                task.setCaching(true);
+                                dependencies.add(0, task.withCounter("hmcl.modpack.download"));
+                                continue;
                             }
-                        } catch (IOException e) {
-                            // Back to Traditional Download
+                        } catch (IOException ignored) {
                         }
                     }
                 }
-                
-                FileDownloadTask task = new FileDownloadTask(downloadUrl, actualPath.toFile(), 
+
+                // Traditional download as fallback
+                URL downloadUrl = new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath()));
+                task = new FileDownloadTask(downloadUrl, actualPath.toFile(),
                     new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()));
                 task.setCacheRepository(dependencyManager.getCacheRepository());
                 task.setCaching(true);
