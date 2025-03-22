@@ -77,6 +77,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleStringProperty launchArguments = new SimpleStringProperty("");
     private final SimpleStringProperty javaArguments = new SimpleStringProperty("");
     private final SimpleStringProperty mcbbsThreadId = new SimpleStringProperty("");
+    private final SimpleBooleanProperty priorityModrinthDownload = new SimpleBooleanProperty();
 
     public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
         this.controller = controller;
@@ -119,6 +120,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         exportInfo.setLaunchArguments(launchArguments.get());
         exportInfo.setJavaArguments(javaArguments.get());
         exportInfo.setAuthlibInjectorServer(authlibInjectorServer.get());
+        exportInfo.setPriorityModrinthDownload(priorityModrinthDownload.get());
 
         if (StringUtils.isNotBlank(mcbbsThreadId.get())) {
             exportInfo.setOrigins(Collections.singletonList(new McbbsModpackManifest.Origin(
@@ -362,6 +364,19 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         button.setMinHeight(16);
                         button.setMaxHeight(16);
                         pane.setRight(button);
+                    }
+
+                    if (skinnable.options.isRequirePriorityModrinthDownload()) {
+                        BorderPane priorityModrinthDownload = new BorderPane();
+                        priorityModrinthDownload.setLeft(new Label(i18n("modpack.wizard.step.initialization.server.priority_modrinth_download")));
+                        list.getContent().add(priorityModrinthDownload);
+
+                        JFXToggleButton priorityModrinthDownloadButton = new JFXToggleButton();
+                        priorityModrinthDownloadButton.selectedProperty().bindBidirectional(skinnable.priorityModrinthDownload);
+                        priorityModrinthDownloadButton.setSize(8);
+                        priorityModrinthDownloadButton.setMinHeight(16);
+                        priorityModrinthDownloadButton.setMaxHeight(16);
+                        priorityModrinthDownload.setRight(priorityModrinthDownloadButton);
                     }
                 }
 

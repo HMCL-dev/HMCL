@@ -102,10 +102,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     @Override
     public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
         String sha1 = DigestUtils.digestToString("SHA-1", file);
+        return getRemoteVersionByHash(sha1, "sha1");
+    }
 
+    public Optional<RemoteMod.Version> getRemoteVersionByHash(String hash, String algorithm) throws IOException {
         try {
-            ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
-                            pair("algorithm", "sha1"))
+            ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + hash,
+                            pair("algorithm", algorithm))
                     .getJson(ProjectVersion.class);
             return mod.toVersion();
         } catch (ResponseCodeException e) {
