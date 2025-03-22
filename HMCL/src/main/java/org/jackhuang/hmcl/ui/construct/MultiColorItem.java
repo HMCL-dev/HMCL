@@ -17,12 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.NamedArg;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
@@ -43,7 +43,7 @@ public class MultiColorItem extends ComponentList {
     private final StringProperty chooserTitle = new SimpleStringProperty(this, "chooserTitle", i18n("selector.choose_file"));
 
     private final ToggleGroup group = new ToggleGroup();
-    private final JFXColorPicker colorPicker = new JFXColorPicker();
+    private final ColorPicker colorPicker = new ColorPicker();
     private final JFXRadioButton radioCustom = new JFXRadioButton();
     private final BorderPane custom = new BorderPane();
     private final VBox pane = new VBox();

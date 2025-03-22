@@ -42,13 +42,14 @@ public final class Validator extends ValidatorBase {
         return predicate -> {
             Validator validator = new Validator(message, predicate);
             InvalidationListener listener = any -> control.validate();
-            validator.getProperties().put(validator, listener);
+            validator.holder = listener;
             control.textProperty().addListener(new WeakInvalidationListener(listener));
             control.getValidators().add(validator);
         };
     }
 
     private final Predicate<String> validator;
+    private InvalidationListener holder;
 
     /**
      * @param validator return true if the input string is valid.
