@@ -51,7 +51,12 @@ public final class JavaInfo {
                 break;
         }
 
-        return endIndex > startIndex ? Integer.parseInt(version.substring(startIndex, endIndex)) : -1;
+        try {
+            return endIndex > startIndex ? Integer.parseInt(version.substring(startIndex, endIndex)) : -1;
+        } catch (Throwable e) {
+            // The version number is too long
+            return -1;
+        }
     }
 
     public static JavaInfo fromReleaseFile(BufferedReader reader) throws IOException {
