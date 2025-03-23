@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -165,7 +166,9 @@ public class Skin {
                 });
             case LITTLE_SKIN:
             case CUSTOM_SKIN_LOADER_API:
-                String realCslApi = type == Type.LITTLE_SKIN ? "https://littleskin.cn" : StringUtils.removeSuffix(cslApi, "/");
+                String realCslApi = type == Type.LITTLE_SKIN
+                        ? "https://littleskin.cn"
+                        : StringUtils.removeSuffix(Lang.requireNonNullElse(cslApi, ""), "/");
                 return Task.composeAsync(() -> new GetTask(new URL(String.format("%s/%s.json", realCslApi, username))))
                         .thenComposeAsync(json -> {
                             SkinJson result = JsonUtils.GSON.fromJson(json, SkinJson.class);
