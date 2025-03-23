@@ -206,7 +206,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                     noJVMCheckPane, noNativesPatchPane
             );
 
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            if (!OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 nativeRenderSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
                 workaroundPane.getContent().add(nativeRenderSublist);
             } else {
