@@ -149,8 +149,9 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
                 "javafx.controls/javafx.scene.control.skin",
-                "jdk.attach/sun.tools.attach"
-            ).joinToString(" ")
+                "jdk.attach/sun.tools.attach",
+            ).joinToString(" "),
+            "Enable-Native-Access" to "ALL-UNNAMED"
         )
 
         System.getenv("GITHUB_SHA")?.also {

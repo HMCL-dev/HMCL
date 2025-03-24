@@ -64,6 +64,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 node = node.nextSibling();
             } while (node != null);
 
+            renderer.mergeLineBreaks();
             return renderer.render();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {

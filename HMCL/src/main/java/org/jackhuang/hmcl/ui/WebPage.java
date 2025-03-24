@@ -53,6 +53,7 @@ public final class WebPage extends SpinnerPane implements DecoratorPage {
                 }, null);
             });
             renderer.appendNode(document);
+            renderer.mergeLineBreaks();
             return renderer.render();
         }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
             if (exception == null) {
