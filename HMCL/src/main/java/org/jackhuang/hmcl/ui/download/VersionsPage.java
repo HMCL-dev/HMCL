@@ -126,12 +126,11 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 centrePane = new ComponentList();
                 centrePane.getStyleClass().add("no-padding");
                 {
-                    HBox checkPane = new HBox();
-                    checkPane.setSpacing(10);
+                    HBox checkPane = new HBox(10);
                     {
                         chkRelease = new JFXCheckBox(i18n("version.game.releases"));
                         chkRelease.setSelected(true);
-                        HBox.setMargin(chkRelease, new Insets(10, 0, 10, 0));
+                        HBox.setMargin(chkRelease, new Insets(10, 0, 10, 10));
 
                         chkSnapshot = new JFXCheckBox(i18n("version.game.snapshots"));
                         HBox.setMargin(chkSnapshot, new Insets(10, 0, 10, 0));
