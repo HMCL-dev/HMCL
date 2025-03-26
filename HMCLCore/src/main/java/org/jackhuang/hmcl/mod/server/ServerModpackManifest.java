@@ -57,7 +57,7 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
         this.fileApi = fileApi;
         this.files = files;
         this.addons = addons;
-        this.priorityModrinthDownload= priorityModrinthDownload;
+        this.priorityModrinthDownload = priorityModrinthDownload;
     }
 
     public String getName() {
