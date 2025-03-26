@@ -156,7 +156,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
                 total++;
                 
                 FileDownloadTask task;
-                if (remoteManifest.isCreateRemoteFiles()) {
+                if (remoteManifest.isPriorityModrinthDownload()) {
                     String path = file.getPath();
                     if (path.startsWith("mods/") || path.startsWith("resourcepacks/") || path.startsWith("shaderpacks/")) {
                         try {
