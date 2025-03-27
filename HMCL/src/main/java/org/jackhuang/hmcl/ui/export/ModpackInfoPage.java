@@ -367,16 +367,16 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequirePriorityModrinthDownload()) {
-                        BorderPane priorityModrinthDownload = new BorderPane();
-                        priorityModrinthDownload.setLeft(new Label(i18n("modpack.wizard.step.initialization.server.priority_modrinth_download")));
-                        list.getContent().add(priorityModrinthDownload);
+                        BorderPane pane = new BorderPane();
+                        pane.setLeft(new Label(i18n("modpack.wizard.step.initialization.server.priority_modrinth_download")));
+                        list.getContent().add(pane);
 
-                        JFXToggleButton priorityModrinthDownloadButton = new JFXToggleButton();
-                        priorityModrinthDownloadButton.selectedProperty().bindBidirectional(skinnable.priorityModrinthDownload);
-                        priorityModrinthDownloadButton.setSize(8);
-                        priorityModrinthDownloadButton.setMinHeight(16);
-                        priorityModrinthDownloadButton.setMaxHeight(16);
-                        priorityModrinthDownload.setRight(priorityModrinthDownloadButton);
+                        JFXToggleButton button = new JFXToggleButton();
+                        button.selectedProperty().bindBidirectional(skinnable.priorityModrinthDownload);
+                        button.setSize(8);
+                        button.setMinHeight(16);
+                        button.setMaxHeight(16);
+                        pane.setRight(button);
                     }
                 }
 
