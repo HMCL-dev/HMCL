@@ -20,8 +20,10 @@ package org.jackhuang.hmcl.mod.multimc;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -38,13 +40,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class MultiMCModpackInstallTask extends Task<Void> {
@@ -141,13 +139,13 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             // /.minecraft
             if (Files.exists(fs.getPath("/.minecraft"))) {
                 subDirectory = "/.minecraft";
-            // /minecraft
+                // /minecraft
             } else if (Files.exists(fs.getPath("/minecraft"))) {
                 subDirectory = "/minecraft";
-            // /[name]/.minecraft
+                // /[name]/.minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/.minecraft";
-            // /[name]/minecraft
+                // /[name]/minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/minecraft";
             } else {
@@ -177,7 +175,13 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                     for (Path patchJson : directoryStream) {
                         if (patchJson.toString().endsWith(".json")) {
                             // If json is malformed, we should stop installing this modpack instead of skipping it.
-                            MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(FileUtils.readText(patchJson), MultiMCInstancePatch.class);
+                            MultiMCInstancePatch multiMCPatch;
+
+                            try {
+                                multiMCPatch = JsonUtils.GSON.fromJson(FileUtils.readText(patchJson), MultiMCInstancePatch.class);
+                            } catch (JsonParseException e) {
+                                throw new IllegalArgumentException("Cannot parse MultiMC patch json: " + patchJson, e);
+                            }
 
                             List<String> arguments = new ArrayList<>();
                             for (String arg : multiMCPatch.getTweakers()) {
@@ -185,9 +189,43 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                                 arguments.add(arg);
                             }
 
-                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
+                            Version patch = new Version(
+                                    multiMCPatch.getName(), multiMCPatch.getVersion(), multiMCPatch.getOrder() + Version.PRIORITY_LOADER,
+                                    new Arguments().addGameArguments(arguments).addJVMArguments(multiMCPatch.getJvmArgs()), multiMCPatch.getMainClass(),
+                                    multiMCPatch.getLibraries()
+                            );
+
+                            int[] majors = multiMCPatch.getJavaMajors();
+                            if (majors != null) {
+                                majors = majors.clone();
+                                Arrays.sort(majors);
+
+                                for (int i = majors.length - 1; i >= 0; i--) {
+                                    GameJavaVersion jv = GameJavaVersion.get(majors[i]);
+                                    if (jv != null) {
+                                        patch.setJavaVersion(jv);
+                                        break;
+                                    }
+                                }
+                            }
+
                             version = version.addPatch(patch);
                         }
+                    }
+                }
+            }
+
+            if (version.getMinecraftArguments().isPresent()) {
+                List<Version> patches1 = version.getPatches();
+
+                for (int i = 0; i < patches1.size(); i++) {
+                    Version patch = patches1.get(i);
+                    if (patch.getId().equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) {
+                        ArrayList<Version> patches2 = new ArrayList<>(patches1);
+                        patches2.set(i, patch.setArguments(new Arguments(null, Arguments.DEFAULT_JVM_ARGUMENTS)));
+
+                        version = version.setPatches(patches2);
+                        break;
                     }
                 }
             }
