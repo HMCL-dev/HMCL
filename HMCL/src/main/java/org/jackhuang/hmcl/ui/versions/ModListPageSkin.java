@@ -17,18 +17,35 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -53,24 +70,16 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.logging.Level;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.InputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import javafx.scene.Node;
+import javafx.scene.control.SkinBase;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -82,7 +91,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 class ModListPageSkin extends SkinBase<ModListPage> {
-
+    private final ModListPage skinnable;
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
     private final HBox toolbarNormal;
@@ -96,6 +105,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
+        this.skinnable = skinnable;
 
         StackPane pane = new StackPane();
         pane.setPadding(new Insets(10));
@@ -131,7 +141,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
                         isSearching = false;
                         searchField.clear();
-                        Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
+                        Bindings.bindContent(listView.getItems(), skinnable.getItems());
                     });
 
             onEscPressed(searchField, closeSearchBar::fire);
@@ -139,6 +149,16 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
             // Toolbar Normal
+            JFXButton menuButton = createToolbarButton2(i18n("button.more"), SVG.DOTS_HORIZONTAL, null);
+            menuButton.setOnAction(e -> {
+                menu.get().getContent().setAll(
+                    new IconedMenuItem(SVG.UPDATE, i18n("mods.check_updates"), () -> skinnable.checkUpdates(), popup.get()),
+                    new IconedMenuItem(SVG.EXPORT, i18n("button.export"), () -> exportList(), popup.get()),
+                    new IconedMenuItem(SVG.ALERT, i18n("mods.check_duplicate_mods"), this::checkDuplicateModIds, popup.get())
+                );
+                popup.get().show(menuButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, menuButton.getHeight());
+            });
+
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
@@ -228,6 +248,291 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         getChildren().setAll(pane);
     }
 
+    private void exportList() {
+        Path exportPath = Paths.get("hmcl-mod-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
+
+        Controllers.taskDialog(Task.runAsync(() -> {
+            CSVTable modDataTable = CSVTable.createEmpty();
+
+            // Headers grouped by data type and source
+            String[] columnHeaders = {
+                // Local Basic Info
+                "fileName", "name", "modID", "version", "modLoader", "homePageURL", "authors", "logoPath",
+                
+                // Local HMCL Info
+                "displayName", "abbr", "mcmodID", "subName", "Curseforge",
+                
+                // Local File Info 
+                "status", "path", "SHA-1",
+                
+                // Remote Common Info
+                "remoteLoaderTypes",
+                
+                // Remote CurseForge Info
+                "remoteCurseForgeID",
+                "curseforgeDependencies", 
+                "curseforgeGameVersions",
+                "curseforgeVersionType",
+                
+                // Remote Modrinth Info 
+                "remoteModrinthID",
+                "modrinthDependencies",
+                "modrinthGameVersions", 
+                "modrinthVersionType"
+            };
+
+            // Initialize headers
+            for (int i = 0; i < columnHeaders.length; i++) {
+                modDataTable.set(i, 0, columnHeaders[i]);
+            }
+
+            // Future collections for async operations
+            // Local computations
+            List<CompletableFuture<String>> fileHashFutures = new ArrayList<>();
+            
+            // Common remote data
+            List<CompletableFuture<List<ModLoaderType>>> modLoadersFutures = new ArrayList<>();
+            
+            // CurseForge remote data
+            List<CompletableFuture<String>> curseForgeIdFutures = new ArrayList<>();
+            List<CompletableFuture<String>> curseForgeDependenciesFutures = new ArrayList<>();
+            List<CompletableFuture<List<String>>> curseForgeGameVersionsFutures = new ArrayList<>();
+            List<CompletableFuture<String>> curseForgeVersionTypeFutures = new ArrayList<>();
+            
+            // Modrinth remote data
+            List<CompletableFuture<String>> modrinthIdFutures = new ArrayList<>();
+            List<CompletableFuture<String>> modrinthDependenciesFutures = new ArrayList<>();
+            List<CompletableFuture<List<String>>> modrinthGameVersionsFutures = new ArrayList<>();
+            List<CompletableFuture<String>> modrinthVersionTypeFutures = new ArrayList<>();
+
+            List<ModInfoObject> modList = listView.getItems();
+
+            // Collect data for each mod
+            for (int i = 0; i < modList.size(); i++) {
+                ModInfoObject mod = modList.get(i);
+                int rowIndex = i + 1;
+
+                // Write local basic data
+                modDataTable.set(0, rowIndex, FileUtils.getName(mod.getModInfo().getFile()));
+                modDataTable.set(1, rowIndex, mod.getModInfo().getName());
+                modDataTable.set(2, rowIndex, mod.getModInfo().getId());
+                modDataTable.set(3, rowIndex, mod.getModInfo().getVersion());
+                modDataTable.set(4, rowIndex, mod.getModInfo().getModLoaderType().name());
+                modDataTable.set(5, rowIndex, mod.getModInfo().getUrl());
+                modDataTable.set(6, rowIndex, mod.getModInfo().getAuthors());
+                modDataTable.set(7, rowIndex, mod.getModInfo().getLogoPath());
+                if (mod.getMod() != null) {
+                    modDataTable.set(8, rowIndex, mod.getMod().getDisplayName());
+                    modDataTable.set(9, rowIndex, mod.getMod().getAbbr());
+                    modDataTable.set(10, rowIndex, mod.getMod().getMcmod());
+                    modDataTable.set(11, rowIndex, mod.getMod().getSubname());
+                    modDataTable.set(12, rowIndex, mod.getMod().getCurseforge());
+                }
+                modDataTable.set(13, rowIndex, mod.getModInfo().getFile().toString().endsWith(".disabled") ? "Disabled" : "Enabled");
+                modDataTable.set(14, rowIndex, mod.getModInfo().getFile().toString());
+
+                // Initialize async operations
+                fileHashFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return DigestUtils.digestToString("SHA-1", mod.getModInfo().getFile());
+                    } catch (IOException e) {
+                        LOG.log(Level.WARNING, "Failed to calculate SHA-1", e);
+                        return "";
+                    }
+                }));
+
+                modLoadersFutures.add(CompletableFuture.supplyAsync(() -> {
+                    Set<ModLoaderType> loaders = new LinkedHashSet<>();
+                    
+                    try {
+                        CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .ifPresent(version -> loaders.addAll(version.getLoaders()));
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge loader types", e);
+                    }
+                    
+                    try {
+                        ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .ifPresent(version -> loaders.addAll(version.getLoaders()));
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth loader types", e);
+                    }
+                    
+                    return new ArrayList<>(loaders);
+                }));
+
+                // Initialize CurseForge data futures
+                curseForgeIdFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getModid())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge ID", e);
+                        return "";
+                    }
+                }));
+
+                curseForgeDependenciesFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getDependencies().stream()
+                                        .map(dep -> dep.getType() + ": " + dep.getId())
+                                        .collect(Collectors.joining(", ")))
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge dependencies", e);
+                        return "";
+                    }
+                }));
+
+                curseForgeGameVersionsFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getGameVersions())
+                                .orElse(Collections.emptyList());
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge game versions", e);
+                        return Collections.emptyList();
+                    }
+                }));
+
+                curseForgeVersionTypeFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getVersionType().name())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get CurseForge version type", e);
+                        return "";
+                    }
+                }));
+
+                // Initialize Modrinth data futures  
+                modrinthIdFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getModid())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth ID", e);
+                        return "";
+                    }
+                }));
+
+                modrinthDependenciesFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getDependencies().stream()
+                                        .map(dep -> dep.getType() + ": " + dep.getId())
+                                        .collect(Collectors.joining(", ")))
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth dependencies", e);
+                        return "";
+                    }
+                }));
+
+                modrinthGameVersionsFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getGameVersions())
+                                .orElse(Collections.emptyList());
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth game versions", e);
+                        return Collections.emptyList();
+                    }
+                }));
+
+                modrinthVersionTypeFutures.add(CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(mod.getModInfo(), mod.getModInfo().getFile())
+                                .map(version -> version.getVersionType().name())
+                                .orElse("");
+                    } catch (Exception e) {
+                        LOG.log(Level.WARNING, "Failed to get Modrinth version type", e);
+                        return "";
+                    }
+                }));
+            }
+
+            // Collect results
+            List<String> fileHashes = fileHashFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            List<List<ModLoaderType>> modLoaders = modLoadersFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            // CurseForge results
+            List<String> curseForgeIds = curseForgeIdFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<String> curseForgeDependencies = curseForgeDependenciesFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<List<String>> curseForgeGameVersions = curseForgeGameVersionsFutures.stream()
+                    .map(CompletableFuture::join) 
+                    .collect(Collectors.toList());
+            List<String> curseForgeVersionTypes = curseForgeVersionTypeFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            // Modrinth results
+            List<String> modrinthIds = modrinthIdFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<String> modrinthDependencies = modrinthDependenciesFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<List<String>> modrinthGameVersions = modrinthGameVersionsFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            List<String> modrinthVersionTypes = modrinthVersionTypeFutures.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
+            // Write collected data to CSV
+            for (int i = 0; i < modList.size(); i++) {
+                int rowIndex = i + 1;
+                
+                // Write file hash
+                modDataTable.set(15, rowIndex, fileHashes.get(i));
+                
+                // Write mod loaders
+                modDataTable.set(16, rowIndex, modLoaders.get(i).stream()
+                        .map(ModLoaderType::name)
+                        .collect(Collectors.joining(", ")));
+                        
+                // Write remote data
+                modDataTable.set(17, rowIndex, curseForgeIds.get(i));
+                modDataTable.set(18, rowIndex, modrinthIds.get(i));
+                modDataTable.set(19, rowIndex, curseForgeDependencies.get(i));
+                modDataTable.set(20, rowIndex, modrinthDependencies.get(i));
+                modDataTable.set(21, rowIndex, String.join(", ", curseForgeGameVersions.get(i)));
+                modDataTable.set(22, rowIndex, String.join(", ", modrinthGameVersions.get(i)));
+                modDataTable.set(23, rowIndex, curseForgeVersionTypes.get(i));
+                modDataTable.set(24, rowIndex, modrinthVersionTypes.get(i));
+            }
+
+            // Save CSV file
+            try (OutputStream outputStream = Files.newOutputStream(exportPath)) {
+                modDataTable.write(outputStream);
+            } catch (IOException e) {
+                LOG.log(Level.WARNING, "Failed to write CSV file", e);
+            }
+
+            FXUtils.showFileInExplorer(exportPath);
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception == null) {
+                Controllers.dialog(exportPath.toString(), i18n("message.success"));
+            } else {
+                Controllers.dialog(exception.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }), i18n("button.export"), TaskCancellationAction.NO_CANCEL);
+    }
+
     private void changeToolbar(HBox newToolbar) {
         Node oldToolbar = toolbarPane.getCurrentNode();
         if (newToolbar != oldToolbar) {
@@ -241,11 +546,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     private void search() {
         isSearching = true;
 
-        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
+        Bindings.unbindContent(listView.getItems(), skinnable.getItems());
 
         String queryString = searchField.getText();
         if (StringUtils.isBlank(queryString)) {
-            listView.getItems().setAll(getSkinnable().getItems());
+            listView.getItems().setAll(skinnable.getItems());
         } else {
             listView.getItems().clear();
 
@@ -264,12 +569,111 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             }
 
             // Do we need to search in the background thread?
-            for (ModInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getModInfo().getFileName())) {
+            for (ModInfoObject item : skinnable.getItems()) {
+                if (predicate.test(item.getModInfo().getFileName() +
+                        item.getModInfo().getName() +
+                        item.getModInfo().getVersion() +
+                        item.getModInfo().getGameVersion() +
+                        item.getModInfo().getId() +
+                        item.getModInfo().getModLoaderType() +
+                        (item.getMod() != null ? item.getMod().getDisplayName() : ""))) {
                     listView.getItems().add(item);
                 }
             }
         }
+    }
+
+    private void checkDuplicateModIds() {
+        Map<String, List<String>> modIdMap = new HashMap<>();
+        for (ModInfoObject modInfo : skinnable.getItems()) {
+            if (modInfo.getModInfo().getFile().toString().endsWith(".disabled")) {
+                continue;
+            }
+            String modId = modInfo.getModInfo().getId();
+            String fileName = modInfo.getModInfo().getFileName();
+            modIdMap.computeIfAbsent(modId, k -> new ArrayList<>()).add(fileName);
+        }
+
+        List<String> duplicateMods = modIdMap.entrySet().stream()
+            .filter(entry -> entry.getValue().size() > 1)
+            .map(entry -> "Mod ID: " + entry.getKey() + "\nFiles: " + String.join(", ", entry.getValue()))
+            .collect(Collectors.toList());
+
+        if (duplicateMods.isEmpty()) {
+            Controllers.dialog(i18n("mods.check_duplicate_mods.empty"), i18n("message.info"));
+        } else {
+            String duplicateInfo = String.join("\n---\n", duplicateMods);
+            JFXButton deleteButton = new JFXButton(i18n("button.copy"));
+            deleteButton.getStyleClass().add("dialog-info");
+            deleteButton.setOnAction(e -> FXUtils.copyText(duplicateInfo));
+            Controllers.confirmAction(duplicateInfo, i18n("mods.check_duplicate_mods"), MessageDialogPane.MessageType.INFO, deleteButton);
+        }
+    }
+
+    private static Task<Image> loadModIcon(LocalModFile modFile, int size) {
+        return Task.supplyAsync(() -> {
+            if (StringUtils.isNotBlank(modFile.getLogoPath())) {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+                    Path iconPath = fs.getPath(modFile.getLogoPath());
+                    if (Files.exists(iconPath)) {
+                        try (InputStream stream = Files.newInputStream(iconPath)) {
+                            Image image = new Image(stream, size, size, true, true);
+                            if (!image.isError() && image.getWidth() == image.getHeight())
+                                return image;
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to load image " + modFile.getLogoPath(), e);
+                }
+            }
+
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+                List<String> defaultPaths = new ArrayList<>(Arrays.asList(
+                        "icon.png",
+                        "logo.png", 
+                        "mod_logo.png",
+                        "pack.png",
+                        "logoFile.png"
+                ));
+
+                String id = modFile.getId();
+                if (StringUtils.isNotBlank(id)) {
+                    defaultPaths.addAll(Arrays.asList(
+                            "assets/" + id + "/icon.png",
+                            "assets/" + id.replace("-", "") + "/icon.png", 
+                            id + ".png",
+                            id + "-logo.png",
+                            id + "-icon.png",
+                            id + "_logo.png",
+                            id + "_icon.png"
+                    ));
+                }
+
+                for (String path : defaultPaths) {
+                    Path iconPath = fs.getPath(path);
+                    if (Files.exists(iconPath)) {
+                        try (InputStream stream = Files.newInputStream(iconPath)) {
+                            Image image = new Image(stream, size, size, true, true);
+                            if (!image.isError() && image.getWidth() == image.getHeight())
+                                return image;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load icon", e);
+            }
+
+            String iconPath;
+            switch (modFile.getModLoaderType()) {
+                case FORGE: iconPath = "/assets/img/forge.png"; break;
+                case NEO_FORGED: iconPath = "/assets/img/neoforge.png"; break; 
+                case FABRIC: iconPath = "/assets/img/fabric.png"; break;
+                case QUILT: iconPath = "/assets/img/quilt.png"; break;
+                case LITE_LOADER: iconPath = "/assets/img/liteloader.png"; break;
+                default: iconPath = "/assets/img/command.png"; break;
+            }
+            return FXUtils.newBuiltinImage(iconPath, size, size, true, true);
+        });
     }
 
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
@@ -284,15 +688,20 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             this.active = localModFile.activeProperty();
 
             StringBuilder title = new StringBuilder(localModFile.getName());
-            if (isNotBlank(localModFile.getVersion()))
-                title.append(" ").append(localModFile.getVersion());
             this.title = title.toString();
 
-            StringBuilder message = new StringBuilder(localModFile.getFileName());
-            if (isNotBlank(localModFile.getGameVersion()))
-                message.append(", ").append(i18n("mods.game.version")).append(": ").append(localModFile.getGameVersion());
-            if (isNotBlank(localModFile.getAuthors()))
-                message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
+            List<String> parts = new ArrayList<>();
+            if (isNotBlank(localModFile.getId())) {
+                parts.add(localModFile.getId());
+            }
+            if (isNotBlank(localModFile.getVersion())) {
+                parts.add(localModFile.getVersion());
+            }
+            if (isNotBlank(localModFile.getGameVersion())) {
+                parts.add(i18n("game.version") + ": " + localModFile.getGameVersion());
+            }
+            String message = String.join(", ", parts);
+
             this.message = message.toString();
 
             this.mod = ModTranslations.MOD.getModById(localModFile.getId());
@@ -326,71 +735,25 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            ImageView imageView = new ImageView();
-            Task.supplyAsync(() -> {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
-                    String logoPath = modInfo.getModInfo().getLogoPath();
-                    if (StringUtils.isNotBlank(logoPath)) {
-                        Path iconPath = fs.getPath(logoPath);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
-                            } catch (Throwable e) {
-                                LOG.warning("Failed to load image " + logoPath, e);
-                            }
-                        }
-                    }
-
-                    List<String> defaultPaths = new ArrayList<>(Arrays.asList(
-                            "icon.png",
-                            "logo.png",
-                            "mod_logo.png",
-                            "pack.png",
-                            "logoFile.png"
-                    ));
-
-                    String id = modInfo.getModInfo().getId();
-                    if (StringUtils.isNotBlank(id)) {
-                        defaultPaths.addAll(Arrays.asList(
-                                "assets/" + id + "/icon.png",
-                                "assets/" + id.replace("-", "") + "/icon.png",
-                                id + ".png",
-                                id + "-logo.png",
-                                id + "-icon.png",
-                                id + "_logo.png",
-                                id + "_icon.png"
-                        ));
-                    }
-
-                    for (String path : defaultPaths) {
-                        Path iconPath = fs.getPath(path);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Failed to load icon", e);
-                }
-
-                return null;
-            }).whenComplete(Schedulers.javafx(), (image, exception) -> {
-                if (image != null) {
+            ImageView imageView = new ImageView(); 
+            loadModIcon(modInfo.getModInfo(), 40)
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
                     imageView.setImage(image);
-                } else {
-                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
-                }
-            }).start();
+                }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
+            if (modInfo.getMod() != null) {
+                title.getTags().add(modInfo.getMod().getDisplayName());
+            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
+                title.getTags().add(i18n("game.version") + ": " + modInfo.getModInfo().getGameVersion());
+            }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                title.getTags().setAll(modInfo.getModInfo().getVersion());
+                title.getTags().add(modInfo.getModInfo().getVersion());
+            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
+                title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
             title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
 
@@ -445,7 +808,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                     Controllers.navigate(new DownloadPage(
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
-                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
+                                            new Profile.ProfileVersion(skinnable.getProfile(), skinnable.getVersionId()),
                                             null
                                     ));
                                 });
@@ -503,6 +866,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
+        ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
@@ -519,6 +883,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
+            imageView.setFitWidth(24);
+            imageView.setFitHeight(24);
+            imageView.setPreserveRatio(true);
+            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 24, 24, true, true));
+
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
 
@@ -530,7 +899,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -539,6 +908,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
+  
+            loadModIcon(dataItem.getModInfo(), 24)
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
+                    imageView.setImage(image);
+                }).start();
+            
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
             switch (dataItem.getModInfo().getModLoaderType()) {
@@ -559,9 +934,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     break;
             }
             if (dataItem.getMod() != null && I18n.isUseChinese()) {
-                content.getTags().add(dataItem.getMod().getDisplayName());
+                if (isNotBlank(dataItem.getSubtitle())) {
+                    content.setSubtitle(dataItem.getSubtitle() + ", " + dataItem.getMod().getDisplayName());
+                } else {
+                    content.setSubtitle(dataItem.getMod().getDisplayName());
+                }
+            } else {
+                content.setSubtitle(dataItem.getSubtitle());
             }
-            content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
@@ -570,7 +950,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
-                                () -> getSkinnable().rollback(dataItem.getModInfo(), localModFile),
+                                () -> skinnable.rollback(dataItem.getModInfo(), localModFile),
                                 popup.get()))
                         .collect(Collectors.toList())
                 );
