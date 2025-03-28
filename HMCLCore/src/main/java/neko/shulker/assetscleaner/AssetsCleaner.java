@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.lang.reflect.Type;
 
-public class AssetsCleaner {
+class AssetsCleaner {
     public static void clean(String indexesDirectory, String assetsDirectory) {
         // 用于存储所有 index 中 hash 键值的 Map
         Map<String, Map<String, Object>> hashMap = new HashMap<>();

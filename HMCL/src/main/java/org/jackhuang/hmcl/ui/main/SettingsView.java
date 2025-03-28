@@ -30,7 +30,6 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
-import neko.shulker.assetscleaner.TestCleaner;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
@@ -197,18 +196,13 @@ public abstract class SettingsView extends StackPane {
                     openLogFolderButton.setOnAction(e -> openLogFolder());
                     openLogFolderButton.getStyleClass().add("jfx-button-border");
 
-                    // 测试Clean
-                    JFXButton testCleanerButton = new JFXButton(i18n("testCleaner"));
-                    testCleanerButton.setOnAction(e -> {TestCleaner.test();});
-                    testCleanerButton.getStyleClass().add("jfx-button-border");
-
                     JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
                     logButton.setOnAction(e -> onExportLogs());
                     logButton.getStyleClass().add("jfx-button-border");
 
                     HBox buttonBox = new HBox();
                     buttonBox.setSpacing(10);
-                    buttonBox.getChildren().addAll(openLogFolderButton, testCleanerButton, logButton);
+                    buttonBox.getChildren().addAll(openLogFolderButton, logButton);
                     BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                     debugPane.setRight(buttonBox);
 
