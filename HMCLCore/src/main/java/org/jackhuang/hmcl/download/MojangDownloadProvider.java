@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
-import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
+import org.jackhuang.hmcl.download.optifine.OptiFine302VersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 
@@ -38,7 +38,7 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final ForgeVersionList forge;
     private final NeoForgeOfficialVersionList neoforge;
     private final LiteLoaderVersionList liteLoader;
-    private final OptiFineBMCLVersionList optifine;
+    private final OptiFine302VersionList optifine;
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
 
@@ -52,7 +52,7 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.forge = new ForgeVersionList(this);
         this.neoforge = new NeoForgeOfficialVersionList(this);
         this.liteLoader = new LiteLoaderVersionList(this);
-        this.optifine = new OptiFineBMCLVersionList(apiRoot);
+        this.optifine = new OptiFine302VersionList("https://hmcl-dev.github.io/metadata/optifine/");
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new QuiltAPIVersionList(this);
     }
