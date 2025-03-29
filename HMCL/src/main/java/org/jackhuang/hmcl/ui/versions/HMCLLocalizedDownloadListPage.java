@@ -110,7 +110,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         try {
             return I18n.getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
-            LOG.warning("Cannot find key " + key + " in resource bundle", e);
+            LOG.warning("Cannot find key " + key + " in resource bundle");
             return category;
         }
     }
