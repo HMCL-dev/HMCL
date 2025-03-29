@@ -463,14 +463,17 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(isModpack ? i18n("install.modpack") : i18n("mods.install"));
-            downloadButton.getStyleClass().add("dialog-accept");
-            downloadButton.setOnAction(e -> {
-                if (isModpack || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
-                    fireEvent(new DialogCloseEvent());
-                }
-                selfPage.download(version);
-            });
+            JFXButton downloadButton = null;
+            if (selfPage.callback != null) {
+                downloadButton = new JFXButton(isModpack ? i18n("install.modpack") : i18n("mods.install"));
+                downloadButton.getStyleClass().add("dialog-accept");
+                downloadButton.setOnAction(e -> {
+                    if (isModpack || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                        fireEvent(new DialogCloseEvent());
+                    }
+                    selfPage.download(version);
+                });
+            }
 
             JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
@@ -485,7 +488,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.getStyleClass().add("dialog-cancel");
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            this.setActions(downloadButton, saveAsButton, cancelButton);
+            if (downloadButton == null) {
+                this.setActions(saveAsButton, cancelButton);
+            } else {
+                this.setActions(downloadButton, saveAsButton, cancelButton);
+            }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
