@@ -154,7 +154,7 @@ public class OfflineAccountSkinPane extends StackPane {
                                     result.getCape() != null ? result.getCape().getImage() : null);
                         }
                     }).start();
-        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
+        }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             GridPane gridPane = new GridPane();
