@@ -18,21 +18,18 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.util.Collections;
-import java.util.Map;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * @author huangyuhui
  */
 public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVersion> {
@@ -45,52 +42,48 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
 
     @Override
     public boolean hasType() {
-        return false;
+        return true;
     }
 
-    private void doBranch(String key, String gameVersion, LiteLoaderRepository repository, LiteLoaderBranch branch, boolean snapshot) {
-        if (branch == null || repository == null)
-            return;
-
-        for (Map.Entry<String, LiteLoaderVersion> entry : branch.getLiteLoader().entrySet()) {
-            String branchName = entry.getKey();
-            LiteLoaderVersion v = entry.getValue();
-            if ("latest".equals(branchName))
-                continue;
-
-            String version = v.getVersion();
-            String url = repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile();
-            if (snapshot) {
-                try {
-                    version = version.replace("SNAPSHOT", getLatestSnapshotVersion(repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/"));
-                    url = repository.getUrl() + "com/mumfrey/liteloader/" + v.getVersion() + "/liteloader-" + version + "-release.jar";
-                } catch (Exception ignore) {
-                }
-            }
-
-            versions.put(key, new LiteLoaderRemoteVersion(gameVersion,
-                    version, Collections.singletonList(url),
-                    v.getTweakClass(), v.getLibraries()
-            ));
-        }
-    }
+    public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
 
     @Override
     public CompletableFuture<?> refreshAsync() {
         return HttpRequest.GET(downloadProvider.injectURL(LITELOADER_LIST)).getJsonAsync(LiteLoaderVersionsRoot.class)
                 .thenAcceptAsync(root -> {
-                    lock.writeLock().lock();
+                    List<CompletableFuture<List<LiteLoaderRemoteVersion>>> futures = new ArrayList<>();
+                    for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
+                        String gameVersion = entry.getKey();
+                        LiteLoaderGameVersions liteLoader = entry.getValue();
 
+                        if (liteLoader.getRepoitory() != null && liteLoader.getArtifacts() != null) {
+                            futures.add(CompletableFuture.supplyAsync(() -> loadArtifactVersion(gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts())));
+                        }
+
+                        if (liteLoader.getSnapshots() != null) {
+                            LiteLoaderVersion v = liteLoader.getSnapshots().getLiteLoader().get("latest");
+                            futures.add(CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return Collections.singletonList(loadSnapshotVersion(gameVersion, v));
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            }));
+                        }
+                    }
+
+                    for (CompletableFuture<List<LiteLoaderRemoteVersion>> future : futures) {
+                        future.join();
+                    }
+
+                    lock.writeLock().lock();
                     try {
                         versions.clear();
 
-                        for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
-                            String gameVersion = entry.getKey();
-                            LiteLoaderGameVersions liteLoader = entry.getValue();
-
-                            String gg = VersionNumber.normalize(gameVersion);
-                            doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts(), false);
-                            doBranch(gg, gameVersion, liteLoader.getRepoitory(), liteLoader.getSnapshots(), true);
+                        for (CompletableFuture<List<LiteLoaderRemoteVersion>> future : futures) {
+                            for (LiteLoaderRemoteVersion v : future.getNow(null)) {
+                                versions.put(v.getGameVersion(), v);
+                            }
                         }
                     } finally {
                         lock.writeLock().unlock();
@@ -98,16 +91,39 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                 });
     }
 
-    public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
+    private List<LiteLoaderRemoteVersion> loadArtifactVersion(String gameVersion, LiteLoaderRepository repository, LiteLoaderBranch branch) {
+        List<LiteLoaderRemoteVersion> versions = new ArrayList<>();
 
-    private static String getLatestSnapshotVersion(String repo) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(repo + "maven-metadata.xml");
-        Element r = doc.getDocumentElement();
-        Element snapshot = (Element) r.getElementsByTagName("snapshot").item(0);
-        Node timestamp = snapshot.getElementsByTagName("timestamp").item(0);
-        Node buildNumber = snapshot.getElementsByTagName("buildNumber").item(0);
-        return timestamp.getTextContent() + "-" + buildNumber.getTextContent();
+        for (Map.Entry<String, LiteLoaderVersion> entry : branch.getLiteLoader().entrySet()) {
+            String branchName = entry.getKey();
+            LiteLoaderVersion v = entry.getValue();
+            if ("latest".equals(branchName))
+                continue;
+
+            versions.add(new LiteLoaderRemoteVersion(
+                    gameVersion, v.getVersion(), RemoteVersion.Type.RELEASE,
+                    Collections.singletonList(repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile()),
+                    v.getTweakClass(), v.getLibraries()
+            ));
+        }
+
+        return versions;
+    }
+
+    // Workaround for https://github.com/HMCL-dev/HMCL/issues/3147: Some LiteLoader artifacts aren't published on http://dl.liteloader.com/repo
+    private static final String SNAPSHOT_METADATA = "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/%s-SNAPSHOT/maven-metadata.xml";
+    private static final String SNAPSHOT_FILE = "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/%s-SNAPSHOT/liteloader-%s-%s-%s.jar";
+
+    private LiteLoaderRemoteVersion loadSnapshotVersion(String gameVersion, LiteLoaderVersion v) throws IOException {
+        String root = HttpRequest.GET(String.format(SNAPSHOT_METADATA, gameVersion)).getString();
+        Document document = Jsoup.parseBodyFragment(root);
+        String timestamp = Objects.requireNonNull(document.select("timestamp"), "timestamp").text();
+        String buildNumber = Objects.requireNonNull(document.select("buildNumber"), "buildNumber").text();
+
+        return new LiteLoaderRemoteVersion(
+                gameVersion, timestamp + "-" + buildNumber, RemoteVersion.Type.SNAPSHOT,
+                Collections.singletonList(String.format(SNAPSHOT_FILE, gameVersion, gameVersion, timestamp, buildNumber)),
+                v.getTweakClass(), v.getLibraries()
+        );
     }
 }
