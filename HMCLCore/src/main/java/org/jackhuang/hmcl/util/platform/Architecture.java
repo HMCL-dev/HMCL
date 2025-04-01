@@ -192,7 +192,7 @@ public enum Architecture {
     static {
         CURRENT_ARCH = parseArchName(System.getProperty("os.arch"));
 
-        Architecture sysArch = UNKNOWN;
+        Architecture sysArch = null;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
             if (processorIdentifier != null) {
@@ -232,6 +232,6 @@ public enum Architecture {
             }
         }
 
-        SYSTEM_ARCH = sysArch == UNKNOWN ? CURRENT_ARCH : sysArch;
+        SYSTEM_ARCH = sysArch == null || sysArch == UNKNOWN ? CURRENT_ARCH : sysArch;
     }
 }
