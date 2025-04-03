@@ -205,10 +205,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 workaroundPane.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
             } else {
-                ComponentSublist nativeRenderSublist = new ComponentSublist();
-                nativeRenderSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
-                nativeRenderSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
-                workaroundPane.getContent().add(nativeRenderSublist);
+                ComponentSublist unsupportedOptionsSublist = new ComponentSublist();
+                unsupportedOptionsSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
+                unsupportedOptionsSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
+                workaroundPane.getContent().add(unsupportedOptionsSublist);
             }
         }
 
