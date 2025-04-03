@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
-import org.jackhuang.hmcl.Metadata;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -54,19 +53,9 @@ public final class I18n {
         return locale == Locales.DEFAULT ? resourceBundle.getString("lang.default") : locale.getResourceBundle().getString("lang");
     }
 
-    private static String replaceURLs(String text) {
-        if (text.contains("{CONTACT_URL}"))
-            text = text.replace("{CONTACT_URL}", Metadata.CONTACT_URL);
-        if (text.contains("{DOCS_URL}"))
-            text = text.replace("{DOCS_URL}", Metadata.DOCS_URL);
-        if (text.contains("{DOWNLOAD_URL}"))
-            text = text.replace("{DOWNLOAD_URL}", Metadata.DOWNLOAD_URL);
-        return text;
-    }
-
     public static String i18n(String key, Object... formatArgs) {
         try {
-            return String.format(replaceURLs(getResourceBundle().getString(key)), formatArgs);
+            return String.format(getResourceBundle().getString(key), formatArgs);
         } catch (MissingResourceException e) {
             LOG.error("Cannot find key " + key + " in resource bundle", e);
         } catch (IllegalFormatException e) {
@@ -78,7 +67,7 @@ public final class I18n {
 
     public static String i18n(String key) {
         try {
-            return replaceURLs(getResourceBundle().getString(key));
+            return getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
             LOG.error("Cannot find key " + key + " in resource bundle", e);
             return key;
