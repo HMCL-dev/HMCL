@@ -33,8 +33,6 @@ public interface DownloadProvider {
 
     String getVersionListURL();
 
-    String getUnlistedMinecraftURL();
-
     String getAssetBaseURL();
 
     default List<URL> getAssetObjectCandidates(String assetObjectLocation) {

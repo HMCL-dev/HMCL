@@ -69,14 +69,6 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
                     try {
                         versions.clear();
 
-                        for (GameRemoteVersionInfo remoteVersion : root.getVersions()) {
-                            versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
-                                    remoteVersion.getGameVersion(),
-                                    remoteVersion.getGameVersion(),
-                                    Collections.singletonList(remoteVersion.getUrl()),
-                                    remoteVersion.getType(), remoteVersion.getReleaseTime()));
-                        }
-
                         if (unlistedVersions != null) {
                             for (GameRemoteVersionInfo unlistedVersion : unlistedVersions.getVersions()) {
                                 versions.put(unlistedVersion.getGameVersion(), new GameRemoteVersion(
@@ -85,6 +77,14 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
                                         Collections.singletonList(unlistedVersion.getUrl()),
                                         unlistedVersion.getType(), unlistedVersion.getReleaseTime()));
                             }
+                        }
+
+                        for (GameRemoteVersionInfo remoteVersion : root.getVersions()) {
+                            versions.put(remoteVersion.getGameVersion(), new GameRemoteVersion(
+                                    remoteVersion.getGameVersion(),
+                                    remoteVersion.getGameVersion(),
+                                    Collections.singletonList(remoteVersion.getUrl()),
+                                    remoteVersion.getType(), remoteVersion.getReleaseTime()));
                         }
 
                     } finally {

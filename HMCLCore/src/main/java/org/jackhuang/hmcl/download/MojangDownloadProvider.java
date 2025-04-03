@@ -63,11 +63,6 @@ public class MojangDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getUnlistedMinecraftURL() {
-        return "https://zkitefly.github.io/unlisted-versions-of-minecraft/version_manifest.json";
-    }
-
-    @Override
     public String getAssetBaseURL() {
         return "https://resources.download.minecraft.net/";
     }
