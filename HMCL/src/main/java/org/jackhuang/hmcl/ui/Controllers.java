@@ -391,10 +391,7 @@ public final class Controllers {
 
     public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
-        pane.setTitle(title);
-        pane.setExecutor(executor);
-        dialog(pane);
+        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
         return pane;
     }

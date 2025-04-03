@@ -124,6 +124,8 @@ public enum OperatingSystem {
     public static final String OS_RELEASE_NAME;
     public static final String OS_RELEASE_PRETTY_NAME;
 
+    public static final int CODE_PAGE;
+
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
@@ -184,13 +186,30 @@ public enum OperatingSystem {
                 osName = "Windows 11";
             }
 
+            int codePage = -1;
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                    Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
+                            .matcher(reader.readLine().trim());
+
+                    if (matcher.find()) {
+                        codePage = Integer.parseInt(matcher.group("cp"));
+                    }
+                }
+                process.destroy();
+            } catch (Throwable ignored) {
+            }
+
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = versionNumber;
             SYSTEM_BUILD_NUMBER = buildNumber;
+            CODE_PAGE = codePage;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
+            CODE_PAGE = -1;
         }
 
         Map<String, String> osRelease = Collections.emptyMap();

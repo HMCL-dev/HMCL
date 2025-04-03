@@ -36,13 +36,14 @@ public final class AnimationUtils {
     public static void init() {
     }
 
-    private static final boolean enabled = !ConfigHolder.config().isAnimationDisabled();
+    private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled();
+    private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
 
     public static boolean isAnimationEnabled() {
-        return enabled;
+        return ENABLED;
     }
 
     public static boolean playWindowAnimation() {
-        return isAnimationEnabled() && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
+        return PLAY_WINDOW_ANIMATION;
     }
 }

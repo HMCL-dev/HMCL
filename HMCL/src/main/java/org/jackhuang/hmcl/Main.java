@@ -20,6 +20,7 @@ package org.jackhuang.hmcl;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import org.jackhuang.hmcl.ui.AwtUtils;
+import org.jackhuang.hmcl.util.ModuleHelper;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -31,6 +32,7 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,7 +56,6 @@ public final class Main {
     public static void main(String[] args) {
         System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
-        System.getProperties().putIfAbsent("javafx.animation.pulse", "120");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
         LOG.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
@@ -70,6 +71,8 @@ public final class Main {
 
         checkJavaFX();
         verifyJavaFX();
+        addEnableNativeAccess();
+        enableUnsafeMemoryAccess();
 
         Launcher.main(args);
     }
@@ -80,7 +83,7 @@ public final class Main {
     }
 
     private static void initIcon() {
-        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/img/icon@8x.png"));
+        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/img/icon-mac.png"));
         AwtUtils.setAppleIcon(image);
     }
 
@@ -117,7 +120,33 @@ public final class Main {
             Class.forName("javafx.stage.Stage");           // javafx.graphics
             Class.forName("javafx.scene.control.Skin");    // javafx.controls
         } catch (Exception e) {
+            e.printStackTrace(System.err);
             showErrorAndExit(i18n("fatal.javafx.incomplete"));
+        }
+    }
+
+    private static void addEnableNativeAccess() {
+        if (JavaRuntime.CURRENT_VERSION > 21) {
+            try {
+                ModuleHelper.addEnableNativeAccess(Class.forName("javafx.stage.Stage")); // javafx.graphics
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                showErrorAndExit(i18n("fatal.javafx.incomplete"));
+            }
+        }
+    }
+
+    private static void enableUnsafeMemoryAccess() {
+        // https://openjdk.org/jeps/498
+        if (JavaRuntime.CURRENT_VERSION == 24 || JavaRuntime.CURRENT_VERSION == 25) {
+            try {
+                Class<?> clazz = Class.forName("sun.misc.Unsafe");
+                Method trySetMemoryAccessWarned = clazz.getDeclaredMethod("trySetMemoryAccessWarned");
+                trySetMemoryAccessWarned.setAccessible(true);
+                trySetMemoryAccessWarned.invoke(null);
+            } catch (Throwable e) {
+                e.printStackTrace(System.err);
+            }
         }
     }
 

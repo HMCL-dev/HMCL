@@ -64,11 +64,13 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 node = node.nextSibling();
             } while (node != null);
 
+            renderer.mergeLineBreaks();
             return renderer.render();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 ScrollPane scrollPane = new ScrollPane(result);
                 scrollPane.setFitToWidth(true);
+                FXUtils.smoothScrolling(scrollPane);
                 setBody(scrollPane);
             } else {
                 LOG.warning("Failed to load update log, trying to open it in browser");
