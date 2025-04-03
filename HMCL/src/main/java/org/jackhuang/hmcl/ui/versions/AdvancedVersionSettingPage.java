@@ -48,7 +48,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final OptionToggleButton useNativeGLFWPane;
     private final OptionToggleButton useNativeOpenALPane;
     private final ComponentSublist nativesDirSublist;
-    private final ComponentSublist nativeRenderSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
     private final JFXComboBox<Renderer> cboRenderer;
@@ -192,9 +191,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             noNativesPatchPane = new OptionToggleButton();
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
-            nativeRenderSublist = new ComponentSublist();
-            nativeRenderSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
-
             useNativeGLFWPane = new OptionToggleButton();
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
 
@@ -206,11 +202,13 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                     noJVMCheckPane, noNativesPatchPane
             );
 
-            if (!OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                workaroundPane.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
+            } else {
+                ComponentSublist nativeRenderSublist = new ComponentSublist();
+                nativeRenderSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
                 nativeRenderSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
                 workaroundPane.getContent().add(nativeRenderSublist);
-            } else {
-                workaroundPane.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
             }
         }
 
