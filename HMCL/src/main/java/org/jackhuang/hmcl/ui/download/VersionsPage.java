@@ -416,8 +416,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
-
-
                         content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
                         break;
                     default:
