@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -74,6 +75,10 @@ public final class IOUtils {
         return readFully(stream).toString("UTF-8");
     }
 
+    public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {
+        return readFully(stream).toString(charset.name());
+    }
+
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {
         copyTo(src, dest, new byte[DEFAULT_BUFFER_SIZE]);
     }
@@ -89,5 +94,22 @@ public final class IOUtils {
 
     public static InputStream wrapFromGZip(InputStream inputStream) throws IOException {
         return new GZIPInputStream(inputStream);
+    }
+
+    public static void closeQuietly(AutoCloseable closeable) {
+        try {
+            if (closeable != null)
+                closeable.close();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void closeQuietly(AutoCloseable closeable, Throwable exception) {
+        try {
+            if (closeable != null)
+                closeable.close();
+        } catch (Throwable e) {
+            exception.addSuppressed(e);
+        }
     }
 }

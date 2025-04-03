@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.KeyValuePairProperties;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -28,8 +30,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Locale;
-import java.util.Optional;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,6 +77,10 @@ public enum OperatingSystem {
         return this == LINUX || this == FREEBSD;
     }
 
+    public String getJavaExecutable() {
+        return this == WINDOWS ? "java.exe" : "java";
+    }
+
     /**
      * The current operating system.
      */
@@ -114,6 +121,11 @@ public enum OperatingSystem {
      */
     public static final String SYSTEM_VERSION;
 
+    public static final String OS_RELEASE_NAME;
+    public static final String OS_RELEASE_PRETTY_NAME;
+
+    public static final int CODE_PAGE;
+
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
@@ -140,7 +152,7 @@ public enum OperatingSystem {
                 }
             }
         } catch (UnsupportedCharsetException e) {
-            e.printStackTrace();
+            e.printStackTrace(System.err);
         }
         NATIVE_CHARSET = nativeCharset;
 
@@ -174,18 +186,50 @@ public enum OperatingSystem {
                 osName = "Windows 11";
             }
 
+            int codePage = -1;
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                    Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
+                            .matcher(reader.readLine().trim());
+
+                    if (matcher.find()) {
+                        codePage = Integer.parseInt(matcher.group("cp"));
+                    }
+                }
+                process.destroy();
+            } catch (Throwable ignored) {
+            }
+
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = versionNumber;
             SYSTEM_BUILD_NUMBER = buildNumber;
+            CODE_PAGE = codePage;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
+            CODE_PAGE = -1;
         }
 
-        TOTAL_MEMORY = getPhysicalMemoryStatus()
-                .map(physicalMemoryStatus -> (int) (physicalMemoryStatus.getTotal() / 1024 / 1024))
-                .orElse(1024);
+        Map<String, String> osRelease = Collections.emptyMap();
+        if (CURRENT_OS == LINUX || CURRENT_OS == FREEBSD) {
+            Path osReleaseFile = Paths.get("/etc/os-release");
+            if (Files.exists(osReleaseFile)) {
+                try {
+                    osRelease = KeyValuePairProperties.load(osReleaseFile);
+                } catch (IOException e) {
+                    e.printStackTrace(System.err);
+                }
+            }
+        }
+        OS_RELEASE_NAME = osRelease.get("NAME");
+        OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
+
+        PhysicalMemoryStatus physicalMemoryStatus = getPhysicalMemoryStatus();
+        TOTAL_MEMORY = physicalMemoryStatus != PhysicalMemoryStatus.INVALID
+                ? (int) (physicalMemoryStatus.getTotal() / 1024 / 1024)
+                : 1024;
 
         SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
@@ -215,10 +259,10 @@ public enum OperatingSystem {
 
         name = name.trim().toLowerCase(Locale.ROOT);
 
-        if (name.contains("win"))
-            return WINDOWS;
-        else if (name.contains("mac"))
+        if (name.contains("mac") || name.contains("darwin") || name.contains("osx"))
             return OSX;
+        else if (name.contains("win"))
+            return WINDOWS;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
             return LINUX;
         else if (name.equals("freebsd"))
@@ -252,7 +296,7 @@ public enum OperatingSystem {
     }
 
     @SuppressWarnings("deprecation")
-    public static Optional<PhysicalMemoryStatus> getPhysicalMemoryStatus() {
+    public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
         if (CURRENT_OS == LINUX) {
             try {
                 long free = 0, available = 0, total = 0;
@@ -273,10 +317,10 @@ public enum OperatingSystem {
                     }
                 }
                 if (total > 0) {
-                    return Optional.of(new PhysicalMemoryStatus(total, available > 0 ? available : free));
+                    return new PhysicalMemoryStatus(total, available > 0 ? available : free);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
             }
         }
 
@@ -286,11 +330,11 @@ public enum OperatingSystem {
                 com.sun.management.OperatingSystemMXBean sunBean =
                         (com.sun.management.OperatingSystemMXBean)
                                 java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-                return Optional.of(new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize()));
+                return new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize());
             }
         } catch (NoClassDefFoundError ignored) {
         }
-        return Optional.empty();
+        return PhysicalMemoryStatus.INVALID;
     }
 
     @SuppressWarnings("removal")

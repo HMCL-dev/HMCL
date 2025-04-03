@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -177,7 +177,7 @@ public final class UpdateHandler {
 
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
-        commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
+        commandline.add(JavaRuntime.getDefault().getBinary().toString());
         for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String && ((String) key).startsWith("hmcl.")) {

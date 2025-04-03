@@ -22,9 +22,9 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected final Label lblName;
     protected final Label lblVersion;
     protected final Label lblAuthor;
-    protected final Label lblModpackLocation;
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
+    protected final JFXButton btnDescription;
 
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
@@ -37,15 +37,6 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
         ComponentList componentList = new ComponentList();
         {
-            BorderPane locationPane = new BorderPane();
-            {
-                locationPane.setLeft(new Label(i18n("modpack.task.install.will")));
-
-                lblModpackLocation = new Label();
-                BorderPane.setAlignment(lblModpackLocation, Pos.CENTER_RIGHT);
-                locationPane.setCenter(lblModpackLocation);
-            }
-
             BorderPane archiveNamePane = new BorderPane();
             {
                 Label label = new Label(i18n("archive.file.name"));
@@ -87,7 +78,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
             BorderPane descriptionPane = new BorderPane();
             {
-                JFXButton btnDescription = new JFXButton(i18n("modpack.description"));
+                btnDescription = new JFXButton(i18n("modpack.description"));
                 btnDescription.getStyleClass().add("jfx-button-border");
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
@@ -99,7 +90,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
             }
 
             componentList.getContent().setAll(
-                    locationPane, archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
+                    archiveNamePane, modpackNamePane, versionPane, authorPane, descriptionPane);
         }
 
         borderPane.getChildren().setAll(componentList);

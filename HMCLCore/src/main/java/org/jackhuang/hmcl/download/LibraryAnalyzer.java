@@ -170,6 +170,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         Version resolvedVersion = version.resolve(provider);
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
+                || mainClass.startsWith("net.minecraftforge")
                 || mainClass.startsWith("net.fabricmc")
                 || mainClass.startsWith("org.quiltmc")
                 || mainClass.startsWith("cpw.mods"));
@@ -215,11 +216,6 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
             @Override
             protected String patchVersion(Version gameVersion, String libraryVersion) {
-                Matcher matcher = NEO_FORGE_VERSION_MATCHER.matcher(libraryVersion);
-                if (matcher.find()) {
-                    return matcher.group("forge");
-                }
-
                 String res = scanVersion(gameVersion);
                 if (res != null) {
                     return res;
@@ -230,6 +226,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                     if (res != null) {
                         return res;
                     }
+                }
+
+                Matcher matcher = NEO_FORGE_VERSION_MATCHER.matcher(libraryVersion);
+                if (matcher.find()) {
+                    return matcher.group("forge");
                 }
 
                 return super.patchVersion(gameVersion, libraryVersion);
@@ -247,12 +248,15 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
                 for (int i = 0; i < gameArguments.size() - 1; i++) {
                     Argument argument = gameArguments.get(i);
-                    if (argument instanceof StringArgument && "--fml.neoForgeVersion".equals(((StringArgument) argument).getArgument())) {
-                        Argument next = gameArguments.get(i + 1);
-                        if (next instanceof StringArgument) {
-                            return ((StringArgument) next).getArgument();
+                    if (argument instanceof StringArgument) {
+                        String argumentValue = ((StringArgument) argument).getArgument();
+                        if ("--fml.neoForgeVersion".equals(argumentValue) || "--fml.forgeVersion".equals(argumentValue)) {
+                            Argument next = gameArguments.get(i + 1);
+                            if (next instanceof StringArgument) {
+                                return ((StringArgument) next).getArgument();
+                            }
+                            return null; // Normally, there should not be two --fml.neoForgeVersion argument.
                         }
-                        return null; // Normally, there should not be two --fml.neoForgeVersion argument.
                     }
                 }
                 return null;
@@ -269,6 +273,13 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         private final String patchId;
         private final Pattern group, artifact;
         private final ModLoaderType modLoaderType;
+
+        private static final Map<String, LibraryType> PATCH_ID_MAP = new HashMap<>();
+        static {
+            for (LibraryType type : values()) {
+                PATCH_ID_MAP.put(type.getPatchId(), type);
+            }
+        }
 
         LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact, ModLoaderType modLoaderType) {
             this.modLoader = modLoader;
@@ -291,10 +302,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         }
 
         public static LibraryType fromPatchId(String patchId) {
-            for (LibraryType type : values())
-                if (type.getPatchId().equals(patchId))
-                    return type;
-            return null;
+            return PATCH_ID_MAP.get(patchId);
         }
 
         protected boolean matchLibrary(Library library, List<Library> libraries) {

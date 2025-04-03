@@ -55,14 +55,11 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
@@ -241,14 +238,14 @@ public class DownloadPage extends Control implements DecoratorPage {
                     openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
                     descriptionPane.getChildren().add(openMcmodButton);
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
-                    runInFX(() -> FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod")));
+                    FXUtils.installFastTooltip(openMcmodButton, i18n("mods.mcmod"));
                 }
 
                 JFXHyperlink openUrlButton = new JFXHyperlink(control.page.getLocalizedOfficialPage());
                 openUrlButton.setExternalLink(getSkinnable().addon.getPageUrl());
                 descriptionPane.getChildren().add(openUrlButton);
                 openUrlButton.setMinWidth(Region.USE_PREF_SIZE);
-                runInFX(() -> FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage()));
+                FXUtils.installFastTooltip(openUrlButton, control.page.getLocalizedOfficialPage());
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();
@@ -308,7 +305,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                         ComponentList sublist = new ComponentList(() -> {
                             ArrayList<ModItem> items = new ArrayList<>(versions.size());
-                            for (RemoteMod.Version v: versions) {
+                            for (RemoteMod.Version v : versions) {
                                 items.add(new ModItem(v, control));
                             }
                             return items;
@@ -346,7 +343,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
             RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> Controllers.navigate(new DownloadPage(page, addon, version, callback)));
+            FXUtils.onClicked(container, () -> {
+                fireEvent(new DialogCloseEvent());
+                Controllers.navigate(new DownloadPage(page, addon, version, callback));
+            });
             getChildren().setAll(container);
 
             if (addon != RemoteMod.BROKEN) {
@@ -378,23 +378,27 @@ public class DownloadPage extends Control implements DecoratorPage {
                 HBox descPane = new HBox(8);
                 descPane.setPadding(new Insets(0, 8, 0, 8));
                 descPane.setAlignment(Pos.CENTER_LEFT);
+                descPane.setMouseTransparent(true);
 
                 {
                     StackPane graphicPane = new StackPane();
-                    graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
-
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.getName());
-                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
+                    content.setSubtitle(I18n.formatDateTime(dataItem.getDatePublished()));
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
+                            content.getTags().add(i18n("mods.channel.alpha"));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            break;
                         case Beta:
-                            content.getTags().add(i18n("version.game.snapshot"));
+                            content.getTags().add(i18n("mods.channel.beta"));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                         case Release:
-                            content.getTags().add(i18n("version.game.release"));
+                            content.getTags().add(i18n("mods.channel.release"));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                     }
 
@@ -425,7 +429,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            container.setOnMouseClicked(e -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
+            FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -435,12 +439,14 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModVersion extends JFXDialogLayout {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
-            this.setHeading(new HBox(new Label(i18n("mods.download.title", version.getName()))));
+            boolean isModpack = selfPage.repository.getType() == RemoteModRepository.Type.MODPACK;
+
+            this.setHeading(new HBox(new Label(i18n(isModpack ? "modpack.download.title" : "mods.download.title", version.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
             ModItem modItem = new ModItem(version, selfPage);
-            modItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
+            modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(modItem);
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
@@ -457,16 +463,16 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(i18n("download"));
+            JFXButton downloadButton = new JFXButton(isModpack ? i18n("install.modpack") : i18n("mods.install"));
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.setOnAction(e -> {
-                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                if (isModpack || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                     fireEvent(new DialogCloseEvent());
                 }
                 selfPage.download(version);
             });
 
-            JFXButton saveAsButton = new JFXButton(i18n("button.save_as"));
+            JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
             saveAsButton.setOnAction(e -> {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
@@ -483,6 +489,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+
+            onEscPressed(this, cancelButton::fire);
         }
 
         private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
@@ -502,7 +510,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                         dependencies.put(dependency.getType(), list);
                     }
                     DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
-                    dependencyModItem.setOnMouseClicked(e -> fireEvent(new DialogCloseEvent()));
                     dependencies.get(dependency.getType()).add(dependencyModItem);
                 }
 
@@ -519,8 +526,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
     }
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     public interface DownloadCallback {
         void download(Profile profile, @Nullable String version, RemoteMod.Version file);

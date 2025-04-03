@@ -270,13 +270,13 @@ public abstract class Task<T> {
 
     /**
      * @throws InterruptedException if current thread is interrupted
-     * @see Thread#interrupted
+     * @see Thread#isInterrupted()
      */
     public void preExecute() throws Exception {}
 
     /**
      * @throws InterruptedException if current thread is interrupted
-     * @see Thread#interrupted
+     * @see Thread#isInterrupted()
      */
     public abstract void execute() throws Exception;
 
@@ -292,7 +292,7 @@ public abstract class Task<T> {
      * {@link Task#isRelyingOnDependencies()} returns true or false.
      *
      * @throws InterruptedException if current thread is interrupted
-     * @see Thread#interrupted
+     * @see Thread#isInterrupted()
      * @see Task#isDependenciesSucceeded()
      */
     public void postExecute() throws Exception {}

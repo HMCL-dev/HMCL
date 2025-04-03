@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
-import org.jackhuang.hmcl.ui.nbt.NBTHelper;
+import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -90,16 +90,16 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage,
-                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTHelper.isNBTFileByExtension(file),
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file.toPath()),
                     modpacks -> {
                         File file = modpacks.get(0);
                         if (ModpackHelper.isFileModpackByExtension(file)) {
                             Controllers.getDecorator().startWizard(
                                     new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
                                     i18n("install.modpack"));
-                        } else if (NBTHelper.isNBTFileByExtension(file)) {
+                        } else if (NBTFileType.isNBTFileByExtension(file.toPath())) {
                             try {
-                                Controllers.navigate(new NBTEditorPage(file));
+                                Controllers.navigate(new NBTEditorPage(file.toPath()));
                             } catch (Throwable e) {
                                 LOG.warning("Fail to open nbt file", e);
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
@@ -154,22 +154,22 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG.VIEW_LIST));
+            gameItem.setLeftGraphic(wrap(SVG.FORMAT_LIST_BULLETED));
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD_OUTLINE));
+            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
-            runInFX(() -> FXUtils.installFastTooltip(downloadItem, i18n("download.hint")));
+            FXUtils.installFastTooltip(downloadItem, i18n("download.hint"));
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG.GEAR_OUTLINE));
+            launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));

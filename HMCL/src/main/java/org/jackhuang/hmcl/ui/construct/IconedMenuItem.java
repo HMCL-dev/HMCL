@@ -25,14 +25,14 @@ import org.jackhuang.hmcl.ui.SVG;
 public class IconedMenuItem extends IconedItem {
 
     public IconedMenuItem(SVG icon, String text, Runnable action, JFXPopup popup) {
-        super(icon != null ? FXUtils.limitingSize(icon.createIcon(Theme.blackFill(), 14, 14), 14, 14) : null, text);
+        super(icon != null ? FXUtils.limitingSize(icon.createIcon(Theme.blackFill(), 14), 14, 14) : null, text);
 
         getStyleClass().setAll("iconed-menu-item");
 
         if (popup == null) {
-            setOnMouseClicked(e -> action.run());
+            FXUtils.onClicked(this, action);
         } else {
-            setOnMouseClicked(e -> {
+            FXUtils.onClicked(this, () -> {
                 action.run();
                 popup.hide();
             });
