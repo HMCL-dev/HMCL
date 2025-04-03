@@ -440,13 +440,24 @@ public class DownloadPage extends Control implements DecoratorPage {
     private static final class ModVersion extends JFXDialogLayout {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
-            String title = "";
+
+            String title;
             switch (type) {
-                case MOD: title = "mods.download.title";break;
-                case WORLD: title = "world.download.title";break;
-                case MODPACK: title = "modpack.download.title";break;
-                case RESOURCE_PACK: title = "resourcepack.download.title";break;
+                case WORLD:
+                    title = "world.download.title";
+                    break;
+                case MODPACK:
+                    title = "modpack.download.title";
+                    break;
+                case RESOURCE_PACK:
+                    title = "resourcepack.download.title";
+                    break;
+                case MOD:
+                default:
+                    title = "mods.download.title";
+                    break;
             }
+
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
