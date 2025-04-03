@@ -457,7 +457,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                     title = "mods.download.title";
                     break;
             }
-
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
