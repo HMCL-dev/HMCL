@@ -17,6 +17,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -197,9 +198,18 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(
-                    nativesDirSublist, rendererPane,
-                    noJVMArgsPane, noGameCheckPane, noJVMCheckPane, noNativesPatchPane,
-                    useNativeGLFWPane, useNativeOpenALPane);
+                    nativesDirSublist, rendererPane, noJVMArgsPane, noGameCheckPane,
+                    noJVMCheckPane, noNativesPatchPane
+            );
+
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                workaroundPane.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
+            } else {
+                ComponentSublist unsupportedOptionsSublist = new ComponentSublist();
+                unsupportedOptionsSublist.setTitle(i18n("settings.advanced.unsupported_system_options"));
+                unsupportedOptionsSublist.getContent().addAll(useNativeGLFWPane, useNativeOpenALPane);
+                workaroundPane.getContent().add(unsupportedOptionsSublist);
+            }
         }
 
         rootPane.getChildren().addAll(
