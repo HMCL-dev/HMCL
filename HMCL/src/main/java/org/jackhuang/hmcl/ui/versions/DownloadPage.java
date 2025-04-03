@@ -439,9 +439,25 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModVersion extends JFXDialogLayout {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
-            boolean isModpack = selfPage.repository.getType() == RemoteModRepository.Type.MODPACK;
+            RemoteModRepository.Type type = selfPage.repository.getType();
 
-            this.setHeading(new HBox(new Label(i18n(isModpack ? "modpack.download.title" : "mods.download.title", version.getName()))));
+            String title;
+            switch (type) {
+                case WORLD:
+                    title = "world.download.title";
+                    break;
+                case MODPACK:
+                    title = "modpack.download.title";
+                    break;
+                case RESOURCE_PACK:
+                    title = "resourcepack.download.title";
+                    break;
+                case MOD:
+                default:
+                    title = "mods.download.title";
+                    break;
+            }
+            this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -463,10 +479,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(isModpack ? i18n("install.modpack") : i18n("mods.install"));
+            JFXButton downloadButton = new JFXButton(type == RemoteModRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.setOnAction(e -> {
-                if (isModpack || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                if (type == RemoteModRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                     fireEvent(new DialogCloseEvent());
                 }
                 selfPage.download(version);
