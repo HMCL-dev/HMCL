@@ -26,7 +26,9 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -48,42 +50,33 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
     public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
+    public CompletableFuture<?> refreshAsync(String gameVersion) {
         return HttpRequest.GET(downloadProvider.injectURL(LITELOADER_LIST)).getJsonAsync(LiteLoaderVersionsRoot.class)
                 .thenAcceptAsync(root -> {
-                    List<CompletableFuture<List<LiteLoaderRemoteVersion>>> futures = new ArrayList<>();
-                    for (Map.Entry<String, LiteLoaderGameVersions> entry : root.getVersions().entrySet()) {
-                        String gameVersion = entry.getKey();
-                        LiteLoaderGameVersions liteLoader = entry.getValue();
-
-                        if (liteLoader.getRepoitory() != null && liteLoader.getArtifacts() != null) {
-                            futures.add(CompletableFuture.supplyAsync(() -> loadArtifactVersion(gameVersion, liteLoader.getRepoitory(), liteLoader.getArtifacts())));
-                        }
-
-                        if (liteLoader.getSnapshots() != null) {
-                            LiteLoaderVersion v = liteLoader.getSnapshots().getLiteLoader().get("latest");
-                            futures.add(CompletableFuture.supplyAsync(() -> {
-                                try {
-                                    return Collections.singletonList(loadSnapshotVersion(gameVersion, v));
-                                } catch (IOException e) {
-                                    throw new UncheckedIOException(e);
-                                }
-                            }));
-                        }
+                    LiteLoaderGameVersions versions = root.getVersions().get(gameVersion);
+                    if (versions == null) {
+                        return;
                     }
 
-                    for (CompletableFuture<List<LiteLoaderRemoteVersion>> future : futures) {
-                        future.join();
+                    LiteLoaderRemoteVersion snapshot = null;
+                    if (versions.getSnapshots() != null) {
+                        try {
+                            snapshot = loadSnapshotVersion(gameVersion, versions.getSnapshots().getLiteLoader().get("latest"));
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
                     }
 
                     lock.writeLock().lock();
                     try {
-                        versions.clear();
+                        this.versions.clear();
 
-                        for (CompletableFuture<List<LiteLoaderRemoteVersion>> future : futures) {
-                            for (LiteLoaderRemoteVersion v : future.getNow(null)) {
-                                versions.put(v.getGameVersion(), v);
-                            }
+                        if (versions.getRepoitory() != null && versions.getArtifacts() != null) {
+                            loadArtifactVersion(gameVersion, versions.getRepoitory(), versions.getArtifacts());
+                        }
+
+                        if (snapshot != null) {
+                            this.versions.put(gameVersion, snapshot);
                         }
                     } finally {
                         lock.writeLock().unlock();
@@ -91,28 +84,29 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                 });
     }
 
-    private List<LiteLoaderRemoteVersion> loadArtifactVersion(String gameVersion, LiteLoaderRepository repository, LiteLoaderBranch branch) {
-        List<LiteLoaderRemoteVersion> versions = new ArrayList<>();
+    @Override
+    public CompletableFuture<?> refreshAsync() {
+        throw new UnsupportedOperationException();
+    }
 
+    private void loadArtifactVersion(String gameVersion, LiteLoaderRepository repository, LiteLoaderBranch branch) {
         for (Map.Entry<String, LiteLoaderVersion> entry : branch.getLiteLoader().entrySet()) {
             String branchName = entry.getKey();
             LiteLoaderVersion v = entry.getValue();
             if ("latest".equals(branchName))
                 continue;
 
-            versions.add(new LiteLoaderRemoteVersion(
+            versions.put(gameVersion, new LiteLoaderRemoteVersion(
                     gameVersion, v.getVersion(), RemoteVersion.Type.RELEASE,
                     Collections.singletonList(repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile()),
                     v.getTweakClass(), v.getLibraries()
             ));
         }
-
-        return versions;
     }
 
     // Workaround for https://github.com/HMCL-dev/HMCL/issues/3147: Some LiteLoader artifacts aren't published on http://dl.liteloader.com/repo
     private static final String SNAPSHOT_METADATA = "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/%s-SNAPSHOT/maven-metadata.xml";
-    private static final String SNAPSHOT_FILE = "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/%s-SNAPSHOT/liteloader-%s-%s-%s.jar";
+    private static final String SNAPSHOT_FILE = "https://repo.mumfrey.com/content/repositories/snapshots/com/mumfrey/liteloader/%s-SNAPSHOT/liteloader-%s-%s-%s-release.jar";
 
     private LiteLoaderRemoteVersion loadSnapshotVersion(String gameVersion, LiteLoaderVersion v) throws IOException {
         String root = HttpRequest.GET(String.format(SNAPSHOT_METADATA, gameVersion)).getString();

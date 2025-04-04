@@ -42,12 +42,12 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
         return false;
     }
 
-    private static final class LiteLoaderBMLLVersion {
+    private static final class LiteLoaderBMCLVersion {
 
         private final LiteLoaderVersion build;
         private final String version;
 
-        public LiteLoaderBMLLVersion(LiteLoaderVersion build, String version) {
+        public LiteLoaderBMCLVersion(LiteLoaderVersion build, String version) {
             this.build = build;
             this.version = version;
         }
@@ -63,7 +63,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
         return HttpRequest.GET(
                         downloadProvider.injectURL("https://bmclapi2.bangbang93.com/liteloader/list"), Pair.pair("mcversion", gameVersion)
                 )
-                .getJsonAsync(LiteLoaderBMLLVersion.class)
+                .getJsonAsync(LiteLoaderBMCLVersion.class)
                 .thenAccept(v -> {
                     lock.writeLock().lock();
                     try {
