@@ -47,7 +47,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
         return true;
     }
 
-    public static final String LITELOADER_LIST = "http://dl.liteloader.com/versions/versions.json";
+    public static final String LITELOADER_LIST = "https://dl.liteloader.com/versions/versions.json";
 
     @Override
     public CompletableFuture<?> refreshAsync(String gameVersion) {
