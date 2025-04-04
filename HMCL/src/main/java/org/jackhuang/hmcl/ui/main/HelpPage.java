@@ -53,7 +53,7 @@ public class HelpPage extends SpinnerPane {
         IconedTwoLineListItem docPane = new IconedTwoLineListItem();
         docPane.setTitle(i18n("help.doc"));
         docPane.setSubtitle(i18n("help.detail"));
-        docPane.setExternalLink(Metadata.HELP_URL);
+        docPane.setExternalLink(Metadata.DOCS_URL);
         ComponentList doc = new ComponentList();
         doc.getContent().setAll(docPane);
         content.getChildren().add(doc);
@@ -63,7 +63,7 @@ public class HelpPage extends SpinnerPane {
 
     private void loadHelp() {
         showSpinner();
-        Task.supplyAsync(() -> HttpRequest.GET("https://docs.hmcl.net/index.json").getJson(listTypeOf(HelpCategory.class)))
+        Task.supplyAsync(() -> HttpRequest.GET(Metadata.DOCS_URL + "/index.json").getJson(listTypeOf(HelpCategory.class)))
                 .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();
