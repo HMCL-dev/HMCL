@@ -288,7 +288,7 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), ETagIndex.class);
+                ETagIndex indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
                 ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
@@ -424,11 +424,17 @@ public class CacheRepository {
             try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 FileLock lock = channel.lock();
                 try {
-                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(new String(IOUtils.readFullyWithoutClosing(Channels.newInputStream(channel)), UTF_8), mapTypeOf(String.class, Object.class));
+                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), mapTypeOf(String.class, Object.class));
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);
-                    channel.write(ByteBuffer.wrap(GSON.toJson(storage).getBytes(UTF_8)));
+
+                    ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(storage).getBytes(UTF_8));
+                    while (writeTo.hasRemaining()) {
+                        if (channel.write(writeTo) == 0) {
+                            throw new IOException("No value is written");
+                        }
+                    }
                     this.storage = indexOnDisk;
                 } finally {
                     lock.release();
