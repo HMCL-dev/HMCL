@@ -424,9 +424,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         content.setExternalLink(null);
                         break;
                 }
-                if (remoteVersion.getUrls().stream().anyMatch(url -> url.contains("unlisted-versions-of-minecraft"))) {
-                    content.getTags().add("Unlisted Minecraft");
-                }
             } else {
                 VersionIconType iconType;
                 if (remoteVersion instanceof LiteLoaderRemoteVersion)
