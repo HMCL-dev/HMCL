@@ -147,15 +147,15 @@ public final class TaskListPane extends StackPane {
                 } else if (task instanceof ModpackUpdateTask) {
                     task.setName(i18n("modpack.update"));
                 } else if (task instanceof CurseInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.curse")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.curse")));
                 } else if (task instanceof MultiMCModpackInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.multimc")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.multimc")));
                 } else if (task instanceof ModrinthInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.modrinth")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.modrinth")));
                 } else if (task instanceof ServerModpackLocalInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.server")));
+                    task.setName(i18n("install.installing") + ": " + i18n("modpack.type.server"));
                 } else if (task instanceof HMCLModpackInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.hmcl")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.hmcl")));
                 } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask) {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
@@ -163,7 +163,7 @@ public final class TaskListPane extends StackPane {
                 } else if (task instanceof MojangJavaDownloadTask) {
                     task.setName(i18n("download.java"));
                 } else if (task instanceof JavaInstallTask) {
-                    task.setName(i18n("java.install"));
+                    task.setName(i18n("java.installing"));
                 }
 
                 Platform.runLater(() -> {
