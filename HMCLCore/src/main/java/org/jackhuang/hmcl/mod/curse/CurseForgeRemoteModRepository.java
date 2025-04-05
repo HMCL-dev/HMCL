@@ -102,7 +102,9 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     @Override
     public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
-        if (category != null) categoryId = ((CurseAddon.Category) category.getSelf()).getId();
+        if (category != null && category.getSelf() instanceof CurseAddon.Category) {
+            categoryId = ((CurseAddon.Category) category.getSelf()).getId();
+        }
         Response<List<CurseAddon>> response = HttpRequest.GET(PREFIX + "/v1/mods/search",
                         pair("gameId", "432"),
                         pair("classId", Integer.toString(section)),
