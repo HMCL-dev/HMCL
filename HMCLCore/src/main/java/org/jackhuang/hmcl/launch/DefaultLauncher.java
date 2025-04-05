@@ -50,6 +50,8 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  */
 public class DefaultLauncher extends Launcher {
 
+    private final LibraryAnalyzer analyzer;
+
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
     }
@@ -60,6 +62,8 @@ public class DefaultLauncher extends Launcher {
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(repository, version, authInfo, options, listener, daemon);
+
+        this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
     }
 
     private Command generateCommandLine(File nativeFolder) throws IOException {
@@ -496,7 +500,7 @@ public class DefaultLauncher extends Launcher {
                         break;
                     case ZINK:
                         env.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
-                        /**
+                        /*
                          * The amdgpu DDX is missing support for modifiers, causing Zink to fail.
                          * Disable DRI3 to workaround this issue.
                          *
@@ -508,7 +512,6 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
         }

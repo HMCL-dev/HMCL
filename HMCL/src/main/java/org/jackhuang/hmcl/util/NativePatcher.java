@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -60,7 +62,11 @@ public final class NativePatcher {
         });
     }
 
-    public static Version patchNative(Version version, String gameVersion, JavaRuntime javaVersion, VersionSetting settings) {
+    public static Version patchNative(DefaultGameRepository repository,
+                                      Version version, String gameVersion,
+                                      JavaRuntime javaVersion,
+                                      VersionSetting settings,
+                                      List<String> javaArguments) {
         if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
@@ -83,7 +89,7 @@ public final class NativePatcher {
         final boolean useNativeOpenAL = settings.isUseNativeOpenAL();
 
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && (useNativeGLFW || useNativeOpenAL)
-                && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
+                && gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") >= 0) {
 
             version = version.setLibraries(version.getLibraries().stream()
                     .filter(library -> {
@@ -124,6 +130,7 @@ public final class NativePatcher {
             return version;
         }
 
+        boolean lwjglVersionChanged = false;
         ArrayList<Library> newLibraries = new ArrayList<>();
         for (Library library : version.getLibraries()) {
             if (!library.appliesToCurrentEnvironment())
@@ -145,14 +152,33 @@ public final class NativePatcher {
                 } else if (replacement != null) {
                     LOG.info("Replace " + library.getName() + " with " + replacement.getName());
                     newLibraries.add(replacement);
+
+                    if ("org.lwjgl:lwjgl".equals(library.getName()) && !Objects.equals(library.getVersion(), replacement.getVersion())) {
+                        lwjglVersionChanged = true;
+                    }
                 }
+            }
+        }
+
+        if (lwjglVersionChanged) {
+            ModManager modManager = repository.getModManager(version.getId());
+            try {
+                for (LocalModFile mod : modManager.getMods()) {
+                    if ("sodium".equals(mod.getId())) {
+                        // https://github.com/CaffeineMC/sodium/issues/2561
+                        javaArguments.add("-Dsodium.checks.issue2561=false");
+                        break;
+                    }
+                }
+            } catch (Throwable e) {
+                LOG.warning("Failed to get mods", e);
             }
         }
 
         return version.setLibraries(newLibraries);
     }
 
-    public static Library getMesaLoader(JavaRuntime javaVersion, Renderer renderer) {
+    public static Library getMesaLoader(JavaRuntime javaVersion) {
         return getNatives(javaVersion.getPlatform()).get("mesa-loader");
     }
 }
