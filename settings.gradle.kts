@@ -2,6 +2,7 @@ rootProject.name = "HMCL3"
 include(
     "HMCL",
     "HMCLCore",
+    "HMCLauncher",
     "HMCLTransformerDiscoveryService"
 )
 
