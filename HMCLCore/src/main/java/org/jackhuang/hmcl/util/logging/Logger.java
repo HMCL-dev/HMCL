@@ -28,7 +28,7 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 public final class Logger {
     public static final Logger LOG = new Logger();
 
-    static volatile String[] accessTokens = new String[0];
+    private static volatile String[] accessTokens = new String[0];
 
     public static synchronized void registerAccessToken(String token) {
         final String[] oldAccessTokens = accessTokens;
