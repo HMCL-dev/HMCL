@@ -199,6 +199,14 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             Path jarmods = root.resolve("jarmods");
             if (Files.exists(jarmods))
                 FileUtils.copyDirectory(jarmods, repository.getVersionRoot(name).toPath().resolve("jarmods"));
+
+            String iconKey = this.manifest.getIconKey();
+            if (iconKey != null) {
+                Path iconFile = root.resolve(iconKey + ".png");
+                if (Files.exists(iconFile)) {
+                    FileUtils.copyFile(iconFile, repository.getVersionRoot(name).toPath().resolve("icon.png"));
+                }
+            }
         }
 
         dependencies.add(repository.saveAsync(version));

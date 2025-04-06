@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -37,13 +38,13 @@ version = "$versionRoot.$buildNumber"
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
+    implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
 
 fun createChecksum(file: File) {
     val algorithms = linkedMapOf(
-        "MD5" to "md5",
         "SHA-1" to "sha1",
         "SHA-256" to "sha256",
         "SHA-512" to "sha512"
@@ -111,6 +112,9 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     exclude("**/package-info.class")
     exclude("META-INF/maven/**")
 
+    exclude("META-INF/services/javax.imageio.spi.ImageReaderSpi")
+    exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
+
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
         exclude(dependency("libs:JFoenix:.*"))
@@ -118,7 +122,7 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
     manifest {
         attributes(
-            "Created-By" to "Copyright(c) 2013-2024 huangyuhui.",
+            "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
             "Main-Class" to "org.jackhuang.hmcl.Main",
             "Multi-Release" to "true",
             "Implementation-Version" to project.version,
@@ -140,8 +144,9 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
                 "javafx.controls/javafx.scene.control.skin",
-                "jdk.attach/sun.tools.attach"
-            ).joinToString(" ")
+                "jdk.attach/sun.tools.attach",
+            ).joinToString(" "),
+            "Enable-Native-Access" to "ALL-UNNAMED"
         )
 
         System.getenv("GITHUB_SHA")?.also {
@@ -249,4 +254,16 @@ tasks.create<JavaExec>("run") {
     doFirst {
         logger.quiet("HMCL_JAVA_OPTS: $vmOptions")
     }
+}
+
+// mcmod data
+
+tasks.register<ParseModDataTask>("parseModData") {
+    inputFile.set(layout.projectDirectory.file("mod.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/mod_data.txt"))
+}
+
+tasks.register<ParseModDataTask>("parseModPackData") {
+    inputFile.set(layout.projectDirectory.file("modpack.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
 }

@@ -82,7 +82,7 @@ final class ComponentListCell extends StackPane {
 
             VBox groupNode = new VBox();
 
-            Node expandIcon = SVG.EXPAND.createIcon(Theme.blackFill(), 20, 20);
+            Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(Theme.blackFill(), 20);
             JFXButton expandButton = new JFXButton();
             expandButton.setGraphic(expandIcon);
             expandButton.getStyleClass().add("options-list-item-expand-button");
@@ -149,8 +149,8 @@ final class ComponentListCell extends StackPane {
                 }
 
                 Platform.runLater(() -> {
-                    double newAnimatedHeight = (list.prefHeight(-1) + 8 + 10) * (expanded ? 1 : -1);
-                    double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(-1);
+                    double newAnimatedHeight = (list.prefHeight(list.getWidth()) + 8 + 10) * (expanded ? 1 : -1);
+                    double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(list.getWidth());
                     double contentHeight = expanded ? newAnimatedHeight : 0;
 
                     if (expanded) {

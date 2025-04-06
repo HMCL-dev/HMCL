@@ -18,18 +18,23 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
+import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.WeakListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.value.*;
-import javafx.geometry.Insets;
+import javafx.event.Event;
+import javafx.event.EventDispatcher;
+import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
@@ -44,6 +49,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
@@ -53,11 +59,9 @@ import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.ResourceNotFoundError;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -68,13 +72,15 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.lang.ref.WeakReference;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,6 +90,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -112,6 +119,10 @@ public final class FXUtils {
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
+
+    public static final List<String> IMAGE_EXTENSIONS = Lang.immutableListOf(
+            "png", "jpg", "jpeg", "bmp", "gif", "webp"
+    );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
     private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
@@ -228,18 +239,19 @@ public final class FXUtils {
                 });
     }
 
-    public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
+    @SuppressWarnings("unchecked")
+    public static <T extends Event> void ignoreEvent(Node node, EventType<T> type, Predicate<? super T> filter) {
+        EventDispatcher oldDispatcher = node.getEventDispatcher();
+        node.setEventDispatcher((event, tail) -> {
+            EventType<?> t = event.getEventType();
+            while (t != null && t != type)
+                t = t.getSuperType();
+            if (t == type && filter.test((T) event)) {
+                return tail.dispatchEvent(event);
+            } else {
+                return oldDispatcher.dispatchEvent(event, tail);
+            }
         });
-    }
-
-    public static Node wrapMargin(Node node, Insets insets) {
-        StackPane.setMargin(node, insets);
-        return new StackPane(node);
     }
 
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
@@ -515,10 +527,12 @@ public final class FXUtils {
     }
 
     public static <T> void bind(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
-        textField.setText(converter == null ? (String) property.getValue() : converter.toString(property.getValue()));
-        TextFieldBindingListener<T> listener = new TextFieldBindingListener<>(textField, property, converter);
-        textField.focusedProperty().addListener((ChangeListener<Boolean>) listener);
-        property.addListener(listener);
+        TextFieldBinding<T> binding = new TextFieldBinding<>(textField, property, converter);
+        binding.updateTextField();
+        textField.getProperties().put("FXUtils.bind.binding", binding);
+        textField.focusedProperty().addListener(binding.focusedListener);
+        textField.sceneProperty().addListener(binding.sceneListener);
+        property.addListener(binding.propertyListener);
     }
 
     public static void bindInt(JFXTextField textField, Property<Number> property) {
@@ -530,53 +544,116 @@ public final class FXUtils {
     }
 
     public static void unbind(JFXTextField textField, Property<?> property) {
-        TextFieldBindingListener<?> listener = new TextFieldBindingListener<>(textField, property, null);
-        textField.focusedProperty().removeListener((ChangeListener<Boolean>) listener);
-        property.removeListener(listener);
+        TextFieldBinding<?> binding = (TextFieldBinding<?>) textField.getProperties().remove("FXUtils.bind.binding");
+        if (binding != null) {
+            textField.focusedProperty().removeListener(binding.focusedListener);
+            textField.sceneProperty().removeListener(binding.sceneListener);
+            property.removeListener(binding.propertyListener);
+        }
     }
 
-    private static final class TextFieldBindingListener<T> implements ChangeListener<Boolean>, InvalidationListener {
-        private final int hashCode;
-        private final WeakReference<JFXTextField> textFieldRef;
-        private final WeakReference<Property<T>> propertyRef;
+    private static final class TextFieldBinding<T> {
+        private final JFXTextField textField;
+        private final Property<T> property;
         private final StringConverter<T> converter;
 
-        TextFieldBindingListener(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
-            this.textFieldRef = new WeakReference<>(textField);
-            this.propertyRef = new WeakReference<>(property);
+        public final ChangeListener<Boolean> focusedListener;
+        public final ChangeListener<Scene> sceneListener;
+        public final InvalidationListener propertyListener;
+
+        public TextFieldBinding(JFXTextField textField, Property<T> property, StringConverter<T> converter) {
+            this.textField = textField;
+            this.property = property;
             this.converter = converter;
-            this.hashCode = System.identityHashCode(textField) ^ System.identityHashCode(property);
+
+            focusedListener = (observable, oldFocused, newFocused) -> {
+                if (oldFocused && !newFocused) {
+                    if (textField.validate()) {
+                        updateProperty();
+                    } else {
+                        // Rollback to old value
+                        updateTextField();
+                    }
+                }
+            };
+
+            sceneListener = (observable, oldScene, newScene) -> {
+                if (oldScene != null && newScene == null) {
+                    // Component is being removed from scene
+                    if (textField.validate()) {
+                        updateProperty();
+                    }
+                }
+            };
+
+            propertyListener = observable -> {
+                updateTextField();
+            };
+        }
+
+        public void updateProperty() {
+            String newText = textField.getText();
+            @SuppressWarnings("unchecked")
+            T newValue = converter == null ? (T) newText : converter.fromString(newText);
+
+            if (!Objects.equals(newValue, property.getValue())) {
+                property.setValue(newValue);
+            }
+        }
+
+        public void updateTextField() {
+            T value = property.getValue();
+            textField.setText(converter == null ? (String) value : converter.toString(value));
+        }
+    }
+
+    private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
+        private final WeakReference<JFXComboBox<E>> comboBoxRef;
+        private final WeakReference<Property<E>> propertyRef;
+        private final int hashCode;
+
+        private boolean updating = false;
+
+        private EnumBidirectionalBinding(JFXComboBox<E> comboBox, Property<E> property) {
+            this.comboBoxRef = new WeakReference<>(comboBox);
+            this.propertyRef = new WeakReference<>(property);
+            this.hashCode = System.identityHashCode(comboBox) ^ System.identityHashCode(property);
         }
 
         @Override
-        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean focused) { // On TextField changed
-            JFXTextField textField = textFieldRef.get();
-            Property<T> property = this.propertyRef.get();
+        public void invalidated(Observable sourceProperty) {
+            if (!updating) {
+                final JFXComboBox<E> comboBox = comboBoxRef.get();
+                final Property<E> property = propertyRef.get();
 
-            if (textField != null && property != null && oldValue == Boolean.TRUE && focused == Boolean.FALSE) {
-                if (textField.validate()) {
-                    String newText = textField.getText();
-                    @SuppressWarnings("unchecked")
-                    T newValue = converter == null ? (T) newText : converter.fromString(newText);
+                if (comboBox == null || property == null) {
+                    if (comboBox != null) {
+                        comboBox.getSelectionModel().selectedItemProperty().removeListener(this);
+                    }
 
-                    if (!Objects.equals(newValue, property.getValue()))
-                        property.setValue(newValue);
+                    if (property != null) {
+                        property.removeListener(this);
+                    }
                 } else {
-                    // Rollback to old value
-                    invalidated(null);
+                    updating = true;
+                    try {
+                        if (property == sourceProperty) {
+                            E newValue = property.getValue();
+                            comboBox.getSelectionModel().select(newValue);
+                        } else {
+                            E newValue = comboBox.getSelectionModel().getSelectedItem();
+                            property.setValue(newValue);
+                        }
+                    } finally {
+                        updating = false;
+                    }
                 }
             }
         }
 
         @Override
-        public void invalidated(Observable observable) { // On property change
-            JFXTextField textField = textFieldRef.get();
-            Property<T> property = this.propertyRef.get();
-
-            if (textField != null && property != null) {
-                T value = property.getValue();
-                textField.setText(converter == null ? (String) value : converter.toString(value));
-            }
+        public boolean wasGarbageCollected() {
+            return comboBoxRef.get() == null || propertyRef.get() == null;
         }
 
         @Override
@@ -585,30 +662,25 @@ public final class FXUtils {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof TextFieldBindingListener))
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof EnumBidirectionalBinding))
                 return false;
-            TextFieldBindingListener<?> other = (TextFieldBindingListener<?>) obj;
-            return this.hashCode == other.hashCode
-                    && this.textFieldRef.get() == other.textFieldRef.get()
-                    && this.propertyRef.get() == other.propertyRef.get();
+
+            EnumBidirectionalBinding<?> that = (EnumBidirectionalBinding<?>) o;
+
+            final JFXComboBox<E> comboBox = this.comboBoxRef.get();
+            final Property<E> property = this.propertyRef.get();
+
+            final JFXComboBox<?> thatComboBox = that.comboBoxRef.get();
+            final Property<?> thatProperty = that.propertyRef.get();
+
+            if (comboBox == null || property == null || thatComboBox == null || thatProperty == null)
+                return false;
+
+            return comboBox == thatComboBox && property == thatProperty;
         }
-    }
-
-    public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().unbindBidirectional(property);
-    }
-
-    public static void bindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().unbindBidirectional(property);
     }
 
     /**
@@ -617,20 +689,18 @@ public final class FXUtils {
      *
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
-     * @see #unbindEnum(JFXComboBox)
+     * @see #unbindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
     public static <T extends Enum<T>> void bindEnum(JFXComboBox<T> comboBox, Property<T> property) {
-        unbindEnum(comboBox);
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
 
-        T currentValue = property.getValue();
-        @SuppressWarnings("unchecked")
-        T[] enumConstants = (T[]) currentValue.getClass().getEnumConstants();
-        ChangeListener<Number> listener = (a, b, newValue) -> property.setValue(enumConstants[newValue.intValue()]);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
 
-        comboBox.getSelectionModel().select(currentValue.ordinal());
-        comboBox.getProperties().put("FXUtils.bindEnum.listener", listener);
-        comboBox.getSelectionModel().selectedIndexProperty().addListener(listener);
+        comboBox.getSelectionModel().select(property.getValue());
+        comboBox.getSelectionModel().selectedItemProperty().addListener(binding);
+        property.addListener(binding);
     }
 
     /**
@@ -641,11 +711,10 @@ public final class FXUtils {
      * @see #bindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
-    public static void unbindEnum(JFXComboBox<? extends Enum<?>> comboBox) {
-        @SuppressWarnings("unchecked")
-        ChangeListener<Number> listener = (ChangeListener<Number>) comboBox.getProperties().remove("FXUtils.bindEnum.listener");
-        if (listener != null)
-            comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
+    public static <T extends Enum<T>> void unbindEnum(JFXComboBox<T> comboBox, Property<T> property) {
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
     }
 
     public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
@@ -707,10 +776,56 @@ public final class FXUtils {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
         }
         stage.getIcons().add(newBuiltinImage(icon));
+    }
+
+    private static Image loadWebPImage(InputStream input) throws IOException {
+        WebPImageReaderSpi spi = new WebPImageReaderSpi();
+        ImageReader reader = spi.createReaderInstance(null);
+
+        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
+            reader.setInput(imageInput, true, true);
+            return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()), null);
+        } finally {
+            reader.dispose();
+        }
+    }
+
+    public static Image loadImage(Path path) throws Exception {
+        try (InputStream input = Files.newInputStream(path)) {
+            if ("webp".equalsIgnoreCase(FileUtils.getExtension(path)))
+                return loadWebPImage(input);
+            else {
+                Image image = new Image(input);
+                if (image.isError())
+                    throw image.getException();
+                return image;
+            }
+        }
+    }
+
+    public static Image loadImage(URL url) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(url);
+        if (connection instanceof HttpURLConnection) {
+            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+        }
+
+        try (InputStream input = connection.getInputStream()) {
+            String path = url.getPath();
+            if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
+                return loadWebPImage(input);
+            else {
+                Image image = new Image(input);
+                if (image.isError())
+                    throw image.getException();
+                return image;
+            }
+        }
     }
 
     /**
@@ -941,6 +1056,8 @@ public final class FXUtils {
         }
     };
 
+    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -955,6 +1072,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void copyOnDoubleClick(Labeled label) {
+        label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                String text = label.getText();
+                if (text != null && !text.isEmpty()) {
+                    copyText(label.getText());
+                    e.consume();
+                }
             }
         });
     }
@@ -1033,5 +1162,10 @@ public final class FXUtils {
         int b = (int) Math.round(color.getBlue() * 255.0);
 
         return String.format("#%02x%02x%02x", r, g, b);
+    }
+
+    public static FileChooser.ExtensionFilter getImageExtensionFilter() {
+        return new FileChooser.ExtensionFilter(i18n("extension.png"),
+                IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
     }
 }

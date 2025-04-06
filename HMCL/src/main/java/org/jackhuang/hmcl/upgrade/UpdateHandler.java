@@ -113,9 +113,8 @@ public final class UpdateHandler {
 
             Task<?> task = new HMCLDownloadTask(version, downloaded);
 
-            TaskExecutor executor = task.executor(false);
+            TaskExecutor executor = task.executor();
             Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
-            executor.start();
             thread(() -> {
                 boolean success = executor.test();
 

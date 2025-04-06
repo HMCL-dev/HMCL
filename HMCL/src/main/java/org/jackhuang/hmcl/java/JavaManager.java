@@ -376,8 +376,8 @@ public final class JavaManager {
                 searchAllJavaInDirectory(javaRuntimes, Paths.get(System.getProperty("user.home"), "/.sdkman/candidates/java")); // SDKMAN!
                 break;
             case OSX:
-                tryAddJavaHome(javaRuntimes, Paths.get("/Library/Java/JavaVirtualMachines/Contents/Home"));
-                tryAddJavaHome(javaRuntimes, Paths.get(System.getProperty("user.home"), "/Library/Java/JavaVirtualMachines/Contents/Home"));
+                searchJavaInMacJavaVirtualMachines(javaRuntimes, Paths.get("/Library/Java/JavaVirtualMachines"));
+                searchJavaInMacJavaVirtualMachines(javaRuntimes, Paths.get(System.getProperty("user.home"), "/Library/Java/JavaVirtualMachines"));
                 tryAddJavaExecutable(javaRuntimes, Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java"));
                 tryAddJavaExecutable(javaRuntimes, Paths.get("/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/MacOS/itms/java/bin/java"));
                 // Homebrew
@@ -628,6 +628,20 @@ public final class JavaManager {
 
         for (String vendor : new String[]{"Java", "BellSoft", "AdoptOpenJDK", "Zulu", "Microsoft", "Eclipse Foundation", "Semeru"}) {
             searchAllJavaInDirectory(javaRuntimes, path.resolve(vendor));
+        }
+    }
+
+    private static void searchJavaInMacJavaVirtualMachines(Map<Path, JavaRuntime> javaRuntimes, Path directory) {
+        if (!Files.isDirectory(directory)) {
+            return;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+            for (Path subDir : stream) {
+                tryAddJavaHome(javaRuntimes, subDir.resolve("Contents/Home"));
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to find Java in " + directory, e);
         }
     }
 

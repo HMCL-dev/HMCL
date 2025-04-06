@@ -35,6 +35,8 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -262,7 +264,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     MessageDialogPane.MessageType.WARNING,
                     doCreate,
                     () -> {
-                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid.tip"));
                         body.setDisable(false);
                         spinner.hideSpinner();
                     }
@@ -337,7 +339,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
 
                 JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
-                officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
+                officialWebsite.setExternalLink(Metadata.PUBLISH_URL);
 
                 vbox.getChildren().setAll(hintPane, officialWebsite);
                 btnAccept.setDisable(true);
@@ -460,7 +462,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.PLUS.createIcon(Theme.blackFill(), 20, 20));
+                btnAddServer.setGraphic(SVG.ADD.createIcon(Theme.blackFill(), 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
