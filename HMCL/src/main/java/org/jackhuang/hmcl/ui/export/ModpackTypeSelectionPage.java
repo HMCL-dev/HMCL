@@ -20,10 +20,10 @@ package org.jackhuang.hmcl.ui.export;
 import com.jfoenix.controls.JFXButton;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Text;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
@@ -43,9 +43,13 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
 
     public ModpackTypeSelectionPage(WizardController controller) {
         this.controller = controller;
+        this.setStyle("-fx-background-color: rgba(255, 255, 255, 0.8);" +
+                "-fx-background-radius: 9;");
+        this.setPadding(new Insets(10));
 
-        Label title = new Label(i18n("modpack.export.as"));
-        title.setPadding(new Insets(8));
+        Text title = new Text(i18n("modpack.export.as"));
+        title.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        VBox.setMargin(title, new Insets(8, 0, 8, 12));
 
         this.getStyleClass().add("jfx-list-view");
         this.setMaxSize(300, 150);
