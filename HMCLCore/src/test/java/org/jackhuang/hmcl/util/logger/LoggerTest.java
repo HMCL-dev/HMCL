@@ -29,18 +29,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class LoggerTest {
     @Test
     public void checkTokenFence() throws IOException {
+        test("a_token001122334455the_token667788another_token");
+
         for (String s : new String[]{
                 "a_token", "the_token", "another_token"
         }) {
             Logger.registerAccessToken(s);
+            test("a_token001122334455the_token667788another_token");
         }
 
-        test("a_token001122334455the_token667788another_token");
-
         {
-            char[] data = new char[1050];
-            "the_token".getChars(0, "the_token".length(), data, 1020);
-            "another_token".getChars(0, "another_token".length(), data, 1035);
+            char[] data = new char[10500];
+            "the_token".getChars(0, "the_token".length(), data, 10200);
+            "another_token".getChars(0, "another_token".length(), data, 10350);
             test(data);
         }
     }

@@ -18,11 +18,20 @@ final class TokenFence {
         return message;
     }
 
+    /**
+     * Intermediate Charset. Maybe UTF_16 has better performance?
+     */
     private static final Charset CHARSET = StandardCharsets.UTF_16;
 
     public static void filter(String[] accessTokens, Reader reader, Writer out) throws IOException {
-        char[] buffer = allocateBuffer(accessTokens[0]);
-        if (accessTokens.length == 1) {
+        char[] buffer = allocateBuffer(accessTokens);
+
+        if (accessTokens.length == 0) {
+            int size;
+            while ((size = reader.read(buffer, 0, buffer.length)) >= 0) {
+                out.write(buffer, 0, size);
+            }
+        } else if (accessTokens.length == 1) {
             filter(accessTokens[0], reader, out, buffer);
         } else {
             Path t1 = Files.createTempFile("hmcl-token-fence-", ".txt"), t2 = Files.createTempFile("hmcl-token-fence-", ".txt");
@@ -31,13 +40,8 @@ final class TokenFence {
             }
 
             for (int i = 1; i < accessTokens.length - 1; i++) {
-                String token = accessTokens[i];
-                if (token.length() > buffer.length) {
-                    buffer = allocateBuffer(token);
-                }
-
                 try (Reader i1 = Files.newBufferedReader(t1, CHARSET); Writer i2 = Files.newBufferedWriter(t2, CHARSET)) {
-                    filter(token, i1, i2, buffer);
+                    filter(accessTokens[i], i1, i2, buffer);
                 }
 
                 Path t3 = t2;
@@ -46,11 +50,7 @@ final class TokenFence {
             }
 
             try (Reader r1 = Files.newBufferedReader(t1, CHARSET)) {
-                String token = accessTokens[accessTokens.length - 1];
-                if (token.length() > buffer.length) {
-                    buffer = allocateBuffer(token);
-                }
-                filter(token, r1, out, buffer);
+                filter(accessTokens[accessTokens.length - 1], r1, out, buffer);
             }
 
             Files.delete(t1);
@@ -58,8 +58,12 @@ final class TokenFence {
         }
     }
 
-    private static char[] allocateBuffer(String token) {
-        return new char[Math.max(1024, token.length() + 16)];
+    private static char[] allocateBuffer(String[] tokens) {
+        int size = 0;
+        for (String token : tokens) {
+            size = Math.max(size, token.length());
+        }
+        return new char[Math.max(8192, size + 16)]; // Should be new char[8192] without huge tokens :)
     }
 
     /**
@@ -109,9 +113,10 @@ final class TokenFence {
 
     /**
      * Find a token in buffer [0, tail + token) by finding the first character and check the remained parts.
+     *
      * @param buffer the buffer.
-     * @param tail the tail index. First character of token should only be in [0, tail).
-     * @param token the token
+     * @param tail   the tail index. First character of token should only be in [0, tail).
+     * @param token  the token
      * @return The index of first character. -1 if no token found.
      */
     private static int findToken(char[] buffer, int tail, String token) {
@@ -131,9 +136,10 @@ final class TokenFence {
 
     /**
      * Find the first character in buffer from [start, tail).
+     *
      * @param buffer The buffer
-     * @param start The start index
-     * @param tail The tail index. (Note this is not 'length'!)
+     * @param start  The start index
+     * @param tail   The tail index. (Note this is not 'length'!)
      * @param target The target character.
      * @return The index of target located in buffer. -1 if no targets are found.
      */
