@@ -41,7 +41,7 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 If you want to submit a pull request, here are some requirements:
 
 * IDE: IntelliJ IDEA
-* Compiler: Java 1.8 or Java 11+
+* Compiler: Java 11+
 * Do NOT modify `gradle` files
 
 ### Compilation
@@ -52,7 +52,7 @@ Simply execute the following command in the project root directory:
 ./gradlew clean build
 ```
 
-Make sure you have at least JavaFX 8 installed. Liberica Full JDK 8 or later is recommended.
+Make sure you have Java 11 or later installed.
 
 ## JVM Options (for debugging)
 
