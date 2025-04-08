@@ -1,22 +1,28 @@
 name: 新功能 | Feature Request
-description: 为 HMCL 提出新功能 | A new feature for HMCL
+description: 为 HMCL 提出新功能。| Suggest a new feature or enhancement for HMCL.
 title: "[Feature] "
 labels: enhancement
 body:
 - type: markdown
   attributes:
-    value: 请确认 Issues 列表无重复的项目。| Please make sure that no duplicated issues has already been delivered.
+    value: |
+      请确认 Issues 列表无重复的项目。
+      Please make sure that no duplicate issues have already been submitted.
 - type: textarea
   id: description
   attributes:
     label: 描述 | Description
-    description: 请详细描述你想加入的新功能。| Please describe the new feature detaily.
+    description: |
+      请详细描述你想加入的新功能。
+      Please describe the new feature in detail.
   validations:
     required: true
 - type: textarea
   id: reason
   attributes:
     label: 原因 | Reason
-    description: 请描述该功能带来的好处及原因。| Please describe why you want to add the feature into HMCL.
+    description: |
+      请描述该功能带来的好处及原因。
+      Please describe why you want to add the feature or enhancement to HMCL.
   validations:
     required: true

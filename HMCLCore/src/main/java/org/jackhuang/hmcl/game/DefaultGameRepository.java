@@ -518,6 +518,14 @@ public class DefaultGameRepository implements GameRepository {
         return new ModManager(this, version);
     }
 
+    public Path getSavesDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("saves");
+    }
+
+    public Path getBackupsDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("backups");
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

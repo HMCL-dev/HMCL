@@ -49,25 +49,25 @@ public class HintPane extends VBox {
         SVG svg;
         switch (type) {
             case INFO:
-                svg = SVG.INFORMATION_OUTLINE;
+                svg = SVG.INFO;
                 break;
             case ERROR:
-                svg = SVG.CLOSE_CIRCLE_OUTLINE;
+                svg = SVG.ERROR;
                 break;
             case SUCCESS:
-                svg = SVG.CHECK_CIRCLE_OUTLINE;
+                svg = SVG.CHECK_CIRCLE;
                 break;
             case WARNING:
-                svg = SVG.ALERT_OUTLINE;
+                svg = SVG.WARNING;
                 break;
             case QUESTION:
-                svg = SVG.HELP_CIRCLE_OUTLINE;
+                svg = SVG.HELP;
                 break;
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
 
-        HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16, 16), new Text(type.getDisplayName()));
+        HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);

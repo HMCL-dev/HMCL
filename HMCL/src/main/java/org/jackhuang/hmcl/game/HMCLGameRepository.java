@@ -217,7 +217,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     private VersionSetting initLocalVersionSetting(String id, VersionSetting vs) {
         localVersionSettings.put(id, vs);
-        vs.addPropertyChangedListener(a -> saveVersionSetting(id));
+        vs.addListener(a -> saveVersionSetting(id));
         return vs;
     }
 
@@ -250,7 +250,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public VersionSetting getVersionSetting(String id) {
         VersionSetting vs = getLocalVersionSetting(id);
         if (vs == null || vs.isUsesGlobal()) {
-            profile.getGlobal().setGlobal(true); // always keep global.isGlobal = true
             profile.getGlobal().setUsesGlobal(true);
             return profile.getGlobal();
         } else
@@ -337,6 +336,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
         if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
             return false;
 
+        LOG.info("Saving version setting: " + id);
+
         try {
             FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
             return true;
@@ -357,7 +358,9 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs = createLocalVersionSetting(id);
         if (vs == null)
             return null;
-        vs.setUsesGlobal(false);
+        if (vs.isUsesGlobal()) {
+            vs.setUsesGlobal(false);
+        }
         return vs;
     }
 
@@ -367,7 +370,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, File gameDir, List<String> javaAgents, boolean makeLaunchScript) {
+    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, File gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -410,7 +413,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
-                .setJavaAgents(javaAgents);
+                .setJavaAgents(javaAgents)
+                .setJavaArguments(javaArguments);
         if (config().hasProxy()) {
             builder.setProxy(ProxyManager.getProxy());
             if (config().hasProxyAuth()) {

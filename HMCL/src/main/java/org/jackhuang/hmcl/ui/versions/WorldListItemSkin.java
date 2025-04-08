@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXPopup;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
@@ -26,65 +25,95 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
+import java.time.Instant;
+
+import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
+import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class WorldListItemSkin extends SkinBase<WorldListItem> {
+public final class WorldListItemSkin extends SkinBase<WorldListItem> {
 
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
 
+        World world = skinnable.getWorld();
+
         BorderPane root = new BorderPane();
-
-        HBox center = new HBox();
-        center.setMouseTransparent(true);
-        center.setSpacing(8);
-        center.setAlignment(Pos.CENTER_LEFT);
-
-        StackPane imageViewContainer = new StackPane();
-        FXUtils.setLimitWidth(imageViewContainer, 32);
-        FXUtils.setLimitHeight(imageViewContainer, 32);
-
-        ImageView imageView = new ImageView();
-        FXUtils.limitSize(imageView, 32, 32);
-        imageView.imageProperty().bind(skinnable.imageProperty());
-        imageViewContainer.getChildren().setAll(imageView);
-
-        TwoLineListItem item = new TwoLineListItem();
-        item.titleProperty().bind(skinnable.titleProperty());
-        item.subtitleProperty().bind(skinnable.subtitleProperty());
-        BorderPane.setAlignment(item, Pos.CENTER);
-        center.getChildren().setAll(imageView, item);
-        root.setCenter(center);
-
-        PopupMenu menu = new PopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
-
-        menu.getContent().setAll(
-                new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("world.datapack"), skinnable::manageDatapacks, popup),
-                new IconedMenuItem(SVG.EXPORT, i18n("world.export"), skinnable::export, popup),
-                new IconedMenuItem(SVG.FOLDER_OUTLINE, i18n("world.reveal"), skinnable::reveal, popup));
-
-        HBox right = new HBox();
-        right.setAlignment(Pos.CENTER_RIGHT);
-
-        JFXButton btnManage = new JFXButton();
-        btnManage.setOnAction(e -> popup.show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight()));
-        btnManage.getStyleClass().add("toggle-icon4");
-        BorderPane.setAlignment(btnManage, Pos.CENTER);
-        btnManage.setGraphic(SVG.DOTS_VERTICAL.createIcon(Theme.blackFill(), -1, -1));
-        right.getChildren().add(btnManage);
-        root.setRight(right);
-
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8));
+
+        {
+            StackPane left = new StackPane();
+            FXUtils.installSlowTooltip(left, world.getFile().toString());
+            root.setLeft(left);
+            left.setPadding(new Insets(0, 8, 0, 0));
+
+            ImageView imageView = new ImageView();
+            left.getChildren().add(imageView);
+            FXUtils.limitSize(imageView, 32, 32);
+            imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+        }
+
+        {
+            TwoLineListItem item = new TwoLineListItem();
+            root.setCenter(item);
+            if (world.getWorldName() != null)
+                item.setTitle(parseColorEscapes(world.getWorldName()));
+            item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+
+            if (world.getGameVersion() != null)
+                item.getTags().add(world.getGameVersion());
+            if (world.isLocked())
+                item.getTags().add(i18n("world.locked"));
+        }
+
+        {
+            HBox right = new HBox(8);
+            root.setRight(right);
+            right.setAlignment(Pos.CENTER_RIGHT);
+
+            JFXButton btnReveal = new JFXButton();
+            right.getChildren().add(btnReveal);
+            FXUtils.installFastTooltip(btnReveal, i18n("world.reveal"));
+            btnReveal.getStyleClass().add("toggle-icon4");
+            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+            btnReveal.setOnAction(event -> skinnable.reveal());
+
+            JFXButton btnExport = new JFXButton();
+            right.getChildren().add(btnExport);
+            FXUtils.installFastTooltip(btnExport, i18n("world.export"));
+            btnExport.getStyleClass().add("toggle-icon4");
+            btnExport.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
+            btnExport.setOnAction(event -> skinnable.export());
+
+            JFXButton btnBackup = new JFXButton();
+            right.getChildren().add(btnBackup);
+            FXUtils.installFastTooltip(btnBackup, i18n("world.backup"));
+            btnBackup.getStyleClass().add("toggle-icon4");
+            btnBackup.setGraphic(SVG.ARCHIVE.createIcon(Theme.blackFill(), -1));
+            btnBackup.setOnAction(event -> skinnable.showBackupPage());
+
+            JFXButton btnDatapack = new JFXButton();
+            right.getChildren().add(btnDatapack);
+            FXUtils.installFastTooltip(btnDatapack, i18n("world.datapack"));
+            btnDatapack.getStyleClass().add("toggle-icon4");
+            btnDatapack.setGraphic(SVG.EXTENSION.createIcon(Theme.blackFill(), -1));
+            btnDatapack.setOnAction(event -> skinnable.manageDatapacks());
+
+            JFXButton btnInfo = new JFXButton();
+            right.getChildren().add(btnInfo);
+            FXUtils.installFastTooltip(btnInfo, i18n("world.info"));
+            btnInfo.getStyleClass().add("toggle-icon4");
+            btnInfo.setGraphic(SVG.INFO.createIcon(Theme.blackFill(), -1));
+            btnInfo.setOnAction(event -> skinnable.showInfo());
+        }
 
         getChildren().setAll(new RipplerContainer(root));
     }

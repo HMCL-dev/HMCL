@@ -50,13 +50,14 @@ jobs:
         if: ${{ env.continue == 'true' }}
         run: |
           echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/dev.html" >> RELEASE_NOTE
-          echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
+          echo "" >> RELEASE_NOTE
+          echo "*Notice: changelogs are written in Chinese.*" >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
           echo "| File Name | SHA-256 Checksum |"  >> RELEASE_NOTE
           echo "| ---  | --- |" >> RELEASE_NOTE
-          echo "| [HMCL-$HMCL_VERSION.exe]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.exe) | $(cat HMCL-$HMCL_VERSION.exe.sha256) |" >> RELEASE_NOTE
-          echo "| [HMCL-$HMCL_VERSION.jar]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.jar) | $(cat HMCL-$HMCL_VERSION.jar.sha256) |" >> RELEASE_NOTE
-          echo "| [HMCL-$HMCL_VERSION.sh]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.sh)   | $(cat HMCL-$HMCL_VERSION.sh.sha256) |"  >> RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.exe]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.exe) | \`$(cat HMCL-$HMCL_VERSION.exe.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.jar]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.jar) | \`$(cat HMCL-$HMCL_VERSION.jar.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.sh]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.sh)   | \`$(cat HMCL-$HMCL_VERSION.sh.sha256)\` |"  >> RELEASE_NOTE
         env:
           GH_DOWNLOAD_BASE_URL: https://github.com/HMCL-dev/HMCL/releases/download
       - name: Create release
@@ -117,13 +118,13 @@ jobs:
           echo "" >> RELEASE_NOTE
           echo "The full changelogs can be found on the website: https://docs.hmcl.net/changelog/stable.html" >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
-          echo "Notice: changelogs are written in Chinese." >> RELEASE_NOTE
+          echo "*Notice: changelogs are written in Chinese.*" >> RELEASE_NOTE
           echo "" >> RELEASE_NOTE
           echo "| File Name | SHA-256 Checksum |"  >> RELEASE_NOTE
           echo "| ---  | --- |" >> RELEASE_NOTE
-          echo "| [HMCL-$HMCL_VERSION.exe]($GH_DOWNLOAD_BASE_URL/release-$HMCL_VERSION/HMCL-$HMCL_VERSION.exe) | $(cat HMCL-$HMCL_VERSION.exe.sha256) |" >> RELEASE_NOTE
-          echo "| [HMCL-$HMCL_VERSION.jar]($GH_DOWNLOAD_BASE_URL/release-$HMCL_VERSION/HMCL-$HMCL_VERSION.jar) | $(cat HMCL-$HMCL_VERSION.jar.sha256) |" >> RELEASE_NOTE
-          echo "| [HMCL-$HMCL_VERSION.sh]($GH_DOWNLOAD_BASE_URL/release-$HMCL_VERSION/HMCL-$HMCL_VERSION.sh)   | $(cat HMCL-$HMCL_VERSION.sh.sha256) |"  >> RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.exe]($GH_DOWNLOAD_BASE_URL/release-$HMCL_VERSION/HMCL-$HMCL_VERSION.exe) | \`$(cat HMCL-$HMCL_VERSION.exe.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.jar]($GH_DOWNLOAD_BASE_URL/release-$HMCL_VERSION/HMCL-$HMCL_VERSION.jar) | \`$(cat HMCL-$HMCL_VERSION.jar.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.sh]($GH_DOWNLOAD_BASE_URL/release-$HMCL_VERSION/HMCL-$HMCL_VERSION.sh)   | \`$(cat HMCL-$HMCL_VERSION.sh.sha256)\` |"  >> RELEASE_NOTE
         env:
           GH_DOWNLOAD_BASE_URL: https://github.com/HMCL-dev/HMCL/releases/download
       - name: Create release

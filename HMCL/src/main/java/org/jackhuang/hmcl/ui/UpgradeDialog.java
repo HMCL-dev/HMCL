@@ -41,6 +41,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpgradeDialog extends JFXDialogLayout {
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
+        maxWidthProperty().bind(Controllers.getScene().widthProperty().multiply(0.7));
+        maxHeightProperty().bind(Controllers.getScene().heightProperty().multiply(0.7));
+
         setHeading(new Label(i18n("update.changelog")));
         setBody(new ProgressIndicator());
 
@@ -61,11 +64,13 @@ public final class UpgradeDialog extends JFXDialogLayout {
                 node = node.nextSibling();
             } while (node != null);
 
+            renderer.mergeLineBreaks();
             return renderer.render();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 ScrollPane scrollPane = new ScrollPane(result);
                 scrollPane.setFitToWidth(true);
+                FXUtils.smoothScrolling(scrollPane);
                 setBody(scrollPane);
             } else {
                 LOG.warning("Failed to load update log, trying to open it in browser");
