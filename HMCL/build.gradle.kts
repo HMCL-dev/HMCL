@@ -251,8 +251,15 @@ tasks.create<JavaExec>("run") {
     val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
     jvmArgs(vmOptions)
 
+    val hmclJavaHome = System.getenv("HMCL_JAVA_HOME")
+    if (hmclJavaHome != null) {
+        this.executable(file(hmclJavaHome).resolve("bin")
+            .resolve(if (System.getProperty("os.name").lowercase().startsWith("windows")) "java.exe" else "java"))
+    }
+
     doFirst {
-        logger.quiet("HMCL_JAVA_OPTS: $vmOptions")
+        logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
+        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
 }
 
