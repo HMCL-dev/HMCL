@@ -9,7 +9,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.gradleup.shadow") version "8.3.6"
 }
 
 val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
