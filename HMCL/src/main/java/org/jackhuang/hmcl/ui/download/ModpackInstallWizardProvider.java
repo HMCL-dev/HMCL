@@ -120,7 +120,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
-        settings.put("title", i18n("install.modpack"));
+        settings.put("title", i18n("install.modpack.installation"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", new FailureCallback() {
             @Override
