@@ -14,10 +14,6 @@ subprojects {
     }
 
     repositories {
-        flatDir {
-            name = "libs"
-            dirs = setOf(rootProject.file("lib"))
-        }
         mavenCentral()
         maven(url = "https://jitpack.io")
         maven(url = "https://libraries.minecraft.net")
