@@ -5,7 +5,10 @@ import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
 
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -37,11 +40,12 @@ public final class Logger {
     }
 
     public static String filterForbiddenToken(String message) {
-        for (String token : accessTokens)
-            message = message.replace(token, "<access token>");
-        return message;
+        return TokenFence.filter(accessTokens, message);
     }
 
+    public static void filterForbiddenToken(Reader reader, Writer out) throws IOException {
+        TokenFence.filter(accessTokens, reader, out);
+    }
 
     static final String CLASS_NAME = Logger.class.getName();
 
