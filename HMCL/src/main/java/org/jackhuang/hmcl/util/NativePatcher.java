@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -67,6 +69,30 @@ public final class NativePatcher {
                                       JavaRuntime javaVersion,
                                       VersionSetting settings,
                                       List<String> javaArguments) {
+
+        // Add RetroWrapper for versions below 1.6
+        if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.6") < 0) {
+            ArrayList<Library> libraries = new ArrayList<>(version.getLibraries());
+            Library retroWrapper = new Library(
+                    new Artifact("com.zero", "retrowrapper", "1.7.8"),
+                    null,
+                    new LibrariesDownloadInfo(
+                            new LibraryDownloadInfo(
+                                    "com/zero/retrowrapper/1.7.8/retrowrapper-1.7.8.jar",
+                                    "https://zkitefly.github.io/unlisted-versions-of-minecraft/libraries/retrowrapper-1.7.8.jar",
+                                    "ea9175b4aebe091ae8859f7352fe59077a62bdf4",
+                                    181263
+                            )
+                    )
+            );
+            libraries.add(retroWrapper);
+            version = version.setLibraries(libraries);
+            
+            // https://github.com/NeRdTheNed/RetroWrapper/wiki/RetroWrapper-flags
+            javaArguments.add("-Dretrowrapper.doUpdateCheck=false");
+            javaArguments.add("-Dretrowrapper.enableFMLPatch=true");
+        }
+
         if (settings.getNativesDirType() == NativesDirectoryType.CUSTOM) {
             if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.19") < 0)
                 return version;
