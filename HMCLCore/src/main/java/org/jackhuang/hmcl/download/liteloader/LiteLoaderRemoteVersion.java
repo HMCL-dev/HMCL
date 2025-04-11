@@ -30,6 +30,7 @@ import java.util.List;
 public class LiteLoaderRemoteVersion extends RemoteVersion {
     private final String tweakClass;
     private final Collection<Library> libraries;
+
     /**
      * Constructor.
      *
@@ -37,8 +38,8 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    LiteLoaderRemoteVersion(String gameVersion, String selfVersion, List<String> urls, String tweakClass, Collection<Library> libraries) {
-        super(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(), gameVersion, selfVersion, null, urls);
+    LiteLoaderRemoteVersion(String gameVersion, String selfVersion, Type type, List<String> urls, String tweakClass, Collection<Library> libraries) {
+        super(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(), gameVersion, selfVersion, null, type, urls);
 
         this.tweakClass = tweakClass;
         this.libraries = libraries;
