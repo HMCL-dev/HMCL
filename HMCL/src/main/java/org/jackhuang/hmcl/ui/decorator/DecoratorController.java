@@ -203,7 +203,11 @@ public class DecoratorController {
             case CUSTOM:
                 String backgroundImage = config().getBackgroundImage();
                 if (backgroundImage != null)
-                    image = tryLoadImage(Paths.get(backgroundImage));
+                    try {
+                        image = tryLoadImage(Paths.get(backgroundImage));
+                    } catch (Exception e) {
+                        LOG.warning("Couldn't load background image", e);
+                    }
                 break;
             case NETWORK:
                 String backgroundImageUrl = config().getBackgroundImageUrl();
