@@ -22,17 +22,13 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * A class that describes a Minecraft dependency.
@@ -41,6 +37,40 @@ import java.util.Optional;
  */
 @Immutable
 public class Library implements Comparable<Library>, Validation {
+    /**
+     * <p>A possible native descriptors can be: [variant-]os[-key]</p>
+     *
+     * <p>
+     * Variant can be empty string, 'native', or 'natives'.
+     * Key can be empty string, system arch, or system arch bit count.
+     * </p>
+     */
+    private static final String[] POSSIBLE_NATIVE_DESCRIPTORS;
+
+    static {
+        String[] keys = {
+                "",
+                Architecture.SYSTEM_ARCH.name().toLowerCase(Locale.ROOT),
+                Architecture.SYSTEM_ARCH.getBits().getBit()
+        }, variants = {"", "native", "natives"};
+
+        POSSIBLE_NATIVE_DESCRIPTORS = new String[keys.length * variants.length];
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < keys.length; i++) {
+            for (int j = 0; j < variants.length; j++) {
+                if (!variants[j].isEmpty()) {
+                    builder.append(variants[j]).append('-');
+                }
+                builder.append(OperatingSystem.CURRENT_OS.getCheckedName());
+                if (!keys[i].isEmpty()) {
+                    builder.append('-').append(keys[i]);
+                }
+
+                POSSIBLE_NATIVE_DESCRIPTORS[i * variants.length + j] = builder.toString();
+                builder.setLength(0);
+            }
+        }
+    }
 
     @SerializedName("name")
     private final Artifact artifact;
@@ -95,29 +125,23 @@ public class Library implements Comparable<Library>, Validation {
 
     public String getClassifier() {
         if (artifact.getClassifier() == null) {
-            if (natives == null) {
-                return null;
-            }
-
-            String current = natives.get(OperatingSystem.CURRENT_OS.getCheckedName());
-            if (current == null) {
-                for (String value : natives.values()) {
-                    int i = value.indexOf('-');
-                    if (i == -1) {
-                        continue;
+            if (natives != null) {
+                for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
+                    String nd = natives.get(nativeDescriptor);
+                    if (nd != null) {
+                        return nd.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
                     }
-
-                    Architecture architecture = JsonUtils.GSON.fromJson(value.substring(i + 1), Architecture.class);
-                    if (architecture == Architecture.SYSTEM_ARCH) {
-                        current = natives.get(value);
-                        break;
+                }
+            } else if (downloads != null && downloads.getClassifiers() != null) {
+                for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
+                    LibraryDownloadInfo info = downloads.getClassifiers().get(nativeDescriptor);
+                    if (info != null) {
+                        return nativeDescriptor;
                     }
                 }
             }
-            if (current == null) {
-                return null;
-            }
-            return current.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
+
+            return null;
         } else {
             return artifact.getClassifier();
         }
@@ -132,10 +156,12 @@ public class Library implements Comparable<Library>, Validation {
     }
 
     public boolean isNative() {
-        return natives != null && appliesToCurrentEnvironment();
+        return appliesToCurrentEnvironment() && (
+                natives != null || (downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native")))
+        );
     }
 
-    protected LibraryDownloadInfo getRawDownloadInfo() {
+    private LibraryDownloadInfo getRawDownloadInfo() {
         if (downloads != null) {
             if (isNative())
                 return downloads.getClassifiers().get(getClassifier());

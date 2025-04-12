@@ -274,7 +274,7 @@ public class Version implements Comparable<Version>, Validation {
         return resolve(provider, new HashSet<>()).markAsResolved();
     }
 
-    protected Version merge(Version parent, boolean isPatch) {
+    public Version merge(Version parent, boolean isPatch, boolean libraryMergeOrder) {
         return new Version(
                 true,
                 id,
@@ -289,7 +289,7 @@ public class Version implements Comparable<Version>, Validation {
                 assets == null ? parent.assets : assets,
                 complianceLevel,
                 javaVersion == null ? parent.javaVersion : javaVersion,
-                Lang.merge(this.libraries, parent.libraries),
+                libraryMergeOrder ? Lang.merge(parent.libraries, this.libraries) : Lang.merge(this.libraries, parent.libraries),
                 Lang.merge(parent.compatibilityRules, this.compatibilityRules),
                 downloads == null ? parent.downloads : downloads,
                 logging == null ? parent.logging : logging,
@@ -319,7 +319,7 @@ public class Version implements Comparable<Version>, Validation {
                 thisVersion = this.jar == null ? this.setJar(id) : this;
             } else {
                 // It is supposed to auto install an version in getVersion.
-                thisVersion = merge(provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar), false);
+                thisVersion = merge(provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar), false, false);
             }
         }
 
@@ -332,7 +332,7 @@ public class Version implements Comparable<Version>, Validation {
                     .sorted(Comparator.comparing(Version::getPriority))
                     .collect(Collectors.toList());
             for (Version patch : sortedPatches) {
-                thisVersion = patch.setJar(null).merge(thisVersion, true);
+                thisVersion = patch.setJar(null).merge(thisVersion, true, false);
             }
         }
 
@@ -382,6 +382,10 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     private Version setHidden(Boolean hidden) {
+        return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
+    public Version setRoot(Boolean root) {
         return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 

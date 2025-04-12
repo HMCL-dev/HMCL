@@ -39,8 +39,6 @@ public final class MultiMCInstancePatch {
     @SerializedName("mcVersion")
     private final String gameVersion;
     private final String mainClass;
-    private final String fileId;
-
     @SerializedName("compatibleJavaMajors")
     private final int[] javaMajors;
 
@@ -60,13 +58,12 @@ public final class MultiMCInstancePatch {
     @Nullable
     private final List<Library> libraries;
 
-    public MultiMCInstancePatch(String name, String version, int order, String gameVersion, String mainClass, String fileId, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries) {
+    public MultiMCInstancePatch(String name, String version, int order, String gameVersion, String mainClass, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries) {
         this.name = name;
         this.version = version;
         this.order = order;
         this.gameVersion = gameVersion;
         this.mainClass = mainClass;
-        this.fileId = fileId;
         this.javaMajors = javaMajors;
         this.tweakers = tweakers;
         this.jvmArgs = jvmArgs;
@@ -96,10 +93,6 @@ public final class MultiMCInstancePatch {
 
     public String getMainClass() {
         return mainClass;
-    }
-
-    public String getFileId() {
-        return fileId;
     }
 
     public List<String> getTweakers() {

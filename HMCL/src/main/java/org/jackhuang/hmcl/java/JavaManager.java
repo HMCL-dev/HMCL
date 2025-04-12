@@ -285,6 +285,23 @@ public final class JavaManager {
         GameJavaVersion suggestedJavaVersion =
                 (version != null && gameVersion != null && gameVersion.compareTo("1.7.10") >= 0) ? version.getJavaVersion() : null;
 
+        if (suggestedJavaVersion != null) {
+            for (JavaRuntime java : javaRuntimes) {
+                if (forceX86) {
+                    if (!java.getArchitecture().isX86())
+                        continue;
+                } else {
+                    if (java.getArchitecture() != Architecture.SYSTEM_ARCH)
+                        continue;
+                }
+
+                // 100% matched.
+                if (java.getParsedVersion() == suggestedJavaVersion.getMajorVersion()) {
+                    return java;
+                }
+            }
+        }
+
         JavaRuntime mandatory = null;
         JavaRuntime suggested = null;
         for (JavaRuntime java : javaRuntimes) {
