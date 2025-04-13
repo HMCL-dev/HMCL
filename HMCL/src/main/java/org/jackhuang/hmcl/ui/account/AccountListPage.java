@@ -18,8 +18,11 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -31,6 +34,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -44,6 +48,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.net.URI;
+import java.time.ZoneId;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -51,7 +56,39 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
-public class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
+public final class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
+    static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
+
+    static {
+        String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
+
+        if ("false".equals(property) || "auto".equals(property) && "Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
+            RESTRICTED.set(false);
+        else {
+            for (Account account : Accounts.getAccounts()) {
+                if (account instanceof MicrosoftAccount) {
+                    RESTRICTED.set(false);
+                    break;
+                }
+            }
+
+            if (!RESTRICTED.get()) {
+                Accounts.getAccounts().addListener(new InvalidationListener() {
+                    @Override
+                    public void invalidated(Observable observable) {
+                        for (Account account : Accounts.getAccounts()) {
+                            if (account instanceof MicrosoftAccount) {
+                                Accounts.getAccounts().removeListener(this);
+                                RESTRICTED.set(false);
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
     private final ObservableList<AccountListItem> items;
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("account.manage")));
     private final ListProperty<Account> accounts = new SimpleListProperty<>(this, "accounts", FXCollections.observableArrayList());
@@ -88,6 +125,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
     private static class AccountListPageSkin extends DecoratorAnimatedPageSkin<AccountListPage> {
 
         private final ObservableList<AdvancedListItem> authServerItems;
+        private ChangeListener<Boolean> holder;
 
         public AccountListPageSkin(AccountListPage skinnable) {
             super(skinnable);
@@ -96,16 +134,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                 VBox boxMethods = new VBox();
                 {
                     boxMethods.getStyleClass().add("advanced-list-box-content");
-                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT)));
                     FXUtils.setLimitWidth(boxMethods, 200);
-
-                    AdvancedListItem offlineItem = new AdvancedListItem();
-                    offlineItem.getStyleClass().add("navigation-drawer-item");
-                    offlineItem.setActionButtonVisible(false);
-                    offlineItem.setTitle(i18n("account.methods.offline"));
-                    offlineItem.setLeftGraphic(wrap(SVG.PERSON));
-                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
-                    boxMethods.getChildren().add(offlineItem);
 
                     AdvancedListItem microsoftItem = new AdvancedListItem();
                     microsoftItem.getStyleClass().add("navigation-drawer-item");
@@ -115,12 +144,21 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
                     boxMethods.getChildren().add(microsoftItem);
 
+                    AdvancedListItem offlineItem = new AdvancedListItem();
+                    offlineItem.getStyleClass().add("navigation-drawer-item");
+                    offlineItem.setActionButtonVisible(false);
+                    offlineItem.setTitle(i18n("account.methods.offline"));
+                    offlineItem.setLeftGraphic(wrap(SVG.PERSON));
+                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+
                     VBox boxAuthServers = new VBox();
+
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftGraphic(wrap(SVG.DRESSER));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
+                        item.disableProperty().bind(RESTRICTED);
 
                         JFXButton btnRemove = new JFXButton();
                         btnRemove.setOnAction(e -> {
@@ -149,7 +187,29 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         return item;
                     });
                     Bindings.bindContent(boxAuthServers.getChildren(), authServerItems);
-                    boxMethods.getChildren().add(boxAuthServers);
+
+                    ClassTitle title = new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT));
+                    if (RESTRICTED.get()) {
+                        VBox wrapper = new VBox(offlineItem, boxAuthServers);
+                        wrapper.setPadding(Insets.EMPTY);
+                        FXUtils.installFastTooltip(wrapper, i18n("account.login.restricted"));
+
+                        offlineItem.setDisable(true);
+                        boxAuthServers.setDisable(true);
+
+                        boxMethods.getChildren().setAll(title, microsoftItem, wrapper);
+
+                        holder = FXUtils.onWeakChange(RESTRICTED, value -> {
+                            if (value) {
+                                offlineItem.setDisable(false);
+                                boxAuthServers.setDisable(false);
+
+                                boxMethods.getChildren().addAll(title, microsoftItem, offlineItem,  boxAuthServers);
+                            }
+                        });
+                    } else {
+                        boxMethods.getChildren().addAll(title, microsoftItem, offlineItem, boxAuthServers);
+                    }
                 }
 
                 AdvancedListItem addAuthServerItem = new AdvancedListItem();
