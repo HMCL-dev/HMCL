@@ -83,10 +83,6 @@ public final class Arguments {
         return new Arguments(getGame(), Lang.merge(getJvm(), list));
     }
 
-    public Arguments addJVMArgumentsDirect(List<Argument> list) {
-        return new Arguments(getGame(), Lang.merge(getJvm(), list));
-    }
-
     public static Arguments merge(Arguments a, Arguments b) {
         if (a == null)
             return b;
