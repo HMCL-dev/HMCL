@@ -156,9 +156,14 @@ public class Library implements Comparable<Library>, Validation {
     }
 
     public boolean isNative() {
-        return appliesToCurrentEnvironment() && (
-                natives != null || (downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native")))
-        );
+        if (!appliesToCurrentEnvironment()) {
+            return false;
+        }
+        if (natives != null) {
+            return true;
+        }
+
+        return downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
     private LibraryDownloadInfo getRawDownloadInfo() {
