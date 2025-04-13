@@ -203,7 +203,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                                 offlineItem.setDisable(false);
                                 boxAuthServers.setDisable(false);
 
-                                boxMethods.getChildren().setAll(title, microsoftItem, offlineItem,  boxAuthServers);
+                                boxMethods.getChildren().setAll(title, microsoftItem, offlineItem, boxAuthServers);
                             }
                         });
                     } else {
