@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRIC_NOT_COMPATIBLE_WITH_FORGE;
@@ -83,8 +84,12 @@ public final class FabricInstallTask extends Task<Version> {
     }
 
     @Override
-    public void execute() {
-        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
+    public void execute() throws IOException {
+        FabricInfo fabricInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class);
+        if (fabricInfo == null)
+            throw new IOException("Fabric metadata is invalid");
+
+        setResult(getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
