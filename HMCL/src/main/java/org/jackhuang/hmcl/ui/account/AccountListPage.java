@@ -18,8 +18,6 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
@@ -34,7 +32,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -51,6 +48,7 @@ import java.net.URI;
 import java.time.ZoneId;
 import java.util.Locale;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -62,31 +60,20 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     static {
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
 
-        if ("false".equals(property) || "auto".equals(property) && "Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
+        if ("false".equals(property)
+                || "auto".equals(property) && "Asia/Shanghai".equals(ZoneId.systemDefault().getId())
+                || globalConfig().isEnableOfflineAccount())
             RESTRICTED.set(false);
-        else {
-            for (Account account : Accounts.getAccounts()) {
-                if (account instanceof MicrosoftAccount) {
-                    RESTRICTED.set(false);
-                    break;
-                }
-            }
-
-            if (RESTRICTED.get()) {
-                Accounts.getAccounts().addListener(new InvalidationListener() {
-                    @Override
-                    public void invalidated(Observable observable) {
-                        for (Account account : Accounts.getAccounts()) {
-                            if (account instanceof MicrosoftAccount) {
-                                Accounts.getAccounts().removeListener(this);
-                                RESTRICTED.set(false);
-                                break;
-                            }
-                        }
+        else
+            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> o, Boolean oldValue, Boolean newValue) {
+                    if (newValue) {
+                        globalConfig().enableOfflineAccountProperty().removeListener(this);
+                        RESTRICTED.set(false);
                     }
-                });
-            }
-        }
+                }
+            });
     }
 
     private final ObservableList<AccountListItem> items;
