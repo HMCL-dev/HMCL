@@ -254,15 +254,20 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 throw new IllegalArgumentException("No such component: " + componentID);
             }
 
-            if (pair.getKey() != null) {
-                artifact = artifact == null ? pair.getKey() : pair.getKey().merge(artifact, true, true);
+            Version original = pair.getKey(), jp = pair.getValue(), tc;
+            if (original == null) {
+                tc = Objects.requireNonNull(jp, "Original and Json-Patch should be empty at the same time.");
+            } else {
+                if (jp != null) {
+                    original = jp.merge(original, true, Version.ONLY_THIS);
+                }
+                tc = original;
             }
-            if (pair.getValue() != null) {
-                artifact = artifact == null ? pair.getValue() : pair.getValue().merge(artifact, true, true);
-            }
+
+            artifact = artifact == null ? tc : tc.merge(artifact, true, Version.THAT_FIRST);
         }
 
-        // Erase all patches to reject any modification to MultiMC mod packs for now.
+        // Erase all patches info to reject any modification to MultiMC mod packs.
         artifact = Objects.requireNonNull(artifact, "There should be at least one component.")
                 .setPatches(null).setId(name).setJar(name).setRoot(null);
 
