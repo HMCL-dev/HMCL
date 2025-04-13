@@ -256,7 +256,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
 
             Version original = pair.getKey(), jp = pair.getValue(), tc;
             if (original == null) {
-                tc = Objects.requireNonNull(jp, "Original and Json-Patch should be empty at the same time.");
+                tc = Objects.requireNonNull(jp, "Original and Json-Patch shouldn't be empty at the same time.");
             } else {
                 if (jp != null) {
                     original = jp.merge(original, true, Version.ONLY_THIS);
