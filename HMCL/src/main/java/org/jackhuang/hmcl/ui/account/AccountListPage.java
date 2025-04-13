@@ -151,7 +151,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
 
                     VBox boxAuthServers = new VBox();
-
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
                         AdvancedListItem item = new AdvancedListItem();
                         item.getStyleClass().add("navigation-drawer-item");
