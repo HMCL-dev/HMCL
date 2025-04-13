@@ -43,15 +43,15 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
 
     public ModpackTypeSelectionPage(WizardController controller) {
         this.controller = controller;
-        this.setStyle("-fx-background-color: white; -fx-background-radius: 5;");
         this.setPadding(new Insets(10));
 
         Label title = new Label(i18n("modpack.export.as"));
-        title.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         VBox.setMargin(title, new Insets(8, 0, 8, 12));
 
         this.getStyleClass().add("jfx-list-view");
-        this.setMaxSize(500, 150);
+        this.setMaxSize(400, 150);
+        this.setSpacing(8);
+
         this.getChildren().setAll(
                 title,
                 createButton(MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
@@ -62,6 +62,8 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
 
     private JFXButton createButton(String type, ModpackExportInfo.Options option) {
         JFXButton button = new JFXButton();
+
+        button.getStyleClass().add("card");
         button.setOnAction(e -> {
             controller.getSettings().put(MODPACK_TYPE, type);
             controller.getSettings().put(MODPACK_INFO_OPTION, option);
