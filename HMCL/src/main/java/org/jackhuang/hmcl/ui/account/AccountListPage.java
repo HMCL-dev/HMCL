@@ -72,7 +72,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 }
             }
 
-            if (!RESTRICTED.get()) {
+            if (RESTRICTED.get()) {
                 Accounts.getAccounts().addListener(new InvalidationListener() {
                     @Override
                     public void invalidated(Observable observable) {
@@ -142,7 +142,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     microsoftItem.setTitle(i18n("account.methods.microsoft"));
                     microsoftItem.setLeftGraphic(wrap(SVG.MICROSOFT));
                     microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
-                    boxMethods.getChildren().add(microsoftItem);
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");
@@ -200,15 +199,15 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         boxMethods.getChildren().setAll(title, microsoftItem, wrapper);
 
                         holder = FXUtils.onWeakChange(RESTRICTED, value -> {
-                            if (value) {
+                            if (!value) {
                                 offlineItem.setDisable(false);
                                 boxAuthServers.setDisable(false);
 
-                                boxMethods.getChildren().addAll(title, microsoftItem, offlineItem,  boxAuthServers);
+                                boxMethods.getChildren().setAll(title, microsoftItem, offlineItem,  boxAuthServers);
                             }
                         });
                     } else {
-                        boxMethods.getChildren().addAll(title, microsoftItem, offlineItem, boxAuthServers);
+                        boxMethods.getChildren().setAll(title, microsoftItem, offlineItem, boxAuthServers);
                     }
                 }
 

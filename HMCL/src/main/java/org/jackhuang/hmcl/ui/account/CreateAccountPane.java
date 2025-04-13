@@ -108,12 +108,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
     public CreateAccountPane(AccountFactory<?> factory) {
         if (factory == null) {
-            showMethodSwitcher = true;
-            String preferred = config().getPreferredLoginType();
-            try {
-                factory = Accounts.getAccountFactory(preferred);
-            } catch (IllegalArgumentException e) {
-                factory = Accounts.FACTORY_OFFLINE;
+            if (AccountListPage.RESTRICTED.get()) {
+                showMethodSwitcher = false;
+                factory = Accounts.FACTORY_MICROSOFT;
+            } else {
+                showMethodSwitcher = true;
+                String preferred = config().getPreferredLoginType();
+                try {
+                    factory = Accounts.getAccountFactory(preferred);
+                } catch (IllegalArgumentException e) {
+                    factory = Accounts.FACTORY_OFFLINE;
+                }
             }
         } else {
             showMethodSwitcher = false;
