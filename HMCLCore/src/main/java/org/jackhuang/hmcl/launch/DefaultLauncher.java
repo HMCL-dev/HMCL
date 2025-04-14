@@ -216,6 +216,7 @@ public class DefaultLauncher extends Launcher {
                 res.addUnstableDefault("DontCompileHugeMethods", false);
                 res.addUnstableDefault("MaxNodeLimit", "240000");
                 res.addUnstableDefault("NodeLimitFudgeFactor", "8000");
+                res.addUnstableDefault("TieredCompileTaskTimeout", "10000");
                 res.addUnstableDefault("ReservedCodeCacheSize", "400M");
 
                 if (javaVersion >= 8) {
