@@ -189,29 +189,56 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.addDefault("-Duser.home=", options.getGameDir().getParent());
 
+            final int javaVersion = options.getJava().getParsedVersion();
+            final boolean is64bit = options.getJava().getBits() == Bits.BIT_64;
+
+            res.addUnstableDefault("UnlockExperimentalVMOptions", true);
+            res.addUnstableDefault("UnlockDiagnosticVMOptions", true);
+
             // Using G1GC with its settings by default
-            if (options.getJava().getParsedVersion() >= 8
+            if (javaVersion >= 8
                     && res.noneMatch(arg -> "-XX:-UseG1GC".equals(arg) || (arg.startsWith("-XX:+Use") && arg.endsWith("GC")))) {
-                res.addUnstableDefault("UnlockExperimentalVMOptions", true);
                 res.addUnstableDefault("UseG1GC", true);
+                res.addUnstableDefault("G1MixedGCCountTarget", "5");
                 res.addUnstableDefault("G1NewSizePercent", "20");
                 res.addUnstableDefault("G1ReservePercent", "20");
                 res.addUnstableDefault("MaxGCPauseMillis", "50");
                 res.addUnstableDefault("G1HeapRegionSize", "32m");
             }
 
-            res.addUnstableDefault("UseAdaptiveSizePolicy", false);
             res.addUnstableDefault("OmitStackTraceInFastThrow", false);
-            res.addUnstableDefault("DontCompileHugeMethods", false);
+
+            // JIT Options
+            if (javaVersion <= 8) {
+                res.addUnstableDefault("MaxInlineLevel", "15");
+            }
+            if (is64bit && OperatingSystem.TOTAL_MEMORY > 4 * 1024) {
+                res.addUnstableDefault("DontCompileHugeMethods", false);
+                res.addUnstableDefault("MaxNodeLimit", "240000");
+                res.addUnstableDefault("NodeLimitFudgeFactor", "8000");
+                res.addUnstableDefault("TieredCompileTaskTimeout", "10000");
+                res.addUnstableDefault("ReservedCodeCacheSize", "400M");
+                if (javaVersion >= 9) {
+                    res.addUnstableDefault("NonNMethodCodeHeapSize", "12M");
+                    res.addUnstableDefault("ProfiledCodeHeapSize", "194M");
+                }
+
+                if (javaVersion >= 8) {
+                    res.addUnstableDefault("NmethodSweepActivity", "1");
+                }
+            }
 
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
-            if (options.getJava().getBits() == Bits.BIT_32) {
+            if (!is64bit) {
                 res.addDefault("-Xss", "1m");
             }
 
-            if (options.getJava().getParsedVersion() == 16)
+            if (javaVersion == 16)
                 res.addDefault("--illegal-access=", "permit");
+
+            if (javaVersion == 24 || javaVersion == 25)
+                res.addDefault("--sun-misc-unsafe-memory-access=", "allow");
 
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
