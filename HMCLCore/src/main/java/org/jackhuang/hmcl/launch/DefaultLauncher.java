@@ -210,7 +210,7 @@ public class DefaultLauncher extends Launcher {
 
             // JIT Options
             if (javaVersion <= 8) {
-                res.add("MaxInlineLevel", "15");
+                res.addUnstableDefault("MaxInlineLevel", "15");
             }
             if (is64bit && OperatingSystem.TOTAL_MEMORY > 4 * 1024) {
                 res.addUnstableDefault("DontCompileHugeMethods", false);
