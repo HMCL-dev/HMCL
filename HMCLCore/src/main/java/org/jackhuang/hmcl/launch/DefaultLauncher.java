@@ -209,7 +209,6 @@ public class DefaultLauncher extends Launcher {
             res.addUnstableDefault("OmitStackTraceInFastThrow", false);
 
             // JIT Options
-            res.addUnstableDefault("Tier3CompileThreshold", "500");
             if (javaVersion <= 8) {
                 res.add("MaxInlineLevel", "15");
             }
