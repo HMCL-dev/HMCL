@@ -190,9 +190,9 @@ tasks.build {
     dependsOn(makeExecutables)
 }
 
-fun parseToolOptions(options: String?): List<String> {
+fun parseToolOptions(options: String?): MutableList<String> {
     if (options == null)
-        return listOf()
+        return mutableListOf()
 
     val builder = StringBuilder()
     val result = mutableListOf<String>()
@@ -249,6 +249,9 @@ tasks.create<JavaExec>("run") {
     workingDir = rootProject.rootDir
 
     val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
+        vmOptions += "-Dhmcl.offline.auth.restricted=false"
+
     jvmArgs(vmOptions)
 
     val hmclJavaHome = System.getenv("HMCL_JAVA_HOME")
