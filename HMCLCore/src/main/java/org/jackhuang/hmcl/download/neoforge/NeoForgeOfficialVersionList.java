@@ -3,6 +3,7 @@ package org.jackhuang.hmcl.download.neoforge;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,8 +57,18 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                 }
 
                 for (String version : results[1].versions) {
-                    int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
-                    String mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                    String mcVersion;
+                    if (version.equals("0.25w14craftmine.3-beta")) {
+                        mcVersion = "25w14craftmine";
+                    } else {
+                        try {
+                            int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+                            mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                        } catch (RuntimeException e) {
+                            Logger.LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);
+                            continue;
+                        }
+                    }
 
                     versions.put(mcVersion, new NeoForgeRemoteVersion(
                             mcVersion, NeoForgeRemoteVersion.normalize(version),
