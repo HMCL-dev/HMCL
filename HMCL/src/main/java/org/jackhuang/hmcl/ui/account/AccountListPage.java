@@ -143,7 +143,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftGraphic(wrap(SVG.DRESSER));
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
-                        item.disableProperty().bind(RESTRICTED);
 
                         JFXButton btnRemove = new JFXButton();
                         btnRemove.setOnAction(e -> {
