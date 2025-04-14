@@ -237,6 +237,9 @@ public class DefaultLauncher extends Launcher {
             if (javaVersion == 16)
                 res.addDefault("--illegal-access=", "permit");
 
+            if (javaVersion == 24 || javaVersion == 25)
+                res.addDefault("--sun-misc-unsafe-memory-access=", "allow");
+
             res.addDefault("-Dfml.ignoreInvalidMinecraftCertificates=", "true");
             res.addDefault("-Dfml.ignorePatchDiscrepancies=", "true");
         }
