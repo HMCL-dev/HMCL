@@ -291,15 +291,15 @@ public final class Accounts {
             accounts.addListener(new ListChangeListener<Account>() {
                 @Override
                 public void onChanged(Change<? extends Account> change) {
-                    while (change.next())
-                        if (change.wasAdded())
-                            for (Account account : change.getAddedSubList()) {
-                                if (account instanceof MicrosoftAccount) {
-                                    accounts.removeListener(this);
-                                    globalConfig().setEnableOfflineAccount(true);
-                                    return;
-                                }
+                    while (change.next()) {
+                        for (Account account : change.getAddedSubList()) {
+                            if (account instanceof MicrosoftAccount) {
+                                accounts.removeListener(this);
+                                globalConfig().setEnableOfflineAccount(true);
+                                return;
                             }
+                        }
+                    }
                 }
             });
 
