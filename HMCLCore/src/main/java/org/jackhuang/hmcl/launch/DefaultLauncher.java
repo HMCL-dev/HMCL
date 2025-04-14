@@ -218,14 +218,13 @@ public class DefaultLauncher extends Launcher {
                 res.addUnstableDefault("NodeLimitFudgeFactor", "8000");
                 res.addUnstableDefault("TieredCompileTaskTimeout", "10000");
                 res.addUnstableDefault("ReservedCodeCacheSize", "400M");
-
-                if (javaVersion >= 8) {
-                    res.addUnstableDefault("NmethodSweepActivity", "1");
-                }
-
                 if (javaVersion >= 9) {
                     res.addUnstableDefault("NonNMethodCodeHeapSize", "12M");
                     res.addUnstableDefault("ProfiledCodeHeapSize", "194M");
+                }
+
+                if (javaVersion >= 8) {
+                    res.addUnstableDefault("NmethodSweepActivity", "1");
                 }
             }
 
