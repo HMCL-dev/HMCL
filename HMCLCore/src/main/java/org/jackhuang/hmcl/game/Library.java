@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -193,10 +194,26 @@ public class Library implements Comparable<Library>, Validation {
         LibraryDownloadInfo temp = getRawDownloadInfo();
         String path = getPath();
         return new LibraryDownloadInfo(path,
-                Optional.ofNullable(temp).map(LibraryDownloadInfo::getUrl).orElse(Optional.ofNullable(url).orElse(Constants.DEFAULT_LIBRARY_URL) + path),
+                computePath(temp, path),
                 temp != null ? temp.getSha1() : null,
                 temp != null ? temp.getSize() : 0
         );
+    }
+
+    private String computePath(LibraryDownloadInfo raw, String path) {
+        if (raw != null) {
+            String url = raw.getUrl();
+            if (url != null) {
+                return url;
+            }
+        }
+
+        String repo = Lang.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
+        if (!repo.endsWith("/")) {
+            repo += '/';
+        }
+
+        return repo + path;
     }
 
     public boolean hasDownloadURL() {

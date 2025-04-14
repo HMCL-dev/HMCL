@@ -58,7 +58,10 @@ public final class MultiMCInstancePatch {
     @Nullable
     private final List<Library> libraries;
 
-    public MultiMCInstancePatch(String name, String version, int order, String gameVersion, String mainClass, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries) {
+    @Nullable
+    private final List<Library> jarMods;
+
+    public MultiMCInstancePatch(String name, String version, int order, String gameVersion, String mainClass, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries, @Nullable List<Library> jarMods) {
         this.name = name;
         this.version = version;
         this.order = order;
@@ -69,6 +72,7 @@ public final class MultiMCInstancePatch {
         this.jvmArgs = jvmArgs;
         this._libraries = _libraries;
         this.libraries = libraries;
+        this.jarMods = jarMods;
     }
 
     public String getName() {
@@ -105,5 +109,9 @@ public final class MultiMCInstancePatch {
 
     public List<Library> getLibraries() {
         return Lang.merge(_libraries, libraries);
+    }
+
+    public List<Library> getJarMods() {
+        return jarMods != null ? Collections.unmodifiableList(jarMods) : Collections.emptyList();
     }
 }
