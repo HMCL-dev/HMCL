@@ -203,7 +203,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     /**
      * Create new version setting if version id has no version setting.
-     *
      * @param id the version id.
      * @return new version setting, null if given version does not exist.
      */
@@ -226,6 +225,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
      * Get the version setting for version id.
      *
      * @param id version id
+     *
      * @return corresponding version setting, null if the version has no its own version setting.
      */
     @Nullable
@@ -349,7 +349,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     /**
      * Make version use self version settings instead of the global one.
-     *
      * @param id the version id.
      * @return specialized version setting, null if given version does not exist.
      */
@@ -382,7 +381,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int) (getAllocatedMemory(
+                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         OperatingSystem.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
