@@ -185,9 +185,9 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
                         holder = FXUtils.onWeakChange(RESTRICTED, value -> {
                             if (!value) {
+                                holder = null;
                                 offlineItem.setDisable(false);
                                 boxAuthServers.setDisable(false);
-
                                 boxMethods.getChildren().setAll(title, microsoftItem, offlineItem, boxAuthServers);
                             }
                         });
