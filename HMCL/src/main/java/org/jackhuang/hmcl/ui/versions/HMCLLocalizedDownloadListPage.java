@@ -56,10 +56,10 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
         supportChinese.set(true);
         downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
-        if (curseForge != null) {
-            downloadSource.set("mods.curseforge");
-        } else if (modrinth != null) {
+        if (modrinth != null) {
             downloadSource.set("mods.modrinth");
+        } else if (curseForge != null) {
+            downloadSource.set("mods.curseforge");
         } else {
             throw new AssertionError("Should not be here.");
         }
