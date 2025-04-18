@@ -58,16 +58,18 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
 
                 for (String version : results[1].versions) {
                     String mcVersion;
-                    if (version.equals("0.25w14craftmine.3-beta")) {
-                        mcVersion = "25w14craftmine";
-                    } else {
-                        try {
-                            int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+
+                    try {
+                        int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+                        int majorVersion = Integer.parseInt(version.substring(0, si1));
+                        if (majorVersion == 0) { // Snapshot version.
+                            mcVersion = version.substring(si1 + 1, si2);
+                        } else {
                             mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
-                        } catch (RuntimeException e) {
-                            Logger.LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);
-                            continue;
                         }
+                    } catch (RuntimeException e) {
+                        Logger.LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);
+                        continue;
                     }
 
                     versions.put(mcVersion, new NeoForgeRemoteVersion(
