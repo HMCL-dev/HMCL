@@ -15,7 +15,7 @@ dependencies {
     api("org.jenkins-ci:constant-pool-scanner:1.2")
     api("com.github.steveice10:opennbt:1.5")
     api("org.nanohttpd:nanohttpd:2.3.1")
-    api("org.jsoup:jsoup:1.18.3")
+    api("org.jsoup:jsoup:1.19.1")
     compileOnlyApi("org.jetbrains:annotations:26.0.1")
 
     if (JavaVersion.current().isJava8) {
