@@ -78,6 +78,17 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 String componentID = component.getUid();
                 String version = component.getVersion();
 
+                // https://github.com/MultiMC/Launcher/blob/develop/launcher/minecraft/ComponentUpdateTask.cpp#L586-L593
+                switch (componentID) {
+                    case "org.lwjgl": {
+                        version = "2.9.1";
+                        break;
+                    }
+                    case "org.lwjgl3": {
+                        version = "3.1.2";
+                    }
+                }
+
                 if (version != null) {
                     GetTask task = new GetTask(NetworkUtils.toURL(String.format(
                             "https://meta.multimc.org/v1/%s/%s.json", componentID, version
@@ -287,11 +298,12 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             arguments.add(arg);
         }
 
-        Version version = new Version(
-                patchID, patch.getVersion(), patch.getOrder(),
-                new Arguments().addGameArguments(arguments).addJVMArguments(patch.getJvmArgs()), patch.getMainClass(),
-                patch.getLibraries()
-        );
+        Version version = new Version(patchID)
+                .setVersion(patch.getVersion())
+                .setArguments(new Arguments().addGameArguments(arguments).addJVMArguments(patch.getJvmArgs()))
+                .setMainClass(patch.getMainClass())
+                .setMinecraftArguments(patch.getMinecraftArguments())
+                .setLibraries(patch.getLibraries());
 
         int[] majors = patch.getJavaMajors();
         if (majors != null) {

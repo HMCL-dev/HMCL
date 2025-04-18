@@ -36,6 +36,8 @@ public final class MultiMCInstancePatch {
     private final String version;
     private final int order;
 
+    private final String minecraftArguments;
+
     @SerializedName("mcVersion")
     private final String gameVersion;
     private final String mainClass;
@@ -61,10 +63,11 @@ public final class MultiMCInstancePatch {
     @Nullable
     private final List<Library> jarMods;
 
-    public MultiMCInstancePatch(String name, String version, int order, String gameVersion, String mainClass, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries, @Nullable List<Library> jarMods) {
+    public MultiMCInstancePatch(String name, String version, int order, String minecraftArguments, String gameVersion, String mainClass, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries, @Nullable List<Library> jarMods) {
         this.name = name;
         this.version = version;
         this.order = order;
+        this.minecraftArguments = minecraftArguments;
         this.gameVersion = gameVersion;
         this.mainClass = mainClass;
         this.javaMajors = javaMajors;
@@ -81,6 +84,10 @@ public final class MultiMCInstancePatch {
 
     public String getVersion() {
         return version;
+    }
+
+    public String getMinecraftArguments() {
+        return minecraftArguments;
     }
 
     public int getOrder() {
