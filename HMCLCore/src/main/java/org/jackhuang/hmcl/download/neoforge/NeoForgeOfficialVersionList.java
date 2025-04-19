@@ -3,7 +3,6 @@ package org.jackhuang.hmcl.download.neoforge;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemoteVersion> {
     private final DownloadProvider downloadProvider;
@@ -68,7 +68,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                             mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
                         }
                     } catch (RuntimeException e) {
-                        Logger.LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);
+                        LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);
                         continue;
                     }
 
