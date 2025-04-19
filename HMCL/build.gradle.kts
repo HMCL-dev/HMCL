@@ -160,17 +160,6 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     }
 }
 
-fun createExecutable(suffix: String, header: String) {
-    val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + suffix)
-
-    output.outputStream().use {
-        it.write(File(project.projectDir, header).readBytes())
-        it.write(jarPath.readBytes())
-    }
-
-    createChecksum(output)
-}
-
 tasks.processResources {
     into("META-INF/versions/11") {
         from(sourceSets["java11"].output)
@@ -179,10 +168,27 @@ tasks.processResources {
 }
 
 val makeExecutables = tasks.create("makeExecutables") {
+    val extensions = listOf("exe", "sh")
+
     dependsOn(tasks.jar)
+    outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
+
     doLast {
-        createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
-        createExecutable("sh", "src/main/resources/assets/HMCLauncher.sh")
+        val jarContent = jarPath.readBytes()
+
+        ZipFile(jarPath).use { zipFile ->
+            for (extension in extensions) {
+                val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + extension)
+                val entry = zipFile.getEntry("assets/HMCLauncher.$extension") ?: throw GradleException("HMCLauncher.$extension not found")
+
+                output.outputStream().use { outputStream ->
+                    zipFile.getInputStream(entry).use { it.copyTo(outputStream) }
+                    outputStream.write(jarContent)
+                }
+
+                createChecksum(output)
+            }
+        }
     }
 }
 
