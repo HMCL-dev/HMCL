@@ -76,9 +76,10 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         if (manifest.getMmcPack() != null) {
             for (MultiMCManifest.MultiMCManifestComponent component : manifest.getMmcPack().getComponents()) {
                 String componentID = component.getUid();
-                String version = component.getVersion();
 
-                // https://github.com/MultiMC/Launcher/blob/develop/launcher/minecraft/ComponentUpdateTask.cpp#L586-L593
+                String version;
+                // https://github.com/MultiMC/Launcher/blob/develop/launcher/minecraft/ComponentUpdateTask.cpp#L586-L602
+                labelSwitch:
                 switch (componentID) {
                     case "org.lwjgl": {
                         version = "2.9.1";
@@ -86,6 +87,22 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                     }
                     case "org.lwjgl3": {
                         version = "3.1.2";
+                        break;
+                    }
+                    case "net.fabricmc.intermediary":
+                    case "org.quiltmc.hashed": {
+                        for (MultiMCManifest.MultiMCManifestComponent c : manifest.getMmcPack().getComponents()) {
+                            if (MultiMCComponents.getComponent(c.getUid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+                                version = Objects.requireNonNull(c.getVersion(), "Version of Minecraft must be specific.");
+                                break labelSwitch;
+                            }
+                        }
+
+                        version = null;
+                        break;
+                    }
+                    default: {
+                        version = component.getVersion();
                     }
                 }
 
@@ -305,6 +322,9 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 .setMinecraftArguments(patch.getMinecraftArguments())
                 .setLibraries(patch.getLibraries());
 
+        // Workaround: Official Version Json can only store one GameJavaVersion, not a array of all suitable java versions.
+        // For compatibility with official launcher and any other launchers,
+        // a transform is made between int[] and GameJavaVersion.
         int[] majors = patch.getJavaMajors();
         if (majors != null) {
             majors = majors.clone();
