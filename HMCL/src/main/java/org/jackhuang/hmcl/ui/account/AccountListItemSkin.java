@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -185,7 +186,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         root.setRight(right);
 
         root.getStyleClass().add("card");
-        root.setStyle("-fx-padding: 8 8 8 0;");
+        root.setPadding(new Insets(8));
         JFXDepthManager.setDepth(root, 1);
 
         getChildren().setAll(root);
