@@ -89,11 +89,6 @@ val java11 = sourceSets.create("java11") {
 }
 
 tasks.getByName<JavaCompile>(java11.compileJavaTaskName) {
-    if (JavaVersion.current() < JavaVersion.VERSION_11) {
-        javaCompiler.set(javaToolchains.compilerFor {
-            languageVersion.set(JavaLanguageVersion.of(11))
-        })
-    }
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
     sourceCompatibility = "11"
     targetCompatibility = "11"
