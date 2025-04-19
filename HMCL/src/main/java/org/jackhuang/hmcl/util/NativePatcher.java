@@ -71,29 +71,31 @@ public final class NativePatcher {
                                       List<String> javaArguments) {
 
         // Add RetroWrapper for versions below 1.6
-        if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.6") < 0) {
-            String minecraftArguments = version.getMinecraftArguments().orElse(null);
-            if (minecraftArguments != null && !minecraftArguments.contains("--tweakClass")) {
-                ArrayList<Library> libraries = new ArrayList<>(version.getLibraries());
-                Library retroWrapper = new Library(
-                        new Artifact("com.zero", "retrowrapper", "1.7.8"),
-                        null,
-                        new LibrariesDownloadInfo(
-                                new LibraryDownloadInfo(
-                                        "com/zero/retrowrapper/1.7.8/retrowrapper-1.7.8.jar",
-                                        "https://zkitefly.github.io/unlisted-versions-of-minecraft/libraries/retrowrapper-1.7.8.jar",
-                                        "ea9175b4aebe091ae8859f7352fe59077a62bdf4",
-                                        181263
-                                )
-                        )
-                );
-                libraries.add(retroWrapper);
-                version = version.setLibraries(libraries);
-                
-                javaArguments.add("-Dretrowrapper.doUpdateCheck=false");
-                javaArguments.add("-Dretrowrapper.enableFMLPatch=true");
+        if (!settings.isNotUseRetroTweaker()) {
+            if (gameVersion != null && GameVersionNumber.compare(gameVersion, "1.6") < 0) {
+                String minecraftArguments = version.getMinecraftArguments().orElse(null);
+                if (minecraftArguments != null && !minecraftArguments.contains("--tweakClass")) {
+                    ArrayList<Library> libraries = new ArrayList<>(version.getLibraries());
+                    Library retroWrapper = new Library(
+                            new Artifact("com.zero", "retrowrapper", "1.7.8"),
+                            null,
+                            new LibrariesDownloadInfo(
+                                    new LibraryDownloadInfo(
+                                            "com/zero/retrowrapper/1.7.8/retrowrapper-1.7.8.jar",
+                                            "https://zkitefly.github.io/unlisted-versions-of-minecraft/libraries/retrowrapper-1.7.8.jar",
+                                            "ea9175b4aebe091ae8859f7352fe59077a62bdf4",
+                                            181263
+                                    )
+                            )
+                    );
+                    libraries.add(retroWrapper);
+                    version = version.setLibraries(libraries);
 
-                version = version.setMinecraftArguments(minecraftArguments + " --tweakClass com.zero.retrowrapper.RetroTweaker");
+                    javaArguments.add("-Dretrowrapper.doUpdateCheck=false");
+                    javaArguments.add("-Dretrowrapper.enableFMLPatch=true");
+
+                    version = version.setMinecraftArguments(minecraftArguments + " --tweakClass com.zero.retrowrapper.RetroTweaker");
+                }
             }
         }
 
