@@ -21,13 +21,12 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
@@ -35,34 +34,48 @@ public final class MultiMCInstancePatch {
 
     private final String name;
     private final String version;
+    private final int order;
+
+    private final String minecraftArguments;
 
     @SerializedName("mcVersion")
     private final String gameVersion;
     private final String mainClass;
-    private final String fileId;
+    @SerializedName("compatibleJavaMajors")
+    private final int[] javaMajors;
 
     @SerializedName("+tweakers")
+    @Nullable
     private final List<String> tweakers;
 
+    @SerializedName("+jvmArgs")
+    @Nullable
+    private final List<String> jvmArgs;
+
     @SerializedName("+libraries")
+    @Nullable
     private final List<Library> _libraries;
 
     @SerializedName("libraries")
+    @Nullable
     private final List<Library> libraries;
 
-    public MultiMCInstancePatch() {
-        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
-    }
+    @Nullable
+    private final List<Library> jarMods;
 
-    public MultiMCInstancePatch(String name, String version, String gameVersion, String mainClass, String fileId, List<String> tweakers, List<Library> _libraries, List<Library> libraries) {
+    public MultiMCInstancePatch(String name, String version, int order, String minecraftArguments, String gameVersion, String mainClass, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries, @Nullable List<Library> jarMods) {
         this.name = name;
         this.version = version;
+        this.order = order;
+        this.minecraftArguments = minecraftArguments;
         this.gameVersion = gameVersion;
         this.mainClass = mainClass;
-        this.fileId = fileId;
-        this.tweakers = new ArrayList<>(tweakers);
-        this._libraries = new ArrayList<>(_libraries);
-        this.libraries = new ArrayList<>(libraries);
+        this.javaMajors = javaMajors;
+        this.tweakers = tweakers;
+        this.jvmArgs = jvmArgs;
+        this._libraries = _libraries;
+        this.libraries = libraries;
+        this.jarMods = jarMods;
     }
 
     public String getName() {
@@ -73,6 +86,18 @@ public final class MultiMCInstancePatch {
         return version;
     }
 
+    public String getMinecraftArguments() {
+        return minecraftArguments;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public int[] getJavaMajors() {
+        return javaMajors;
+    }
+
     public String getGameVersion() {
         return gameVersion;
     }
@@ -81,16 +106,19 @@ public final class MultiMCInstancePatch {
         return mainClass;
     }
 
-    public String getFileId() {
-        return fileId;
+    public List<String> getTweakers() {
+        return tweakers != null ? Collections.unmodifiableList(tweakers) : Collections.emptyList();
     }
 
-    public List<String> getTweakers() {
-        return Collections.unmodifiableList(tweakers);
+    public List<String> getJvmArgs() {
+        return jvmArgs != null ? Collections.unmodifiableList(jvmArgs) : Collections.emptyList();
     }
 
     public List<Library> getLibraries() {
         return Lang.merge(_libraries, libraries);
     }
 
+    public List<Library> getJarMods() {
+        return jarMods != null ? Collections.unmodifiableList(jarMods) : Collections.emptyList();
+    }
 }
