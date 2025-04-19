@@ -187,7 +187,6 @@ val makeExecutables = tasks.create("makeExecutables") {
     inputs.file(jarPath)
     if (launcherExe != null)
         inputs.file(launcherExe)
-
     outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
 
     doLast {
