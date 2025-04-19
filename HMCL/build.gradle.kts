@@ -33,12 +33,18 @@ val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
+val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
+
 version = "$versionRoot.$buildNumber"
 
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
     implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
+
+    if (launcherExe == null) {
+        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.1")
+    }
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -154,6 +160,12 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
         }
     }
 
+    if (launcherExe != null) {
+        into("assets") {
+            from(file(launcherExe))
+        }
+    }
+
     doLast {
         attachSignature(jarPath)
         createChecksum(jarPath)
@@ -171,6 +183,8 @@ val makeExecutables = tasks.create("makeExecutables") {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
+
+    inputs.file(jarPath)
     outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
 
     doLast {
@@ -179,7 +193,8 @@ val makeExecutables = tasks.create("makeExecutables") {
         ZipFile(jarPath).use { zipFile ->
             for (extension in extensions) {
                 val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + extension)
-                val entry = zipFile.getEntry("assets/HMCLauncher.$extension") ?: throw GradleException("HMCLauncher.$extension not found")
+                val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
+                    ?: throw GradleException("HMCLauncher.$extension not found")
 
                 output.outputStream().use { outputStream ->
                     zipFile.getInputStream(entry).use { it.copyTo(outputStream) }
@@ -262,8 +277,10 @@ tasks.create<JavaExec>("run") {
 
     val hmclJavaHome = System.getenv("HMCL_JAVA_HOME")
     if (hmclJavaHome != null) {
-        this.executable(file(hmclJavaHome).resolve("bin")
-            .resolve(if (System.getProperty("os.name").lowercase().startsWith("windows")) "java.exe" else "java"))
+        this.executable(
+            file(hmclJavaHome).resolve("bin")
+                .resolve(if (System.getProperty("os.name").lowercase().startsWith("windows")) "java.exe" else "java")
+        )
     }
 
     doFirst {
