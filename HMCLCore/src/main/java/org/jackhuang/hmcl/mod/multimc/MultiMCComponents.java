@@ -2,13 +2,15 @@ package org.jackhuang.hmcl.mod.multimc;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class MultiMCComponents {
+    public static final String[] META = {
+            "https://meta.multimc.org/v1/%s/%s.json",
+            "https://meta.prismlauncher.org/v1/%s/%s.json",
+    };
+
     private MultiMCComponents() {
     }
 
@@ -26,7 +28,7 @@ public final class MultiMCComponents {
     private static final Map<LibraryAnalyzer.LibraryType, String> TYPE_ID =
             ID_TYPE.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-    private static final List<Map.Entry<String, LibraryAnalyzer.LibraryType>> PAIRS = new ArrayList<>(ID_TYPE.entrySet());
+    private static final Collection<Map.Entry<String, LibraryAnalyzer.LibraryType>> PAIRS = Collections.unmodifiableCollection(ID_TYPE.entrySet());
 
     static {
         if (TYPE_ID.isEmpty()) {
@@ -42,7 +44,7 @@ public final class MultiMCComponents {
         return ID_TYPE.get(type);
     }
 
-    public static List<Map.Entry<String, LibraryAnalyzer.LibraryType>> getPairs() {
+    public static Collection<Map.Entry<String, LibraryAnalyzer.LibraryType>> getPairs() {
         return PAIRS;
     }
 }

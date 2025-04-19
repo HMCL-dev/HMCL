@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -77,39 +78,39 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             for (MultiMCManifest.MultiMCManifestComponent component : manifest.getMmcPack().getComponents()) {
                 String componentID = component.getUid();
 
-                String version;
-                // https://github.com/MultiMC/Launcher/blob/develop/launcher/minecraft/ComponentUpdateTask.cpp#L586-L602
-                labelSwitch:
-                switch (componentID) {
-                    case "org.lwjgl": {
-                        version = "2.9.1";
-                        break;
-                    }
-                    case "org.lwjgl3": {
-                        version = "3.1.2";
-                        break;
-                    }
-                    case "net.fabricmc.intermediary":
-                    case "org.quiltmc.hashed": {
-                        for (MultiMCManifest.MultiMCManifestComponent c : manifest.getMmcPack().getComponents()) {
-                            if (MultiMCComponents.getComponent(c.getUid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
-                                version = Objects.requireNonNull(c.getVersion(), "Version of Minecraft must be specific.");
-                                break labelSwitch;
-                            }
+                String version = component.getVersion();
+                if (version == null) {
+                    // https://github.com/MultiMC/Launcher/blob/develop/launcher/minecraft/ComponentUpdateTask.cpp#L586-L602
+                    labelSwitch:
+                    switch (componentID) {
+                        case "org.lwjgl": {
+                            version = "2.9.1";
+                            break;
                         }
-
-                        version = null;
-                        break;
-                    }
-                    default: {
-                        version = component.getVersion();
+                        case "org.lwjgl3": {
+                            version = "3.1.2";
+                            break;
+                        }
+                        case "net.fabricmc.intermediary":
+                        case "org.quiltmc.hashed": {
+                            for (MultiMCManifest.MultiMCManifestComponent c : manifest.getMmcPack().getComponents()) {
+                                if (MultiMCComponents.getComponent(c.getUid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+                                    version = Objects.requireNonNull(c.getVersion(), "Version of Minecraft must be specific.");
+                                    break labelSwitch;
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
 
                 if (version != null) {
-                    GetTask task = new GetTask(NetworkUtils.toURL(String.format(
-                            "https://meta.multimc.org/v1/%s/%s.json", componentID, version
-                    )));
+                    List<URL> urls = new ArrayList<>(MultiMCComponents.META.length);
+                    for (String s : MultiMCComponents.META) {
+                        urls.add(NetworkUtils.toURL(String.format(s, componentID, version)));
+                    }
+
+                    GetTask task = new GetTask(urls);
 
                     componentOriginalPatch.put(componentID, task);
                     dependents.add(task);
