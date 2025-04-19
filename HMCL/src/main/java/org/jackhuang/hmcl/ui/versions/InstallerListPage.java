@@ -114,6 +114,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
             for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                 String libraryId = mark.getLibraryId();
                 String libraryVersion = mark.getLibraryVersion();
+                if("mcbbs".equals(libraryId)) continue;
 
                 // we have done this library above.
                 if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)
