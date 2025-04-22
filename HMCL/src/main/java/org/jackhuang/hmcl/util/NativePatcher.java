@@ -92,8 +92,6 @@ public final class NativePatcher {
                     version = version.setLibraries(libraries);
 
                     javaArguments.add("-Dretrowrapper.doUpdateCheck=false");
-                    javaArguments.add("-Dretrowrapper.enableFMLPatch=true");
-
                     version = version.setMinecraftArguments(minecraftArguments + " --tweakClass com.zero.retrowrapper.RetroTweaker");
                 }
             }
