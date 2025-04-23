@@ -51,8 +51,10 @@ public class FontComboBox extends JFXComboBox<String> {
             }
         });
 
-        itemsProperty().bind(BindingMapping.of(valueProperty())
-                        .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
+        promptTextProperty().bind(Bindings.createStringBinding(() -> {
+            String value = getValue();
+            return value != null && !value.isEmpty() ? value : Font.getDefault().getFamily();
+        }, valueProperty()));
 
         FXUtils.onClicked(this, () -> {
             if (loaded)
