@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -194,8 +193,8 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             String componentID = entry.getKey();
             String patchJson = Objects.requireNonNull(entry.getValue().getResult());
 
-            if (components.put(componentID, Pair.pair(convertPatchToVersion(
-                    readPatch(patchJson), componentID), null
+            if (components.put(componentID, Pair.pair(readPatch(patchJson).asVersion(
+                    componentID), null
             )) != null) {
                 throw new IllegalArgumentException("Duplicate libraries: " + componentID);
             }
@@ -277,7 +276,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                         FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
                     }
                 } else {
-                    Version tc, pp = jp == null ? null : convertPatchToVersion(jp, componentID);
+                    Version tc, pp = jp == null ? null : jp.asVersion(componentID);
 
                     if (original == null) {
                         tc = Objects.requireNonNull(pp, "Original and Json-Patch shouldn't be empty at the same time.");
@@ -307,39 +306,5 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             throw new IllegalArgumentException("Cannot parse MultiMC patch json: " + patchJson, e);
         }
         return patch;
-    }
-
-    private Version convertPatchToVersion(MultiMCInstancePatch patch, String patchID) {
-        List<String> arguments = new ArrayList<>();
-        for (String arg : patch.getTweakers()) {
-            arguments.add("--tweakClass");
-            arguments.add(arg);
-        }
-
-        Version version = new Version(patchID)
-                .setVersion(patch.getVersion())
-                .setArguments(new Arguments().addGameArguments(arguments).addJVMArguments(patch.getJvmArgs()))
-                .setMainClass(patch.getMainClass())
-                .setMinecraftArguments(patch.getMinecraftArguments())
-                .setLibraries(patch.getLibraries());
-
-        // Workaround: Official Version Json can only store one GameJavaVersion, not a array of all suitable java versions.
-        // For compatibility with official launcher and any other launchers,
-        // a transform is made between int[] and GameJavaVersion.
-        int[] majors = patch.getJavaMajors();
-        if (majors != null) {
-            majors = majors.clone();
-            Arrays.sort(majors);
-
-            for (int i = majors.length - 1; i >= 0; i--) {
-                GameJavaVersion jv = GameJavaVersion.get(majors[i]);
-                if (jv != null) {
-                    version = version.setJavaVersion(jv);
-                    break;
-                }
-            }
-        }
-
-        return version;
     }
 }
