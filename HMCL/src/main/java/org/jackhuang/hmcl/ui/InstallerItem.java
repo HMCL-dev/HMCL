@@ -362,10 +362,9 @@ public class InstallerItem extends Control {
                     }
                     return i18n("install.installer.version", s.version);
                 } else if (state instanceof InstallableState) {
-                    if (control.style == Style.CARD) {
-                        return i18n("install.installer.do_not_install");
-                    }
-                    return i18n("install.installer.not_installed");
+                    return control.style == Style.CARD
+                            ? i18n("install.installer.do_not_install")
+                            : i18n("install.installer.not_installed");
                 } else if (state instanceof IncompatibleState) {
                     return i18n("install.installer.incompatible", i18n("install.installer." + ((IncompatibleState) state).incompatibleItemName));
                 } else {
