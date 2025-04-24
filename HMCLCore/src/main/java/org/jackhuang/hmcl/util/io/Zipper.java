@@ -151,7 +151,7 @@ public final class Zipper implements Closeable {
         zos.putNextEntry(new ZipEntry(normalize(path)));
 
         return new OutputStream() {
-            private volatile boolean closed;
+            private boolean closed;
 
             private void ensureOpen() throws IOException {
                 if (closed) {
@@ -173,8 +173,10 @@ public final class Zipper implements Closeable {
 
             @Override
             public void close() throws IOException {
-                closed = true;
-                zos.closeEntry();
+                if (!closed) {
+                    closed = true;
+                    zos.closeEntry();
+                }
             }
 
             @Override
