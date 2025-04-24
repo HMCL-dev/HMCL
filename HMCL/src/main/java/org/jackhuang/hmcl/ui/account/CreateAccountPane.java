@@ -273,14 +273,14 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnYes.setOnAction(e -> doCreate.run());
             btnYes.setDisable(true);
 
-            int countdown = 5;
+            int countdown = 10;
             KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
             for (int i = 0; i < countdown; i++) {
                 keyFrames[i] = new KeyFrame(Duration.seconds(i),
                         new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
             }
             keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
-                    new KeyValue(btnYes.textProperty(), i18n("button.ok")),
+                    new KeyValue(btnYes.textProperty(), i18n("account.methods.offline.name.invalid.confirm")),
                     new KeyValue(btnYes.disableProperty(), false));
 
             Timeline timeline = new Timeline(keyFrames);
@@ -289,7 +289,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     MessageDialogPane.MessageType.WARNING,
                     btnYes,
                     () -> {
-                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid.tip"));
+                        timeline.stop();
                         body.setDisable(false);
                         spinner.hideSpinner();
                     }
