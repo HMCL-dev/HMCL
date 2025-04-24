@@ -26,12 +26,15 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -253,6 +256,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
             graphic.setTranslateX(6);
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(graphic);
+
+            EventHandler<MouseEvent> secondaryClickHandle = event -> {
+                if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
+                    menuButton.fire();
+                    event.consume();
+                }
+            };
+            launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+            menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
