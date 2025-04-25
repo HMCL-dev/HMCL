@@ -149,29 +149,28 @@ public class MicrosoftAccountSkinPane extends StackPane {
         Controllers.dialog(builder.build());
 
         return Task.runAsync(() -> {
-                    model = future.get();
-                    try (FileInputStream input = new FileInputStream(selectedFile)) {
-                        localSkinImg = new Image(input);
-                    } catch (IOException e) {
-                        throw new InvalidSkinException("Failed to read skin image", e);
-                    }
-                    if (localSkinImg.isError()) {
-                        throw new InvalidSkinException("Failed to read skin image", localSkinImg.getException());
-                    }
-                    boolean isSlim = model.equals(TextureModel.SLIM);
-                    LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    account.uploadSkin(isSlim, selectedFile.toPath());
-                })
-                .whenComplete(Schedulers.javafx(), e -> {
-                    updateSkinButtonSpinnerPane.hideSpinner();
-                    updateCanvas().start();
-                    if (e != null) {
-                        Logger.LOG.error("Failed to upload skin", e);
-                        Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageDialogPane.MessageType.ERROR);
-                    } else {
-                        Controllers.dialog(i18n("message.success"), i18n("account.skin.upload"), MessageDialogPane.MessageType.SUCCESS);
-                    }
-                });
+            model = future.get();
+            try (FileInputStream input = new FileInputStream(selectedFile)) {
+                localSkinImg = new Image(input);
+            } catch (IOException e) {
+                throw new InvalidSkinException("Failed to read skin image", e);
+            }
+            if (localSkinImg.isError()) {
+                throw new InvalidSkinException("Failed to read skin image", localSkinImg.getException());
+            }
+            boolean isSlim = model.equals(TextureModel.SLIM);
+            LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
+            account.uploadSkin(isSlim, selectedFile.toPath());
+        }).whenComplete(Schedulers.javafx(), e -> {
+            updateSkinButtonSpinnerPane.hideSpinner();
+            updateCanvas().start();
+            if (e != null) {
+                Logger.LOG.error("Failed to upload skin", e);
+                Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageDialogPane.MessageType.ERROR);
+            } else {
+                Controllers.dialog(i18n("message.success"), i18n("account.skin.upload"), MessageDialogPane.MessageType.SUCCESS);
+            }
+        });
     }
 
     private Task<?> updateCanvas() {
@@ -181,10 +180,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
             Image remoteCapeImg = FXUtils.newRemoteImage(textures.get(TextureType.CAPE).getUrl());
 
             FXUtils.runInFX(() -> {
-                canvas.updateSkin(
-                        localSkinImg != null ? localSkinImg : remoteSkinImg,
-                        model == null ? Objects.equals(profile.getSkins().get(0).getVariant(), "SLIM") : model.equals(TextureModel.SLIM),
-                        remoteCapeImg);
+                canvas.updateSkin(localSkinImg != null ? localSkinImg : remoteSkinImg, model == null ? Objects.equals(profile.getSkins().get(0).getVariant(), "SLIM") : model.equals(TextureModel.SLIM), remoteCapeImg);
             });
             return null;
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {

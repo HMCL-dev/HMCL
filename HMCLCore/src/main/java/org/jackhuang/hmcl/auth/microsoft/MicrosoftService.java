@@ -503,7 +503,6 @@ public class MicrosoftService {
             Validation.requireNonNull(capes, "capes cannot be null");
         }
 
-
         public List<MinecraftProfileResponseSkin> getSkins() {
             return skins;
         }
@@ -511,7 +510,6 @@ public class MicrosoftService {
         public List<MinecraftProfileResponseCape> getCapes() {
             return capes;
         }
-
     }
 
     private static class MinecraftErrorResponse {
