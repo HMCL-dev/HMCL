@@ -280,7 +280,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
             }
             keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
-                    new KeyValue(btnYes.textProperty(), i18n("account.methods.offline.name.invalid.confirm")),
+                    new KeyValue(btnYes.textProperty(), i18n("button.ok")),
                     new KeyValue(btnYes.disableProperty(), false));
 
             Timeline timeline = new Timeline(keyFrames);
