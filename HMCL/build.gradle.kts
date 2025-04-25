@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.register
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
@@ -112,7 +113,7 @@ tasks.jar {
 
 val jarPath = tasks.jar.get().archiveFile.get().asFile
 
-tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+tasks.shadowJar {
     archiveClassifier.set(null as String?)
 
     exclude("**/package-info.class")
@@ -179,7 +180,7 @@ tasks.processResources {
     dependsOn(tasks["java11Classes"])
 }
 
-val makeExecutables = tasks.create("makeExecutables") {
+val makeExecutables by tasks.registering {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
@@ -261,7 +262,7 @@ fun parseToolOptions(options: String?): MutableList<String> {
     return result
 }
 
-tasks.create<JavaExec>("run") {
+tasks.register<JavaExec>("run") {
     dependsOn(tasks.jar)
 
     group = "application"
