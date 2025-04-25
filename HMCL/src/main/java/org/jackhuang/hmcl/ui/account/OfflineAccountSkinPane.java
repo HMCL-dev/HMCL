@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXDialogLayout;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
@@ -69,15 +66,20 @@ public class OfflineAccountSkinPane extends StackPane {
         getChildren().setAll(layout);
         layout.setHeading(new Label(i18n("account.skin")));
 
-        BorderPane pane = new BorderPane();
-
         SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 300, 300, true);
+        canvas.enableRotation(.5);
+
         StackPane canvasPane = new StackPane(canvas);
         canvasPane.setPrefWidth(300);
         canvasPane.setPrefHeight(300);
-        pane.setCenter(canvas);
-        canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
-        canvas.enableRotation(.5);
+
+        BorderPane pane = new BorderPane();
+        pane.setCenter(canvasPane);
+
+        StackPane skinOptionPane = new StackPane();
+        skinOptionPane.setMaxWidth(300);
+        VBox optionPane = new VBox(skinItem, skinOptionPane);
+        pane.setRight(optionPane);
 
         canvas.addEventHandler(DragEvent.DRAG_OVER, e -> {
             if (e.getDragboard().hasFiles()) {
@@ -96,15 +98,8 @@ public class OfflineAccountSkinPane extends StackPane {
             }
         });
 
-        StackPane skinOptionPane = new StackPane();
-        skinOptionPane.setMaxWidth(300);
-        VBox optionPane = new VBox(skinItem, skinOptionPane);
-        pane.setRight(optionPane);
-
         skinSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
         capeSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
-
-        layout.setBody(pane);
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
         cslApiField.setValidators(new URLValidator());
@@ -200,6 +195,7 @@ public class OfflineAccountSkinPane extends StackPane {
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
+        layout.setBody(pane);
         layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }
 

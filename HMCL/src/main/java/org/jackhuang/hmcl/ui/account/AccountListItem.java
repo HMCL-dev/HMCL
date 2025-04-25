@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -136,45 +137,16 @@ public class AccountListItem extends RadioButton {
      * @return the skin upload task, null if no file is selected
      */
     @Nullable
-    public Task<?> uploadSkin() {
+    public void uploadSkin() {
         if (account instanceof OfflineAccount) {
             Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
-            return null;
+        }
+        if (account instanceof MicrosoftAccount) {
+            Controllers.dialog(new MicrosoftAccountSkinPane((MicrosoftAccount) account));
         }
         if (!account.canUploadSkin()) {
-            return null;
+            return;
         }
-
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("account.skin.upload"));
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
-        if (selectedFile == null) {
-            return null;
-        }
-
-        return refreshAsync()
-                .thenRunAsync(() -> {
-                    Image skinImg;
-                    try (FileInputStream input = new FileInputStream(selectedFile)) {
-                        skinImg = new Image(input);
-                    } catch (IOException e) {
-                        throw new InvalidSkinException("Failed to read skin image", e);
-                    }
-                    if (skinImg.isError()) {
-                        throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
-                    }
-                    NormalizedSkin skin = new NormalizedSkin(skinImg);
-                    String model = skin.isSlim() ? "slim" : "";
-                    LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    account.uploadSkin(skin.isSlim(), selectedFile.toPath());
-                })
-                .thenComposeAsync(refreshAsync())
-                .whenComplete(Schedulers.javafx(), e -> {
-                    if (e != null) {
-                        Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageType.ERROR);
-                    }
-                });
     }
 
     public void remove() {

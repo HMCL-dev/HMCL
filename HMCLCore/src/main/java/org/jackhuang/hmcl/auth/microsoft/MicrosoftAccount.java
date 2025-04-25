@@ -136,6 +136,10 @@ public final class MicrosoftAccount extends OAuthAccount {
         service.uploadSkin(session.getAccessToken(), isSlim, file);
     }
 
+    public void changeCape(String id) throws AuthenticationException, UnsupportedOperationException {
+        service.changeCape(session.getAccessToken(), id);
+    }
+
     @Override
     public Map<Object, Object> toStorage() {
         return session.toStorage();
@@ -180,5 +184,13 @@ public final class MicrosoftAccount extends OAuthAccount {
         if (o == null || getClass() != o.getClass()) return false;
         MicrosoftAccount that = (MicrosoftAccount) o;
         return this.isPortable() == that.isPortable() && characterUUID.equals(that.characterUUID);
+    }
+
+    public Optional<MicrosoftService.MinecraftProfileResponse> getMinecraftProfileResponse() {
+        try {
+            return service.getCompleteProfile(session.getAuthorization());
+        } catch (AuthenticationException e) {
+            return Optional.empty();
+        }
     }
 }
