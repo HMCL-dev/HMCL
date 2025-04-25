@@ -118,7 +118,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
         changeCapeButton.getStyleClass().add("jfx-button-raised");
         changeCapeButton.setOnAction(event -> {
-            Controllers.dialog(new MicrosoftAccountChangeCapeDialog(account, profile));
+            Controllers.dialog(new MicrosoftAccountChangeCapeDialog(account, account.getMinecraftProfileResponse().get()));
         });
         gridPane.addRow(0, updateSkinButtonSpinnerPane);
         gridPane.addRow(0, changeCapeButton);
