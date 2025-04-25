@@ -114,7 +114,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
             }
         });
 
-        JFXButton changeCapeButton = new JFXButton("修改披风");
+        JFXButton changeCapeButton = new JFXButton(i18n("account.cape.change"));
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
         changeCapeButton.getStyleClass().add("jfx-button-raised");
         changeCapeButton.setOnAction(event -> {
