@@ -299,12 +299,10 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
     }
 
     private MultiMCInstancePatch readPatch(String patchJson) {
-        MultiMCInstancePatch patch;
         try {
-            patch = JsonUtils.GSON.fromJson(patchJson, MultiMCInstancePatch.class);
+            return JsonUtils.GSON.fromJson(patchJson, MultiMCInstancePatch.class);
         } catch (JsonParseException e) {
             throw new IllegalArgumentException("Cannot parse MultiMC patch json: " + patchJson, e);
         }
-        return patch;
     }
 }
