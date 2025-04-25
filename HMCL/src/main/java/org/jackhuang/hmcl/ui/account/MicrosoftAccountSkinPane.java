@@ -183,7 +183,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
             FXUtils.runInFX(() -> {
                 canvas.updateSkin(
                         localSkinImg != null ? localSkinImg : remoteSkinImg,
-                        model == null ? Objects.equals(profile.getSkins().getFirst().getVariant(), "SLIM") : model.equals(TextureModel.SLIM),
+                        model == null ? Objects.equals(profile.getSkins().get(0).getVariant(), "SLIM") : model.equals(TextureModel.SLIM),
                         remoteCapeImg);
             });
             return null;
