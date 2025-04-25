@@ -81,7 +81,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         if (currentCape != null) {
             capeItem.setSelectedData(currentCape.getId());
         } else {
-            options.add(new MultiFileItem.Option<>("无", null));
+            options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), null));
             capeItem.setSelectedData(null);
         }
     }
