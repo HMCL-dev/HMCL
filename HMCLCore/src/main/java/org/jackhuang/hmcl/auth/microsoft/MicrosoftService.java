@@ -473,16 +473,6 @@ public class MicrosoftService {
         public String getId() {
             return id;
         }
-
-        @Override
-        public String toString() {
-            return "MinecraftProfileResponseCape{" +
-                    "id='" + id + '\'' +
-                    ", state='" + state + '\'' +
-                    ", url='" + url + '\'' +
-                    ", alias='" + alias + '\'' +
-                    '}';
-        }
     }
 
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
