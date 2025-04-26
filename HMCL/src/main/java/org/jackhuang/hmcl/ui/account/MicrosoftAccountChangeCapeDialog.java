@@ -42,7 +42,8 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
         acceptButton.getStyleClass().add("dialog-accept");
         acceptButton.setOnAction(e -> {
-            if (!capeItem.getSelectedData().equals(currentCape.getId()))
+            if (Objects.equals(capeItem.getSelectedData(), "empty") ||
+                    (currentCape == null) || !capeItem.getSelectedData().equals(currentCape.getId()))
                 updateCapeSetting();
             fireEvent(new DialogCloseEvent());
         });
@@ -78,12 +79,12 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         }
 
         if (currentCape != null) {
+            capeItem.loadChildren(options);
             capeItem.setSelectedData(currentCape.getId());
         } else {
-            options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), "none"));
-            capeItem.setSelectedData("none");
+            options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), "empty"));
+            capeItem.loadChildren(options);
+            capeItem.setSelectedData("empty");
         }
-
-        capeItem.loadChildren(options);
     }
 }
