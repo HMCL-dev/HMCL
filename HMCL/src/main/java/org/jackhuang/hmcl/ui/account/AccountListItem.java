@@ -46,8 +46,8 @@ import java.util.concurrent.CancellationException;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AccountListItem extends RadioButton {
 
@@ -133,7 +133,7 @@ public class AccountListItem extends RadioButton {
             Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
         }
         if (account instanceof MicrosoftAccount) {
-            Controllers.dialog(new MicrosoftAccountSkinPane((MicrosoftAccount) account));
+            Controllers.dialog(new MicrosoftAccountSkinPane(refreshAsync(), (MicrosoftAccount) account));
         }
         if (!account.canUploadSkin()) {
             return;

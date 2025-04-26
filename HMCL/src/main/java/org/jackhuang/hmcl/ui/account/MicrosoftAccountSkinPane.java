@@ -62,13 +62,18 @@ public class MicrosoftAccountSkinPane extends StackPane {
     private final SkinCanvas canvas;
     private final SpinnerPane canvasSpinnerPane = new SpinnerPane();
     private final SpinnerPane updateSkinButtonSpinnerPane = new SpinnerPane();
-    private MicrosoftService.MinecraftProfileResponse profile;
+    private final MicrosoftService.MinecraftProfileResponse profile;
     private TextureModel model;
     private Image localSkinImg;
 
-    public MicrosoftAccountSkinPane(MicrosoftAccount account) {
+    public MicrosoftAccountSkinPane(Task<?> refreshTask, MicrosoftAccount account) {
         this.account = account;
-        this.profile = account.getMinecraftProfileResponse().get();
+        this.profile = account.getMinecraftProfileResponse().orElse(null);
+
+        if (profile == null) {
+            refreshTask.start();
+            fireEvent(new DialogCloseEvent());
+        }
 
         getStyleClass().add("skin-pane");
 
@@ -178,7 +183,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
             Texture cape = textures.get(TextureType.CAPE);
 
             Image remoteCapeImg;
-            if (cape != null){
+            if (cape != null) {
                 remoteCapeImg = FXUtils.newRemoteImage(textures.get(TextureType.CAPE).getUrl());
             } else {
                 remoteCapeImg = null;
