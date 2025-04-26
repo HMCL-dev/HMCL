@@ -77,12 +77,13 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
             }
         }
 
-        capeItem.loadChildren(options);
         if (currentCape != null) {
             capeItem.setSelectedData(currentCape.getId());
         } else {
-            options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), null));
-            capeItem.setSelectedData(null);
+            options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), "none"));
+            capeItem.setSelectedData("none");
         }
+
+        capeItem.loadChildren(options);
     }
 }

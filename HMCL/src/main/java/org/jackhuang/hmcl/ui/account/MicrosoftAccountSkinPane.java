@@ -117,9 +117,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
         JFXButton changeCapeButton = new JFXButton(i18n("account.cape.change"));
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
         changeCapeButton.getStyleClass().add("jfx-button-raised");
-        changeCapeButton.setOnAction(event -> {
-            Controllers.dialog(new MicrosoftAccountChangeCapeDialog(account, account.getMinecraftProfileResponse().get()));
-        });
+        changeCapeButton.setOnAction(event -> Controllers.dialog(new MicrosoftAccountChangeCapeDialog(account, account.getMinecraftProfileResponse().get())));
         gridPane.addRow(0, updateSkinButtonSpinnerPane);
         gridPane.addRow(0, changeCapeButton);
 
@@ -176,11 +174,21 @@ public class MicrosoftAccountSkinPane extends StackPane {
     private Task<?> updateCanvas() {
         return Task.supplyAsync(Schedulers.defaultScheduler(), () -> {
             Map<TextureType, Texture> textures = account.getTextures().get().get();
-            Image remoteSkinImg = FXUtils.newRemoteImage(textures.get(TextureType.SKIN).getUrl());
-            Image remoteCapeImg = FXUtils.newRemoteImage(textures.get(TextureType.CAPE).getUrl());
 
+            Texture cape = textures.get(TextureType.CAPE);
+
+            Image remoteCapeImg;
+            if (cape != null){
+                remoteCapeImg = FXUtils.newRemoteImage(textures.get(TextureType.CAPE).getUrl());
+            } else {
+                remoteCapeImg = null;
+            }
+
+            Image remoteSkinImg = FXUtils.newRemoteImage(textures.get(TextureType.SKIN).getUrl());
             FXUtils.runInFX(() -> {
-                canvas.updateSkin(localSkinImg != null ? localSkinImg : remoteSkinImg, model == null ? Objects.equals(profile.getSkins().get(0).getVariant(), "SLIM") : model.equals(TextureModel.SLIM), remoteCapeImg);
+                canvas.updateSkin(localSkinImg != null ? localSkinImg : remoteSkinImg,
+                        model == null ? Objects.equals(profile.getSkins().get(0).getVariant(), "SLIM") : model.equals(TextureModel.SLIM),
+                        remoteCapeImg);
             });
             return null;
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
