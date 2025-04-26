@@ -24,6 +24,7 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import static javafx.collections.FXCollections.observableList;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class FontComboBox extends JFXComboBox<String> {
 
@@ -48,7 +49,11 @@ public class FontComboBox extends JFXComboBox<String> {
 
         promptTextProperty().bind(Bindings.createStringBinding(() -> {
             String value = getValue();
-            return value != null && !value.isEmpty() ? value : Font.getDefault().getFamily();
+            if (value != null && !value.isEmpty()) {
+                return value;
+            } else {
+                return String.format(i18n("settings.launcher.font.default"), Font.getDefault().getFamily());
+            }
         }, valueProperty()));
 
         FXUtils.onClicked(this, () -> {
