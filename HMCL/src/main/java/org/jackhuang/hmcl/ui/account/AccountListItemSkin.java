@@ -152,7 +152,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         });
         btnUpload.getStyleClass().add("toggle-icon4");
         btnUpload.setGraphic(SVG.CHECKROOM.createIcon(Theme.blackFill(), -1));
-        FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
+        FXUtils.installFastTooltip(btnUpload, i18n("account.skin.edit"));
         btnUpload.disableProperty().bind(Bindings.not(skinnable.canUploadSkin()));
         spinnerUpload.setContent(btnUpload);
         spinnerUpload.getStyleClass().add("small-spinner-pane");
