@@ -140,6 +140,9 @@ public final class MicrosoftAccount extends OAuthAccount {
         service.changeCape(session.getAccessToken(), id);
     }
 
+    public void hideCape() throws AuthenticationException, UnsupportedOperationException {
+        service.hideCape(session.getAccessToken());
+    }
     @Override
     public Map<Object, Object> toStorage() {
         return session.toStorage();

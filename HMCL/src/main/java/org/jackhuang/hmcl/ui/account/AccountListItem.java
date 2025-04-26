@@ -133,7 +133,7 @@ public class AccountListItem extends RadioButton {
             Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
         }
         if (account instanceof MicrosoftAccount) {
-            Controllers.dialog(new MicrosoftAccountSkinPane(refreshAsync(), (MicrosoftAccount) account));
+            Controllers.dialog(new MicrosoftAccountSkinPane((MicrosoftAccount) account));
         }
         if (!account.canUploadSkin()) {
             return;

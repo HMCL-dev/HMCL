@@ -42,9 +42,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
         acceptButton.getStyleClass().add("dialog-accept");
         acceptButton.setOnAction(e -> {
-            if (Objects.equals(capeItem.getSelectedData(), "empty") ||
-                    (currentCape == null) || !capeItem.getSelectedData().equals(currentCape.getId()))
-                updateCapeSetting();
+            updateCapeSetting();
             fireEvent(new DialogCloseEvent());
         });
 
@@ -58,8 +56,21 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     }
 
     private void updateCapeSetting() {
+        String cape = capeItem.getSelectedData();
+
+        if ("empty".equals(cape)) {
+            if (currentCape == null) return;
+            cape = null;
+        } else if (currentCape != null && cape.equals(currentCape.getId())) {
+            return;
+        }
+
         try {
-            account.changeCape(capeItem.getSelectedData());
+            if (cape == null) {
+                account.hideCape();
+            } else {
+                account.changeCape(cape);
+            }
         } catch (AuthenticationException e) {
             Logger.LOG.error("Failed to change cape", e);
             Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
@@ -70,6 +81,8 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         ArrayList<MultiFileItem.Option<String>> options = new ArrayList<>();
         List<MicrosoftService.MinecraftProfileResponseCape> capes = profile.getCapes();
 
+        options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), "empty"));
+
         for (MicrosoftService.MinecraftProfileResponseCape cape : capes) {
             MultiFileItem.Option<String> option = new MultiFileItem.Option<>(cape.getAlias(), cape.getId());
             options.add(option);
@@ -78,12 +91,10 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
             }
         }
 
+        capeItem.loadChildren(options);
         if (currentCape != null) {
-            capeItem.loadChildren(options);
             capeItem.setSelectedData(currentCape.getId());
         } else {
-            options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), "empty"));
-            capeItem.loadChildren(options);
             capeItem.setSelectedData("empty");
         }
     }

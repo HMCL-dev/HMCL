@@ -66,14 +66,9 @@ public class MicrosoftAccountSkinPane extends StackPane {
     private TextureModel model;
     private Image localSkinImg;
 
-    public MicrosoftAccountSkinPane(Task<?> refreshTask, MicrosoftAccount account) {
+    public MicrosoftAccountSkinPane(MicrosoftAccount account) {
         this.account = account;
         this.profile = account.getMinecraftProfileResponse().orElse(null);
-
-        if (profile == null) {
-            refreshTask.start();
-            fireEvent(new DialogCloseEvent());
-        }
 
         getStyleClass().add("skin-pane");
 
@@ -206,5 +201,4 @@ public class MicrosoftAccountSkinPane extends StackPane {
             }
         });
     }
-
 }

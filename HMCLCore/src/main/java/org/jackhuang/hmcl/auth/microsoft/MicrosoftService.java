@@ -327,6 +327,27 @@ public class MicrosoftService {
         }
     }
 
+    public void hideCape(String accessToken) throws AuthenticationException, UnsupportedOperationException{
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com//minecraft/profile/capes/active"));
+            con.setRequestMethod("DELETE");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setDoOutput(true);
+
+            String response = NetworkUtils.readData(con);
+            if (StringUtils.isBlank(response)) {
+                if (con.getResponseCode() / 100 != 2)
+                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+            } else {
+                MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to hide cape, response code: " + con.getResponseCode() + ", response: " + response);
+            }
+        } catch (IOException | JsonParseException e) {
+            throw new AuthenticationException(e);
+        }
+    }
+
     public static class XboxAuthorizationException extends AuthenticationException {
         private final long errorCode;
         private final String redirect;
