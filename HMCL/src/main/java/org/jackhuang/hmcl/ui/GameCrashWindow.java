@@ -142,7 +142,7 @@ public class GameCrashWindow extends Stage {
 
             String log;
             try {
-                log = FileUtils.readText(latestLog);
+                log = FileUtils.readTextMaybeNativeEncoding(latestLog);
             } catch (IOException e) {
                 LOG.warning("Failed to read logs/latest.log", e);
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
