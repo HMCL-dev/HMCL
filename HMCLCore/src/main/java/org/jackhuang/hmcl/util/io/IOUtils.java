@@ -17,9 +17,18 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.chardet.DetectedCharset;
+import org.glavo.chardet.UniversalDetector;
+
 import java.io.*;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.util.Locale;
 import java.util.zip.GZIPInputStream;
+
+import static java.nio.charset.StandardCharsets.*;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -32,6 +41,76 @@ public final class IOUtils {
     }
 
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+
+    private static boolean isASCIICompatible(Charset charset) {
+        if (charset == US_ASCII || charset == UTF_8 || charset.name().startsWith("ISO-8859-")) {
+            return true;
+        }
+
+        if (charset.name().startsWith("UTF-")) {
+            return false;
+        }
+
+        switch (charset.name().toLowerCase(Locale.ROOT)) {
+            case "gbk":
+            case "gb2312":
+            case "gb18030":
+            case "big5":
+            case "euc-kr":
+                return true;
+            case "shift-jis":
+                return false;
+            default:
+                byte[] buffer = new byte[128];
+                for (int i = 0; i < buffer.length; i++) {
+                    buffer[i] = (byte) i;
+                }
+
+                String str = new String(buffer, charset);
+                if (str.length() != buffer.length)
+                    return false;
+
+                for (int i = 0; i < buffer.length; i++) {
+                    if (str.charAt(i) != buffer[i])
+                        return false;
+                }
+
+                return true;
+        }
+    }
+
+    public static BufferedReader newBufferedReaderByDetectedCharset(Path file, Charset defaultCharset) throws IOException {
+        FileChannel channel = FileChannel.open(file);
+        try {
+            long oldPosition = channel.position();
+
+            DetectedCharset detectedCharset = UniversalDetector.detectCharset(channel);
+
+            Charset charset;
+            if (detectedCharset != null) {
+                if (detectedCharset.isSupported()) {
+                    charset = detectedCharset.getCharset();
+                    if (charset == US_ASCII) {
+                        charset = isASCIICompatible(defaultCharset) ? defaultCharset : UTF_8;
+                    }
+                } else if (detectedCharset == DetectedCharset.HZ_GB_2312) {
+                    charset = Charset.forName("GB18030");
+                } else if (detectedCharset == DetectedCharset.X_ISO_10646_UCS_4_2143 || detectedCharset == DetectedCharset.X_ISO_10646_UCS_4_3412) {
+                    charset = Charset.forName("UTF-32");
+                } else {
+                    charset = defaultCharset;
+                }
+            } else {
+                charset = defaultCharset;
+            }
+
+            channel.position(oldPosition);
+            return new BufferedReader(new InputStreamReader(Channels.newInputStream(channel), charset));
+        } catch (Throwable e) {
+            closeQuietly(channel, e);
+            throw e;
+        }
+    }
 
     /**
      * Read all bytes to a buffer from given input stream. The stream will not be closed.

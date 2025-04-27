@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -93,7 +94,7 @@ public final class LogExporter {
                 if (Files.isRegularFile(file)) {
                     FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
-                        try (BufferedReader reader = Files.newBufferedReader(file, OperatingSystem.NATIVE_CHARSET)) {
+                        try (BufferedReader reader = IOUtils.newBufferedReaderByDetectedCharset(file, OperatingSystem.NATIVE_CHARSET)) {
                             zipper.putLines(reader.lines().map(Logger::filterForbiddenToken), file.getFileName().toString());
                         } catch (IOException e) {
                             LOG.warning("Failed to read log file: " + file, e);

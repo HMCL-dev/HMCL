@@ -16,6 +16,7 @@ dependencies {
     api("com.github.steveice10:opennbt:1.5")
     api("org.nanohttpd:nanohttpd:2.3.1")
     api("org.jsoup:jsoup:1.19.1")
+    api("org.glavo:chardet:2.5.0")
     compileOnlyApi("org.jetbrains:annotations:26.0.1")
 
     if (JavaVersion.current().isJava8) {
