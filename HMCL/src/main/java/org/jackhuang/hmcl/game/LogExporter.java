@@ -94,7 +94,7 @@ public final class LogExporter {
                 if (Files.isRegularFile(file)) {
                     FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
-                        try (BufferedReader reader = IOUtils.newBufferedReaderByDetectedCharset(file, OperatingSystem.NATIVE_CHARSET)) {
+                        try (BufferedReader reader = IOUtils.newBufferedReaderMaybeNativeEncoding(file)) {
                             zipper.putLines(reader.lines().map(Logger::filterForbiddenToken), file.getFileName().toString());
                         } catch (IOException e) {
                             LOG.warning("Failed to read log file: " + file, e);
