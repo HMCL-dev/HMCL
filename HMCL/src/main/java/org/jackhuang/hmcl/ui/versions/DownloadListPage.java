@@ -453,6 +453,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         changeButton.value.run();
                     });
 
+                    FXUtils.onChange(control.pageOffset, pageCountN -> {
+                        if (changeButton.value != null) {
+                            changeButton.value.run();
+                        }
+                    });
+
                     Pane placeholder = new Pane();
                     HBox.setHgrow(placeholder, Priority.SOMETIMES);
 
