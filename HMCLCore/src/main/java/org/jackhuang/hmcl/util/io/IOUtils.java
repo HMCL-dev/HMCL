@@ -50,12 +50,10 @@ public final class IOUtils {
         FileChannel channel = FileChannel.open(file);
         try {
             long oldPosition = channel.position();
-
             DetectedCharset detectedCharset = UniversalDetector.detectCharset(channel);
             Charset charset = detectedCharset != null && detectedCharset.isSupported()
                     && (detectedCharset.getCharset() == UTF_8 || detectedCharset.getCharset() == US_ASCII)
                     ? UTF_8 : NATIVE_CHARSET;
-
             channel.position(oldPosition);
             return new BufferedReader(new InputStreamReader(Channels.newInputStream(channel), charset));
         } catch (Throwable e) {
