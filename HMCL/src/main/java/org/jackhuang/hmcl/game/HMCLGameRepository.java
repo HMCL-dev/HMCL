@@ -150,18 +150,24 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         Version fromVersion = getVersion(srcId);
 
-        if (Files.exists(dstDir)) throw new IOException("Version exists");
-        FileUtils.copyDirectory(srcDir, dstDir);
+        List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
+        blackList.add(srcId + ".jar");
+        blackList.add(srcId + ".json");
+        if (!copySaves)
+            blackList.add("saves");
 
-        Path fromJson = dstDir.resolve(srcId + ".json");
-        Path fromJar = dstDir.resolve(srcId + ".jar");
+        if (Files.exists(dstDir)) throw new IOException("Version exists");
+        FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
+
+        Path fromJson = srcDir.resolve(srcId + ".json");
+        Path fromJar = srcDir.resolve(srcId + ".jar");
         Path toJson = dstDir.resolve(dstId + ".json");
         Path toJar = dstDir.resolve(dstId + ".jar");
 
         if (Files.exists(fromJar)) {
-            Files.move(fromJar, toJar);
+            Files.copy(fromJar, toJar);
         }
-        Files.move(fromJson, toJson);
+        Files.copy(fromJson, toJson);
 
         FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
 
@@ -174,12 +180,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         File srcGameDir = getRunDirectory(srcId);
         File dstGameDir = getRunDirectory(dstId);
-
-        List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
-        blackList.add(srcId + ".jar");
-        blackList.add(srcId + ".json");
-        if (!copySaves)
-            blackList.add("saves");
 
         if (originalGameDirType != GameDirectoryType.VERSION_FOLDER)
             FileUtils.copyDirectory(srcGameDir.toPath(), dstGameDir.toPath(), path -> Modpack.acceptFile(path, blackList, null));
