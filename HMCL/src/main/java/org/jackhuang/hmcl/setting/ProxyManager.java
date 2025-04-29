@@ -18,77 +18,117 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ProxyManager extends ProxySelector {
+public final class ProxyManager {
 
-    private static final List<Proxy> NO_PROXY = Collections.singletonList(Proxy.NO_PROXY);
+    private static final ProxySelector NO_PROXY = new SimpleProxySelector(Proxy.NO_PROXY);
+    private static final ProxySelector SYSTEM_DEFAULT = Lang.requireNonNullElse(ProxySelector.getDefault(), NO_PROXY);
 
-    private volatile Function<URI, List<Proxy>> proxySelector;
+    private static ProxySelector getProxySelector() {
+        if (config().hasProxy()) {
+            Proxy.Type proxyType = config().getProxyType();
+            String host = config().getProxyHost();
+            int port = config().getProxyPort();
+
+            if (proxyType == Proxy.Type.DIRECT || StringUtils.isBlank(host)) {
+                return NO_PROXY;
+            } else if (port < 0 || port > 0xFFFF) {
+                LOG.warning("Illegal proxy port: " + port);
+                return NO_PROXY;
+            } else {
+                return new SimpleProxySelector(new Proxy(proxyType, new InetSocketAddress(host, port)));
+            }
+        } else {
+            return ProxyManager.SYSTEM_DEFAULT;
+        }
+    }
+
+    private static Authenticator getAuthenticator() {
+        if (config().hasProxy() && config().hasProxyAuth()) {
+            String username = config().getProxyUser();
+            String password = config().getProxyPass();
+
+            if (username != null || password != null)
+                return new SimpleAuthenticator(username, password.toCharArray());
+            else
+                return null;
+        } else
+            return null;
+    }
 
     static void init() {
-        Function<URI, List<Proxy>> systemDefault = ProxySelector.getDefault()::select;
-        ProxyManager proxyManager = new ProxyManager();
-        ProxySelector.setDefault(proxyManager);
+        ProxySelector.setDefault(getProxySelector());
+        InvalidationListener updateProxySelector = observable -> ProxySelector.setDefault(getProxySelector());
+        config().proxyTypeProperty().addListener(updateProxySelector);
+        config().proxyHostProperty().addListener(updateProxySelector);
+        config().proxyPortProperty().addListener(updateProxySelector);
+        config().hasProxyProperty().addListener(updateProxySelector);
 
-        InvalidationListener listener = observable -> {
-            if (config().hasProxy()) {
-                Proxy.Type proxyType = config().getProxyType();
-                String host = config().getProxyHost();
-                int port = config().getProxyPort();
-
-                if (proxyType == Proxy.Type.DIRECT || StringUtils.isBlank(host)) {
-                    proxyManager.proxySelector = null;
-                } else if (port < 0 || port > 0xFFFF) {
-                    LOG.warning("Illegal proxy port: " + port);
-                    proxyManager.proxySelector = systemDefault;
-                } else {
-                    List<Proxy> proxies = Collections.singletonList(new Proxy(proxyType, new InetSocketAddress(host, port)));
-                    proxyManager.proxySelector = uri -> proxies;
-                }
-            } else {
-                proxyManager.proxySelector = systemDefault;
-            }
-        };
-        config().proxyTypeProperty().addListener(listener);
-        config().proxyHostProperty().addListener(listener);
-        config().proxyPortProperty().addListener(listener);
-        config().hasProxyProperty().addListener(listener);
-        listener.invalidated(null);
-
-        Authenticator.setDefault(new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                if (config().hasProxyAuth()) {
-                    String username = config().getProxyUser();
-                    String password = config().getProxyPass();
-                    if (username != null && password != null) {
-                        return new PasswordAuthentication(username, password.toCharArray());
-                    }
-                }
-                return null;
-            }
-        });
+        Authenticator.setDefault(getAuthenticator());
+        InvalidationListener updateAuthenticator = observable -> Authenticator.setDefault(getAuthenticator());
+        config().hasProxyProperty().addListener(updateAuthenticator);
+        config().hasProxyAuthProperty().addListener(updateAuthenticator);
+        config().proxyUserProperty().addListener(updateAuthenticator);
+        config().proxyPassProperty().addListener(updateAuthenticator);
     }
 
-    @Override
-    public List<Proxy> select(URI uri) {
-        return proxySelector != null ? proxySelector.apply(uri) : NO_PROXY;
-    }
+    private static final class SimpleProxySelector extends ProxySelector {
+        private final List<Proxy> proxies;
 
-    @Override
-    public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
-        if (uri == null || sa == null || ioe == null) {
-            throw new IllegalArgumentException("Arguments can't be null.");
+        SimpleProxySelector(Proxy proxy) {
+            this(Collections.singletonList(proxy));
         }
+
+        SimpleProxySelector(List<Proxy> proxies) {
+            this.proxies = proxies;
+        }
+
+        @Override
+        public List<Proxy> select(URI uri) {
+            if (uri == null)
+                throw new IllegalArgumentException("URI can't be null.");
+
+            return proxies;
+        }
+
+        @Override
+        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+            if (uri == null || sa == null || ioe == null) {
+                throw new IllegalArgumentException("Arguments can't be null.");
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "SimpleProxySelector" + proxies;
+        }
+    }
+
+    private static final class SimpleAuthenticator extends Authenticator {
+        private final String username;
+        private final char[] password;
+
+        private SimpleAuthenticator(String username, char[] password) {
+            this.username = username;
+            this.password = password;
+        }
+
+        @Override
+        protected PasswordAuthentication getPasswordAuthentication() {
+            return getRequestorType() == RequestorType.PROXY ? new PasswordAuthentication(username, password) : null;
+        }
+    }
+
+    private ProxyManager() {
     }
 }
