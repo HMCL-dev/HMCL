@@ -78,7 +78,7 @@ public class Theme {
         }
 
         for (String fileName : fileNames) {
-            Path path = Metadata.HMCL_DIRECTORY.resolve(fileName);
+            Path path = Metadata.HMCL_GLOBAL_DIRECTORY.resolve(fileName);
             if (Files.isRegularFile(path)) {
                 try {
                     Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);

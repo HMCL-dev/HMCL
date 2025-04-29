@@ -58,7 +58,7 @@ public final class Main {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        LOG.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
+        LOG.start(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
 

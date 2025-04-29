@@ -175,7 +175,7 @@ public final class Accounts {
     }
 
     private static void loadGlobalAccountStorages() {
-        Path globalAccountsFile = Metadata.HMCL_DIRECTORY.resolve("accounts.json");
+        Path globalAccountsFile = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("accounts.json");
         if (Files.exists(globalAccountsFile)) {
             try (Reader reader = Files.newBufferedReader(globalAccountsFile)) {
                 globalAccountStorages.setAll(Config.CONFIG_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class))));
@@ -388,7 +388,7 @@ public final class Accounts {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
         if (authlibinjectorLocation == null) {
             return new AuthlibInjectorDownloader(
-                    Metadata.HMCL_DIRECTORY.resolve("authlib-injector.jar"),
+                    Metadata.HMCL_GLOBAL_DIRECTORY.resolve("authlib-injector.jar"),
                     DownloadProviders::getDownloadProvider) {
                 @Override
                 public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {

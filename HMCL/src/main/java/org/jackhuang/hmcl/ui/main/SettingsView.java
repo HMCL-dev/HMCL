@@ -216,7 +216,7 @@ public abstract class SettingsView extends StackPane {
     }
 
     public void openLogFolder() {
-        FXUtils.openFolder(Metadata.HMCL_DIRECTORY.resolve("logs").toFile());
+        FXUtils.openFolder(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("logs").toFile());
     }
 
     protected abstract void onUpdate();
