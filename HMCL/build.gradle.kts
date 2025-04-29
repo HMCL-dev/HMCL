@@ -9,7 +9,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
 
 plugins {
-    id("com.gradleup.shadow") version "8.3.6"
+    alias(libs.plugins.shadow)
 }
 
 val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
@@ -40,7 +40,7 @@ version = "$versionRoot.$buildNumber"
 dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
-    implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
+    implementation(libs.twelvemonkeys.imageio.webp)
 
     if (launcherExe == null) {
         implementation("org.glavo.hmcl:HMCLauncher:3.6.0.1")
