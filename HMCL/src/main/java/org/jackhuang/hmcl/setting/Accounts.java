@@ -397,7 +397,7 @@ public final class Accounts {
                         return local;
                     }
                     // search authlib-injector.jar in current directory, it's used as a fallback
-                    return parseArtifact(Paths.get("authlib-injector.jar"));
+                    return parseArtifact(Metadata.CURRENT_DIRECTORY.resolve("authlib-injector.jar"));
                 }
             };
         } else {
