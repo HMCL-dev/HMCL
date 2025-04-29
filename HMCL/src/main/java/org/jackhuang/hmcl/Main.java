@@ -73,7 +73,7 @@ public final class Main {
             }
         }
 
-        LOG.start(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("logs"));
+        LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
 
