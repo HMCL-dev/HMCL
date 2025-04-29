@@ -74,7 +74,6 @@ public final class Metadata {
             HMCL_GLOBAL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
         }
 
-
         String hmclCurrentDir = System.getProperty("hmcl.dir");
         HMCL_CURRENT_DIRECTORY = hmclCurrentDir != null
                 ? Paths.get(hmclCurrentDir).toAbsolutePath().normalize()
