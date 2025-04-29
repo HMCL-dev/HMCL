@@ -37,7 +37,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Locale;
 import java.util.Objects;
@@ -59,26 +58,11 @@ public class Theme {
             Color.web("#B71C1C")  // red
     };
 
-    private static final Lazy<Font> FONT = new Lazy<>(() -> {
+    private static Font tryLoadDefaultFont(Path dir) {
         String[] fileNames = {"font.ttf", "font.otf", "font.woff"};
 
         for (String fileName : fileNames) {
-            Path path = Paths.get(fileName).toAbsolutePath();
-            if (Files.isRegularFile(path)) {
-                try {
-                    Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);
-                    if (font != null) {
-                        return font;
-                    }
-                } catch (MalformedURLException ignored) {
-                }
-
-                LOG.warning("Failed to load font " + path);
-            }
-        }
-
-        for (String fileName : fileNames) {
-            Path path = Metadata.HMCL_GLOBAL_DIRECTORY.resolve(fileName);
+            Path path = dir.resolve(fileName);
             if (Files.isRegularFile(path)) {
                 try {
                     Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);
@@ -93,6 +77,18 @@ public class Theme {
         }
 
         return null;
+    }
+
+    private static final Lazy<Font> FONT = new Lazy<>(() -> {
+        Font font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
+        if (font != null)
+            return font;
+
+        font = tryLoadDefaultFont(Metadata.CURRENT_DIRECTORY);
+        if (font != null)
+            return font;
+
+        return tryLoadDefaultFont(Metadata.HMCL_GLOBAL_DIRECTORY);
     });
 
     public static Theme getTheme() {
