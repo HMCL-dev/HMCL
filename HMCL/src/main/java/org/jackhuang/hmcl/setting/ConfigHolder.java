@@ -93,18 +93,8 @@ public final class ConfigHolder {
         LOG.setLogRetention(globalConfig().getLogRetention());
         Settings.init();
 
-        if (newlyCreated) {
+        if (newlyCreated)
             saveConfigSync();
-
-            // hide the config file on windows
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                try {
-                    Files.setAttribute(configLocation, "dos:hidden", true);
-                } catch (IOException e) {
-                    LOG.warning("Failed to set hidden attribute of " + configLocation, e);
-                }
-            }
-        }
 
         if (!Files.isWritable(configLocation)) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
