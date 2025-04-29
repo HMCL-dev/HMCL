@@ -415,13 +415,14 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
-        if (config().hasProxy()) {
-            builder.setProxy(ProxyManager.getProxy());
-            if (config().hasProxyAuth()) {
-                builder.setProxyUser(config().getProxyUser());
-                builder.setProxyPass(config().getProxyPass());
-            }
-        }
+// TODO
+//        if (config().hasProxy()) {
+//            builder.setProxy(ProxyManager.getProxy());
+//            if (config().hasProxyAuth()) {
+//                builder.setProxyUser(config().getProxyUser());
+//                builder.setProxyPass(config().getProxyPass());
+//            }
+//        }
 
         File json = getModpackConfiguration(version);
         if (json.exists()) {
