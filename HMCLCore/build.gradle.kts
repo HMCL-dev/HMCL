@@ -18,10 +18,4 @@ dependencies {
     api("org.jsoup:jsoup:1.19.1")
     api("org.glavo:chardet:2.5.0")
     compileOnlyApi("org.jetbrains:annotations:26.0.1")
-
-    if (JavaVersion.current().isJava8) {
-        org.gradle.internal.jvm.Jvm.current().toolsJar?.let {
-            compileOnly(files(it))
-        }
-    }
 }
