@@ -17,56 +17,53 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.value.ObservableObjectValue;
+import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.net.Authenticator;
-import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
-import java.net.Proxy.Type;
+import java.io.IOException;
+import java.net.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ProxyManager {
-    private ProxyManager() {
-    }
+public final class ProxyManager extends ProxySelector {
 
-    private static ObjectBinding<Proxy> proxyProperty;
+    private static final List<Proxy> NO_PROXY = Collections.singletonList(Proxy.NO_PROXY);
 
-    public static Proxy getProxy() {
-        return proxyProperty.get();
-    }
-
-    public static ObservableObjectValue<Proxy> proxyProperty() {
-        return proxyProperty;
-    }
+    private volatile Function<URI, List<Proxy>> proxySelector;
 
     static void init() {
-        proxyProperty = Bindings.createObjectBinding(
-                () -> {
-                    String host = config().getProxyHost();
-                    int port = config().getProxyPort();
-                    if (!config().hasProxy() || StringUtils.isBlank(host) || config().getProxyType() == Proxy.Type.DIRECT) {
-                        return Proxy.NO_PROXY;
-                    } else {
-                        if (port < 0 || port > 0xFFFF) {
-                            LOG.warning("Illegal proxy port: " + port);
-                            return Proxy.NO_PROXY;
-                        }
-                        return new Proxy(config().getProxyType(), new InetSocketAddress(host, port));
-                    }
-                },
-                config().proxyTypeProperty(),
-                config().proxyHostProperty(),
-                config().proxyPortProperty(),
-                config().hasProxyProperty());
+        Function<URI, List<Proxy>> systemDefault = ProxySelector.getDefault()::select;
+        ProxyManager proxyManager = new ProxyManager();
+        ProxySelector.setDefault(proxyManager);
 
-        proxyProperty.addListener(any -> updateSystemProxy());
-        updateSystemProxy();
+        InvalidationListener listener = observable -> {
+            if (config().hasProxy()) {
+                Proxy.Type proxyType = config().getProxyType();
+                String host = config().getProxyHost();
+                int port = config().getProxyPort();
+
+                if (proxyType == Proxy.Type.DIRECT || StringUtils.isBlank(host)) {
+                    proxyManager.proxySelector = null;
+                } else if (port < 0 || port > 0xFFFF) {
+                    LOG.warning("Illegal proxy port: " + port);
+                    proxyManager.proxySelector = systemDefault;
+                } else {
+                    List<Proxy> proxies = Collections.singletonList(new Proxy(proxyType, new InetSocketAddress(host, port)));
+                    proxyManager.proxySelector = uri -> proxies;
+                }
+            } else {
+                proxyManager.proxySelector = systemDefault;
+            }
+        };
+        config().proxyTypeProperty().addListener(listener);
+        config().proxyHostProperty().addListener(listener);
+        config().proxyPortProperty().addListener(listener);
+        config().hasProxyProperty().addListener(listener);
+        listener.invalidated(null);
 
         Authenticator.setDefault(new Authenticator() {
             @Override
@@ -83,34 +80,15 @@ public final class ProxyManager {
         });
     }
 
-    private static void updateSystemProxy() {
-        Proxy proxy = proxyProperty.get();
-        if (proxy.type() == Proxy.Type.DIRECT) {
-            System.clearProperty("http.proxyHost");
-            System.clearProperty("http.proxyPort");
-            System.clearProperty("https.proxyHost");
-            System.clearProperty("https.proxyPort");
-            System.clearProperty("socksProxyHost");
-            System.clearProperty("socksProxyPort");
-        } else {
-            InetSocketAddress address = (InetSocketAddress) proxy.address();
-            String host = address.getHostString();
-            String port = String.valueOf(address.getPort());
-            if (proxy.type() == Type.HTTP) {
-                System.clearProperty("socksProxyHost");
-                System.clearProperty("socksProxyPort");
-                System.setProperty("http.proxyHost", host);
-                System.setProperty("http.proxyPort", port);
-                System.setProperty("https.proxyHost", host);
-                System.setProperty("https.proxyPort", port);
-            } else if (proxy.type() == Type.SOCKS) {
-                System.clearProperty("http.proxyHost");
-                System.clearProperty("http.proxyPort");
-                System.clearProperty("https.proxyHost");
-                System.clearProperty("https.proxyPort");
-                System.setProperty("socksProxyHost", host);
-                System.setProperty("socksProxyPort", port);
-            }
+    @Override
+    public List<Proxy> select(URI uri) {
+        return proxySelector != null ? proxySelector.apply(uri) : NO_PROXY;
+    }
+
+    @Override
+    public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        if (uri == null || sa == null || ioe == null) {
+            throw new IllegalArgumentException("Arguments can't be null.");
         }
     }
 }
