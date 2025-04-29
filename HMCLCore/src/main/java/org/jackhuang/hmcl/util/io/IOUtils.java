@@ -17,8 +17,19 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.chardet.DetectedCharset;
+import org.glavo.chardet.UniversalDetector;
+
 import java.io.*;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
+
+import static java.nio.charset.StandardCharsets.*;
+import static org.jackhuang.hmcl.util.platform.OperatingSystem.NATIVE_CHARSET;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -31,6 +42,25 @@ public final class IOUtils {
     }
 
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+
+    public static BufferedReader newBufferedReaderMaybeNativeEncoding(Path file) throws IOException {
+        if (NATIVE_CHARSET == UTF_8)
+            return Files.newBufferedReader(file);
+
+        FileChannel channel = FileChannel.open(file);
+        try {
+            long oldPosition = channel.position();
+            DetectedCharset detectedCharset = UniversalDetector.detectCharset(channel);
+            Charset charset = detectedCharset != null && detectedCharset.isSupported()
+                    && (detectedCharset.getCharset() == UTF_8 || detectedCharset.getCharset() == US_ASCII)
+                    ? UTF_8 : NATIVE_CHARSET;
+            channel.position(oldPosition);
+            return new BufferedReader(new InputStreamReader(Channels.newInputStream(channel), charset));
+        } catch (Throwable e) {
+            closeQuietly(channel, e);
+            throw e;
+        }
+    }
 
     /**
      * Read all bytes to a buffer from given input stream. The stream will not be closed.
@@ -72,6 +102,10 @@ public final class IOUtils {
 
     public static String readFullyAsString(InputStream stream) throws IOException {
         return readFully(stream).toString("UTF-8");
+    }
+
+    public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {
+        return readFully(stream).toString(charset.name());
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {

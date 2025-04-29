@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.java;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
+import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.util.KeyValuePairProperties;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -38,25 +38,23 @@ import java.nio.file.Path;
  * @author Glavo
  */
 public final class JavaInfo {
+
     public static int parseVersion(String version) {
+        int startIndex = version.startsWith("1.") ? 2 : 0;
+        int endIndex = startIndex;
+
+        while (endIndex < version.length()) {
+            char ch = version.charAt(endIndex);
+            if (ch >= '0' && ch <= '9')
+                endIndex++;
+            else
+                break;
+        }
+
         try {
-            int idx = version.indexOf('.');
-            if (idx < 0) {
-                idx = version.indexOf('u');
-                return idx > 0 ? Integer.parseInt(version.substring(0, idx)) : Integer.parseInt(version);
-            } else {
-                int major = Integer.parseInt(version.substring(0, idx));
-                if (major != 1) {
-                    return major;
-                } else {
-                    int idx2 = version.indexOf('.', idx + 1);
-                    if (idx2 < 0) {
-                        return -1;
-                    }
-                    return Integer.parseInt(version.substring(idx + 1, idx2));
-                }
-            }
-        } catch (NumberFormatException e) {
+            return endIndex > startIndex ? Integer.parseInt(version.substring(startIndex, endIndex)) : -1;
+        } catch (Throwable e) {
+            // The version number is too long
             return -1;
         }
     }

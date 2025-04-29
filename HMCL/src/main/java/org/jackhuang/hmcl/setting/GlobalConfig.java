@@ -21,7 +21,9 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
@@ -52,6 +54,8 @@ public final class GlobalConfig implements Observable {
     private final IntegerProperty platformPromptVersion = new SimpleIntegerProperty();
 
     private final IntegerProperty logRetention = new SimpleIntegerProperty();
+
+    private final BooleanProperty enableOfflineAccount = new SimpleBooleanProperty(false);
 
     private final ObservableSet<String> userJava = FXCollections.observableSet(new LinkedHashSet<>());
 
@@ -115,6 +119,18 @@ public final class GlobalConfig implements Observable {
         this.logRetention.set(logRetention);
     }
 
+    public boolean isEnableOfflineAccount() {
+        return enableOfflineAccount.get();
+    }
+
+    public BooleanProperty enableOfflineAccountProperty() {
+        return enableOfflineAccount;
+    }
+
+    public void setEnableOfflineAccount(boolean value) {
+        enableOfflineAccount.set(value);
+    }
+
     public ObservableSet<String> getUserJava() {
         return userJava;
     }
@@ -129,7 +145,8 @@ public final class GlobalConfig implements Observable {
                 "platformPromptVersion",
                 "logRetention",
                 "userJava",
-                "disabledJava"
+                "disabledJava",
+                "enableOfflineAccount"
         ));
 
         @Override
@@ -142,6 +159,9 @@ public final class GlobalConfig implements Observable {
             jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
             jsonObject.add("platformPromptVersion", context.serialize(src.getPlatformPromptVersion()));
             jsonObject.add("logRetention", context.serialize(src.getLogRetention()));
+            if (src.enableOfflineAccount.get())
+                jsonObject.addProperty("enableOfflineAccount", true);
+
             if (!src.getUserJava().isEmpty())
                 jsonObject.add("userJava", context.serialize(src.getUserJava()));
 
@@ -165,6 +185,7 @@ public final class GlobalConfig implements Observable {
             config.setAgreementVersion(Optional.ofNullable(obj.get("agreementVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setPlatformPromptVersion(Optional.ofNullable(obj.get("platformPromptVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setLogRetention(Optional.ofNullable(obj.get("logRetention")).map(JsonElement::getAsInt).orElse(20));
+            config.setEnableOfflineAccount(Optional.ofNullable(obj.get("enableOfflineAccount")).map(JsonElement::getAsBoolean).orElse(false));
 
             JsonElement userJava = obj.get("userJava");
             if (userJava != null && userJava.isJsonArray()) {

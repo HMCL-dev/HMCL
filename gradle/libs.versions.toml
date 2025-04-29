@@ -1,0 +1,36 @@
+[versions]
+jetbrains-annotations = "26.0.1"
+kala-compress = "1.27.1-1"
+simple-png-javafx = "0.3.0"
+gson = "2.13.0"
+toml4j = "0.7.2"
+xz = "1.10"
+fx-gson = "5.0.0"
+constant-pool-scanner = "1.2"
+opennbt = "1.5"
+nanohttpd = "2.3.1"
+jsoup = "1.19.1"
+chardet = "2.5.0"
+twelvemonkeys = "3.12.0"
+
+# plugins
+shadow = "8.3.6"
+
+[libraries]
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
+kala-compress-zip = { module = "org.glavo.kala:kala-compress-archivers-zip", version.ref = "kala-compress" }
+kala-compress-tar = { module = "org.glavo.kala:kala-compress-archivers-tar", version.ref = "kala-compress" }
+simple-png-javafx = { module = "org.glavo:simple-png-javafx", version.ref = "simple-png-javafx" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+toml = { module = "com.moandjiezana.toml:toml4j", version.ref = "toml4j" }
+xz = { module = "org.tukaani:xz", version.ref = "xz" }
+fx-gson = { module = "org.hildan.fxgson:fx-gson", version.ref = "fx-gson" }
+constant-pool-scanner = { module = "org.jenkins-ci:constant-pool-scanner", version.ref = "constant-pool-scanner" }
+opennbt = { module = "com.github.steveice10:opennbt", version.ref = "opennbt" }
+nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+chardet = { module = "org.glavo:chardet", version.ref = "chardet" }
+twelvemonkeys-imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

@@ -41,7 +41,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 如果你想提交一個 Pull Request，必須遵守如下要求：
 
 * IDE：IntelliJ IDEA
-* 編譯器：Java 1.8 或 Java 11+
+* 編譯器：Java 11+
 * **不要**修改 `gradle` 相關文件
 
 ### 編譯
@@ -52,7 +52,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 ./gradlew clean build
 ```
 
-請確保你至少安裝了含有 JavaFX 8 的 Java。建議使用 Liberica Full JDK 8 或更高版本。
+請確保你至少安裝了 JDK 11 或更高版本。
 
 ## JVM 選項 (用於除錯)
 

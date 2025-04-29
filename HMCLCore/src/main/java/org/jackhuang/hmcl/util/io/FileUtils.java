@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.chardet.DetectedCharset;
+import org.glavo.chardet.UniversalDetector;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
@@ -126,6 +128,24 @@ public final class FileUtils {
 
     public static String readText(Path file, Charset charset) throws IOException {
         return new String(Files.readAllBytes(file), charset);
+    }
+
+    public static String readTextMaybeNativeEncoding(Path file) throws IOException {
+        byte[] bytes = Files.readAllBytes(file);
+
+        if (OperatingSystem.NATIVE_CHARSET == UTF_8)
+            return new String(bytes, UTF_8);
+
+        UniversalDetector detector = new UniversalDetector();
+        detector.handleData(bytes);
+        detector.dataEnd();
+
+        DetectedCharset detectedCharset = detector.getDetectedCharset();
+        if (detectedCharset != null && detectedCharset.isSupported()
+                && (detectedCharset == DetectedCharset.UTF_8 || detectedCharset == DetectedCharset.US_ASCII))
+            return new String(bytes, UTF_8);
+        else
+            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
     }
 
     /**

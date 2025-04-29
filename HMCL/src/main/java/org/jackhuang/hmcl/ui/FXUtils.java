@@ -776,6 +776,8 @@ public final class FXUtils {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
         }

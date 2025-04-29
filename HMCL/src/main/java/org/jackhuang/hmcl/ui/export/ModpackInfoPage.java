@@ -27,6 +27,8 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -173,7 +175,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
                 if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_SERVER) {
                     Hyperlink hyperlink = new Hyperlink(i18n("modpack.wizard.step.initialization.server"));
-                    hyperlink.setOnAction(e -> FXUtils.openLink("https://docs.hmcl.net/modpack/serverpack.html"));
+                    hyperlink.setOnAction(e -> FXUtils.openLink(Metadata.DOCS_URL + "/modpack/serverpack.html"));
                     borderPane.setTop(hyperlink);
                 } else {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
