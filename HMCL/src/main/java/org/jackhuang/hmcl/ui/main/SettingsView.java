@@ -40,12 +40,14 @@ import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.Arrays;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class SettingsView extends StackPane {
     protected final JFXComboBox<SupportedLocale> cboLanguage;
@@ -195,6 +197,8 @@ public abstract class SettingsView extends StackPane {
                     JFXButton openLogFolderButton = new JFXButton(i18n("settings.launcher.launcher_log.reveal"));
                     openLogFolderButton.setOnAction(e -> openLogFolder());
                     openLogFolderButton.getStyleClass().add("jfx-button-border");
+                    if (LOG.getLogFile() == null)
+                        openLogFolderButton.setDisable(true);
 
                     JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
                     logButton.setOnAction(e -> onExportLogs());
@@ -216,7 +220,7 @@ public abstract class SettingsView extends StackPane {
     }
 
     public void openLogFolder() {
-        FXUtils.openFolder(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("logs").toFile());
+        FXUtils.openFolder(LOG.getLogFile().getParent().toFile());
     }
 
     protected abstract void onUpdate();
