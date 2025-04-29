@@ -121,12 +121,14 @@ public final class ConfigHolder {
     }
 
     private static Path locateConfig() {
-        Path exePath = Paths.get("").toAbsolutePath();
+        Path defaultConfigFile = Metadata.HMCL_CURRENT_DIRECTORY.resolve(CONFIG_FILENAME);
+        if (Files.isRegularFile(defaultConfigFile))
+            return defaultConfigFile;
+
         try {
             Path jarPath = JarUtils.thisJarPath();
             if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
                 jarPath = jarPath.getParent();
-                exePath = jarPath;
 
                 Path config = jarPath.resolve(CONFIG_FILENAME);
                 if (Files.isRegularFile(config))
@@ -149,7 +151,7 @@ public final class ConfigHolder {
             return dotConfig;
 
         // create new
-        return exePath.resolve(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? CONFIG_FILENAME : CONFIG_FILENAME_LINUX);
+        return defaultConfigFile;
     }
 
     private static Config loadConfig() throws IOException {
