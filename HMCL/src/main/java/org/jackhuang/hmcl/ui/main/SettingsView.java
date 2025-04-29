@@ -30,7 +30,6 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -40,7 +39,6 @@ import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
-import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.Arrays;
 
