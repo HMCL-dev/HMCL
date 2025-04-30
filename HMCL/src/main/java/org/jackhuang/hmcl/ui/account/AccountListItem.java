@@ -124,23 +124,22 @@ public class AccountListItem extends RadioButton {
         }
     }
 
-    public void uploadSkin() {
+    public Task<?> uploadSkin() {
         if (account instanceof OfflineAccount) {
-            Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
+            return Task.runAsync(Schedulers.javafx(), () -> {
+                Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
+            });
         }
         if (account instanceof MicrosoftAccount) {
-            refreshAsync()
+            return refreshAsync()
                     .whenComplete(Schedulers.javafx(), ex -> {
                         if (ex != null) {
                             Controllers.showToast(Accounts.localizeErrorMessage(ex));
                         }
                         Controllers.dialog(new MicrosoftAccountSkinPane((MicrosoftAccount) account));
-                    })
-                    .start();
+                    });
         }
-        if (!account.canUploadSkin()) {
-            return;
-        }
+        return null;
     }
 
     public void remove() {

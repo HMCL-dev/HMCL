@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -148,7 +149,11 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnUpload = new JFXButton();
         SpinnerPane spinnerUpload = new SpinnerPane();
         btnUpload.setOnAction(e -> {
-            skinnable.uploadSkin();
+            spinnerUpload.showSpinner();
+            Task<?> uploadTask = skinnable.uploadSkin();
+            uploadTask.whenComplete(Schedulers.javafx(), ex -> {
+                spinnerUpload.hideSpinner();
+            }).start();
         });
         btnUpload.getStyleClass().add("toggle-icon4");
         btnUpload.setGraphic(SVG.CHECKROOM.createIcon(Theme.blackFill(), -1));
