@@ -100,7 +100,7 @@ public final class Launcher extends Application {
                     return;
             }
 
-            if (Metadata.HMCL_DIRECTORY.toString().indexOf('=') >= 0) {
+            if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
                 Main.showWarningAndContinue(i18n("fatal.illegal_char"));
             }
 
@@ -186,8 +186,10 @@ public final class Launcher extends Application {
 
         ArrayList<String> files = new ArrayList<>();
         files.add(ConfigHolder.configLocation().toString());
-        if (Files.exists(Metadata.HMCL_DIRECTORY))
-            files.add(Metadata.HMCL_DIRECTORY.toString());
+        if (Files.exists(Metadata.HMCL_GLOBAL_DIRECTORY))
+            files.add(Metadata.HMCL_GLOBAL_DIRECTORY.toString());
+        if (Files.exists(Metadata.HMCL_CURRENT_DIRECTORY))
+            files.add(Metadata.HMCL_CURRENT_DIRECTORY.toString());
 
         Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
         if (Files.exists(mcDir))
@@ -238,8 +240,9 @@ public final class Launcher extends Application {
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
-            LOG.info("Current Directory: " + System.getProperty("user.dir"));
-            LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
+            LOG.info("Current Directory: " + Metadata.CURRENT_DIRECTORY);
+            LOG.info("HMCL Global Directory: " + Metadata.HMCL_GLOBAL_DIRECTORY);
+            LOG.info("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");

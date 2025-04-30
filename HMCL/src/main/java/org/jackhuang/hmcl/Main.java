@@ -58,7 +58,8 @@ public final class Main {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        LOG.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
+        createHMCLCurrentDirectory();
+        LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
 
@@ -80,6 +81,24 @@ public final class Main {
     public static void exit(int exitCode) {
         LOG.shutdown();
         System.exit(exitCode);
+    }
+
+    private static void createHMCLCurrentDirectory() {
+        if (!Files.isDirectory(Metadata.HMCL_CURRENT_DIRECTORY)) {
+            try {
+                Files.createDirectories(Metadata.HMCL_CURRENT_DIRECTORY);
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    try {
+                        Files.setAttribute(Metadata.HMCL_CURRENT_DIRECTORY, "dos:hidden", true);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to set hidden attribute of " + Metadata.HMCL_CURRENT_DIRECTORY, e);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace(System.err);
+                showErrorAndExit(i18n("fatal.create_hmcl_current_directory_failure", Metadata.HMCL_CURRENT_DIRECTORY));
+            }
+        }
     }
 
     private static void initIcon() {

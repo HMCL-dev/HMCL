@@ -58,7 +58,7 @@ public final class JavaManager {
     private JavaManager() {
     }
 
-    public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_DIRECTORY.resolve("java"));
+    public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("java"));
 
     public static String getMojangJavaPlatform(Platform platform) {
         if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
