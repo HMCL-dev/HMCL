@@ -4,14 +4,16 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.ArrayList;
@@ -41,9 +43,20 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
 
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
         acceptButton.getStyleClass().add("dialog-accept");
+
         acceptButton.setOnAction(e -> {
-            updateCapeSetting();
-            fireEvent(new DialogCloseEvent());
+            Task<?> updateCapeTask = updateCapeSetting();
+            if (updateCapeTask != null) {
+                updateCapeTask.whenComplete(Schedulers.javafx(), (exception -> {
+                    if (exception != null) {
+                        Logger.LOG.error("Failed to change cape", exception);
+                        Controllers.dialog(Accounts.localizeErrorMessage(exception), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                    }
+                    fireEvent(new DialogCloseEvent());
+                })).start();
+            } else {
+                fireEvent(new DialogCloseEvent());
+            }
         });
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
@@ -55,25 +68,21 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         setActions(acceptButton, cancelButton);
     }
 
-    private void updateCapeSetting() {
+    private Task<?> updateCapeSetting() {
         String cape = capeItem.getSelectedData();
 
         if ("empty".equals(cape)) {
-            if (currentCape == null) return;
+            if (currentCape == null) return null;
             cape = null;
         } else if (currentCape != null && cape.equals(currentCape.getId())) {
-            return;
+            return null;
         }
 
-        try {
-            if (cape == null) {
-                account.hideCape();
-            } else {
-                account.changeCape(cape);
-            }
-        } catch (AuthenticationException e) {
-            Logger.LOG.error("Failed to change cape", e);
-            Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+        if (cape == null) {
+            return Task.runAsync(account::hideCape);
+        } else {
+            String finalCape = cape;
+            return Task.runAsync(() -> account.changeCape(finalCape));
         }
     }
 
