@@ -49,7 +49,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public Path getPlatformRoot(Platform platform) {
-        return root.resolve(platform.getNormalizedName());
+        return root.resolve(platform.toString());
     }
 
     @Override
@@ -189,7 +189,7 @@ public final class HMCLJavaRepository implements JavaRepository {
         Path javaDir = getJavaDir(platform, name);
         return new JavaInstallTask(javaDir, update, archiveFile).thenApplyAsync(result -> {
             if (!result.getInfo().getPlatform().equals(platform))
-                throw new IOException("Platform is mismatch: expected " + platform.getNormalizedName() + " but got " + result.getInfo().getPlatform());
+                throw new IOException("Platform is mismatch: expected " + platform.toString() + " but got " + result.getInfo().getPlatform().toString());
 
             Path executable = javaDir.resolve("bin").resolve(platform.getOperatingSystem().getJavaExecutable()).toRealPath();
             FileUtils.writeText(getManifestFile(platform, name), JsonUtils.GSON.toJson(result));

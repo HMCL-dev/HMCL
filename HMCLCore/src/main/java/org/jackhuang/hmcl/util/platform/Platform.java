@@ -91,10 +91,6 @@ public final class Platform {
         return os == platform.os && arch == platform.arch;
     }
 
-    public String getNormalizedName() {
-        return os.getNormalizedName() + "-" + arch.getCheckedName();
-    }
-
     @Override
     public String toString() {
         return os.getCheckedName() + "-" + arch.getCheckedName();

@@ -154,7 +154,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
                 JavaInfo info = JavaInfo.fromArchive(tree);
 
                 if (!JavaManager.isCompatible(info.getPlatform()))
-                    throw new UnsupportedPlatformException(info.getPlatform().getNormalizedName());
+                    throw new UnsupportedPlatformException(info.getPlatform().toString());
 
                 return Pair.pair(tree.getRoot().getSubDirs().keySet().iterator().next(), info);
             }

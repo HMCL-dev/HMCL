@@ -180,7 +180,7 @@ public final class JavaManager {
         return Task.supplyAsync("Get Java", () -> JavaManager.getJava(binary))
                 .thenApplyAsync(Schedulers.javafx(), javaRuntime -> {
                     if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {
-                        throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform().getNormalizedName());
+                        throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform());
                     }
 
                     String pathString = javaRuntime.getBinary().toString();

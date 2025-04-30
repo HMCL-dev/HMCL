@@ -53,7 +53,7 @@ public enum OperatingSystem {
     /**
      * Mac OS X.
      */
-    MACOS("osx", "macos"),
+    MACOS("macos"),
     /**
      * FreeBSD.
      */
@@ -64,24 +64,13 @@ public enum OperatingSystem {
     UNKNOWN("universal");
 
     private final String checkedName;
-    private final String normalizedName;
 
     OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
-        this.normalizedName = checkedName;
-    }
-
-    OperatingSystem(String checkedName, String normalizedName) {
-        this.checkedName = checkedName;
-        this.normalizedName = normalizedName;
     }
 
     public String getCheckedName() {
         return checkedName;
-    }
-
-    public String getNormalizedName() {
-        return normalizedName;
     }
 
     public boolean isLinuxOrBSD() {

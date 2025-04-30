@@ -144,7 +144,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public File getNativeDirectory(String id, Platform platform) {
-        return new File(getVersionRoot(id), "natives-" + platform.getNormalizedName());
+        return new File(getVersionRoot(id), "natives-" + platform);
     }
 
     @Override
