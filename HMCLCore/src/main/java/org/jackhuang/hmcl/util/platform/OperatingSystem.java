@@ -53,24 +53,35 @@ public enum OperatingSystem {
     /**
      * macOS.
      */
-    MACOS("macos"),
+    MACOS("macos", "osx"),
     /**
      * FreeBSD.
      */
-    FREEBSD("freebsd"),
+    FREEBSD("freebsd", "linux"),
     /**
      * Unknown operating system.
      */
     UNKNOWN("universal");
 
     private final String checkedName;
+    private final String officialName;
 
     OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
+        this.officialName = checkedName;
+    }
+
+    OperatingSystem(String checkedName, String officialName) {
+        this.checkedName = checkedName;
+        this.officialName = officialName;
     }
 
     public String getCheckedName() {
         return checkedName;
+    }
+
+    public String getOfficialName() {
+        return officialName;
     }
 
     public boolean isLinuxOrBSD() {
