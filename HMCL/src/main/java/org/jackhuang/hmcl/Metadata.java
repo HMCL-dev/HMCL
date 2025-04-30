@@ -56,6 +56,7 @@ public final class Metadata {
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
     public static final Path HMCL_GLOBAL_DIRECTORY;
     public static final Path HMCL_CURRENT_DIRECTORY;
+    public static final Path DEPENDENCIES_DIRECTORY;
 
     static {
         String hmclHome = System.getProperty("hmcl.home");
@@ -78,6 +79,7 @@ public final class Metadata {
         HMCL_CURRENT_DIRECTORY = hmclCurrentDir != null
                 ? Paths.get(hmclCurrentDir).toAbsolutePath().normalize()
                 : CURRENT_DIRECTORY.resolve(".hmcl");
+        DEPENDENCIES_DIRECTORY = HMCL_CURRENT_DIRECTORY.resolve("dependencies");
     }
 
     public static boolean isStable() {
