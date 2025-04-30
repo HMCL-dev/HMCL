@@ -89,11 +89,13 @@ public final class OSRestriction {
             if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString())
                 return OperatingSystem.parseOSName(json.getAsString());
             else
-                return OperatingSystem.UNKNOWN;
+                return null;
         }
 
         @Override
         public JsonElement serialize(OperatingSystem src, Type typeOfSrc, JsonSerializationContext context) {
+            if (src == null || src == OperatingSystem.UNKNOWN)
+                return JsonNull.INSTANCE;
             return new JsonPrimitive(src == OperatingSystem.MACOS ? "osx" : src.getCheckedName());
         }
     }
