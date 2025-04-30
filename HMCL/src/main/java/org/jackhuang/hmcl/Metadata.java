@@ -64,9 +64,9 @@ public final class Metadata {
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
-                    HMCL_GLOBAL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath();
+                    HMCL_GLOBAL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath().normalize();
                 } else {
-                    HMCL_GLOBAL_DIRECTORY = Paths.get(System.getProperty("user.home", "."), ".local", "share", "hmcl").toAbsolutePath();
+                    HMCL_GLOBAL_DIRECTORY = Paths.get(System.getProperty("user.home"), ".local", "share", "hmcl").toAbsolutePath().normalize();
                 }
             } else {
                 HMCL_GLOBAL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
