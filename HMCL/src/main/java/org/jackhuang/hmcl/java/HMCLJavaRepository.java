@@ -98,14 +98,8 @@ public final class HMCLJavaRepository implements JavaRepository {
         return getJavaExecutable(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
     }
 
-    @Override
-    public Collection<JavaRuntime> getAllJava(Platform platform) {
-        Path root = getPlatformRoot(platform);
-        if (!Files.isDirectory(root))
-            return Collections.emptyList();
-
-        ArrayList<JavaRuntime> list = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
+    private static void getAllJava(List<JavaRuntime> list, Platform platform, Path platformRoot, boolean isManaged) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(platformRoot)) {
             for (Path file : stream) {
                 try {
                     String name = file.getFileName().toString();
@@ -127,7 +121,7 @@ public final class HMCLJavaRepository implements JavaRepository {
                                 manifest = JsonUtils.fromJsonFully(input, JavaManifest.class);
                             }
 
-                            list.add(JavaRuntime.of(executable, manifest.getInfo(), true));
+                            list.add(JavaRuntime.of(executable, manifest.getInfo(), isManaged));
                         }
                     }
                 } catch (Throwable e) {
@@ -137,6 +131,23 @@ public final class HMCLJavaRepository implements JavaRepository {
 
         } catch (IOException ignored) {
         }
+    }
+
+    @Override
+    public Collection<JavaRuntime> getAllJava(Platform platform) {
+        Path platformRoot = getPlatformRoot(platform);
+        if (!Files.isDirectory(platformRoot))
+            return Collections.emptyList();
+
+        ArrayList<JavaRuntime> list = new ArrayList<>();
+
+        getAllJava(list, platform, platformRoot, true);
+        if (platform.getOperatingSystem() == OperatingSystem.MACOS) {
+            platformRoot = root.resolve("osx-" + platform.getArchitecture().getCheckedName());
+            if (Files.isDirectory(platformRoot))
+                getAllJava(list, platform, platformRoot, false);
+        }
+
         return list;
     }
 
