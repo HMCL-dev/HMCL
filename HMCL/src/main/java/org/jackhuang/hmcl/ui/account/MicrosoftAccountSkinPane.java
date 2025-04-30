@@ -63,13 +63,14 @@ public class MicrosoftAccountSkinPane extends StackPane {
     private final SpinnerPane canvasSpinnerPane = new SpinnerPane();
     private final SpinnerPane updateSkinButtonSpinnerPane = new SpinnerPane();
     private final MicrosoftService.MinecraftProfileResponse profile;
+    private final MicrosoftAccountChangeCapeDialog accountChangeCapeDialog;
     private TextureModel model;
     private Image localSkinImg;
 
     public MicrosoftAccountSkinPane(MicrosoftAccount account) {
         this.account = account;
         this.profile = account.getMinecraftProfileResponse().orElse(null);
-
+        this.accountChangeCapeDialog = new MicrosoftAccountChangeCapeDialog(account, profile);
         getStyleClass().add("skin-pane");
 
         JFXDialogLayout layout = new JFXDialogLayout();
@@ -117,7 +118,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
         JFXButton changeCapeButton = new JFXButton(i18n("account.cape.change"));
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
         changeCapeButton.getStyleClass().add("jfx-button-raised");
-        changeCapeButton.setOnAction(event -> Controllers.dialog(new MicrosoftAccountChangeCapeDialog(account, account.getMinecraftProfileResponse().get())));
+        changeCapeButton.setOnAction(event -> Controllers.dialog(accountChangeCapeDialog));
         gridPane.addRow(0, updateSkinButtonSpinnerPane);
         gridPane.addRow(0, changeCapeButton);
 
