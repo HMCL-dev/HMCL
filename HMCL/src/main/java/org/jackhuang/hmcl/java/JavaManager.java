@@ -75,7 +75,7 @@ public final class JavaManager {
             } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                 return "linux";
             }
-        } else if (platform.getOperatingSystem() == OperatingSystem.OSX) {
+        } else if (platform.getOperatingSystem() == OperatingSystem.MACOS) {
             if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                 return "mac-os";
             } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
@@ -113,7 +113,7 @@ public final class JavaManager {
                 if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
                     return architecture == Architecture.X86;
                 break;
-            case OSX:
+            case MACOS:
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
                     return architecture == Architecture.X86_64;
                 break;
@@ -180,7 +180,7 @@ public final class JavaManager {
         return Task.supplyAsync("Get Java", () -> JavaManager.getJava(binary))
                 .thenApplyAsync(Schedulers.javafx(), javaRuntime -> {
                     if (!JavaManager.isCompatible(javaRuntime.getPlatform())) {
-                        throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform());
+                        throw new UnsupportedPlatformException("Incompatible platform: " + javaRuntime.getPlatform().getNormalizedName());
                     }
 
                     String pathString = javaRuntime.getBinary().toString();
@@ -279,7 +279,7 @@ public final class JavaManager {
         LibraryAnalyzer analyzer = version != null ? LibraryAnalyzer.analyze(version, gameVersion != null ? gameVersion.toString() : null) : null;
 
         boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
-                && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 && (gameVersion == null || gameVersion.compareTo("1.6") < 0);
 
         GameJavaVersion suggestedJavaVersion =
@@ -349,9 +349,9 @@ public final class JavaManager {
                     searchAllJavaInRepository(javaRuntimes, Platform.WINDOWS_X86);
                 }
                 break;
-            case OSX:
+            case MACOS:
                 if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
-                    searchAllJavaInRepository(javaRuntimes, Platform.OSX_X86_64);
+                    searchAllJavaInRepository(javaRuntimes, Platform.MACOS_X86_64);
                 break;
         }
 
@@ -375,7 +375,7 @@ public final class JavaManager {
                 searchAllJavaInDirectory(javaRuntimes, Paths.get("/usr/lib64/jvm")); // General locations
                 searchAllJavaInDirectory(javaRuntimes, Paths.get(System.getProperty("user.home"), "/.sdkman/candidates/java")); // SDKMAN!
                 break;
-            case OSX:
+            case MACOS:
                 searchJavaInMacJavaVirtualMachines(javaRuntimes, Paths.get("/Library/Java/JavaVirtualMachines"));
                 searchJavaInMacJavaVirtualMachines(javaRuntimes, Paths.get(System.getProperty("user.home"), "/Library/Java/JavaVirtualMachines"));
                 tryAddJavaExecutable(javaRuntimes, Paths.get("/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin/java"));
@@ -405,7 +405,7 @@ public final class JavaManager {
                     .ifPresent(it -> searchAllOfficialJava(javaRuntimes, it, false));
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.X86_64) {
             searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home"), ".minecraft/runtime"), false);
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             searchAllOfficialJava(javaRuntimes, Paths.get(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"), false);
         }
         searchAllOfficialJava(javaRuntimes, CacheRepository.getInstance().getCacheDirectory().resolve("java"), true);
@@ -548,7 +548,7 @@ public final class JavaManager {
             }
         }
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             Path macPath = dir.resolve("jre.bundle/Contents/Home");
             if (Files.exists(macPath)) {
                 tryAddJavaHome(javaRuntimes, macPath);
@@ -587,8 +587,8 @@ public final class JavaManager {
                 }
                 searchAllOfficialJava(javaRuntimes, directory, getMojangJavaPlatform(Platform.WINDOWS_X86), verify);
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX && Architecture.CURRENT_ARCH == Architecture.ARM64) {
-            searchAllOfficialJava(javaRuntimes, directory, getMojangJavaPlatform(Platform.OSX_X86_64), verify);
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.CURRENT_ARCH == Architecture.ARM64) {
+            searchAllOfficialJava(javaRuntimes, directory, getMojangJavaPlatform(Platform.MACOS_X86_64), verify);
         }
     }
 

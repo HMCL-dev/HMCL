@@ -38,7 +38,7 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
     public static final String API_ROOT = System.getProperty("hmcl.discoapi.override", "https://api.foojay.io/disco/v3.0");
 
     private static String getOperatingSystemName(OperatingSystem os) {
-        return os == OperatingSystem.OSX ? "macos" : os.getCheckedName();
+        return os == OperatingSystem.MACOS ? "macos" : os.getCheckedName();
     }
 
     private static String getArchitectureName(Architecture arch) {

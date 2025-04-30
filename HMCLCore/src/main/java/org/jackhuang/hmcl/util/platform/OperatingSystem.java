@@ -53,7 +53,7 @@ public enum OperatingSystem {
     /**
      * Mac OS X.
      */
-    OSX("osx"),
+    MACOS("osx", "macos"),
     /**
      * FreeBSD.
      */
@@ -64,13 +64,24 @@ public enum OperatingSystem {
     UNKNOWN("universal");
 
     private final String checkedName;
+    private final String normalizedName;
 
     OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
+        this.normalizedName = checkedName;
+    }
+
+    OperatingSystem(String checkedName, String normalizedName) {
+        this.checkedName = checkedName;
+        this.normalizedName = normalizedName;
     }
 
     public String getCheckedName() {
         return checkedName;
+    }
+
+    public String getNormalizedName() {
+        return normalizedName;
     }
 
     public boolean isLinuxOrBSD() {
@@ -260,7 +271,7 @@ public enum OperatingSystem {
         name = name.trim().toLowerCase(Locale.ROOT);
 
         if (name.contains("mac") || name.contains("darwin") || name.contains("osx"))
-            return OSX;
+            return MACOS;
         else if (name.contains("win"))
             return WINDOWS;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
@@ -356,7 +367,7 @@ public enum OperatingSystem {
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");
                 return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
-            case OSX:
+            case MACOS:
                 return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
             default:
                 return Paths.get(home, folder).toAbsolutePath();

@@ -77,7 +77,7 @@
       "sha1": "0bf7380823bb8c420dd41837d2c71087b8953ec1"
     }
   ],
-  "osx-x86_64": [
+  "macos-x86_64": [
     {
       "module": "javafx.base",
       "groupId": "org.openjfx",
@@ -103,7 +103,7 @@
       "sha1": "b7786b1b63e741c0e234829825fae5fef9d96c31"
     }
   ],
-  "osx-arm64": [
+  "macos-arm64": [
     {
       "module": "javafx.base",
       "groupId": "org.openjfx",

@@ -49,7 +49,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public Path getPlatformRoot(Platform platform) {
-        return root.resolve(platform.toString());
+        return root.resolve(platform.getNormalizedName());
     }
 
     @Override
@@ -83,7 +83,7 @@ public final class HMCLJavaRepository implements JavaRepository {
         try {
             return JavaManager.getExecutable(javaDir).toRealPath();
         } catch (IOException ignored) {
-            if (platform.getOperatingSystem() == OperatingSystem.OSX) {
+            if (platform.getOperatingSystem() == OperatingSystem.MACOS) {
                 try {
                     return JavaManager.getMacExecutable(javaDir).toRealPath();
                 } catch (IOException ignored1) {
@@ -115,7 +115,7 @@ public final class HMCLJavaRepository implements JavaRepository {
                         try {
                             executable = JavaManager.getExecutable(javaDir).toRealPath();
                         } catch (IOException e) {
-                            if (platform.getOperatingSystem() == OperatingSystem.OSX)
+                            if (platform.getOperatingSystem() == OperatingSystem.MACOS)
                                 executable = JavaManager.getMacExecutable(javaDir).toRealPath();
                             else
                                 throw e;
@@ -149,7 +149,7 @@ public final class HMCLJavaRepository implements JavaRepository {
             try {
                 executable = JavaManager.getExecutable(javaDir).toRealPath();
             } catch (IOException e) {
-                if (platform.getOperatingSystem() == OperatingSystem.OSX)
+                if (platform.getOperatingSystem() == OperatingSystem.MACOS)
                     executable = JavaManager.getMacExecutable(javaDir).toRealPath();
                 else
                     throw e;
@@ -189,7 +189,7 @@ public final class HMCLJavaRepository implements JavaRepository {
         Path javaDir = getJavaDir(platform, name);
         return new JavaInstallTask(javaDir, update, archiveFile).thenApplyAsync(result -> {
             if (!result.getInfo().getPlatform().equals(platform))
-                throw new IOException("Platform is mismatch: expected " + platform + " but got " + result.getInfo().getPlatform());
+                throw new IOException("Platform is mismatch: expected " + platform.getNormalizedName() + " but got " + result.getInfo().getPlatform());
 
             Path executable = javaDir.resolve("bin").resolve(platform.getOperatingSystem().getJavaExecutable()).toRealPath();
             FileUtils.writeText(getManifestFile(platform, name), JsonUtils.GSON.toJson(result));
