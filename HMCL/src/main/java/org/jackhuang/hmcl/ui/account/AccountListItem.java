@@ -35,10 +35,10 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.Set;
@@ -129,7 +129,14 @@ public class AccountListItem extends RadioButton {
             Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
         }
         if (account instanceof MicrosoftAccount) {
-            Controllers.dialog(new MicrosoftAccountSkinPane((MicrosoftAccount) account));
+            refreshAsync()
+                    .whenComplete(Schedulers.javafx(), ex -> {
+                        if (ex != null) {
+                            Controllers.showToast(Accounts.localizeErrorMessage(ex));
+                        }
+                        Controllers.dialog(new MicrosoftAccountSkinPane((MicrosoftAccount) account));
+                    })
+                    .start();
         }
         if (!account.canUploadSkin()) {
             return;
