@@ -17,13 +17,10 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.*;
-import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.lang.reflect.Type;
 import java.util.regex.Pattern;
 
 /**
@@ -32,8 +29,7 @@ import java.util.regex.Pattern;
  */
 public final class OSRestriction {
 
-    @JsonAdapter(OSNameSerializer.class)
-    private final OperatingSystem name;
+    private final String name;
     private final String version;
     private final String arch;
 
@@ -41,21 +37,27 @@ public final class OSRestriction {
         this(OperatingSystem.UNKNOWN);
     }
 
-    public OSRestriction(OperatingSystem name) {
-        this(name, null);
+    public OSRestriction(OperatingSystem os) {
+        this(os, null);
     }
 
-    public OSRestriction(OperatingSystem name, String version) {
-        this(name, version, null);
+    public OSRestriction(OperatingSystem os, String version) {
+        this(os, version, null);
     }
 
-    public OSRestriction(OperatingSystem name, String version, String arch) {
+    public OSRestriction(OperatingSystem os, String version, String arch) {
+        this.name = os.getCheckedName();
+        this.version = version;
+        this.arch = arch;
+    }
+
+    public OSRestriction(String name, String version, String arch) {
         this.name = name;
         this.version = version;
         this.arch = arch;
     }
 
-    public OperatingSystem getName() {
+    public String getName() {
         return name;
     }
 
@@ -68,10 +70,10 @@ public final class OSRestriction {
     }
 
     public boolean allow() {
-        if (name != null
-                && name != OperatingSystem.UNKNOWN
-                && name != OperatingSystem.CURRENT_OS
-                && !(name == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
+        OperatingSystem os = OperatingSystem.parseOSName(name);
+        if (os != OperatingSystem.UNKNOWN
+                && os != OperatingSystem.CURRENT_OS
+                && !(os == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
             return false;
 
         if (version != null)
@@ -84,21 +86,4 @@ public final class OSRestriction {
         return true;
     }
 
-    private static final class OSNameSerializer implements JsonSerializer<OperatingSystem>, JsonDeserializer<OperatingSystem> {
-
-        @Override
-        public OperatingSystem deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString())
-                return OperatingSystem.parseOSName(json.getAsString());
-            else
-                return OperatingSystem.UNKNOWN;
-        }
-
-        @Override
-        public JsonElement serialize(OperatingSystem src, Type typeOfSrc, JsonSerializationContext context) {
-            if (src == null || src == OperatingSystem.UNKNOWN)
-                return JsonNull.INSTANCE;
-            return new JsonPrimitive(src == OperatingSystem.MACOS ? "osx" : src.getCheckedName());
-        }
-    }
 }
