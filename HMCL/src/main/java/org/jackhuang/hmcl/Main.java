@@ -58,7 +58,7 @@ public final class Main {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        createHMCLDirectory();
+        createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
@@ -83,7 +83,7 @@ public final class Main {
         System.exit(exitCode);
     }
 
-    private static void createHMCLDirectory() {
+    private static void createHMCLDirectories() {
         if (!Files.isDirectory(Metadata.HMCL_CURRENT_DIRECTORY)) {
             try {
                 Files.createDirectories(Metadata.HMCL_CURRENT_DIRECTORY);
