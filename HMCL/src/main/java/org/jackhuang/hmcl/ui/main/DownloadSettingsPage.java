@@ -265,7 +265,7 @@ public class DownloadSettingsPage extends StackPane {
                     {
                         JFXTextField txtProxyPort = new JFXTextField();
                         GridPane.setFillWidth(txtProxyPort, false);
-                        txtProxyPort.setMaxWidth(20);
+                        txtProxyPort.setMaxWidth(200);
                         GridPane.setRowIndex(txtProxyPort, 2);
                         GridPane.setColumnIndex(txtProxyPort, 1);
                         FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
