@@ -143,35 +143,33 @@ public final class Logger {
                 log(Level.WARNING, caller, "Failed to list log files in " + dir, e);
             }
 
-            if (list.size() <= logRetention) {
-                return;
-            }
+            if (list.size() > logRetention) {
+                list.sort((a, b) -> {
+                    int[] v1 = a.getValue();
+                    int[] v2 = b.getValue();
 
-            list.sort((a, b) -> {
-                int[] v1 = a.getValue();
-                int[] v2 = b.getValue();
+                    assert v1.length == v2.length;
 
-                assert v1.length == v2.length;
-
-                for (int i = 0; i < v1.length; i++) {
-                    int c = Integer.compare(v1[i], v2[i]);
-                    if (c != 0)
-                        return c;
-                }
-
-                return 0;
-            });
-
-            for (int i = 0, end = list.size() - logRetention; i < end; i++) {
-                Path file = list.get(i).getKey();
-
-                try {
-                    if (!Files.isSameFile(file, logFile)) {
-                        log(Level.INFO, caller, "Delete old log file " + file, null);
-                        Files.delete(file);
+                    for (int i = 0; i < v1.length; i++) {
+                        int c = Integer.compare(v1[i], v2[i]);
+                        if (c != 0)
+                            return c;
                     }
-                } catch (IOException e) {
-                    log(Level.WARNING, caller, "Failed to delete log file " + file, e);
+
+                    return 0;
+                });
+
+                for (int i = 0, end = list.size() - logRetention; i < end; i++) {
+                    Path file = list.get(i).getKey();
+
+                    try {
+                        if (!Files.isSameFile(file, logFile)) {
+                            log(Level.INFO, caller, "Delete old log file " + file, null);
+                            Files.delete(file);
+                        }
+                    } catch (IOException e) {
+                        log(Level.WARNING, caller, "Failed to delete log file " + file, e);
+                    }
                 }
             }
         }
