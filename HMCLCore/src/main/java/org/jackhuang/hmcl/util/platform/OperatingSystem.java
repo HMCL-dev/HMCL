@@ -51,7 +51,7 @@ public enum OperatingSystem {
      */
     LINUX("linux"),
     /**
-     * Mac OS X.
+     * macOS.
      */
     MACOS("macos"),
     /**
