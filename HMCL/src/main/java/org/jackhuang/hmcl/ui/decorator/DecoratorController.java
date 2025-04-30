@@ -236,7 +236,7 @@ public class DecoratorController {
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
-        Image image = randomImageIn(Metadata.HMCL_CURRENT_DIRECTORY.resolve("bg"));
+        Image image = randomImageIn(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background"));
         if (image != null)
             return image;
 
