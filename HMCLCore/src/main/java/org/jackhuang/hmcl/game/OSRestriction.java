@@ -46,7 +46,7 @@ public final class OSRestriction {
     }
 
     public OSRestriction(OperatingSystem os, String version, String arch) {
-        this.name = os.getCheckedName();
+        this.name = os == OperatingSystem.MACOS ? "osx" : os.getCheckedName();
         this.version = version;
         this.arch = arch;
     }
