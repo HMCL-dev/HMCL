@@ -234,9 +234,9 @@ public class DownloadSettingsPage extends StackPane {
 
                 {
                     GridPane gridPane = new GridPane();
+                    gridPane.setPadding(new Insets(0, 0, 0, 30));
                     gridPane.setHgap(20);
                     gridPane.setVgap(10);
-                    gridPane.setStyle("-fx-padding: 0 0 0 15;");
                     gridPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
                     gridPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
 
@@ -264,6 +264,8 @@ public class DownloadSettingsPage extends StackPane {
 
                     {
                         JFXTextField txtProxyPort = new JFXTextField();
+                        GridPane.setFillWidth(txtProxyPort, false);
+                        txtProxyPort.setMaxWidth(20);
                         GridPane.setRowIndex(txtProxyPort, 2);
                         GridPane.setColumnIndex(txtProxyPort, 1);
                         FXUtils.setValidateWhileTextChanged(txtProxyPort, true);
@@ -277,25 +279,25 @@ public class DownloadSettingsPage extends StackPane {
                     proxyPane.getChildren().add(gridPane);
                 }
 
-                GridPane authPane = new GridPane();
+                VBox chkProxyAuthenticationPane = new VBox();
                 {
-                    VBox vBox = new VBox();
-                    vBox.setStyle("-fx-padding: 20 0 20 5;");
+                    chkProxyAuthenticationPane.setPadding(new Insets(20, 0, 20, 5));
 
                     JFXCheckBox chkProxyAuthentication = new JFXCheckBox(i18n("settings.launcher.proxy.authentication"));
-                    vBox.getChildren().setAll(chkProxyAuthentication);
-                    authPane.disableProperty().bind(chkProxyAuthentication.selectedProperty().not());
+                    chkProxyAuthenticationPane.getChildren().add(chkProxyAuthentication);
                     chkProxyAuthentication.selectedProperty().bindBidirectional(config().hasProxyAuthProperty());
 
-                    proxyPane.getChildren().add(vBox);
+                    proxyPane.getChildren().add(chkProxyAuthenticationPane);
                 }
 
+                GridPane authPane = new GridPane();
                 {
+                    authPane.setPadding(new Insets(0, 0, 0, 30));
                     authPane.setHgap(20);
                     authPane.setVgap(10);
-                    authPane.setStyle("-fx-padding: 0 0 0 15;");
                     authPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
                     authPane.getRowConstraints().setAll(new RowConstraints(), new RowConstraints());
+                    authPane.disableProperty().bind(config().hasProxyAuthProperty().not());
 
                     {
                         Label username = new Label(i18n("settings.launcher.proxy.username"));
