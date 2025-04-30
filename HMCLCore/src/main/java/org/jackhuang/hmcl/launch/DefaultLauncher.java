@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -111,24 +110,6 @@ public class DefaultLauncher extends Launcher {
 
         res.addAllWithoutParsing(options.getOverrideJavaArguments());
 
-        Proxy proxy = options.getProxy();
-        if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
-            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
-            if (address != null) {
-                String host = address.getHostString();
-                int port = address.getPort();
-                if (proxy.type() == Proxy.Type.HTTP) {
-                    res.addDefault("-Dhttp.proxyHost=", host);
-                    res.addDefault("-Dhttp.proxyPort=", String.valueOf(port));
-                    res.addDefault("-Dhttps.proxyHost=", host);
-                    res.addDefault("-Dhttps.proxyPort=", String.valueOf(port));
-                } else if (proxy.type() == Proxy.Type.SOCKS) {
-                    res.addDefault("-DsocksProxyHost=", host);
-                    res.addDefault("-DsocksProxyPort=", String.valueOf(port));
-                }
-            }
-        }
-
         if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
             res.addDefault("-Xmx", options.getMaxMemory() + "m");
 
@@ -188,6 +169,26 @@ public class DefaultLauncher extends Launcher {
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.addDefault("-Duser.home=", options.getGameDir().getParent());
+
+            Proxy.Type proxyType = options.getProxyType();
+            if (proxyType == null) {
+                res.addDefault("-Djava.net.useSystemProxies", "true");
+            } else {
+                String proxyHost = options.getProxyHost();
+                int proxyPort = options.getProxyPort();
+
+                if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
+                    if (proxyType == Proxy.Type.HTTP) {
+                        res.addDefault("-Dhttp.proxyHost=", proxyHost);
+                        res.addDefault("-Dhttp.proxyPort=", String.valueOf(proxyPort));
+                        res.addDefault("-Dhttps.proxyHost=", proxyHost);
+                        res.addDefault("-Dhttps.proxyPort=", String.valueOf(proxyPort));
+                    } else if (proxyType == Proxy.Type.SOCKS) {
+                        res.addDefault("-DsocksProxyHost=", proxyHost);
+                        res.addDefault("-DsocksProxyPort=", String.valueOf(proxyPort));
+                    }
+                }
+            }
 
             final int javaVersion = options.getJava().getParsedVersion();
             final boolean is64bit = options.getJava().getBits() == Bits.BIT_64;
@@ -309,13 +310,15 @@ public class DefaultLauncher extends Launcher {
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (options.getProxy() != null && options.getProxy().type() == Proxy.Type.SOCKS) {
-            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
-            if (address != null) {
+        if (options.getProxyType() == Proxy.Type.SOCKS) {
+            String proxyHost = options.getProxyHost();
+            int proxyPort = options.getProxyPort();
+
+            if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
                 res.add("--proxyHost");
-                res.add(address.getHostString());
+                res.add(proxyHost);
                 res.add("--proxyPort");
-                res.add(String.valueOf(address.getPort()));
+                res.add(String.valueOf(proxyPort));
                 if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
                     res.add("--proxyUser");
                     res.add(options.getProxyUser());

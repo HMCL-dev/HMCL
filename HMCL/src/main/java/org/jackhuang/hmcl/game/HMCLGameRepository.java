@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.ProxyManager;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -203,6 +202,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     /**
      * Create new version setting if version id has no version setting.
+     *
      * @param id the version id.
      * @return new version setting, null if given version does not exist.
      */
@@ -225,7 +225,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
      * Get the version setting for version id.
      *
      * @param id version id
-     *
      * @return corresponding version setting, null if the version has no its own version setting.
      */
     @Nullable
@@ -349,6 +348,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     /**
      * Make version use self version settings instead of the global one.
+     *
      * @param id the version id.
      * @return specialized version setting, null if given version does not exist.
      */
@@ -415,14 +415,17 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
-// TODO
-//        if (config().hasProxy()) {
-//            builder.setProxy(ProxyManager.getProxy());
-//            if (config().hasProxyAuth()) {
-//                builder.setProxyUser(config().getProxyUser());
-//                builder.setProxyPass(config().getProxyPass());
-//            }
-//        }
+
+        if (config().hasProxy()) {
+            builder.setProxyType(config().getProxyType());
+            builder.setProxyHost(config().getProxyHost());
+            builder.setProxyPort(config().getProxyPort());
+
+            if (config().hasProxyAuth()) {
+                builder.setProxyUser(config().getProxyUser());
+                builder.setProxyPass(config().getProxyPass());
+            }
+        }
 
         File json = getModpackConfiguration(version);
         if (json.exists()) {
