@@ -13,7 +13,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.util.ArrayList;
