@@ -327,7 +327,7 @@ public class MicrosoftService {
         }
     }
 
-    public void hideCape(String accessToken) throws AuthenticationException, UnsupportedOperationException{
+    public void hideCape(String accessToken) throws AuthenticationException, UnsupportedOperationException {
         try {
             HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com//minecraft/profile/capes/active"));
             con.setRequestMethod("DELETE");
