@@ -91,7 +91,7 @@ public final class OSRestriction {
             if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString())
                 return OperatingSystem.parseOSName(json.getAsString());
             else
-                return null;
+                return OperatingSystem.UNKNOWN;
         }
 
         @Override
