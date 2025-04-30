@@ -124,10 +124,6 @@ public class AccountListItem extends RadioButton {
         }
     }
 
-    /**
-     * @return the skin upload task, null if no file is selected
-     */
-    @Nullable
     public void uploadSkin() {
         if (account instanceof OfflineAccount) {
             Controllers.dialog(new OfflineAccountSkinPane((OfflineAccount) account));
