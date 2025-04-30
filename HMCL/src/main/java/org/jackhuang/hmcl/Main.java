@@ -95,6 +95,7 @@ public final class Main {
                     }
                 }
             } catch (IOException e) {
+                e.printStackTrace(System.err);
                 showErrorAndExit(i18n("fatal.create_hmcl_current_directory_failure", Metadata.HMCL_CURRENT_DIRECTORY));
             }
         }
