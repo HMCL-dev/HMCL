@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.lang.reflect.Type;
 import java.util.regex.Pattern;
 
 /**
@@ -29,6 +32,7 @@ import java.util.regex.Pattern;
  */
 public final class OSRestriction {
 
+    @JsonAdapter(OSNameSerializer.class)
     private final OperatingSystem name;
     private final String version;
     private final String arch;
@@ -78,4 +82,19 @@ public final class OSRestriction {
         return true;
     }
 
+    private static final class OSNameSerializer implements JsonSerializer<OperatingSystem>, JsonDeserializer<OperatingSystem> {
+
+        @Override
+        public OperatingSystem deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString())
+                return OperatingSystem.parseOSName(json.getAsString());
+            else
+                return OperatingSystem.UNKNOWN;
+        }
+
+        @Override
+        public JsonElement serialize(OperatingSystem src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src == OperatingSystem.MACOS ? "osx" : src.getCheckedName());
+        }
+    }
 }
