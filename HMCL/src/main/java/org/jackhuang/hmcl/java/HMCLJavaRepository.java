@@ -143,7 +143,7 @@ public final class HMCLJavaRepository implements JavaRepository {
 
         getAllJava(list, platform, platformRoot, true);
         if (platform.getOperatingSystem() == OperatingSystem.MACOS) {
-            platformRoot = root.resolve(platform.getOperatingSystem().getOfficialName() + "-" + platform.getArchitecture().getCheckedName());
+            platformRoot = root.resolve(platform.getOperatingSystem().getMojangName() + "-" + platform.getArchitecture().getCheckedName());
             if (Files.isDirectory(platformRoot))
                 getAllJava(list, platform, platformRoot, false);
         }

@@ -94,8 +94,8 @@ public class Library implements Comparable<Library>, Validation {
 
     public String getClassifier() {
         if (artifact.getClassifier() == null)
-            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS.getOfficialName()))
-                return natives.get(OperatingSystem.CURRENT_OS.getOfficialName()).replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
+            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS.getMojangName()))
+                return natives.get(OperatingSystem.CURRENT_OS.getMojangName()).replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
             else
                 return null;
         else

@@ -46,7 +46,7 @@ public final class OSRestriction {
     }
 
     public OSRestriction(OperatingSystem os, String version, String arch) {
-        this.name = os.getOfficialName();
+        this.name = os.getMojangName();
         this.version = version;
         this.arch = arch;
     }

@@ -64,24 +64,24 @@ public enum OperatingSystem {
     UNKNOWN("universal");
 
     private final String checkedName;
-    private final String officialName;
+    private final String mojangName;
 
     OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
-        this.officialName = checkedName;
+        this.mojangName = checkedName;
     }
 
-    OperatingSystem(String checkedName, String officialName) {
+    OperatingSystem(String checkedName, String mojangName) {
         this.checkedName = checkedName;
-        this.officialName = officialName;
+        this.mojangName = mojangName;
     }
 
     public String getCheckedName() {
         return checkedName;
     }
 
-    public String getOfficialName() {
-        return officialName;
+    public String getMojangName() {
+        return mojangName;
     }
 
     public boolean isLinuxOrBSD() {
