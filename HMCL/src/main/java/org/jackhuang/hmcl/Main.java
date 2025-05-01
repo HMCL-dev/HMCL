@@ -58,7 +58,7 @@ public final class Main {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        createHMCLCurrentDirectory();
+        createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
@@ -83,7 +83,7 @@ public final class Main {
         System.exit(exitCode);
     }
 
-    private static void createHMCLCurrentDirectory() {
+    private static void createHMCLDirectories() {
         if (!Files.isDirectory(Metadata.HMCL_CURRENT_DIRECTORY)) {
             try {
                 Files.createDirectories(Metadata.HMCL_CURRENT_DIRECTORY);
@@ -97,6 +97,14 @@ public final class Main {
             } catch (IOException e) {
                 e.printStackTrace(System.err);
                 showErrorAndExit(i18n("fatal.create_hmcl_current_directory_failure", Metadata.HMCL_CURRENT_DIRECTORY));
+            }
+        }
+
+        if (!Files.isDirectory(Metadata.HMCL_GLOBAL_DIRECTORY)) {
+            try {
+                Files.createDirectories(Metadata.HMCL_GLOBAL_DIRECTORY);
+            } catch (IOException e) {
+                LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
             }
         }
     }
