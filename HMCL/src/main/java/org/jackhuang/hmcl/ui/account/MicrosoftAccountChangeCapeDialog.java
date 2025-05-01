@@ -42,7 +42,6 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     public MicrosoftAccountChangeCapeDialog(MicrosoftAccount account, MicrosoftService.MinecraftProfileResponse profile) {
         this.profile = profile;
         this.account = account;
-
         setWidth(400);
         setHeading(new Label(i18n("account.cape.change")));
         BorderPane body = new BorderPane();
@@ -72,6 +71,8 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
                 }
             })).start();
         };
+        invalidationListener.invalidated(null);
+
         capeItem.selectedDataProperty().addListener(invalidationListener);
 
         getChildren().add(body);
