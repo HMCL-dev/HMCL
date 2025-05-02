@@ -453,7 +453,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         changeButton.value.run();
                     });
 
-                    FXUtils.onChange(control.pageOffset, pageCountN -> {
+                    FXUtils.onChange(control.pageOffset, pageOffsetN -> {
                         changeButton.value.run();
                     });
 
