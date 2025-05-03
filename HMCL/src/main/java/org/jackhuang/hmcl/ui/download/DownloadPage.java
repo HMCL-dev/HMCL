@@ -43,21 +43,22 @@ import org.jackhuang.hmcl.ui.construct.TabControl;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.*;
+import org.jackhuang.hmcl.ui.versions.DownloadListPage;
+import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
+import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Locale;
-import java.util.Optional;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
