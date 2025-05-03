@@ -50,12 +50,14 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -75,11 +77,17 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private WeakListenerHolder listenerHolder;
 
-    public DownloadPage() {
+    public DownloadPage(){
+        this(null);
+    }
+
+    public DownloadPage(String uploadVersion) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack(Versions::downloadModpackImpl, false);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, file)->{
+                Versions.downloadModpackImpl(profile, uploadVersion, file);
+            }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Versions.importModpack());
