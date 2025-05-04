@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
@@ -65,7 +66,9 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
             return true;
 
-        if (NativeUtils.USE_JNA && ZonedDateTime.now().getOffset().getTotalSeconds() == 8 * 3600) { // GMT+8
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                && NativeUtils.USE_JNA
+                && ZonedDateTime.now().getOffset().getTotalSeconds() == 8 * 3600) { // GMT+8
             Kernel32 kernel32 = Kernel32.INSTANCE;
 
             // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
