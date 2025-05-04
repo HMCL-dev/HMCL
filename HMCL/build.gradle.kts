@@ -116,8 +116,14 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageReaderSpi")
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
+    listOf(
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*","freebsd-*", "linux-*", "darwin-*",
+        "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
+    ).forEach { exclude("com/sun/jna/$it/**") }
+
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
+        exclude(dependency("net.java.dev.jna:jna:.*"))
         exclude(dependency("libs:JFoenix:.*"))
     }
 
