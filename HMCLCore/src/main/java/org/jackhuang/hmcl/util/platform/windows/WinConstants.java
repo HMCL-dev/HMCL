@@ -36,4 +36,8 @@ public interface WinConstants {
     long HKEY_CURRENT_CONFIG = 0x80000005L;
     long HKEY_DYN_DATA = 0x80000006L;
     long HKEY_CURRENT_USER_LOCAL_SETTINGS = 0x80000007L;
+
+    int GEOCLASS_NATION = 16;
+    int GEOCLASS_REGION = 14;
+    int GEOCLASS_ALL = 0;
 }

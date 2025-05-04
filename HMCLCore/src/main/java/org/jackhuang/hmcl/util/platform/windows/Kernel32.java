@@ -44,4 +44,8 @@ public interface Kernel32 extends StdCallLibrary {
      */
     int GetACP();
 
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winnls/nf-winnls-getusergeoid">GetUserGeoID function</a>
+     */
+    int GetUserGeoID(int geoClass);
 }
