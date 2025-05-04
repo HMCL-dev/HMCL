@@ -43,9 +43,13 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
 import java.net.URI;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -57,11 +61,26 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedIt
 public final class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
     static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
+    private static boolean isExemptedRegion() {
+        if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
+            return true;
+
+        if (NativeUtils.USE_JNA && ZonedDateTime.now().getOffset().getTotalSeconds() == 8 * 3600) { // GMT+8
+            Kernel32 kernel32 = Kernel32.INSTANCE;
+
+            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 0x2d)
+                return true;
+        }
+
+        return false;
+    }
+
     static {
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
 
         if ("false".equals(property)
-                || "auto".equals(property) && "Asia/Shanghai".equals(ZoneId.systemDefault().getId())
+                || "auto".equals(property) && isExemptedRegion()
                 || globalConfig().isEnableOfflineAccount())
             RESTRICTED.set(false);
         else
