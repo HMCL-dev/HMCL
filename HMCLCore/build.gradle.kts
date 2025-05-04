@@ -15,5 +15,7 @@ dependencies {
     api(libs.nanohttpd)
     api(libs.jsoup)
     api(libs.chardet)
+    api(libs.jna)
+
     compileOnlyApi(libs.jetbrains.annotations)
 }
