@@ -405,6 +405,29 @@ public final class StringUtils {
         return true;
     }
 
+    /**
+     * Replace the URL prefix with a new one.
+     * @param originalUrl the original URL
+     * @param newPrefix the new prefix to replace with 
+     * @return the URL with the new prefix, or the original URL if newPrefix is empty
+     */
+    public static String replaceSitePrefix(String originalUrl, String newPrefix) {
+        if (isBlank(newPrefix)) return originalUrl;
+        
+        int pathStart = originalUrl.indexOf("://");
+        if (pathStart >= 0) {
+            pathStart += 3;
+        } else {
+            pathStart = 0;
+        }
+        
+        int firstSlash = originalUrl.indexOf('/', pathStart);
+        if (firstSlash < 0) return originalUrl;
+        
+        String path = originalUrl.substring(firstSlash);
+        return newPrefix + path;
+    }
+
     public static class LevCalculator {
         private int[][] lev;
 

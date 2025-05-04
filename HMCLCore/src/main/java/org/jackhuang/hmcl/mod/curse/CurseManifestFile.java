@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -85,15 +86,23 @@ public final class CurseManifestFile implements Validation {
 
     @Nullable
     public URL getUrl() {
+        String urlStr;
         if (url == null) {
             if (fileName != null) {
-                return NetworkUtils.toURL(NetworkUtils.encodeLocation(String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)));
+                urlStr = String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName);
             } else {
                 return null;
             }
         } else {
-            return NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
+            urlStr = url;
         }
+
+        String downloadPrefix = System.getProperty("hmcl.curseforge.download.prefix", "");
+        if (!StringUtils.isBlank(downloadPrefix)) {
+            urlStr = StringUtils.replaceSitePrefix(urlStr, downloadPrefix);
+        }
+        
+        return NetworkUtils.toURL(NetworkUtils.encodeLocation(urlStr));
     }
 
     public CurseManifestFile withFileName(String fileName) {

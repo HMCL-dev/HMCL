@@ -44,6 +44,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     private static final String DEFAULT_PREFIX = "https://api.curseforge.com";
     private static final String PREFIX = System.getProperty("hmcl.curseforge.prefix", DEFAULT_PREFIX);
+    private static final String DOWNLOAD_PREFIX = System.getProperty("hmcl.curseforge.download.prefix", "");
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
@@ -204,7 +205,16 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
 
         Response<CurseAddon.LatestFile> response = request.getJson(Response.typeOf(CurseAddon.LatestFile.class));
-        return response.getData().toVersion().getFile();
+        RemoteMod.File file = response.getData().toVersion().getFile();
+        
+        if (!DOWNLOAD_PREFIX.isEmpty()) {
+            return new RemoteMod.File(
+                file.getHashes(), 
+                StringUtils.replaceSitePrefix(file.getUrl(), DOWNLOAD_PREFIX),
+                file.getFilename()
+            );
+        }
+        return file;
     }
 
     @Override

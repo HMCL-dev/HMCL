@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -519,12 +520,20 @@ public class CurseAddon implements RemoteMod.IMod {
         }
 
         public String getDownloadUrl() {
+            String url;
             if (downloadUrl == null) {
                 // This addon is not allowed for distribution, and downloadUrl will be null.
                 // We try to find its download url.
-                return String.format("https://edge.forgecdn.net/files/%d/%d/%s", id / 1000, id % 1000, fileName);
+                url = String.format("https://edge.forgecdn.net/files/%d/%d/%s", id / 1000, id % 1000, fileName);
+            } else {
+                url = downloadUrl;
             }
-            return downloadUrl;
+
+            String downloadPrefix = System.getProperty("hmcl.curseforge.download.prefix", "");
+            if (!StringUtils.isBlank(downloadPrefix)) {
+                return StringUtils.replaceSitePrefix(url, downloadPrefix);
+            }
+            return url;
         }
 
         public List<String> getGameVersions() {
