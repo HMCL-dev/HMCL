@@ -47,7 +47,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
 
-    private static final String PREFIX = "https://api.modrinth.com";
+    private static final String PREFIX = System.getProperty("hmcl.modrinth.prefix", "https://api.modrinth.com");
 
     private final String projectType;
 

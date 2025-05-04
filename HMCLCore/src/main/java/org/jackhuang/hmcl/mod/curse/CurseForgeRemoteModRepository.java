@@ -42,7 +42,8 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
-    private static final String PREFIX = "https://api.curseforge.com";
+    private static final String DEFAULT_PREFIX = "https://api.curseforge.com";
+    private static final String PREFIX = System.getProperty("hmcl.curseforge.prefix", DEFAULT_PREFIX);
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
@@ -105,18 +106,22 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         if (category != null && category.getSelf() instanceof CurseAddon.Category) {
             categoryId = ((CurseAddon.Category) category.getSelf()).getId();
         }
-        Response<List<CurseAddon>> response = HttpRequest.GET(PREFIX + "/v1/mods/search",
-                        pair("gameId", "432"),
-                        pair("classId", Integer.toString(section)),
-                        pair("categoryId", Integer.toString(categoryId)),
-                        pair("gameVersion", gameVersion),
-                        pair("searchFilter", searchFilter),
-                        pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
-                        pair("sortOrder", toSortOrder(sortOrder)),
-                        pair("index", Integer.toString(pageOffset * pageSize)),
-                        pair("pageSize", Integer.toString(pageSize)))
-                .header("X-API-KEY", apiKey)
-                .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
+        HttpRequest request = HttpRequest.GET(PREFIX + "/v1/mods/search",
+                pair("gameId", "432"),
+                pair("classId", Integer.toString(section)),
+                pair("categoryId", Integer.toString(categoryId)),
+                pair("gameVersion", gameVersion),
+                pair("searchFilter", searchFilter),
+                pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
+                pair("sortOrder", toSortOrder(sortOrder)),
+                pair("index", Integer.toString(pageOffset * pageSize)),
+                pair("pageSize", Integer.toString(pageSize)));
+
+        if (PREFIX.equals(DEFAULT_PREFIX)) {
+            request.header("X-API-KEY", apiKey);
+        }
+
+        Response<List<CurseAddon>> response = request.getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
         if (searchFilter.isEmpty()) {
             return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
         }
@@ -162,10 +167,14 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
 
-        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
-                .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
-                .header("X-API-KEY", apiKey)
-                .getJson(Response.typeOf(FingerprintMatchesResult.class));
+        HttpRequest request = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
+                .json(mapOf(pair("fingerprints", Collections.singletonList(hash))));
+
+        if (PREFIX.equals(DEFAULT_PREFIX)) {
+            request.header("X-API-KEY", apiKey);
+        }
+
+        Response<FingerprintMatchesResult> response = request.getJson(Response.typeOf(FingerprintMatchesResult.class));
 
         if (response.getData().getExactMatches() == null || response.getData().getExactMatches().isEmpty()) {
             return Optional.empty();
@@ -176,33 +185,49 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public RemoteMod getModById(String id) throws IOException {
-        Response<CurseAddon> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id)
-                .header("X-API-KEY", apiKey)
-                .getJson(Response.typeOf(CurseAddon.class));
+        HttpRequest request = HttpRequest.GET(PREFIX + "/v1/mods/" + id);
+
+        if (PREFIX.equals(DEFAULT_PREFIX)) {
+            request.header("X-API-KEY", apiKey);
+        }
+
+        Response<CurseAddon> response = request.getJson(Response.typeOf(CurseAddon.class));
         return response.data.toMod();
     }
 
     @Override
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
-        Response<CurseAddon.LatestFile> response = HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId))
-                .header("X-API-KEY", apiKey)
-                .getJson(Response.typeOf(CurseAddon.LatestFile.class));
+        HttpRequest request = HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId));
+
+        if (PREFIX.equals(DEFAULT_PREFIX)) {
+            request.header("X-API-KEY", apiKey);
+        }
+
+        Response<CurseAddon.LatestFile> response = request.getJson(Response.typeOf(CurseAddon.LatestFile.class));
         return response.getData().toVersion().getFile();
     }
 
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-        Response<List<CurseAddon.LatestFile>> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
-                        pair("pageSize", "10000"))
-                .header("X-API-KEY", apiKey)
-                .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
+        HttpRequest request = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
+                pair("pageSize", "10000"));
+
+        if (PREFIX.equals(DEFAULT_PREFIX)) {
+            request.header("X-API-KEY", apiKey);
+        }
+
+        Response<List<CurseAddon.LatestFile>> response = request.getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
         return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
     }
 
     public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
-        Response<List<CurseAddon.Category>> categories = HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432"))
-                .header("X-API-KEY", apiKey)
-                .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
+        HttpRequest request = HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432"));
+
+        if (PREFIX.equals(DEFAULT_PREFIX)) {
+            request.header("X-API-KEY", apiKey);
+        }
+
+        Response<List<CurseAddon.Category>> categories = request.getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
         return reorganizeCategories(categories.getData(), section);
     }
 
