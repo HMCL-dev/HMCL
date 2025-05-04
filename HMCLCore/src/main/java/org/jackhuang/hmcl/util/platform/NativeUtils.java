@@ -60,10 +60,13 @@ public final class NativeUtils {
                     // https://learn.microsoft.com/windows/win32/sysinfo/operating-system-version
                     if (osVersion == null || osVersion.startsWith("5.") || osVersion.equals("6.0"))
                         return false;
+
+                    // Currently we only need to use JNA on Windows
+                    Native.getDefaultStringEncoding();
+                    return true;
                 }
 
-                Native.getDefaultStringEncoding();
-                return true;
+                return false;
             } catch (Throwable ignored) {
                 return false;
             }

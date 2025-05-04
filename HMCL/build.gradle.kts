@@ -117,9 +117,8 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     listOf(
-        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*",
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*","freebsd-*", "linux-*", "darwin-*",
         "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
-        "freebsd-x86", "freebsd-aarch64"
     ).forEach { exclude("com/sun/jna/$it/**") }
 
     minimize {
