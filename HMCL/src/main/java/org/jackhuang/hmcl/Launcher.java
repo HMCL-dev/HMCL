@@ -247,13 +247,13 @@ public final class Launcher extends Application {
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
-            LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
+            LOG.info("Physical Memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
             LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
                     .filter(bean -> bean.getName().equals("Metaspace"))
                     .findAny()
                     .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
                     .orElse("Unknown"));
-            LOG.info("Use JNA: " + NativeUtils.USE_JNA);
+            LOG.info("Native Backend: " + (NativeUtils.USE_JNA ? "JNA" : "None"));
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));

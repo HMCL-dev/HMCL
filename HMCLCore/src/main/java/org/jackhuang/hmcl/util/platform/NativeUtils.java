@@ -51,7 +51,7 @@ public final class NativeUtils {
 
     private static boolean useJNA() {
         String backend = System.getProperty("hmcl.native.backend");
-        if (backend == null || "auto".equals(backend)) {
+        if (backend == null || "auto".equalsIgnoreCase(backend)) {
             try {
                 if (Platform.isWindows()) {
                     String osVersion = System.getProperty("os.version");
@@ -70,11 +70,11 @@ public final class NativeUtils {
             } catch (Throwable ignored) {
                 return false;
             }
-        } else if ("jna".equals(backend)) {
+        } else if ("jna".equalsIgnoreCase(backend)) {
             // Ensure JNA is available
             Native.getDefaultStringEncoding();
             return true;
-        } else if ("none".equals(backend))
+        } else if ("none".equalsIgnoreCase(backend))
             return false;
         else
             throw new Error("Unsupported native backend: " + backend);
