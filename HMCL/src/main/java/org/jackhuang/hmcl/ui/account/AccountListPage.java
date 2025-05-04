@@ -72,7 +72,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
             Kernel32 kernel32 = Kernel32.INSTANCE;
 
             // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
-            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 0x2d)
+            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45)
                 return true;
         }
 
