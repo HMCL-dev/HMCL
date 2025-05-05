@@ -171,7 +171,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 csvTable.set(3, i + 1, objects.get(i).source.get());
             }
 
-            csvTable.write(Files.newOutputStream(path));
+            csvTable.write(path);
 
             FXUtils.showFileInExplorer(path);
         }).whenComplete(Schedulers.javafx(), exception -> {
