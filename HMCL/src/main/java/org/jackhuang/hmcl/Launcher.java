@@ -225,8 +225,6 @@ public final class Launcher extends Application {
         Thread.setDefaultUncaughtExceptionHandler(CRASH_REPORTER);
         AsyncTaskExecutor.setUncaughtExceptionHandler(new CrashReporter(false));
 
-        System.out.println(Hardware.GRAPHICS_CARDS);
-
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + (OperatingSystem.OS_RELEASE_PRETTY_NAME == null
@@ -263,9 +261,8 @@ public final class Launcher extends Application {
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
 
-
             String card;
-            if (Hardware.GRAPHICS_CARDS == null || Hardware.GRAPHICS_CARDS.isEmpty())
+            if (Hardware.GRAPHICS_CARDS.isEmpty())
                 card = "Not Found";
             else if (Hardware.GRAPHICS_CARDS.size() == 1)
                 card = Hardware.GRAPHICS_CARDS.get(0).toString();

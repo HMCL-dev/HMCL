@@ -79,12 +79,13 @@ public final class GraphicsCard {
         }
     }
 
-    public static @Nullable List<GraphicsCard> listGraphicsCards() {
+    public static List<GraphicsCard> listGraphicsCards() {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            return searchByCIM();
+            List<GraphicsCard> cards = searchByCIM();
+            return cards != null ? cards : Collections.emptyList();
         }
 
-        return null;
+        return Collections.emptyList();
     }
 
     private final String name;

@@ -17,24 +17,37 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+/**
+ * @author Glavo
+ */
+public final class WinReg {
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/sysinfo/predefined-keys">Predefined Keys</a>
+     */
+    public enum HKEY {
+        HKEY_CLASSES_ROOT(0x80000000),
+        HKEY_CURRENT_USER(0x80000001),
+        HKEY_LOCAL_MACHINE(0x80000002),
+        HKEY_USERS(0x80000003),
+        HKEY_PERFORMANCE_DATA(0x80000004),
+        HKEY_PERFORMANCE_TEXT(0x80000050),
+        HKEY_PERFORMANCE_NLSTEXT(0x80000060),
+        HKEY_CURRENT_CONFIG(0x80000005),
+        HKEY_DYN_DATA(0x80000006),
+        HKEY_CURRENT_USER_LOCAL_SETTINGS(0x80000007);
 
-public final class WMIC {
+        private final int value;
 
-    private static final Path TOOL_PATH;
+        HKEY(int value) {
+            this.value = value;
+        }
 
-    static {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            Path path = Paths.get(System.getenv("SystemRoot"), "System32", "Wbem", "WMIC.exe");
-            TOOL_PATH = Files.isExecutable(path) ? path : null;
-        } else
-            TOOL_PATH = null;
+        public int getValue() {
+            return value;
+        }
     }
 
-    private WMIC() {
-    }
+
+
 }

@@ -17,13 +17,11 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 
 public final class Hardware {
 
-    public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = GraphicsCard.listGraphicsCards();
+    public static final List<GraphicsCard> GRAPHICS_CARDS = GraphicsCard.listGraphicsCards();
 
     private Hardware() {
     }
