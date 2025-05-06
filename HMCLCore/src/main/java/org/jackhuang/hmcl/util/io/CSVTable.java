@@ -32,11 +32,7 @@ public final class CSVTable {
     private int rowCount = 0;
     private final InfiniteSizeList<InfiniteSizeList<String>> table = new InfiniteSizeList<>();
 
-    private CSVTable() {
-    }
-
-    public static CSVTable createEmpty() {
-        return new CSVTable();
+    public CSVTable() {
     }
 
     public int getColumnCount() {

@@ -28,7 +28,7 @@ public final class CSVTableTest {
 
     @Test
     public void testCreate() {
-        CSVTable table = CSVTable.createEmpty();
+        CSVTable table = new CSVTable();
 
         assertEquals(0, table.getColumnCount());
         assertEquals(0, table.getRowCount());
@@ -54,7 +54,7 @@ public final class CSVTableTest {
 
     @Test
     public void testToString() {
-        CSVTable table = CSVTable.createEmpty();
+        CSVTable table = new CSVTable();
         table.set(0, 0, "a");
         table.set(1, 0, "b");
         table.set(3, 0, "c");
