@@ -19,10 +19,12 @@ package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.Nullable;
 
-public final class Hardware {
-    public static final @Nullable Hardware INSTANCE = init();
+import java.util.List;
 
-    private static Hardware init() {
-        return null;
+public final class Hardware {
+
+    public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = GraphicsCard.listGraphicsCards();
+
+    private Hardware() {
     }
 }
