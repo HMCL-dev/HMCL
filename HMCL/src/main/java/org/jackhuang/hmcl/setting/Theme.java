@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,7 +89,15 @@ public class Theme {
         if (font != null)
             return font;
 
-        return tryLoadDefaultFont(Metadata.HMCL_GLOBAL_DIRECTORY);
+        font = tryLoadDefaultFont(Metadata.HMCL_GLOBAL_DIRECTORY);
+        if (font != null)
+            return font;
+
+        Path thisJar = JarUtils.thisJarPath();
+        if (thisJar != null && thisJar.getParent() != null)
+            return tryLoadDefaultFont(thisJar.getParent());
+
+        return null;
     });
 
     public static Theme getTheme() {
