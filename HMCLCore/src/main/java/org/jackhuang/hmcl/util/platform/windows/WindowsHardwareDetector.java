@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
@@ -25,10 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -71,29 +72,29 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         if (!OperatingSystem.isWindows7OrLater())
             return Collections.emptyList();
 
-        Path tempFile = null;
         Process process = null;
         String list = null;
         try {
-            tempFile = Files.createTempFile("hmcl-video-controllers-", ".txt").toAbsolutePath().normalize();
             File nul = new File("NUL");
 
             String getCimInstance = OperatingSystem.SYSTEM_VERSION.startsWith("6.1")
                     ? "Get-WmiObject"
                     : "Get-CimInstance";
 
-            process = new ProcessBuilder("powershell.exe",
+            Process finalProcess = process = new ProcessBuilder("powershell.exe",
                     "-Command",
                     String.join(" | ",
                             getCimInstance + " -Class Win32_VideoController",
                             "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
-                            "Format-List",
-                            "Out-File -Encoding utf8 -FilePath '" + tempFile + "'"
+                            "Format-List"
                     ))
                     .redirectInput(nul)
-                    .redirectOutput(nul)
                     .redirectError(nul)
                     .start();
+
+            CompletableFuture<String> future = CompletableFuture.supplyAsync(Lang.wrap(() ->
+                            IOUtils.readFullyAsString(finalProcess.getInputStream(), OperatingSystem.NATIVE_CHARSET)),
+                    Schedulers.io());
 
             if (!process.waitFor(15, TimeUnit.SECONDS))
                 throw new TimeoutException();
@@ -101,14 +102,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             if (process.exitValue() != 0)
                 throw new IOException("Bad exit code: " + process.exitValue());
 
-            byte[] bytes = Files.readAllBytes(tempFile);
-            if (bytes.length >= 3
-                    && bytes[0] == (byte) 0xef
-                    && bytes[1] == (byte) 0xbb
-                    && bytes[2] == (byte) 0xbf) // skip bom
-                list = new String(bytes, 3, bytes.length - 3, StandardCharsets.UTF_8);
-            else
-                list = new String(bytes, StandardCharsets.UTF_8);
+            list = future.get();
 
             List<Map<String, String>> videoControllers = parsePowerShellFormatList(Arrays.asList(list.split("\\R")));
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
@@ -138,13 +132,6 @@ public final class WindowsHardwareDetector extends HardwareDetector {
                 process.destroy();
             LOG.warning("Failed to get graphics card info" + (list != null ? ": " + list : ""), e);
             return Collections.emptyList();
-        } finally {
-            try {
-                if (tempFile != null)
-                    Files.deleteIfExists(tempFile);
-            } catch (IOException e) {
-                LOG.warning("Failed to delete temp file: " + tempFile, e);
-            }
         }
     }
 }
