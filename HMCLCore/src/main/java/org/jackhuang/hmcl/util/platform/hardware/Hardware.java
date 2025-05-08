@@ -55,8 +55,9 @@ public final class Hardware {
             card = Holder.GRAPHICS_CARDS.get(0).toString();
         else {
             StringBuilder builder = new StringBuilder();
+            int index = 1;
             for (GraphicsCard graphicsCard : graphicsCards) {
-                builder.append("\n - ").append(graphicsCard.toString());
+                builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard.toString());
             }
             card = builder.toString();
         }
