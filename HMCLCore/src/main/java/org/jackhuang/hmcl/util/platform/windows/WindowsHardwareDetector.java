@@ -66,7 +66,6 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
             JsonReader reader = new JsonReader(new StringReader(json));
 
-
             List<Win32_VideoController> videoControllers;
             JsonToken firstToken = reader.peek();
             if (firstToken == JsonToken.BEGIN_ARRAY)
