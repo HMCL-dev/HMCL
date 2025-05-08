@@ -82,7 +82,9 @@ public final class WindowsHardwareDetector extends HardwareDetector {
                     cards.add(GraphicsCard.builder().setName(videoController.Name)
                             .setVendor(GraphicsCard.Vendor.of(videoController.AdapterCompatibility))
                             .setDriverVersion(videoController.DriverVersion)
-                            .setType(StringUtils.isBlank(videoController.AdapterDACType) || "Internal".equalsIgnoreCase(videoController.AdapterDACType)
+                            .setType(StringUtils.isBlank(videoController.AdapterDACType)
+                                    || "Internal".equalsIgnoreCase(videoController.AdapterDACType)
+                                    || "InternalDAC".equalsIgnoreCase(videoController.AdapterDACType)
                                     ? GraphicsCard.Type.Integrated
                                     : GraphicsCard.Type.Discrete)
                             .build()
