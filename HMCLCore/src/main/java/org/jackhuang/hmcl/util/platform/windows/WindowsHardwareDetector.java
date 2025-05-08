@@ -101,7 +101,6 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             if (process.exitValue() != 0)
                 throw new IOException("Bad exit code: " + process.exitValue());
 
-
             byte[] bytes = Files.readAllBytes(tempFile);
             if (bytes.length >= 3
                     && bytes[0] == (byte) 0xef
