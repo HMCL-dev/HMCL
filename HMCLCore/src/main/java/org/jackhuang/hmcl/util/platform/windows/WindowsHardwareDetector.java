@@ -17,25 +17,19 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -46,11 +40,31 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WindowsHardwareDetector extends HardwareDetector {
 
-    private static final class Win32_VideoController {
-        String Name;
-        String AdapterCompatibility;
-        String DriverVersion;
-        String AdapterDACType;
+    private static List<Map<String, String>> parsePowerShellFormatList(Iterable<String> lines) {
+        ArrayList<Map<String, String>> result = new ArrayList<>();
+        Map<String, String> current = new LinkedHashMap<>();
+
+        for (String line : lines) {
+            int idx = line.indexOf(':');
+
+            if (idx < 0) {
+                if (!current.isEmpty()) {
+                    result.add(current);
+                    current = new LinkedHashMap<>();
+                }
+                continue;
+            }
+
+            String key = line.substring(0, idx).trim();
+            String value = line.substring(idx + 1).trim();
+
+            current.put(key, value);
+        }
+
+        if (!current.isEmpty())
+            result.add(current);
+
+        return result;
     }
 
     @Override
@@ -60,17 +74,20 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
         Path tempFile = null;
         Process process = null;
-        String json = null;
         try {
-            tempFile = Files.createTempFile("hmcl-video-controllers-", ".json").toAbsolutePath().normalize();
+            tempFile = Files.createTempFile("hmcl-video-controllers-", ".txt").toAbsolutePath().normalize();
             File nul = new File("NUL");
+
+            String getCimInstance = OperatingSystem.SYSTEM_VERSION.startsWith("6.1")
+                    ? "Get-WmiObject"
+                    : "Get-CimInstance";
 
             process = new ProcessBuilder("powershell.exe",
                     "-Command",
                     String.join(" | ",
-                            "Get-CimInstance -Class Win32_VideoController",
+                            getCimInstance + " -Class Win32_VideoController",
                             "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
-                            "ConvertTo-Json",
+                            "Format-List",
                             "Out-File -Encoding utf8 -FilePath '" + tempFile + "'"
                     ))
                     .redirectInput(nul)
@@ -84,36 +101,25 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             if (process.exitValue() != 0)
                 throw new IOException("Bad exit code: " + process.exitValue());
 
-            byte[] bytes = Files.readAllBytes(tempFile);
-            if (bytes.length >= 3
-                    && bytes[0] == (byte) 0xef
-                    && bytes[1] == (byte) 0xbb
-                    && bytes[2] == (byte) 0xbf) // skip bom
-                json = new String(bytes, 3, bytes.length - 3, StandardCharsets.UTF_8);
-            else
-                json = new String(bytes, StandardCharsets.UTF_8);
-
-            json = FileUtils.readText(tempFile);
-
-            JsonReader reader = new JsonReader(new StringReader(json));
-            List<Win32_VideoController> videoControllers;
-            JsonToken firstToken = reader.peek();
-            if (firstToken == JsonToken.BEGIN_ARRAY)
-                videoControllers = JsonUtils.GSON.fromJson(reader, JsonUtils.listTypeOf(Win32_VideoController.class));
-            else if (firstToken == JsonToken.BEGIN_OBJECT)
-                videoControllers = Collections.singletonList(JsonUtils.GSON.fromJson(reader, Win32_VideoController.class));
-            else
-                return Collections.emptyList();
+            List<Map<String, String>> videoControllers;
+            try (BufferedReader reader = Files.newBufferedReader(tempFile)) {
+                videoControllers = parsePowerShellFormatList(Lang.toIterable(reader.lines()));
+            }
 
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
-            for (Win32_VideoController videoController : videoControllers) {
-                if (videoController != null && videoController.Name != null) {
-                    cards.add(GraphicsCard.builder().setName(videoController.Name)
-                            .setVendor(GraphicsCard.Vendor.of(videoController.AdapterCompatibility))
-                            .setDriverVersion(videoController.DriverVersion)
-                            .setType(StringUtils.isBlank(videoController.AdapterDACType)
-                                    || "Internal".equalsIgnoreCase(videoController.AdapterDACType)
-                                    || "InternalDAC".equalsIgnoreCase(videoController.AdapterDACType)
+            for (Map<String, String> videoController : videoControllers) {
+                String name = videoController.get("Name");
+                String adapterCompatibility = videoController.get("AdapterCompatibility");
+                String driverVersion = videoController.get("DriverVersion");
+                String adapterDACType = videoController.get("AdapterDACType");
+
+                if (StringUtils.isNotBlank(name)) {
+                    cards.add(GraphicsCard.builder().setName(name)
+                            .setVendor(GraphicsCard.Vendor.of(adapterCompatibility))
+                            .setDriverVersion(driverVersion)
+                            .setType(StringUtils.isBlank(adapterDACType)
+                                    || "Internal".equalsIgnoreCase(adapterDACType)
+                                    || "InternalDAC".equalsIgnoreCase(adapterDACType)
                                     ? GraphicsCard.Type.Integrated
                                     : GraphicsCard.Type.Discrete)
                             .build()
@@ -125,8 +131,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         } catch (Throwable e) {
             if (process != null && process.isAlive())
                 process.destroy();
-
-            LOG.warning("Failed to get graphics card info" + (json != null ? ": " + json : ""), e);
+            LOG.warning("Failed to get graphics card info", e);
             return Collections.emptyList();
         } finally {
             try {
