@@ -21,7 +21,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
@@ -30,9 +30,14 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -53,18 +58,42 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         if (!OperatingSystem.isWindows7OrLater())
             return Collections.emptyList();
 
+        Path tempFile = null;
         Process process = null;
         String json = null;
         try {
+            tempFile = Files.createTempFile("hmcl-video-controllers-", ".json").toAbsolutePath().normalize();
+            File nul = new File("NUL");
+
             process = new ProcessBuilder("powershell.exe",
                     "-Command",
-                    "Get-CimInstance -Class Win32_VideoController | Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType | ConvertTo-Json")
-                    .redirectError(new File("NUL"))
+                    String.join(" | ",
+                            "Get-CimInstance -Class Win32_VideoController",
+                            "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
+                            "ConvertTo-Json",
+                            "Out-File -Encoding utf8 -FilePath '" + tempFile + "'"
+                    ))
+                    .redirectInput(nul)
+                    .redirectOutput(nul)
+                    .redirectError(nul)
                     .start();
 
-            json = IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET);
-            if (process.waitFor() != 0)
+            if (!process.waitFor(15, TimeUnit.SECONDS))
+                throw new TimeoutException();
+
+            if (process.exitValue() != 0)
                 throw new IOException("Bad exit code: " + process.exitValue());
+
+            byte[] bytes = Files.readAllBytes(tempFile);
+            if (bytes.length >= 3
+                    && bytes[0] == (byte) 0xef
+                    && bytes[1] == (byte) 0xbb
+                    && bytes[2] == (byte) 0xbf) // skip bom
+                json = new String(bytes, 3, bytes.length - 3, StandardCharsets.UTF_8);
+            else
+                json = new String(bytes, StandardCharsets.UTF_8);
+
+            json = FileUtils.readText(tempFile);
 
             JsonReader reader = new JsonReader(new StringReader(json));
             List<Win32_VideoController> videoControllers;
@@ -99,6 +128,13 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
             LOG.warning("Failed to get graphics card info" + (json != null ? ": " + json : ""), e);
             return Collections.emptyList();
+        } finally {
+            try {
+                if (tempFile != null)
+                    Files.deleteIfExists(tempFile);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete temp file: " + tempFile, e);
+            }
         }
     }
 }
