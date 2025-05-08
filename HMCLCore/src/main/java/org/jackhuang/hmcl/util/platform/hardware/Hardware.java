@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
 
 import java.util.List;
@@ -29,6 +30,8 @@ public final class Hardware {
     static {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             DETECTOR = new WindowsHardwareDetector();
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+            DETECTOR = new LinuxHardwareDetector();
         else
             DETECTOR = new HardwareDetector();
     }
