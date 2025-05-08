@@ -235,8 +235,9 @@ public final class GraphicsCard {
             return type;
         }
 
-        public void setType(Type type) {
+        public Builder setType(Type type) {
             this.type = type;
+            return this;
         }
 
         public String getDriver() {

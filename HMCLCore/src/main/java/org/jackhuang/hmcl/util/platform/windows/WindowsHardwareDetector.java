@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.platform.windows;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -44,6 +45,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         String Name;
         String AdapterCompatibility;
         String DriverVersion;
+        String AdapterDACType;
     }
 
     @Override
@@ -56,7 +58,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         try {
             process = new ProcessBuilder("powershell.exe",
                     "-Command",
-                    "Get-CimInstance -Class Win32_VideoController | Select-Object Name,AdapterCompatibility,DriverVersion | ConvertTo-Json")
+                    "Get-CimInstance -Class Win32_VideoController | Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType | ConvertTo-Json")
                     .redirectError(new File("NUL"))
                     .start();
 
@@ -80,6 +82,9 @@ public final class WindowsHardwareDetector extends HardwareDetector {
                     cards.add(GraphicsCard.builder().setName(videoController.Name)
                             .setVendor(GraphicsCard.Vendor.of(videoController.AdapterCompatibility))
                             .setDriverVersion(videoController.DriverVersion)
+                            .setType(StringUtils.isBlank(videoController.AdapterDACType) || "Internal".equalsIgnoreCase(videoController.AdapterDACType)
+                                    ? GraphicsCard.Type.Integrated
+                                    : GraphicsCard.Type.Discrete)
                             .build()
                     );
                 }
