@@ -17,16 +17,15 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -74,6 +73,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
         Path tempFile = null;
         Process process = null;
+        String list = null;
         try {
             tempFile = Files.createTempFile("hmcl-video-controllers-", ".txt").toAbsolutePath().normalize();
             File nul = new File("NUL");
@@ -101,11 +101,17 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             if (process.exitValue() != 0)
                 throw new IOException("Bad exit code: " + process.exitValue());
 
-            List<Map<String, String>> videoControllers;
-            try (BufferedReader reader = Files.newBufferedReader(tempFile)) {
-                videoControllers = parsePowerShellFormatList(Lang.toIterable(reader.lines()));
-            }
 
+            byte[] bytes = Files.readAllBytes(tempFile);
+            if (bytes.length >= 3
+                    && bytes[0] == (byte) 0xef
+                    && bytes[1] == (byte) 0xbb
+                    && bytes[2] == (byte) 0xbf) // skip bom
+                list = new String(bytes, 3, bytes.length - 3, StandardCharsets.UTF_8);
+            else
+                list = new String(bytes, StandardCharsets.UTF_8);
+
+            List<Map<String, String>> videoControllers = parsePowerShellFormatList(Arrays.asList(list.split("\\R")));
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
             for (Map<String, String> videoController : videoControllers) {
                 String name = videoController.get("Name");
@@ -131,7 +137,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         } catch (Throwable e) {
             if (process != null && process.isAlive())
                 process.destroy();
-            LOG.warning("Failed to get graphics card info", e);
+            LOG.warning("Failed to get graphics card info" + (list != null ? ": " + list : ""), e);
             return Collections.emptyList();
         } finally {
             try {
