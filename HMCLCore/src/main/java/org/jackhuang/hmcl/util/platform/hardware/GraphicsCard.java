@@ -17,85 +17,32 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
  */
 public final class GraphicsCard {
 
-    private static final class Win32_VideoController {
-        String Name;
-        String AdapterCompatibility;
-        String DriverVersion;
-    }
-
-    private static @Nullable List<GraphicsCard> searchByCIM() {
-        if (!OperatingSystem.isWindows7OrLater())
-            return null;
-
-        Process process = null;
-        try {
-            process = new ProcessBuilder("powershell.exe",
-                    "-Command",
-                    "Get-CimInstance -Class Win32_VideoController | Select-Object Name,AdapterCompatibility,DriverVersion | ConvertTo-Json")
-                    .redirectError(new File("NUL"))
-                    .start();
-
-            String json = IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET);
-            if (process.waitFor() != 0)
-                throw new IOException("Bad exit code: " + process.exitValue());
-
-            List<Win32_VideoController> videoControllers = JsonUtils.GSON.fromJson(json, JsonUtils.listTypeOf(Win32_VideoController.class));
-            if (videoControllers == null)
-                return null;
-
-            ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
-            for (Win32_VideoController videoController : videoControllers) {
-                if (videoController != null && videoController.Name != null) {
-                    cards.add(new GraphicsCard(videoController.Name,
-                            Vendor.of(videoController.AdapterCompatibility),
-                            videoController.DriverVersion));
-                }
-            }
-
-            return cards;
-        } catch (Throwable e) {
-            if (process != null && process.isAlive())
-                process.destroy();
-
-            LOG.warning("Failed to get graphics card info", e);
-            return null;
-        }
-    }
-
-    public static List<GraphicsCard> listGraphicsCards() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            List<GraphicsCard> cards = searchByCIM();
-            return cards != null ? cards : Collections.emptyList();
-        }
-
-        return Collections.emptyList();
+    public static Builder builder() {
+        return new Builder();
     }
 
     private final String name;
     private final @Nullable Vendor vendor;
-    private final @Nullable String version;
+    private final @Nullable Type type;
+    private final @Nullable String driver;
+    private final @Nullable String driverVersion;
 
-    private GraphicsCard(String name, @Nullable Vendor vendor, @Nullable String version) {
-        this.name = name;
+    private GraphicsCard(String name, @Nullable Vendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion) {
+        this.name = Objects.requireNonNull(name);
         this.vendor = vendor;
-        this.version = version;
+        this.type = type;
+        this.driver = driver;
+        this.driverVersion = driverVersion;
     }
 
     public String getName() {
@@ -106,25 +53,25 @@ public final class GraphicsCard {
         return vendor;
     }
 
-    public @Nullable String getVersion() {
-        return version;
+    public @Nullable String getDriverVersion() {
+        return driverVersion;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(name);
 
-        if (vendor != null || version != null) {
+        if (vendor != null || driverVersion != null) {
             builder.append(" (");
 
             if (vendor != null)
                 builder.append(vendor);
 
-            if (version != null) {
+            if (driverVersion != null) {
                 if (vendor != null)
                     builder.append(", ");
 
-                builder.append(version);
+                builder.append(driverVersion);
             }
 
             builder.append(')');
@@ -134,9 +81,24 @@ public final class GraphicsCard {
     }
 
     public static final class Vendor {
+        public static final Vendor UNKNOWN = new Vendor("Unknown");
+
         public static final Vendor INTEL = new Vendor("Intel");
         public static final Vendor NVIDIA = new Vendor("NVIDIA");
         public static final Vendor AMD = new Vendor("AMD");
+        public static final Vendor APPLE = new Vendor("Apple");
+        public static final Vendor QUALCOMM = new Vendor("Qualcomm");
+        public static final Vendor MTK = new Vendor("MTK");
+        public static final Vendor VMWARE = new Vendor("VMware");
+        public static final Vendor PARALLEL = new Vendor("Parallel");
+        public static final Vendor MICROSOFT = new Vendor("Microsoft");
+        public static final Vendor MOORE_THREADS = new Vendor("Moore Threads");
+        public static final Vendor BROADCOM = new Vendor("Broadcom");
+        public static final Vendor IMG = new Vendor("Imagination");
+        public static final Vendor LOONGSON = new Vendor("Loongson");
+        public static final Vendor JINGJIA_MICRO = new Vendor("Jingjia Micro");
+        public static final Vendor HUAWEI = new Vendor("Huawei");
+        public static final Vendor ZHAOXIN = new Vendor("Zhaoxin");
 
         @Contract("null -> null; !null -> !null")
         public static Vendor of(String name) {
@@ -146,9 +108,70 @@ public final class GraphicsCard {
             String lower = name.toLowerCase(Locale.ROOT);
             if (lower.startsWith("intel")) return INTEL;
             if (lower.startsWith("nvidia")) return NVIDIA;
-            if (lower.startsWith("amd")) return AMD;
+            if (lower.startsWith("advanced micro devices")
+                    || (lower.startsWith("amd") && !(lower.length() > 3 && Character.isAlphabetic(lower.charAt(3)))))
+                return AMD;
+            if (lower.equals("brcm") || lower.startsWith("broadcom")) return BROADCOM;
+            if (lower.startsWith("mediatek")) return MTK;
+            if (lower.startsWith("qualcomm")) return QUALCOMM;
+            if (lower.startsWith("apple")) return APPLE;
+            if (lower.startsWith("microsoft")) return MICROSOFT;
+            if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
+
+            if (lower.startsWith("loongson")) return LOONGSON;
+            if (lower.startsWith("moore threads")) return MOORE_THREADS;
+            if (lower.startsWith("jingjia")) return JINGJIA_MICRO;
+            if (lower.startsWith("huawei")) return HUAWEI;
+            if (lower.startsWith("zhaoxin")) return ZHAOXIN;
 
             return new Vendor(name);
+        }
+
+        public static @Nullable Vendor ofId(int vendorId) {
+            // https://devicehunt.com/all-pci-vendors
+            switch (vendorId) {
+                case 0x106b:
+                    return APPLE;
+                case 0x1002:
+                case 0x1022:
+                case 0x1dd8: // AMD Pensando Systems
+                case 0x1924: // AMD Solarflare
+                    return AMD;
+                case 0x8086:
+                case 0x8087:
+                case 0x03e7:
+                    return INTEL;
+                case 0x0955:
+                case 0x10de:
+                case 0x12d2:
+                    return NVIDIA;
+                case 0x1ed5:
+                    return MOORE_THREADS;
+                case 0x168c:
+                case 0x5143:
+                    return QUALCOMM;
+                case 0x14c3:
+                    return MTK;
+                case 0x15ad:
+                    return VMWARE;
+                case 0x1ab8:
+                    return PARALLEL;
+                case 0x1414:
+                    return MICROSOFT;
+                case 0x182f:
+                case 0x14e4:
+                    return BROADCOM;
+                case 0x0014:
+                    return LOONGSON;
+                case 0x0731:
+                    return JINGJIA_MICRO;
+                case 0x19e5:
+                    return HUAWEI;
+                case 0x1d17:
+                    return ZHAOXIN;
+                default:
+                    return null;
+            }
         }
 
         private final String name;
@@ -163,18 +186,81 @@ public final class GraphicsCard {
 
         @Override
         public boolean equals(Object o) {
-            if (!(o instanceof Vendor)) return false;
-            return Objects.equals(name, ((Vendor) o).name);
+            return o instanceof Vendor && name.equals(((Vendor) o).name);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(name);
+            return name.hashCode();
         }
 
         @Override
         public String toString() {
             return name;
+        }
+    }
+
+    public enum Type {
+        INTEGRATED,
+        DISCRETE
+    }
+
+    public static final class Builder {
+        private String name;
+        private Vendor vendor;
+        private Type type;
+        private String driver;
+        private String driverVersion;
+
+        public GraphicsCard build() {
+            if (name == null)
+                throw new IllegalStateException("Name not set");
+
+            return new GraphicsCard(name, vendor, type, driver, driverVersion);
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Builder setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Vendor getVendor() {
+            return vendor;
+        }
+
+        public Builder setVendor(Vendor vendor) {
+            this.vendor = vendor;
+            return this;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public void setType(Type type) {
+            this.type = type;
+        }
+
+        public String getDriver() {
+            return driver;
+        }
+
+        public Builder setDriver(String driver) {
+            this.driver = driver;
+            return this;
+        }
+
+        public String getDriverVersion() {
+            return driverVersion;
+        }
+
+        public Builder setDriverVersion(String driverVersion) {
+            this.driverVersion = driverVersion;
+            return this;
         }
     }
 }

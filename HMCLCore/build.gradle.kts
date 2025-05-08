@@ -16,6 +16,7 @@ dependencies {
     api(libs.jsoup)
     api(libs.chardet)
     api(libs.jna)
+    api(libs.pci.ids)
 
     compileOnlyApi(libs.jetbrains.annotations)
 }

@@ -15,26 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.platform.hardware;
+package org.jackhuang.hmcl.util.platform.linux;
 
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class Hardware {
+/**
+ * @author Glavo
+ */
+public final class LinuxHardwareDetector extends HardwareDetector {
 
-    public static final HardwareDetector DETECTOR;
-
-    static {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            DETECTOR = new WindowsHardwareDetector();
-        else
-            DETECTOR = new HardwareDetector();
-    }
-
-    public static final List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
-
-    private Hardware() {
+    @Override
+    public @NotNull List<GraphicsCard> detectGraphicsCards() {
+        return LinuxGPUDetector.detectAll();
     }
 }

@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.util.platform.windows;
 /**
  * @author Glavo
  */
-public final class WinReg {
+public abstract class WinReg {
 
     /**
      * @see <a href="https://learn.microsoft.com/windows/win32/sysinfo/predefined-keys">Predefined Keys</a>
@@ -47,7 +47,4 @@ public final class WinReg {
             return value;
         }
     }
-
-
-
 }

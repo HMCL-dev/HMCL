@@ -17,24 +17,16 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
-public final class Hardware {
-
-    public static final HardwareDetector DETECTOR;
-
-    static {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            DETECTOR = new WindowsHardwareDetector();
-        else
-            DETECTOR = new HardwareDetector();
-    }
-
-    public static final List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
-
-    private Hardware() {
+/**
+ * @author Glavo
+ */
+public class HardwareDetector {
+    public @NotNull List<GraphicsCard> detectGraphicsCards() {
+        return Collections.emptyList();
     }
 }
