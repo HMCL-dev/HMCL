@@ -65,7 +65,6 @@ public final class WindowsHardwareDetector extends HardwareDetector {
                 throw new IOException("Bad exit code: " + process.exitValue());
 
             JsonReader reader = new JsonReader(new StringReader(json));
-
             List<Win32_VideoController> videoControllers;
             JsonToken firstToken = reader.peek();
             if (firstToken == JsonToken.BEGIN_ARRAY)
