@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.Hardware;
 
 import java.io.File;
@@ -261,19 +260,7 @@ public final class Launcher extends Application {
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
 
-            String card;
-            if (Hardware.GRAPHICS_CARDS.isEmpty())
-                card = "Not Found";
-            else if (Hardware.GRAPHICS_CARDS.size() == 1)
-                card = Hardware.GRAPHICS_CARDS.get(0).toString();
-            else {
-                StringBuilder builder = new StringBuilder();
-                for (GraphicsCard graphicsCard : Hardware.GRAPHICS_CARDS) {
-                    builder.append("\n - ").append(graphicsCard.toString());
-                }
-                card = builder.toString();
-            }
-            LOG.info("Graphics Card: " + card);
+            Lang.thread(Hardware::initialize, "Detection Hardware", true);
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
