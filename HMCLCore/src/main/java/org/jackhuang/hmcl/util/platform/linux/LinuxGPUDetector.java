@@ -50,7 +50,7 @@ final class LinuxGPUDetector {
     private static final Pattern PCI_MODALIAS_PATTERN =
             Pattern.compile("pci:v(?<vendorId>\\p{XDigit}{8})d(?<deviceId>\\p{XDigit}{8})sv(?<subVendorId>\\p{XDigit}{8})sd(?<subDeviceId>\\p{XDigit}{8})bc(?<classId>\\p{XDigit}{2})sc(?<subclassId>\\p{XDigit}{2})i\\p{XDigit}{2}");
     private static final Pattern PCI_DEVICE_PATTERN =
-            Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?=pciBus\\p{XDigit}+):(?=pciDevice\\p{XDigit}+)\\.(?=pciFunc\\p{XDigit}+)");
+            Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?<pciBus>\\p{XDigit}+):(?<pciDevice>\\p{XDigit}+)\\.(?<pciFunc>\\p{XDigit}+)");
     private static final Pattern OF_DEVICE_PATTERN =
             Pattern.compile("of:NgpuT[^C]*C(?<compatible>.*)");
 
@@ -190,11 +190,11 @@ final class LinuxGPUDetector {
                     if (builder.getName() == null) {
                         Device device = vendor.getDevices().get(deviceId);
                         if (device != null) {
-                            matcher = Pattern.compile(".*\\[(?=<name>.*)]").matcher(device.getName());
+                            matcher = Pattern.compile(".*\\[(?<name>.*)]").matcher(device.getName());
                             if (matcher.matches())
-                                builder.setName(matcher.group("name"));
+                                builder.setName(builder.getVendor() + " " + matcher.group("name"));
                             else
-                                builder.setName(device.getName());
+                                builder.setName(builder.getVendor() + " " + device.getName());
                         }
                     }
                 }
