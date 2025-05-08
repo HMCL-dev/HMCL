@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -47,9 +48,11 @@ final class LinuxGPUDetector {
     private static volatile SoftReference<PCIIDsDatabase> databaseCache;
 
     private static final Pattern PCI_MODALIAS_PATTERN =
-            Pattern.compile("^pci:v(?<vendorId>\\p{XDigit}{8})d(?<deviceId>\\p{XDigit}{8})sv(?<subVendorId>\\p{XDigit}{8})sd(?<subDeviceId>\\p{XDigit}{8})bc(?<classId>\\p{XDigit}{2})sc(?<subclassId>\\p{XDigit}{2})");
+            Pattern.compile("pci:v(?<vendorId>\\p{XDigit}{8})d(?<deviceId>\\p{XDigit}{8})sv(?<subVendorId>\\p{XDigit}{8})sd(?<subDeviceId>\\p{XDigit}{8})bc(?<classId>\\p{XDigit}{2})sc(?<subclassId>\\p{XDigit}{2})i\\p{XDigit}{2}");
     private static final Pattern PCI_DEVICE_PATTERN =
             Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?=pciBus\\p{XDigit}+):(?=pciDevice\\p{XDigit}+)\\.(?=pciFunc\\p{XDigit}+)");
+    private static final Pattern OF_DEVICE_PATTERN =
+            Pattern.compile("^NgpuT[^C]*C(?<compatible>.*)");
 
     private static PCIIDsDatabase getPCIIDsDatabase() {
         SoftReference<PCIIDsDatabase> databaseWeakReference = LinuxGPUDetector.databaseCache;
@@ -62,13 +65,11 @@ final class LinuxGPUDetector {
             }
         }
 
-        String[] paths = {
+        for (String path : new String[]{
                 "/usr/share/misc/pci.ids",
                 "/usr/share/hwdata/pci.ids",
                 "/usr/local/share/hwdata/pci.ids"
-        };
-
-        for (String path : paths) {
+        }) {
             Path p = Paths.get(path);
             if (Files.isRegularFile(p)) {
                 try {
@@ -84,9 +85,31 @@ final class LinuxGPUDetector {
         return null;
     }
 
-    private static GraphicsCard detectPci(Path deviceDir, String modalias) throws IOException {
+    private static void detectDriver(GraphicsCard.Builder builder, Path deviceDir) {
+        try {
+            Path driverDir = Files.readSymbolicLink(deviceDir.resolve("driver"));
+            if (driverDir.getNameCount() > 0) {
+
+                String name = driverDir.getName(driverDir.getNameCount() - 1).toString();
+                builder.setDriver(name);
+
+                Path versionFile = deviceDir.resolve("driver/module/version");
+                if (Files.isRegularFile(versionFile)) {
+                    builder.setDriverVersion(FileUtils.readText(versionFile).trim());
+                } else if ("zx".equals(name)) {
+                    versionFile = deviceDir.resolve("zx_info/driver_version");
+                    if (Files.isRegularFile(versionFile)) {
+                        builder.setDriverVersion(FileUtils.readText(versionFile).trim());
+                    }
+                }
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static GraphicsCard detectPCI(Path deviceDir, String modalias) throws IOException {
         Matcher matcher = PCI_MODALIAS_PATTERN.matcher(modalias);
-        if (!matcher.find())
+        if (!matcher.matches())
             return null;
 
         GraphicsCard.Builder builder = GraphicsCard.builder();
@@ -115,25 +138,7 @@ final class LinuxGPUDetector {
 
         builder.setVendor(GraphicsCard.Vendor.ofId(vendorId));
 
-        try {
-            Path driverDir = Files.readSymbolicLink(deviceDir.resolve("driver"));
-            if (driverDir.getNameCount() > 0) {
-
-                String name = driverDir.getName(driverDir.getNameCount() - 1).toString();
-                builder.setDriver(name);
-
-                Path versionFile = deviceDir.resolve("driver/module/version");
-                if (Files.isRegularFile(versionFile)) {
-                    builder.setDriverVersion(FileUtils.readText(versionFile).trim());
-                } else if ("zx".equals(name)) {
-                    versionFile = deviceDir.resolve("zx_info/driver_version");
-                    if (Files.isRegularFile(versionFile)) {
-                        builder.setDriverVersion(FileUtils.readText(versionFile).trim());
-                    }
-                }
-            }
-        } catch (IOException ignored1) {
-        }
+        detectDriver(builder, deviceDir);
 
         try {
             if (builder.getVendor() == GraphicsCard.Vendor.AMD) {
@@ -196,9 +201,6 @@ final class LinuxGPUDetector {
             }
         }
 
-        if (builder.getVendor() == null)
-            builder.setVendor(GraphicsCard.Vendor.UNKNOWN);
-
         if (builder.getName() == null) {
             String subclassStr;
             switch (subclassId) {
@@ -215,7 +217,9 @@ final class LinuxGPUDetector {
                     subclassStr = "";
             }
 
-            builder.setName(String.format("%s Device %04X%s", builder.getVendor(), deviceId, subclassStr));
+            builder.setName(String.format("%s Device %04X%s",
+                    builder.getVendor() != null ? builder.getVendor().toString() : "Unknown",
+                    deviceId, subclassStr));
         }
 
         if (builder.getType() == null) {
@@ -231,6 +235,31 @@ final class LinuxGPUDetector {
             }
         }
 
+        return builder.build();
+    }
+
+    private static GraphicsCard detectOF(Path deviceDir, String modalias) throws IOException {
+        Matcher matcher = OF_DEVICE_PATTERN.matcher(modalias);
+        if (!matcher.matches())
+            return null;
+
+        GraphicsCard.Builder builder = new GraphicsCard.Builder();
+
+        String compatible = matcher.group("compatible");
+        int idx = compatible.indexOf(',');
+        if (idx < 0) {
+            builder.setName(compatible.trim());
+        } else {
+            String vendorName = compatible.substring(idx + 1).trim();
+            GraphicsCard.Vendor vendor = GraphicsCard.Vendor.getKnown(vendorName);
+
+            builder.setName(compatible.substring(0, idx).trim());
+            builder.setVendor(vendor != null ? vendor : new GraphicsCard.Vendor(vendorName.toUpperCase(Locale.ROOT)));
+        }
+
+        builder.setType(GraphicsCard.Type.INTEGRATED);
+
+        detectDriver(builder, deviceDir);
         return builder.build();
     }
 
@@ -260,10 +289,9 @@ final class LinuxGPUDetector {
                     String modalias = FileUtils.readText(modaliasFile);
                     GraphicsCard graphicsCard = null;
                     if (modalias.startsWith("pci:"))
-                        graphicsCard = detectPci(deviceDir, modalias);
-                    else if (modalias.startsWith("of:")) {
-                        // TODO
-                    }
+                        graphicsCard = detectPCI(deviceDir, modalias);
+                    else if (modalias.startsWith("of:"))
+                        graphicsCard = detectOF(deviceDir, modalias);
 
                     if (graphicsCard != null)
                         cards.add(graphicsCard);

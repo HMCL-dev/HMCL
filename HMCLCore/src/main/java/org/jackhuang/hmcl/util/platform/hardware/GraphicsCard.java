@@ -81,8 +81,6 @@ public final class GraphicsCard {
     }
 
     public static final class Vendor {
-        public static final Vendor UNKNOWN = new Vendor("Unknown");
-
         public static final Vendor INTEL = new Vendor("Intel");
         public static final Vendor NVIDIA = new Vendor("NVIDIA");
         public static final Vendor AMD = new Vendor("AMD");
@@ -100,8 +98,7 @@ public final class GraphicsCard {
         public static final Vendor HUAWEI = new Vendor("Huawei");
         public static final Vendor ZHAOXIN = new Vendor("Zhaoxin");
 
-        @Contract("null -> null; !null -> !null")
-        public static Vendor of(String name) {
+        public static @Nullable Vendor getKnown(String name) {
             if (name == null)
                 return null;
 
@@ -124,7 +121,16 @@ public final class GraphicsCard {
             if (lower.startsWith("huawei")) return HUAWEI;
             if (lower.startsWith("zhaoxin")) return ZHAOXIN;
 
-            return new Vendor(name);
+            return null;
+        }
+
+        @Contract("null -> null; !null -> !null")
+        public static Vendor of(String name) {
+            if (name == null)
+                return null;
+
+            Vendor known = getKnown(name);
+            return known != null ? known : new Vendor(name);
         }
 
         public static @Nullable Vendor ofId(int vendorId) {
