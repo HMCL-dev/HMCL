@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.util.platform.linux;
 
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,6 +32,8 @@ public final class LinuxHardwareDetector extends HardwareDetector {
 
     @Override
     public @NotNull List<GraphicsCard> detectGraphicsCards() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
+            return Collections.emptyList();
         return LinuxGPUDetector.detectAll();
     }
 }

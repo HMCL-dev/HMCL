@@ -61,20 +61,8 @@ public final class GraphicsCard {
     public String toString() {
         StringBuilder builder = new StringBuilder(name);
 
-        if (vendor != null || driverVersion != null) {
-            builder.append(" (");
-
-            if (vendor != null)
-                builder.append(vendor);
-
-            if (driverVersion != null) {
-                if (vendor != null)
-                    builder.append(", ");
-
-                builder.append(driverVersion);
-            }
-
-            builder.append(')');
+        if (type != null) {
+            builder.append(" [").append(type).append(']');
         }
 
         return builder.toString();
@@ -207,8 +195,8 @@ public final class GraphicsCard {
     }
 
     public enum Type {
-        INTEGRATED,
-        DISCRETE
+        Integrated,
+        Discrete
     }
 
     public static final class Builder {

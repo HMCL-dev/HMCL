@@ -147,8 +147,8 @@ final class LinuxGPUDetector {
                     for (Path subDir : Lang.toIterable(subDirs)) {
                         if (Files.isDirectory(subDir) && !subDir.getFileName().toString().startsWith(".")) {
                             builder.setType(Files.exists(subDir.resolve("in1_input"))
-                                    ? GraphicsCard.Type.INTEGRATED
-                                    : GraphicsCard.Type.DISCRETE);
+                                    ? GraphicsCard.Type.Integrated
+                                    : GraphicsCard.Type.Discrete);
                             break;
                         }
                     }
@@ -174,7 +174,7 @@ final class LinuxGPUDetector {
                 }
 
             } else if (builder.getVendor() == GraphicsCard.Vendor.INTEL) {
-                builder.setType(pciDevice == 20 ? GraphicsCard.Type.INTEGRATED : GraphicsCard.Type.DISCRETE);
+                builder.setType(pciDevice == 20 ? GraphicsCard.Type.Integrated : GraphicsCard.Type.Discrete);
             }
         } catch (Throwable ignored) {
         }
@@ -227,11 +227,11 @@ final class LinuxGPUDetector {
                 if (builder.getName().startsWith("GeForce")
                         || builder.getName().startsWith("Quadro")
                         || builder.getName().startsWith("Tesla"))
-                    builder.setType(GraphicsCard.Type.DISCRETE);
+                    builder.setType(GraphicsCard.Type.Discrete);
 
             } else if (builder.getVendor() == GraphicsCard.Vendor.MOORE_THREADS) {
                 if (builder.getName().startsWith("MTT "))
-                    builder.setType(GraphicsCard.Type.DISCRETE);
+                    builder.setType(GraphicsCard.Type.Discrete);
             }
         }
 
@@ -257,7 +257,7 @@ final class LinuxGPUDetector {
             builder.setVendor(vendor != null ? vendor : new GraphicsCard.Vendor(vendorName.toUpperCase(Locale.ROOT)));
         }
 
-        builder.setType(GraphicsCard.Type.INTEGRATED);
+        builder.setType(GraphicsCard.Type.Integrated);
 
         detectDriver(builder, deviceDir);
         return builder.build();
