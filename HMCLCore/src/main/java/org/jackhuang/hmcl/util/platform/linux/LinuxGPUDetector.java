@@ -52,7 +52,7 @@ final class LinuxGPUDetector {
     private static final Pattern PCI_DEVICE_PATTERN =
             Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?=pciBus\\p{XDigit}+):(?=pciDevice\\p{XDigit}+)\\.(?=pciFunc\\p{XDigit}+)");
     private static final Pattern OF_DEVICE_PATTERN =
-            Pattern.compile("^NgpuT[^C]*C(?<compatible>.*)");
+            Pattern.compile("of:NgpuT[^C]*C(?<compatible>.*)");
 
     private static PCIIDsDatabase getPCIIDsDatabase() {
         SoftReference<PCIIDsDatabase> databaseWeakReference = LinuxGPUDetector.databaseCache;
@@ -250,10 +250,10 @@ final class LinuxGPUDetector {
         if (idx < 0) {
             builder.setName(compatible.trim());
         } else {
-            String vendorName = compatible.substring(idx + 1).trim();
+            String vendorName = compatible.substring(0, idx).trim();
             GraphicsCard.Vendor vendor = GraphicsCard.Vendor.getKnown(vendorName);
 
-            builder.setName(compatible.substring(0, idx).trim());
+            builder.setName(compatible.substring(idx + 1).trim());
             builder.setVendor(vendor != null ? vendor : new GraphicsCard.Vendor(vendorName.toUpperCase(Locale.ROOT)));
         }
 
@@ -286,7 +286,7 @@ final class LinuxGPUDetector {
                     continue;
 
                 try {
-                    String modalias = FileUtils.readText(modaliasFile);
+                    String modalias = FileUtils.readText(modaliasFile).trim();
                     GraphicsCard graphicsCard = null;
                     if (modalias.startsWith("pci:"))
                         graphicsCard = detectPCI(deviceDir, modalias);
