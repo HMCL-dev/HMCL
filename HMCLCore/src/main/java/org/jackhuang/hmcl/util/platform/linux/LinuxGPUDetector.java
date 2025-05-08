@@ -302,6 +302,7 @@ final class LinuxGPUDetector {
             LOG.warning("Failed to get graphics card info", e);
         } finally {
             databaseCache = null;
+            System.gc();
         }
 
         return Collections.unmodifiableList(cards);
