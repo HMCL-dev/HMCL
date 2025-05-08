@@ -158,8 +158,8 @@ final class LinuxGPUDetector {
                 Path revisionFile = deviceDir.resolve("revision");
                 if (Files.isRegularFile(revisionFile)) {
                     String revisionString = FileUtils.readText(revisionFile).trim();
-                    int revision = Integer.parseInt(revisionString);
-                    String prefix = String.format("%X,\t%X ", deviceId, revision);
+                    int revision = Integer.decode(revisionString);
+                    String prefix = String.format("%X,\t%X,\t", deviceId, revision);
                     //noinspection DataFlowIssue
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                             LinuxHardwareDetector.class.getResourceAsStream("/assets/platform/amdgpu.ids"), StandardCharsets.UTF_8))) {
