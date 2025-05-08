@@ -102,11 +102,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
             if (process != null && process.isAlive())
                 process.destroy();
 
-            if (json == null)
-                LOG.warning("Failed to get graphics card info", e);
-            else
-                LOG.warning("Failed to get graphics card info: " + json, e);
-
+            LOG.warning("Failed to get graphics card info" + (json != null ? ": " + json : ""), e);
             return Collections.emptyList();
         }
 

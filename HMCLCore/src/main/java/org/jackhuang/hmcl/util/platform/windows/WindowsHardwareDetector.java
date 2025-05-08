@@ -17,8 +17,11 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
@@ -26,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,6 +53,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             return Collections.emptyList();
 
         Process process = null;
+        String json = null;
         try {
             process = new ProcessBuilder("powershell.exe",
                     "-Command",
@@ -56,12 +61,20 @@ public final class WindowsHardwareDetector extends HardwareDetector {
                     .redirectError(new File("NUL"))
                     .start();
 
-            String json = IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET);
+            json = IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET);
             if (process.waitFor() != 0)
                 throw new IOException("Bad exit code: " + process.exitValue());
 
-            List<Win32_VideoController> videoControllers = JsonUtils.GSON.fromJson(json, JsonUtils.listTypeOf(Win32_VideoController.class));
-            if (videoControllers == null)
+            JsonReader reader = new JsonReader(new StringReader(json));
+
+
+            List<Win32_VideoController> videoControllers;
+            JsonToken firstToken = reader.peek();
+            if (firstToken == JsonToken.BEGIN_ARRAY)
+                videoControllers = JsonUtils.GSON.fromJson(reader, JsonUtils.listTypeOf(Win32_VideoController.class));
+            else if (firstToken == JsonToken.BEGIN_OBJECT)
+                videoControllers = Collections.singletonList(JsonUtils.GSON.fromJson(reader, Win32_VideoController.class));
+            else
                 return Collections.emptyList();
 
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
@@ -80,7 +93,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             if (process != null && process.isAlive())
                 process.destroy();
 
-            LOG.warning("Failed to get graphics card info", e);
+            LOG.warning("Failed to get graphics card info" + (json != null ? ": " + json : ""), e);
             return Collections.emptyList();
         }
     }
