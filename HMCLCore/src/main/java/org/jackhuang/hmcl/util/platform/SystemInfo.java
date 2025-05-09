@@ -63,6 +63,16 @@ public final class SystemInfo {
                 }
             }
         }
+
+        OperatingSystem.PhysicalMemoryStatus memoryStatus = OperatingSystem.getPhysicalMemoryStatus();
+        if (memoryStatus.getTotal() > 0 && memoryStatus.getAvailable() > 0) {
+            builder.append("\n - Memory: ")
+                    .append(String.format("%.2f GiB / %.2f GiB (%d%%)",
+                            memoryStatus.getUsedGB(), memoryStatus.getTotalGB(),
+                            (int) (((double) memoryStatus.getUsed() / memoryStatus.getTotal()) * 100)
+                    ));
+        }
+
         LOG.info(builder.toString());
     }
 
