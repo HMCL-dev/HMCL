@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,7 +67,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     }
 
     @Override
-    public @NotNull List<GraphicsCard> detectGraphicsCards() {
+    public List<GraphicsCard> detectGraphicsCards() {
         if (!OperatingSystem.isWindows7OrLater())
             return null;
 
