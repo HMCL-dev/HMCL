@@ -260,7 +260,7 @@ public final class Launcher extends Application {
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
 
-            Lang.thread(SystemInfo::initialize, "Detection Hardware", true);
+            Lang.thread(SystemInfo::initialize, "Detection System Information", true);
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
