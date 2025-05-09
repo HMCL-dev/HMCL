@@ -388,7 +388,7 @@ public final class Accounts {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
         if (authlibinjectorLocation == null) {
             return new AuthlibInjectorDownloader(
-                    Metadata.DEPENDENCIES_DIRECTORY.resolve("authlib-injector.jar"),
+                    Metadata.DEPENDENCIES_DIRECTORY.resolve("universal").resolve("authlib-injector.jar"),
                     DownloadProviders::getDownloadProvider) {
                 @Override
                 public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {

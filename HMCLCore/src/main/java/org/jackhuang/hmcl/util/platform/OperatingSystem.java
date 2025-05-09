@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.KeyValuePairProperties;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,10 +31,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -170,47 +169,68 @@ public enum OperatingSystem {
         if (CURRENT_OS == WINDOWS) {
             String versionNumber = null;
             int buildNumber = -1;
+            int codePage = -1;
 
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                    Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
-                            .matcher(reader.readLine().trim());
+            Kernel32 kernel32 = Kernel32.INSTANCE;
 
-                    if (matcher.find()) {
-                        versionNumber = matcher.group("version");
-                        buildNumber = Integer.parseInt(matcher.group("build"));
-                    }
-                }
-                process.destroy();
-            } catch (Throwable ignored) {
+            // Get Windows version number
+            if (kernel32 != null) {
+                WinTypes.OSVERSIONINFOEXW osVersionInfo = new WinTypes.OSVERSIONINFOEXW();
+                if (kernel32.GetVersionExW(osVersionInfo)) {
+                    int majorVersion = osVersionInfo.dwMajorVersion;
+                    int minorVersion = osVersionInfo.dwMinorVersion;
+
+                    buildNumber = osVersionInfo.dwBuildNumber;
+                    versionNumber = majorVersion + "." + minorVersion + "." + buildNumber;
+                } else
+                    System.err.println("Failed to obtain OS version number (" + kernel32.GetLastError() + ")");
             }
 
             if (versionNumber == null) {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                        Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
+                                .matcher(reader.readLine().trim());
+
+                        if (matcher.find()) {
+                            versionNumber = matcher.group("version");
+                            buildNumber = Integer.parseInt(matcher.group("build"));
+                        }
+                    }
+                    process.destroy();
+                } catch (Throwable ignored) {
+                }
+            }
+
+            if (versionNumber == null)
                 versionNumber = System.getProperty("os.version");
+
+            // Get Code Page
+
+            if (kernel32 != null)
+                codePage = kernel32.GetACP();
+            else {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                        Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
+                                .matcher(reader.readLine().trim());
+
+                        if (matcher.find()) {
+                            codePage = Integer.parseInt(matcher.group("cp"));
+                        }
+                    }
+                    process.destroy();
+                } catch (Throwable ignored) {
+                }
             }
 
             String osName = System.getProperty("os.name");
 
             // Java 17 or earlier recognizes Windows 11 as Windows 10
-            if (osName.equals("Windows 10") && buildNumber >= 22000) {
+            if (osName.equals("Windows 10") && buildNumber >= 22000)
                 osName = "Windows 11";
-            }
-
-            int codePage = -1;
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                    Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
-                            .matcher(reader.readLine().trim());
-
-                    if (matcher.find()) {
-                        codePage = Integer.parseInt(matcher.group("cp"));
-                    }
-                }
-                process.destroy();
-            } catch (Throwable ignored) {
-            }
 
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = versionNumber;
@@ -454,4 +474,5 @@ public enum OperatingSystem {
 
         public static final PhysicalMemoryStatus INVALID = new PhysicalMemoryStatus(0, -1);
     }
+
 }
