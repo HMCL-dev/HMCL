@@ -48,7 +48,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
     public List<GraphicsCard> detectGraphicsCards() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
             return null;
 
         Process process = null;
