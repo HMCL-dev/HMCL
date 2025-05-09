@@ -252,9 +252,11 @@ final class LinuxGPUDetector {
         } else {
             String vendorName = compatible.substring(0, idx).trim();
             GraphicsCard.Vendor vendor = GraphicsCard.Vendor.getKnown(vendorName);
+            if (vendor == null)
+                vendor = new GraphicsCard.Vendor(vendorName.toUpperCase(Locale.ROOT));
 
-            builder.setName(compatible.substring(idx + 1).trim());
-            builder.setVendor(vendor != null ? vendor : new GraphicsCard.Vendor(vendorName.toUpperCase(Locale.ROOT)));
+            builder.setName(vendor + " " + compatible.substring(idx + 1).trim());
+            builder.setVendor(vendor);
         }
 
         builder.setType(GraphicsCard.Type.Integrated);
