@@ -15,18 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.platform.hardware;
+package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class Hardware {
+public final class SystemInfo {
 
     private static final class Holder {
         public static final HardwareDetector DETECTOR;
@@ -42,32 +44,32 @@ public final class Hardware {
                 DETECTOR = new HardwareDetector();
         }
 
-        public static final List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
+        public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
 
     public static void initialize() {
+        StringBuilder builder = new StringBuilder("System Info:");
         List<GraphicsCard> graphicsCards = getGraphicsCards();
 
-        String card;
-        if (graphicsCards.isEmpty())
-            card = "Not Found";
-        else if (Holder.GRAPHICS_CARDS.size() == 1)
-            card = Holder.GRAPHICS_CARDS.get(0).toString();
-        else {
-            StringBuilder builder = new StringBuilder();
-            int index = 1;
-            for (GraphicsCard graphicsCard : graphicsCards) {
-                builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard.toString());
+        if (graphicsCards != null) {
+            if (graphicsCards.isEmpty())
+                builder.append("\n - GPU: Not Found");
+            else if (graphicsCards.size() == 1)
+                builder.append("\n - GPU: ").append(graphicsCards.get(0));
+            else {
+                int index = 1;
+                for (GraphicsCard graphicsCard : graphicsCards) {
+                    builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
+                }
             }
-            card = builder.toString();
         }
-        LOG.info("Graphics Card: " + card);
+        LOG.info(builder.toString());
     }
 
-    public static List<GraphicsCard> getGraphicsCards() {
+    public static @Nullable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;
     }
 
-    private Hardware() {
+    private SystemInfo() {
     }
 }

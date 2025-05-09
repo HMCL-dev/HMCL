@@ -17,16 +17,15 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Glavo
  */
 public class HardwareDetector {
-    public @NotNull List<GraphicsCard> detectGraphicsCards() {
-        return Collections.emptyList();
+    public @Nullable List<GraphicsCard> detectGraphicsCards() {
+        return null;
     }
 }

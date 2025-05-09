@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,9 +47,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
-    public @NotNull List<GraphicsCard> detectGraphicsCards() {
+    public List<GraphicsCard> detectGraphicsCards() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
-            return Collections.emptyList();
+            return null;
 
         Process process = null;
         String json = null;

@@ -70,7 +70,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     @Override
     public @NotNull List<GraphicsCard> detectGraphicsCards() {
         if (!OperatingSystem.isWindows7OrLater())
-            return Collections.emptyList();
+            return null;
 
         Process process = null;
         String list = null;
