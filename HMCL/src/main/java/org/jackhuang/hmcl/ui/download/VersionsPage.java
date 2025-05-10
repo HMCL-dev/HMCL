@@ -92,6 +92,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final JFXCheckBox chkRelease;
     private final JFXCheckBox chkSnapshot;
     private final JFXCheckBox chkOld;
+    private final JFXCheckBox chkAprilFools;
     private final ComponentList centrePane;
     private final StackPane center;
 
@@ -139,7 +140,10 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         chkOld = new JFXCheckBox(i18n("version.game.old"));
                         HBox.setMargin(chkOld, new Insets(10, 0, 10, 0));
 
-                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld);
+                        chkAprilFools = new JFXCheckBox(i18n("version.game.aprilfools"));
+                        HBox.setMargin(chkAprilFools, new Insets(10, 0, 10, 0));
+
+                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld, chkAprilFools);
                     }
 
                     list = new JFXListView<>();
@@ -269,6 +273,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkRelease.selectedProperty().addListener(listener);
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
+        chkAprilFools.selectedProperty().addListener(listener);
         queryString.addListener(listener);
 
         btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1)));
@@ -297,6 +302,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             return chkSnapshot.isSelected();
                         case OLD:
                             return chkOld.isSelected();
+                        case APRILFOOLS:
+                            return chkAprilFools.isSelected();
                         default:
                             return true;
                     }
@@ -321,6 +328,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             chkRelease.setSelected(true);
                             chkSnapshot.setSelected(true);
                             chkOld.setSelected(true);
+                            chkAprilFools.setSelected(true);
                         } else {
                             list.getItems().setAll(items);
                         }
@@ -415,6 +423,11 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     case PENDING:
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
+                        content.setImage(VersionIconType.COMMAND.getIcon());
+                        content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
+                        break;
+                    case APRILFOOLS:
+                        content.getTags().setAll(i18n("version.game.aprilfools"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
                         content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
                         break;
