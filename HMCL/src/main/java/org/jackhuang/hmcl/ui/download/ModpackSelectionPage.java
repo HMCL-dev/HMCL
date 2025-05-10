@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
+import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_NAME;
 import static org.jackhuang.hmcl.ui.download.RemoteModpackPage.MODPACK_SERVER_MANIFEST;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -170,7 +171,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     public void onChooseRepository() {
-        DownloadPage downloadPage = new DownloadPage();
+        String modPackName = (String) controller.getSettings().get(MODPACK_NAME);
+        DownloadPage downloadPage = new DownloadPage(modPackName);
         downloadPage.showModpackDownloads();
         Controllers.navigate(downloadPage);
     }
