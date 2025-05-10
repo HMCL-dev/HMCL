@@ -192,6 +192,11 @@ public final class SelfDependencyPatcher {
             } catch (IOException e) {
                 throw new PatchException("Failed to download dependencies", e);
             }
+            try {
+                patcher.cleanupUnusedDependencies();
+            } catch (IOException e) {
+                LOG.warning("Failed to cleanup unused dependencies: " + e);
+            }
         }
 
         // Add the dependencies
@@ -346,6 +351,29 @@ public final class SelfDependencyPatcher {
             dialog.dispose();
             return;
         }
+    }
+
+    private void cleanupUnusedDependencies() throws IOException {
+        Path dirPath = DependencyDescriptor.DEPENDENCIES_DIR_PATH;
+        if (!Files.exists(dirPath)) {
+            return;
+        }
+
+        Set<String> validFiles = dependencies.stream()
+                .map(DependencyDescriptor::filename)
+                .collect(toSet());
+
+        Files.list(dirPath).forEach(file -> {
+            String filename = file.getFileName().toString();
+            if (!validFiles.contains(filename)) {
+                try {
+                    Files.delete(file);
+                    LOG.info("Deleted unused dependency file: " + filename);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete unused dependency file: " + filename);
+                }
+            }
+        });
     }
 
     private List<DependencyDescriptor> checkMissingDependencies() {
