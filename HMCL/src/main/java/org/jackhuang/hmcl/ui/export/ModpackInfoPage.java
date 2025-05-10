@@ -302,7 +302,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             FXUtils.setLimitWidth(txtMinMemory, 60);
                             validatingFields.add(txtMinMemory);
 
-                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MB"));
+                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MiB"));
                         }
 
                         pane.getChildren().setAll(title, lowerBoundPane);
