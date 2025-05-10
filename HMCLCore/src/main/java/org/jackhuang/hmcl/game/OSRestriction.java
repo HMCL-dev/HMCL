@@ -17,16 +17,22 @@
  */
 package org.jackhuang.hmcl.game;
 
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author huangyuhui
  */
+@JsonAdapter(OSRestriction.JsonAdapterImpl.class)
 public final class OSRestriction {
 
     private final OperatingSystem name;
@@ -78,4 +84,49 @@ public final class OSRestriction {
         return true;
     }
 
+    public static final class JsonAdapterImpl implements TypeAdapterFactory {
+        @SuppressWarnings("unchecked")
+        @Override
+        public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+            if (type.getRawType() != OSRestriction.class) {
+                return null;
+            }
+
+            TypeAdapter<OSRestriction> thisDelegate = (TypeAdapter<OSRestriction>) gson.getDelegateAdapter(this, type);
+
+            return (TypeAdapter<T>) new TypeAdapter<OSRestriction>() {
+                @Override
+                public void write(JsonWriter writer, OSRestriction restriction) throws IOException {
+                    thisDelegate.write(writer, restriction);
+                }
+
+                @Override
+                public OSRestriction read(JsonReader reader) {
+                    JsonObject element = gson.fromJson(reader, JsonObject.class);
+
+                    OSRestriction restriction = thisDelegate.fromJsonTree(element);
+                    if (restriction.getName() != null) {
+                        return restriction;
+                    }
+
+                    JsonElement name = element.getAsJsonObject().get("name");
+                    if (name != null && name.isJsonPrimitive()) {
+                        JsonPrimitive jp = name.getAsJsonPrimitive();
+                        if (jp.isString()) {
+                            String[] parts = jp.getAsString().split("-", 2);
+                            if (parts.length == 2) {
+                                OperatingSystem os = gson.fromJson(new JsonPrimitive(parts[0]), OperatingSystem.class);
+                                Architecture arch = gson.fromJson(new JsonPrimitive(parts[1]), Architecture.class);
+                                if (os != null && arch != null) {
+                                    return new OSRestriction(os, restriction.version, arch.getCheckedName());
+                                }
+                            }
+                        }
+                    }
+
+                    return restriction;
+                }
+            };
+        }
+    }
 }
