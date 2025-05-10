@@ -5,6 +5,7 @@ import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
@@ -47,7 +48,16 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         BorderPane body = new BorderPane();
 
         initCapeItem();
-        body.setCenter(capeItem);
+
+        ScrollPane scrollPane = new ScrollPane(capeItem);
+
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setMaxHeight(250);
+        scrollPane.setMaxWidth(150);
+
+        body.setCenter(scrollPane);
+        FXUtils.smoothScrolling(scrollPane);
 
         BorderPane rightPane = new BorderPane();
         rightPane.setCenter(capePreviewSpinner);
