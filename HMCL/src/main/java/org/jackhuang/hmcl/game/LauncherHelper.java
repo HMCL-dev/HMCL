@@ -554,9 +554,9 @@ public final class LauncherHelper {
                 }
 
                 // Cannot allocate too much memory exceeding free space.
-                long totalMemorySize = SystemInfo.getTotalMemorySize();
-                if (totalMemorySize > 0 && totalMemorySize < setting.getMaxMemory()) {
-                    suggestions.add(i18n("launch.advice.not_enough_space", (long) MEGABYTES.convertFromBytes(totalMemorySize)));
+                long totalMemorySizeMB = (long) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+                if (totalMemorySizeMB > 0 && totalMemorySizeMB < setting.getMaxMemory()) {
+                    suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
                 }
 
                 VersionNumber forgeVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
