@@ -23,8 +23,8 @@ val jfxPlatforms = listOf(
     Platform("windows-x86", "win-x86", version = oldJfxVersion),
     Platform("windows-x86_64", "win"),
     Platform("windows-arm64", "win", groupId = "org.glavo.hmcl.openjfx", version = "18.0.2+1-arm64"),
-    Platform("osx-x86_64", "mac", version = oldJfxVersion),
-    Platform("osx-arm64", "mac-aarch64", version = oldJfxVersion),
+    Platform("macos-x86_64", "mac", version = oldJfxVersion),
+    Platform("macos-arm64", "mac-aarch64", version = oldJfxVersion),
     Platform("linux-x86_64", "linux"),
     Platform("linux-arm32", "linux-arm32-monocle", version = oldJfxVersion),
     Platform("linux-arm64", "linux-aarch64", version = oldJfxVersion),
@@ -46,7 +46,7 @@ if (!jfxInClasspath && JavaVersion.current() >= JavaVersion.VERSION_11) {
     val os = System.getProperty("os.name").lowercase().let { osName ->
         when {
             osName.contains("win") -> "windows"
-            osName.contains("mac") -> "osx"
+            osName.contains("mac") -> "macos"
             osName.contains("linux") || osName.contains("unix") -> "linux"
             osName.contains("freebsd") -> "freebsd"
             else -> null

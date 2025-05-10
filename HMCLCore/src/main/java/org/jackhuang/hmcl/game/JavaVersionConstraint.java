@@ -135,7 +135,7 @@ public enum JavaVersionConstraint {
             if (java == null || java.getArchitecture() != Architecture.ARM64)
                 return false;
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 return gameVersionNumber.compareTo("1.6") < 0;
 
             return false;

@@ -73,13 +73,13 @@ public final class GameJavaVersion {
             switch (operatingSystem) {
                 case WINDOWS:
                 case LINUX:
-                case OSX:
+                case MACOS:
                     return Arrays.asList(JAVA_8, JAVA_16, JAVA_17, JAVA_21);
             }
         } else if (architecture == Architecture.ARM64) {
             switch (operatingSystem) {
                 case WINDOWS:
-                case OSX:
+                case MACOS:
                     return Arrays.asList(JAVA_17, JAVA_21);
             }
         }

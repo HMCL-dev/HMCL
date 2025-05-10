@@ -201,7 +201,7 @@ public enum Architecture {
                     sysArch = parseArchName(processorIdentifier.substring(0, idx));
                 }
             }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             if (CURRENT_ARCH == X86_64) {
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
