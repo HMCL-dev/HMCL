@@ -51,10 +51,10 @@ public final class VersionSetting implements Cloneable, Observable {
     private static final int SUGGESTED_MEMORY;
 
     static {
-        double totalMemoryInMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
-        SUGGESTED_MEMORY = totalMemoryInMB >= 32768
+        double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+        SUGGESTED_MEMORY = totalMemoryMB >= 32768
                 ? 8192
-                : Integer.max((int) (Math.round(totalMemoryInMB / 4.0 / 128.0) * 128), 256);
+                : Integer.max((int) (Math.round(totalMemoryMB / 4.0 / 128.0) * 128), 256);
     }
 
     private final transient ObservableHelper helper = new ObservableHelper(this);
