@@ -256,6 +256,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             graphic.setTranslateX(6);
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(graphic);
+            menuButton.disableProperty().bind(Bindings.isEmpty(menu.getContent()));
 
             EventHandler<MouseEvent> secondaryClickHandle = event -> {
                 if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
