@@ -51,6 +51,8 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.nio.file.Paths;
@@ -58,13 +60,15 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.getTimer;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
 
-    private static final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
+    private static final ObjectProperty<PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(PhysicalMemoryStatus.INVALID);
     private static TimerTask memoryStatusUpdateTask;
 
     private static void initMemoryStatusUpdateTask() {
@@ -74,7 +78,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         memoryStatusUpdateTask = new TimerTask() {
             @Override
             public void run() {
-                Platform.runLater(() -> memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus()));
+                Platform.runLater(() -> memoryStatus.set(SystemInfo.getPhysicalMemoryStatus()));
             }
         };
         getTimer().scheduleAtFixedRate(memoryStatusUpdateTask, 0, 1000);
@@ -295,12 +299,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
                     FXUtils.onChangeAndOperate(maxMemory, maxMemory -> {
                         changedByTextField.set(true);
-                        slider.setValue(maxMemory.intValue() * 1.0 / OperatingSystem.TOTAL_MEMORY);
+                        slider.setValue(maxMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
                         changedByTextField.set(false);
                     });
                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
                         if (changedByTextField.get()) return;
-                        maxMemory.set((int) (value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
+                        maxMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
                     });
 
                     JFXTextField txtMaxMemory = new JFXTextField();
@@ -343,9 +347,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     Label lblPhysicalMemory = new Label();
                     lblPhysicalMemory.getStyleClass().add("memory-label");
                     digitalPane.setLeft(lblPhysicalMemory);
-                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> {
-                        return i18n("settings.memory.used_per_total", memoryStatus.get().getUsedGB(), memoryStatus.get().getTotalGB());
-                    }, memoryStatus));
+                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() ->
+                            i18n("settings.memory.used_per_total",
+                                    GIGABYTES.convertFromBytes(memoryStatus.get().getUsed()),
+                                    GIGABYTES.convertFromBytes(memoryStatus.get().getTotal())), memoryStatus));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
@@ -353,9 +358,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         return i18n(memoryStatus.get().hasAvailable() && maxMemory > memoryStatus.get().getAvailable()
                                         ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto.exceeded" : "settings.memory.allocate.manual.exceeded")
                                         : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto" : "settings.memory.allocate.manual"),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(maxMemory),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(memoryStatus.get().getAvailable()));
+                                GIGABYTES.convertFromBytes(maxMemory),
+                                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
+                                GIGABYTES.convertFromBytes(memoryStatus.get().getAvailable()));
                     }, memoryStatus, maxMemory, chkAutoAllocate.selectedProperty()));
                     lblAllocateMemory.getStyleClass().add("memory-label");
                     digitalPane.setRight(lblAllocateMemory);
@@ -507,7 +512,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         cboProcessPriority.getItems().setAll(ProcessPriority.values());
         cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
 
-        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
+        memoryStatus.set(SystemInfo.getPhysicalMemoryStatus());
         componentList.disableProperty().bind(enableSpecificSettings.not());
 
         initMemoryStatusUpdateTask();

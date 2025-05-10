@@ -41,16 +41,10 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.logging.Logger;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -65,6 +59,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -98,7 +93,7 @@ public class GameCrashWindow extends Stage {
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
 
-        total_memory = OperatingSystem.TOTAL_MEMORY + " MB";
+        total_memory = MEGABYTES.formatBytes(SystemInfo.getTotalMemorySize());
 
         this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
                 ? launchOptions.getJava().getVersion()
