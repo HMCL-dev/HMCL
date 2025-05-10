@@ -318,6 +318,7 @@ public class MicrosoftService {
         public static final long MISSING_XBOX_ACCOUNT = 2148916233L;
         public static final long COUNTRY_UNAVAILABLE = 2148916235L;
         public static final long ADD_FAMILY = 2148916238L;
+        public static final long BANNED = 2148916227L;
     }
 
     public static class XBox400Exception extends AuthenticationException {
