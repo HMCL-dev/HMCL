@@ -63,6 +63,7 @@ import java.util.stream.Collectors;
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -553,8 +554,9 @@ public final class LauncherHelper {
                 }
 
                 // Cannot allocate too much memory exceeding free space.
-                if (OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
-                    suggestions.add(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY));
+                long totalMemorySizeMB = (long) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+                if (totalMemorySizeMB > 0 && totalMemorySizeMB < setting.getMaxMemory()) {
+                    suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
                 }
 
                 VersionNumber forgeVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)

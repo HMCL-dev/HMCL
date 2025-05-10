@@ -48,4 +48,9 @@ public interface Kernel32 extends StdCallLibrary {
      * @see <a href="https://learn.microsoft.com/windows/win32/api/winnls/nf-winnls-getusergeoid">GetUserGeoID function</a>
      */
     int GetUserGeoID(int geoClass);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex">GlobalMemoryStatusEx function</a>
+     */
+    boolean GlobalMemoryStatusEx(WinTypes.MEMORYSTATUSEX lpBuffer);
 }

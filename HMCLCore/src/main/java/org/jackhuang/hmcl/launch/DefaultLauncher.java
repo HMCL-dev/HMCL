@@ -212,7 +212,7 @@ public class DefaultLauncher extends Launcher {
             if (javaVersion <= 8) {
                 res.addUnstableDefault("MaxInlineLevel", "15");
             }
-            if (is64bit && OperatingSystem.TOTAL_MEMORY > 4 * 1024) {
+            if (is64bit && SystemInfo.getTotalMemorySize() > 4L * 1024 * 1024 * 1024) {
                 res.addUnstableDefault("DontCompileHugeMethods", false);
                 res.addUnstableDefault("MaxNodeLimit", "240000");
                 res.addUnstableDefault("NodeLimitFudgeFactor", "8000");

@@ -85,16 +85,6 @@ public enum OperatingSystem {
      */
     public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
 
-    /**
-     * The total memory/MB this computer have.
-     */
-    public static final int TOTAL_MEMORY;
-
-    /**
-     * The suggested memory size/MB for Minecraft to allocate.
-     */
-    public static final int SUGGESTED_MEMORY;
-
     public static final String PATH_SEPARATOR = File.pathSeparator;
     public static final String FILE_SEPARATOR = File.separator;
     public static final String LINE_SEPARATOR = System.lineSeparator();
@@ -128,8 +118,6 @@ public enum OperatingSystem {
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
-
-    private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
         String nativeEncoding = System.getProperty("native.encoding");
@@ -246,13 +234,6 @@ public enum OperatingSystem {
         OS_RELEASE_NAME = osRelease.get("NAME");
         OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
 
-        PhysicalMemoryStatus physicalMemoryStatus = getPhysicalMemoryStatus();
-        TOTAL_MEMORY = physicalMemoryStatus != PhysicalMemoryStatus.INVALID
-                ? (int) (physicalMemoryStatus.getTotal() / 1024 / 1024)
-                : 1024;
-
-        SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
-
         // setup the invalid names
         if (CURRENT_OS == WINDOWS) {
             // valid names and characters taken from http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/fs/naming_a_file.asp
@@ -313,48 +294,6 @@ public enum OperatingSystem {
         // Windows 7:       NT 6.1
 
         return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
-    }
-
-    @SuppressWarnings("deprecation")
-    public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
-        if (CURRENT_OS == LINUX) {
-            try {
-                long free = 0, available = 0, total = 0;
-                for (String line : Files.readAllLines(Paths.get("/proc/meminfo"))) {
-                    Matcher matcher = MEMINFO_PATTERN.matcher(line);
-                    if (matcher.find()) {
-                        String key = matcher.group("key");
-                        String value = matcher.group("value");
-                        if ("MemAvailable".equals(key)) {
-                            available = Long.parseLong(value) * 1024;
-                        }
-                        if ("MemFree".equals(key)) {
-                            free = Long.parseLong(value) * 1024;
-                        }
-                        if ("MemTotal".equals(key)) {
-                            total = Long.parseLong(value) * 1024;
-                        }
-                    }
-                }
-                if (total > 0) {
-                    return new PhysicalMemoryStatus(total, available > 0 ? available : free);
-                }
-            } catch (IOException e) {
-                e.printStackTrace(System.err);
-            }
-        }
-
-        try {
-            java.lang.management.OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-            if (bean instanceof com.sun.management.OperatingSystemMXBean) {
-                com.sun.management.OperatingSystemMXBean sunBean =
-                        (com.sun.management.OperatingSystemMXBean)
-                                java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-                return new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize());
-            }
-        } catch (NoClassDefFoundError ignored) {
-        }
-        return PhysicalMemoryStatus.INVALID;
     }
 
     @SuppressWarnings("removal")
@@ -418,50 +357,6 @@ public enum OperatingSystem {
         }
 
         return true;
-    }
-
-    public static class PhysicalMemoryStatus {
-        private final long total;
-        private final long available;
-
-        public PhysicalMemoryStatus(long total, long available) {
-            this.total = total;
-            this.available = available;
-        }
-
-        public long getTotal() {
-            return total;
-        }
-
-        public double getTotalGB() {
-            return toGigaBytes(total);
-        }
-
-        public long getUsed() {
-            return hasAvailable() ? total - available : 0;
-        }
-
-        public double getUsedGB() {
-            return toGigaBytes(getUsed());
-        }
-
-        public long getAvailable() {
-            return available;
-        }
-
-        public double getAvailableGB() {
-            return toGigaBytes(available);
-        }
-
-        public boolean hasAvailable() {
-            return available >= 0;
-        }
-
-        public static double toGigaBytes(long bytes) {
-            return bytes / 1024. / 1024. / 1024.;
-        }
-
-        public static final PhysicalMemoryStatus INVALID = new PhysicalMemoryStatus(0, -1);
     }
 
 }

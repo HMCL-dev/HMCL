@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
@@ -132,5 +133,37 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             LOG.warning("Failed to get graphics card info" + (list != null ? ": " + list : ""), e);
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public long getTotalMemorySize() {
+        if (NativeUtils.USE_JNA) {
+            Kernel32 kernel32 = Kernel32.INSTANCE;
+            if (kernel32 != null) {
+                WinTypes.MEMORYSTATUSEX status = new WinTypes.MEMORYSTATUSEX();
+                if (kernel32.GlobalMemoryStatusEx(status))
+                    return status.ullTotalPhys;
+                else
+                    LOG.warning("Failed to get memory status: " + kernel32.GetLastError());
+            }
+        }
+
+        return super.getTotalMemorySize();
+    }
+
+    @Override
+    public long getFreeMemorySize() {
+        if (NativeUtils.USE_JNA) {
+            Kernel32 kernel32 = Kernel32.INSTANCE;
+            if (kernel32 != null) {
+                WinTypes.MEMORYSTATUSEX status = new WinTypes.MEMORYSTATUSEX();
+                if (kernel32.GlobalMemoryStatusEx(status))
+                    return status.ullAvailPhys;
+                else
+                    LOG.warning("Failed to get memory status: " + kernel32.GetLastError());
+            }
+        }
+
+        return super.getFreeMemorySize();
     }
 }

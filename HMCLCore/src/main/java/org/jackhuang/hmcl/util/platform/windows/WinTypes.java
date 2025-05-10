@@ -60,4 +60,33 @@ public interface WinTypes {
             );
         }
     }
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/sysinfoapi/ns-sysinfoapi-memorystatusex">MEMORYSTATUSEX structure</a>
+     */
+    final class MEMORYSTATUSEX extends Structure {
+        public int dwLength;
+        public int dwMemoryLoad;
+        public long ullTotalPhys;
+        public long ullAvailPhys;
+        public long ullTotalPageFile;
+        public long ullAvailPageFile;
+        public long ullTotalVirtual;
+        public long ullAvailVirtual;
+        public long ullAvailExtendedVirtual;
+
+        public MEMORYSTATUSEX() {
+            dwLength = size();
+        }
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList(
+                    "dwLength", "dwMemoryLoad",
+                    "ullTotalPhys", "ullAvailPhys", "ullTotalPageFile", "ullAvailPageFile",
+                    "ullTotalVirtual", "ullAvailVirtual", "ullAvailExtendedVirtual");
+        }
+    }
+
+    ;
 }

@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
@@ -44,13 +46,15 @@ public final class SystemInfo {
                 DETECTOR = new HardwareDetector();
         }
 
+        public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
 
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
-        List<GraphicsCard> graphicsCards = getGraphicsCards();
 
+        // Graphics Card
+        List<GraphicsCard> graphicsCards = getGraphicsCards();
         if (graphicsCards != null) {
             if (graphicsCards.isEmpty())
                 builder.append("\n - GPU: Not Found");
@@ -64,16 +68,44 @@ public final class SystemInfo {
             }
         }
 
-        OperatingSystem.PhysicalMemoryStatus memoryStatus = OperatingSystem.getPhysicalMemoryStatus();
-        if (memoryStatus.getTotal() > 0 && memoryStatus.getAvailable() > 0) {
-            builder.append("\n - Memory: ")
-                    .append(String.format("%.2f GiB / %.2f GiB (%d%%)",
-                            memoryStatus.getUsedGB(), memoryStatus.getTotalGB(),
-                            (int) (((double) memoryStatus.getUsed() / memoryStatus.getTotal()) * 100)
-                    ));
-        }
+        // Memory
+        long totalMemorySize = getTotalMemorySize();
+        long usedMemorySize = getUsedMemorySize();
+
+        builder.append("\n - Memory: ")
+                .append(DataSizeUnit.format(usedMemorySize))
+                .append(" / ")
+                .append(DataSizeUnit.format(totalMemorySize));
+
+        if (totalMemorySize > 0 && usedMemorySize > 0)
+            builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
 
         LOG.info(builder.toString());
+    }
+
+    public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
+        long totalMemorySize = getTotalMemorySize();
+        long freeMemorySize = getFreeMemorySize();
+
+        return totalMemorySize > 0 && freeMemorySize >= 0
+                ? new PhysicalMemoryStatus(totalMemorySize, freeMemorySize)
+                : PhysicalMemoryStatus.INVALID;
+    }
+
+    public static long getTotalMemorySize() {
+        return Holder.TOTAL_MEMORY;
+    }
+
+    public static long getFreeMemorySize() {
+        return Holder.DETECTOR.getFreeMemorySize();
+    }
+
+    public static long getUsedMemorySize() {
+        long totalMemorySize = getTotalMemorySize();
+        if (totalMemorySize <= 0)
+            return 0;
+
+        return Long.max(0, totalMemorySize - getFreeMemorySize());
     }
 
     public static @Nullable List<GraphicsCard> getGraphicsCards() {
