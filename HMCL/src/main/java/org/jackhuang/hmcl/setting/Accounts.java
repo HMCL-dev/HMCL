@@ -65,10 +65,40 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class Accounts {
-    private Accounts() {
+    public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
+    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
+    private static final AuthlibInjectorArtifactProvider AUTHLIB_INJECTOR_DOWNLOADER = createAuthlibInjectorArtifactProvider();
+    public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
+    public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
+    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    // ==== Login type name i18n ===
+    private static final Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
+            pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
+            pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"),
+            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"));
+    // ==== login type / account factory mapping ====
+    private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
+    private static final Map<AccountFactory<?>, String> factory2type = new HashMap<>();
+    private static final String GLOBAL_PREFIX = "$GLOBAL:";
+    private static final ObservableList<Map<Object, Object>> globalAccountStorages = FXCollections.observableArrayList();
+    private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[]{account});
+    private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<>(Accounts.class, "selectedAccount");
+    /**
+     * True if {@link #init()} hasn't been called.
+     */
+    private static boolean initialized = false;
+    // ====
+
+    static {
+        type2factory.put("offline", FACTORY_OFFLINE);
+        type2factory.put("authlibInjector", FACTORY_AUTHLIB_INJECTOR);
+        type2factory.put("microsoft", FACTORY_MICROSOFT);
+
+        type2factory.forEach((type, factory) -> factory2type.put(factory, type));
     }
 
-    private static final AuthlibInjectorArtifactProvider AUTHLIB_INJECTOR_DOWNLOADER = createAuthlibInjectorArtifactProvider();
+    private Accounts() {
+    }
 
     private static void triggerAuthlibInjectorUpdateCheck() {
         if (AUTHLIB_INJECTOR_DOWNLOADER instanceof AuthlibInjectorDownloader) {
@@ -80,25 +110,6 @@ public final class Accounts {
                 }
             });
         }
-    }
-
-    public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
-
-    public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
-    public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
-    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
-
-    // ==== login type / account factory mapping ====
-    private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
-    private static final Map<AccountFactory<?>, String> factory2type = new HashMap<>();
-
-    static {
-        type2factory.put("offline", FACTORY_OFFLINE);
-        type2factory.put("authlibInjector", FACTORY_AUTHLIB_INJECTOR);
-        type2factory.put("microsoft", FACTORY_MICROSOFT);
-
-        type2factory.forEach((type, factory) -> factory2type.put(factory, type));
     }
 
     public static String getLoginType(AccountFactory<?> factory) {
@@ -120,7 +131,6 @@ public final class Accounts {
     public static BoundAuthlibInjectorAccountFactory getAccountFactoryByAuthlibInjectorServer(AuthlibInjectorServer server) {
         return new BoundAuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, server);
     }
-    // ====
 
     public static AccountFactory<?> getAccountFactory(Account account) {
         if (account instanceof OfflineAccount)
@@ -132,17 +142,6 @@ public final class Accounts {
         else
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
-
-    private static final String GLOBAL_PREFIX = "$GLOBAL:";
-    private static final ObservableList<Map<Object, Object>> globalAccountStorages = FXCollections.observableArrayList();
-
-    private static final ObservableList<Account> accounts = observableArrayList(account -> new Observable[]{account});
-    private static final ObjectProperty<Account> selectedAccount = new SimpleObjectProperty<>(Accounts.class, "selectedAccount");
-
-    /**
-     * True if {@link #init()} hasn't been called.
-     */
-    private static boolean initialized = false;
 
     private static Map<Object, Object> getAccountStorage(Account account) {
         Map<Object, Object> storage = account.toStorage();
@@ -416,6 +415,7 @@ public final class Accounts {
                     return server;
                 });
     }
+    // ====
 
     /**
      * After an {@link AuthlibInjectorServer} is removed, the associated accounts should also be removed.
@@ -429,13 +429,6 @@ public final class Accounts {
                 .collect(toList())
                 .forEach(accounts::remove);
     }
-    // ====
-
-    // ==== Login type name i18n ===
-    private static final Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
-            pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
-            pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"),
-            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"));
 
     public static String getLocalizedLoginTypeName(AccountFactory<?> factory) {
         return i18n(Optional.ofNullable(unlocalizedLoginTypeNames.get(factory))
@@ -489,6 +482,8 @@ public final class Accounts {
                 return i18n("account.methods.microsoft.error.country_unavailable");
             } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
                 return i18n("account.methods.microsoft.error.missing_xbox_account");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.BANNED) {
+                return i18n("account.methods.microsoft.error.banned");
             } else {
                 return i18n("account.methods.microsoft.error.unknown", errorCode);
             }
