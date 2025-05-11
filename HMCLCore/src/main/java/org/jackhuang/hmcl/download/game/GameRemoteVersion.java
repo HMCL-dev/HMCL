@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  *
@@ -64,7 +65,8 @@ public final class GameRemoteVersion extends RemoteVersion {
     private static Type getReleaseType(ReleaseType type, Instant releaseDate, String gameVersion) {
         if (type == null || releaseDate == null || gameVersion == null) return Type.UNCATEGORIZED;
         if (gameVersion.startsWith("2.0")) return Type.APRILFOOLS;
-        Calendar cal = Calendar.getInstance();
+        if (gameVersion.startsWith("1.RV")) return Type.APRILFOOLS;
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         cal.setTime(Date.from(releaseDate));
         int month = cal.get(Calendar.MONTH);
         int day = cal.get(Calendar.DAY_OF_MONTH);
