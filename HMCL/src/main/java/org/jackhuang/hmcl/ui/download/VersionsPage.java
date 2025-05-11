@@ -239,6 +239,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkSnapshot.setVisible(hasType);
         chkOld.setManaged(hasType);
         chkOld.setVisible(hasType);
+        chkAprilFools.setManaged(hasType);
+        chkAprilFools.setVisible(hasType);
 
         if (hasType) {
             centrePane.getContent().setAll(toolbarPane, list);
