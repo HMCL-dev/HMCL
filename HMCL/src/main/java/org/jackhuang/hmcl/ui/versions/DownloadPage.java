@@ -212,10 +212,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToHeight(true);
 
             HBox descriptionPane = new HBox(8);
-            descriptionPane.minHeightProperty().bind(Bindings.createDoubleBinding(
-                    () -> descriptionPane.prefHeight(-1),
-                    descriptionPane.prefHeightProperty(), descriptionPane.widthProperty()
-            ));
+            descriptionPane.setMinHeight(Region.USE_PREF_SIZE);
             descriptionPane.setAlignment(Pos.CENTER);
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
