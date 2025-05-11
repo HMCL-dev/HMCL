@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.platform.windows;
 
 import com.sun.jna.platform.win32.Advapi32Util;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -59,7 +60,7 @@ public final class WinRegTest {
         Advapi32Util.registrySetLongValue(hkey, key, "QWORD", 0xCAFEBABEL);
     }
 
-    // @AfterAll
+    @AfterAll
     public static void cleanUp() {
         if (key != null)
             Advapi32Util.registryDeleteKey(com.sun.jna.platform.win32.WinReg.HKEY_CURRENT_USER, key);
