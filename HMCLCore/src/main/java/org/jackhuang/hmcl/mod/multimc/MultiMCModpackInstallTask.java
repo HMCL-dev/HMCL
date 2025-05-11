@@ -80,7 +80,6 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 String version = component.getVersion();
                 if (version == null) {
                     // https://github.com/MultiMC/Launcher/blob/develop/launcher/minecraft/ComponentUpdateTask.cpp#L586-L602
-                    labelSwitch:
                     switch (componentID) {
                         case "org.lwjgl": {
                             version = "2.9.1";
@@ -95,7 +94,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                             for (MultiMCManifest.MultiMCManifestComponent c : manifest.getMmcPack().getComponents()) {
                                 if (MultiMCComponents.getComponent(c.getUid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
                                     version = Objects.requireNonNull(c.getVersion(), "Version of Minecraft must be specific.");
-                                    break labelSwitch;
+                                    break;
                                 }
                             }
                             break;
