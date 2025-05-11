@@ -429,7 +429,12 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     case APRILFOOLS:
                         content.getTags().setAll(i18n("version.game.aprilfools"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
-                        content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
+                        if (remoteVersion.getGameVersion().startsWith("2.0")) {
+                            content.setExternalLink(i18n("wiki.version.game.snapshot", "2.0"));
+                        }
+                        else {
+                            content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
+                        }
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));
