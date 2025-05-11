@@ -22,8 +22,27 @@ package org.jackhuang.hmcl.util.platform.windows;
  */
 public interface WinConstants {
 
+    // https://learn.microsoft.com/windows/win32/debug/system-error-codes--0-499-
+    int ERROR_SUCCESS = 0;
+
     // https://learn.microsoft.com/windows/win32/sysinfo/registry-key-security-and-access-rights
+    int KEY_QUERY_VALUE = 0x0001;
+    int KEY_ENUMERATE_SUB_KEYS = 0x0008;
     int KEY_READ = 0x20019;
+
+    // https://learn.microsoft.com/windows/win32/sysinfo/registry-value-types
+    int REG_NONE = 0;
+    int REG_SZ = 1;
+    int REG_EXPAND_SZ = 2;
+    int REG_BINARY = 3;
+    int REG_DWORD_LITTLE_ENDIAN = 4;
+    int REG_DWORD_BIG_ENDIAN = 5;
+    int REG_LINK = 6;
+    int REG_MULTI_SZ = 7;
+    int REG_RESOURCE_LIST = 8;
+    int REG_FULL_RESOURCE_DESCRIPTOR = 9;
+    int REG_RESOURCE_REQUIREMENTS_LIST = 10;
+    int REG_QWORD_LITTLE_ENDIAN = 11;
 
     // https://learn.microsoft.com/windows/win32/sysinfo/predefined-keys
     long HKEY_CLASSES_ROOT = 0x80000000L;

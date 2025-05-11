@@ -17,10 +17,24 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
+import com.sun.jna.Memory;
+import com.sun.jna.Pointer;
+import com.sun.jna.WString;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+
+import java.nio.ByteOrder;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /**
  * @author Glavo
  */
 public abstract class WinReg {
+
+    public static final WinReg INSTANCE = NativeUtils.USE_JNA && Advapi32.INSTANCE != null
+            ? new JNAWinReg(Advapi32.INSTANCE) : null;
 
     /**
      * @see <a href="https://learn.microsoft.com/windows/win32/sysinfo/predefined-keys">Predefined Keys</a>
@@ -36,7 +50,6 @@ public abstract class WinReg {
         HKEY_CURRENT_CONFIG(0x80000005),
         HKEY_DYN_DATA(0x80000006),
         HKEY_CURRENT_USER_LOCAL_SETTINGS(0x80000007);
-
         private final int value;
 
         HKEY(int value) {
@@ -46,5 +59,108 @@ public abstract class WinReg {
         public int getValue() {
             return value;
         }
+
+        public Pointer toPointer() {
+            return Pointer.createConstant((long) value);
+        }
     }
+
+    public abstract boolean exists(HKEY root, String key);
+
+    public abstract Object queryValue(HKEY root, String key, String valueName);
+
+    private static final class JNAWinReg extends WinReg {
+
+        private final Advapi32 advapi32;
+
+        JNAWinReg(Advapi32 advapi32) {
+            this.advapi32 = advapi32;
+        }
+
+        @Override
+        public boolean exists(HKEY root, String key) {
+            PointerByReference phkKey = new PointerByReference();
+            int status = advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_READ, phkKey);
+
+            if (status == WinConstants.ERROR_SUCCESS) {
+                advapi32.RegCloseKey(phkKey.getValue());
+                return true;
+            } else
+                return false;
+        }
+
+        private static void checkLength(int expected, int actual) {
+            if (expected != actual) {
+                throw new IllegalStateException("Expected " + expected + " bytes, but got " + actual);
+            }
+        }
+
+        @Override
+        public Object queryValue(HKEY root, String key, String valueName) {
+            PointerByReference phkKey = new PointerByReference();
+            int status = advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_READ, phkKey);
+
+            if (status != WinConstants.ERROR_SUCCESS)
+                return null;
+
+            Pointer hkey = phkKey.getValue();
+            try {
+                IntByReference lpType = new IntByReference();
+                IntByReference lpcbData = new IntByReference();
+                if (advapi32.RegQueryValueExW(hkey, new WString(valueName), null, lpType, null, lpcbData) != WinConstants.ERROR_SUCCESS)
+                    return null;
+
+                int type = lpType.getValue();
+                int cbData = lpcbData.getValue();
+
+                try (Memory lpData = new Memory(cbData)) {
+                    if (advapi32.RegQueryValueExW(hkey, new WString(valueName), null, null, lpData, lpcbData) != WinConstants.ERROR_SUCCESS)
+                        return null;
+
+                    checkLength(cbData, lpcbData.getValue());
+
+                    switch (type) {
+                        case WinConstants.REG_NONE:
+                        case WinConstants.REG_BINARY:
+                            return lpData.getByteArray(0L, cbData);
+                        case WinConstants.REG_DWORD_LITTLE_ENDIAN:
+                        case WinConstants.REG_DWORD_BIG_ENDIAN: {
+                            checkLength(4, cbData);
+                            int value = lpData.getInt(0L);
+                            ByteOrder expectedOrder = type == WinConstants.REG_DWORD_LITTLE_ENDIAN ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
+                            if (expectedOrder != ByteOrder.nativeOrder())
+                                value = Integer.reverseBytes(value);
+                            return value;
+                        }
+                        case WinConstants.REG_QWORD_LITTLE_ENDIAN: {
+                            checkLength(8, cbData);
+                            long value = lpData.getLong(0L);
+                            if (ByteOrder.nativeOrder() != ByteOrder.LITTLE_ENDIAN)
+                                value = Long.reverseBytes(value);
+                            return value;
+                        }
+                        case WinConstants.REG_SZ:
+                        case WinConstants.REG_EXPAND_SZ:
+                        case WinConstants.REG_LINK: {
+                            if (cbData < 2)
+                                throw new IllegalStateException("Illegal length: " + cbData);
+                            if (lpData.getChar(cbData - 2) != '\0')
+                                throw new IllegalStateException("The string does not end with \\0");
+
+                            return lpData.getWideString(0L);
+                        }
+                        default:
+                            throw new IllegalStateException("Unknown reg type: " + type);
+                    }
+                }
+            } catch (Throwable e) {
+                LOG.warning("Failed to query value", e);
+            } finally {
+                advapi32.RegCloseKey(hkey);
+            }
+
+            return null;
+        }
+    }
+
 }

@@ -87,6 +87,4 @@ public interface WinTypes {
                     "ullTotalVirtual", "ullAvailVirtual", "ullAvailExtendedVirtual");
         }
     }
-
-    ;
 }
