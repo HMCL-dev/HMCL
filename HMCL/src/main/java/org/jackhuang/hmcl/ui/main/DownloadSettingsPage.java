@@ -96,7 +96,13 @@ public class DownloadSettingsPage extends StackPane {
                     selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
                 }
 
-                downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane);
+                VBox checkBoxWrapper = new VBox();
+                checkBoxWrapper.setPadding(new Insets(8, 0, 8, 0));
+                JFXCheckBox enableMCIMCheckbox = new JFXCheckBox(i18n("settings.launcher.enable_mcim"));
+                enableMCIMCheckbox.selectedProperty().bindBidirectional(config().getMCIMEnablementProperty());
+                checkBoxWrapper.getChildren().setAll(enableMCIMCheckbox);
+
+                downloadSource.getChildren().setAll(chooseWrapper, versionListSourcePane, downloadSourcePane, checkBoxWrapper);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
