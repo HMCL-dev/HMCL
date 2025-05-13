@@ -36,7 +36,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -74,11 +73,8 @@ public class PersonalizationPage extends StackPane {
 
             ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
             picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
-            picker.setOnAction(e -> {
-                Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
-                config().setTheme(theme);
-                Controllers.getScene().getStylesheets().setAll(theme.getStylesheets(config().getLauncherFontFamily()));
-            });
+            picker.setOnAction(e ->
+                    config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
@@ -217,9 +213,10 @@ public class PersonalizationPage extends StackPane {
                 lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
                         () -> Font.font(config().getLauncherFontFamily(), 12),
                         config().launcherFontFamilyProperty()));
-                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
-                    Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue));
-                });
+                // TODO
+//                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
+//                    Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue));
+//                });
 
                 vbox.getChildren().add(lblFontDisplay);
 
