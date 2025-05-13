@@ -74,7 +74,7 @@ public final class StyleSheets {
         }
     }
 
-    private static String toCss(String styleSheet, int index, String fallback) {
+    private static String toStyleSheetUri(String styleSheet, int index, String fallback) {
         if (FXUtils.JAVAFX_MAJOR_VERSION >= 17)
             // JavaFX 17+ support loading stylesheets from data URIs
             // https://bugs.openjdk.org/browse/JDK-8267554
@@ -156,7 +156,7 @@ public final class StyleSheets {
 
         builder.append('}');
 
-        return toCss(builder.toString(), FONT_STYLE_SHEET_INDEX, fontFamily);
+        return toStyleSheetUri(builder.toString(), FONT_STYLE_SHEET_INDEX, fontFamily);
     }
 
     private static String rgba(Color color, double opacity) {
@@ -174,20 +174,16 @@ public final class StyleSheets {
         if (theme == null || theme.getPaint().equals(Theme.BLUE.getPaint()))
             return blueCss;
 
-        Color textFill = theme.getForegroundColor();
-
-        String builder = ".root {" +
+        return toStyleSheetUri(".root {" +
                 "-fx-base-color:" + theme.getColor() + ';' +
                 "-fx-base-darker-color: derive(-fx-base-color, -10%);" +
                 "-fx-base-check-color: derive(-fx-base-color, 30%);" +
                 "-fx-rippler-color:" + rgba(theme.getPaint(), 0.3) + ';' +
                 "-fx-base-rippler-color: derive(" + rgba(theme.getPaint(), 0.3) + ", 100%);" +
-                "-fx-base-disabled-text-fill:" + rgba(textFill, 0.7) + ";" +
+                "-fx-base-disabled-text-fill:" + rgba(theme.getForegroundColor(), 0.7) + ";" +
                 "-fx-base-text-fill:" + Theme.getColorDisplayName(theme.getForegroundColor()) + ";" +
                 "-theme-thumb:" + rgba(theme.getPaint(), 0.7) + ";" +
-                '}';
-
-        return toCss(builder, THEME_STYLE_SHEET_INDEX, blueCss);
+                '}', THEME_STYLE_SHEET_INDEX, blueCss);
     }
 
     public static void init(Scene scene) {
