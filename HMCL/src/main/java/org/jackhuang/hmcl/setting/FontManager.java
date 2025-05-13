@@ -113,7 +113,7 @@ public final class FontManager {
     }
 
     public static void setFontFamily(String fontFamily) {
-        setFont(fontFamily != null ? new Font(fontFamily, DEFAULT_FONT_SIZE) : null);
+        setFont(fontFamily != null ? Font.font(fontFamily, DEFAULT_FONT_SIZE) : null);
     }
 
     private FontManager() {
