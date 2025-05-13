@@ -45,8 +45,6 @@ public final class StyleSheets {
     private static final int FONT_STYLE_SHEET_INDEX = 0;
     private static final int THEME_STYLE_SHEET_INDEX = 1;
 
-    private static final Path[] tempFiles = new Path[2];
-
     private static final ObservableList<String> stylesheets;
 
     static {
@@ -59,50 +57,25 @@ public final class StyleSheets {
 
         FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
         config().themeProperty().addListener(o -> stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet()));
-
-        if (FXUtils.JAVAFX_MAJOR_VERSION < 17) {
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                for (Path tempFile : tempFiles) {
-                    if (tempFile != null) {
-                        try {
-                            Files.deleteIfExists(tempFile);
-                        } catch (IOException ignored) {
-                        }
-                    }
-                }
-            }));
-        }
     }
 
-    private static String toStyleSheetUri(String styleSheet, int index, String fallback) {
+    private static String toStyleSheetUri(String styleSheet, String fallback) {
         if (FXUtils.JAVAFX_MAJOR_VERSION >= 17)
             // JavaFX 17+ support loading stylesheets from data URIs
             // https://bugs.openjdk.org/browse/JDK-8267554
             return "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(styleSheet.getBytes(StandardCharsets.UTF_8));
-        else {
-            Path oldTempFile = tempFiles[index];
-            if (oldTempFile != null) {
-                tempFiles[index] = null;
-
-                try {
-                    Files.deleteIfExists(oldTempFile);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
+        else
             try {
                 Path temp = Files.createTempFile("hmcl", ".css");
                 // For JavaFX 17 or earlier, CssParser uses the default charset
                 // https://bugs.openjdk.org/browse/JDK-8279328
                 FileUtils.writeText(temp, styleSheet, Charset.defaultCharset());
-                tempFiles[index] = temp;
+                temp.toFile().deleteOnExit();
                 return temp.toUri().toString();
             } catch (IOException | NullPointerException e) {
                 LOG.error("Unable to create stylesheet, fallback to " + fallback, e);
                 return fallback;
             }
-        }
     }
 
     private static String getFontStyleSheet() {
@@ -156,7 +129,7 @@ public final class StyleSheets {
 
         builder.append('}');
 
-        return toStyleSheetUri(builder.toString(), FONT_STYLE_SHEET_INDEX, fontFamily);
+        return toStyleSheetUri(builder.toString(), fontFamily);
     }
 
     private static String rgba(Color color, double opacity) {
@@ -183,7 +156,7 @@ public final class StyleSheets {
                 "-fx-base-disabled-text-fill:" + rgba(theme.getForegroundColor(), 0.7) + ";" +
                 "-fx-base-text-fill:" + Theme.getColorDisplayName(theme.getForegroundColor()) + ";" +
                 "-theme-thumb:" + rgba(theme.getPaint(), 0.7) + ";" +
-                '}', THEME_STYLE_SHEET_INDEX, blueCss);
+                '}', blueCss);
     }
 
     public static void init(Scene scene) {
