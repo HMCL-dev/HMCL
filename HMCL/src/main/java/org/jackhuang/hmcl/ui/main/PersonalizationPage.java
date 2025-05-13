@@ -211,9 +211,7 @@ public class PersonalizationPage extends StackPane {
                     }
                 }
 
-                Label lblFontDisplay = new Label("Hello Minecraft! Launcher");
-
-                vbox.getChildren().add(lblFontDisplay);
+                vbox.getChildren().add(new Label("Hello Minecraft! Launcher"));
 
                 fontPane.getContent().add(vbox);
             }
