@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.value.ObservableObjectValue;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
@@ -35,26 +35,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class FontManager {
-    private static Font tryLoadDefaultFont(Path dir) {
-        String[] fileNames = {"font.ttf", "font.otf", "font.woff"};
 
-        for (String fileName : fileNames) {
-            Path path = dir.resolve(fileName);
-            if (Files.isRegularFile(path)) {
-                try {
-                    Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), 0);
-                    if (font != null) {
-                        return font;
-                    }
-                } catch (MalformedURLException ignored) {
-                }
-
-                LOG.warning("Failed to load font " + path);
-            }
-        }
-
-        return null;
-    }
+    public static final double DEFAULT_FONT_SIZE = 12.0f;
 
     private static final Lazy<Font> DEFAULT_FONT = new Lazy<>(() -> {
         Font font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
@@ -76,22 +58,62 @@ public final class FontManager {
         return null;
     });
 
-    static final ObservableObjectValue<Font> fontProperty = Bindings.createObjectBinding(() -> {
+    private static final ObjectProperty<Font> fontProperty = new SimpleObjectProperty<>(getDefaultFont());
+
+    static {
+        fontProperty.addListener((obs, oldValue, newValue) -> {
+            if (newValue != null)
+                config().setLauncherFontFamily(newValue.getFamily());
+            else
+                config().setLauncherFontFamily(null);
+        });
+    }
+
+    private static Font tryLoadDefaultFont(Path dir) {
+        String[] fileNames = {"font.ttf", "font.otf", "font.woff"};
+
+        for (String fileName : fileNames) {
+            Path path = dir.resolve(fileName);
+            if (Files.isRegularFile(path)) {
+                try {
+                    Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
+                    if (font != null) {
+                        return font;
+                    }
+                } catch (MalformedURLException ignored) {
+                }
+
+                LOG.warning("Failed to load font " + path);
+            }
+        }
+
+        return null;
+    }
+
+    private static Font getDefaultFont() {
         String fontFamily = config().getLauncherFontFamily();
         if (fontFamily == null)
-            fontFamily = System.getProperty("hmcl.font.override", System.getenv("HMCL_FONT"));
-        if (fontFamily != null)
-            return Font.font(fontFamily);
+            fontFamily = System.getProperty("hmcl.font.override");
+        if (fontFamily == null)
+            fontFamily = System.getenv("HMCL_FONT");
 
-        Font font = DEFAULT_FONT.get();
-        if (font != null)
-            return font;
+        return fontFamily == null ? DEFAULT_FONT.get() : Font.font(fontFamily, DEFAULT_FONT_SIZE);
+    }
 
-        return Font.getDefault();
-    }, config().launcherFontFamilyProperty());
+    public static ObjectProperty<Font> fontProperty() {
+        return fontProperty;
+    }
 
     public static Font getFont() {
         return fontProperty.get();
+    }
+
+    public static void setFont(Font font) {
+        fontProperty.set(font);
+    }
+
+    public static void setFontFamily(String fontFamily) {
+        setFont(fontFamily != null ? new Font(fontFamily, DEFAULT_FONT_SIZE) : null);
     }
 
     private FontManager() {

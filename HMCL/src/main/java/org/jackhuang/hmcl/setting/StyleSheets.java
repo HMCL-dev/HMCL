@@ -57,7 +57,7 @@ public final class StyleSheets {
         };
         stylesheets = FXCollections.observableList(Arrays.asList(array));
 
-        config().launcherFontFamilyProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
+        FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
         config().themeProperty().addListener(o -> stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet()));
 
         if (FXUtils.JAVAFX_MAJOR_VERSION < 17) {
