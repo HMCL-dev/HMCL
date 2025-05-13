@@ -116,7 +116,7 @@ public final class ManagedProcess {
                     pidField.setAccessible(true);
                     return pidField.getInt(process);
                 } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on OSX / Linux.", e);
+                    throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on macOS/Linux.", e);
                 }
             } else {
                 // Unknown Operating System, no fallback available.
