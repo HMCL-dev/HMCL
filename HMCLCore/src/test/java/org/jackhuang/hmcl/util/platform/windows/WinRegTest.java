@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -104,5 +105,9 @@ public final class WinRegTest {
 
         assertEquals(Arrays.asList(SUBKEYS).stream().map(it -> key + "\\" + it).collect(Collectors.toList()),
                 reg.queryKeys(hkey, key).stream().sorted().collect(Collectors.toList()));
+        for (String subkey : SUBKEYS) {
+            assertEquals(Collections.emptyList(), reg.queryKeys(hkey, key + "\\" + subkey));
+        }
+        assertEquals(Collections.emptyList(), reg.queryKeys(hkey, key + "\\NOT_EXIST"));
     }
 }
