@@ -49,17 +49,6 @@ public interface Advapi32 extends StdCallLibrary {
     int RegQueryValueExW(Pointer hKey, WString lpValueName, Pointer lpReserved, IntByReference lpType, Pointer lpData, IntByReference lpcbData);
 
     /**
-     * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regqueryinfokeyw">RegQueryInfoKeyW function</a>
-     */
-    int RegQueryInfoKeyW(Pointer hKey, Pointer lpClass,
-                        IntByReference lpcchClass, Pointer lpReserved,
-                        IntByReference lpcSubKeys, IntByReference lpcbMaxSubKeyLen,
-                        IntByReference lpcbMaxClassLen, IntByReference lpcValues,
-                        IntByReference lpcbMaxValueNameLen, IntByReference lpcbMaxValueLen,
-                        IntByReference lpcbSecurityDescriptor,
-                        Pointer lpftLastWriteTime);
-
-    /**
      * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regenumkeyexw">RegEnumKeyExW function</a>
      */
     int RegEnumKeyExW(Pointer hKey, int dwIndex,

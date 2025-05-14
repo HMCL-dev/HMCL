@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -647,45 +646,21 @@ public final class JavaManager {
 
     // ==== Windows Registry Support ====
     private static void queryJavaInRegistryKey(Map<Path, JavaRuntime> javaRuntimes, WinReg.HKEY hkey, String location) {
-        for (String java : querySubFolders(hkey, location)) {
-            if (!querySubFolders(hkey, java).contains(java + "\\MSI"))
+        WinReg reg = WinReg.INSTANCE;
+        if (reg == null)
+            return;
+
+        for (String java : reg.queryKeys(hkey, location)) {
+            if (!reg.queryKeys(hkey, java).contains(java + "\\MSI"))
                 continue;
-            String home = queryRegisterValue(hkey, java, "JavaHome");
-            if (home != null) {
+            Object home = reg.queryValue(hkey, java, "JavaHome");
+            if (home instanceof String) {
                 try {
-                    tryAddJavaHome(javaRuntimes, Paths.get(home));
+                    tryAddJavaHome(javaRuntimes, Paths.get((String) home));
                 } catch (InvalidPathException e) {
                     LOG.warning("Invalid Java path in system registry: " + home);
                 }
             }
         }
-    }
-
-    private static List<String> querySubFolders(WinReg.HKEY hkey, String key) {
-        List<String> res = new ArrayList<>();
-
-        try {
-            Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", key});
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-                for (String line; (line = reader.readLine()) != null; ) {
-                    if (line.startsWith(key) && !line.equals(key)) {
-                        res.add(line);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            LOG.warning("Failed to query sub folders of " + key, e);
-        }
-        return res;
-    }
-
-    private static String queryRegisterValue(WinReg.HKEY hkey, String key, String valueName) {
-        WinReg winreg = WinReg.INSTANCE;
-        if (winreg != null) {
-            Object value = winreg.queryValue(hkey, key, valueName);
-            if (value instanceof String)
-                return (String) value;
-        }
-        return null;
     }
 }

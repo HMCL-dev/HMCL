@@ -201,7 +201,6 @@ public abstract class WinReg {
                                 LOG.warning("Failed to enum key: " + status);
                             break;
                         }
-
                     }
                 }
                 return res;
