@@ -34,6 +34,7 @@ jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 chardet = { module = "org.glavo:chardet", version.ref = "chardet" }
 twelvemonkeys-imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }
 
 [plugins]
