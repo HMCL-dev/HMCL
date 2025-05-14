@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import com.sun.javafx.font.PrismFontFactory;
 import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
@@ -50,8 +51,18 @@ public final class SystemInfo {
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
 
+    private static String getSystemFont() {
+        return PrismFontFactory.getSystemFont("System");
+    }
+
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
+        try {
+            String systemFont = getSystemFont();
+            builder.append("\n - System Font: ").append(systemFont);
+        } catch (Throwable e) {
+            LOG.warning("Failed to get system font", e);
+        }
 
         // Graphics Card
         List<GraphicsCard> graphicsCards = getGraphicsCards();
