@@ -24,6 +24,31 @@ public interface WinConstants {
 
     // https://learn.microsoft.com/windows/win32/debug/system-error-codes--0-499-
     int ERROR_SUCCESS = 0;
+    int ERROR_FILE_NOT_FOUND        = 2;
+    int ERROR_PATH_NOT_FOUND        = 3;
+    int ERROR_ACCESS_DENIED         = 5;
+    int ERROR_INVALID_HANDLE        = 6;
+    int ERROR_INVALID_DATA          = 13;
+    int ERROR_NOT_SAME_DEVICE       = 17;
+    int ERROR_NOT_READY             = 21;
+    int ERROR_SHARING_VIOLATION     = 32;
+    int ERROR_FILE_EXISTS           = 80;
+    int ERROR_INVALID_PARAMETER     = 87;
+    int ERROR_DISK_FULL             = 112;
+    int ERROR_INSUFFICIENT_BUFFER   = 122;
+    int ERROR_INVALID_LEVEL         = 124;
+    int ERROR_DIR_NOT_ROOT          = 144;
+    int ERROR_DIR_NOT_EMPTY         = 145;
+    int ERROR_ALREADY_EXISTS        = 183;
+    int ERROR_MORE_DATA             = 234;
+    int ERROR_NO_MORE_ITEMS = 259;
+    int ERROR_DIRECTORY             = 267;
+    int ERROR_NOTIFY_ENUM_DIR       = 1022;
+    int ERROR_PRIVILEGE_NOT_HELD    = 1314;
+    int ERROR_NONE_MAPPED           = 1332;
+    int ERROR_CANT_ACCESS_FILE      = 1920;
+    int ERROR_NOT_A_REPARSE_POINT   = 4390;
+    int ERROR_INVALID_REPARSE_DATA  = 4392;
 
     // https://learn.microsoft.com/windows/win32/sysinfo/registry-key-security-and-access-rights
     int KEY_QUERY_VALUE = 0x0001;

@@ -23,7 +23,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,6 +38,14 @@ public final class WinRegTest {
         return WinReg.INSTANCE != null;
     }
 
+    private static final com.sun.jna.platform.win32.WinReg.HKEY ROOT_KEY = com.sun.jna.platform.win32.WinReg.HKEY_CURRENT_USER;
+    private static final String KEY_BASE = "Software\\JavaSoft\\Prefs\\hmcl\\test";
+    private static String key;
+
+    private static final String[] SUBKEYS = {
+            "Sub0", "Sub1", "Sub2", "Sub3"
+    };
+
     private static final byte[] TEST_DATA = new byte[128];
 
     static {
@@ -44,30 +54,38 @@ public final class WinRegTest {
         }
     }
 
-    private static String key;
-
     @BeforeAll
     public static void setup() {
-        com.sun.jna.platform.win32.WinReg.HKEY hkey = com.sun.jna.platform.win32.WinReg.HKEY_CURRENT_USER;
-        key = "Software\\JavaSoft\\Prefs\\hmcl\\test\\" + UUID.randomUUID();
-        if (!Advapi32Util.registryCreateKey(hkey, key)) {
+        key = KEY_BASE + "\\" + UUID.randomUUID();
+        if (!Advapi32Util.registryCreateKey(ROOT_KEY, key))
             throw new AssertionError("Failed to create key");
-        }
 
-        Advapi32Util.registrySetBinaryValue(hkey, key, "BINARY", TEST_DATA);
-        Advapi32Util.registrySetStringValue(hkey, key, "SZ", "Hello World!");
-        Advapi32Util.registrySetIntValue(hkey, key, "DWORD", 0xCAFEBABE);
-        Advapi32Util.registrySetLongValue(hkey, key, "QWORD", 0xCAFEBABEL);
+        Advapi32Util.registrySetBinaryValue(ROOT_KEY, key, "BINARY", TEST_DATA);
+        Advapi32Util.registrySetStringValue(ROOT_KEY, key, "SZ", "Hello World!");
+        Advapi32Util.registrySetIntValue(ROOT_KEY, key, "DWORD", 0xCAFEBABE);
+        Advapi32Util.registrySetLongValue(ROOT_KEY, key, "QWORD", 0xCAFEBABEL);
+
+        for (String subkey : SUBKEYS) {
+            if (!Advapi32Util.registryCreateKey(ROOT_KEY, key, subkey))
+                throw new AssertionError("Failed to create key");
+        }
     }
 
     @AfterAll
     public static void cleanUp() {
-        if (key != null)
-            Advapi32Util.registryDeleteKey(com.sun.jna.platform.win32.WinReg.HKEY_CURRENT_USER, key);
+        if (key != null) {
+            if (!Advapi32Util.registryKeyExists(ROOT_KEY, key))
+                return;
+
+            for (String subKey : Advapi32Util.registryGetKeys(ROOT_KEY, key))
+                Advapi32Util.registryDeleteKey(ROOT_KEY, key, subKey);
+
+            Advapi32Util.registryDeleteKey(ROOT_KEY, key);
+        }
     }
 
     @Test
-    public void testQuery() {
+    public void testQueryValue() {
         WinReg.HKEY hkey = WinReg.HKEY.HKEY_CURRENT_USER;
         WinReg reg = WinReg.INSTANCE;
 
@@ -76,5 +94,15 @@ public final class WinRegTest {
         assertEquals(0xCAFEBABE, reg.queryValue(hkey, key, "DWORD"));
         assertEquals(0xCAFEBABEL, reg.queryValue(hkey, key, "QWORD"));
         assertNull(reg.queryValue(hkey, key, "UNKNOWN"));
+        assertNull(reg.queryValue(hkey, KEY_BASE + "\\" + "NOT_EXIST", "UNKNOWN"));
+    }
+
+    @Test
+    public void testQueryKeys() {
+        WinReg.HKEY hkey = WinReg.HKEY.HKEY_CURRENT_USER;
+        WinReg reg = WinReg.INSTANCE;
+
+        assertEquals(Arrays.asList(SUBKEYS).stream().map(it -> key + "\\" + it).collect(Collectors.toList()),
+                reg.queryKeys(hkey, key).stream().sorted().collect(Collectors.toList()));
     }
 }

@@ -31,12 +31,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -357,10 +357,10 @@ public final class JavaManager {
 
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
-                queryJavaInRegistryKey(javaRuntimes, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Runtime Environment\\");
-                queryJavaInRegistryKey(javaRuntimes, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\");
-                queryJavaInRegistryKey(javaRuntimes, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JRE\\");
-                queryJavaInRegistryKey(javaRuntimes, "HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\JDK\\");
+                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Runtime Environment");
+                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Development Kit");
+                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\JRE");
+                queryJavaInRegistryKey(javaRuntimes, WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\JDK");
 
                 searchJavaInProgramFiles(javaRuntimes, "ProgramFiles", "C:\\Program Files");
                 searchJavaInProgramFiles(javaRuntimes, "ProgramFiles(x86)", "C:\\Program Files (x86)");
@@ -646,11 +646,11 @@ public final class JavaManager {
     }
 
     // ==== Windows Registry Support ====
-    private static void queryJavaInRegistryKey(Map<Path, JavaRuntime> javaRuntimes, String location) {
-        for (String java : querySubFolders(location)) {
-            if (!querySubFolders(java).contains(java + "\\MSI"))
+    private static void queryJavaInRegistryKey(Map<Path, JavaRuntime> javaRuntimes, WinReg.HKEY hkey, String location) {
+        for (String java : querySubFolders(hkey, location)) {
+            if (!querySubFolders(hkey, java).contains(java + "\\MSI"))
                 continue;
-            String home = queryRegisterValue(java, "JavaHome");
+            String home = queryRegisterValue(hkey, java, "JavaHome");
             if (home != null) {
                 try {
                     tryAddJavaHome(javaRuntimes, Paths.get(home));
@@ -661,52 +661,31 @@ public final class JavaManager {
         }
     }
 
-    private static List<String> querySubFolders(String location) {
+    private static List<String> querySubFolders(WinReg.HKEY hkey, String key) {
         List<String> res = new ArrayList<>();
 
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", location});
+            Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", key});
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
                 for (String line; (line = reader.readLine()) != null; ) {
-                    if (line.startsWith(location) && !line.equals(location)) {
+                    if (line.startsWith(key) && !line.equals(key)) {
                         res.add(line);
                     }
                 }
             }
         } catch (IOException e) {
-            LOG.warning("Failed to query sub folders of " + location, e);
+            LOG.warning("Failed to query sub folders of " + key, e);
         }
         return res;
     }
 
-    private static String queryRegisterValue(String location, String name) {
-        boolean last = false;
-
-        try {
-            Process process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", "reg", "query", location, "/v", name});
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-                for (String line; (line = reader.readLine()) != null; ) {
-                    if (StringUtils.isNotBlank(line)) {
-                        if (last && line.trim().startsWith(name)) {
-                            int begins = line.indexOf(name);
-                            if (begins > 0) {
-                                String s2 = line.substring(begins + name.length());
-                                begins = s2.indexOf("REG_SZ");
-                                if (begins > 0) {
-                                    return s2.substring(begins + "REG_SZ".length()).trim();
-                                }
-                            }
-                        }
-                        if (location.equals(line.trim())) {
-                            last = true;
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            LOG.warning("Failed to query register value of " + location, e);
+    private static String queryRegisterValue(WinReg.HKEY hkey, String key, String valueName) {
+        WinReg winreg = WinReg.INSTANCE;
+        if (winreg != null) {
+            Object value = winreg.queryValue(hkey, key, valueName);
+            if (value instanceof String)
+                return (String) value;
         }
-
         return null;
     }
 }

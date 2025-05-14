@@ -25,6 +25,9 @@ import com.sun.jna.ptr.PointerByReference;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -69,6 +72,8 @@ public abstract class WinReg {
 
     public abstract Object queryValue(HKEY root, String key, String valueName);
 
+    public abstract List<String> queryKeys(HKEY root, String key);
+
     private static final class JNAWinReg extends WinReg {
 
         private final Advapi32 advapi32;
@@ -98,24 +103,32 @@ public abstract class WinReg {
         @Override
         public Object queryValue(HKEY root, String key, String valueName) {
             PointerByReference phkKey = new PointerByReference();
-            int status = advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_READ, phkKey);
-
-            if (status != WinConstants.ERROR_SUCCESS)
+            if (advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_READ, phkKey) != WinConstants.ERROR_SUCCESS)
                 return null;
 
             Pointer hkey = phkKey.getValue();
             try {
                 IntByReference lpType = new IntByReference();
                 IntByReference lpcbData = new IntByReference();
-                if (advapi32.RegQueryValueExW(hkey, new WString(valueName), null, lpType, null, lpcbData) != WinConstants.ERROR_SUCCESS)
-                    return null;
+                int status = advapi32.RegQueryValueExW(hkey, new WString(valueName), null, lpType, null, lpcbData);
+                if (status != WinConstants.ERROR_SUCCESS) {
+                    if (status == WinConstants.ERROR_FILE_NOT_FOUND)
+                        return null;
+                    else
+                        throw new RuntimeException("Failed to query value: " + status);
+                }
 
                 int type = lpType.getValue();
                 int cbData = lpcbData.getValue();
 
                 try (Memory lpData = new Memory(cbData)) {
-                    if (advapi32.RegQueryValueExW(hkey, new WString(valueName), null, null, lpData, lpcbData) != WinConstants.ERROR_SUCCESS)
-                        return null;
+                    status = advapi32.RegQueryValueExW(hkey, new WString(valueName), null, null, lpData, lpcbData);
+                    if (status != WinConstants.ERROR_SUCCESS) {
+                        if (status == WinConstants.ERROR_FILE_NOT_FOUND)
+                            return null;
+                        else
+                            throw new RuntimeException("Failed to query value: " + status);
+                    }
 
                     checkLength(cbData, lpcbData.getValue());
 
@@ -143,14 +156,14 @@ public abstract class WinReg {
                         case WinConstants.REG_EXPAND_SZ:
                         case WinConstants.REG_LINK: {
                             if (cbData < 2)
-                                throw new IllegalStateException("Illegal length: " + cbData);
+                                throw new RuntimeException("Illegal length: " + cbData);
                             if (lpData.getChar(cbData - 2) != '\0')
-                                throw new IllegalStateException("The string does not end with \\0");
+                                throw new RuntimeException("The string does not end with \\0");
 
                             return lpData.getWideString(0L);
                         }
                         default:
-                            throw new IllegalStateException("Unknown reg type: " + type);
+                            throw new RuntimeException("Unknown reg type: " + type);
                     }
                 }
             } catch (Throwable e) {
@@ -160,6 +173,45 @@ public abstract class WinReg {
             }
 
             return null;
+        }
+
+        @Override
+        public List<String> queryKeys(HKEY root, String key) {
+            PointerByReference phkKey = new PointerByReference();
+            if (advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_READ, phkKey) != WinConstants.ERROR_SUCCESS)
+                return Collections.emptyList();
+
+            Pointer hkey = phkKey.getValue();
+            try {
+                String prefix = key.endsWith("\\") ? key : key + "\\";
+                ArrayList<String> res = new ArrayList<>();
+                int maxKeyLength = 256;
+                try (Memory lpName = new Memory(maxKeyLength * 2)) {
+                    IntByReference lpcchName = new IntByReference();
+                    int i = 0;
+
+                    while (true) {
+                        lpcchName.setValue(maxKeyLength);
+                        int status = advapi32.RegEnumKeyExW(hkey, i, lpName, lpcchName, null, null, null, null);
+                        if (status == WinConstants.ERROR_SUCCESS) {
+                            res.add(prefix + lpName.getWideString(0L));
+                            i++;
+                        } else {
+                            if (status != WinConstants.ERROR_NO_MORE_ITEMS)
+                                LOG.warning("Failed to enum key: " + status);
+                            break;
+                        }
+
+                    }
+                }
+                return res;
+            } catch (Throwable e) {
+                LOG.warning("Failed to query keys", e);
+            } finally {
+                advapi32.RegCloseKey(hkey);
+            }
+
+            return Collections.emptyList();
         }
     }
 
