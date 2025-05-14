@@ -265,7 +265,7 @@ public final class Controllers {
         stage.setMinHeight(MIN_HEIGHT);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
-        scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
+        StyleSheets.init(scene);
 
         FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
