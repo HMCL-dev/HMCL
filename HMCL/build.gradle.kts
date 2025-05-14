@@ -146,7 +146,6 @@ tasks.shadowJar {
                 "javafx.base/com.sun.javafx.event",
                 "javafx.base/com.sun.javafx.runtime",
                 "javafx.graphics/javafx.css",
-                "javafx.graphics/javafx.scene.text",
                 "javafx.graphics/com.sun.javafx.font",
                 "javafx.graphics/com.sun.javafx.stage",
                 "javafx.graphics/com.sun.prism",
