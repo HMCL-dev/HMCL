@@ -59,7 +59,7 @@ public final class SystemInfo {
         StringBuilder builder = new StringBuilder("System Info:");
         try {
             String systemFont = getSystemFont();
-            builder.append("\n - System Font: ").append(systemFont);
+            builder.append("\n - Font: ").append(systemFont);
         } catch (Throwable e) {
             LOG.warning("Failed to get system font", e);
         }
