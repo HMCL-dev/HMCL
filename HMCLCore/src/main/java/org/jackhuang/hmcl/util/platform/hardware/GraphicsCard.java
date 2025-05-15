@@ -80,10 +80,7 @@ public final class GraphicsCard {
         private String driverVersion;
 
         public GraphicsCard build() {
-            if (name == null)
-                throw new IllegalStateException("Name not set");
-
-            return new GraphicsCard(name, vendor, type, driver, driverVersion);
+            return new GraphicsCard(name != null ? name : "Unknown", vendor, type, driver, driverVersion);
         }
 
         public String getName() {

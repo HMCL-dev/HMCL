@@ -87,9 +87,7 @@ public final class CentralProcessor {
         private @Nullable Cores cores;
 
         public CentralProcessor build() {
-            if (name == null)
-                throw new IllegalStateException("Name not set");
-            return new CentralProcessor(name, vendor, cores);
+            return new CentralProcessor(name != null ? name : "Unknown", vendor, cores);
         }
 
         public String getName() {
