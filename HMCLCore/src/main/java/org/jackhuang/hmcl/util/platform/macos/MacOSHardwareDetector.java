@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -42,7 +44,66 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
     public @Nullable CentralProcessor detectCentralProcessor() {
-        return super.detectCentralProcessor();
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
+            return null;
+
+        try {
+            LinkedHashMap<String, String> values = SystemUtils.run(Arrays.asList("/usr/sbin/sysctl", "machdep.cpu"), inputStream -> {
+                LinkedHashMap<String, String> result = new LinkedHashMap<>();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        int idx = line.indexOf(':');
+                        if (idx > 0) {
+                            String key = line.substring(0, idx).trim();
+                            String value = line.substring(idx + 1).trim();
+                            result.put(key, value);
+                        }
+                    }
+                }
+                return result;
+            });
+
+            String brandString = values.get("machdep.cpu.brand_string");
+            String coreCount = values.get("machdep.cpu.core_count");
+            String threadCount = values.get("machdep.cpu.thread_count");
+            String coresPerPackage = values.get("machdep.cpu.cores_per_package");
+
+            CentralProcessor.Builder builder = new CentralProcessor.Builder();
+
+            if (brandString != null) {
+                builder.setName(brandString);
+
+                String lower = brandString.toLowerCase(Locale.ROOT);
+                if (lower.startsWith("apple"))
+                    builder.setVendor(HardwareVendor.APPLE);
+                else if (lower.startsWith("intel"))
+                    builder.setVendor(HardwareVendor.INTEL);
+            } else
+                builder.setName("Unknown");
+
+            if (coreCount != null || threadCount != null) {
+                int cores = coreCount != null ? Integer.parseInt(coreCount) : 0;
+                int threads = threadCount != null ? Integer.parseInt(threadCount) : 0;
+                int coresPerPackageCount = coresPerPackage != null ? Integer.parseInt(coresPerPackage) : 0;
+
+                if (cores > 0 && threads == 0)
+                    threads = cores;
+                else if (threads > 0 && cores == 0)
+                    cores = threads;
+
+                int packages = 1;
+                if (cores > 0 && coresPerPackageCount > 0)
+                    packages = Integer.max(cores / coresPerPackageCount, 1);
+
+                builder.setCores(new CentralProcessor.Cores(cores, threads, packages));
+            }
+
+            return builder.build();
+        } catch (Throwable e) {
+            LOG.warning("Failed to get cpu info", e);
+            return null;
+        }
     }
 
     @Override
