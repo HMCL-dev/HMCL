@@ -37,6 +37,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 final class FastFetchUtils {
+    private FastFetchUtils() {
+    }
+
     private static final Path fastfetch = SystemUtils.which("fastfetch");
 
     private static <T> T get(String type, TypeToken<T> resultType) {
