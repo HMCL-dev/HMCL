@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.platform.macos;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -48,21 +49,9 @@ public final class MacOSHardwareDetector extends HardwareDetector {
             return null;
 
         try {
-            LinkedHashMap<String, String> values = SystemUtils.run(Arrays.asList("/usr/sbin/sysctl", "machdep.cpu"), inputStream -> {
-                LinkedHashMap<String, String> result = new LinkedHashMap<>();
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        int idx = line.indexOf(':');
-                        if (idx > 0) {
-                            String key = line.substring(0, idx).trim();
-                            String value = line.substring(idx + 1).trim();
-                            result.put(key, value);
-                        }
-                    }
-                }
-                return result;
-            });
+            Map<String, String> values = SystemUtils.run(Arrays.asList("/usr/sbin/sysctl", "machdep.cpu"),
+                    inputStream -> KeyValuePairUtils.loadProperties(
+                            new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
 
             String brandString = values.get("machdep.cpu.brand_string");
             String coreCount = values.get("machdep.cpu.core_count");

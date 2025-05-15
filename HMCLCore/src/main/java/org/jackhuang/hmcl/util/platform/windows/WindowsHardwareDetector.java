@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -37,35 +39,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WindowsHardwareDetector extends HardwareDetector {
 
-    private static List<Map<String, String>> parsePowerShellFormatList(Iterable<String> lines) {
-        ArrayList<Map<String, String>> result = new ArrayList<>();
-        Map<String, String> current = new LinkedHashMap<>();
-
-        for (String line : lines) {
-            int idx = line.indexOf(':');
-
-            if (idx < 0) {
-                if (!current.isEmpty()) {
-                    result.add(current);
-                    current = new LinkedHashMap<>();
-                }
-                continue;
-            }
-
-            String key = line.substring(0, idx).trim();
-            String value = line.substring(idx + 1).trim();
-
-            current.put(key, value);
-        }
-
-        if (!current.isEmpty())
-            result.add(current);
-
-        return result;
-    }
-
     @Override
     public @Nullable CentralProcessor detectCentralProcessor() {
+        if (!OperatingSystem.isWindows7OrLater())
+            return null;
         return WindowsCPUDetector.detect();
     }
 
@@ -74,22 +51,21 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         if (!OperatingSystem.isWindows7OrLater())
             return null;
 
-        String list = null;
         try {
             String getCimInstance = OperatingSystem.SYSTEM_VERSION.startsWith("6.1")
                     ? "Get-WmiObject"
                     : "Get-CimInstance";
 
-            list = SystemUtils.run(Arrays.asList(
-                    "powershell.exe",
-                    "-Command",
-                    String.join(" | ",
-                            getCimInstance + " -Class Win32_VideoController",
-                            "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
-                            "Format-List"
-                    )), inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
+            List<Map<String, String>> videoControllers = SystemUtils.run(Arrays.asList(
+                            "powershell.exe",
+                            "-Command",
+                            String.join(" | ",
+                                    getCimInstance + " -Class Win32_VideoController",
+                                    "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
+                                    "Format-List"
+                            )),
+                    inputStream -> KeyValuePairUtils.loadList(new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
 
-            List<Map<String, String>> videoControllers = parsePowerShellFormatList(Arrays.asList(list.split("\\R")));
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
             for (Map<String, String> videoController : videoControllers) {
                 String name = videoController.get("Name");
@@ -113,7 +89,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
             return cards;
         } catch (Throwable e) {
-            LOG.warning("Failed to get graphics card info" + (list != null ? ": " + list : ""), e);
+            LOG.warning("Failed to get graphics card info", e);
             return Collections.emptyList();
         }
     }

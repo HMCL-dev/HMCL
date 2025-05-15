@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Glavo
  */
-public final class KeyValuePairPropertiesTest {
+public final class KeyValuePairUtilsTest {
     @Test
     public void test() throws IOException {
         String content = "#test: key0=value0\n \n" +
@@ -20,7 +21,7 @@ public final class KeyValuePairPropertiesTest {
                 "key2=\"value2\"\n" +
                 "key3=\"\\\" \\n\"\n";
 
-        KeyValuePairProperties properties = KeyValuePairProperties.load(new BufferedReader(new StringReader(content)));
+        Map<String, String> properties = KeyValuePairUtils.loadProperties(new BufferedReader(new StringReader(content)));
 
         assertEquals(Lang.mapOf(
                 pair("key1", "value1"),

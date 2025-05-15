@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.KeyValuePairProperties;
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
@@ -225,7 +225,7 @@ public enum OperatingSystem {
             Path osReleaseFile = Paths.get("/etc/os-release");
             if (Files.exists(osReleaseFile)) {
                 try {
-                    osRelease = KeyValuePairProperties.load(osReleaseFile);
+                    osRelease = KeyValuePairUtils.loadProperties(osReleaseFile);
                 } catch (IOException e) {
                     e.printStackTrace(System.err);
                 }
