@@ -99,15 +99,15 @@ public final class WinRegTest {
     }
 
     @Test
-    public void testQueryKeys() {
+    public void testQuerySubKeys() {
         WinReg.HKEY hkey = WinReg.HKEY.HKEY_CURRENT_USER;
         WinReg reg = WinReg.INSTANCE;
 
         assertEquals(Arrays.asList(SUBKEYS).stream().map(it -> key + "\\" + it).collect(Collectors.toList()),
-                reg.queryKeys(hkey, key).stream().sorted().collect(Collectors.toList()));
+                reg.querySubKeys(hkey, key).stream().sorted().collect(Collectors.toList()));
         for (String subkey : SUBKEYS) {
-            assertEquals(Collections.emptyList(), reg.queryKeys(hkey, key + "\\" + subkey));
+            assertEquals(Collections.emptyList(), reg.querySubKeys(hkey, key + "\\" + subkey));
         }
-        assertEquals(Collections.emptyList(), reg.queryKeys(hkey, key + "\\NOT_EXIST"));
+        assertEquals(Collections.emptyList(), reg.querySubKeys(hkey, key + "\\NOT_EXIST"));
     }
 }

@@ -23,9 +23,11 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,6 +68,11 @@ public final class WindowsHardwareDetector extends HardwareDetector {
             result.add(current);
 
         return result;
+    }
+
+    @Override
+    public @Nullable CentralProcessor detectCentralProcessor() {
+        return WindowsCPUDetector.detect();
     }
 
     @Override

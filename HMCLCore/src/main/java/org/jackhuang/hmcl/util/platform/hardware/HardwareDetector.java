@@ -32,6 +32,10 @@ public class HardwareDetector {
         return null;
     }
 
+    public @Nullable CentralProcessor detectCentralProcessor() {
+        return null;
+    }
+
     public long getTotalMemorySize() {
         try {
             OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();

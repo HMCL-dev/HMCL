@@ -650,8 +650,8 @@ public final class JavaManager {
         if (reg == null)
             return;
 
-        for (String java : reg.queryKeys(hkey, location)) {
-            if (!reg.queryKeys(hkey, java).contains(java + "\\MSI"))
+        for (String java : reg.querySubKeys(hkey, location)) {
+            if (!reg.querySubKeys(hkey, java).contains(java + "\\MSI"))
                 continue;
             Object home = reg.queryValue(hkey, java, "JavaHome");
             if (home instanceof String) {

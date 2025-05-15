@@ -17,22 +17,17 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import com.sun.jna.Memory;
-import com.sun.jna.ptr.IntByReference;
 import org.jackhuang.hmcl.util.DataSizeUnit;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
-import org.jackhuang.hmcl.util.platform.windows.Kernel32;
-import org.jackhuang.hmcl.util.platform.windows.WinConstants;
-import org.jackhuang.hmcl.util.platform.windows.WinTypes;
-import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
+import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -53,11 +48,17 @@ public final class SystemInfo {
         }
 
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
+        public static final @Nullable CentralProcessor CENTRAL_PROCESSOR = DETECTOR.detectCentralProcessor();
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
 
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
+
+        // CPU
+        CentralProcessor cpu = getCentralProcessor();
+        if (cpu != null)
+            builder.append("\n - CPU: ").append(cpu);
 
         // Graphics Card
         List<GraphicsCard> graphicsCards = getGraphicsCards();
@@ -87,50 +88,6 @@ public final class SystemInfo {
             builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
 
         LOG.info(builder.toString());
-
-        // TODO: Under development
-
-        Kernel32 kernel32 = Objects.requireNonNull(Kernel32.INSTANCE);
-
-        IntByReference length = new IntByReference();
-        if (!kernel32.GetLogicalProcessorInformationEx(WinConstants.RelationAll, null, length) && length.getValue() == 0)
-            throw new AssertionError("Failed to get logical processor information length: " + kernel32.GetLastError());
-
-        try (Memory pProcessorInfo = new Memory(Integer.toUnsignedLong(length.getValue()))) {
-            if (!kernel32.GetLogicalProcessorInformationEx(WinConstants.RelationAll, pProcessorInfo, length))
-                throw new AssertionError("Failed to get logical processor information length: " + kernel32.GetLastError());
-
-            for (long offset = 0L; offset < pProcessorInfo.size(); ) {
-                int relationship = pProcessorInfo.getInt(offset);
-                long size = Integer.toUnsignedLong(pProcessorInfo.getInt(offset + 4L));
-
-                if (relationship == WinConstants.RelationGroup) {
-                    WinTypes.GROUP_RELATIONSHIP groupRelationship = new WinTypes.GROUP_RELATIONSHIP(pProcessorInfo.share(offset + 8L, size - 8L));
-                    groupRelationship.read();
-
-                    LOG.info(">> RelationGroup " + groupRelationship.activeGroupCount);
-
-                    int activeGroupCount = Short.toUnsignedInt(groupRelationship.activeGroupCount);
-                    for (int i = 0; i < activeGroupCount; i++) {
-                        WinTypes.PROCESSOR_GROUP_INFO groupInfo = groupRelationship.groupInfo[i];
-                        LOG.info("    ActiveProcessorCount: " + Short.toUnsignedInt(groupInfo.activeProcessorCount));
-                        LOG.info("    MaximumProcessorCount: " + Short.toUnsignedInt(groupInfo.maximumProcessorCount));
-                    }
-
-                } else if (relationship == WinConstants.RelationProcessorCore) {
-                    LOG.info(">> RelationProcessorCore");
-                } else if (relationship == WinConstants.RelationNumaNode) {
-                    LOG.info(">> RelationNumaNode");
-                } else if (relationship == WinConstants.RelationCache) {
-                    LOG.info(">> RelationCache");
-                } else {
-                    LOG.info(">> Unknown relationship: " + relationship);
-                }
-
-                offset += size;
-            }
-
-        }
     }
 
     public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
@@ -156,6 +113,10 @@ public final class SystemInfo {
             return 0;
 
         return Long.max(0, totalMemorySize - getFreeMemorySize());
+    }
+
+    public static @Nullable CentralProcessor getCentralProcessor() {
+        return Holder.CENTRAL_PROCESSOR;
     }
 
     public static @Nullable List<GraphicsCard> getGraphicsCards() {
