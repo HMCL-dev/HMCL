@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.platform.windows;
 
 import com.sun.jna.*;
+import com.sun.jna.ptr.LongByReference;
 
 import java.util.Arrays;
 import java.util.List;
@@ -85,6 +86,113 @@ public interface WinTypes {
                     "dwLength", "dwMemoryLoad",
                     "ullTotalPhys", "ullAvailPhys", "ullTotalPageFile", "ullAvailPageFile",
                     "ullTotalVirtual", "ullAvailVirtual", "ullAvailExtendedVirtual");
+        }
+    }
+
+    final class GROUP_AFFINITY extends Structure {
+        public LongByReference mask;
+        public short group;
+        public short[] reserved = new short[3];
+
+        public GROUP_AFFINITY(Pointer memory) {
+            super(memory);
+        }
+
+        public GROUP_AFFINITY() {
+            super();
+        }
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList(
+                    "mask", "group", "reserved"
+            );
+        }
+    }
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-processor_group_info">PROCESSOR_GROUP_INFO structure</a>
+     */
+    final class PROCESSOR_GROUP_INFO extends Structure {
+        public byte maximumProcessorCount;
+        public byte activeProcessorCount;
+        public byte[] reserved = new byte[38];
+        public LongByReference activeProcessorMask;
+
+        public PROCESSOR_GROUP_INFO(Pointer memory) {
+            super(memory);
+        }
+
+        public PROCESSOR_GROUP_INFO() {
+            super();
+        }
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("maximumProcessorCount", "activeProcessorCount", "reserved", "activeProcessorMask");
+        }
+    }
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-processor_relationship">PROCESSOR_RELATIONSHIP structure</a>
+     */
+    final class PROCESSOR_RELATIONSHIP extends Structure {
+
+        public byte flags;
+        public byte efficiencyClass;
+        public byte[] reserved = new byte[20];
+        public short groupCount;
+        public GROUP_AFFINITY[] groupMask = new GROUP_AFFINITY[1];
+
+        public PROCESSOR_RELATIONSHIP() {
+        }
+
+        public PROCESSOR_RELATIONSHIP(Pointer memory) {
+            super(memory);
+        }
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("flags", "efficiencyClass", "reserved", "groupCount", "groupMask");
+        }
+
+        @Override
+        public void read() {
+            readField("groupCount");
+            if (groupCount != groupMask.length) {
+                groupMask = new GROUP_AFFINITY[groupCount];
+            }
+            super.read();
+        }
+    }
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-group_relationship">GROUP_RELATIONSHIP structure</a>
+     */
+    final class GROUP_RELATIONSHIP extends Structure {
+        public short maximumGroupCount;
+        public short activeGroupCount;
+        public byte[] reserved = new byte[20];
+        public PROCESSOR_GROUP_INFO[] groupInfo = new PROCESSOR_GROUP_INFO[1];
+
+        public GROUP_RELATIONSHIP() {
+        }
+
+        public GROUP_RELATIONSHIP(Pointer memory) {
+            super(memory);
+        }
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("maximumGroupCount", "activeGroupCount", "reserved", "groupInfo");
+        }
+
+        @Override
+        public void read() {
+            readField("activeGroupCount");
+            if (activeGroupCount != groupInfo.length)
+                groupInfo = new PROCESSOR_GROUP_INFO[activeGroupCount];
+            super.read();
         }
     }
 }

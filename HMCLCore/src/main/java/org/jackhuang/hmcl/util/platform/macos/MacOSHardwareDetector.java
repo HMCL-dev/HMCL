@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,7 +99,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                             .setName(model.getAsString());
 
                     if (vendor != null)
-                        builder.setVendor(GraphicsCard.Vendor.of(StringUtils.removePrefix(vendor.getAsString(), "sppci_vendor_")));
+                        builder.setVendor(HardwareVendor.of(StringUtils.removePrefix(vendor.getAsString(), "sppci_vendor_")));
 
                     GraphicsCard.Type type = GraphicsCard.Type.Integrated;
                     if (bus != null) {

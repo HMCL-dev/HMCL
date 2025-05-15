@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -32,12 +31,12 @@ public final class GraphicsCard {
     }
 
     private final String name;
-    private final @Nullable Vendor vendor;
+    private final @Nullable HardwareVendor vendor;
     private final @Nullable Type type;
     private final @Nullable String driver;
     private final @Nullable String driverVersion;
 
-    private GraphicsCard(String name, @Nullable Vendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion) {
+    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion) {
         this.name = Objects.requireNonNull(name);
         this.vendor = vendor;
         this.type = type;
@@ -49,7 +48,7 @@ public final class GraphicsCard {
         return name;
     }
 
-    public @Nullable Vendor getVendor() {
+    public @Nullable HardwareVendor getVendor() {
         return vendor;
     }
 
@@ -68,132 +67,6 @@ public final class GraphicsCard {
         return builder.toString();
     }
 
-    public static final class Vendor {
-        public static final Vendor INTEL = new Vendor("Intel");
-        public static final Vendor NVIDIA = new Vendor("NVIDIA");
-        public static final Vendor AMD = new Vendor("AMD");
-        public static final Vendor APPLE = new Vendor("Apple");
-        public static final Vendor QUALCOMM = new Vendor("Qualcomm");
-        public static final Vendor MTK = new Vendor("MTK");
-        public static final Vendor VMWARE = new Vendor("VMware");
-        public static final Vendor PARALLEL = new Vendor("Parallel");
-        public static final Vendor MICROSOFT = new Vendor("Microsoft");
-        public static final Vendor MOORE_THREADS = new Vendor("Moore Threads");
-        public static final Vendor BROADCOM = new Vendor("Broadcom");
-        public static final Vendor IMG = new Vendor("Imagination");
-        public static final Vendor LOONGSON = new Vendor("Loongson");
-        public static final Vendor JINGJIA_MICRO = new Vendor("Jingjia Micro");
-        public static final Vendor HUAWEI = new Vendor("Huawei");
-        public static final Vendor ZHAOXIN = new Vendor("Zhaoxin");
-
-        public static @Nullable Vendor getKnown(String name) {
-            if (name == null)
-                return null;
-
-            String lower = name.toLowerCase(Locale.ROOT);
-            if (lower.startsWith("intel")) return INTEL;
-            if (lower.startsWith("nvidia")) return NVIDIA;
-            if (lower.startsWith("advanced micro devices")
-                    || (lower.startsWith("amd") && !(lower.length() > 3 && Character.isAlphabetic(lower.charAt(3)))))
-                return AMD;
-            if (lower.equals("brcm") || lower.startsWith("broadcom")) return BROADCOM;
-            if (lower.startsWith("mediatek")) return MTK;
-            if (lower.startsWith("qualcomm")) return QUALCOMM;
-            if (lower.startsWith("apple")) return APPLE;
-            if (lower.startsWith("microsoft")) return MICROSOFT;
-            if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
-
-            if (lower.startsWith("loongson")) return LOONGSON;
-            if (lower.startsWith("moore threads")) return MOORE_THREADS;
-            if (lower.startsWith("jingjia")) return JINGJIA_MICRO;
-            if (lower.startsWith("huawei")) return HUAWEI;
-            if (lower.startsWith("zhaoxin")) return ZHAOXIN;
-
-            return null;
-        }
-
-        @Contract("null -> null; !null -> !null")
-        public static Vendor of(String name) {
-            if (name == null)
-                return null;
-
-            Vendor known = getKnown(name);
-            return known != null ? known : new Vendor(name);
-        }
-
-        public static @Nullable Vendor ofId(int vendorId) {
-            // https://devicehunt.com/all-pci-vendors
-            switch (vendorId) {
-                case 0x106b:
-                    return APPLE;
-                case 0x1002:
-                case 0x1022:
-                case 0x1dd8: // AMD Pensando Systems
-                case 0x1924: // AMD Solarflare
-                    return AMD;
-                case 0x8086:
-                case 0x8087:
-                case 0x03e7:
-                    return INTEL;
-                case 0x0955:
-                case 0x10de:
-                case 0x12d2:
-                    return NVIDIA;
-                case 0x1ed5:
-                    return MOORE_THREADS;
-                case 0x168c:
-                case 0x5143:
-                    return QUALCOMM;
-                case 0x14c3:
-                    return MTK;
-                case 0x15ad:
-                    return VMWARE;
-                case 0x1ab8:
-                    return PARALLEL;
-                case 0x1414:
-                    return MICROSOFT;
-                case 0x182f:
-                case 0x14e4:
-                    return BROADCOM;
-                case 0x0014:
-                    return LOONGSON;
-                case 0x0731:
-                    return JINGJIA_MICRO;
-                case 0x19e5:
-                    return HUAWEI;
-                case 0x1d17:
-                    return ZHAOXIN;
-                default:
-                    return null;
-            }
-        }
-
-        private final String name;
-
-        public Vendor(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return o instanceof Vendor && name.equals(((Vendor) o).name);
-        }
-
-        @Override
-        public int hashCode() {
-            return name.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
-    }
-
     public enum Type {
         Integrated,
         Discrete
@@ -201,7 +74,7 @@ public final class GraphicsCard {
 
     public static final class Builder {
         private String name;
-        private Vendor vendor;
+        private HardwareVendor vendor;
         private Type type;
         private String driver;
         private String driverVersion;
@@ -222,11 +95,11 @@ public final class GraphicsCard {
             return this;
         }
 
-        public Vendor getVendor() {
+        public HardwareVendor getVendor() {
             return vendor;
         }
 
-        public Builder setVendor(Vendor vendor) {
+        public Builder setVendor(HardwareVendor vendor) {
             this.vendor = vendor;
             return this;
         }

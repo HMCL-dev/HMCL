@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,7 +115,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
                 if (StringUtils.isNotBlank(name)) {
                     cards.add(GraphicsCard.builder().setName(name)
-                            .setVendor(GraphicsCard.Vendor.of(adapterCompatibility))
+                            .setVendor(HardwareVendor.of(adapterCompatibility))
                             .setDriverVersion(driverVersion)
                             .setType(StringUtils.isBlank(adapterDACType)
                                     || "Internal".equalsIgnoreCase(adapterDACType)

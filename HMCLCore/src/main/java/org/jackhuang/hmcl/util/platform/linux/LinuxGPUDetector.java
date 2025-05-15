@@ -23,6 +23,7 @@ import org.glavo.pci.ids.model.Vendor;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -136,12 +137,11 @@ final class LinuxGPUDetector {
         int pciDevice = Integer.parseInt(matcher.group("pciDevice"), 16);
         int pciFunc = Integer.parseInt(matcher.group("pciFunc"), 16);
 
-        builder.setVendor(GraphicsCard.Vendor.ofId(vendorId));
-
+        builder.setVendor(HardwareVendor.ofPciVendorId(vendorId));
         detectDriver(builder, deviceDir);
 
         try {
-            if (builder.getVendor() == GraphicsCard.Vendor.AMD) {
+            if (builder.getVendor() == HardwareVendor.AMD) {
                 Path hwmon = deviceDir.resolve("hwmon");
                 try (Stream<Path> subDirs = Files.list(hwmon)) {
                     for (Path subDir : Lang.toIterable(subDirs)) {
@@ -173,7 +173,7 @@ final class LinuxGPUDetector {
                     }
                 }
 
-            } else if (builder.getVendor() == GraphicsCard.Vendor.INTEL) {
+            } else if (builder.getVendor() == HardwareVendor.INTEL) {
                 builder.setType(pciDevice == 20 ? GraphicsCard.Type.Integrated : GraphicsCard.Type.Discrete);
             }
         } catch (Throwable ignored) {
@@ -185,7 +185,7 @@ final class LinuxGPUDetector {
                 Vendor vendor = database.findVendor(vendorId);
                 if (vendor != null) {
                     if (builder.getVendor() == null)
-                        builder.setVendor(GraphicsCard.Vendor.of(vendor.getName()));
+                        builder.setVendor(HardwareVendor.of(vendor.getName()));
 
                     if (builder.getName() == null) {
                         Device device = vendor.getDevices().get(deviceId);
@@ -223,13 +223,13 @@ final class LinuxGPUDetector {
         }
 
         if (builder.getType() == null) {
-            if (builder.getVendor() == GraphicsCard.Vendor.NVIDIA) {
+            if (builder.getVendor() == HardwareVendor.NVIDIA) {
                 if (builder.getName().startsWith("GeForce")
                         || builder.getName().startsWith("Quadro")
                         || builder.getName().startsWith("Tesla"))
                     builder.setType(GraphicsCard.Type.Discrete);
 
-            } else if (builder.getVendor() == GraphicsCard.Vendor.MOORE_THREADS) {
+            } else if (builder.getVendor() == HardwareVendor.MOORE_THREADS) {
                 if (builder.getName().startsWith("MTT "))
                     builder.setType(GraphicsCard.Type.Discrete);
             }
@@ -251,9 +251,9 @@ final class LinuxGPUDetector {
             builder.setName(compatible.trim());
         } else {
             String vendorName = compatible.substring(0, idx).trim();
-            GraphicsCard.Vendor vendor = GraphicsCard.Vendor.getKnown(vendorName);
+            HardwareVendor vendor = HardwareVendor.getKnown(vendorName);
             if (vendor == null)
-                vendor = new GraphicsCard.Vendor(vendorName.toUpperCase(Locale.ROOT));
+                vendor = new HardwareVendor(vendorName.toUpperCase(Locale.ROOT));
 
             builder.setName(vendor + " " + compatible.substring(idx + 1).trim());
             builder.setVendor(vendor);
