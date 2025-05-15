@@ -40,9 +40,8 @@ final class FastFetchUtils {
     private FastFetchUtils() {
     }
 
-    private static final Path fastfetch = SystemUtils.which("fastfetch");
-
     private static <T> T get(String type, TypeToken<T> resultType) {
+        Path fastfetch = SystemUtils.which("fastfetch");
         if (fastfetch == null)
             return null;
 
