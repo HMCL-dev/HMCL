@@ -28,12 +28,12 @@ import java.util.List;
  */
 @SuppressWarnings("ALL")
 public class HardwareDetector {
-    public @Nullable List<GraphicsCard> detectGraphicsCards() {
-        return null;
+    public @Nullable CentralProcessor detectCentralProcessor() {
+        return FastFetchUtils.detectCentralProcessor();
     }
 
-    public @Nullable CentralProcessor detectCentralProcessor() {
-        return null;
+    public @Nullable List<GraphicsCard> detectGraphicsCards() {
+        return FastFetchUtils.detectGraphicsCards();
     }
 
     public long getTotalMemorySize() {

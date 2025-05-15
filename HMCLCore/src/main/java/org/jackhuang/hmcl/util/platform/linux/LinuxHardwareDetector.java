@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.util.platform.linux;
 
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,11 +36,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class LinuxHardwareDetector extends HardwareDetector {
-
-    @Override
-    public @Nullable CentralProcessor detectCentralProcessor() {
-        return LinuxCPUDetector.detect();
-    }
 
     @Override
     public List<GraphicsCard> detectGraphicsCards() {
