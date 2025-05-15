@@ -110,7 +110,7 @@ public final class CentralProcessor {
             return this;
         }
 
-        public @Nullable Cores getCores() {
+        public Cores getCores() {
             return cores;
         }
 

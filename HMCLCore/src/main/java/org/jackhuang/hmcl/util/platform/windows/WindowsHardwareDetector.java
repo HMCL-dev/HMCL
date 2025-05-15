@@ -17,24 +17,18 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -80,37 +74,20 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         if (!OperatingSystem.isWindows7OrLater())
             return null;
 
-        Process process = null;
         String list = null;
         try {
-            File nul = new File("NUL");
-
             String getCimInstance = OperatingSystem.SYSTEM_VERSION.startsWith("6.1")
                     ? "Get-WmiObject"
                     : "Get-CimInstance";
 
-            Process finalProcess = process = new ProcessBuilder("powershell.exe",
+            list = SystemUtils.run(Arrays.asList(
+                    "powershell.exe",
                     "-Command",
                     String.join(" | ",
                             getCimInstance + " -Class Win32_VideoController",
                             "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
                             "Format-List"
-                    ))
-                    .redirectInput(nul)
-                    .redirectError(nul)
-                    .start();
-
-            CompletableFuture<String> future = CompletableFuture.supplyAsync(Lang.wrap(() ->
-                            IOUtils.readFullyAsString(finalProcess.getInputStream(), OperatingSystem.NATIVE_CHARSET)),
-                    Schedulers.io());
-
-            if (!process.waitFor(15, TimeUnit.SECONDS))
-                throw new TimeoutException();
-
-            if (process.exitValue() != 0)
-                throw new IOException("Bad exit code: " + process.exitValue());
-
-            list = future.get();
+                    )), inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
 
             List<Map<String, String>> videoControllers = parsePowerShellFormatList(Arrays.asList(list.split("\\R")));
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
@@ -136,8 +113,6 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
             return cards;
         } catch (Throwable e) {
-            if (process != null && process.isAlive())
-                process.destroy();
             LOG.warning("Failed to get graphics card info" + (list != null ? ": " + list : ""), e);
             return Collections.emptyList();
         }

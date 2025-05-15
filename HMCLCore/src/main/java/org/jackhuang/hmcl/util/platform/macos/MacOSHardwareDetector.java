@@ -20,25 +20,18 @@ package org.jackhuang.hmcl.util.platform.macos;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -48,33 +41,19 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
+    public @Nullable CentralProcessor detectCentralProcessor() {
+        return super.detectCentralProcessor();
+    }
+
+    @Override
     public List<GraphicsCard> detectGraphicsCards() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
             return null;
 
-        Process process = null;
         String json = null;
         try {
-            File devNull = new File("/dev/null");
-
-            Process finalProcess = process = new ProcessBuilder("/usr/sbin/system_profiler",
-                    "SPDisplaysDataType",
-                    "-json")
-                    .redirectInput(devNull)
-                    .redirectError(devNull)
-                    .start();
-
-            CompletableFuture<String> future = CompletableFuture.supplyAsync(Lang.wrap(() ->
-                            IOUtils.readFullyAsString(finalProcess.getInputStream(), OperatingSystem.NATIVE_CHARSET)),
-                    Schedulers.io());
-
-            if (!process.waitFor(15, TimeUnit.SECONDS))
-                throw new TimeoutException();
-
-            if (process.exitValue() != 0)
-                throw new IOException("Bad exit code: " + process.exitValue());
-
-            json = future.get();
+            json = SystemUtils.run(Arrays.asList("/usr/sbin/system_profiler", "SPDisplaysDataType", "-json"),
+                    inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
 
             JsonObject object = JsonUtils.GSON.fromJson(json, JsonObject.class);
             JsonArray spDisplaysDataType = object.getAsJsonArray("SPDisplaysDataType");
@@ -115,9 +94,6 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                 return Collections.unmodifiableList(cards);
             }
         } catch (Throwable e) {
-            if (process != null && process.isAlive())
-                process.destroy();
-
             LOG.warning("Failed to get graphics card info" + (json != null ? ": " + json : ""), e);
             return Collections.emptyList();
         }
