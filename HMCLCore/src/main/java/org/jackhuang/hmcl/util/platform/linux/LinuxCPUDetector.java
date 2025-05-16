@@ -32,8 +32,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -123,12 +121,19 @@ final class LinuxCPUDetector {
             Path compatiblePath = Paths.get("/proc/device-tree/compatible");
             if (Files.isRegularFile(compatiblePath)) {
                 // device-vendor,device-model\0soc-vendor,soc-model\0
-                String data = FileUtils.readText(compatiblePath);
-                Matcher matcher = Pattern.compile("^[^,]+,[^\0]+\0(?<vendor>[^,]+),(?<model>.+)\0$").matcher(data);
+                String[] data = FileUtils.readText(compatiblePath).split("\0");
 
-                if (matcher.matches()) {
-                    String vendor = matcher.group("vendor");
-                    String model = matcher.group("model");
+                for (int i = data.length - 1; i >= 0; i--) {
+                    String device = data[i];
+                    int idx = device.indexOf(',');
+                    if (idx <= 0 || idx >= device.length() - 1)
+                        continue;
+
+                    String vendor = device.substring(0, idx);
+                    String model = device.substring(idx + 1);
+
+                    if (model.startsWith("generic-"))
+                        continue;
 
                     builder.setVendor(HardwareVendor.getKnown(vendor));
                     if (builder.getVendor() == null)
@@ -151,6 +156,8 @@ final class LinuxCPUDetector {
 
                     if (builder.getName() == null)
                         builder.setName(builder.getVendor() + " " + model);
+
+                    return;
                 }
             }
         } catch (Throwable e) {

@@ -41,10 +41,15 @@ public final class HardwareVendor {
     public static final HardwareVendor JINGJIA_MICRO = new HardwareVendor("Jingjia Micro");
     public static final HardwareVendor HUAWEI = new HardwareVendor("Huawei");
     public static final HardwareVendor ZHAOXIN = new HardwareVendor("Zhaoxin");
-    public static final HardwareVendor THEAD = new HardwareVendor("T-Head");
     public static final HardwareVendor SAMSUNG = new HardwareVendor("Samsung");
     public static final HardwareVendor MARVELL = new HardwareVendor("Marvell");
     public static final HardwareVendor AMPERE = new HardwareVendor("Ampere");
+
+    // RISC-V
+    public static final HardwareVendor THEAD = new HardwareVendor("T-Head");
+    public static final HardwareVendor STARFIVE = new HardwareVendor("StarFive");
+    public static final HardwareVendor ESWIN = new HardwareVendor("ESWIN");
+    public static final HardwareVendor SPACEMIT = new HardwareVendor("SpacemiT");
 
     public static @Nullable HardwareVendor getKnown(String name) {
         if (name == null)
@@ -63,16 +68,18 @@ public final class HardwareVendor {
         if (lower.startsWith("apple")) return APPLE;
         if (lower.startsWith("microsoft")) return MICROSOFT;
         if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
-
         if (lower.startsWith("loongson")) return LOONGSON;
         if (lower.startsWith("moore threads")) return MOORE_THREADS;
         if (lower.startsWith("jingjia")) return JINGJIA_MICRO;
         if (lower.startsWith("huawei") || lower.startsWith("hisilicon")) return HUAWEI;
         if (lower.startsWith("zhaoxin")) return ZHAOXIN;
-        if (lower.startsWith("thead") || lower.startsWith("t-head")) return THEAD;
         if (lower.startsWith("marvell")) return MARVELL;
         if (lower.startsWith("samsung")) return SAMSUNG;
         if (lower.startsWith("ampere")) return AMPERE;
+        if (lower.startsWith("thead") || lower.startsWith("t-head")) return THEAD;
+        if (lower.startsWith("starfive")) return STARFIVE;
+        if (lower.startsWith("eswin")) return ESWIN;
+        if (lower.startsWith("spacemit")) return SPACEMIT;
 
         return null;
     }
