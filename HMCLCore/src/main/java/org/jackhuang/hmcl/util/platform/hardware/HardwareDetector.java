@@ -19,13 +19,44 @@ package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.util.List;
 
 /**
  * @author Glavo
  */
+@SuppressWarnings("ALL")
 public class HardwareDetector {
+    public @Nullable CentralProcessor detectCentralProcessor() {
+        return FastFetchUtils.detectCentralProcessor();
+    }
+
     public @Nullable List<GraphicsCard> detectGraphicsCards() {
-        return null;
+        return FastFetchUtils.detectGraphicsCards();
+    }
+
+    public long getTotalMemorySize() {
+        try {
+            OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();
+            if (bean instanceof com.sun.management.OperatingSystemMXBean) {
+                return ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
+            }
+        } catch (NoClassDefFoundError ignored) {
+        }
+
+        return 0L;
+    }
+
+    public long getFreeMemorySize() {
+        try {
+            OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();
+            if (bean instanceof com.sun.management.OperatingSystemMXBean) {
+                return ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getFreePhysicalMemorySize();
+            }
+        } catch (NoClassDefFoundError ignored) {
+        }
+
+        return 0L;
     }
 }

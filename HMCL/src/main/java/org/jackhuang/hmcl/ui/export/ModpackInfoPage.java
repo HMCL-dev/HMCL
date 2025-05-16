@@ -43,7 +43,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.File;
 import java.util.*;
@@ -54,6 +54,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -287,12 +288,12 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             AtomicBoolean changedByTextField = new AtomicBoolean(false);
                             FXUtils.onChangeAndOperate(skinnable.minMemory, minMemory -> {
                                 changedByTextField.set(true);
-                                slider.setValue(minMemory.intValue() * 1.0 / OperatingSystem.TOTAL_MEMORY);
+                                slider.setValue(minMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
                                 changedByTextField.set(false);
                             });
                             slider.valueProperty().addListener((value, oldVal, newVal) -> {
                                 if (changedByTextField.get()) return;
-                                skinnable.minMemory.set((int) (value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
+                                skinnable.minMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
                             });
 
                             JFXTextField txtMinMemory = new JFXTextField();
@@ -301,7 +302,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             FXUtils.setLimitWidth(txtMinMemory, 60);
                             validatingFields.add(txtMinMemory);
 
-                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MB"));
+                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MiB"));
                         }
 
                         pane.getChildren().setAll(title, lowerBoundPane);

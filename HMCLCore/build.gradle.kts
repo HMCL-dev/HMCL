@@ -19,4 +19,6 @@ dependencies {
     api(libs.pci.ids)
 
     compileOnlyApi(libs.jetbrains.annotations)
+
+    testImplementation(libs.jna.platform)
 }

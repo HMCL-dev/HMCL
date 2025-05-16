@@ -22,8 +22,52 @@ package org.jackhuang.hmcl.util.platform.windows;
  */
 public interface WinConstants {
 
+    // https://learn.microsoft.com/windows/win32/debug/system-error-codes--0-499-
+    int ERROR_SUCCESS = 0;
+    int ERROR_FILE_NOT_FOUND = 2;
+    int ERROR_PATH_NOT_FOUND = 3;
+    int ERROR_ACCESS_DENIED = 5;
+    int ERROR_INVALID_HANDLE = 6;
+    int ERROR_INVALID_DATA = 13;
+    int ERROR_NOT_SAME_DEVICE = 17;
+    int ERROR_NOT_READY = 21;
+    int ERROR_SHARING_VIOLATION = 32;
+    int ERROR_FILE_EXISTS = 80;
+    int ERROR_INVALID_PARAMETER = 87;
+    int ERROR_DISK_FULL = 112;
+    int ERROR_INSUFFICIENT_BUFFER = 122;
+    int ERROR_INVALID_LEVEL = 124;
+    int ERROR_DIR_NOT_ROOT = 144;
+    int ERROR_DIR_NOT_EMPTY = 145;
+    int ERROR_ALREADY_EXISTS = 183;
+    int ERROR_MORE_DATA = 234;
+    int ERROR_NO_MORE_ITEMS = 259;
+    int ERROR_DIRECTORY = 267;
+    int ERROR_NOTIFY_ENUM_DIR = 1022;
+    int ERROR_PRIVILEGE_NOT_HELD = 1314;
+    int ERROR_NONE_MAPPED = 1332;
+    int ERROR_CANT_ACCESS_FILE = 1920;
+    int ERROR_NOT_A_REPARSE_POINT = 4390;
+    int ERROR_INVALID_REPARSE_DATA = 4392;
+
     // https://learn.microsoft.com/windows/win32/sysinfo/registry-key-security-and-access-rights
+    int KEY_QUERY_VALUE = 0x0001;
+    int KEY_ENUMERATE_SUB_KEYS = 0x0008;
     int KEY_READ = 0x20019;
+
+    // https://learn.microsoft.com/windows/win32/sysinfo/registry-value-types
+    int REG_NONE = 0;
+    int REG_SZ = 1;
+    int REG_EXPAND_SZ = 2;
+    int REG_BINARY = 3;
+    int REG_DWORD_LITTLE_ENDIAN = 4;
+    int REG_DWORD_BIG_ENDIAN = 5;
+    int REG_LINK = 6;
+    int REG_MULTI_SZ = 7;
+    int REG_RESOURCE_LIST = 8;
+    int REG_FULL_RESOURCE_DESCRIPTOR = 9;
+    int REG_RESOURCE_REQUIREMENTS_LIST = 10;
+    int REG_QWORD_LITTLE_ENDIAN = 11;
 
     // https://learn.microsoft.com/windows/win32/sysinfo/predefined-keys
     long HKEY_CLASSES_ROOT = 0x80000000L;
@@ -37,7 +81,19 @@ public interface WinConstants {
     long HKEY_DYN_DATA = 0x80000006L;
     long HKEY_CURRENT_USER_LOCAL_SETTINGS = 0x80000007L;
 
+    // https://learn.microsoft.com/windows/win32/api/winnls/ne-winnls-sysgeoclass
     int GEOCLASS_NATION = 16;
     int GEOCLASS_REGION = 14;
     int GEOCLASS_ALL = 0;
+
+    // https://learn.microsoft.com/windows/win32/api/winnt/ne-winnt-logical_processor_relationship
+    int RelationProcessorCore = 0;
+    int RelationNumaNode = 1;
+    int RelationCache = 2;
+    int RelationProcessorPackage = 3;
+    int RelationGroup = 4;
+    int RelationProcessorDie = 5;
+    int RelationNumaNodeEx = 6;
+    int RelationProcessorModule = 7;
+    int RelationAll = 0xffff;
 }

@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.java;
 
 import kala.compress.archivers.ArchiveEntry;
-import org.jackhuang.hmcl.util.KeyValuePairProperties;
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * @author Glavo
@@ -60,7 +61,7 @@ public final class JavaInfo {
     }
 
     public static JavaInfo fromReleaseFile(BufferedReader reader) throws IOException {
-        KeyValuePairProperties properties = KeyValuePairProperties.load(reader);
+        Map<String, String> properties = KeyValuePairUtils.loadProperties(reader);
         String osName = properties.get("OS_NAME");
         String osArch = properties.get("OS_ARCH");
         String vendor = properties.get("IMPLEMENTOR");

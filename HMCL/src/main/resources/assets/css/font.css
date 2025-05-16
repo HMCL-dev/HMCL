@@ -1,6 +1,6 @@
 /**
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 .root {
-    -fx-base-color: #5C6BC0;
-    -fx-base-darker-color: derive(-fx-base-color, -10%);
-    -fx-base-check-color: derive(-fx-base-color, 30%);
-    -fx-rippler-color: rgba(92, 107, 192, 0.3);
-    -fx-base-rippler-color: derive(rgba(92, 107, 192, 0.3), 100%);
-    -fx-base-disabled-text-fill: rgba(256, 256, 256, 0.7);
-    -fx-base-text-fill: white;
-
-    -theme-thumb: rgba(92, 107, 192, 0.7);
+    /* https://github.com/HMCL-dev/HMCL/pull/3423 */
+    -fx-font-family: -fx-base-font-family;
 }

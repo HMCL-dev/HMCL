@@ -83,7 +83,6 @@ import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -411,22 +410,6 @@ public final class FXUtils {
         });
     }
 
-    private static String which(String command) {
-        String path = System.getenv("PATH");
-        if (path == null)
-            return null;
-
-        for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
-            try {
-                Path program = Paths.get(item, command);
-                if (Files.isExecutable(program))
-                    return program.toRealPath().toString();
-            } catch (Throwable ignored) {
-            }
-        }
-        return null;
-    }
-
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
@@ -435,7 +418,7 @@ public final class FXUtils {
             openCommands = new String[]{"explorer.exe", "/select,", path};
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && which("dbus-send") != null)
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -501,10 +484,10 @@ public final class FXUtils {
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
-                    String path = which(browser);
+                    Path path = SystemUtils.which(browser);
                     if (path != null) {
                         try {
-                            Runtime.getRuntime().exec(new String[]{browser, link});
+                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
                             return;
                         } catch (Throwable ignored) {
                         }
