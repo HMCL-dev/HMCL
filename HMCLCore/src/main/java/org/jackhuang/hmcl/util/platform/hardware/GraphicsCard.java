@@ -80,7 +80,15 @@ public final class GraphicsCard {
         private String driverVersion;
 
         public GraphicsCard build() {
-            return new GraphicsCard(name != null ? name : "Unknown", vendor, type, driver, driverVersion);
+            String name = this.name;
+            if (name == null) {
+                if (vendor != null)
+                    name = vendor + " Display Card";
+                else
+                    name = "Unknown";
+            }
+
+            return new GraphicsCard(name, vendor, type, driver, driverVersion);
         }
 
         public String getName() {

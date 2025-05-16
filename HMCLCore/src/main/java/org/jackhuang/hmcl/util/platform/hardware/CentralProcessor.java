@@ -69,6 +69,10 @@ public final class CentralProcessor {
         public final int logical;
         public final int packages;
 
+        public Cores(int logical) {
+            this(logical, logical, 1);
+        }
+
         public Cores(int physical, int logical, int packages) {
             this.physical = physical;
             this.logical = logical;
@@ -87,7 +91,15 @@ public final class CentralProcessor {
         private @Nullable Cores cores;
 
         public CentralProcessor build() {
-            return new CentralProcessor(name != null ? name : "Unknown", vendor, cores);
+            String name = this.name;
+            if (name == null) {
+                if (vendor != null)
+                    name = vendor + " Processor";
+                else
+                    name = "Unknown";
+            }
+
+            return new CentralProcessor(name, vendor, cores);
         }
 
         public String getName() {

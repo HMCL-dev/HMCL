@@ -21,6 +21,7 @@ import org.glavo.pci.ids.PCIIDsDatabase;
 import org.glavo.pci.ids.model.Device;
 import org.glavo.pci.ids.model.Vendor;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
@@ -34,7 +35,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -253,7 +253,7 @@ final class LinuxGPUDetector {
             String vendorName = compatible.substring(0, idx).trim();
             HardwareVendor vendor = HardwareVendor.getKnown(vendorName);
             if (vendor == null)
-                vendor = new HardwareVendor(vendorName.toUpperCase(Locale.ROOT));
+                vendor = new HardwareVendor(StringUtils.capitalizeFirst(vendorName));
 
             builder.setName(vendor + " " + compatible.substring(idx + 1).trim());
             builder.setVendor(vendor);

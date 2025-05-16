@@ -54,6 +54,13 @@ public final class StringUtils {
         return !isBlank(str);
     }
 
+    public static String capitalizeFirst(String str) {
+        if (str == null || str.isEmpty())
+            return str;
+
+        return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+    }
+
     public static String substringBeforeLast(String str, char delimiter) {
         return substringBeforeLast(str, delimiter, str);
     }

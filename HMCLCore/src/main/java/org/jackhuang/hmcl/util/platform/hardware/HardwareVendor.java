@@ -28,6 +28,7 @@ public final class HardwareVendor {
     public static final HardwareVendor NVIDIA = new HardwareVendor("NVIDIA");
     public static final HardwareVendor AMD = new HardwareVendor("AMD");
     public static final HardwareVendor APPLE = new HardwareVendor("Apple");
+    public static final HardwareVendor ARM = new HardwareVendor("ARM");
     public static final HardwareVendor QUALCOMM = new HardwareVendor("Qualcomm");
     public static final HardwareVendor MTK = new HardwareVendor("MTK");
     public static final HardwareVendor VMWARE = new HardwareVendor("VMware");
@@ -40,6 +41,10 @@ public final class HardwareVendor {
     public static final HardwareVendor JINGJIA_MICRO = new HardwareVendor("Jingjia Micro");
     public static final HardwareVendor HUAWEI = new HardwareVendor("Huawei");
     public static final HardwareVendor ZHAOXIN = new HardwareVendor("Zhaoxin");
+    public static final HardwareVendor THEAD = new HardwareVendor("T-Head");
+    public static final HardwareVendor SAMSUNG = new HardwareVendor("Samsung");
+    public static final HardwareVendor MARVELL = new HardwareVendor("Marvell");
+    public static final HardwareVendor AMPERE = new HardwareVendor("Ampere");
 
     public static @Nullable HardwareVendor getKnown(String name) {
         if (name == null)
@@ -49,12 +54,12 @@ public final class HardwareVendor {
         if (lower.startsWith("intel") || lower.startsWith("genuineintel")) return INTEL;
         if (lower.startsWith("nvidia")) return NVIDIA;
         if (lower.startsWith("advanced micro devices")
-                || lower.startsWith("authenticamd")
-                || (lower.startsWith("amd") && !(lower.length() > 3 && Character.isAlphabetic(lower.charAt(3)))))
+            || lower.startsWith("authenticamd")
+            || (lower.startsWith("amd") && !(lower.length() > 3 && Character.isAlphabetic(lower.charAt(3)))))
             return AMD;
         if (lower.equals("brcm") || lower.startsWith("broadcom")) return BROADCOM;
         if (lower.startsWith("mediatek")) return MTK;
-        if (lower.startsWith("qualcomm")) return QUALCOMM;
+        if (lower.equals("qcom") || lower.startsWith("qualcomm")) return QUALCOMM;
         if (lower.startsWith("apple")) return APPLE;
         if (lower.startsWith("microsoft")) return MICROSOFT;
         if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
@@ -62,8 +67,12 @@ public final class HardwareVendor {
         if (lower.startsWith("loongson")) return LOONGSON;
         if (lower.startsWith("moore threads")) return MOORE_THREADS;
         if (lower.startsWith("jingjia")) return JINGJIA_MICRO;
-        if (lower.startsWith("huawei")) return HUAWEI;
+        if (lower.startsWith("huawei") || lower.startsWith("hisilicon")) return HUAWEI;
         if (lower.startsWith("zhaoxin")) return ZHAOXIN;
+        if (lower.startsWith("thead") || lower.startsWith("t-head")) return THEAD;
+        if (lower.startsWith("marvell")) return MARVELL;
+        if (lower.startsWith("samsung")) return SAMSUNG;
+        if (lower.startsWith("ampere")) return AMPERE;
 
         return null;
     }
@@ -119,6 +128,36 @@ public final class HardwareVendor {
                 return HUAWEI;
             case 0x1d17:
                 return ZHAOXIN;
+            default:
+                return null;
+        }
+    }
+
+    public static @Nullable HardwareVendor ofArmImplementerId(int implementerId) {
+        // https://github.com/util-linux/util-linux/blob/0a21358af3e50fcb13a9bf3702779f11a4739667/sys-utils/lscpu-arm.c#L301
+        switch (implementerId) {
+            case 0x41:
+                return ARM;
+            case 0x42:
+                return BROADCOM;
+            case 0x48:
+                return HUAWEI;
+            case 0x4e:
+                return NVIDIA;
+            case 0x51:
+                return QUALCOMM;
+            case 0x53:
+                return SAMSUNG;
+            case 0x56:
+                return MARVELL;
+            case 0x61:
+                return APPLE;
+            case 0x69:
+                return INTEL;
+            case 0x6D:
+                return MICROSOFT;
+            case 0xc0:
+                return AMPERE;
             default:
                 return null;
         }

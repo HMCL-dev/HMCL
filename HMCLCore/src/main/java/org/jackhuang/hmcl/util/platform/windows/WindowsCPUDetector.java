@@ -37,9 +37,6 @@ final class WindowsCPUDetector {
 
         if (vendor instanceof String)
             builder.setVendor(HardwareVendor.of((String) vendor));
-
-        if (builder.getName() == null && builder.getVendor() != null)
-            builder.setName(builder.getVendor().getName() + " Processor");
     }
 
     private static void detectCores(CentralProcessor.Builder builder, Kernel32 kernel32) {

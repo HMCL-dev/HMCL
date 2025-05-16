@@ -86,11 +86,12 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                     packages = Integer.max(cores / coresPerPackageCount, 1);
 
                 builder.setCores(new CentralProcessor.Cores(cores, threads, packages));
-            }
+            } else
+                builder.setCores(new CentralProcessor.Cores(Runtime.getRuntime().availableProcessors()));
 
             return builder.build();
         } catch (Throwable e) {
-            LOG.warning("Failed to get cpu info", e);
+            LOG.warning("Failed to get CPU info", e);
             return null;
         }
     }
