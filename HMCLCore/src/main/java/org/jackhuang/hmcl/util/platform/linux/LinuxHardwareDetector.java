@@ -41,6 +41,8 @@ public final class LinuxHardwareDetector extends HardwareDetector {
 
     @Override
     public @Nullable CentralProcessor detectCentralProcessor() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
+            return null;
         return LinuxCPUDetector.detect();
     }
 
