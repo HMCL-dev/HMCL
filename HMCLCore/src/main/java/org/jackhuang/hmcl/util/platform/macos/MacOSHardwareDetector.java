@@ -45,7 +45,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
     public @Nullable CentralProcessor detectCentralProcessor() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
             return null;
 
         try {
