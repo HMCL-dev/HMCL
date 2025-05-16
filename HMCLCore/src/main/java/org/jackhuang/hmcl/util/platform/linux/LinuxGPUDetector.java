@@ -249,15 +249,25 @@ final class LinuxGPUDetector {
         String compatible = matcher.group("compatible");
         int idx = compatible.indexOf(',');
         if (idx < 0) {
-            builder.setName(compatible.trim().toUpperCase(Locale.ROOT));
+            String name = compatible.trim().toUpperCase(Locale.ROOT);
+            if (name.equals("IMG-GPU"))  // Fucking Imagination
+                builder.setVendor(HardwareVendor.IMG);
+            else
+                builder.setName(name);
         } else {
             String vendorName = compatible.substring(0, idx).trim();
             HardwareVendor vendor = HardwareVendor.getKnown(vendorName);
             if (vendor == null)
                 vendor = new HardwareVendor(StringUtils.capitalizeFirst(vendorName));
 
-            builder.setName(vendor + " " + compatible.substring(idx + 1).trim().toUpperCase(Locale.ROOT));
             builder.setVendor(vendor);
+
+            String name = compatible.substring(idx + 1).trim().toUpperCase(Locale.ROOT);
+            if (vendor == HardwareVendor.IMG) {
+                if (!name.equals("GPU"))
+                    builder.setName(vendor + " " + name);
+            } else
+                builder.setName(vendor + " " + name);
         }
 
         builder.setType(GraphicsCard.Type.Integrated);
@@ -305,7 +315,6 @@ final class LinuxGPUDetector {
             LOG.warning("Failed to get graphics card info", e);
         } finally {
             databaseCache = null;
-            System.gc();
         }
 
         return Collections.unmodifiableList(cards);

@@ -83,7 +83,7 @@ public final class GraphicsCard {
             String name = this.name;
             if (name == null) {
                 if (vendor != null)
-                    name = vendor + " Display Card";
+                    name = vendor + " Graphics";
                 else
                     name = "Unknown";
             }
