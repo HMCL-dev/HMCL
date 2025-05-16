@@ -19,29 +19,18 @@ package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
 /**
  * @author Glavo
  */
-public final class GraphicsCard {
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
+public final class CentralProcessor {
     private final String name;
     private final @Nullable HardwareVendor vendor;
-    private final @Nullable Type type;
-    private final @Nullable String driver;
-    private final @Nullable String driverVersion;
+    private final @Nullable Cores cores;
 
-    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion) {
-        this.name = Objects.requireNonNull(name);
+    private CentralProcessor(String name, @Nullable HardwareVendor vendor, @Nullable Cores cores) {
+        this.name = name;
         this.vendor = vendor;
-        this.type = type;
-        this.driver = driver;
-        this.driverVersion = driverVersion;
+        this.cores = cores;
     }
 
     public String getName() {
@@ -52,43 +41,65 @@ public final class GraphicsCard {
         return vendor;
     }
 
-    public @Nullable String getDriverVersion() {
-        return driverVersion;
+    public @Nullable Cores getCores() {
+        return cores;
     }
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder(name);
+        StringBuilder builder = new StringBuilder(128);
+        if (cores != null && cores.packages > 1)
+            builder.append(cores.packages).append(" x ");
 
-        if (type != null) {
-            builder.append(" [").append(type).append(']');
+        builder.append(name);
+
+        if (cores != null) {
+            builder.append(" (");
+            builder.append(cores.physical).append(" Cores");
+            if (cores.logical > 0 && cores.logical != cores.physical)
+                builder.append(" / ").append(cores.logical).append(" Threads");
+            builder.append(")");
         }
 
         return builder.toString();
     }
 
-    public enum Type {
-        Integrated,
-        Discrete
+    public static final class Cores {
+        public final int physical;
+        public final int logical;
+        public final int packages;
+
+        public Cores(int logical) {
+            this(logical, logical, 1);
+        }
+
+        public Cores(int physical, int logical, int packages) {
+            this.physical = physical;
+            this.logical = logical;
+            this.packages = packages;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Cores[physical=%d, logical=%d, packages=%d]", physical, logical, packages);
+        }
     }
 
     public static final class Builder {
         private String name;
-        private HardwareVendor vendor;
-        private Type type;
-        private String driver;
-        private String driverVersion;
+        private @Nullable HardwareVendor vendor;
+        private @Nullable Cores cores;
 
-        public GraphicsCard build() {
+        public CentralProcessor build() {
             String name = this.name;
             if (name == null) {
                 if (vendor != null)
-                    name = vendor + " Graphics";
+                    name = vendor + " Processor";
                 else
                     name = "Unknown";
             }
 
-            return new GraphicsCard(name, vendor, type, driver, driverVersion);
+            return new CentralProcessor(name, vendor, cores);
         }
 
         public String getName() {
@@ -109,30 +120,12 @@ public final class GraphicsCard {
             return this;
         }
 
-        public Type getType() {
-            return type;
+        public Cores getCores() {
+            return cores;
         }
 
-        public Builder setType(Type type) {
-            this.type = type;
-            return this;
-        }
-
-        public String getDriver() {
-            return driver;
-        }
-
-        public Builder setDriver(String driver) {
-            this.driver = driver;
-            return this;
-        }
-
-        public String getDriverVersion() {
-            return driverVersion;
-        }
-
-        public Builder setDriverVersion(String driverVersion) {
-            this.driverVersion = driverVersion;
+        public Builder setCores(Cores cores) {
+            this.cores = cores;
             return this;
         }
     }

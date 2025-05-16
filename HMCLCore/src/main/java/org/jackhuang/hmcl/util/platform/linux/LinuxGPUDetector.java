@@ -21,8 +21,10 @@ import org.glavo.pci.ids.PCIIDsDatabase;
 import org.glavo.pci.ids.model.Device;
 import org.glavo.pci.ids.model.Vendor;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -52,7 +54,7 @@ final class LinuxGPUDetector {
     private static final Pattern PCI_DEVICE_PATTERN =
             Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?<pciBus>\\p{XDigit}+):(?<pciDevice>\\p{XDigit}+)\\.(?<pciFunc>\\p{XDigit}+)");
     private static final Pattern OF_DEVICE_PATTERN =
-            Pattern.compile("of:NgpuT[^C]*C(?<compatible>.*)");
+            Pattern.compile("of:N(img)?gpuT[^C]*C(?<compatible>.*)");
 
     private static PCIIDsDatabase getPCIIDsDatabase() {
         SoftReference<PCIIDsDatabase> databaseWeakReference = LinuxGPUDetector.databaseCache;
@@ -136,12 +138,11 @@ final class LinuxGPUDetector {
         int pciDevice = Integer.parseInt(matcher.group("pciDevice"), 16);
         int pciFunc = Integer.parseInt(matcher.group("pciFunc"), 16);
 
-        builder.setVendor(GraphicsCard.Vendor.ofId(vendorId));
-
+        builder.setVendor(HardwareVendor.ofPciVendorId(vendorId));
         detectDriver(builder, deviceDir);
 
         try {
-            if (builder.getVendor() == GraphicsCard.Vendor.AMD) {
+            if (builder.getVendor() == HardwareVendor.AMD) {
                 Path hwmon = deviceDir.resolve("hwmon");
                 try (Stream<Path> subDirs = Files.list(hwmon)) {
                     for (Path subDir : Lang.toIterable(subDirs)) {
@@ -173,7 +174,7 @@ final class LinuxGPUDetector {
                     }
                 }
 
-            } else if (builder.getVendor() == GraphicsCard.Vendor.INTEL) {
+            } else if (builder.getVendor() == HardwareVendor.INTEL) {
                 builder.setType(pciDevice == 20 ? GraphicsCard.Type.Integrated : GraphicsCard.Type.Discrete);
             }
         } catch (Throwable ignored) {
@@ -185,7 +186,7 @@ final class LinuxGPUDetector {
                 Vendor vendor = database.findVendor(vendorId);
                 if (vendor != null) {
                     if (builder.getVendor() == null)
-                        builder.setVendor(GraphicsCard.Vendor.of(vendor.getName()));
+                        builder.setVendor(HardwareVendor.of(vendor.getName()));
 
                     if (builder.getName() == null) {
                         Device device = vendor.getDevices().get(deviceId);
@@ -223,13 +224,13 @@ final class LinuxGPUDetector {
         }
 
         if (builder.getType() == null) {
-            if (builder.getVendor() == GraphicsCard.Vendor.NVIDIA) {
+            if (builder.getVendor() == HardwareVendor.NVIDIA) {
                 if (builder.getName().startsWith("GeForce")
                         || builder.getName().startsWith("Quadro")
                         || builder.getName().startsWith("Tesla"))
                     builder.setType(GraphicsCard.Type.Discrete);
 
-            } else if (builder.getVendor() == GraphicsCard.Vendor.MOORE_THREADS) {
+            } else if (builder.getVendor() == HardwareVendor.MOORE_THREADS) {
                 if (builder.getName().startsWith("MTT "))
                     builder.setType(GraphicsCard.Type.Discrete);
             }
@@ -248,15 +249,25 @@ final class LinuxGPUDetector {
         String compatible = matcher.group("compatible");
         int idx = compatible.indexOf(',');
         if (idx < 0) {
-            builder.setName(compatible.trim());
+            String name = compatible.trim().toUpperCase(Locale.ROOT);
+            if (name.equals("IMG-GPU"))  // Fucking Imagination
+                builder.setVendor(HardwareVendor.IMG);
+            else
+                builder.setName(name);
         } else {
             String vendorName = compatible.substring(0, idx).trim();
-            GraphicsCard.Vendor vendor = GraphicsCard.Vendor.getKnown(vendorName);
+            HardwareVendor vendor = HardwareVendor.getKnown(vendorName);
             if (vendor == null)
-                vendor = new GraphicsCard.Vendor(vendorName.toUpperCase(Locale.ROOT));
+                vendor = new HardwareVendor(StringUtils.capitalizeFirst(vendorName));
 
-            builder.setName(vendor + " " + compatible.substring(idx + 1).trim());
             builder.setVendor(vendor);
+
+            String name = compatible.substring(idx + 1).trim().toUpperCase(Locale.ROOT);
+            if (vendor == HardwareVendor.IMG) {
+                if (!name.equals("GPU"))
+                    builder.setName(vendor + " " + name);
+            } else
+                builder.setName(vendor + " " + name);
         }
 
         builder.setType(GraphicsCard.Type.Integrated);
@@ -265,7 +276,7 @@ final class LinuxGPUDetector {
         return builder.build();
     }
 
-    public static List<GraphicsCard> detectAll() {
+    static List<GraphicsCard> detect() {
         Path drm = Paths.get("/sys/class/drm");
         if (!Files.isDirectory(drm))
             return Collections.emptyList();
@@ -304,7 +315,6 @@ final class LinuxGPUDetector {
             LOG.warning("Failed to get graphics card info", e);
         } finally {
             databaseCache = null;
-            System.gc();
         }
 
         return Collections.unmodifiableList(cards);

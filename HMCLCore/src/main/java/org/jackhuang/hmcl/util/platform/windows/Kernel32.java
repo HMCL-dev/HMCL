@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 
@@ -53,4 +55,9 @@ public interface Kernel32 extends StdCallLibrary {
      * @see <a href="https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex">GlobalMemoryStatusEx function</a>
      */
     boolean GlobalMemoryStatusEx(WinTypes.MEMORYSTATUSEX lpBuffer);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-getlogicalprocessorinformationex">GetLogicalProcessorInformationEx function</a>
+     */
+    boolean GetLogicalProcessorInformationEx(int relationshipType, Pointer buffer, IntByReference returnedLength);
 }

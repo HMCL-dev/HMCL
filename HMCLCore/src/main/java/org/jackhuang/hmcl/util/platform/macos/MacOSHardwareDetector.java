@@ -20,24 +20,21 @@ package org.jackhuang.hmcl.util.platform.macos;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -47,33 +44,67 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
+    public @Nullable CentralProcessor detectCentralProcessor() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
+            return null;
+
+        try {
+            Map<String, String> values = SystemUtils.run(Arrays.asList("/usr/sbin/sysctl", "machdep.cpu"),
+                    inputStream -> KeyValuePairUtils.loadProperties(
+                            new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
+
+            String brandString = values.get("machdep.cpu.brand_string");
+            String coreCount = values.get("machdep.cpu.core_count");
+            String threadCount = values.get("machdep.cpu.thread_count");
+            String coresPerPackage = values.get("machdep.cpu.cores_per_package");
+
+            CentralProcessor.Builder builder = new CentralProcessor.Builder();
+
+            if (brandString != null) {
+                builder.setName(brandString);
+
+                String lower = brandString.toLowerCase(Locale.ROOT);
+                if (lower.startsWith("apple"))
+                    builder.setVendor(HardwareVendor.APPLE);
+                else if (lower.startsWith("intel"))
+                    builder.setVendor(HardwareVendor.INTEL);
+            } else
+                builder.setName("Unknown");
+
+            if (coreCount != null || threadCount != null) {
+                int cores = coreCount != null ? Integer.parseInt(coreCount) : 0;
+                int threads = threadCount != null ? Integer.parseInt(threadCount) : 0;
+                int coresPerPackageCount = coresPerPackage != null ? Integer.parseInt(coresPerPackage) : 0;
+
+                if (cores > 0 && threads == 0)
+                    threads = cores;
+                else if (threads > 0 && cores == 0)
+                    cores = threads;
+
+                int packages = 1;
+                if (cores > 0 && coresPerPackageCount > 0)
+                    packages = Integer.max(cores / coresPerPackageCount, 1);
+
+                builder.setCores(new CentralProcessor.Cores(cores, threads, packages));
+            } else
+                builder.setCores(new CentralProcessor.Cores(Runtime.getRuntime().availableProcessors()));
+
+            return builder.build();
+        } catch (Throwable e) {
+            LOG.warning("Failed to get CPU info", e);
+            return null;
+        }
+    }
+
+    @Override
     public List<GraphicsCard> detectGraphicsCards() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
             return null;
 
-        Process process = null;
         String json = null;
         try {
-            File devNull = new File("/dev/null");
-
-            Process finalProcess = process = new ProcessBuilder("/usr/sbin/system_profiler",
-                    "SPDisplaysDataType",
-                    "-json")
-                    .redirectInput(devNull)
-                    .redirectError(devNull)
-                    .start();
-
-            CompletableFuture<String> future = CompletableFuture.supplyAsync(Lang.wrap(() ->
-                            IOUtils.readFullyAsString(finalProcess.getInputStream(), OperatingSystem.NATIVE_CHARSET)),
-                    Schedulers.io());
-
-            if (!process.waitFor(15, TimeUnit.SECONDS))
-                throw new TimeoutException();
-
-            if (process.exitValue() != 0)
-                throw new IOException("Bad exit code: " + process.exitValue());
-
-            json = future.get();
+            json = SystemUtils.run(Arrays.asList("/usr/sbin/system_profiler", "SPDisplaysDataType", "-json"),
+                    inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
 
             JsonObject object = JsonUtils.GSON.fromJson(json, JsonObject.class);
             JsonArray spDisplaysDataType = object.getAsJsonArray("SPDisplaysDataType");
@@ -98,7 +129,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                             .setName(model.getAsString());
 
                     if (vendor != null)
-                        builder.setVendor(GraphicsCard.Vendor.of(StringUtils.removePrefix(vendor.getAsString(), "sppci_vendor_")));
+                        builder.setVendor(HardwareVendor.of(StringUtils.removePrefix(vendor.getAsString(), "sppci_vendor_")));
 
                     GraphicsCard.Type type = GraphicsCard.Type.Integrated;
                     if (bus != null) {
@@ -114,9 +145,6 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                 return Collections.unmodifiableList(cards);
             }
         } catch (Throwable e) {
-            if (process != null && process.isAlive())
-                process.destroy();
-
             LOG.warning("Failed to get graphics card info" + (json != null ? ": " + json : ""), e);
             return Collections.emptyList();
         }

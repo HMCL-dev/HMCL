@@ -72,7 +72,20 @@ public abstract class WinReg {
 
     public abstract Object queryValue(HKEY root, String key, String valueName);
 
-    public abstract List<String> queryKeys(HKEY root, String key);
+    public abstract List<String> querySubKeyNames(HKEY root, String key);
+
+    public List<String> querySubKeys(HKEY root, String key) {
+        List<String> list = querySubKeyNames(root, key);
+        if (list.isEmpty())
+            return list;
+
+        if (!(list instanceof ArrayList))
+            list = new ArrayList<>(list);
+
+        String prefix = key.endsWith("\\") ? key : key + "\\";
+        list.replaceAll(str -> prefix + str);
+        return list;
+    }
 
     private static final class JNAWinReg extends WinReg {
 
@@ -176,14 +189,13 @@ public abstract class WinReg {
         }
 
         @Override
-        public List<String> queryKeys(HKEY root, String key) {
+        public List<String> querySubKeyNames(HKEY root, String key) {
             PointerByReference phkKey = new PointerByReference();
             if (advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_READ, phkKey) != WinConstants.ERROR_SUCCESS)
                 return Collections.emptyList();
 
             Pointer hkey = phkKey.getValue();
             try {
-                String prefix = key.endsWith("\\") ? key : key + "\\";
                 ArrayList<String> res = new ArrayList<>();
                 int maxKeyLength = 256;
                 try (Memory lpName = new Memory(maxKeyLength * 2)) {
@@ -194,7 +206,7 @@ public abstract class WinReg {
                         lpcchName.setValue(maxKeyLength);
                         int status = advapi32.RegEnumKeyExW(hkey, i, lpName, lpcchName, null, null, null, null);
                         if (status == WinConstants.ERROR_SUCCESS) {
-                            res.add(prefix + lpName.getWideString(0L));
+                            res.add(lpName.getWideString(0L));
                             i++;
                         } else {
                             if (status != WinConstants.ERROR_NO_MORE_ITEMS)

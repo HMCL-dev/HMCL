@@ -81,7 +81,19 @@ public interface WinConstants {
     long HKEY_DYN_DATA = 0x80000006L;
     long HKEY_CURRENT_USER_LOCAL_SETTINGS = 0x80000007L;
 
+    // https://learn.microsoft.com/windows/win32/api/winnls/ne-winnls-sysgeoclass
     int GEOCLASS_NATION = 16;
     int GEOCLASS_REGION = 14;
     int GEOCLASS_ALL = 0;
+
+    // https://learn.microsoft.com/windows/win32/api/winnt/ne-winnt-logical_processor_relationship
+    int RelationProcessorCore = 0;
+    int RelationNumaNode = 1;
+    int RelationCache = 2;
+    int RelationProcessorPackage = 3;
+    int RelationGroup = 4;
+    int RelationProcessorDie = 5;
+    int RelationNumaNodeEx = 6;
+    int RelationProcessorModule = 7;
+    int RelationAll = 0xffff;
 }

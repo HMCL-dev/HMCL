@@ -18,12 +18,13 @@
 package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.DataSizeUnit;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
-import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
+import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -47,11 +48,17 @@ public final class SystemInfo {
         }
 
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
+        public static final @Nullable CentralProcessor CENTRAL_PROCESSOR = DETECTOR.detectCentralProcessor();
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
 
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
+
+        // CPU
+        CentralProcessor cpu = getCentralProcessor();
+        if (cpu != null)
+            builder.append("\n - CPU: ").append(cpu);
 
         // Graphics Card
         List<GraphicsCard> graphicsCards = getGraphicsCards();
@@ -106,6 +113,10 @@ public final class SystemInfo {
             return 0;
 
         return Long.max(0, totalMemorySize - getFreeMemorySize());
+    }
+
+    public static @Nullable CentralProcessor getCentralProcessor() {
+        return Holder.CENTRAL_PROCESSOR;
     }
 
     public static @Nullable List<GraphicsCard> getGraphicsCards() {
