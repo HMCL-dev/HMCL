@@ -53,7 +53,7 @@ final class LinuxGPUDetector {
     private static final Pattern PCI_DEVICE_PATTERN =
             Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?<pciBus>\\p{XDigit}+):(?<pciDevice>\\p{XDigit}+)\\.(?<pciFunc>\\p{XDigit}+)");
     private static final Pattern OF_DEVICE_PATTERN =
-            Pattern.compile("of:NgpuT[^C]*C(?<compatible>.*)");
+            Pattern.compile("of:N(img)?gpuT[^C]*C(?<compatible>.*)");
 
     private static PCIIDsDatabase getPCIIDsDatabase() {
         SoftReference<PCIIDsDatabase> databaseWeakReference = LinuxGPUDetector.databaseCache;
@@ -265,7 +265,7 @@ final class LinuxGPUDetector {
         return builder.build();
     }
 
-    public static List<GraphicsCard> detectAll() {
+    static List<GraphicsCard> detect() {
         Path drm = Paths.get("/sys/class/drm");
         if (!Files.isDirectory(drm))
             return Collections.emptyList();

@@ -48,7 +48,7 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     public List<GraphicsCard> detectGraphicsCards() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
             return null;
-        return LinuxGPUDetector.detectAll();
+        return LinuxGPUDetector.detect();
     }
 
     private static final Path MEMINFO = Paths.get("/proc/meminfo");
