@@ -44,6 +44,7 @@ public final class HardwareVendor {
     public static final HardwareVendor SAMSUNG = new HardwareVendor("Samsung");
     public static final HardwareVendor MARVELL = new HardwareVendor("Marvell");
     public static final HardwareVendor AMPERE = new HardwareVendor("Ampere");
+    public static final HardwareVendor ROCKCHIP = new HardwareVendor("Rockchip");
 
     // RISC-V
     public static final HardwareVendor THEAD = new HardwareVendor("T-Head");
@@ -76,6 +77,7 @@ public final class HardwareVendor {
         if (lower.startsWith("marvell")) return MARVELL;
         if (lower.startsWith("samsung")) return SAMSUNG;
         if (lower.startsWith("ampere")) return AMPERE;
+        if (lower.startsWith("rockchip")) return ROCKCHIP;
         if (lower.startsWith("thead") || lower.startsWith("t-head")) return THEAD;
         if (lower.startsWith("starfive")) return STARFIVE;
         if (lower.startsWith("eswin")) return ESWIN;
