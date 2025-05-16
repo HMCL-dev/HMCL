@@ -78,7 +78,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private WeakListenerHolder listenerHolder;
 
-    public DownloadPage(){
+    public DownloadPage() {
         this(null);
     }
 
@@ -86,7 +86,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, file)->{
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, file) -> {
                 Versions.downloadModpackImpl(profile, uploadVersion, file);
             }, false);
 
