@@ -188,9 +188,9 @@ final class LinuxCPUDetector {
                 for (Integer value : cpuCores.values()) {
                     physical += value;
                 }
-                physical = Integer.max(physical, logical);
 
                 builder.setCores(new CentralProcessor.Cores(physical, logical, physicalIds.size()));
+                return;
             }
         } catch (Throwable e) {
             LOG.warning("Failed to detect CPU cores", e);
