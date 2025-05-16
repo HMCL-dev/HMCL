@@ -43,7 +43,10 @@ import org.jackhuang.hmcl.ui.construct.TabControl;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.*;
+import org.jackhuang.hmcl.ui.versions.DownloadListPage;
+import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
+import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -54,8 +57,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -76,10 +79,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
+        this(null);
+    }
+
+    public DownloadPage(String uploadVersion) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack(Versions::downloadModpackImpl, false);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, file) -> {
+                Versions.downloadModpackImpl(profile, uploadVersion, file);
+            }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Versions.importModpack());
