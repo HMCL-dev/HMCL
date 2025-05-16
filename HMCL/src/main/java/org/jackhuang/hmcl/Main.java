@@ -67,7 +67,7 @@ public final class Main {
             // This environment check will take ~300ms
             thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             initIcon();
 
         checkJavaFX();

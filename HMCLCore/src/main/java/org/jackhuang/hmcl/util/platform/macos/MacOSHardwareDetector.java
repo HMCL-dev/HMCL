@@ -45,7 +45,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
     public @Nullable CentralProcessor detectCentralProcessor() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
             return null;
 
         try {
@@ -98,7 +98,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
     @Override
     public List<GraphicsCard> detectGraphicsCards() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.OSX)
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
             return null;
 
         String json = null;
