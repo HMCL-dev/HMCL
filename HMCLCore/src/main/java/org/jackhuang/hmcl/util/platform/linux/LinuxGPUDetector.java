@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -248,14 +249,14 @@ final class LinuxGPUDetector {
         String compatible = matcher.group("compatible");
         int idx = compatible.indexOf(',');
         if (idx < 0) {
-            builder.setName(compatible.trim());
+            builder.setName(compatible.trim().toUpperCase(Locale.ROOT));
         } else {
             String vendorName = compatible.substring(0, idx).trim();
             HardwareVendor vendor = HardwareVendor.getKnown(vendorName);
             if (vendor == null)
                 vendor = new HardwareVendor(StringUtils.capitalizeFirst(vendorName));
 
-            builder.setName(vendor + " " + compatible.substring(idx + 1).trim());
+            builder.setName(vendor + " " + compatible.substring(idx + 1).trim().toUpperCase(Locale.ROOT));
             builder.setVendor(vendor);
         }
 

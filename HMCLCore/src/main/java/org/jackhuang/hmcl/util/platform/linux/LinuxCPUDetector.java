@@ -155,7 +155,7 @@ final class LinuxCPUDetector {
                         builder.setName("Broadcom " + model.toUpperCase(Locale.ROOT));
 
                     if (builder.getName() == null)
-                        builder.setName(builder.getVendor() + " " + model);
+                        builder.setName(builder.getVendor() + " " + model.toUpperCase(Locale.ROOT));
 
                     return;
                 }
