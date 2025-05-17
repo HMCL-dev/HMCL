@@ -124,7 +124,7 @@ public final class FabricInstallTask extends Task<Version> {
         libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary.maven), "https://maven.fabricmc.net/", null));
         libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.loader.maven), "https://maven.fabricmc.net/", null));
 
-        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, 30000, arguments, mainClass, libraries);
+        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
     public static class FabricInfo {

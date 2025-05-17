@@ -407,7 +407,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                         dependencyManager.checkLibraryCompletionAsync(neoForgeVersion, true)));
 
         setResult(neoForgeVersion
-                .setPriority(30000)
+                .setPriority(Version.PRIORITY_LOADER)
                 .setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
                 .setVersion(selfVersion));
     }

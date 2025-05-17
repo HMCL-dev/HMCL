@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod.multimc;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
@@ -27,24 +28,25 @@ import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
+import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
- *
  * @author huangyuhui
  */
 public final class MultiMCModpackInstallTask extends Task<Void> {
@@ -56,6 +58,7 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(4);
+    private final Map<String, GetTask> componentOriginalPatch = new HashMap<>();
 
     public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, String name) {
         this.zipFile = zipFile;
@@ -71,35 +74,51 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
         GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getGameVersion());
 
         if (manifest.getMmcPack() != null) {
-            Optional<MultiMCManifest.MultiMCManifestComponent> forge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.minecraftforge")).findAny();
-            forge.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("forge", c.getVersion());
-            });
+            for (MultiMCManifest.MultiMCManifestComponent component : manifest.getMmcPack().getComponents()) {
+                String componentID = component.getUid();
 
-            Optional<MultiMCManifest.MultiMCManifestComponent> neoForge = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.neoforged")).findAny();
-            neoForge.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("neoforge", c.getVersion());
-            });
+                String version = component.getVersion();
+                if (version == null) {
+                    // https://github.com/MultiMC/Launcher/blob/develop/launcher/minecraft/ComponentUpdateTask.cpp#L586-L602
+                    switch (componentID) {
+                        case "org.lwjgl": {
+                            version = "2.9.1";
+                            break;
+                        }
+                        case "org.lwjgl3": {
+                            version = "3.1.2";
+                            break;
+                        }
+                        case "net.fabricmc.intermediary":
+                        case "org.quiltmc.hashed": {
+                            for (MultiMCManifest.MultiMCManifestComponent c : manifest.getMmcPack().getComponents()) {
+                                if (MultiMCComponents.getComponent(c.getUid()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+                                    version = Objects.requireNonNull(c.getVersion(), "Version of Minecraft must be specific.");
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
 
-            Optional<MultiMCManifest.MultiMCManifestComponent> liteLoader = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("com.mumfrey.liteloader")).findAny();
-            liteLoader.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("liteloader", c.getVersion());
-            });
+                if (version != null) {
+                    List<URL> urls = new ArrayList<>(MultiMCComponents.META.length);
+                    for (String s : MultiMCComponents.META) {
+                        urls.add(NetworkUtils.toURL(String.format(s, componentID, version)));
+                    }
 
-            Optional<MultiMCManifest.MultiMCManifestComponent> fabric = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("net.fabricmc.fabric-loader")).findAny();
-            fabric.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("fabric", c.getVersion());
-            });
+                    GetTask task = new GetTask(urls);
 
-            Optional<MultiMCManifest.MultiMCManifestComponent> quilt = manifest.getMmcPack().getComponents().stream().filter(e -> e.getUid().equals("org.quiltmc.quilt-loader")).findAny();
-            quilt.ifPresent(c -> {
-                if (c.getVersion() != null)
-                    builder.version("quilt", c.getVersion());
-            });
+                    componentOriginalPatch.put(componentID, task);
+                    dependents.add(task);
+
+                    LibraryAnalyzer.LibraryType type = MultiMCComponents.getComponent(componentID);
+                    if (type != null) {
+                        builder.version(type.getPatchId(), version);
+                    }
+                }
+            }
         }
 
         dependents.add(builder.buildAsync());
@@ -141,13 +160,13 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             // /.minecraft
             if (Files.exists(fs.getPath("/.minecraft"))) {
                 subDirectory = "/.minecraft";
-            // /minecraft
+                // /minecraft
             } else if (Files.exists(fs.getPath("/minecraft"))) {
                 subDirectory = "/minecraft";
-            // /[name]/.minecraft
+                // /[name]/.minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/.minecraft";
-            // /[name]/minecraft
+                // /[name]/minecraft
             } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft"))) {
                 subDirectory = "/" + manifest.getName() + "/minecraft";
             } else {
@@ -166,7 +185,19 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        Version version = repository.readVersionJson(name);
+        // componentID -> <default, user patch>
+        Map<String, Pair<Version, MultiMCInstancePatch>> components = new HashMap<>();
+
+        for (Map.Entry<String, GetTask> entry : componentOriginalPatch.entrySet()) {
+            String componentID = entry.getKey();
+            String patchJson = Objects.requireNonNull(entry.getValue().getResult());
+
+            if (components.put(componentID, Pair.pair(readPatch(patchJson).asVersion(
+                    componentID), null
+            )) != null) {
+                throw new IllegalArgumentException("Duplicate libraries: " + componentID);
+            }
+        }
 
         try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
             Path root = MultiMCModpackProvider.getRootPath(fs.getPath("/"));
@@ -176,17 +207,12 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
                 try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(patches)) {
                     for (Path patchJson : directoryStream) {
                         if (patchJson.toString().endsWith(".json")) {
-                            // If json is malformed, we should stop installing this modpack instead of skipping it.
-                            MultiMCInstancePatch multiMCPatch = JsonUtils.GSON.fromJson(FileUtils.readText(patchJson), MultiMCInstancePatch.class);
+                            String patchID = FileUtils.getNameWithoutExtension(patchJson);
 
-                            List<String> arguments = new ArrayList<>();
-                            for (String arg : multiMCPatch.getTweakers()) {
-                                arguments.add("--tweakClass");
-                                arguments.add(arg);
+                            Pair<?, MultiMCInstancePatch> pair = components.computeIfAbsent(patchID, p -> Pair.pair(null, null));
+                            if (pair.setValue(readPatch(FileUtils.readText(patchJson))) != null) {
+                                throw new IllegalArgumentException("Duplicate user patch: " + patchID);
                             }
-
-                            Version patch = new Version(multiMCPatch.getName(), multiMCPatch.getVersion(), 1, new Arguments().addGameArguments(arguments), multiMCPatch.getMainClass(), multiMCPatch.getLibraries());
-                            version = version.addPatch(patch);
                         }
                     }
                 }
@@ -209,6 +235,73 @@ public final class MultiMCModpackInstallTask extends Task<Void> {
             }
         }
 
-        dependencies.add(repository.saveAsync(version));
+        // If $.minecraftArguments exist, write default VM arguments into $.patches[name=game].arguments.jvm for compatibility.
+        // See org.jackhuang.hmcl.game.VersionLibraryBuilder::build
+
+        {
+            Pair<Version, ?> pair = components.get(MultiMCComponents.getComponent(LibraryAnalyzer.LibraryType.MINECRAFT));
+
+            Version mc = pair.getKey();
+            if (mc.getArguments().map(Arguments::getJvm).map(List::isEmpty).orElse(true)) {
+                pair.setKey(mc.setArguments(new Arguments(null, Arguments.DEFAULT_JVM_ARGUMENTS)));
+            }
+        }
+
+        // Rearrange all patches.
+
+        Version artifact = null;
+        try (FileSystem mc = CompressingUtils.writable(
+                repository.getVersionRoot(name).toPath().resolve(name + ".jar")
+        ).setAutoDetectEncoding(true).build()) {
+            for (MultiMCManifest.MultiMCManifestComponent component : manifest.getMmcPack().getComponents()) {
+                String componentID = component.getUid();
+
+                Pair<Version, MultiMCInstancePatch> pair = components.get(componentID);
+                if (pair == null) {
+                    throw new IllegalArgumentException("No such component: " + componentID);
+                }
+
+                Version original = pair.getKey();
+                MultiMCInstancePatch jp = pair.getValue();
+                if (jp != null && !jp.getJarMods().isEmpty()) {
+                    // JarMod. Merge it into minecraft.jar
+                    if (original != null || !componentID.startsWith("org.multimc.jarmod.")) {
+                        throw new IllegalArgumentException("Illegal jar mod: " + componentID);
+                    }
+
+                    try (FileSystem jm = CompressingUtils.readonly(repository.getVersionRoot(name).toPath().resolve(
+                            "jarmods/" + StringUtils.removePrefix(componentID, "org.multimc.jarmod.") + ".jar"
+                    )).setAutoDetectEncoding(true).build()) {
+                        FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
+                    }
+                } else {
+                    Version tc, pp = jp == null ? null : jp.asVersion(componentID);
+
+                    if (original == null) {
+                        tc = Objects.requireNonNull(pp, "Original and Json-Patch shouldn't be empty at the same time.");
+                    } else if (jp != null) {
+                        tc = pp.merge(original, true, Version.ONLY_THIS);
+                    } else {
+                        tc = original;
+                    }
+
+                    artifact = artifact == null ? tc : tc.merge(artifact, true, Version.THAT_FIRST);
+                }
+            }
+        }
+
+        // Erase all patches info to reject any modification to MultiMC mod packs.
+        artifact = Objects.requireNonNull(artifact, "There should be at least one component.")
+                .setPatches(null).setId(name).setJar(name).setRoot(null);
+
+        dependencies.add(repository.saveAsync(artifact));
+    }
+
+    private MultiMCInstancePatch readPatch(String patchJson) {
+        try {
+            return JsonUtils.GSON.fromJson(patchJson, MultiMCInstancePatch.class);
+        } catch (JsonParseException e) {
+            throw new IllegalArgumentException("Cannot parse MultiMC patch json: " + patchJson, e);
+        }
     }
 }
