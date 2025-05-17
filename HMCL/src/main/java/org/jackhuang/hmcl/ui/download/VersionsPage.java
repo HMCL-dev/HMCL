@@ -155,18 +155,19 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         HBox refreshPane = new HBox();
                         refreshPane.setAlignment(Pos.CENTER_RIGHT);
 
-                        btnRefresh = new JFXButton(i18n("button.refresh"));
+                        btnRefresh = new JFXButton();
                         btnRefresh.getStyleClass().add("jfx-tool-bar-button");
                         btnRefresh.setOnAction(e -> onRefresh());
 
-                        JFXButton btnSearch = new JFXButton(i18n("search"));
+                        JFXButton btnSearch = new JFXButton();
                         btnSearch.getStyleClass().add("jfx-tool-bar-button");
                         btnSearch.setGraphic(wrap(SVG.SEARCH.createIcon(Theme.blackFill(), -1)));
 
                         searchBar = new HBox();
                         {
                             searchBar.setAlignment(Pos.CENTER);
-                            searchBar.setPadding(new Insets(0, 5, 0, 0));
+                            searchBar.setPadding(new Insets(0, 0, 0, 0));
+                            searchBar.setMaxWidth(130);
 
                             JFXTextField searchField = new JFXTextField();
                             searchField.setPromptText(i18n("search"));
