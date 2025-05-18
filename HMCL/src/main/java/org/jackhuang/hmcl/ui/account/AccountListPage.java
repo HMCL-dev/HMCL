@@ -80,7 +80,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 return true;
         }
 
-
         return false;
     }
 
