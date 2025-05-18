@@ -69,9 +69,15 @@ public final class Logger {
         builder.setLength(0);
         builder.append('[');
         TIME_FORMATTER.formatTo(Instant.ofEpochMilli(event.time), builder);
-        builder.append("] [")
-                .append(event.caller)
-                .append('/')
+        builder.append("] [");
+
+        if (event.caller == null || !event.caller.startsWith("org.jackhuang.hmcl.")) {
+            builder.append(event.caller);
+        } else {
+            builder.append("@.").append(event.caller, "org.jackhuang.hmcl.".length(), event.caller.length());
+        }
+
+        builder.append('/')
                 .append(event.level)
                 .append("] ")
                 .append(filterForbiddenToken(event.message));
