@@ -19,7 +19,9 @@ package org.jackhuang.hmcl.util.platform;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -297,7 +299,14 @@ public final class CommandBuilder {
     }
 
     public static String toBatchStringLiteral(String s) {
-        return containsEscape(s, " \t\"^&<>|") ? '"' + escape(s, '\\', '"') + '"' : s;
+        String escape = " \t\"^&<>|?*";
+        if (containsEscape(s, escape))
+            // The argument has not been quoted, add quotes.
+            // See explanation at https://github.com/Artoria2e5/node/blob/fix!/child-process-args/lib/child_process.js
+            // about making the string "inert to CMD", and associated unit tests
+            return '"' + s.replaceAll("(\\\\*)($|\")\"", "$1$1$2").replace("\"", "\"\"") + '"';
+        else
+            return s;
     }
 
     public static String toShellStringLiteral(String s) {
