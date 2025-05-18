@@ -63,18 +63,23 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
     private static boolean isExemptedRegion() {
-        if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
+        String zoneId = ZoneId.systemDefault().getId();
+        if ("Asia/Shanghai".equals(zoneId) || "Asia/Beijing".equals(zoneId))
             return true;
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                && NativeUtils.USE_JNA
-                && ZonedDateTime.now().getOffset().getTotalSeconds() == 8 * 3600) { // GMT+8
-            Kernel32 kernel32 = Kernel32.INSTANCE;
+        if (ZonedDateTime.now().getOffset().getTotalSeconds() == 8 * 3600) { // GMT+8
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+                Kernel32 kernel32 = Kernel32.INSTANCE;
 
-            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
-            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45)
+                // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+                if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
+                    return true;
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && "GMT+08:00".equals(zoneId))
+                // Some Linux distributions may use invalid time zone ids (e.g., Asia/Beijing)
+                // Java may not be able to resolve this name and use GMT+08:00 instead.
                 return true;
         }
+
 
         return false;
     }
