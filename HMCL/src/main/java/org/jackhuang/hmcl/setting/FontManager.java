@@ -56,8 +56,11 @@ public final class FontManager {
             return font;
 
         Path thisJar = JarUtils.thisJarPath();
-        if (thisJar != null && thisJar.getParent() != null)
-            return tryLoadDefaultFont(thisJar.getParent());
+        if (thisJar != null && thisJar.getParent() != null) {
+            font = tryLoadDefaultFont(thisJar.getParent());
+            if (font != null)
+                return font;
+        }
 
         return OperatingSystem.CURRENT_OS.isLinuxOrBSD() ? fcMatchLookupFont() : null;
     });
