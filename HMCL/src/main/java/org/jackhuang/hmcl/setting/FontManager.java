@@ -22,6 +22,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
@@ -62,7 +64,12 @@ public final class FontManager {
                 return font;
         }
 
-        return OperatingSystem.CURRENT_OS.isLinuxOrBSD() ? fcMatchLookupFont() : null;
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+                && Locale.getDefault() != Locale.ROOT
+                && !"en".equals(Locale.getDefault().getLanguage()))
+            return fcMatchLookupFont();
+        else
+            return null;
     });
 
     private static final ObjectProperty<Font> fontProperty;
