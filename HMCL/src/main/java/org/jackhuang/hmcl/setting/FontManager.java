@@ -65,7 +65,7 @@ public final class FontManager {
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
                 && Locale.getDefault() != Locale.ROOT
                 && !"en".equals(Locale.getDefault().getLanguage()))
-            return fcMatchLookupFont();
+            return findByFcMatch();
         else
             return null;
     });
@@ -112,7 +112,7 @@ public final class FontManager {
         return null;
     }
 
-    public static Font fcMatchLookupFont() {
+    public static Font findByFcMatch() {
         Path fcMatch = SystemUtils.which("fc-match");
         if (fcMatch == null)
             return null;
