@@ -50,7 +50,6 @@ import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
 import java.net.URI;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -67,18 +66,16 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         if ("Asia/Shanghai".equals(zoneId) || "Asia/Beijing".equals(zoneId))
             return true;
 
-        if (ZonedDateTime.now().getOffset().getTotalSeconds() == 8 * 3600) { // GMT+8
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
-                Kernel32 kernel32 = Kernel32.INSTANCE;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+            Kernel32 kernel32 = Kernel32.INSTANCE;
 
-                // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
-                if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
-                    return true;
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && "GMT+08:00".equals(zoneId))
-                // Some Linux distributions may use invalid time zone ids (e.g., Asia/Beijing)
-                // Java may not be able to resolve this name and use GMT+08:00 instead.
+            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
                 return true;
-        }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && "GMT+08:00".equals(zoneId))
+            // Some Linux distributions may use invalid time zone ids (e.g., Asia/Beijing)
+            // Java may not be able to resolve this name and use GMT+08:00 instead.
+            return true;
 
         return false;
     }
