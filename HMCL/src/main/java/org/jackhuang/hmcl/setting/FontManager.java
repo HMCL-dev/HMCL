@@ -65,9 +65,19 @@ public final class FontManager {
         return OperatingSystem.CURRENT_OS.isLinuxOrBSD() ? fcMatchLookupFont() : null;
     });
 
-    private static final ObjectProperty<Font> fontProperty = new SimpleObjectProperty<>(getDefaultFont());
+    private static final ObjectProperty<Font> fontProperty;
 
     static {
+        String fontFamily = config().getLauncherFontFamily();
+        if (fontFamily == null)
+            fontFamily = System.getProperty("hmcl.font.override");
+        if (fontFamily == null)
+            fontFamily = System.getenv("HMCL_FONT");
+
+        Font font = fontFamily == null ? DEFAULT_FONT.get() : Font.font(fontFamily, DEFAULT_FONT_SIZE);
+        fontProperty = new SimpleObjectProperty<>(font);
+
+        LOG.info("Font: " + (font != null ? font.getName() : Font.getDefault().getName()));
         fontProperty.addListener((obs, oldValue, newValue) -> {
             if (newValue != null)
                 config().setLauncherFontFamily(newValue.getFamily());
@@ -104,7 +114,7 @@ public final class FontManager {
 
         try {
             String path = SystemUtils.run(fcMatch.toString(),
-                    "sans:lang=" + Locale.getDefault().toLanguageTag(),
+                    ":lang=" + Locale.getDefault().toLanguageTag(),
                     "--format", "%{file}").trim();
             Path file = Paths.get(path).toAbsolutePath().normalize();
             if (!Files.isRegularFile(file)) {
@@ -120,16 +130,6 @@ public final class FontManager {
             LOG.warning("Failed to get default font from fc-match", e);
             return null;
         }
-    }
-
-    private static Font getDefaultFont() {
-        String fontFamily = config().getLauncherFontFamily();
-        if (fontFamily == null)
-            fontFamily = System.getProperty("hmcl.font.override");
-        if (fontFamily == null)
-            fontFamily = System.getenv("HMCL_FONT");
-
-        return fontFamily == null ? DEFAULT_FONT.get() : Font.font(fontFamily, DEFAULT_FONT_SIZE);
     }
 
     public static ObjectProperty<Font> fontProperty() {
