@@ -63,6 +63,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
     private static boolean isExemptedRegion() {
         String zoneId = ZoneId.systemDefault().getId();
+        // Although Asia/Beijing is not a legal name, Deepin uses it
         if ("Asia/Shanghai".equals(zoneId) || "Asia/Beijing".equals(zoneId))
             return true;
 
