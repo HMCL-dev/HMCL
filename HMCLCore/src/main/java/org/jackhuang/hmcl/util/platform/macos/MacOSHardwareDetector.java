@@ -103,8 +103,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
         String json = null;
         try {
-            json = SystemUtils.run(Arrays.asList("/usr/sbin/system_profiler", "SPDisplaysDataType", "-json"),
-                    inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
+            json = SystemUtils.run("/usr/sbin/system_profiler", "SPDisplaysDataType", "-json");
 
             JsonObject object = JsonUtils.GSON.fromJson(json, JsonObject.class);
             JsonArray spDisplaysDataType = object.getAsJsonArray("SPDisplaysDataType");

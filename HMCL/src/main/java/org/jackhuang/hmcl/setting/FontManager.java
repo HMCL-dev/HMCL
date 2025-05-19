@@ -23,10 +23,14 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -55,7 +59,7 @@ public final class FontManager {
         if (thisJar != null && thisJar.getParent() != null)
             return tryLoadDefaultFont(thisJar.getParent());
 
-        return null;
+        return OperatingSystem.CURRENT_OS.isLinuxOrBSD() ? fcMatchLookupFont() : null;
     });
 
     private static final ObjectProperty<Font> fontProperty = new SimpleObjectProperty<>(getDefaultFont());
@@ -88,6 +92,31 @@ public final class FontManager {
         }
 
         return null;
+    }
+
+    public static Font fcMatchLookupFont() {
+        Path fcMatch = SystemUtils.which("fc-match");
+        if (fcMatch == null)
+            return null;
+
+        try {
+            String path = SystemUtils.run(fcMatch.toString(),
+                    "sans:lang=" + Locale.getDefault().toLanguageTag(),
+                    "--format", "%{file}").trim();
+            Path file = Paths.get(path).toAbsolutePath().normalize();
+            if (!Files.isRegularFile(file)) {
+                LOG.warning("Font file does not exist: " + path);
+                return null;
+            }
+
+            Font font = Font.loadFont(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
+            if (font == null)
+                LOG.warning("Failed to load font from " + path);
+            return font;
+        } catch (Throwable e) {
+            LOG.warning("Failed to get default font from fc-match", e);
+            return null;
+        }
     }
 
     private static Font getDefaultFont() {
