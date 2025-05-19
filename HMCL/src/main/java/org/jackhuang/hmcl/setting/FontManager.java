@@ -132,7 +132,7 @@ public final class FontManager {
                 LOG.warning("Failed to load font from " + path);
             return font;
         } catch (Throwable e) {
-            LOG.warning("Failed to get default font from fc-match", e);
+            LOG.warning("Failed to get default font with fc-match", e);
             return null;
         }
     }
