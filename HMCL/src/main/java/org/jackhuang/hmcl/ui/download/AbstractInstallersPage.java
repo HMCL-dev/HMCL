@@ -74,7 +74,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new InstallersPage.InstallersPageSkin(this);
+        return new InstallersPageSkin(this);
     }
 
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
