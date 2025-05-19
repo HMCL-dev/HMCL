@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -73,6 +74,11 @@ public final class SystemUtils {
         managedProcess.pumpInputStream(SystemUtils::onLogLine);
         managedProcess.pumpErrorStream(SystemUtils::onLogLine);
         return managedProcess.getProcess().waitFor();
+    }
+
+    public static String run(String... command) throws Exception {
+        return run(Arrays.asList(command),
+                inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
     }
 
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {
