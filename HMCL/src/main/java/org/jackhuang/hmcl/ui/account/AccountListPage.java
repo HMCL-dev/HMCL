@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
 import java.net.URI;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -63,8 +64,14 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
     private static boolean isExemptedRegion() {
         String zoneId = ZoneId.systemDefault().getId();
-        // Although Asia/Beijing is not a legal name, Deepin uses it
-        if ("Asia/Shanghai".equals(zoneId) || "Asia/Beijing".equals(zoneId))
+        if (Arrays.asList(
+                "Asia/Shanghai",
+                // Although Asia/Beijing is not a legal name, Deepin uses it
+                "Asia/Beijing",
+                "Asia/Chongqing",
+                "Asia/Chungking",
+                "Asia/Harbin"
+        ).contains(zoneId))
             return true;
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
