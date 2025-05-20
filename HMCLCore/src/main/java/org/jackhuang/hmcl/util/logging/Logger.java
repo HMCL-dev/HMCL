@@ -42,7 +42,7 @@ public final class Logger {
         return message;
     }
 
-
+    static final String PACKAGE_PREFIX = "org.jackhuang.hmcl.";
     static final String CLASS_NAME = Logger.class.getName();
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
@@ -71,10 +71,10 @@ public final class Logger {
         TIME_FORMATTER.formatTo(Instant.ofEpochMilli(event.time), builder);
         builder.append("] [");
 
-        if (event.caller == null || !event.caller.startsWith("org.jackhuang.hmcl.")) {
-            builder.append(event.caller);
+        if (event.caller != null && event.caller.startsWith(PACKAGE_PREFIX)) {
+            builder.append("@.").append(event.caller, PACKAGE_PREFIX.length(), event.caller.length());
         } else {
-            builder.append("@.").append(event.caller, "org.jackhuang.hmcl.".length(), event.caller.length());
+            builder.append(event.caller);
         }
 
         builder.append('/')
