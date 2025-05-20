@@ -245,16 +245,15 @@ public final class CommandBuilder {
     }
 
     public static boolean hasExecutionPolicy() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
             return true;
-        }
+        if (!OperatingSystem.isWindows7OrLater())
+            return false;
 
-        if (OperatingSystem.isWindows7OrLater()) {
-            try {
-                String policy = SystemUtils.run("powershell.exe", "-NoProfile", "-Command", "Get-ExecutionPolicy").trim();
-                return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
-            } catch (Throwable ignored) {
-            }
+        try {
+            String policy = SystemUtils.run("powershell.exe", "-NoProfile", "-Command", "Get-ExecutionPolicy").trim();
+            return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
+        } catch (Throwable ignored) {
         }
         return false;
     }
