@@ -41,7 +41,7 @@ public final class SystemInfo {
                 DETECTOR = new WindowsHardwareDetector();
             else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
                 DETECTOR = new LinuxHardwareDetector();
-            else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+            else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 DETECTOR = new MacOSHardwareDetector();
             else
                 DETECTOR = new HardwareDetector();

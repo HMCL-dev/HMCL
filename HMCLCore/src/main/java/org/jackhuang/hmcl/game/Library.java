@@ -46,7 +46,7 @@ public class Library implements Comparable<Library>, Validation {
     private final String url;
     private final LibrariesDownloadInfo downloads;
     private final ExtractRules extract;
-    private final Map<OperatingSystem, String> natives;
+    private final Map<String, String> natives;
     private final List<CompatibilityRule> rules;
     private final List<String> checksums;
 
@@ -64,7 +64,7 @@ public class Library implements Comparable<Library>, Validation {
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
-    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
+    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<String, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
         this.artifact = artifact;
         this.url = url;
         this.downloads = downloads;
@@ -94,8 +94,8 @@ public class Library implements Comparable<Library>, Validation {
 
     public String getClassifier() {
         if (artifact.getClassifier() == null)
-            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS))
-                return natives.get(OperatingSystem.CURRENT_OS).replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
+            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS.getMojangName()))
+                return natives.get(OperatingSystem.CURRENT_OS.getMojangName()).replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
             else
                 return null;
         else

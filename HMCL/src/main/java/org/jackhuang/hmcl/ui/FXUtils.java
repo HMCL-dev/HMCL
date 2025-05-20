@@ -379,7 +379,7 @@ public final class FXUtils {
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
         else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
             openCommand = "/usr/bin/xdg-open";
@@ -416,7 +416,7 @@ public final class FXUtils {
         String[] openCommands;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
         else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
@@ -498,7 +498,7 @@ public final class FXUtils {
             try {
                 java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                     try {
                         Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
                     } catch (IOException ex) {
@@ -759,7 +759,7 @@ public final class FXUtils {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";

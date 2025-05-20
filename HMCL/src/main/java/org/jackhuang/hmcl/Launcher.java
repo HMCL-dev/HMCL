@@ -90,7 +90,7 @@ public final class Launcher extends Application {
             }
 
             // https://lapcatsoftware.com/articles/app-translocation.html
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                     && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
                 if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
@@ -152,7 +152,7 @@ public final class Launcher extends Application {
                     || configPath.startsWith("/var/cache/")
                     || configPath.startsWith("/dev/shm/")
                     || configPath.contains("/Trash/");
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             return configPath.startsWith("/var/folders/")
                     || configPath.startsWith("/private/var/folders/")
                     || configPath.startsWith("/tmp/")
