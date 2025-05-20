@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -42,7 +40,7 @@ public final class StringUtils {
     public static String getStackTrace(StackTraceElement[] elements) {
         StringBuilder builder = new StringBuilder();
         for (StackTraceElement element : elements)
-            builder.append("\tat ").append(element).append(OperatingSystem.LINE_SEPARATOR);
+            builder.append("\tat ").append(element).append(System.lineSeparator());
         return builder.toString();
     }
 

@@ -296,7 +296,7 @@ public final class Launcher extends Application {
             Controllers.getStage().close();
             Schedulers.shutdown();
             Controllers.shutdown();
-            Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
+            Lang.executeDelayed(() -> System.gc(), TimeUnit.SECONDS, 5, true);
         });
     }
 

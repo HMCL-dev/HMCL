@@ -47,7 +47,7 @@ public final class SystemUtils {
             return null;
 
         try {
-            for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
+            for (String item : path.split(File.pathSeparator)) {
                 try {
                     Path program = Paths.get(item, command);
                     if (Files.isExecutable(program))
