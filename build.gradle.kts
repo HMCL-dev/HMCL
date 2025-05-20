@@ -1,3 +1,5 @@
+import org.jackhuang.hmcl.gradle.javafx.JavaFXUtils
+
 plugins {
     id("checkstyle")
 }
@@ -107,8 +109,6 @@ tasks.register("checkTranslations") {
     }
 }
 
-apply {
-    from("javafx.gradle.kts")
-}
+JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
