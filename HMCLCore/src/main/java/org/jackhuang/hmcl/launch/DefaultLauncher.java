@@ -255,7 +255,7 @@ public class DefaultLauncher extends Launcher {
         // Provided Minecraft arguments
         Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
-        configuration.put("${classpath}", String.join(OperatingSystem.PATH_SEPARATOR, classpath));
+        configuration.put("${classpath}", String.join(File.pathSeparator, classpath));
         configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
         configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
@@ -434,7 +434,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${resolution_width}", options.getWidth().toString()),
                 pair("${resolution_height}", options.getHeight().toString()),
                 pair("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
-                pair("${classpath_separator}", OperatingSystem.PATH_SEPARATOR),
+                pair("${classpath_separator}", File.pathSeparator),
                 pair("${primary_jar}", repository.getVersionJar(version).getAbsolutePath()),
                 pair("${language}", Locale.getDefault().toString()),
 
@@ -444,7 +444,7 @@ public class DefaultLauncher extends Launcher {
                 // when we propose this placeholder.
                 pair("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
                 // file_separator is used in -DignoreList
-                pair("${file_separator}", OperatingSystem.FILE_SEPARATOR),
+                pair("${file_separator}", File.separator),
                 pair("${primary_jar_name}", FileUtils.getName(repository.getVersionJar(version).toPath()))
         );
     }

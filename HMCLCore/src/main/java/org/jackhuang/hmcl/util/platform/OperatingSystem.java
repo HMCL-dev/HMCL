@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -95,10 +94,6 @@ public enum OperatingSystem {
      * The current operating system.
      */
     public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
-
-    public static final String PATH_SEPARATOR = File.pathSeparator;
-    public static final String FILE_SEPARATOR = File.separator;
-    public static final String LINE_SEPARATOR = System.lineSeparator();
 
     /**
      * The system default charset.
@@ -305,16 +300,6 @@ public enum OperatingSystem {
 
     public static boolean isWindows7OrLater() {
         return IS_WINDOWS_7_OR_LATER;
-    }
-
-    @SuppressWarnings("removal")
-    public static void forceGC() {
-        System.gc();
-        try {
-            System.runFinalization();
-            System.gc();
-        } catch (NoSuchMethodError ignored) {
-        }
     }
 
     public static Path getWorkingDirectory(String folder) {

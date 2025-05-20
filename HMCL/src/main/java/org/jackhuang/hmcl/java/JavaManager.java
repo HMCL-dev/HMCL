@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
@@ -411,7 +412,7 @@ public final class JavaManager {
 
         // Search in PATH.
         if (System.getenv("PATH") != null) {
-            String[] paths = System.getenv("PATH").split(OperatingSystem.PATH_SEPARATOR);
+            String[] paths = System.getenv("PATH").split(File.pathSeparator);
             for (String path : paths) {
                 try {
                     tryAddJavaExecutable(javaRuntimes, Paths.get(path, OperatingSystem.CURRENT_OS.getJavaExecutable()));
@@ -421,7 +422,7 @@ public final class JavaManager {
         }
 
         if (System.getenv("HMCL_JRES") != null) {
-            String[] paths = System.getenv("HMCL_JRES").split(OperatingSystem.PATH_SEPARATOR);
+            String[] paths = System.getenv("HMCL_JRES").split(File.pathSeparator);
             for (String path : paths) {
                 try {
                     tryAddJavaHome(javaRuntimes, Paths.get(path));

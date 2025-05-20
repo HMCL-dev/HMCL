@@ -265,7 +265,7 @@ public class GameCrashWindow extends Stage {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
         CompletableFuture.supplyAsync(() ->
-                        logs.stream().map(Log::getLog).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
+                        logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs ->
                         LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
                 .handleAsync((result, exception) -> {
