@@ -58,6 +58,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
             List<Map<String, String>> videoControllers = SystemUtils.run(Arrays.asList(
                             "powershell.exe",
+                            "-NoProfile",
                             "-Command",
                             String.join(" | ",
                                     getCimInstance + " -Class Win32_VideoController",
