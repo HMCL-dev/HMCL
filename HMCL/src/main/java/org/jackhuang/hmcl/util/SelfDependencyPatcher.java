@@ -107,9 +107,18 @@ public final class SelfDependencyPatcher {
         static List<DependencyDescriptor> readDependencies() {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
-                Map<String, List<DependencyDescriptor>> allDependencies =
-                        JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class)));
-                return allDependencies.get(Platform.getPlatform().toString());
+                Map<String, Map<String, List<DependencyDescriptor>>> allDependencies =
+                        JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class))));
+                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.getPlatform().toString());
+                if (platform == null)
+                    return null;
+
+                if (JavaRuntime.CURRENT_VERSION >= 22) {
+                    List<DependencyDescriptor> modernDependencies = platform.get("modern");
+                    if (modernDependencies != null)
+                        return modernDependencies;
+                }
+                return platform.get("classic");
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
