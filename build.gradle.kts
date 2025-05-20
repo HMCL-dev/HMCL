@@ -107,8 +107,6 @@ tasks.register("checkTranslations") {
     }
 }
 
-apply {
-    from("javafx.gradle.kts")
-}
+org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")

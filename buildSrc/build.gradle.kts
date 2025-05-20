@@ -4,6 +4,7 @@ repositories {
 
 dependencies {
     implementation(libs.gson)
+    implementation(libs.jna)
 }
 
 java {
