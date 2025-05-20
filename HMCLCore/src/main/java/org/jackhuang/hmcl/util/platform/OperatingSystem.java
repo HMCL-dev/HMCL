@@ -130,6 +130,8 @@ public enum OperatingSystem {
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
 
+    private static final boolean IS_WINDOWS_7_OR_LATER;
+
     static {
         String nativeEncoding = System.getProperty("native.encoding");
         String hmclNativeEncoding = System.getProperty("hmcl.native.encoding");
@@ -194,6 +196,23 @@ public enum OperatingSystem {
             if (versionNumber == null)
                 versionNumber = System.getProperty("os.version");
 
+            int major;
+            int dotIndex = versionNumber.indexOf('.');
+            try {
+                if (dotIndex < 0)
+                    major = Integer.parseInt(versionNumber);
+                else
+                    major = Integer.parseInt(versionNumber.substring(0, dotIndex));
+            } catch (NumberFormatException ignored) {
+                major = -1;
+            }
+
+            // Windows XP:      NT 5.1~5.2
+            // Windows Vista:   NT 6.0
+            // Windows 7:       NT 6.1
+
+            IS_WINDOWS_7_OR_LATER = major >= 6 && !versionNumber.startsWith("6.0");
+
             // Get Code Page
 
             if (kernel32 != null)
@@ -229,6 +248,7 @@ public enum OperatingSystem {
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
             CODE_PAGE = -1;
+            IS_WINDOWS_7_OR_LATER = false;
         }
 
         Map<String, String> osRelease = Collections.emptyMap();
@@ -284,27 +304,7 @@ public enum OperatingSystem {
     }
 
     public static boolean isWindows7OrLater() {
-        if (CURRENT_OS != WINDOWS) {
-            return false;
-        }
-
-        int major;
-        int dotIndex = SYSTEM_VERSION.indexOf('.');
-        try {
-            if (dotIndex < 0) {
-                major = Integer.parseInt(SYSTEM_VERSION);
-            } else {
-                major = Integer.parseInt(SYSTEM_VERSION.substring(0, dotIndex));
-            }
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-
-        // Windows XP:      NT 5.1~5.2
-        // Windows Vista:   NT 6.0
-        // Windows 7:       NT 6.1
-
-        return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
+        return IS_WINDOWS_7_OR_LATER;
     }
 
     @SuppressWarnings("removal")

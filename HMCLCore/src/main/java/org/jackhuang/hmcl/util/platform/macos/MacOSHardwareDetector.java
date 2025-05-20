@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
@@ -103,8 +102,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
         String json = null;
         try {
-            json = SystemUtils.run(Arrays.asList("/usr/sbin/system_profiler", "SPDisplaysDataType", "-json"),
-                    inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
+            json = SystemUtils.run("/usr/sbin/system_profiler", "SPDisplaysDataType", "-json");
 
             JsonObject object = JsonUtils.GSON.fromJson(json, JsonObject.class);
             JsonArray spDisplaysDataType = object.getAsJsonArray("SPDisplaysDataType");

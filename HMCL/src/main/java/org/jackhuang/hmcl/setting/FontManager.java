@@ -23,10 +23,14 @@ import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -52,15 +56,33 @@ public final class FontManager {
             return font;
 
         Path thisJar = JarUtils.thisJarPath();
-        if (thisJar != null && thisJar.getParent() != null)
-            return tryLoadDefaultFont(thisJar.getParent());
+        if (thisJar != null && thisJar.getParent() != null) {
+            font = tryLoadDefaultFont(thisJar.getParent());
+            if (font != null)
+                return font;
+        }
 
-        return null;
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+                && Locale.getDefault() != Locale.ROOT
+                && !"en".equals(Locale.getDefault().getLanguage()))
+            return findByFcMatch();
+        else
+            return null;
     });
 
-    private static final ObjectProperty<Font> fontProperty = new SimpleObjectProperty<>(getDefaultFont());
+    private static final ObjectProperty<Font> fontProperty;
 
     static {
+        String fontFamily = config().getLauncherFontFamily();
+        if (fontFamily == null)
+            fontFamily = System.getProperty("hmcl.font.override");
+        if (fontFamily == null)
+            fontFamily = System.getenv("HMCL_FONT");
+
+        Font font = fontFamily == null ? DEFAULT_FONT.get() : Font.font(fontFamily, DEFAULT_FONT_SIZE);
+        fontProperty = new SimpleObjectProperty<>(font);
+
+        LOG.info("Font: " + (font != null ? font.getName() : Font.getDefault().getName()));
         fontProperty.addListener((obs, oldValue, newValue) -> {
             if (newValue != null)
                 config().setLauncherFontFamily(newValue.getFamily());
@@ -90,14 +112,29 @@ public final class FontManager {
         return null;
     }
 
-    private static Font getDefaultFont() {
-        String fontFamily = config().getLauncherFontFamily();
-        if (fontFamily == null)
-            fontFamily = System.getProperty("hmcl.font.override");
-        if (fontFamily == null)
-            fontFamily = System.getenv("HMCL_FONT");
+    public static Font findByFcMatch() {
+        Path fcMatch = SystemUtils.which("fc-match");
+        if (fcMatch == null)
+            return null;
 
-        return fontFamily == null ? DEFAULT_FONT.get() : Font.font(fontFamily, DEFAULT_FONT_SIZE);
+        try {
+            String path = SystemUtils.run(fcMatch.toString(),
+                    ":lang=" + Locale.getDefault().toLanguageTag(),
+                    "--format", "%{file}").trim();
+            Path file = Paths.get(path).toAbsolutePath().normalize();
+            if (!Files.isRegularFile(file)) {
+                LOG.warning("Font file does not exist: " + path);
+                return null;
+            }
+
+            Font font = Font.loadFont(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
+            if (font == null)
+                LOG.warning("Failed to load font from " + path);
+            return font;
+        } catch (Throwable e) {
+            LOG.warning("Failed to get default font with fc-match", e);
+            return null;
+        }
     }
 
     public static ObjectProperty<Font> fontProperty() {

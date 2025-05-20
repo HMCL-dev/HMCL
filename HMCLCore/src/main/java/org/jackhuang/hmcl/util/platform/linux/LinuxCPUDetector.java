@@ -24,14 +24,12 @@ import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -41,11 +39,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 final class LinuxCPUDetector {
 
-    private static final String CPUINFO_PATH = "/proc/cpuinfo";
-
     private static TreeMap<Integer, Map<String, String>> loadCPUInfo() {
         try {
-            List<Map<String, String>> list = KeyValuePairUtils.loadList(Paths.get(CPUINFO_PATH));
+            List<Map<String, String>> list = KeyValuePairUtils.loadList(Paths.get("/proc/cpuinfo"));
             TreeMap<Integer, Map<String, String>> result = new TreeMap<>();
             for (Map<String, String> map : list) {
                 String id = map.get("processor");
@@ -193,10 +189,50 @@ final class LinuxCPUDetector {
                 return;
             }
         } catch (Throwable e) {
-            LOG.warning("Failed to detect CPU cores", e);
+            LOG.warning("Failed to detect cores in /proc/cpuinfo", e);
         }
 
-        // We can check /sys/devices/system/cpu, but I don't think it's necessary.
+        Path cpuDevicesDir = Paths.get("/sys/devices/system/cpu");
+        if (Files.isRegularFile(cpuDevicesDir.resolve("cpu0/topology/physical_package_id"))
+                && Files.isRegularFile(cpuDevicesDir.resolve("cpu0/topology/core_cpus_list"))) {
+            Pattern dirNamePattern = Pattern.compile("cpu[0-9]+");
+            TreeSet<Integer> physicalPackageIds = new TreeSet<>();
+            TreeSet<Integer> physicalCores = new TreeSet<>();
+
+            int physical = 0;
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(cpuDevicesDir)) {
+                for (Path cpuDir : stream) {
+                    if (!dirNamePattern.matcher(cpuDir.getFileName().toString()).matches() || !Files.isDirectory(cpuDir))
+                        continue;
+
+                    physicalPackageIds.add(Integer.parseInt(FileUtils.readText(cpuDir.resolve("topology/physical_package_id")).trim()));
+
+                    boolean shouldCount = false;
+                    for (String item : FileUtils.readText(cpuDir.resolve("topology/core_cpus_list")).trim().split(",")) {
+                        String range = item.trim();
+                        int idx = range.indexOf('-');
+                        if (idx < 0)
+                            shouldCount |= physicalCores.add(Integer.parseInt(range));
+                        else {
+                            int first = Integer.parseInt(range.substring(0, idx));
+                            int last = Integer.parseInt(range.substring(idx + 1));
+
+                            for (int i = first; i <= last; i++) {
+                                shouldCount |= physicalCores.add(i);
+                            }
+                        }
+                    }
+                    if (shouldCount)
+                        physical++;
+                }
+
+                builder.setCores(new CentralProcessor.Cores(physical, logical, physicalPackageIds.size()));
+                return;
+            } catch (Throwable e) {
+                LOG.warning("Failed to detect cores in /sys/devices/system/cpu", e);
+            }
+        }
+
         builder.setCores(new CentralProcessor.Cores(logical));
     }
 

@@ -25,10 +25,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.PageAware;
-import org.jackhuang.hmcl.ui.construct.TabControl;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
@@ -62,7 +59,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         tab = new TabHeader(gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
-        gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null);
+        addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null));
         transitionPane.setContent(gameTab.getNode(), ContainerAnimations.NONE);
         FXUtils.onChange(tab.getSelectionModel().selectedItemProperty(), newValue -> {
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
