@@ -33,7 +33,7 @@ final class WindowsCPUDetector {
         Object vendor = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "VendorIdentifier");
 
         if (name instanceof String)
-            builder.setName((String) name);
+            builder.setName(CentralProcessor.cleanName((String) name));
 
         if (vendor instanceof String)
             builder.setVendor(HardwareVendor.of((String) vendor));

@@ -17,12 +17,33 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Glavo
  */
 public final class CentralProcessor {
+
+    public static String cleanName(String name) {
+        if (name == null)
+            return null;
+
+        for (String removeString : new String[]{
+                " CPU", " FPU", " APU", " Processor",
+                " Dual-Core", " Quad-Core", " Six-Core", " Eight-Core", " Ten-Core",
+                " 2-Core", " 4-Core", " 6-Core", " 8-Core", " 10-Core", " 12-Core", " 14-Core", " 16-Core"
+        }) {
+            name = name.replace(removeString, "");
+        }
+
+        int idx = name.indexOf('@');
+        if (idx > 0)
+            name = name.substring(0, idx);
+
+        return StringUtils.normalizeWhitespaces(name);
+    }
+
     private final String name;
     private final @Nullable HardwareVendor vendor;
     private final @Nullable Cores cores;
