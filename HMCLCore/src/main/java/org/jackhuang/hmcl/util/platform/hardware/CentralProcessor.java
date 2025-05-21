@@ -26,12 +26,14 @@ import org.jetbrains.annotations.Nullable;
 public final class CentralProcessor {
 
     public static String cleanName(String name) {
-        if (name == null)
+        if (name == null) {
             return null;
+        }
 
         int idx = name.indexOf('@');
-        if (idx > 0)
+        if (idx > 0) {
             name = name.substring(0, idx);
+        }
 
         for (String removeString : new String[]{
                 " CPU", " FPU", " APU", " Processor",
@@ -41,9 +43,11 @@ public final class CentralProcessor {
             name = name.replace(removeString, "");
         }
 
-        name = name.replace("Intel(R) ", "Intel ");
-        name = name.replace("Core(TM) ", "Core ");
-        name = name.replace("Celeron(R) ", "Celeron ");
+        if (name.contains("Intel")) {
+            name = name.replaceFirst("^([0-9]+th Gen )?Intel(\\(R\\))? ", "Intel ");
+            name = name.replace("Core(TM) ", "Core ");
+            name = name.replace("Celeron(R) ", "Celeron ");
+        }
 
         return StringUtils.normalizeWhitespaces(name);
     }
