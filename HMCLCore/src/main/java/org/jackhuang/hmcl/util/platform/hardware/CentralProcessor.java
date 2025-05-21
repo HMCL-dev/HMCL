@@ -41,7 +41,9 @@ public final class CentralProcessor {
             name = name.replace(removeString, "");
         }
 
-        name = name.replace("Intel(R) Core(TM) ", "Intel Core ");
+        name = name.replace("Intel(R) ", "Intel ");
+        name = name.replace("Core(TM) ", "Core ");
+        name = name.replace("Celeron(R) ", "Celeron ");
 
         return StringUtils.normalizeWhitespaces(name);
     }
