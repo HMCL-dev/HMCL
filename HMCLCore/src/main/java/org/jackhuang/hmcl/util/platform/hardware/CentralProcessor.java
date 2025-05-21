@@ -33,7 +33,7 @@ public final class CentralProcessor {
         if (idx > 0)
             name = name.substring(0, idx);
 
-        name = name.replaceAll(" (\\d+|Dual|Quad|Six|Eight|Ten)-Core", "");
+        name = name.replaceFirst(" (\\d+|Dual|Quad|Six|Eight|Ten)-Core", "");
         name = name.replaceAll(" (CPU|FPU|APU|Processor)", "");
 
         if (name.contains("Intel")) {
