@@ -44,9 +44,11 @@ public final class CentralProcessor {
         }
 
         if (name.contains("Intel")) {
-            name = name.replaceFirst("^([0-9]+th Gen )?Intel(\\(R\\))? ", "Intel ");
+            name = name.replaceFirst("^([0-9]+th Gen )?Intel", "Intel");
+            name = name.replace("Intel(R) ", "Intel ");
             name = name.replace("Core(TM) ", "Core ");
             name = name.replace("Celeron(R) ", "Celeron ");
+            name = name.replace("Pentium(R) ", "Pentium ");
         }
 
         return StringUtils.normalizeWhitespaces(name);
