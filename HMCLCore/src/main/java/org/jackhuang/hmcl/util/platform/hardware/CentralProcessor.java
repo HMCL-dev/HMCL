@@ -41,12 +41,13 @@ public final class CentralProcessor {
             name = name.replaceAll(" ([a-zA-Z]+)\\((?:TM|R|™|®)\\) ", " $1 ");
             name = name.replace("Core(TM)2", "Core 2");
         } else if (name.contains("AMD")) {
+            name = name.replace("(tm)", "");
+
             idx = name.indexOf(" w/ Radeon "); // Radeon 780M Graphics
             if (idx < 0)
                 idx = name.indexOf(" with Radeon ");
             if (idx < 0)
                 idx = name.indexOf(" with AMD Radeon ");
-
             if (idx > 0)
                 name = name.substring(0, idx);
         } else if (name.contains("Loongson")) {
