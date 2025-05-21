@@ -29,6 +29,10 @@ public final class CentralProcessor {
         if (name == null)
             return null;
 
+        int idx = name.indexOf('@');
+        if (idx > 0)
+            name = name.substring(0, idx);
+
         for (String removeString : new String[]{
                 " CPU", " FPU", " APU", " Processor",
                 " Dual-Core", " Quad-Core", " Six-Core", " Eight-Core", " Ten-Core",
@@ -37,9 +41,7 @@ public final class CentralProcessor {
             name = name.replace(removeString, "");
         }
 
-        int idx = name.indexOf('@');
-        if (idx > 0)
-            name = name.substring(0, idx);
+        name = name.replace("Intel(R) Core(TM) ", "Intel Core ");
 
         return StringUtils.normalizeWhitespaces(name);
     }
