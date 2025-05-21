@@ -26,25 +26,18 @@ import org.jetbrains.annotations.Nullable;
 public final class CentralProcessor {
 
     public static String cleanName(String name) {
-        if (name == null) {
+        if (name == null)
             return null;
-        }
 
         int idx = name.indexOf('@');
-        if (idx > 0) {
+        if (idx > 0)
             name = name.substring(0, idx);
-        }
 
-        for (String removeString : new String[]{
-                " CPU", " FPU", " APU", " Processor",
-                " Dual-Core", " Quad-Core", " Six-Core", " Eight-Core", " Ten-Core",
-                " 2-Core", " 4-Core", " 6-Core", " 8-Core", " 10-Core", " 12-Core", " 14-Core", " 16-Core"
-        }) {
-            name = name.replace(removeString, "");
-        }
+        name = name.replaceAll(" (\\d+|Dual|Quad|Six|Eight|Ten)-Core", "");
+        name = name.replaceAll(" (CPU|FPU|APU|Processor)", "");
 
         if (name.contains("Intel")) {
-            name = name.replaceFirst("^([0-9]+th Gen )?Intel", "Intel");
+            name = name.replaceFirst("^(\\d+th Gen )?Intel", "Intel");
             name = name.replace("Intel(R) ", "Intel ");
             name = name.replace("Core(TM) ", "Core ");
             name = name.replace("Celeron(R) ", "Celeron ");
