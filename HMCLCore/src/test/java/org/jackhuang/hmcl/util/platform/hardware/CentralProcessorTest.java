@@ -31,11 +31,13 @@ public final class CentralProcessorTest {
     public void testCleanName() {
         assertEquals("Intel Core i7-12700K", cleanName("12th Gen Intel(R) Core(TM) i7-12700K"));
         assertEquals("Intel Core Ultra 9 285K", cleanName("Intel(R) Core(TM) Ultra 9 285K"));
+        assertEquals("Intel Xeon Platinum 8380", cleanName("Intel(R) Xeon(R) Platinum 8380 CPU @ 2.30GHz"));
         assertEquals("Intel Xeon E5-2660 v2", cleanName("Intel(R) Xeon(R) CPU E5-2660 v2 @ 2.20GHz"));
         assertEquals("Intel Xeon Phi 7250", cleanName("Intel(R) Xeon Phi(TM) CPU 7250 @ 1.40GHz"));
         assertEquals("Intel Celeron N5105", cleanName("Intel(R) Celeron(R) N5105 @ 2.00GHz"));
         assertEquals("Intel Pentium Silver J5005", cleanName("Intel(R) Pentium(R) Silver J5005 CPU @ 1.50GHz"));
         assertEquals("Intel Atom E3940", cleanName("Intel(R) Atom(TM) Processor E3940 @ 1.60GHz"));
+        assertEquals("Intel Core i7 X 990", cleanName("Intel(R) Core(TM) i7 CPU       X 990  @ 3.47GHz"));
         assertEquals("Intel Core 2 Duo T7500", cleanName("Intel(R) Core(TM)2 Duo CPU     T7500  @ 2.20GHz"));
         assertEquals("Intel Core 2 Quad Q9500", cleanName("Intel(R) Core(TM)2 Quad CPU    Q9500  @ 2.83GHz"));
 
