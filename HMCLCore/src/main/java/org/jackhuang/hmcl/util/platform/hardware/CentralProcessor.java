@@ -17,12 +17,46 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Glavo
  */
 public final class CentralProcessor {
+
+    public static String cleanName(String name) {
+        if (name == null)
+            return null;
+
+        int idx = name.indexOf('@');
+        if (idx > 0)
+            name = name.substring(0, idx);
+
+        name = name.replaceFirst(" (\\d+|Dual|Quad|Six|Eight|Ten)-[Cc]ores?", "");
+        name = name.replaceAll(" (CPU|FPU|APU|Processor)", "");
+
+        if (name.contains("Intel")) {
+            name = name.replaceFirst("^(\\d+th Gen )?Intel(\\(R\\)|®)? ", "Intel ");
+            name = name.replaceAll(" ([a-zA-Z]+)\\((?:TM|R|™|®)\\) ", " $1 ");
+            name = name.replace("Core(TM)2", "Core 2");
+        } else if (name.contains("AMD")) {
+            name = name.replace("(tm)", "");
+
+            idx = name.indexOf(" w/ Radeon "); // Radeon 780M Graphics
+            if (idx < 0)
+                idx = name.indexOf(" with Radeon ");
+            if (idx < 0)
+                idx = name.indexOf(" with AMD Radeon ");
+            if (idx > 0)
+                name = name.substring(0, idx);
+        } else if (name.contains("Loongson")) {
+            name = name.replaceFirst("^Loongson-3A R\\d \\((Loongson-[^)]+)\\)", "$1");
+        }
+
+        return StringUtils.normalizeWhitespaces(name);
+    }
+
     private final String name;
     private final @Nullable HardwareVendor vendor;
     private final @Nullable Cores cores;

@@ -52,6 +52,55 @@ public final class StringUtils {
         return !isBlank(str);
     }
 
+    public static String normalizeWhitespaces(String str) {
+        if (str == null)
+            return "";
+
+        int start = 0;
+        int end = str.length();
+
+        while (start < str.length() && Character.isWhitespace(str.charAt(start))) {
+            start++;
+        }
+        while (end > start && Character.isWhitespace(str.charAt(end - 1))) {
+            end--;
+        }
+
+        if (end == start) {
+            return "";
+        }
+
+        StringBuilder builder = null;
+
+        int i = start;
+        while (i < end) {
+            char ch = str.charAt(i);
+            if (Character.isWhitespace(ch)) {
+                int whitespaceEnd = i + 1;
+                while (whitespaceEnd < end && Character.isWhitespace(str.charAt(whitespaceEnd))) {
+                    whitespaceEnd++;
+                }
+
+                if (whitespaceEnd - i > 1 || ch != ' ') {
+                    if (builder == null) {
+                        builder = new StringBuilder(end - start);
+                        builder.append(str, start, i);
+                    }
+                    builder.append(' ');
+                    i = whitespaceEnd ;
+                    continue;
+                }
+            }
+
+            if (builder != null) {
+                builder.append(ch);
+            }
+            i++;
+        }
+
+        return builder != null ? builder.toString() : str.substring(start, end);
+    }
+
     public static String capitalizeFirst(String str) {
         if (str == null || str.isEmpty())
             return str;

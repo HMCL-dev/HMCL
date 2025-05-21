@@ -101,10 +101,12 @@ final class LinuxCPUDetector {
         if (modelName == null)
             modelName = firstCore.get("Model Name");
         if (modelName == null)
+            modelName = firstCore.get("Model name");
+        if (modelName == null)
             modelName = firstCore.get("cpu model");
 
         if (modelName != null) {
-            builder.setName(modelName);
+            builder.setName(CentralProcessor.cleanName(modelName));
             builder.setVendor(HardwareVendor.of(firstCore.get("vendor_id")));
 
             if (builder.getVendor() == null && modelName.startsWith("Loongson"))
