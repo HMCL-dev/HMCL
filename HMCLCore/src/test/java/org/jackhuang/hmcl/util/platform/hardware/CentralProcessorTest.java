@@ -34,10 +34,28 @@ public final class CentralProcessorTest {
         assertEquals("Intel Xeon E5-2660 v2", cleanName("Intel(R) Xeon(R) CPU E5-2660 v2 @ 2.20GHz"));
         assertEquals("Intel Celeron N5105", cleanName("Intel(R) Celeron(R) N5105 @ 2.00GHz"));
         assertEquals("Intel Pentium Silver J5005", cleanName("Intel(R) Pentium(R) Silver J5005 CPU @ 1.50GHz"));
+        assertEquals("Intel Atom E3940", cleanName("Intel(R) Atom(TM) Processor E3940 @ 1.60GHz"));
+        assertEquals("Intel Core 2 Duo T7500", cleanName("Intel(R) Core(TM)2 Duo CPU     T7500  @ 2.20GHz"));
+        assertEquals("Intel Core 2 Quad Q9500", cleanName("Intel(R) Core(TM)2 Quad CPU    Q9500  @ 2.83GHz"));
 
         assertEquals("AMD Ryzen 7 5800X", cleanName("AMD Ryzen 7 5800X 8-Core Processor"));
         assertEquals("AMD Ryzen 7 6800U", cleanName("AMD Ryzen 7 6800U with Radeon Graphics"));
         assertEquals("AMD Ryzen 7 7840HS", cleanName("AMD Ryzen 7 7840HS w/ Radeon 780M Graphics"));
         assertEquals("AMD EPYC 7713", cleanName("AMD EPYC 7713 64-Core Processor"));
+        assertEquals("AMD Ryzen Threadripper 3960X", cleanName("AMD Ryzen Threadripper 3960X 24-Core Processor"));
+        assertEquals("AMD Ryzen Threadripper PRO 5995WX", cleanName("AMD Ryzen Threadripper PRO 5995WX 64-Cores"));
+        assertEquals("AMD A8-7410", cleanName("AMD A8-7410 APU with AMD Radeon R5 Graphics"));
+        assertEquals("AMD Phenom(tm) II X6 1055T", cleanName("AMD Phenom(tm) II X6 1055T Processor"));
+
+        assertEquals("Hygon C86 7285", cleanName("Hygon C86 7285 32-core Processor"));
+        assertEquals("Hygon C86 3250", cleanName("Hygon C86 3250  8-core Processor"));
+
+        assertEquals("ZHAOXIN KaiXian KX-6640MA", cleanName("ZHAOXIN KaiXian KX-6640MA@2.2+GHz"));
+        assertEquals("ZHAOXIN KaiXian KX-U6780A", cleanName("ZHAOXIN KaiXian KX-U6780A@2.7GHz"));
+        assertEquals("ZHAOXIN KaiSheng KH-40000/16", cleanName("ZHAOXIN KaiSheng KH-40000/16@2.2GHz"));
+        assertEquals("ZHAOXIN KaiSheng KH-37800D", cleanName("ZHAOXIN KaiSheng KH-37800D@2.7GHz"));
+
+        assertEquals("Loongson-3A3000", cleanName("Loongson-3A R3 (Loongson-3A3000) @ 1400MHz"));
+        assertEquals("Loongson-3B4000", cleanName("Loongson-3A R4 (Loongson-3B4000) @ 1800MHz"));
     }
 }

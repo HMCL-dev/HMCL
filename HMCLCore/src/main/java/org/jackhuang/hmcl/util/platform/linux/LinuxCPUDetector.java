@@ -101,6 +101,8 @@ final class LinuxCPUDetector {
         if (modelName == null)
             modelName = firstCore.get("Model Name");
         if (modelName == null)
+            modelName = firstCore.get("Model name");
+        if (modelName == null)
             modelName = firstCore.get("cpu model");
 
         if (modelName != null) {
