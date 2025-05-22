@@ -121,7 +121,7 @@ public final class SettingsSaver extends Thread {
                     Thread.sleep(100); // Waiting for more changes
                 }
 
-                if (queue.drainTo(buffer) > 0) {
+                while (queue.drainTo(buffer) > 0) {
                     for (Pair<Path, String> pair : buffer) {
                         if (pair == SHUTDOWN)
                             running = false;
