@@ -27,8 +27,8 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
@@ -81,7 +81,7 @@ public class InstallersPage extends AbstractInstallersPage {
         String name = txtName.getText();
 
         // Check for non-ASCII characters.
-        if (!StandardCharsets.US_ASCII.newEncoder().canEncode(name)) {
+        if (!StringUtils.isASCII(name)) {
             Controllers.dialog(new MessageDialogPane.Builder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
