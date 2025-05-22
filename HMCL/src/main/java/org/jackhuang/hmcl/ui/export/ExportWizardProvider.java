@@ -123,7 +123,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.setPreferredLoginType(config().getPreferredLoginType());
                     exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
 
-                    zip.putTextFile(exported.toJson(), ConfigHolder.CONFIG_FILENAME);
+                    zip.putTextFile(exported.toJson(), ".hmcl/hmcl.json");
                     zip.putFile(tempModpack, "modpack.zip");
 
                     File bg = new File("bg").getAbsoluteFile();
