@@ -45,7 +45,7 @@ public final class FileSaver extends Thread {
     private static void doSave(Map<Path, String> map) {
         for (Map.Entry<Path, String> entry : map.entrySet()) {
             Path file = entry.getKey();
-            LOG.info("Saving settings: " + file);
+            LOG.info("Saving file " + file);
             try {
                 FileUtils.saveSafely(file, entry.getValue());
             } catch (Throwable e) {
