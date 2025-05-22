@@ -265,7 +265,7 @@ public final class Controllers {
         stage.setMinHeight(MIN_HEIGHT);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
-        scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
+        StyleSheets.init(scene);
 
         FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
@@ -293,8 +293,8 @@ public final class Controllers {
         if (!Architecture.SYSTEM_ARCH.isX86() && globalConfig().getPlatformPromptVersion() < 1) {
             Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                Controllers.dialog(i18n("fatal.unsupported_platform.osx_arm64"), null, MessageType.INFO, continueAction);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                Controllers.dialog(i18n("fatal.unsupported_platform.macos_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&

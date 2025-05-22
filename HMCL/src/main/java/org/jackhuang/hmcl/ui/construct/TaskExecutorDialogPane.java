@@ -98,17 +98,15 @@ public class TaskExecutorDialogPane extends BorderPane {
             double speed = speedEvent.getSpeed();
             if (speed > 1024) {
                 speed /= 1024;
-                unit = "KB/s";
+                unit = "KiB/s";
             }
             if (speed > 1024) {
                 speed /= 1024;
-                unit = "MB/s";
+                unit = "MiB/s";
             }
             double finalSpeed = speed;
             String finalUnit = unit;
-            Platform.runLater(() -> {
-                lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit));
-            });
+            Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
         };
         FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).registerWeak(speedEventHandler);
 

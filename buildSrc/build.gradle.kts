@@ -3,10 +3,11 @@ repositories {
 }
 
 dependencies {
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation(libs.gson)
+    implementation(libs.jna)
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }

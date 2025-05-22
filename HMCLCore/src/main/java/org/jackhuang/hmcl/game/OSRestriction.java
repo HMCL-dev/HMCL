@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 @JsonAdapter(OSRestriction.JsonAdapterImpl.class)
 public final class OSRestriction {
 
-    private final OperatingSystem name;
+    private final String name;
     private final String version;
     private final String arch;
 
@@ -43,21 +43,27 @@ public final class OSRestriction {
         this(OperatingSystem.UNKNOWN);
     }
 
-    public OSRestriction(OperatingSystem name) {
-        this(name, null);
+    public OSRestriction(OperatingSystem os) {
+        this(os, null);
     }
 
-    public OSRestriction(OperatingSystem name, String version) {
-        this(name, version, null);
+    public OSRestriction(OperatingSystem os, String version) {
+        this(os, version, null);
     }
 
-    public OSRestriction(OperatingSystem name, String version, String arch) {
+    public OSRestriction(OperatingSystem os, String version, String arch) {
+        this.name = os.getMojangName();
+        this.version = version;
+        this.arch = arch;
+    }
+
+    public OSRestriction(String name, String version, String arch) {
         this.name = name;
         this.version = version;
         this.arch = arch;
     }
 
-    public OperatingSystem getName() {
+    public String getName() {
         return name;
     }
 
@@ -70,8 +76,10 @@ public final class OSRestriction {
     }
 
     public boolean allow() {
-        if (name != OperatingSystem.UNKNOWN && name != OperatingSystem.CURRENT_OS
-                && !(name == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
+        OperatingSystem os = OperatingSystem.parseOSName(name);
+        if (os != OperatingSystem.UNKNOWN
+                && os != OperatingSystem.CURRENT_OS
+                && !(os == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
             return false;
 
         if (version != null)

@@ -3,24 +3,22 @@ plugins {
 }
 
 dependencies {
-    val kalaCompressVersion = "1.27.1-1"
+    api(libs.kala.compress.zip)
+    api(libs.kala.compress.tar)
+    api(libs.simple.png.javafx)
+    api(libs.gson)
+    api(libs.toml)
+    api(libs.xz)
+    api(libs.fx.gson)
+    api(libs.constant.pool.scanner)
+    api(libs.opennbt)
+    api(libs.nanohttpd)
+    api(libs.jsoup)
+    api(libs.chardet)
+    api(libs.jna)
+    api(libs.pci.ids)
 
-    api("org.glavo.kala:kala-compress-archivers-zip:$kalaCompressVersion")
-    api("org.glavo.kala:kala-compress-archivers-tar:$kalaCompressVersion")
-    api("org.glavo:simple-png-javafx:0.3.0")
-    api("com.google.code.gson:gson:2.12.1")
-    api("com.moandjiezana.toml:toml4j:0.7.2")
-    api("org.tukaani:xz:1.10")
-    api("org.hildan.fxgson:fx-gson:5.0.0")
-    api("org.jenkins-ci:constant-pool-scanner:1.2")
-    api("com.github.steveice10:opennbt:1.5")
-    api("org.nanohttpd:nanohttpd:2.3.1")
-    api("org.jsoup:jsoup:1.18.3")
-    compileOnlyApi("org.jetbrains:annotations:26.0.1")
+    compileOnlyApi(libs.jetbrains.annotations)
 
-    if (JavaVersion.current().isJava8) {
-        org.gradle.internal.jvm.Jvm.current().toolsJar?.let {
-            compileOnly(files(it))
-        }
-    }
+    testImplementation(libs.jna.platform)
 }

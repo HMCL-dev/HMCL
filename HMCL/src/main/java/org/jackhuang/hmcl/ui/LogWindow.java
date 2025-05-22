@@ -40,7 +40,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.Log;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
@@ -92,7 +92,7 @@ public final class LogWindow extends Stage {
         this.logs = logs;
         this.impl = new LogWindowImpl();
         setScene(new Scene(impl, 800, 480));
-        getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
+        StyleSheets.init(getScene());
         setTitle(i18n("logwindow.title"));
         FXUtils.setIcon(this);
 

@@ -37,20 +37,14 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.logging.Logger;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -64,7 +58,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -98,7 +92,7 @@ public class GameCrashWindow extends Stage {
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
 
-        total_memory = OperatingSystem.TOTAL_MEMORY + " MB";
+        total_memory = MEGABYTES.formatBytes(SystemInfo.getTotalMemorySize());
 
         this.java = launchOptions.getJava().getArchitecture() == Architecture.SYSTEM_ARCH
                 ? launchOptions.getJava().getVersion()
@@ -109,7 +103,7 @@ public class GameCrashWindow extends Stage {
         this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
         setScene(new Scene(view, 800, 480));
-        getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
+        StyleSheets.init(getScene());
         setTitle(i18n("game.crash.title"));
         FXUtils.setIcon(this);
 
@@ -142,7 +136,7 @@ public class GameCrashWindow extends Stage {
 
             String log;
             try {
-                log = FileUtils.readText(latestLog);
+                log = FileUtils.readTextMaybeNativeEncoding(latestLog);
             } catch (IOException e) {
                 LOG.warning("Failed to read logs/latest.log", e);
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
@@ -271,7 +265,7 @@ public class GameCrashWindow extends Stage {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
         CompletableFuture.supplyAsync(() ->
-                        logs.stream().map(Log::getLog).collect(Collectors.joining(OperatingSystem.LINE_SEPARATOR)))
+                        logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs ->
                         LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
                 .handleAsync((result, exception) -> {

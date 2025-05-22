@@ -62,7 +62,7 @@ public class Library implements Comparable<Library>, Validation {
                 if (!variants[j].isEmpty()) {
                     builder.append(variants[j]).append('-');
                 }
-                builder.append(OperatingSystem.CURRENT_OS.getCheckedName());
+                builder.append(OperatingSystem.CURRENT_OS.getMojangName());
                 if (!keys[i].isEmpty()) {
                     builder.append('-').append(keys[i]);
                 }
