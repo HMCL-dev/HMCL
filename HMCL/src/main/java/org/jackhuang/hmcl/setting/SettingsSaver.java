@@ -112,7 +112,7 @@ public final class SettingsSaver extends Thread {
             ArrayList<Pair<Path, String>> buffer = new ArrayList<>();
 
             while (running) {
-                Pair<Path, String> head = queue.poll(10, TimeUnit.SECONDS);
+                Pair<Path, String> head = queue.poll(60, TimeUnit.SECONDS);
                 if (head == null || head == SHUTDOWN) {
                     running = false;
                 } else {
