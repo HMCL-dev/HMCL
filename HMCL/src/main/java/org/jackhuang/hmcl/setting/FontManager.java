@@ -40,7 +40,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class FontManager {
 
-    public static String[] FONT_EXTENSIONS = {
+    public static final String[] FONT_EXTENSIONS = {
             "ttf", "otf", "woff"
     };
 
