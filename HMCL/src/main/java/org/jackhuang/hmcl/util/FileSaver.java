@@ -15,10 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.setting;
+package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
@@ -33,7 +32,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SettingsSaver extends Thread {
+public final class FileSaver extends Thread {
 
     private static final Pair<Path, String> SHUTDOWN = Pair.pair(null, null);
 
@@ -41,7 +40,7 @@ public final class SettingsSaver extends Thread {
 
     private static volatile boolean running = false;
     private static final ReentrantLock runningLock = new ReentrantLock();
-    private static boolean installedShutdownHook;
+    private static volatile boolean installedShutdownHook;
 
     private static void doSave(Map<Path, String> map) {
         for (Map.Entry<Path, String> entry : map.entrySet()) {
@@ -80,14 +79,14 @@ public final class SettingsSaver extends Thread {
                 runningLock.lock();
                 try {
                     if (!running) {
-                        SettingsSaver saver = new SettingsSaver();
+                        FileSaver saver = new FileSaver();
                         saver.start();
                         running = true;
                     }
 
                     if (!installedShutdownHook) {
                         installedShutdownHook = true;
-                        Runtime.getRuntime().addShutdownHook(new Thread(SettingsSaver::onExit, "SettingsSaverShutdownHook"));
+                        Runtime.getRuntime().addShutdownHook(new Thread(FileSaver::onExit, "SettingsSaverShutdownHook"));
                     }
                 } finally {
                     runningLock.unlock();
@@ -100,7 +99,7 @@ public final class SettingsSaver extends Thread {
         queue.add(SHUTDOWN);
     }
 
-    private SettingsSaver() {
+    private FileSaver() {
         super("SettingsSaver");
     }
 

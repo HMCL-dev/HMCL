@@ -27,7 +27,7 @@ import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
-import org.jackhuang.hmcl.setting.SettingsSaver;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -216,7 +216,7 @@ public final class Launcher extends Application {
     public void stop() throws Exception {
         Controllers.onApplicationStop();
         LOG.shutdown();
-        SettingsSaver.shutdown();
+        FileSaver.shutdown();
     }
 
     public static void main(String[] args) {

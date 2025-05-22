@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.SettingsSaver;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -340,7 +340,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             LOG.warning("Failed to create directory: " + file.getParent(), e);
         }
 
-        SettingsSaver.save(file, GSON.toJson(localVersionSettings.get(id)));
+        FileSaver.save(file, GSON.toJson(localVersionSettings.get(id)));
     }
 
     /**

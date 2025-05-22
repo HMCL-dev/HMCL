@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -81,10 +82,10 @@ public final class ConfigHolder {
         LOG.info("Config location: " + configLocation);
 
         configInstance = loadConfig();
-        configInstance.addListener(source -> SettingsSaver.save(configLocation, configInstance.toJson()));
+        configInstance.addListener(source -> FileSaver.save(configLocation, configInstance.toJson()));
 
         globalConfigInstance = loadGlobalConfig();
-        globalConfigInstance.addListener(source -> SettingsSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
+        globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
 
         Locale.setDefault(config().getLocalization().getLocale());
         I18n.setLocale(configInstance.getLocalization());

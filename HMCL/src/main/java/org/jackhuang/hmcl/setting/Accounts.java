@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -182,7 +183,7 @@ public final class Accounts {
         }
 
         globalAccountStorages.addListener(onInvalidating(() ->
-                SettingsSaver.save(globalAccountsFile, Config.CONFIG_GSON.toJson(globalAccountStorages))));
+                FileSaver.save(globalAccountsFile, Config.CONFIG_GSON.toJson(globalAccountStorages))));
     }
 
     private static Account parseAccount(Map<Object, Object> storage) {

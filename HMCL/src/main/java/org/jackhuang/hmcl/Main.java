@@ -19,7 +19,7 @@ package org.jackhuang.hmcl;
 
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
-import org.jackhuang.hmcl.setting.SettingsSaver;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.util.ModuleHelper;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
@@ -81,7 +81,7 @@ public final class Main {
 
     public static void exit(int exitCode) {
         LOG.shutdown();
-        SettingsSaver.shutdown();
+        FileSaver.shutdown();
         System.exit(exitCode);
     }
 
