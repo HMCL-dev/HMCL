@@ -35,9 +35,6 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -184,21 +181,8 @@ public final class Accounts {
             }
         }
 
-        InvocationDispatcher<String> dispatcher = InvocationDispatcher.runOn(Lang::thread, json -> {
-            LOG.info("Saving global accounts");
-            synchronized (globalAccountsFile) {
-                try {
-                    synchronized (globalAccountsFile) {
-                        FileUtils.saveSafely(globalAccountsFile, json);
-                    }
-                } catch (IOException e) {
-                    LOG.error("Failed to save global accounts", e);
-                }
-            }
-        });
-
         globalAccountStorages.addListener(onInvalidating(() ->
-                dispatcher.accept(Config.CONFIG_GSON.toJson(globalAccountStorages))));
+                SettingsSaver.save(globalAccountsFile, Config.CONFIG_GSON.toJson(globalAccountStorages))));
     }
 
     private static Account parseAccount(Map<Object, Object> storage) {

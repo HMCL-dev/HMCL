@@ -22,6 +22,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
+import org.jackhuang.hmcl.setting.SettingsSaver;
 import org.jackhuang.hmcl.ui.CrashWindow;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -112,6 +113,7 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
         }
 
         LOG.shutdown();
+        SettingsSaver.shutdown();
     }
 
     private void reportToServer(CrashReport crashReport) {
