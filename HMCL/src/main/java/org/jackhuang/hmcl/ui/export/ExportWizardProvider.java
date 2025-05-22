@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
+import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Task;
@@ -139,6 +140,15 @@ public final class ExportWizardProvider implements WizardProvider {
                             background = Metadata.CURRENT_DIRECTORY.resolve(fileName);
                         if (Files.isRegularFile(background))
                             zip.putFile(background, ".hmcl/" + fileName);
+                    }
+
+                    for (String extension : FontManager.FONT_EXTENSIONS) {
+                        String fileName = "font." + extension;
+                        Path font = Metadata.HMCL_CURRENT_DIRECTORY.resolve(fileName);
+                        if (!Files.isRegularFile(font))
+                            font = Metadata.CURRENT_DIRECTORY.resolve(fileName);
+                        if (Files.isRegularFile(font))
+                            zip.putFile(font, ".hmcl/" + fileName);
                     }
 
                     zip.putFile(launcherJar, launcherJar.getFileName().toString());
