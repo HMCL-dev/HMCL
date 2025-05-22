@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -75,21 +76,23 @@ public final class SettingsSaver extends Thread {
 
         queue.add(Pair.pair(file, content));
         if (!running) {
-            runningLock.lock();
-            try {
-                if (!running) {
-                    SettingsSaver saver = new SettingsSaver();
-                    saver.start();
-                    running = true;
-                }
+            Schedulers.defaultScheduler().execute(() -> {
+                runningLock.lock();
+                try {
+                    if (!running) {
+                        SettingsSaver saver = new SettingsSaver();
+                        saver.start();
+                        running = true;
+                    }
 
-                if (!installedShutdownHook) {
-                    installedShutdownHook = true;
-                    Runtime.getRuntime().addShutdownHook(new Thread(SettingsSaver::onExit, "SettingsSaverShutdownHook"));
+                    if (!installedShutdownHook) {
+                        installedShutdownHook = true;
+                        Runtime.getRuntime().addShutdownHook(new Thread(SettingsSaver::onExit, "SettingsSaverShutdownHook"));
+                    }
+                } finally {
+                    runningLock.unlock();
                 }
-            } finally {
-                runningLock.unlock();
-            }
+            });
         }
     }
 
@@ -118,7 +121,7 @@ public final class SettingsSaver extends Thread {
                     Thread.sleep(100); // Waiting for more changes
                 }
 
-                while (queue.drainTo(buffer) > 0) {
+                if (queue.drainTo(buffer) > 0) {
                     for (Pair<Path, String> pair : buffer) {
                         if (pair == SHUTDOWN)
                             running = false;
