@@ -79,7 +79,7 @@ public final class SettingsSaver extends Thread {
             Schedulers.defaultScheduler().execute(() -> {
                 runningLock.lock();
                 try {
-                    if (!running && !queue.isEmpty()) {
+                    if (!running) {
                         SettingsSaver saver = new SettingsSaver();
                         saver.start();
                         running = true;
