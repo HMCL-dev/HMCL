@@ -59,7 +59,7 @@ public final class SettingsSaver extends Thread {
         shutdown();
         runningLock.lock();
         try {
-            IdentityHashMap<Path, String> map = new IdentityHashMap<>();
+            HashMap<Path, String> map = new HashMap<>();
             for (Pair<Path, String> pair : queue) {
                 if (pair != SHUTDOWN)
                     map.put(pair.getKey(), pair.getValue());
@@ -108,7 +108,7 @@ public final class SettingsSaver extends Thread {
     public void run() {
         runningLock.lock();
         try {
-            IdentityHashMap<Path, String> map = new IdentityHashMap<>();
+            HashMap<Path, String> map = new HashMap<>();
             ArrayList<Pair<Path, String>> buffer = new ArrayList<>();
 
             while (running) {
