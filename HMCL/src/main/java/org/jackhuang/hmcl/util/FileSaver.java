@@ -41,16 +41,11 @@ public final class FileSaver extends Thread {
     private static final AtomicBoolean running = new AtomicBoolean(false);
     private static final ReentrantLock runningLock = new ReentrantLock();
     private static final AtomicBoolean installedShutdownHook = new AtomicBoolean(false);
+    private static volatile boolean shutdown = false;
 
     private static void doSave(Map<Path, String> map) {
         for (Map.Entry<Path, String> entry : map.entrySet()) {
-            Path file = entry.getKey();
-            LOG.info("Saving file " + file);
-            try {
-                FileUtils.saveSafely(file, entry.getValue());
-            } catch (Throwable e) {
-                LOG.warning("Failed to save " + file, e);
-            }
+            saveSync(entry.getKey(), entry.getValue());
         }
     }
 
@@ -72,6 +67,11 @@ public final class FileSaver extends Thread {
     public static void save(Path file, String content) {
         Objects.requireNonNull(file);
         Objects.requireNonNull(content);
+
+        if (shutdown) {
+            saveSync(file, content);
+            return;
+        }
 
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
@@ -98,7 +98,17 @@ public final class FileSaver extends Thread {
         }
     }
 
+    public static void saveSync(Path file, String content) {
+        LOG.info("Saving file " + file);
+        try {
+            FileUtils.saveSafely(file, content);
+        } catch (Throwable e) {
+            LOG.warning("Failed to save " + file, e);
+        }
+    }
+
     public static void shutdown() {
+        shutdown = true;
         queue.add(SHUTDOWN);
     }
 
