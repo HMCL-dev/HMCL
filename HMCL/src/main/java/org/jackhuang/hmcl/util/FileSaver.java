@@ -124,13 +124,17 @@ public final class FileSaver extends Thread {
             ArrayList<Pair<Path, String>> buffer = new ArrayList<>();
 
             while (running.get()) {
-                Pair<Path, String> head = queue.poll(60, TimeUnit.SECONDS);
-                if (head == null || head == SHUTDOWN) {
+                if (shutdown) {
                     running.set(false);
                 } else {
-                    map.put(head.getKey(), head.getValue());
-                    //noinspection BusyWait
-                    Thread.sleep(100); // Waiting for more changes
+                    Pair<Path, String> head = queue.poll(60, TimeUnit.SECONDS);
+                    if (head == null || head == SHUTDOWN) {
+                        running.set(false);
+                    } else {
+                        map.put(head.getKey(), head.getValue());
+                        //noinspection BusyWait
+                        Thread.sleep(100); // Waiting for more changes
+                    }
                 }
 
                 while (queue.drainTo(buffer) > 0) {
