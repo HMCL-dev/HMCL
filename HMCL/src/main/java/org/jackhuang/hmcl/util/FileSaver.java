@@ -74,8 +74,13 @@ public final class FileSaver extends Thread {
 
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
-            FileSaver saver = new FileSaver();
-            saver.start();
+            runningLock.lock();
+            try {
+                FileSaver saver = new FileSaver();
+                saver.start();
+            } finally {
+                runningLock.unlock();
+            }
 
             if (installedShutdownHook.compareAndSet(false, true))
                 Runtime.getRuntime().addShutdownHook(new Thread(FileSaver::onExit, "SettingsSaverShutdownHook"));
