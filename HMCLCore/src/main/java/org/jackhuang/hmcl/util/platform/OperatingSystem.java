@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
+import org.jackhuang.hmcl.util.platform.windows.WindowsVersion;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -107,6 +109,11 @@ public enum OperatingSystem {
     public static final int SYSTEM_BUILD_NUMBER;
 
     /**
+     * The version number is non-null if and only if the operating system is {@linkplain #WINDOWS}.
+     */
+    public static final @Nullable WindowsVersion WINDOWS_VERSION;
+
+    /**
      * The name of current operating system.
      */
     public static final String SYSTEM_NAME;
@@ -124,8 +131,6 @@ public enum OperatingSystem {
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
-
-    private static final boolean IS_WINDOWS_7_OR_LATER;
 
     static {
         String nativeEncoding = System.getProperty("native.encoding");
@@ -152,61 +157,35 @@ public enum OperatingSystem {
         NATIVE_CHARSET = nativeCharset;
 
         if (CURRENT_OS == WINDOWS) {
-            String versionNumber = null;
-            int buildNumber = -1;
             int codePage = -1;
+            WindowsVersion windowsVersion = null;
 
             Kernel32 kernel32 = Kernel32.INSTANCE;
-
             // Get Windows version number
             if (kernel32 != null) {
                 WinTypes.OSVERSIONINFOEXW osVersionInfo = new WinTypes.OSVERSIONINFOEXW();
                 if (kernel32.GetVersionExW(osVersionInfo)) {
-                    int majorVersion = osVersionInfo.dwMajorVersion;
-                    int minorVersion = osVersionInfo.dwMinorVersion;
-
-                    buildNumber = osVersionInfo.dwBuildNumber;
-                    versionNumber = majorVersion + "." + minorVersion + "." + buildNumber;
+                    windowsVersion = new WindowsVersion(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.dwBuildNumber);
                 } else
                     System.err.println("Failed to obtain OS version number (" + kernel32.GetLastError() + ")");
             }
 
-            if (versionNumber == null) {
+            if (windowsVersion == null) {
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                        Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
+                        Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
                                 .matcher(reader.readLine().trim());
-
-                        if (matcher.find()) {
-                            versionNumber = matcher.group("version");
-                            buildNumber = Integer.parseInt(matcher.group("build"));
-                        }
+                        if (matcher.find())
+                            windowsVersion = new WindowsVersion(matcher.group("version"));
                     }
                     process.destroy();
                 } catch (Throwable ignored) {
                 }
             }
 
-            if (versionNumber == null)
-                versionNumber = System.getProperty("os.version");
-
-            int major;
-            int dotIndex = versionNumber.indexOf('.');
-            try {
-                if (dotIndex < 0)
-                    major = Integer.parseInt(versionNumber);
-                else
-                    major = Integer.parseInt(versionNumber.substring(0, dotIndex));
-            } catch (NumberFormatException ignored) {
-                major = -1;
-            }
-
-            // Windows XP:      NT 5.1~5.2
-            // Windows Vista:   NT 6.0
-            // Windows 7:       NT 6.1
-
-            IS_WINDOWS_7_OR_LATER = major >= 6 && !versionNumber.startsWith("6.0");
+            if (windowsVersion == null)
+                windowsVersion = new WindowsVersion(System.getProperty("os.version"));
 
             // Get Code Page
 
@@ -219,9 +198,8 @@ public enum OperatingSystem {
                         Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
                                 .matcher(reader.readLine().trim());
 
-                        if (matcher.find()) {
+                        if (matcher.find())
                             codePage = Integer.parseInt(matcher.group("cp"));
-                        }
                     }
                     process.destroy();
                 } catch (Throwable ignored) {
@@ -231,19 +209,20 @@ public enum OperatingSystem {
             String osName = System.getProperty("os.name");
 
             // Java 17 or earlier recognizes Windows 11 as Windows 10
-            if (osName.equals("Windows 10") && buildNumber >= 22000)
+            if (osName.equals("Windows 10") && windowsVersion.compareTo(WindowsVersion.WINDOWS_11) >= 0)
                 osName = "Windows 11";
 
             SYSTEM_NAME = osName;
-            SYSTEM_VERSION = versionNumber;
-            SYSTEM_BUILD_NUMBER = buildNumber;
+            SYSTEM_VERSION = windowsVersion.toString();
+            SYSTEM_BUILD_NUMBER = windowsVersion.getBuild();
+            WINDOWS_VERSION = windowsVersion;
             CODE_PAGE = codePage;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
+            WINDOWS_VERSION = null;
             CODE_PAGE = -1;
-            IS_WINDOWS_7_OR_LATER = false;
         }
 
         Map<String, String> osRelease = Collections.emptyMap();
@@ -299,7 +278,7 @@ public enum OperatingSystem {
     }
 
     public static boolean isWindows7OrLater() {
-        return IS_WINDOWS_7_OR_LATER;
+        return WINDOWS_VERSION != null && WINDOWS_VERSION.compareTo(WindowsVersion.WINDOWS_7) >= 0;
     }
 
     public static Path getWorkingDirectory(String folder) {
