@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
@@ -74,12 +75,21 @@ public final class FileSaver extends Thread {
 
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
-            runningLock.lock(); // Wait for the previous FileSaver to stop
-            try {
-                FileSaver saver = new FileSaver();
-                saver.start();
-            } finally {
-                runningLock.unlock();
+            if (runningLock.tryLock()) { // Wait for the previous FileSaver to stop
+                try {
+                    new FileSaver().start();
+                } finally {
+                    runningLock.unlock();
+                }
+            } else {
+                Schedulers.defaultScheduler().execute(() -> {
+                    runningLock.lock();
+                    try {
+                        new FileSaver().start();
+                    } finally {
+                        runningLock.unlock();
+                    }
+                });
             }
 
             if (installedShutdownHook.compareAndSet(false, true))
