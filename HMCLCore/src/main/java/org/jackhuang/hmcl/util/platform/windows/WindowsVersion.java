@@ -30,6 +30,8 @@ import java.util.regex.Pattern;
  */
 public final class WindowsVersion implements Comparable<WindowsVersion> {
 
+    public static final WindowsVersion UNKNOWN = new WindowsVersion(0, 0);
+
     public static final WindowsVersion WINDOWS_2000 = new WindowsVersion(5, 0);
     public static final WindowsVersion WINDOWS_XP = new WindowsVersion(5, 1);
     public static final WindowsVersion WINDOWS_VISTA = new WindowsVersion(6, 0);
@@ -75,7 +77,7 @@ public final class WindowsVersion implements Comparable<WindowsVersion> {
 
         Matcher matcher = Pattern.compile("^(?<major>\\d+)\\.(?<minor>\\d+)(\\.(?<build>\\d+)(\\.(?<revision>\\d+))?)?")
                 .matcher(version);
-        if (matcher.matches()) {
+        if (matcher.find()) {
             this.major = Integer.parseInt(matcher.group("major"));
             this.minor = Integer.parseInt(matcher.group("minor"));
             this.build = matcher.group("build") != null ? Integer.parseInt(matcher.group("build")) : 0;
