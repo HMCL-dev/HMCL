@@ -74,7 +74,7 @@ public final class FileSaver extends Thread {
 
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
-            runningLock.lock();
+            runningLock.lock(); // Wait for the previous FileSaver to stop
             try {
                 FileSaver saver = new FileSaver();
                 saver.start();
