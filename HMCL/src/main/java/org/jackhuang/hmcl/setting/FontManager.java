@@ -40,6 +40,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class FontManager {
 
+    public static final String[] FONT_EXTENSIONS = {
+            "ttf", "otf", "woff"
+    };
+
     public static final double DEFAULT_FONT_SIZE = 12.0f;
 
     private static final Lazy<Font> DEFAULT_FONT = new Lazy<>(() -> {
@@ -92,10 +96,8 @@ public final class FontManager {
     }
 
     private static Font tryLoadDefaultFont(Path dir) {
-        String[] fileNames = {"font.ttf", "font.otf", "font.woff"};
-
-        for (String fileName : fileNames) {
-            Path path = dir.resolve(fileName);
+        for (String extension : FONT_EXTENSIONS) {
+            Path path = dir.resolve("font." + extension);
             if (Files.isRegularFile(path)) {
                 try {
                     Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
