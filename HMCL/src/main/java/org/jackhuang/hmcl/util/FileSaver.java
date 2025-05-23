@@ -116,6 +116,15 @@ public final class FileSaver extends Thread {
         super("SettingsSaver");
     }
 
+    private boolean stopped = false;
+
+    private void stopCurrentSaver() {
+        if (!stopped) {
+            stopped = true;
+            running.set(false);
+        }
+    }
+
     @Override
     public void run() {
         runningLock.lock();
@@ -123,13 +132,13 @@ public final class FileSaver extends Thread {
             HashMap<Path, String> map = new HashMap<>();
             ArrayList<Pair<Path, String>> buffer = new ArrayList<>();
 
-            while (running.get()) {
+            while (!stopped) {
                 if (shutdown) {
-                    running.set(false);
+                    stopCurrentSaver();
                 } else {
                     Pair<Path, String> head = queue.poll(60, TimeUnit.SECONDS);
                     if (head == null || head == SHUTDOWN) {
-                        running.set(false);
+                        stopCurrentSaver();
                     } else {
                         map.put(head.getKey(), head.getValue());
                         //noinspection BusyWait
@@ -140,7 +149,7 @@ public final class FileSaver extends Thread {
                 while (queue.drainTo(buffer) > 0) {
                     for (Pair<Path, String> pair : buffer) {
                         if (pair == SHUTDOWN)
-                            running.set(false);
+                            stopCurrentSaver();
                         else
                             map.put(pair.getKey(), pair.getValue());
                     }
