@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
@@ -25,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -37,10 +37,9 @@ public final class FileSaver extends Thread {
     private static final Pair<Path, String> SHUTDOWN = Pair.pair(null, null);
 
     private static final BlockingQueue<Pair<Path, String>> queue = new LinkedBlockingQueue<>();
-
-    private static volatile boolean running = false;
+    private static final AtomicBoolean running = new AtomicBoolean(false);
     private static final ReentrantLock runningLock = new ReentrantLock();
-    private static volatile boolean installedShutdownHook;
+    private static final AtomicBoolean installedShutdownHook = new AtomicBoolean(false);
 
     private static void doSave(Map<Path, String> map) {
         for (Map.Entry<Path, String> entry : map.entrySet()) {
@@ -74,24 +73,12 @@ public final class FileSaver extends Thread {
         Objects.requireNonNull(content);
 
         queue.add(Pair.pair(file, content));
-        if (!running) {
-            Schedulers.defaultScheduler().execute(() -> {
-                runningLock.lock();
-                try {
-                    if (!running) {
-                        FileSaver saver = new FileSaver();
-                        saver.start();
-                        running = true;
-                    }
+        if (running.compareAndSet(false, true)) {
+            FileSaver saver = new FileSaver();
+            saver.start();
 
-                    if (!installedShutdownHook) {
-                        installedShutdownHook = true;
-                        Runtime.getRuntime().addShutdownHook(new Thread(FileSaver::onExit, "SettingsSaverShutdownHook"));
-                    }
-                } finally {
-                    runningLock.unlock();
-                }
-            });
+            if (installedShutdownHook.compareAndSet(false, true))
+                Runtime.getRuntime().addShutdownHook(new Thread(FileSaver::onExit, "SettingsSaverShutdownHook"));
         }
     }
 
@@ -110,10 +97,10 @@ public final class FileSaver extends Thread {
             HashMap<Path, String> map = new HashMap<>();
             ArrayList<Pair<Path, String>> buffer = new ArrayList<>();
 
-            while (running) {
+            while (running.get()) {
                 Pair<Path, String> head = queue.poll(60, TimeUnit.SECONDS);
                 if (head == null || head == SHUTDOWN) {
-                    running = false;
+                    running.set(false);
                 } else {
                     map.put(head.getKey(), head.getValue());
                     //noinspection BusyWait
@@ -123,7 +110,7 @@ public final class FileSaver extends Thread {
                 while (queue.drainTo(buffer) > 0) {
                     for (Pair<Path, String> pair : buffer) {
                         if (pair == SHUTDOWN)
-                            running = false;
+                            running.set(false);
                         else
                             map.put(pair.getKey(), pair.getValue());
                     }
