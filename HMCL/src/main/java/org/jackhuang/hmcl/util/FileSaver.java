@@ -82,6 +82,7 @@ public final class FileSaver extends Thread {
                     runningLock.unlock();
                 }
             } else {
+                // This method is often called on the FX thread; we should avoid blocking the FX thread.
                 Schedulers.defaultScheduler().execute(() -> {
                     runningLock.lock();
                     try {
