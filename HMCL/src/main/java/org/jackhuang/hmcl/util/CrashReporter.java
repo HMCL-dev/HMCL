@@ -111,8 +111,8 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
             LOG.error("Unable to handle uncaught exception", handlingException);
         }
 
-        LOG.shutdown();
         FileSaver.shutdown();
+        LOG.shutdown();
     }
 
     private void reportToServer(CrashReport crashReport) {

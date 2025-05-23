@@ -80,8 +80,8 @@ public final class Main {
     }
 
     public static void exit(int exitCode) {
-        LOG.shutdown();
         FileSaver.shutdown();
+        LOG.shutdown();
         System.exit(exitCode);
     }
 
