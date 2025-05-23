@@ -93,6 +93,7 @@ public final class FileSaver extends Thread {
                 });
             }
 
+            // Do we really need a shutdown hook?
             if (installedShutdownHook.compareAndSet(false, true))
                 Runtime.getRuntime().addShutdownHook(new Thread(FileSaver::onExit, "SettingsSaverShutdownHook"));
         }
