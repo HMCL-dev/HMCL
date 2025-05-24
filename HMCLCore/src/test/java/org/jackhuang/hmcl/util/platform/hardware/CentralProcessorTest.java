@@ -67,5 +67,6 @@ public final class CentralProcessorTest {
 
         assertEquals("Loongson-3A3000", cleanName("Loongson-3A R3 (Loongson-3A3000) @ 1400MHz"));
         assertEquals("Loongson-3B4000", cleanName("Loongson-3A R4 (Loongson-3B4000) @ 1800MHz"));
+        assertEquals("Loongson-3A6000", cleanName("Loongson-3A6000"));
     }
 }
