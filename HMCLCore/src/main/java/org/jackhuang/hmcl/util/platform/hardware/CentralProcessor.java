@@ -38,12 +38,13 @@ public final class CentralProcessor {
 
         name = name.replaceFirst(" (\\d+|Dual|Quad|Six|Eight|Ten)-[Cc]ores?", "");
         name = name.replaceAll(" (CPU|FPU|APU|Processor)", "");
-        name = name.replaceAll("\\((TM|tm)|R\\)(?=\\W|$)", "");
+        name = name.replaceAll("\\((TM|R)\\)(?=\\s|$)", "");
 
         if (name.contains("Intel")) {
-            name = name.replaceFirst("^(\\d+th Gen )?Intel(\\(R\\)|®)? ", "Intel ");
+            name = name.replaceFirst("^(\\d+th Gen )?Intel\\s+", "Intel ");
             name = name.replace("Core(TM)2", "Core 2");
         } else if (name.contains("AMD")) {
+            name = name.replace("(tm)", "");
             idx = name.indexOf(" w/ Radeon "); // Radeon 780M Graphics
             if (idx < 0)
                 idx = name.indexOf(" with Radeon ");
@@ -57,7 +58,7 @@ public final class CentralProcessor {
             name = StringUtils.normalizeWhitespaces(name);
 
             if (name.startsWith("Snapdragon ")) {
-                Matcher matcher = Pattern.compile("Snapdragon X Elite - (?<id>X1E\\w+) - Qualcomm Oryon").matcher(name);
+                Matcher matcher = Pattern.compile("Snapdragon X Elite - (?<id>X1E\\S+) - Qualcomm Oryon").matcher(name);
                 if (matcher.matches()) {
                     name = "Qualcomm Snapdragon X Elite " + matcher.group("id");
                 } else if (!name.contains("Qualcomm")) {
