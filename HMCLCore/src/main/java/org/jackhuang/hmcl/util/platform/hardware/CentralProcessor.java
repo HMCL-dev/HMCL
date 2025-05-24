@@ -38,7 +38,7 @@ public final class CentralProcessor {
 
         name = name.replaceFirst(" (\\d+|Dual|Quad|Six|Eight|Ten)-[Cc]ores?", "");
         name = name.replaceAll(" (CPU|FPU|APU|Processor)", "");
-        name = name.replaceAll("\\((TM|R|tm)\\)(?=\\W|$)", "");
+        name = name.replaceAll("\\((TM|tm)|R\\)(?=\\W|$)", "");
 
         if (name.contains("Intel")) {
             name = name.replaceFirst("^(\\d+th Gen )?Intel(\\(R\\)|®)? ", "Intel ");
