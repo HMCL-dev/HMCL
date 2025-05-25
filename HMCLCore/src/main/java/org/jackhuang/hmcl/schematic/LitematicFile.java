@@ -104,11 +104,11 @@ public final class LitematicFile {
             }
         }
 
-        int totalRegions = 0;
+        int regionCount = 0;
         {
             Tag regions = root.get("Regions");
             if (regions instanceof CompoundTag)
-                totalRegions = ((CompoundTag) regions).size();
+                regionCount = ((CompoundTag) regions).size();
         }
 
         return new LitematicFile(
@@ -118,7 +118,7 @@ public final class LitematicFile {
                 timeCreated, timeModified,
                 totalBlocks, totalVolume,
                 enclosingSize,
-                totalRegions
+                regionCount
         );
     }
 
@@ -135,13 +135,13 @@ public final class LitematicFile {
     private final int totalBlocks;
     private final int totalVolume;
     private final Point3D enclosingSize;
-    private final int totalRegions;
+    private final int regionCount;
 
     public LitematicFile(@NotNull Path file, int version, int subVersion, int minecraftDataVersion,
                          String name, String author, String description,
                          Instant timeCreated, Instant timeModified,
                          int totalBlocks, int totalVolume, Point3D enclosingSize,
-                         int totalRegions) {
+                         int regionCount) {
         this.file = file;
         this.version = version;
         this.subVersion = subVersion;
@@ -154,7 +154,7 @@ public final class LitematicFile {
         this.totalBlocks = totalBlocks;
         this.totalVolume = totalVolume;
         this.enclosingSize = enclosingSize;
-        this.totalRegions = totalRegions;
+        this.regionCount = regionCount;
     }
 
     public @NotNull Path getFile() {
@@ -205,7 +205,7 @@ public final class LitematicFile {
         return enclosingSize;
     }
 
-    public int getTotalRegions() {
-        return totalRegions;
+    public int getRegionCount() {
+        return regionCount;
     }
 }

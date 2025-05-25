@@ -18,12 +18,11 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -32,10 +31,8 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.ToolbarListPageSkin;
+import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
@@ -47,10 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -61,9 +55,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
 
+    private static String translateAuthorName(String author) {
+        if (I18n.isUseChinese() && "hsds".equals(author)) {
+            return "黑山大叔";
+        }
+        return author;
+    }
+
     private Profile profile;
     private String version;
     private Path schematicsDirectory;
+    private List<String> currentRelativePath = Collections.emptyList();
 
     @Override
     protected Skin<?> createDefaultSkin() {
@@ -88,7 +90,22 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     setLoading(false);
                     if (exception == null) {
-                        navigateTo(result);
+                        DirItem current = result;
+                        loop:
+                        for (int i = 0; i < currentRelativePath.size(); i++) {
+                            String dirName = currentRelativePath.get(i);
+
+                            for (Item child : current.children) {
+                                if (child instanceof DirItem && child.getName().equals(dirName)) {
+                                    current = (DirItem) child;
+                                    continue loop;
+                                }
+                            }
+
+                            currentRelativePath = currentRelativePath.subList(0, i);
+                            break;
+                        }
+                        navigateTo(current);
                     } else {
                         LOG.warning("Failed to load schematics", exception);
                     }
@@ -120,9 +137,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private void navigateTo(DirItem item) {
         getItems().clear();
-        if (item.parent != null)
+        if (item.parent != null) {
             getItems().add(new BackItem(item.parent));
+        }
         getItems().addAll(item.children);
+        currentRelativePath = item.relativePath;
     }
 
     abstract class Item extends Control implements Comparable<Item> {
@@ -173,6 +192,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     left.getChildren().add(getIcon().createIcon(Theme.blackFill(), 24));
                     left.setPadding(new Insets(0, 8, 0, 0));
 
+                    if (Item.this instanceof DirItem || Item.this instanceof LitematicFileItem) {
+                        FXUtils.installSlowTooltip(left, getPath().toAbsolutePath().normalize().toString());
+                    }
+
+                    BorderPane.setAlignment(left, Pos.CENTER);
                     root.setLeft(left);
                 }
 
@@ -184,7 +208,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     root.setCenter(center);
                 }
 
-                {
+                if (!(Item.this instanceof BackItem)) {
                     HBox right = new HBox(8);
                     right.setAlignment(Pos.CENTER_RIGHT);
 
@@ -251,12 +275,20 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private final class DirItem extends Item {
         final Path path;
-        final DirItem parent;
+        final @Nullable DirItem parent;
         final List<Item> children = new ArrayList<>();
+        final List<String> relativePath;
 
-        DirItem(Path path, DirItem parent) {
+        DirItem(Path path, @Nullable DirItem parent) {
             this.path = path;
             this.parent = parent;
+
+            if (parent != null) {
+                this.relativePath = new ArrayList<>(parent.relativePath);
+                relativePath.add(path.getFileName().toString());
+            } else {
+                this.relativePath = Collections.emptyList();
+            }
         }
 
         @Override
@@ -321,14 +353,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         String getDescription() {
-            List<String> details = new ArrayList<>();
-            if (StringUtils.isNotBlank(file.getAuthor()))
-                details.add("作者: " + file.getAuthor());
-
-            if (file.getTimeCreated() != null)
-                details.add("创建时间: " + I18n.formatDateTime(file.getTimeCreated()));
-
-            return String.join(" | ", details);
+            return file.getFile().getFileName().toString();
         }
 
         @Override
@@ -338,7 +363,60 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         void onClick() {
-            // TODO
+            JFXDialogLayout dialog = new JFXDialogLayout();
+
+            HBox titleBox = new HBox(8);
+            {
+                StackPane icon = new StackPane();
+                icon.setMaxSize(40, 40);
+                icon.setPrefSize(40, 40);
+                icon.getChildren().add(getIcon().createIcon(Theme.blackFill(), 40));
+
+                TwoLineListItem title = new TwoLineListItem();
+                title.setTitle(getName());
+                title.setSubtitle(file.getFile().getFileName().toString());
+
+                titleBox.getChildren().setAll(icon, title);
+                dialog.setHeading(titleBox);
+            }
+
+            {
+                List<String> details = new ArrayList<>();
+
+                details.add(i18n("schematics.info.name") + ": " + file.getName());
+                if (StringUtils.isNotBlank(file.getAuthor()))
+                    details.add(i18n("schematics.info.schematic_author", translateAuthorName(file.getAuthor())));
+                if (file.getTimeCreated() != null)
+                    details.add(i18n("schematics.info.time_created", I18n.formatDateTime(file.getTimeCreated())));
+                if (file.getTimeModified() != null && !file.getTimeModified().equals(file.getTimeCreated()))
+                    details.add(i18n("schematics.info.time_modified", I18n.formatDateTime(file.getTimeModified())));
+                if (file.getRegionCount() > 0)
+                    details.add(i18n("schematics.info.region_count", file.getRegionCount()));
+                if (file.getTotalVolume() > 0)
+                    details.add(i18n("schematics.info.total_volume", file.getTotalVolume()));
+                if (file.getTotalBlocks() > 0)
+                    details.add(i18n("schematics.info.total_blocks", file.getTotalBlocks()));
+                if (file.getEnclosingSize() != null)
+                    details.add(i18n("schematics.info.enclosing_size",
+                            (int) file.getEnclosingSize().getX(),
+                            (int) file.getEnclosingSize().getY(),
+                            (int) file.getEnclosingSize().getZ()));
+
+                Label label = new Label(String.join("\n", details));
+                StackPane.setAlignment(label, Pos.CENTER_LEFT);
+                StackPane.setMargin(label, new Insets(0, 20, 0, 20));
+                dialog.setBody(label);
+            }
+
+            {
+                JFXButton okButton = new JFXButton();
+                okButton.getStyleClass().add("dialog-accept");
+                okButton.setText(i18n("button.ok"));
+                okButton.setOnAction(e -> dialog.fireEvent(new DialogCloseEvent()));
+                dialog.getActions().add(okButton);
+            }
+
+            Controllers.dialog(dialog);
         }
 
         @Override

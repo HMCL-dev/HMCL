@@ -48,6 +48,6 @@ public final class LitematicFileTest {
         assertEquals(1334, file.getTotalBlocks());
         assertEquals(5746, file.getTotalVolume());
         assertEquals(new Point3D(17, 26, 13), file.getEnclosingSize());
-        assertEquals(1, file.getTotalRegions());
+        assertEquals(1, file.getRegionCount());
     }
 }
