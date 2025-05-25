@@ -127,7 +127,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     zip.putTextFile(exported.toJson(), ".hmcl/hmcl.json");
                     zip.putFile(tempModpack, "modpack.zip");
 
-                    Path bg = Metadata.HMCL_CURRENT_DIRECTORY.resolve("bg");
+                    Path bg = Metadata.HMCL_CURRENT_DIRECTORY.resolve("background");
                     if (!Files.isDirectory(bg))
                         bg = Metadata.CURRENT_DIRECTORY.resolve("bg");
                     if (Files.isDirectory(bg))
