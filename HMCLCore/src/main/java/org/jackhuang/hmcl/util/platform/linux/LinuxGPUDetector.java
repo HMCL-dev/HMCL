@@ -167,7 +167,7 @@ final class LinuxGPUDetector {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             if (line.startsWith(prefix)) {
-                                builder.setName(GraphicsCard.cleanName(line.substring(prefix.length())));
+                                builder.setName(line.substring(prefix.length()));
                                 break;
                             }
                         }
