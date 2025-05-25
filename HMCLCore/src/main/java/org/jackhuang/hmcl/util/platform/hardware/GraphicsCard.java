@@ -17,14 +17,37 @@
  */
 package org.jackhuang.hmcl.util.platform.hardware;
 
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Glavo
  */
 public final class GraphicsCard {
+
+    public static String cleanName(String name) {
+        if (name == null)
+            return null;
+
+        name = name.replaceAll("\\((TM|R)\\)(?=\\s|$)", "");
+        name = name.replace(" GPU", "");
+
+        if (name.contains("Snapdragon")) {
+            name = StringUtils.normalizeWhitespaces(name);
+            if (name.startsWith("Snapdragon ")) {
+                Matcher matcher = Pattern.compile("Snapdragon X Elite - (?<id>X1E\\S+) - Qualcomm Adreno").matcher(name);
+                if (matcher.matches()) {
+                    name = "Qualcomm Adreno Graphics";
+                }
+            }
+        }
+
+        return StringUtils.normalizeWhitespaces(name);
+    }
 
     public static Builder builder() {
         return new Builder();

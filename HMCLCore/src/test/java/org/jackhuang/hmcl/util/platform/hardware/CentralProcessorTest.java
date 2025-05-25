@@ -54,6 +54,9 @@ public final class CentralProcessorTest {
         assertEquals("AMD Phenom II X6 1055T", cleanName("AMD Phenom(tm) II X6 1055T Processor"));
         assertEquals("AMD Athlon 5350", cleanName("AMD Athlon(tm) 5350 APU with Radeon(tm) R3"));
 
+        assertEquals("Qualcomm Snapdragon X Elite X1E78100", cleanName("Snapdragon(R) X Elite - X1E78100 - Qualcomm(R) Oryon(TM) CPU"));
+        assertEquals("Qualcomm Snapdragon 850", cleanName("Snapdragon (TM) 850 @ 2.96 GHz"));
+
         assertEquals("Hygon C86 7285", cleanName("Hygon C86 7285 32-core Processor"));
         assertEquals("Hygon C86 3250", cleanName("Hygon C86 3250  8-core Processor"));
 
@@ -64,5 +67,6 @@ public final class CentralProcessorTest {
 
         assertEquals("Loongson-3A3000", cleanName("Loongson-3A R3 (Loongson-3A3000) @ 1400MHz"));
         assertEquals("Loongson-3B4000", cleanName("Loongson-3A R4 (Loongson-3B4000) @ 1800MHz"));
+        assertEquals("Loongson-3A6000", cleanName("Loongson-3A6000"));
     }
 }

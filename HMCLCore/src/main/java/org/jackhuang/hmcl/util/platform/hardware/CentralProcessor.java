@@ -20,6 +20,9 @@ package org.jackhuang.hmcl.util.platform.hardware;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Glavo
  */
@@ -35,14 +38,13 @@ public final class CentralProcessor {
 
         name = name.replaceFirst(" (\\d+|Dual|Quad|Six|Eight|Ten)-[Cc]ores?", "");
         name = name.replaceAll(" (CPU|FPU|APU|Processor)", "");
+        name = name.replaceAll("\\((TM|R)\\)(?=\\s|$)", "");
 
         if (name.contains("Intel")) {
-            name = name.replaceFirst("^(\\d+th Gen )?Intel(\\(R\\)|®)? ", "Intel ");
-            name = name.replaceAll(" ([a-zA-Z]+)\\((?:TM|R|™|®)\\) ", " $1 ");
+            name = name.replaceFirst("^(\\d+th Gen )?Intel\\s+", "Intel ");
             name = name.replace("Core(TM)2", "Core 2");
         } else if (name.contains("AMD")) {
             name = name.replace("(tm)", "");
-
             idx = name.indexOf(" w/ Radeon "); // Radeon 780M Graphics
             if (idx < 0)
                 idx = name.indexOf(" with Radeon ");
@@ -52,6 +54,17 @@ public final class CentralProcessor {
                 name = name.substring(0, idx);
         } else if (name.contains("Loongson")) {
             name = name.replaceFirst("^Loongson-3A R\\d \\((Loongson-[^)]+)\\)", "$1");
+        } else if (name.contains("Snapdragon")) {
+            name = StringUtils.normalizeWhitespaces(name);
+
+            if (name.startsWith("Snapdragon ")) {
+                Matcher matcher = Pattern.compile("Snapdragon X Elite - (?<id>X1E\\S+) - Qualcomm Oryon").matcher(name);
+                if (matcher.matches()) {
+                    name = "Qualcomm Snapdragon X Elite " + matcher.group("id");
+                } else if (!name.contains("Qualcomm")) {
+                    name = "Qualcomm " + name;
+                }
+            }
         }
 
         return StringUtils.normalizeWhitespaces(name);

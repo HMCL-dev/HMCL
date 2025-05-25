@@ -193,7 +193,7 @@ final class LinuxGPUDetector {
                         if (device != null) {
                             matcher = Pattern.compile(".*\\[(?<name>.*)]").matcher(device.getName());
                             if (matcher.matches())
-                                builder.setName(builder.getVendor() + " " + matcher.group("name"));
+                                builder.setName(GraphicsCard.cleanName(builder.getVendor() + " " + matcher.group("name")));
                             else
                                 builder.setName(builder.getVendor() + " " + device.getName());
                         }
