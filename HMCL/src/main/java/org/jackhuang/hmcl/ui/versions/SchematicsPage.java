@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private Profile profile;
     private String version;
     private Path schematicsDirectory;
-    private List<String> currentRelativePath = Collections.emptyList();
+    private DirItem currentDirectory;
 
     @Override
     protected Skin<?> createDefaultSkin() {
@@ -90,22 +91,23 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     setLoading(false);
                     if (exception == null) {
-                        DirItem current = result;
-                        loop:
-                        for (int i = 0; i < currentRelativePath.size(); i++) {
-                            String dirName = currentRelativePath.get(i);
+                        DirItem target = result;
+                        if (currentDirectory != null) {
+                            loop:
+                            for (int i = 0; i < currentDirectory.relativePath.size(); i++) {
+                                String dirName = currentDirectory.relativePath.get(i);
 
-                            for (Item child : current.children) {
-                                if (child instanceof DirItem && child.getName().equals(dirName)) {
-                                    current = (DirItem) child;
-                                    continue loop;
+                                for (Item child : target.children) {
+                                    if (child instanceof DirItem && child.getName().equals(dirName)) {
+                                        target = (DirItem) child;
+                                        continue loop;
+                                    }
                                 }
+                                break;
                             }
-
-                            currentRelativePath = currentRelativePath.subList(0, i);
-                            break;
                         }
-                        navigateTo(current);
+
+                        navigateTo(target);
                     } else {
                         LOG.warning("Failed to load schematics", exception);
                     }
@@ -136,12 +138,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private void navigateTo(DirItem item) {
+        currentDirectory = item;
         getItems().clear();
         if (item.parent != null) {
             getItems().add(new BackItem(item.parent));
         }
         getItems().addAll(item.children);
-        currentRelativePath = item.relativePath;
     }
 
     abstract class Item extends Control implements Comparable<Item> {
@@ -164,6 +166,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         abstract void onReveal();
 
+        abstract void onDelete();
+
         @Override
         public int compareTo(@NotNull SchematicsPage.Item o) {
             if (this.order() != o.order())
@@ -174,58 +178,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         protected Skin<?> createDefaultSkin() {
-            return new ItemSkin();
-        }
-
-        private final class ItemSkin extends SkinBase<Item> {
-            public ItemSkin() {
-                super(Item.this);
-
-                BorderPane root = new BorderPane();
-                root.getStyleClass().add("md-list-cell");
-                root.setPadding(new Insets(8));
-
-                {
-                    StackPane left = new StackPane();
-                    left.setMaxSize(32, 32);
-                    left.setPrefSize(32, 32);
-                    left.getChildren().add(getIcon().createIcon(Theme.blackFill(), 24));
-                    left.setPadding(new Insets(0, 8, 0, 0));
-
-                    if (Item.this instanceof DirItem || Item.this instanceof LitematicFileItem) {
-                        FXUtils.installSlowTooltip(left, getPath().toAbsolutePath().normalize().toString());
-                    }
-
-                    BorderPane.setAlignment(left, Pos.CENTER);
-                    root.setLeft(left);
-                }
-
-                {
-                    TwoLineListItem center = new TwoLineListItem();
-                    center.setTitle(getName());
-                    center.setSubtitle(getDescription());
-
-                    root.setCenter(center);
-                }
-
-                if (!(Item.this instanceof BackItem)) {
-                    HBox right = new HBox(8);
-                    right.setAlignment(Pos.CENTER_RIGHT);
-
-                    JFXButton btnReveal = new JFXButton();
-                    right.getChildren().add(btnReveal);
-                    FXUtils.installFastTooltip(btnReveal, i18n("world.reveal"));
-                    btnReveal.getStyleClass().add("toggle-icon4");
-                    btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
-                    btnReveal.setOnAction(event -> Item.this.onReveal());
-
-                    root.setRight(right);
-                }
-
-                RipplerContainer container = new RipplerContainer(root);
-                FXUtils.onClicked(container, Item.this::onClick);
-                this.getChildren().add(container);
-            }
+            return new ItemSkin(this);
         }
     }
 
@@ -254,7 +207,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         String getDescription() {
-            return "返回至 " + parent.getName();
+            return i18n("schematics.back_to", parent.getName());
         }
 
         @Override
@@ -269,7 +222,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         void onReveal() {
-            parent.onReveal();
+            throw new UnsupportedOperationException("Unreachable");
+        }
+
+        @Override
+        void onDelete() {
+            throw new UnsupportedOperationException("Unreachable");
         }
     }
 
@@ -308,7 +266,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         String getDescription() {
-            return children.size() + " 个子项";
+            return i18n("schematics.sub_items", children.size());
         }
 
         @Override
@@ -324,6 +282,16 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         @Override
         void onReveal() {
             FXUtils.openFolder(path.toFile());
+        }
+
+        @Override
+        void onDelete() {
+            try {
+                FileUtils.cleanDirectory(path.toFile());
+                refresh();
+            } catch (IOException e) {
+                LOG.warning("Failed to delete directory: " + path, e);
+            }
         }
     }
 
@@ -422,6 +390,75 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         @Override
         void onReveal() {
             FXUtils.showFileInExplorer(file.getFile());
+        }
+
+        @Override
+        void onDelete() {
+            try {
+                Files.deleteIfExists(file.getFile());
+                refresh();
+            } catch (IOException e) {
+                LOG.warning("Failed to delete litematic file: " + file.getFile(), e);
+            }
+        }
+    }
+
+    private static final class ItemSkin extends SkinBase<Item> {
+        public ItemSkin(Item item) {
+            super(item);
+
+            BorderPane root = new BorderPane();
+            root.getStyleClass().add("md-list-cell");
+            root.setPadding(new Insets(8));
+
+            {
+                StackPane left = new StackPane();
+                left.setMaxSize(32, 32);
+                left.setPrefSize(32, 32);
+                left.getChildren().add(item.getIcon().createIcon(Theme.blackFill(), 24));
+                left.setPadding(new Insets(0, 8, 0, 0));
+
+                Path path = item.getPath();
+                if (path != null) {
+                    FXUtils.installSlowTooltip(left, path.toAbsolutePath().normalize().toString());
+                }
+
+                BorderPane.setAlignment(left, Pos.CENTER);
+                root.setLeft(left);
+            }
+
+            {
+                TwoLineListItem center = new TwoLineListItem();
+                center.setTitle(item.getName());
+                center.setSubtitle(item.getDescription());
+
+                root.setCenter(center);
+            }
+
+            if (!(item instanceof BackItem)) {
+                HBox right = new HBox(8);
+                right.setAlignment(Pos.CENTER_RIGHT);
+
+                JFXButton btnReveal = new JFXButton();
+                FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_explorer"));
+                btnReveal.getStyleClass().add("toggle-icon4");
+                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+                btnReveal.setOnAction(event -> item.onReveal());
+
+                JFXButton btnDelete = new JFXButton();
+                btnDelete.getStyleClass().add("toggle-icon4");
+                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), -1));
+                btnDelete.setOnAction(event ->
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
+                                item::onDelete, null));
+
+                right.getChildren().setAll(btnReveal, btnDelete);
+                root.setRight(right);
+            }
+
+            RipplerContainer container = new RipplerContainer(root);
+            FXUtils.onClicked(container, item::onClick);
+            this.getChildren().add(container);
         }
     }
 
