@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.schematic;
 import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.geometry.Point3D;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -121,7 +122,7 @@ public final class LitematicFile {
         );
     }
 
-    private final Path file;
+    private final @NotNull Path file;
     private final int version;
     private final int subVersion;
     private final int minecraftDataVersion;
@@ -136,7 +137,7 @@ public final class LitematicFile {
     private final Point3D enclosingSize;
     private final int totalRegions;
 
-    public LitematicFile(Path file, int version, int subVersion, int minecraftDataVersion,
+    public LitematicFile(@NotNull Path file, int version, int subVersion, int minecraftDataVersion,
                          String name, String author, String description,
                          Instant timeCreated, Instant timeModified,
                          int totalBlocks, int totalVolume, Point3D enclosingSize,
@@ -156,7 +157,7 @@ public final class LitematicFile {
         this.totalRegions = totalRegions;
     }
 
-    public Path getFile() {
+    public @NotNull Path getFile() {
         return file;
     }
 

@@ -526,6 +526,10 @@ public class DefaultGameRepository implements GameRepository {
         return getRunDirectory(id).toPath().resolve("backups");
     }
 
+    public Path getSchematicsDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("schematics");
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
