@@ -75,7 +75,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
                 String adapterDACType = videoController.get("AdapterDACType");
 
                 if (StringUtils.isNotBlank(name)) {
-                    cards.add(GraphicsCard.builder().setName(name)
+                    cards.add(GraphicsCard.builder().setName(GraphicsCard.cleanName(name))
                             .setVendor(HardwareVendor.of(adapterCompatibility))
                             .setDriverVersion(driverVersion)
                             .setType(StringUtils.isBlank(adapterDACType)

@@ -167,7 +167,7 @@ final class LinuxGPUDetector {
                         String line;
                         while ((line = reader.readLine()) != null) {
                             if (line.startsWith(prefix)) {
-                                builder.setName(line.substring(prefix.length()));
+                                builder.setName(GraphicsCard.cleanName(line.substring(prefix.length())));
                                 break;
                             }
                         }
@@ -193,7 +193,7 @@ final class LinuxGPUDetector {
                         if (device != null) {
                             matcher = Pattern.compile(".*\\[(?<name>.*)]").matcher(device.getName());
                             if (matcher.matches())
-                                builder.setName(builder.getVendor() + " " + matcher.group("name"));
+                                builder.setName(GraphicsCard.cleanName(builder.getVendor() + " " + matcher.group("name")));
                             else
                                 builder.setName(builder.getVendor() + " " + device.getName());
                         }
