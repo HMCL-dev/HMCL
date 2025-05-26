@@ -52,6 +52,8 @@ public final class ServerAddressTest {
         assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]:a"));
         assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]:65536"));
         assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]:-1"));
+        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[ ]:-1"));
+        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[-]:-1"));
         assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("example.com:"));
         assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("example.com:a"));
         assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("example.com:65536"));

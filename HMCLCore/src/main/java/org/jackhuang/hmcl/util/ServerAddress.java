@@ -66,6 +66,12 @@ public final class ServerAddress {
                 throw illegalAddress(address);
 
             String host = address.substring(1, closeBracketIndex);
+            for (int i = 0; i < host.length(); i++) {
+                char c = host.charAt(i);
+                if (c != ':' && !Character.isLetterOrDigit(c))
+                    throw illegalAddress(address);
+            }
+
             if (closeBracketIndex == address.length() - 1)
                 return new ServerAddress(host);
 
