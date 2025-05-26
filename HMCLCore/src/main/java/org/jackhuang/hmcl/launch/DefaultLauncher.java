@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -295,15 +296,21 @@ public class DefaultLauncher extends Launcher {
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
-            String[] args = options.getServerIp().split(":");
-            if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
-                res.add("--server");
-                res.add(args[0]);
-                res.add("--port");
-                res.add(args.length > 1 ? args[1] : "25565");
-            } else {
-                res.add("--quickPlayMultiplayer");
-                res.add(args[0] + ":" + (args.length > 1 ? args[1] : "25565"));
+            try {
+                ServerAddress address = ServerAddress.parse(options.getServerIp());
+                String host = address.getHost();
+                String port = address.getPort() >= 0 ? String.valueOf(address.getPort()) : "25565";
+                if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
+                    res.add("--server");
+                    res.add(host);
+                    res.add("--port");
+                    res.add(port);
+                } else {
+                    res.add("--quickPlayMultiplayer");
+                    res.add(host + ":" + port);
+                }
+            } catch (IllegalArgumentException e) {
+                LOG.warning("Invalid server address: " + options.getServerIp(), e);
             }
         }
 
