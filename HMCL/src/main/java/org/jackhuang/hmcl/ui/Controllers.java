@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -62,6 +63,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -70,6 +72,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    public static final String JAVA_VERSION_TIP = "javaVersion";
+
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
     public static final Screen SCREEN = Screen.getPrimary();
@@ -307,6 +311,51 @@ public final class Controllers {
             }
         }
 
+        if (JavaRuntime.CURRENT_VERSION < 10) {
+            Integer shownTipVersion = null;
+
+            try {
+                shownTipVersion = (Integer) config().getShownTips().get(JAVA_VERSION_TIP);
+            } catch (ClassCastException e) {
+                LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
+            }
+
+            if (shownTipVersion == null || shownTipVersion < 11) {
+                String downloadLink = null;
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW)
+                    downloadLink = "https://www.loongnix.cn/zh/api/java/downloads-jdk21/index.html";
+                else {
+
+                    EnumSet<Architecture> supportedArchitectures;
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                        supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.X86, Architecture.ARM64);
+                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+                        supportedArchitectures = EnumSet.of(
+                                Architecture.X86_64, Architecture.X86,
+                                Architecture.ARM64, Architecture.ARM32,
+                                Architecture.RISCV64, Architecture.LOONGARCH64
+                        );
+                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+                        supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.ARM64);
+                    else
+                        supportedArchitectures = EnumSet.noneOf(Architecture.class);
+
+                    if (supportedArchitectures.contains(Architecture.SYSTEM_ARCH))
+                        downloadLink = String.format("https://docs.hmcl.net/downloads/%s/%s.html",
+                                OperatingSystem.CURRENT_OS.getCheckedName(),
+                                Architecture.SYSTEM_ARCH.getCheckedName()
+                        );
+                }
+
+                MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
+                if (downloadLink != null)
+                    builder.addHyperLink(i18n("fatal.deprecated_java_version.download_link", 21), downloadLink);
+                Controllers.dialog(builder
+                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, 11))
+                        .build());
+            }
+        }
 
         if (globalConfig().getAgreementVersion() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();

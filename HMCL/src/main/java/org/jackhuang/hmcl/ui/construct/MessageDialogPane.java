@@ -160,6 +160,13 @@ public final class MessageDialogPane extends HBox {
             this.dialog = new MessageDialogPane(text, title, type);
         }
 
+        public Builder addHyperLink(String text, String externalLink) {
+            JFXHyperlink link = new JFXHyperlink(text);
+            link.setExternalLink(externalLink);
+            dialog.actions.getChildren().add(link);
+            return this;
+        }
+
         public Builder addAction(Node actionNode) {
             dialog.addButton(actionNode);
             actionNode.getStyleClass().add("dialog-accept");
