@@ -296,21 +296,21 @@ public class DefaultLauncher extends Launcher {
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
+            String address = options.getServerIp();
+
             try {
-                ServerAddress address = ServerAddress.parse(options.getServerIp());
-                String host = address.getHost();
-                String port = address.getPort() >= 0 ? String.valueOf(address.getPort()) : "25565";
+                ServerAddress parsed = ServerAddress.parse(address);
                 if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
                     res.add("--server");
-                    res.add(host);
+                    res.add(parsed.getHost());
                     res.add("--port");
-                    res.add(port);
+                    res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
                 } else {
                     res.add("--quickPlayMultiplayer");
-                    res.add(host + ":" + port);
+                    res.add(parsed.getPort() < 0 ? address + ":25565" : address);
                 }
             } catch (IllegalArgumentException e) {
-                LOG.warning("Invalid server address: " + options.getServerIp(), e);
+                LOG.warning("Invalid server address: " + address, e);
             }
         }
 

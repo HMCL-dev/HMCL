@@ -58,6 +58,7 @@ public final class ServerAddress {
                 return new ServerAddress(address);
             }
         } else {
+            // Parse IPv6 address
             int colonIndex = address.indexOf(':');
             int closeBracketIndex = address.lastIndexOf(']');
 
