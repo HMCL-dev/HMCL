@@ -45,6 +45,8 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.ServerAddress;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -451,6 +453,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 txtServerIP = new JFXTextField();
                 txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
+                Validator.addTo(txtServerIP).accept(str -> {
+                    if (StringUtils.isBlank(str))
+                        return true;
+                    try {
+                        ServerAddress.parse(str);
+                        return true;
+                    } catch (Exception ignored) {
+                        return false;
+                    }
+                });
                 FXUtils.setLimitWidth(txtServerIP, 300);
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
