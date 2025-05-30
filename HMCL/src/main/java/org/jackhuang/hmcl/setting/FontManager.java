@@ -163,7 +163,7 @@ public final class FontManager {
                         }
                     }
 
-                    LOG.warning(String.format(" Family '%s' not found in font file '%s'", family, path));
+                    LOG.warning(String.format("Family '%s' not found in font file '%s'", family, path));
                     return fonts[0];
                 } catch (NoSuchMethodException | IllegalAccessException ignored) {
                 }
