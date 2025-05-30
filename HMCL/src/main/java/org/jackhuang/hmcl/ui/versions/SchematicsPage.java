@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -52,7 +51,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -405,65 +403,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         void onClick() {
-            JFXDialogLayout dialog = new JFXDialogLayout();
-
-            HBox titleBox = new HBox(8);
-            {
-                StackPane icon = new StackPane();
-                icon.setMaxSize(40, 40);
-                icon.setPrefSize(40, 40);
-                icon.getChildren().add(getIcon().createIcon(Theme.blackFill(), 40));
-
-                TwoLineListItem title = new TwoLineListItem();
-                title.setTitle(getName());
-                title.setSubtitle(file.getFile().getFileName().toString());
-
-                titleBox.getChildren().setAll(icon, title);
-                dialog.setHeading(titleBox);
-            }
-
-            {
-                List<Pair<String, String>> details = new ArrayList<>();
-
-                details.add(pair(i18n("schematics.info.name"), file.getName()));
-                if (StringUtils.isNotBlank(file.getAuthor()))
-                    details.add(pair(i18n("schematics.info.schematic_author"), translateAuthorName(file.getAuthor())));
-                if (file.getTimeCreated() != null)
-                    details.add(pair(i18n("schematics.info.time_created"), I18n.formatDateTime(file.getTimeCreated())));
-                if (file.getTimeModified() != null && !file.getTimeModified().equals(file.getTimeCreated()))
-                    details.add(pair(i18n("schematics.info.time_modified"), I18n.formatDateTime(file.getTimeModified())));
-                if (file.getRegionCount() > 0)
-                    details.add(pair(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount())));
-                if (file.getTotalVolume() > 0)
-                    details.add(pair(i18n("schematics.info.total_volume"), String.valueOf(file.getTotalVolume())));
-                if (file.getTotalBlocks() > 0)
-                    details.add(pair(i18n("schematics.info.total_blocks"), String.valueOf(file.getTotalBlocks())));
-                if (file.getEnclosingSize() != null)
-                    details.add(pair(i18n("schematics.info.enclosing_size"),
-                            String.format("%d x %d x %d", (int) file.getEnclosingSize().getX(),
-                                    (int) file.getEnclosingSize().getY(),
-                                    (int) file.getEnclosingSize().getZ())));
-
-                ComponentList list = new ComponentList();
-                for (Pair<String, String> detail : details) {
-                    BorderPane borderPane = new BorderPane();
-
-                    borderPane.setLeft(new Label(detail.getKey()));
-                    borderPane.setRight(new Label(detail.getValue()));
-                    list.getContent().add(borderPane);
-                }
-                dialog.setBody(list);
-            }
-
-            {
-                JFXButton okButton = new JFXButton();
-                okButton.getStyleClass().add("dialog-accept");
-                okButton.setText(i18n("button.ok"));
-                okButton.setOnAction(e -> dialog.fireEvent(new DialogCloseEvent()));
-                dialog.getActions().add(okButton);
-            }
-
-            Controllers.dialog(dialog);
+            Controllers.dialog(new LitematicInfoDialog());
         }
 
         @Override
@@ -478,6 +418,73 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 refresh();
             } catch (IOException e) {
                 LOG.warning("Failed to delete litematic file: " + file.getFile(), e);
+            }
+        }
+
+        private final class LitematicInfoDialog extends JFXDialogLayout {
+            private final ComponentList details;
+
+            private void addDetailItem(String key, Object detail) {
+                BorderPane borderPane = new BorderPane();
+                borderPane.setLeft(new Label(key));
+                borderPane.setRight(new Label(detail.toString()));
+                details.getContent().add(borderPane);
+            }
+
+            private void updateContent(LitematicFile file) {
+                details.getContent().clear();
+                addDetailItem(i18n("schematics.info.name"), file.getName());
+                if (StringUtils.isNotBlank(file.getAuthor()))
+                    addDetailItem(i18n("schematics.info.schematic_author"), translateAuthorName(file.getAuthor()));
+                if (file.getTimeCreated() != null)
+                    addDetailItem(i18n("schematics.info.time_created"), I18n.formatDateTime(file.getTimeCreated()));
+                if (file.getTimeModified() != null && !file.getTimeModified().equals(file.getTimeCreated()))
+                    addDetailItem(i18n("schematics.info.time_modified"), I18n.formatDateTime(file.getTimeModified()));
+                if (file.getRegionCount() > 0)
+                    addDetailItem(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount()));
+                if (file.getTotalVolume() > 0)
+                    addDetailItem(i18n("schematics.info.total_volume"), file.getTotalVolume());
+                if (file.getTotalBlocks() > 0)
+                    addDetailItem(i18n("schematics.info.total_blocks"), file.getTotalBlocks());
+                if (file.getEnclosingSize() != null)
+                    addDetailItem(i18n("schematics.info.enclosing_size"),
+                            String.format("%d x %d x %d", (int) file.getEnclosingSize().getX(),
+                                    (int) file.getEnclosingSize().getY(),
+                                    (int) file.getEnclosingSize().getZ()));
+
+                addDetailItem(i18n("schematics.info.version"), file.getVersion());
+            }
+
+            LitematicInfoDialog() {
+                HBox titleBox = new HBox(8);
+                {
+                    StackPane icon = new StackPane();
+                    icon.setMaxSize(40, 40);
+                    icon.setPrefSize(40, 40);
+                    icon.getChildren().add(getIcon().createIcon(Theme.blackFill(), 40));
+
+                    TwoLineListItem title = new TwoLineListItem();
+                    title.setTitle(getName());
+                    title.setSubtitle(file.getFile().getFileName().toString());
+
+                    titleBox.getChildren().setAll(icon, title);
+                    setHeading(titleBox);
+                }
+
+                {
+                    this.details = new ComponentList();
+                    setBody(details);
+                }
+
+                {
+                    JFXButton okButton = new JFXButton();
+                    okButton.getStyleClass().add("dialog-accept");
+                    okButton.setText(i18n("button.ok"));
+                    okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+                    getActions().add(okButton);
+                }
+
+                updateContent(file);
             }
         }
     }
