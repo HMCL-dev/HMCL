@@ -373,7 +373,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         private LitematicFileItem(LitematicFile file) {
             this.file = file;
-            this.name = file.getName() != null ? file.getName() : file.getFile().getFileName().toString();
+
+            String name = file.getName();
+            if (name != null && !"Unnamed".equals(name)) {
+                this.name = name;
+            } else {
+                this.name = StringUtils.removeSuffix(file.getFile().getFileName().toString(), ".litematic");
+            }
         }
 
         @Override
