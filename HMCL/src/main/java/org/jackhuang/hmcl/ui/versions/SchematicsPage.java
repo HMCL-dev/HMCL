@@ -23,6 +23,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -232,6 +236,14 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         abstract SVG getIcon();
 
+        Node getIcon(int size) {
+            StackPane icon = new StackPane();
+            icon.setPrefSize(size, size);
+            icon.setMaxSize(size, size);
+            icon.getChildren().add(getIcon().createIcon(Theme.blackFill(), size));
+            return icon;
+        }
+
         abstract int order();
 
         abstract void onClick();
@@ -370,6 +382,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private final class LitematicFileItem extends Item {
         final LitematicFile file;
         final String name;
+        final Image image;
 
         private LitematicFileItem(LitematicFile file) {
             this.file = file;
@@ -380,6 +393,24 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             } else {
                 this.name = StringUtils.removeSuffix(file.getFile().getFileName().toString(), ".litematic");
             }
+
+            WritableImage image = null;
+            int[] previewImageData = file.getPreviewImageData();
+            if (previewImageData != null && previewImageData.length > 0) {
+                int size = (int) Math.sqrt(previewImageData.length);
+                if ((size * size) == previewImageData.length) {
+                    image = new WritableImage(size, size);
+                    PixelWriter pixelWriter = image.getPixelWriter();
+
+                    for (int y = 0, i = 0; y < size; ++y) {
+                        for (int x = 0; x < size; ++x) {
+                            pixelWriter.setArgb(x, y, previewImageData[i++]);
+                        }
+                    }
+
+                }
+            }
+            this.image = image;
         }
 
         @Override
@@ -405,6 +436,18 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         @Override
         SVG getIcon() {
             return SVG.SCHEMA;
+        }
+
+        Node getIcon(int size) {
+            if (image == null) {
+                return super.getIcon(size);
+            } else {
+                ImageView imageView = new ImageView();
+                imageView.setFitHeight(size);
+                imageView.setFitWidth(size);
+                imageView.setImage(image);
+                return imageView;
+            }
         }
 
         @Override
@@ -464,10 +507,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             LitematicInfoDialog() {
                 HBox titleBox = new HBox(8);
                 {
-                    StackPane icon = new StackPane();
-                    icon.setMaxSize(40, 40);
-                    icon.setPrefSize(40, 40);
-                    icon.getChildren().add(getIcon().createIcon(Theme.blackFill(), 40));
+                    Node icon = getIcon(40);
 
                     TwoLineListItem title = new TwoLineListItem();
                     title.setTitle(getName());
@@ -507,7 +547,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 StackPane left = new StackPane();
                 left.setMaxSize(32, 32);
                 left.setPrefSize(32, 32);
-                left.getChildren().add(item.getIcon().createIcon(Theme.blackFill(), 24));
+                left.getChildren().add(item.getIcon(24));
                 left.setPadding(new Insets(0, 8, 0, 0));
 
                 Path path = item.getPath();
