@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -51,6 +52,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -421,31 +423,36 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
 
             {
-                List<String> details = new ArrayList<>();
+                List<Pair<String, String>> details = new ArrayList<>();
 
-                details.add(i18n("schematics.info.name") + ": " + file.getName());
+                details.add(pair(i18n("schematics.info.name"), file.getName()));
                 if (StringUtils.isNotBlank(file.getAuthor()))
-                    details.add(i18n("schematics.info.schematic_author", translateAuthorName(file.getAuthor())));
+                    details.add(pair(i18n("schematics.info.schematic_author"), translateAuthorName(file.getAuthor())));
                 if (file.getTimeCreated() != null)
-                    details.add(i18n("schematics.info.time_created", I18n.formatDateTime(file.getTimeCreated())));
+                    details.add(pair(i18n("schematics.info.time_created"), I18n.formatDateTime(file.getTimeCreated())));
                 if (file.getTimeModified() != null && !file.getTimeModified().equals(file.getTimeCreated()))
-                    details.add(i18n("schematics.info.time_modified", I18n.formatDateTime(file.getTimeModified())));
+                    details.add(pair(i18n("schematics.info.time_modified"), I18n.formatDateTime(file.getTimeModified())));
                 if (file.getRegionCount() > 0)
-                    details.add(i18n("schematics.info.region_count", file.getRegionCount()));
+                    details.add(pair(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount())));
                 if (file.getTotalVolume() > 0)
-                    details.add(i18n("schematics.info.total_volume", file.getTotalVolume()));
+                    details.add(pair(i18n("schematics.info.total_volume"), String.valueOf(file.getTotalVolume())));
                 if (file.getTotalBlocks() > 0)
-                    details.add(i18n("schematics.info.total_blocks", file.getTotalBlocks()));
+                    details.add(pair(i18n("schematics.info.total_blocks"), String.valueOf(file.getTotalBlocks())));
                 if (file.getEnclosingSize() != null)
-                    details.add(i18n("schematics.info.enclosing_size",
-                            (int) file.getEnclosingSize().getX(),
-                            (int) file.getEnclosingSize().getY(),
-                            (int) file.getEnclosingSize().getZ()));
+                    details.add(pair(i18n("schematics.info.enclosing_size"),
+                            String.format("%d x %d x %d", (int) file.getEnclosingSize().getX(),
+                                    (int) file.getEnclosingSize().getY(),
+                                    (int) file.getEnclosingSize().getZ())));
 
-                Label label = new Label(String.join("\n", details));
-                StackPane.setAlignment(label, Pos.CENTER_LEFT);
-                StackPane.setMargin(label, new Insets(0, 20, 0, 20));
-                dialog.setBody(label);
+                ComponentList list = new ComponentList();
+                for (Pair<String, String> detail : details) {
+                    BorderPane borderPane = new BorderPane();
+
+                    borderPane.setLeft(new Label(detail.getKey()));
+                    borderPane.setRight(new Label(detail.getValue()));
+                    list.getContent().add(borderPane);
+                }
+                dialog.setBody(list);
             }
 
             {
