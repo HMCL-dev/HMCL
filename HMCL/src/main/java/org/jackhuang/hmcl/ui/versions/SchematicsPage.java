@@ -519,7 +519,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
                 {
                     this.details = new ComponentList();
-                    setBody(details);
+                    StackPane detailsContainer = new StackPane();
+                    detailsContainer.setPadding(new Insets(10, 0, 0, 0));
+                    detailsContainer.getChildren().add(details);
+                    setBody(detailsContainer);
                 }
 
                 {
