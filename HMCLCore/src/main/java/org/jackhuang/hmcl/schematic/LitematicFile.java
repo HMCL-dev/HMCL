@@ -96,21 +96,21 @@ public final class LitematicFile {
         return root.<IntTag>get("Version").getValue();
     }
 
-    public LitematicFile withVersion(int version) {
-        if (version < 0)
-            throw new IllegalArgumentException("Illegal version: " + version);
-
-        CompoundTag newRoot = root.clone();
-        newRoot.<IntTag>get("Version").setValue(version);
-        return new LitematicFile(file, newRoot);
-    }
-
     public int getSubVersion() {
         return tryGetInt(root.get("SubVersion"));
     }
 
     public int getMinecraftDataVersion() {
         return tryGetInt(root.get("MinecraftDataVersion"));
+    }
+
+    public int[] getPreviewImageData() {
+        Tag previewImageData = getMetadata().get("PreviewImageData");
+        if (previewImageData instanceof IntArrayTag) {
+            return ((IntArrayTag) previewImageData).getValue().clone();
+        } else {
+            return null;
+        }
     }
 
     public String getName() {
@@ -161,13 +161,5 @@ public final class LitematicFile {
         if (regions instanceof CompoundTag)
             return ((CompoundTag) regions).size();
         else return 0;
-    }
-
-    public void saveToFile() throws IOException {
-        FileUtils.saveSafely(file, outputStream -> {
-            try (GZIPOutputStream output = new GZIPOutputStream(outputStream)) {
-                NBTIO.writeTag(output, root);
-            }
-        });
     }
 }

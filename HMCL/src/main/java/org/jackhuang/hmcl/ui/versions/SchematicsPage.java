@@ -176,7 +176,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
 
                     try {
-                        Files.createDirectory(targetDir);
+                        Files.createDirectories(targetDir);
                         resolve.run();
                         refresh();
                     } catch (IOException e) {
