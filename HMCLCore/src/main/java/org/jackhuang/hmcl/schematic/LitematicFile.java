@@ -99,7 +99,7 @@ public final class LitematicFile {
                 int y = tryGetInt(list.get("y"));
                 int z = tryGetInt(list.get("z"));
 
-                if (x > 0 && y > 0 && z > 0)
+                if (x >= 0 && y >= 0 && z >= 0)
                     enclosingSize = new Point3D(x, y, z);
             }
         }
