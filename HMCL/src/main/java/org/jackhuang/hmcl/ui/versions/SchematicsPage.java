@@ -66,8 +66,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         return author;
     }
 
-    private Profile profile;
-    private String version;
     private Path schematicsDirectory;
     private DirItem currentDirectory;
 
@@ -85,8 +83,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     @Override
     public void loadVersion(Profile profile, String version) {
-        this.profile = profile;
-        this.version = version;
         this.schematicsDirectory = profile.getRepository().getSchematicsDirectory(version);
 
         refresh();
