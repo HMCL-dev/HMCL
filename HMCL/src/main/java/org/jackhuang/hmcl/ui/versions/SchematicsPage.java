@@ -26,26 +26,29 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -67,6 +70,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private String version;
     private Path schematicsDirectory;
     private DirItem currentDirectory;
+
+    public SchematicsPage() {
+        FXUtils.applyDragListener(this,
+                file -> currentDirectory != null && file.isFile() && file.getName().endsWith(".litematic"),
+                files -> addFiles(files.stream().map(File::toPath).collect(Collectors.toList()))
+        );
+    }
 
     @Override
     protected Skin<?> createDefaultSkin() {
@@ -112,6 +122,72 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         LOG.warning("Failed to load schematics", exception);
                     }
                 }).start();
+    }
+
+    public void addFiles(List<Path> files) {
+        if (currentDirectory == null)
+            return;
+
+        Path dir = currentDirectory.path;
+        try {
+            // Can be executed in the background, but be careful that users can call loadVersion during this time
+            Files.createDirectories(dir);
+            for (Path file : files) {
+                Files.copy(file, dir.resolve(file.getFileName()));
+            }
+            refresh();
+        } catch (FileAlreadyExistsException ignored) {
+        } catch (IOException e) {
+            Controllers.dialog(i18n("schematics.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            LOG.warning("Failed to add schematics to " + dir, e);
+        }
+    }
+
+    public void onAddFiles() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(i18n("schematics.add"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                i18n("schematics"), "*.litematic"));
+        List<File> files = fileChooser.showOpenMultipleDialog(Controllers.getStage());
+        if (files != null && !files.isEmpty()) {
+            addFiles(files.stream().map(File::toPath).collect(Collectors.toList()));
+        }
+    }
+
+    public void onCreateDirectory() {
+        if (currentDirectory == null)
+            return;
+
+        Path parent = currentDirectory.path;
+        Controllers.dialog(new InputDialogPane(
+                i18n("schematics.create_directory.prompt"),
+                "",
+                (result, resolve, reject) -> {
+                    if (StringUtils.isBlank(result)) {
+                        reject.accept(i18n("schematics.create_directory.prompt"));
+                        return;
+                    }
+
+                    if (result.contains("/") || result.contains("\\") || !OperatingSystem.isNameValid(result)) {
+                        reject.accept(i18n("schematics.create_directory.failed.invalid_name"));
+                        return;
+                    }
+
+                    Path targetDir = parent.resolve(result);
+                    if (Files.exists(targetDir)) {
+                        reject.accept(i18n("schematics.create_directory.failed.already_exists"));
+                        return;
+                    }
+
+                    try {
+                        Files.createDirectory(targetDir);
+                        resolve.run();
+                        refresh();
+                    } catch (IOException e) {
+                        LOG.warning("Failed to create directory: " + targetDir, e);
+                        reject.accept(i18n("schematics.create_directory.failed", targetDir));
+                    }
+                }));
     }
 
     private DirItem loadAll(Path dir, @Nullable DirItem parent) {
@@ -470,7 +546,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         @Override
         protected List<Node> initializeToolbar(SchematicsPage skinnable) {
             return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
+                    createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory)
             );
         }
     }
