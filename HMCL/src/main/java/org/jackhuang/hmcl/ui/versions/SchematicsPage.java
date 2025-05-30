@@ -160,7 +160,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 "",
                 (result, resolve, reject) -> {
                     if (StringUtils.isBlank(result)) {
-                        reject.accept(i18n("schematics.create_directory.prompt"));
+                        reject.accept(i18n("schematics.create_directory.failed.empty_name"));
                         return;
                     }
 
