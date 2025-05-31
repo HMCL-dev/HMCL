@@ -373,6 +373,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         void onDelete() {
             try {
                 FileUtils.cleanDirectory(path.toFile());
+                Files.deleteIfExists(path);
                 refresh();
             } catch (IOException e) {
                 LOG.warning("Failed to delete directory: " + path, e);
