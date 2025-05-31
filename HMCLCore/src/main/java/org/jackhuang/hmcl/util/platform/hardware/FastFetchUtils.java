@@ -41,13 +41,13 @@ final class FastFetchUtils {
     }
 
     private static <T> T get(String type, TypeToken<T> resultType) {
-        Path fastfetch = SystemUtils.which("fastfetch");
+        Path fastfetch = SystemUtils.which(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
         if (fastfetch == null)
             return null;
 
-        String json;
+        String output;
         try {
-            json = SystemUtils.run(Arrays.asList(fastfetch.toString(), "--structure", type, "--format", "json"),
+            output = SystemUtils.run(Arrays.asList(fastfetch.toString(), "--structure", type, "--format", "json"),
                     inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
         } catch (Throwable e) {
             LOG.warning("Failed to get result from fastfetch", e);
@@ -55,6 +55,10 @@ final class FastFetchUtils {
         }
 
         try {
+            // Sometimes there is some garbage before the output JSON, we should filter it out
+            int idx = output.indexOf('[');
+            String json = idx >= 0 ? output.substring(idx) : output;
+
             List<Result<T>> list = JsonUtils.GSON.fromJson(json, JsonUtils.listTypeOf(Result.typeOf(resultType)));
 
             Result<T> result;
@@ -68,7 +72,7 @@ final class FastFetchUtils {
 
             return result.result;
         } catch (Throwable e) {
-            LOG.warning("Failed to parse fastfetch output: " + json, e);
+            LOG.warning("Failed to parse fastfetch output: " + output, e);
             return null;
         }
     }

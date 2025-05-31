@@ -43,14 +43,21 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     public @Nullable CentralProcessor detectCentralProcessor() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
             return null;
-        return LinuxCPUDetector.detect();
+        CentralProcessor cpu = LinuxCPUDetector.detect();
+        return cpu != null ? cpu : super.detectCentralProcessor();
     }
 
     @Override
     public List<GraphicsCard> detectGraphicsCards() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
             return null;
-        return LinuxGPUDetector.detect();
+        List<GraphicsCard> cards = LinuxGPUDetector.detect();
+        if (cards == null || cards.isEmpty()) {
+            List<GraphicsCard> fastfetchResults = super.detectGraphicsCards();
+            if (fastfetchResults != null) // Avoid overwriting empty lists with null
+                cards = fastfetchResults;
+        }
+        return cards;
     }
 
     private static final Path MEMINFO = Paths.get("/proc/meminfo");
