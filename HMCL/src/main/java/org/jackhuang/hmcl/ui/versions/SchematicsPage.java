@@ -55,6 +55,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -531,6 +532,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     okButton.setText(i18n("button.ok"));
                     okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
                     getActions().add(okButton);
+
+                    onEscPressed(this, okButton::fire);
                 }
 
                 updateContent(file);
