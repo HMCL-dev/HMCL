@@ -26,7 +26,10 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.time.Instant;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  *
@@ -38,7 +41,7 @@ public final class GameRemoteVersion extends RemoteVersion {
     private final ReleaseType type;
 
     public GameRemoteVersion(String gameVersion, String selfVersion, List<String> url, ReleaseType type, Instant releaseDate) {
-        super(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion, selfVersion, releaseDate, getReleaseType(type), url);
+        super(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion, selfVersion, releaseDate, getReleaseType(type, releaseDate, gameVersion), url);
         this.type = type;
     }
 
@@ -59,8 +62,17 @@ public final class GameRemoteVersion extends RemoteVersion {
         return o.getReleaseDate().compareTo(getReleaseDate());
     }
 
-    private static Type getReleaseType(ReleaseType type) {
-        if (type == null) return Type.UNCATEGORIZED;
+    private static Type getReleaseType(ReleaseType type, Instant releaseDate, String gameVersion) {
+        if (type == null || releaseDate == null || gameVersion == null) return Type.UNCATEGORIZED;
+        if (gameVersion.startsWith("2.0")) return Type.APRILFOOLS;
+        if (gameVersion.startsWith("1.RV")) return Type.APRILFOOLS;
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        cal.setTime(Date.from(releaseDate));
+        int month = cal.get(Calendar.MONTH);
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+        if (month == Calendar.APRIL && day == 1) {
+            return Type.APRILFOOLS;
+        }
         switch (type) {
             case RELEASE:
                 return Type.RELEASE;
@@ -70,6 +82,8 @@ public final class GameRemoteVersion extends RemoteVersion {
                 return Type.UNCATEGORIZED;
             case PENDING:
                 return Type.PENDING;
+            case APRILFOOLS:
+                return Type.APRILFOOLS;
             default:
                 return Type.OLD;
         }
