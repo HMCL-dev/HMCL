@@ -43,7 +43,7 @@ dependencies {
     implementation(libs.twelvemonkeys.imageio.webp)
 
     if (launcherExe == null) {
-        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.1")
+        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.2")
     }
 }
 
