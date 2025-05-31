@@ -28,12 +28,14 @@ import java.util.List;
  */
 @SuppressWarnings("ALL")
 public class HardwareDetector {
+    private static final boolean USE_FAST_FETCH = "true".equalsIgnoreCase(System.getProperty("hmcl.hardware.fastfetch", "true"));
+
     public @Nullable CentralProcessor detectCentralProcessor() {
-        return FastFetchUtils.detectCentralProcessor();
+        return USE_FAST_FETCH ? FastFetchUtils.detectCentralProcessor() : null;
     }
 
     public @Nullable List<GraphicsCard> detectGraphicsCards() {
-        return FastFetchUtils.detectGraphicsCards();
+        return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : null;
     }
 
     public long getTotalMemorySize() {

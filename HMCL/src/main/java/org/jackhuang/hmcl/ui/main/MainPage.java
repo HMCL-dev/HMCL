@@ -321,6 +321,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void onMenu() {
+        if (menu.getContent().isEmpty()) {
+            Label placeholder = new Label(i18n("version.empty"));
+            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: gray; -fx-font-style: italic;");
+
+            popup.setPopupContent(placeholder);
+        } else {
+            popup.setPopupContent(menu);
+        }
         popup.show(menuButton, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -menuButton.getHeight());
     }
 
