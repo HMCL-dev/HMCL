@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -46,6 +47,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
+    private final ModManager modManager;
     private final String version;
     private ModpackConfiguration<ServerModpackManifest> manifest;
     private GetTask dependent;
@@ -59,6 +61,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version, ModpackConfiguration<ServerModpackManifest> manifest) {
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
+        this.modManager = repository.getModManager(version);
         this.version = version;
 
         if (manifest == null) {
@@ -131,12 +134,21 @@ public class ServerModpackCompletionTask extends Task<Void> {
         Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
                 .collect(Collectors.toSet());
 
+        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path modsDirectory = runDirectory.resolve("mods");
+
         int total = 0;
         // for files in new modpack
         for (ModpackConfiguration.FileInformation file : remoteManifest.getFiles()) {
-            Path actualPath = rootPath.resolve(file.getPath());
+            Path actualPath = rootPath.resolve(file.getPath()).toAbsolutePath().normalize();
+
+            if (!actualPath.startsWith(rootPath)) {
+                throw new IOException("Unsecure path: " + file.getPath());
+            }
+
             boolean download;
-            if (!files.containsKey(file.getPath())) {
+            boolean isModFile = modsDirectory.equals(actualPath.getParent());
+            if (!files.containsKey(file.getPath()) || isModFile && !modManager.hasSimpleMod(FileUtils.getName(actualPath))) {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {
