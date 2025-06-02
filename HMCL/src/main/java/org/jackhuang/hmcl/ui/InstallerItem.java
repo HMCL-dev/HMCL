@@ -281,7 +281,13 @@ public class InstallerItem extends Control {
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
-                    item.resolvedStateProperty.bind(item.versionProperty);
+                    item.resolvedStateProperty.bind(Bindings.createObjectBinding(() -> {
+                        InstalledState itemVersion = item.versionProperty.get();
+                        if (itemVersion != null) {
+                            return itemVersion;
+                        }
+                        return InstallableState.INSTANCE;
+                    }, item.versionProperty));
                 }
             }
 

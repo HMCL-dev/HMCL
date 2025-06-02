@@ -303,16 +303,12 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
-        // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
-        if (inheritsFrom == null && isRoot()) {
-            return this;
-        }
-
         Version thisVersion;
 
         if (inheritsFrom == null) {
             if (isRoot()) {
-                thisVersion = new Version(id).setPatches(patches);
+                // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
+                thisVersion = patches != null ? new Version(id).setPatches(patches) : this;
             } else {
                 thisVersion = this;
             }
