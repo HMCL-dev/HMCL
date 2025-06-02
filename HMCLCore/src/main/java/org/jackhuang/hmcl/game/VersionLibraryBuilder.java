@@ -20,7 +20,10 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -51,12 +54,7 @@ public final class VersionLibraryBuilder {
             // The official launcher will not parse the "arguments" property when it detects the presence of "mcArgs".
             // The "arguments" property with the "rule" is simply ignored here.
             this.mcArgs.addAll(this.game.stream().map(arg -> arg.toString(new HashMap<>(), new HashMap<>())).flatMap(Collection::stream).collect(Collectors.toList()));
-
-            // For compatibility with MultiMC launcher, we only ignore the game arguments but keep the presence of vm arguments.
-            Arguments arguments = ret.getArguments().orElse(null);
-            if (arguments != null) {
-                ret.setArguments(arguments.withGame(Collections.emptyList()));
-            }
+            ret = ret.setArguments(null);
 
             // Since $ will be escaped in linux, and our maintain of minecraftArgument will not cause escaping,
             // so we regenerate the minecraftArgument without escaping.

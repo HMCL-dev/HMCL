@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -60,7 +61,9 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         return Files.exists(root.resolve("instance.cfg"));
     }
 
-    public static Path getRootPath(Path root) throws IOException {
+    public static Path getRootPath(FileSystem fs) throws IOException {
+        Path root = fs.getPath("/");
+
         if (testPath(root)) return root;
         try (Stream<Path> stream = Files.list(root)) {
             Path candidate = stream.filter(Files::isDirectory).findAny()

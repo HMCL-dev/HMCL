@@ -1,15 +1,13 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public final class MultiMCComponents {
-    public static final String[] META = {
-            "https://meta.multimc.org/v1/%s/%s.json",
-            "https://meta.prismlauncher.org/v1/%s/%s.json",
-    };
 
     private MultiMCComponents() {
     }
@@ -46,5 +44,9 @@ public final class MultiMCComponents {
 
     public static Collection<Map.Entry<String, LibraryAnalyzer.LibraryType>> getPairs() {
         return PAIRS;
+    }
+
+    public static URL getMetaURL(String componentID, String version) {
+        return NetworkUtils.toURL(String.format("https://meta.multimc.org/v1/%s/%s.json", componentID, version));
     }
 }

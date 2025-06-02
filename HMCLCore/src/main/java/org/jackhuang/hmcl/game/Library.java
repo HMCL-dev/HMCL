@@ -167,7 +167,7 @@ public class Library implements Comparable<Library>, Validation {
         return downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
-    private LibraryDownloadInfo getRawDownloadInfo() {
+    public LibraryDownloadInfo getRawDownloadInfo() {
         if (downloads != null) {
             if (isNative())
                 return downloads.getClassifiers().get(getClassifier());

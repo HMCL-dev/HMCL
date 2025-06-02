@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -275,18 +274,7 @@ public class Version implements Comparable<Version>, Validation {
         return resolve(provider, new HashSet<>()).markAsResolved();
     }
 
-    /**
-     * <p>Custom Library Merge Strategies.</p>
-     *
-     * <p>THIS_FIRST: Default implementation. For Version::resolve</p>
-     * <p>THAT_FIRST, ONLY_THIS: MultiMC implementation. For MultiMCModpackInstallTask</p>
-     */
-    public static final BiFunction<List<Library>, List<Library>, List<Library>>
-            THIS_FIRST = Lang::merge,
-            THAT_FIRST = (self, parent) -> Lang.merge(parent, self),
-            ONLY_THIS = (self, parent) -> self;
-
-    public Version merge(Version parent, boolean isPatch, BiFunction<List<Library>, List<Library>, List<Library>> libMerge) {
+    protected Version merge(Version parent, boolean isPatch) {
         return new Version(
                 true,
                 id,
@@ -301,7 +289,7 @@ public class Version implements Comparable<Version>, Validation {
                 assets == null ? parent.assets : assets,
                 complianceLevel,
                 javaVersion == null ? parent.javaVersion : javaVersion,
-                libMerge.apply(this.libraries, parent.libraries),
+                Lang.merge(this.libraries, parent.libraries),
                 Lang.merge(parent.compatibilityRules, this.compatibilityRules),
                 downloads == null ? parent.downloads : downloads,
                 logging == null ? parent.logging : logging,
@@ -315,6 +303,11 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     protected Version resolve(VersionProvider provider, Set<String> resolvedSoFar) throws VersionNotFoundException {
+        // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
+        if (inheritsFrom == null && isRoot()) {
+            return this;
+        }
+
         Version thisVersion;
 
         if (inheritsFrom == null) {
@@ -331,7 +324,7 @@ public class Version implements Comparable<Version>, Validation {
                 thisVersion = this.jar == null ? this.setJar(id) : this;
             } else {
                 // It is supposed to auto install an version in getVersion.
-                thisVersion = merge(provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar), false, THIS_FIRST);
+                thisVersion = merge(provider.getVersion(inheritsFrom).resolve(provider, resolvedSoFar), false);
             }
         }
 
@@ -344,7 +337,7 @@ public class Version implements Comparable<Version>, Validation {
                     .sorted(Comparator.comparing(Version::getPriority))
                     .collect(Collectors.toList());
             for (Version patch : sortedPatches) {
-                thisVersion = patch.setJar(null).merge(thisVersion, true, THIS_FIRST);
+                thisVersion = patch.setJar(null).merge(thisVersion, true);
             }
         }
 
@@ -385,7 +378,7 @@ public class Version implements Comparable<Version>, Validation {
         return thisVersion.setId(id).setJar(resolve(provider).getJar());
     }
 
-    private Version markAsResolved() {
+    public Version markAsResolved() {
         return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 
@@ -442,6 +435,10 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     public Version setLibraries(List<Library> libraries) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
+    public Version setDownload(JsonMap<DownloadType, DownloadInfo> downloads) {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 

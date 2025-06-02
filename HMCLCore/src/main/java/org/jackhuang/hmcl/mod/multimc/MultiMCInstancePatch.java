@@ -17,73 +17,108 @@
  */
 package org.jackhuang.hmcl.mod.multimc;
 
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.Argument;
+import org.jackhuang.hmcl.game.Arguments;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.AssetIndexInfo;
+import org.jackhuang.hmcl.game.CompatibilityRule;
+import org.jackhuang.hmcl.game.DownloadType;
+import org.jackhuang.hmcl.game.GameJavaVersion;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.OSRestriction;
+import org.jackhuang.hmcl.game.RuledArgument;
+import org.jackhuang.hmcl.game.StringArgument;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
-import org.jetbrains.annotations.Nullable;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonMap;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author huangyuhui
  */
 @Immutable
 public final class MultiMCInstancePatch {
+    private final int formatVersion;
 
-    private final String name;
+    @SerializedName("uid")
+    private final String id;
+
+    @SerializedName("version")
     private final String version;
-    private final int order;
+
+    @SerializedName("assetIndex")
     private final AssetIndexInfo assetIndex;
 
+    @SerializedName("minecraftArguments")
     private final String minecraftArguments;
 
-    @SerializedName("mcVersion")
-    private final String gameVersion;
+    @SerializedName("+jvmArgs")
+    private final List<String> jvmArgs;
+
+    @SerializedName("mainClass")
     private final String mainClass;
+
     @SerializedName("compatibleJavaMajors")
     private final int[] javaMajors;
 
+    @SerializedName("mainJar")
+    private final Library mainJar;
+
+    @SerializedName("+traits")
+    private final List<String> traits;
+
     @SerializedName("+tweakers")
-    @Nullable
     private final List<String> tweakers;
 
-    @SerializedName("+jvmArgs")
-    @Nullable
-    private final List<String> jvmArgs;
+    @SerializedName(value = "+libraries")
+    private final List<Library> libraries0;
+    @SerializedName(value = "libraries")
+    private final List<Library> libraries1;
+    @SerializedName(value = "mavenFiles")
+    private final List<Library> mavenFiles;
 
-    @SerializedName("+libraries")
-    @Nullable
-    private final List<Library> _libraries;
-
-    @SerializedName("libraries")
-    @Nullable
-    private final List<Library> libraries;
-
-    @Nullable
+    @SerializedName("jarMods")
     private final List<Library> jarMods;
 
-    public MultiMCInstancePatch(String name, String version, int order, AssetIndexInfo assetIndex, String minecraftArguments, String gameVersion, String mainClass, int[] javaMajors, @Nullable List<String> tweakers, @Nullable List<String> jvmArgs, @Nullable List<Library> _libraries, @Nullable List<Library> libraries, @Nullable List<Library> jarMods) {
-        this.name = name;
+    public MultiMCInstancePatch(int formatVersion, String id, String version, AssetIndexInfo assetIndex, String minecraftArguments, List<String> jvmArgs, String mainClass, int[] javaMajors, Library mainJar, List<String> traits, List<String> tweakers, List<Library> libraries0, List<Library> libraries1, List<Library> mavenFiles, List<Library> jarMods) {
+        this.formatVersion = formatVersion;
+        this.id = id;
         this.version = version;
-        this.order = order;
         this.assetIndex = assetIndex;
         this.minecraftArguments = minecraftArguments;
-        this.gameVersion = gameVersion;
+        this.jvmArgs = jvmArgs;
         this.mainClass = mainClass;
         this.javaMajors = javaMajors;
+        this.mainJar = mainJar;
+        this.traits = traits;
         this.tweakers = tweakers;
-        this.jvmArgs = jvmArgs;
-        this._libraries = _libraries;
-        this.libraries = libraries;
+        this.libraries0 = libraries0;
+        this.libraries1 = libraries1;
+        this.mavenFiles = mavenFiles;
         this.jarMods = jarMods;
     }
 
-    public String getName() {
-        return name;
+    public int getFormatVersion() {
+        return formatVersion;
+    }
+
+    public String getID() {
+        return id;
     }
 
     public String getVersion() {
@@ -98,69 +133,274 @@ public final class MultiMCInstancePatch {
         return minecraftArguments;
     }
 
-    public int getOrder() {
-        return order;
-    }
-
-    public int[] getJavaMajors() {
-        return javaMajors;
-    }
-
-    public String getGameVersion() {
-        return gameVersion;
+    public List<String> getJvmArgs() {
+        return nonNullOrEmpty(jvmArgs);
     }
 
     public String getMainClass() {
         return mainClass;
     }
 
-    public List<String> getTweakers() {
-        return tweakers != null ? Collections.unmodifiableList(tweakers) : Collections.emptyList();
+    public int[] getJavaMajors() {
+        return javaMajors;
     }
 
-    public List<String> getJvmArgs() {
-        return jvmArgs != null ? Collections.unmodifiableList(jvmArgs) : Collections.emptyList();
+    public Library getMainJar() {
+        return mainJar;
+    }
+
+    public List<String> getTraits() {
+        return nonNullOrEmpty(traits);
+    }
+
+    public List<String> getTweakers() {
+        return nonNullOrEmpty(tweakers);
     }
 
     public List<Library> getLibraries() {
-        return Lang.merge(_libraries, libraries);
+        List<Library> list = new ArrayList<>();
+        if (libraries0 != null) {
+            list.addAll(libraries0);
+        }
+        if (libraries1 != null) {
+            list.addAll(libraries1);
+        }
+        return nonNullOrEmpty(list);
+    }
+
+    public List<Library> getMavenOnlyFiles() {
+        return nonNullOrEmpty(mavenFiles);
     }
 
     public List<Library> getJarMods() {
-        return jarMods != null ? Collections.unmodifiableList(jarMods) : Collections.emptyList();
+        return nonNullOrEmpty(jarMods);
     }
 
-    public Version asVersion(String patchID) {
-        List<String> arguments = new ArrayList<>();
-        for (String arg : getTweakers()) {
-            arguments.add("--tweakClass");
-            arguments.add(arg);
+    private static <T> List<T> nonNullOrEmpty(List<T> value) {
+        return value != null && !value.isEmpty() ? value : Collections.emptyList();
+    }
+
+    // TODO: Disgusting O(n^2) implementation.
+    private static <T> List<T> dropDuplicate(List<T> original, Comparator<T> condition) {
+        List<T> values = new ArrayList<>();
+
+        outer:
+        for (T item : original) {
+            for (T existed : values) {
+                if (condition == null ? Objects.equals(item, existed) : condition.compare(item, existed) == 0) {
+                    continue outer;
+                }
+            }
+
+            values.add(item);
         }
 
-        Version version = new Version(patchID)
-                .setVersion(getVersion())
-                .setArguments(new Arguments().addGameArguments(arguments).addJVMArguments(getJvmArgs()))
-                .setMainClass(getMainClass())
-                .setMinecraftArguments(getMinecraftArguments())
-                .setLibraries(getLibraries())
-                .setAssetIndex(getAssetIndex());
+        return values;
+    }
 
-        /* TODO: Official Version Json can only store one GameJavaVersion, not a array of all suitable java versions.
-            For compatibility with official launcher and any other launchers, a transform is made between int[] and GameJavaVersion. */
-        int[] majors = getJavaMajors();
-        if (majors != null) {
-            majors = majors.clone();
-            Arrays.sort(majors);
+    public static MultiMCInstancePatch read(String componentID, String text) {
+        try {
+            return JsonUtils.fromNonNullJson(text, MultiMCInstancePatch.class);
+        } catch (JsonParseException e) {
+            throw new IllegalArgumentException("Illegal Json-Patch: " + componentID);
+        }
+    }
 
-            for (int i = majors.length - 1; i >= 0; i--) {
-                GameJavaVersion jv = GameJavaVersion.get(majors[i]);
-                if (jv != null) {
-                    version = version.setJavaVersion(jv);
-                    break;
+    public static final class ResolvedInstance {
+        private final Version version;
+
+        private final String gameVersion;
+
+        private final Library mainJar;
+
+        private final List<String> jarModFileNames;
+        private final List<Library> mavenOnlyFiles;
+
+        public ResolvedInstance(Version version, String gameVersion, Library mainJar, List<String> jarModFileNames, List<Library> mavenOnlyFiles) {
+            this.version = version;
+            this.gameVersion = gameVersion;
+            this.mainJar = mainJar;
+            this.jarModFileNames = jarModFileNames;
+            this.mavenOnlyFiles = mavenOnlyFiles;
+        }
+
+        public Version getVersion() {
+            return version;
+        }
+
+        public String getGameVersion() {
+            return gameVersion;
+        }
+
+        public Library getMainJar() {
+            return mainJar;
+        }
+
+        public List<String> getJarModFileNames() {
+            return jarModFileNames;
+        }
+
+        public List<Library> getMavenOnlyFiles() {
+            return mavenOnlyFiles;
+        }
+    }
+
+    /**
+     * <p>Core methods transforming MultiMCModpack to Official Version Scheme.</p>
+     *
+     * <p>Mose of the information can be transformed in a lossless manner, except for some inputs.
+     * See to do marks below for more information</p>
+     *
+     * @param patches List of all Json-Patch.
+     * @param versionID the version ID. Used when constructing a Version.
+     * @return The resolved instance.
+     */
+    public static ResolvedInstance resolveArtifact(List<MultiMCInstancePatch> patches, String versionID) {
+        if (patches.isEmpty()) {
+            throw new IllegalArgumentException("Empty components.");
+        }
+
+        List<String> minecraftArguments;
+        ArrayList<Argument> jvmArguments = new ArrayList<>(Arguments.DEFAULT_JVM_ARGUMENTS);
+        String mainClass;
+        AssetIndexInfo assetIndex;
+        int[] javaMajors;
+        Library mainJar;
+        List<String> traits;
+        List<String> tweakers;
+        List<Library> libraries;
+        List<Library> mavenOnlyFiles;
+        List<String> jarModFileNames;
+
+        {
+            MultiMCInstancePatch last = patches.get(patches.size() - 1);
+            minecraftArguments = last.getMinecraftArguments() == null ? null : StringUtils.tokenize(last.getMinecraftArguments());
+            mainClass = last.getMainClass();
+            assetIndex = last.getAssetIndex();
+            javaMajors = last.getJavaMajors();
+            mainJar = last.getMainJar();
+            traits = last.getTraits();
+            tweakers = last.getTweakers();
+            libraries = last.getLibraries();
+            mavenOnlyFiles = last.getMavenOnlyFiles();
+            jarModFileNames = last.getJarMods().stream().map(Library::getFileName).collect(Collectors.toList());
+        }
+
+        for (int i = patches.size() - 2; i >= 0; i--) {
+            MultiMCInstancePatch patch = patches.get(i);
+            if (minecraftArguments == null & patch.getMinecraftArguments() != null) {
+                minecraftArguments = StringUtils.tokenize(patch.getMinecraftArguments());
+            }
+            for (String jvmArg : patch.getJvmArgs()) {
+                jvmArguments.add(new StringArgument(jvmArg));
+            }
+            mainClass = Lang.requireNonNullElse(mainClass, patch.getMainClass());
+            assetIndex = Lang.requireNonNullElse(patch.getAssetIndex(), assetIndex);
+            javaMajors = Lang.requireNonNullElse(patch.getJavaMajors(), javaMajors);
+            mainJar = Lang.requireNonNullElse(patch.getMainJar(), mainJar);
+            traits = Lang.merge(patch.getTraits(), traits);
+            tweakers = Lang.merge(patch.getTweakers(), tweakers);
+            libraries = Lang.merge(patch.getLibraries(), libraries);
+            mavenOnlyFiles = Lang.merge(patch.getMavenOnlyFiles(), mavenOnlyFiles);
+            jarModFileNames = Lang.merge(patch.getJarMods().stream().map(Library::getFileName).collect(Collectors.toList()), jarModFileNames);
+        }
+
+        mainClass = Lang.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
+
+        if (minecraftArguments == null) {
+            minecraftArguments = new ArrayList<>();
+        }
+
+        // '--tweakClass' can't be the last argument.
+        for (int i = minecraftArguments.size() - 2; i >= 0; i--) {
+            if ("--tweakClass".equals(minecraftArguments.get(i))) {
+                tweakers.add(minecraftArguments.get(i + 1));
+
+                minecraftArguments.remove(i);
+                minecraftArguments.remove(i);
+            }
+        }
+
+        traits = dropDuplicate(traits, null);
+        tweakers = dropDuplicate(tweakers, null);
+        libraries = dropDuplicate(libraries, Comparator.comparing(Library::getName));
+        jarModFileNames = dropDuplicate(jarModFileNames, null);
+
+        for (String tweaker : tweakers) {
+            minecraftArguments.add("--tweakClass");
+            minecraftArguments.add(tweaker);
+        }
+
+        List<String> unknownTraits = new ArrayList<>();
+        for (String trait : traits) {
+            if (trait.equals("FirstThreadOnMacOS")) {
+                jvmArguments.add(new RuledArgument(
+                        Collections.singletonList(
+                                new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.MACOS))
+                        ),
+                        Collections.singletonList("-XstartOnFirstThread")
+                ));
+            } else {
+                unknownTraits.add(trait);
+            }
+        }
+        if (!unknownTraits.isEmpty()) {
+            // TODO: Support all traits.
+            Logger.LOG.warning("Unknown MultiMC traits: " + unknownTraits);
+        }
+
+        for (Library library : libraries) {
+            Artifact artifact = library.getArtifact();
+            if ("io.github.zekerzhayard".equals(artifact.getGroup()) && "ForgeWrapper".equals(artifact.getName())) {
+                jvmArguments.add(new StringArgument("-Dforgewrapper.librariesDir=${library_directory}"));
+                jvmArguments.add(new StringArgument("-Dforgewrapper.minecraft=${primary_jar}"));
+
+                for (Library lib : libraries) {
+                    Artifact ar = lib.getArtifact();
+                    if ("net.neoforged".equals(ar.getGroup()) && "neoforge".equals(ar.getName()) && "installer".equals(ar.getClassifier()) ||
+                            "net.minecraftforge".equals(ar.getGroup()) && "forge".equals(ar.getName()) && "installer".equals(ar.getClassifier())
+                    ) {
+                        jvmArguments.add(new StringArgument("-Dforgewrapper.installer=${library_directory}${file_separator}" + ar.getPath()));
+                    }
                 }
             }
         }
 
-        return version;
+        Version version = new Version(versionID)
+                .setArguments(new Arguments().addGameArguments(minecraftArguments).addJVMArgumentsDirect(jvmArguments))
+                .setMainClass(mainClass)
+                .setLibraries(libraries)
+                .setAssetIndex(assetIndex)
+                .setDownload(new JsonMap<>(Collections.singletonMap(DownloadType.CLIENT, mainJar.getRawDownloadInfo())));
+
+        /* TODO: Official Version-Json can only store one pre-defined GameJavaVersion, including 8, 11, 16, 17 and 21.
+            An array of all suitable java versions are NOT supported.
+            For compatibility with official launcher and any other launchers, a transform is made between int[] and GameJavaVersion. */
+        javaMajors:
+        if (javaMajors != null) {
+            javaMajors = javaMajors.clone();
+            Arrays.sort(javaMajors);
+
+            for (int i = javaMajors.length - 1; i >= 0; i--) {
+                GameJavaVersion jv = GameJavaVersion.get(javaMajors[i]);
+                if (jv != null) {
+                    version = version.setJavaVersion(jv);
+                    break javaMajors;
+                }
+            }
+
+            // TODO: Support user-defined version
+            throw new UnsupportedOperationException("TODO: Support user-defined version");
+        }
+
+        version = version.markAsResolved();
+        for (MultiMCInstancePatch patch : patches) {
+            if (MultiMCComponents.getComponent(patch.getID()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+                return new ResolvedInstance(version, patch.getVersion(), mainJar, jarModFileNames, mavenOnlyFiles);
+            }
+        }
+
+        // TODO: Not sure whether MultiMC allows modpacks without Minecraft itself.
+        throw new UnsupportedOperationException("TODO: Not sure whether MultiMC allows modpacks without Minecraft itself");
     }
 }

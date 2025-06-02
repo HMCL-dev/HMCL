@@ -385,7 +385,10 @@ public class InstallerItem extends Control {
             if (control.id.equals(MINECRAFT.getPatchId())) {
                 removeButton.setVisible(false);
             } else {
-                removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> control.resolvedStateProperty.get() instanceof InstalledState, control.resolvedStateProperty));
+                removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
+                    State state = control.resolvedStateProperty.get();
+                    return state instanceof InstalledState && !((InstalledState) state).external;
+                }, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());
             removeButton.setOnAction(e -> {
