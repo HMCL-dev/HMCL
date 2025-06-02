@@ -360,7 +360,7 @@ public final class MultiMCInstancePatch {
                     if ("net.neoforged".equals(ar.getGroup()) && "neoforge".equals(ar.getName()) && "installer".equals(ar.getClassifier()) ||
                             "net.minecraftforge".equals(ar.getGroup()) && "forge".equals(ar.getName()) && "installer".equals(ar.getClassifier())
                     ) {
-                        jvmArguments.add(new StringArgument("-Dforgewrapper.installer=${library_directory}${file_separator}" + ar.getPath()));
+                        jvmArguments.add(new StringArgument("-Dforgewrapper.installer=${library_directory}/" + ar.getPath()));
                     }
                 }
             }
