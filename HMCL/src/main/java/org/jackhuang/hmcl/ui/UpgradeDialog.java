@@ -60,6 +60,9 @@ public final class UpgradeDialog extends JFXDialogLayout {
             });
 
             do {
+                if (node.nodeName().equalsIgnoreCase("h1") && !node.attr("id").equals("nowchange")) {
+                    break;
+                }
                 renderer.appendNode(node);
                 node = node.nextSibling();
             } while (node != null);
