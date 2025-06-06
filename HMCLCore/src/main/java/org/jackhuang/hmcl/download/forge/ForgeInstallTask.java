@@ -20,22 +20,33 @@ package org.jackhuang.hmcl.download.forge;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
@@ -106,10 +117,92 @@ public final class ForgeInstallTask extends Task<Version> {
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 
+        if ("1.5.2".equals(remote.getGameVersion())) {
+            downloadFMLLibs();
+        }
+
         if (detectForgeInstallerType(dependencyManager, version, installer))
             dependency = new ForgeNewInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
         else
             dependency = new ForgeOldInstallTask(dependencyManager, version, remote.getSelfVersion(), installer);
+    }
+
+    // Help Forge download the lib files it needs because the files on their servers are gone
+    private void downloadFMLLibs() throws IOException {
+        File baseDir = dependencyManager.getGameRepository().getBaseDirectory();
+        File versionRoot = dependencyManager.getGameRepository().getVersionRoot(version.getId());
+
+        Path baseDirLib = Paths.get(baseDir.getAbsolutePath(), "lib");
+        Path versionRootLib = Paths.get(versionRoot.getAbsolutePath(), "lib");
+
+        Files.createDirectories(baseDirLib);
+        Files.createDirectories(versionRootLib);
+
+        FMLLib[] fmlLibs = new FMLLib[] {
+                new FMLLib("argo-small-3.2.jar", "58912ea2858d168c50781f956fa5b59f0f7c6b51"),
+                new FMLLib("guava-14.0-rc3.jar", "931ae21fa8014c3ce686aaa621eae565fefb1a6a"),
+                new FMLLib("asm-all-4.1.jar", "054986e962b88d8660ae4566475658469595ef58"),
+                new FMLLib("bcprov-jdk15on-148.jar", "960dea7c9181ba0b17e8bab0c06a43f0a5f04e65"),
+                new FMLLib("deobfuscation_data_1.5.2.zip", "446e55cd986582c70fcf12cb27bc00114c5adfd9"),
+                new FMLLib("scala-library.jar", "458d046151ad179c85429ed7420ffb1eaf6ddf85")
+        };
+
+        for (FMLLib lib : fmlLibs) {
+            Path baseTarget = baseDirLib.resolve(lib.name);
+            Path versionTarget = versionRootLib.resolve(lib.name);
+
+            boolean needsDownload = false;
+            if (!Files.exists(baseTarget)
+                    || !DigestUtils.digestToString("SHA-1", Files.newInputStream(baseTarget)).equals(lib.sha1)) {
+                needsDownload = true;
+            }
+            if (!Files.exists(versionTarget)
+                    || !DigestUtils.digestToString("SHA-1", Files.newInputStream(versionTarget)).equals(lib.sha1)) {
+                needsDownload = true;
+            }
+
+            if (needsDownload) {
+                String[] urls = new String[] {
+                        "https://hmcl-dev.github.io/metadata/fmllibs/" + lib.name,
+                        "https://files.multimc.org/fmllibs/" + lib.name
+                };
+
+                List<URL> urlList = Arrays.stream(urls)
+                        .map(url -> {
+                            try {
+                                return new URL(url);
+                            } catch (MalformedURLException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        })
+                        .collect(Collectors.toList());
+
+                FileDownloadTask baseTask = new FileDownloadTask(urlList, baseTarget.toFile(),
+                        new IntegrityCheck("SHA-1", lib.sha1));
+                baseTask.setCaching(true);
+                try {
+                    baseTask.execute();
+                    // Only copy if download is successful
+                    try {
+                        Files.copy(baseTarget, versionTarget, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        LOG.error("Failed to copy " + lib.name + " to version directory", e);
+                    }
+                } catch (Exception e) {
+                    LOG.error("Failed to download " + lib.name, e);
+                }
+            }
+        }
+    }
+
+    private static class FMLLib {
+        final String name;
+        final String sha1;
+
+        FMLLib(String name, String sha1) {
+            this.name = name;
+            this.sha1 = sha1;
+        }
     }
 
     /**
