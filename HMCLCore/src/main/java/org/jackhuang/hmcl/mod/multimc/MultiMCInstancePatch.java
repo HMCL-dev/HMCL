@@ -43,9 +43,10 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -180,22 +181,17 @@ public final class MultiMCInstancePatch {
         return value != null && !value.isEmpty() ? value : Collections.emptyList();
     }
 
-    // TODO: Disgusting O(n^2) implementation.
-    private static <T> List<T> dropDuplicate(List<T> original, Comparator<T> condition) {
-        List<T> values = new ArrayList<>();
+    private static <T, K> List<T> dropDuplicate(List<T> original, Function<T, K> mapper) {
+        Set<K> values = new HashSet<>();
+        List<T> result = new ArrayList<>();
 
-        outer:
         for (T item : original) {
-            for (T existed : values) {
-                if (condition == null ? Objects.equals(item, existed) : condition.compare(item, existed) == 0) {
-                    continue outer;
-                }
+            if (values.add(mapper.apply(item))) {
+                result.add(item);
             }
-
-            values.add(item);
         }
 
-        return values;
+        return result;
     }
 
     public static MultiMCInstancePatch read(String componentID, String text) {
@@ -251,7 +247,7 @@ public final class MultiMCInstancePatch {
      * <p>Mose of the information can be transformed in a lossless manner, except for some inputs.
      * See to do marks below for more information</p>
      *
-     * @param patches List of all Json-Patch.
+     * @param patches   List of all Json-Patch.
      * @param versionID the version ID. Used when constructing a Version.
      * @return The resolved instance.
      */
@@ -259,6 +255,8 @@ public final class MultiMCInstancePatch {
         if (patches.isEmpty()) {
             throw new IllegalArgumentException("Empty components.");
         }
+
+        StringBuilder message = new StringBuilder();
 
         List<String> minecraftArguments;
         ArrayList<Argument> jvmArguments = new ArrayList<>(Arguments.DEFAULT_JVM_ARGUMENTS);
@@ -321,17 +319,16 @@ public final class MultiMCInstancePatch {
             }
         }
 
-        traits = dropDuplicate(traits, null);
-        tweakers = dropDuplicate(tweakers, null);
-        libraries = dropDuplicate(libraries, Comparator.comparing(Library::getName));
-        jarModFileNames = dropDuplicate(jarModFileNames, null);
+        traits = dropDuplicate(traits, Function.identity());
+        tweakers = dropDuplicate(tweakers, Function.identity());
+        libraries = dropDuplicate(libraries, Library::getName);
+        jarModFileNames = dropDuplicate(jarModFileNames, Function.identity());
 
         for (String tweaker : tweakers) {
             minecraftArguments.add("--tweakClass");
             minecraftArguments.add(tweaker);
         }
 
-        List<String> unknownTraits = new ArrayList<>();
         for (String trait : traits) {
             if (trait.equals("FirstThreadOnMacOS")) {
                 jvmArguments.add(new RuledArgument(
@@ -341,12 +338,8 @@ public final class MultiMCInstancePatch {
                         Collections.singletonList("-XstartOnFirstThread")
                 ));
             } else {
-                unknownTraits.add(trait);
+                message.append(" - Trait: ").append(trait).append('\n');
             }
-        }
-        if (!unknownTraits.isEmpty()) {
-            // TODO: Support all traits.
-            Logger.LOG.warning("Unknown MultiMC traits: " + unknownTraits);
         }
 
         for (Library library : libraries) {
@@ -389,18 +382,25 @@ public final class MultiMCInstancePatch {
                 }
             }
 
-            // TODO: Support user-defined version
-            throw new UnsupportedOperationException("TODO: Support user-defined version");
+            message.append(" - Java Version Range: ").append(Arrays.toString(javaMajors)).append('\n');
         }
 
         version = version.markAsResolved();
+
+        String gameVersion = null;
         for (MultiMCInstancePatch patch : patches) {
             if (MultiMCComponents.getComponent(patch.getID()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
-                return new ResolvedInstance(version, patch.getVersion(), mainJar, jarModFileNames, mavenOnlyFiles);
+                gameVersion = patch.getVersion();
+                break;
             }
         }
 
-        // TODO: Not sure whether MultiMC allows modpacks without Minecraft itself.
-        throw new UnsupportedOperationException("TODO: Not sure whether MultiMC allows modpacks without Minecraft itself");
+        if (message.length() != 0) {
+            if (message.charAt(message.length() - 1) == '\n') {
+                message.setLength(message.length() - 1);
+            }
+            Logger.LOG.warning("Cannot fully parse MultiMC modpack with following unsupported features: \n" + message);
+        }
+        return new ResolvedInstance(version, gameVersion, mainJar, jarModFileNames, mavenOnlyFiles);
     }
 }

@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -109,35 +110,20 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             } catch (JsonParseException | IOException ignore) {
             }
 
-            // TODO: These locating process are similar to MultiMCModpackProvider.getRoot
-            String subDirectory;
-            try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(modpack.getEncoding()).build()) {
-                // /.minecraft
-                if (Files.exists(fs.getPath("/.minecraft"))) {
-                    subDirectory = "/.minecraft";
-                    // /minecraft
-                } else if (Files.exists(fs.getPath("/minecraft"))) {
-                    subDirectory = "/minecraft";
-                    // /[name]/.minecraft
-                } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/.minecraft"))) {
-                    subDirectory = "/" + manifest.getName() + "/.minecraft";
-                    // /[name]/minecraft
-                } else if (Files.exists(fs.getPath("/" + manifest.getName() + "/minecraft"))) {
-                    subDirectory = "/" + manifest.getName() + "/minecraft";
-                } else {
-                    subDirectory = "/" + manifest.getName() + "/.minecraft";
-                }
+            String mcDirectory;
+            try (FileSystem fs = openModpack()) {
+                mcDirectory = getRootPath(fs).resolve(".minecraft").toAbsolutePath().normalize().toString();
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(subDirectory), any -> true, config).withStage("hmcl.modpack"));
-            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(subDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
+            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
 
-        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
-            Path root = MultiMCModpackProvider.getRootPath(fs);
+        try (FileSystem fs = openModpack()) {
+            Path root = getRootPath(fs);
 
             for (MultiMCManifest.MultiMCManifestComponent component : Objects.requireNonNull(
                     Objects.requireNonNull(manifest.getMmcPack(), "mmc-pack.json").getComponents(), "components"
@@ -145,22 +131,22 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                 String componentID = Objects.requireNonNull(component.getUid(), "Component ID");
                 Path patchPath = root.resolve(String.format("patches/%s.json", componentID));
 
+                Task<String> task;
                 if (Files.exists(patchPath)) {
                     if (!Files.isRegularFile(patchPath)) {
                         throw new IllegalArgumentException("Json-Patch isn't a file: " + componentID);
                     }
 
-                    String text = FileUtils.readText(patchPath, StandardCharsets.UTF_8);
                     // TODO: Task.completed has unclear compatibility issue.
-                    Task<MultiMCInstancePatch> task = Task.supplyAsync(() -> MultiMCInstancePatch.read(componentID, text));
-                    patches.add(task);
-                    dependents.add(task);
+                    String text = FileUtils.readText(patchPath, StandardCharsets.UTF_8);
+                    task = Task.supplyAsync(() -> text);
                 } else {
-                    Task<MultiMCInstancePatch> task = new GetTask(MultiMCComponents.getMetaURL(componentID, component.getVersion()))
-                            .thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
-                    patches.add(task);
-                    dependents.add(task);
+                    task = new GetTask(MultiMCComponents.getMetaURL(componentID, component.getVersion()));
                 }
+
+                Task<MultiMCInstancePatch> task2 = task.thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
+                patches.add(task2);
+                dependents.add(task2);
             }
         }
     }
@@ -180,8 +166,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         );
 
         // Stage #4: Copy embedded files.
-        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
-            Path root = MultiMCModpackProvider.getRootPath(fs);
+        try (FileSystem fs = openModpack()) {
+            Path root = getRootPath(fs);
 
             Path libraries = root.resolve("libraries");
             if (Files.exists(libraries))
@@ -211,15 +197,15 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             Artifact mainJarArtifact = artifact.getMainJar().getArtifact();
             String gameVersion = artifact.getGameVersion();
-            if ("com.mojang".equals(mainJarArtifact.getGroup()) &&
+            if (gameVersion != null &&
+                    "com.mojang".equals(mainJarArtifact.getGroup()) &&
                     "minecraft".equals(mainJarArtifact.getName()) &&
                     Objects.equals(gameVersion, mainJarArtifact.getVersion()) &&
                     "client".equals(mainJarArtifact.getClassifier())
             ) {
                 dependencies.add(new GameDownloadTask(dependencyManager, gameVersion, version));
             } else {
-                // TODO: Support install user-defined mainJar.
-                throw new UnsupportedOperationException("TODO: Support install user-defined mainJar.");
+                dependencies.add(new GameDownloadTask(dependencyManager, null, version));
             }
         }
 
@@ -247,8 +233,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         }
 
         // Stage #7: Apply jar mods.
-        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).build()) {
-            Path root = MultiMCModpackProvider.getRootPath(fs).resolve("jarmods");
+        try (FileSystem fs = openModpack()) {
+            Path root = getRootPath(fs).resolve("jarmods");
 
             try (FileSystem mc = CompressingUtils.writable(
                     repository.getVersionRoot(name).toPath().resolve(name + ".jar")
@@ -260,5 +246,31 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                 }
             }
         }
+    }
+
+    private FileSystem openModpack() throws IOException {
+        return CompressingUtils.readonly(zipFile.toPath()).setAutoDetectEncoding(true).setEncoding(modpack.getEncoding()).build();
+    }
+
+    private static boolean testPath(Path root) {
+        return Files.exists(root.resolve("instance.cfg"));
+    }
+
+    private static Path getRootPath(FileSystem fs) throws IOException {
+        Path root = fs.getPath("/");
+
+        if (testPath(root)) {
+            return root;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
+            for (Path candidate : stream) {
+                if (testPath(candidate)) {
+                    return candidate;
+                }
+            }
+        }
+
+        throw new IOException("Not a valid MultiMC modpack");
     }
 }
