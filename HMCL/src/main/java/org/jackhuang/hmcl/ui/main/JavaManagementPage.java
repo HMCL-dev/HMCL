@@ -264,7 +264,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
                 revealButton.getStyleClass().add("toggle-icon4");
                 revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
                 revealButton.setOnAction(e -> control.onReveal());
-                FXUtils.installFastTooltip(revealButton, i18n("java.reveal"));
+                FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 JFXButton removeButton = new JFXButton();
                 removeButton.getStyleClass().add("toggle-icon4");

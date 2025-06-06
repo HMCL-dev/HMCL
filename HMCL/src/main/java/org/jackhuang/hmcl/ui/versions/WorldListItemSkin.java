@@ -81,7 +81,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
 
             JFXButton btnReveal = new JFXButton();
             right.getChildren().add(btnReveal);
-            FXUtils.installFastTooltip(btnReveal, i18n("world.reveal"));
+            FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.getStyleClass().add("toggle-icon4");
             btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
             btnReveal.setOnAction(event -> skinnable.reveal());
