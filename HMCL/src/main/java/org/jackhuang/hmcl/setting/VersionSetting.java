@@ -428,6 +428,20 @@ public final class VersionSetting implements Cloneable, Observable {
         notPatchNativesProperty.set(notPatchNatives);
     }
 
+    private final BooleanProperty notUseRetroTweakerProperty = new SimpleBooleanProperty(this, "notUseRetroTweaker", false);
+
+    public BooleanProperty notUseRetroTweakerProperty() {
+        return notUseRetroTweakerProperty;
+    }
+
+    public boolean isNotUseRetroTweaker() {
+        return notUseRetroTweakerProperty.get();
+    }
+
+    public void setNotUseRetroTweaker(boolean notUseRetroTweaker) {
+        notUseRetroTweakerProperty.set(notUseRetroTweaker);
+    }
+
     private final BooleanProperty showLogsProperty = new SimpleBooleanProperty(this, "showLogs", false);
 
     public BooleanProperty showLogsProperty() {
@@ -760,6 +774,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("notCheckGame", src.isNotCheckGame());
             obj.addProperty("notCheckJVM", src.isNotCheckJVM());
             obj.addProperty("notPatchNatives", src.isNotPatchNatives());
+            obj.addProperty("notUseRetroTweaker", src.isNotUseRetroTweaker());
             obj.addProperty("showLogs", src.isShowLogs());
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
@@ -838,6 +853,7 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setNotUseRetroTweaker(Optional.ofNullable(obj.get("notUseRetroTweaker")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
             vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
