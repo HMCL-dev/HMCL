@@ -20,7 +20,6 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.logging.Logger;
 
@@ -182,9 +181,9 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
             String imagePath = "/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias()) + ".png";
             URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
 
-            if(imageURL != null){
+            if (imageURL != null) {
                 previewCapeImage = FXUtils.newBuiltinImage(imagePath);
-            }else {
+            } else {
                 previewCapeImage = FXUtils.newRemoteImage(capeItem.getSelectedData().getUrl());
                 LOG.warning("Cannot find cape image: "+ imagePath);
             }
