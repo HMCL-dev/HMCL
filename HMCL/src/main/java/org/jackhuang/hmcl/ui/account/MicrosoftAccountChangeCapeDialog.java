@@ -48,6 +48,9 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         setHeading(new Label(i18n("account.cape.change")));
         BorderPane body = new BorderPane();
 
+        capePreviewSpinner.setPrefHeight(150);
+        capePreviewSpinner.setPrefWidth(100);
+
         initCapeItem();
 
         ScrollPane scrollPane = new ScrollPane(capeItem);
