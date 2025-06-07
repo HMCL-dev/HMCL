@@ -90,7 +90,11 @@ public final class Versions {
                 new FileDownloadTask(downloadURL, modpack.toFile())
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
-                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                                if (version != null) {
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile(), version));
+                                } else {
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                                }
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {

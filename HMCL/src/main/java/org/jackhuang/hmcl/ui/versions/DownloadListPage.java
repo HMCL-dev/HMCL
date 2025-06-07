@@ -60,10 +60,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -156,7 +153,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         FXUtils.runInFX(() -> selectedVersion.set(versionID));
     }
 
-    public void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
+    private void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
         retrySearch = null;
         setLoading(true);
         setFailed(false);
@@ -171,7 +168,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         ? version.getProfile().getRepository().getGameVersion(version.getVersion()).orElse("")
                         : "";
             }
-        }).thenApplyAsync(gameVersion -> repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        }).thenApplyAsync(
+                gameVersion -> repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
+        ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (searchID != currentSearchID) {
                 return;
             }
@@ -312,7 +311,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 StackPane categoryStackPane = new StackPane();
                 JFXComboBox<CategoryIndented> categoryComboBox = new JFXComboBox<>();
-                categoryComboBox.getItems().setAll(new CategoryIndented(0, null));
+                categoryComboBox.getItems().setAll(CategoryIndented.ALL);
                 categoryStackPane.getChildren().setAll(categoryComboBox);
                 categoryComboBox.prefWidthProperty().bind(categoryStackPane.widthProperty());
                 categoryComboBox.getStyleClass().add("fit-width");
@@ -320,14 +319,22 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 categoryComboBox.getSelectionModel().select(0);
                 categoryComboBox.setConverter(stringConverter(getSkinnable()::getLocalizedCategoryIndent));
                 FXUtils.onChangeAndOperate(getSkinnable().downloadSource, downloadSource -> {
+                    categoryComboBox.getItems().setAll(CategoryIndented.ALL);
+                    categoryComboBox.getSelectionModel().select(0);
+
                     Task.supplyAsync(() -> getSkinnable().repository.getCategories())
                             .thenAcceptAsync(Schedulers.javafx(), categories -> {
+                                if (!Objects.equals(getSkinnable().downloadSource.get(), downloadSource)) {
+                                    return;
+                                }
+
                                 List<CategoryIndented> result = new ArrayList<>();
-                                result.add(new CategoryIndented(0, null));
+                                result.add(CategoryIndented.ALL);
                                 for (RemoteModRepository.Category category : Lang.toIterable(categories)) {
                                     resolveCategory(category, 0, result);
                                 }
                                 categoryComboBox.getItems().setAll(result);
+                                categoryComboBox.getSelectionModel().select(0);
                             }).start();
                 });
 
@@ -344,7 +351,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
                 EventHandler<ActionEvent> searchAction = e -> {
-                    if (currentFilterID.get() != filterID.get()) {
+                    if (currentFilterID.get() != -1 && currentFilterID.get() != filterID.get()) {
                         control.pageOffset.set(0);
                     }
                     currentFilterID.set(filterID.get());
@@ -379,8 +386,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     JFXButton firstPageButton = FXUtils.newBorderButton(i18n("search.first_page"));
                     firstPageButton.setOnAction(event -> {
                         control.pageOffset.set(0);
-                        changeButton.value.run();
                         searchAction.handle(event);
+                        changeButton.value.run();
                     });
 
                     JFXButton previousPageButton = FXUtils.newBorderButton(i18n("search.previous_page"));
@@ -388,8 +395,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         int pageOffset = control.pageOffset.get();
                         if (pageOffset > 0) {
                             control.pageOffset.set(pageOffset - 1);
-                            changeButton.value.run();
                             searchAction.handle(event);
+                            changeButton.value.run();
                         }
                     });
 
@@ -404,16 +411,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         int nv = control.pageOffset.get() + 1;
                         if (nv < control.pageCount.get()) {
                             control.pageOffset.set(nv);
-                            changeButton.value.run();
                             searchAction.handle(event);
+                            changeButton.value.run();
                         }
                     });
 
                     JFXButton lastPageButton = FXUtils.newBorderButton(i18n("search.last_page"));
                     lastPageButton.setOnAction(event -> {
                         control.pageOffset.set(control.pageCount.get() - 1);
-                        changeButton.value.run();
                         searchAction.handle(event);
+                        changeButton.value.run();
                     });
 
                     firstPageButton.setDisable(true);
@@ -443,6 +450,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             }
                         }
 
+                        changeButton.value.run();
+                    });
+
+                    FXUtils.onChange(control.pageOffset, pageOffsetN -> {
                         changeButton.value.run();
                     });
 
@@ -529,6 +540,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         }
 
         private static class CategoryIndented {
+            private static final CategoryIndented ALL = new CategoryIndented(0, null);
+
             private final int indent;
             private final RemoteModRepository.Category category;
 

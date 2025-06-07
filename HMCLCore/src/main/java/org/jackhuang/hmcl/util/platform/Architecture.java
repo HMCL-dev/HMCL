@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.File;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -192,30 +192,46 @@ public enum Architecture {
     static {
         CURRENT_ARCH = parseArchName(System.getProperty("os.arch"));
 
-        String sysArchName = null;
+        Architecture sysArch = null;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
             if (processorIdentifier != null) {
                 int idx = processorIdentifier.indexOf(' ');
                 if (idx > 0) {
-                    sysArchName = processorIdentifier.substring(0, idx);
+                    sysArch = parseArchName(processorIdentifier.substring(0, idx));
+                }
+            }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            if (CURRENT_ARCH == X86_64) {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
+                    if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
+                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET).trim())) {
+                        sysArch = ARM64;
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace(System.err);
                 }
             }
         } else {
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"/bin/uname", "-m"});
-                if (process.waitFor(3, TimeUnit.SECONDS)) {
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-                        sysArchName = reader.readLine().trim();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            for (String uname : new String[]{
+                    "/bin/uname",
+                    "/usr/bin/uname"
+            }) {
+                if (new File(uname).exists()) {
+                    try {
+                        Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
+                        if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                            sysArch = parseArchName(IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET).trim());
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.err);
                     }
+                    break;
                 }
-            } catch (Throwable ignored) {
             }
         }
 
-        Architecture sysArch = parseArchName(sysArchName);
-        SYSTEM_ARCH = sysArch == UNKNOWN ? CURRENT_ARCH : sysArch;
+        SYSTEM_ARCH = sysArch == null || sysArch == UNKNOWN ? CURRENT_ARCH : sysArch;
     }
 }

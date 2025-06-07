@@ -38,11 +38,14 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Files;
@@ -53,6 +56,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -86,7 +90,7 @@ public final class Launcher extends Application {
             }
 
             // https://lapcatsoftware.com/articles/app-translocation.html
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                     && ConfigHolder.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
                 if (showAlert(AlertType.WARNING, i18n("fatal.mac_app_translocation"), ButtonType.YES, ButtonType.NO) == ButtonType.NO)
@@ -100,7 +104,7 @@ public final class Launcher extends Application {
                     return;
             }
 
-            if (Metadata.HMCL_DIRECTORY.toString().indexOf('=') >= 0) {
+            if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
                 Main.showWarningAndContinue(i18n("fatal.illegal_char"));
             }
 
@@ -148,7 +152,7 @@ public final class Launcher extends Application {
                     || configPath.startsWith("/var/cache/")
                     || configPath.startsWith("/dev/shm/")
                     || configPath.contains("/Trash/");
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             return configPath.startsWith("/var/folders/")
                     || configPath.startsWith("/private/var/folders/")
                     || configPath.startsWith("/tmp/")
@@ -186,8 +190,10 @@ public final class Launcher extends Application {
 
         ArrayList<String> files = new ArrayList<>();
         files.add(ConfigHolder.configLocation().toString());
-        if (Files.exists(Metadata.HMCL_DIRECTORY))
-            files.add(Metadata.HMCL_DIRECTORY.toString());
+        if (Files.exists(Metadata.HMCL_GLOBAL_DIRECTORY))
+            files.add(Metadata.HMCL_GLOBAL_DIRECTORY.toString());
+        if (Files.exists(Metadata.HMCL_CURRENT_DIRECTORY))
+            files.add(Metadata.HMCL_CURRENT_DIRECTORY.toString());
 
         Path mcDir = Paths.get(".minecraft").toAbsolutePath().normalize();
         if (Files.exists(mcDir))
@@ -229,25 +235,39 @@ public final class Launcher extends Application {
                 LOG.info("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER"));
             }
             LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName());
+            LOG.info("Native Encoding: " + OperatingSystem.NATIVE_CHARSET);
+            LOG.info("JNU Encoding: " + System.getProperty("sun.jnu.encoding"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                LOG.info("Code Page: " + OperatingSystem.CODE_PAGE);
+            }
             LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName());
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
-            LOG.info("Current Directory: " + System.getProperty("user.dir"));
-            LOG.info("HMCL Directory: " + Metadata.HMCL_DIRECTORY);
+            LOG.info("Current Directory: " + Metadata.CURRENT_DIRECTORY);
+            LOG.info("HMCL Global Directory: " + Metadata.HMCL_GLOBAL_DIRECTORY);
+            LOG.info("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY);
             LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
             LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
-            LOG.info("Memory: " + Runtime.getRuntime().maxMemory() / 1024 / 1024 + "MB");
-            LOG.info("Physical memory: " + OperatingSystem.TOTAL_MEMORY + " MB");
-            LOG.info("Metaspace: " + ManagementFactory.getMemoryPoolMXBeans().stream()
-                    .filter(bean -> bean.getName().equals("Metaspace"))
-                    .findAny()
-                    .map(bean -> bean.getUsage().getUsed() / 1024 / 1024 + "MB")
-                    .orElse("Unknown"));
+            LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));
+            try {
+                for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+                    if ("Metaspace".equals(bean.getName())) {
+                        long bytes = bean.getUsage().getUsed();
+                        LOG.info("Metaspace: " + MEGABYTES.formatBytes(bytes));
+                        break;
+                    }
+                }
+            } catch (NoClassDefFoundError ignored) {
+            }
+            LOG.info("Native Backend: " + (NativeUtils.USE_JNA ? "JNA" : "None"));
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
+
+            Lang.thread(SystemInfo::initialize, "Detection System Information", true);
+
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
@@ -276,7 +296,7 @@ public final class Launcher extends Application {
             Controllers.getStage().close();
             Schedulers.shutdown();
             Controllers.shutdown();
-            Lang.executeDelayed(OperatingSystem::forceGC, TimeUnit.SECONDS, 5, true);
+            Lang.executeDelayed(System::gc, TimeUnit.SECONDS, 5, true);
         });
     }
 

@@ -140,7 +140,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
     }
 
     void createBackup() {
-        Controllers.taskDialog(new WorldBackupTask(world, backupsDir).setName(i18n("world.backup")).thenApplyAsync(path -> {
+        Controllers.taskDialog(new WorldBackupTask(world, backupsDir).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
             Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
             if (!matcher.matches()) {
                 throw new AssertionError("Wrong backup file name" + path);
@@ -153,7 +153,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(world.getFile(), new World(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, new World(path), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -176,7 +176,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
         @Override
         protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            return Arrays.asList(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh), createToolbarButton2(i18n("world.backup"), SVG.ARCHIVE, skinnable::createBackup));
+            return Arrays.asList(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh), createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup));
         }
     }
 

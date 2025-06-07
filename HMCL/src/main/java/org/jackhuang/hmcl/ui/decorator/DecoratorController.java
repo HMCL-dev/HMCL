@@ -40,6 +40,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -203,7 +204,11 @@ public class DecoratorController {
             case CUSTOM:
                 String backgroundImage = config().getBackgroundImage();
                 if (backgroundImage != null)
-                    image = tryLoadImage(Paths.get(backgroundImage));
+                    try {
+                        image = tryLoadImage(Paths.get(backgroundImage));
+                    } catch (Exception e) {
+                        LOG.warning("Couldn't load background image", e);
+                    }
                 break;
             case NETWORK:
                 String backgroundImageUrl = config().getBackgroundImageUrl();
@@ -231,12 +236,22 @@ public class DecoratorController {
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
-        Image image = randomImageIn(Paths.get("bg"));
+        Image image = randomImageIn(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background"));
         if (image != null)
             return image;
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Paths.get("background." + extension));
+            image = tryLoadImage(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background." + extension));
+            if (image != null)
+                return image;
+        }
+
+        image = randomImageIn(Metadata.CURRENT_DIRECTORY.resolve("bg"));
+        if (image != null)
+            return image;
+
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            image = tryLoadImage(Metadata.CURRENT_DIRECTORY.resolve("background." + extension));
             if (image != null)
                 return image;
         }
@@ -397,21 +412,22 @@ public class DecoratorController {
         node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
         node.addEventHandler(DialogCloseEvent.CLOSE, handler);
 
-        if (node instanceof DialogAware) {
-            DialogAware dialogAware = (DialogAware) node;
-            if (dialog.isVisible()) {
-                dialogAware.onDialogShown();
-            } else {
-                dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                        if (newValue) {
-                            dialogAware.onDialogShown();
-                            observable.removeListener(this);
-                        }
+        if (dialog.isVisible()) {
+            dialog.requestFocus();
+            if (node instanceof DialogAware)
+                ((DialogAware) node).onDialogShown();
+        } else {
+            dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                    if (newValue) {
+                        dialog.requestFocus();
+                        if (node instanceof DialogAware)
+                            ((DialogAware) node).onDialogShown();
+                        observable.removeListener(this);
                     }
-                });
-            }
+                }
+            });
         }
     }
 

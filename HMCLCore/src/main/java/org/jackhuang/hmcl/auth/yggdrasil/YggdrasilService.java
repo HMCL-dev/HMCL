@@ -269,5 +269,5 @@ public class YggdrasilService {
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 
-    public static final String PURCHASE_URL = "https://www.microsoft.com/store/productid/9nxp44l49shj";
+    public static final String PURCHASE_URL = "https://www.xbox.com/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj";
 }
