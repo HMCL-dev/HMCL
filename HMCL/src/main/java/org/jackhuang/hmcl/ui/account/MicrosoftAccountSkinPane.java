@@ -75,7 +75,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
 
         JFXDialogLayout layout = new JFXDialogLayout();
         getChildren().setAll(layout);
-        layout.setHeading(new Label(i18n("account.skin")));
+        layout.setHeading(new Label(i18n("account.cape_skin")));
 
         canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 300, 300, true);
         canvas.enableRotation(.5);
