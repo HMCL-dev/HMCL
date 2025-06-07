@@ -24,12 +24,14 @@ import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.logging.Logger;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     private final MultiFileItem<MicrosoftService.MinecraftProfileResponseCape> capeItem = new MultiFileItem<>();
@@ -151,7 +153,16 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
 
         for (MicrosoftService.MinecraftProfileResponseCape cape : capes) {
             String key = "account.cape.name." + capeId(cape.getAlias());
-            MultiFileItem.Option<MicrosoftService.MinecraftProfileResponseCape> option = new MultiFileItem.Option<>(I18n.hasKey(key) ? i18n(key) : cape.getAlias(), cape);
+            String displayName;
+
+            if (I18n.hasKey(key)) {
+                displayName = i18n(key);
+            }else{
+                LOG.error("Cannot find key " + key + " in resource bundle");
+                displayName = cape.getAlias();
+            }
+
+            MultiFileItem.Option<MicrosoftService.MinecraftProfileResponseCape> option = new MultiFileItem.Option<>(displayName , cape);
             options.add(option);
             if (Objects.equals(cape.getState(), "ACTIVE")) {
                 currentCape = cape;
@@ -168,11 +179,16 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
 
     private Task<?> loadCapePreview() {
         return Task.runAsync(() -> {
-            try {
-                previewCapeImage = FXUtils.newBuiltinImage("/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias()));
-            } catch (ResourceNotFoundError error) {
+            String imagePath = "/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias());
+            URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
+
+            if(imageURL != null){
+                previewCapeImage = FXUtils.newBuiltinImage(imagePath);
+            }else {
                 previewCapeImage = FXUtils.newRemoteImage(capeItem.getSelectedData().getUrl());
+                LOG.warning("Cannot find cape image: "+ imagePath);
             }
+
             previewCapeImage = scaleImageNearestNeighbor(previewCapeImage, 10, 10);
         }).whenComplete(Schedulers.javafx(), (exception) -> {
             if (exception == null) {
