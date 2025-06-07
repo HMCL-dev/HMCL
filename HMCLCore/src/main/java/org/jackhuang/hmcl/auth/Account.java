@@ -25,16 +25,14 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  *
@@ -75,6 +73,18 @@ public abstract class Account implements Observable {
     }
 
     public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+        throw new UnsupportedOperationException("Unsupported Operation");
+    }
+
+    public boolean canChangeCape() {
+        return false;
+    }
+
+    public void changeCape(String capeId) throws AuthenticationException, UnsupportedOperationException {
+        throw new UnsupportedOperationException("Unsupported Operation");
+    }
+
+    public List<MicrosoftService.MinecraftProfileResponseCape> getCapes() throws AuthenticationException {
         throw new UnsupportedOperationException("Unsupported Operation");
     }
 

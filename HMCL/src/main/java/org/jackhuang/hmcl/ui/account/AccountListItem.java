@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
@@ -26,12 +27,14 @@ import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
@@ -41,6 +44,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -175,6 +181,56 @@ public class AccountListItem extends RadioButton {
                         Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageType.ERROR);
                     }
                 });
+    }
+
+    public ObservableBooleanValue canChangeCape() {
+        if (account.canChangeCape()) {
+            return createBooleanBinding(() -> true);
+        } else {
+            return createBooleanBinding(() -> false);
+        }
+    }
+
+    @Nullable
+    public Task<?> changeCape() {
+        if (!account.canChangeCape()) {
+            return null;
+        }
+
+        return refreshAsync().thenRunAsync(() -> {
+            List<MicrosoftService.MinecraftProfileResponseCape> capes = account.getCapes();
+            if (capes.isEmpty()) {
+                Platform.runLater(() -> Controllers.dialog(i18n("account.cape.none")));
+            } else {
+                VBox vBox = new VBox();
+                vBox.setPadding(new javafx.geometry.Insets(10, 10, 10, 10));
+
+                MultiFileItem<MicrosoftService.MinecraftProfileResponseCape> capeItem = new MultiFileItem<>();
+                List<MultiFileItem.Option<MicrosoftService.MinecraftProfileResponseCape>> options = new ArrayList<>();
+                for (MicrosoftService.MinecraftProfileResponseCape cape : capes) {
+                    options.add(new MultiFileItem.Option<>(cape.alias, cape));
+                }
+                capeItem.loadChildren(options);
+
+                vBox.getChildren().addAll(capeItem);
+
+                Platform.runLater(()->Controllers.confirm(vBox, () -> {
+                    MicrosoftService.MinecraftProfileResponseCape cape = capeItem.getSelectedData();
+                    if (cape != null) {
+                        try {
+                            account.changeCape(cape.id);
+                            Controllers.showToast(i18n("account.cape.change.success"));
+                        } catch (AuthenticationException e) {
+                            Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.cape.change.failed"), MessageType.ERROR);
+                        }
+                    }
+                }, ()->{}));
+            }
+        }).thenComposeAsync(refreshAsync()).whenComplete(Schedulers.javafx(), e->{
+            if (e != null) {
+                Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.cape.change.failed"), MessageType.ERROR);
+            }
+        });
     }
 
     public void remove() {

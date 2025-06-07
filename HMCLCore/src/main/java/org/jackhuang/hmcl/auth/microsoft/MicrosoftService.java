@@ -33,8 +33,10 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -287,6 +289,53 @@ public class MicrosoftService {
         }
     }
 
+    public List<MinecraftProfileResponseCape> getCapes(String accessToken) throws AuthenticationException {
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile"));
+            con.setRequestMethod("GET");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+
+            String response = NetworkUtils.readData(con);
+            if (StringUtils.isBlank(response)) {
+                if (con.getResponseCode() / 100 != 2)
+                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+            } else {
+                MinecraftProfileResponse profileResponse = GSON.fromJson(response, MinecraftProfileResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to get capes, response code: " + con.getResponseCode() + ", response: " + response);
+                return profileResponse.capes;
+            }
+        } catch (IOException | JsonParseException e) {
+            throw new AuthenticationException(e);
+        }
+        return null;
+    }
+
+    public void changeCape(String accessToken, String capeId) throws AuthenticationException {
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile/capes/active"));
+            con.setRequestMethod("PUT");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+            String jsonInputString = "{\"capeId\":\""+ capeId +"\"}";
+
+            try (OutputStream os = con.getOutputStream()) {
+                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = con.getResponseCode();
+            if (responseCode / 100 != 2) {
+                throw new ResponseCodeException(con.getURL(), responseCode);
+            }
+        } catch (IOException | JsonParseException e) {
+            throw new AuthenticationException(e);
+        }
+    }
+
     private static String request(URL url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -421,8 +470,23 @@ public class MicrosoftService {
         }
     }
 
-    public static class MinecraftProfileResponseCape {
+    public static class MinecraftProfileResponseCape implements Validation {
+        @SerializedName("id")
+        public String id;
+        @SerializedName("alias")
+        public String alias;
+        @SerializedName("url")
+        public String url;
+        @SerializedName("state")
+        public String state;
 
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            Validation.requireNonNull(id, "id cannot be null");
+            Validation.requireNonNull(alias, "alias cannot be null");
+            Validation.requireNonNull(url, "url cannot be null");
+            Validation.requireNonNull(state, "state cannot be null");
+        }
     }
 
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {

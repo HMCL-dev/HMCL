@@ -25,10 +25,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -134,6 +131,21 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         service.uploadSkin(session.getAccessToken(), isSlim, file);
+    }
+
+    @Override
+    public boolean canChangeCape() {
+        return true;
+    }
+
+    @Override
+    public void changeCape(String capeId) throws AuthenticationException, UnsupportedOperationException {
+        service.changeCape(session.getAccessToken(), capeId);
+    }
+
+    @Override
+    public List<MicrosoftService.MinecraftProfileResponseCape> getCapes() throws AuthenticationException {
+        return service.getCapes(session.getAccessToken());
     }
 
     @Override

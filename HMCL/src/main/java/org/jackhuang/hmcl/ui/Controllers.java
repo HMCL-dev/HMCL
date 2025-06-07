@@ -406,6 +406,10 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).yesOrNo(yes, no).build());
     }
 
+    public static void confirm(Node node, Runnable yes, Runnable no) {
+        dialog(new NormalDialogPane.Builder(node).yesOrNo(yes, no).build());
+    }
+
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton) {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, null).build());
     }

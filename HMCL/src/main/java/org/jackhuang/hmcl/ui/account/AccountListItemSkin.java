@@ -165,6 +165,25 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
+        JFXButton btnChangeCape = new JFXButton();
+        SpinnerPane spinnerChangeCape = new SpinnerPane();
+        btnChangeCape.setOnAction(e -> {
+            Task<?> changeCapeTask = skinnable.changeCape();
+            if (changeCapeTask != null) {
+                spinnerChangeCape.showSpinner();
+                changeCapeTask
+                        .whenComplete(Schedulers.javafx(), ex -> spinnerChangeCape.hideSpinner())
+                        .start();
+            }
+        });
+        btnChangeCape.getStyleClass().add("toggle-icon4");
+        btnChangeCape.setGraphic(SVG.CHECKROOM.createIcon(Theme.blackFill(), -1));
+        FXUtils.installFastTooltip(btnChangeCape, i18n("account.skin.change_cape"));
+        btnChangeCape.disableProperty().bind(Bindings.not(skinnable.canChangeCape()));
+        spinnerChangeCape.setContent(btnChangeCape);
+        spinnerChangeCape.getStyleClass().add("small-spinner-pane");
+        right.getChildren().add(spinnerChangeCape);
+
         JFXButton btnCopyUUID = new JFXButton();
         SpinnerPane spinnerCopyUUID = new SpinnerPane();
         spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
