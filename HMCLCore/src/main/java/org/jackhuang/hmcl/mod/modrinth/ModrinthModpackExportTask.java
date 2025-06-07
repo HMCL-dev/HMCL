@@ -44,10 +44,9 @@ public class ModrinthModpackExportTask extends Task<Void> {
             return null;
         }
 
-        String fileName = file.getFileName().toString().toLowerCase();
-        boolean isDisabled = fileName.endsWith(".disabled");
+        boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
-            relativePath = relativePath.replace(".disabled", "");
+            relativePath = repository.getModManager(version).enableMod(Path.of(relativePath)).toString();
         }
 
         LocalModFile localModFile = null;
