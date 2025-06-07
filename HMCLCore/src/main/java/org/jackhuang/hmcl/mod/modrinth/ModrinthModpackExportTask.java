@@ -88,12 +88,16 @@ public class ModrinthModpackExportTask extends Task<Void> {
         if (curseForgeVersion.isPresent())
             downloads.add(new URL(curseForgeVersion.get().getFile().getUrl()));
 
+        long fileSize = Files.size(file);
+        if (fileSize > Integer.MAX_VALUE) {
+            LOG.warning("File " + relativePath + " is too large (size: " + fileSize + " bytes), precision may be lost when converting to int");
+        }
         return new ModrinthManifest.File(
             relativePath,
             hashes,
             env,
             downloads,
-            (int) Files.size(file)
+            (int) fileSize
         );
     }
 
