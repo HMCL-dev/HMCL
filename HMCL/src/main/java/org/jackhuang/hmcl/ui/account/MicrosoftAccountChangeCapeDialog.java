@@ -185,7 +185,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
                 previewCapeImage = FXUtils.newBuiltinImage(imagePath);
             } else {
                 previewCapeImage = FXUtils.newRemoteImage(capeItem.getSelectedData().getUrl());
-                LOG.warning("Cannot find cape image: "+ imagePath);
+                LOG.warning("Cannot find cape image: " + imagePath);
             }
 
             previewCapeImage = scaleImageNearestNeighbor(previewCapeImage, 10, 10);
