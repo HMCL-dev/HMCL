@@ -18,7 +18,12 @@
 package org.jackhuang.hmcl.game.tlauncher;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.CompatibilityRule;
+import org.jackhuang.hmcl.game.ExtractRules;
+import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.util.List;

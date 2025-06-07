@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author huangyuhui
  */
 public final class OSRestriction {
@@ -57,19 +56,28 @@ public final class OSRestriction {
         this.arch = arch;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public String getArch() {
-        return arch;
-    }
-
     public boolean allow() {
+        // Some modpacks directly use { name: "win-x86" }
+        if (name != null) {
+            String[] parts = name.split("-", 3);
+            if (parts.length == 2) {
+                OperatingSystem os = OperatingSystem.parseOSName(parts[0]);
+                Architecture arch = Architecture.parseArchName(parts[1]);
+
+                if (os != OperatingSystem.UNKNOWN && arch != Architecture.UNKNOWN) {
+                    if (os != OperatingSystem.CURRENT_OS && !(os == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD())) {
+                        return false;
+                    }
+
+                    if (arch != Architecture.SYSTEM_ARCH) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
+        }
+
         OperatingSystem os = OperatingSystem.parseOSName(name);
         if (os != OperatingSystem.UNKNOWN
                 && os != OperatingSystem.CURRENT_OS
@@ -85,5 +93,4 @@ public final class OSRestriction {
 
         return true;
     }
-
 }

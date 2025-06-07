@@ -410,7 +410,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                         dependencyManager.checkLibraryCompletionAsync(forgeVersion, true)));
 
         setResult(forgeVersion
-                .setPriority(30000)
+                .setPriority(Version.PRIORITY_LOADER)
                 .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
                 .setVersion(selfVersion));
     }
