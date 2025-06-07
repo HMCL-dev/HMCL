@@ -256,6 +256,14 @@ public final class MultiMCInstancePatch {
             throw new IllegalArgumentException("Empty components.");
         }
 
+        for (MultiMCInstancePatch patch : patches) {
+            if (patch.getFormatVersion() != 1) {
+                throw new UnsupportedOperationException(
+                        String.format("Unsupported JSON-Patch[%s] format version: %d", patch.getID(), patch.getFormatVersion())
+                );
+            }
+        }
+
         StringBuilder message = new StringBuilder();
 
         List<String> minecraftArguments;
@@ -330,15 +338,25 @@ public final class MultiMCInstancePatch {
         }
 
         for (String trait : traits) {
-            if (trait.equals("FirstThreadOnMacOS")) {
-                jvmArguments.add(new RuledArgument(
-                        Collections.singletonList(
-                                new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.MACOS))
-                        ),
-                        Collections.singletonList("-XstartOnFirstThread")
-                ));
-            } else {
-                message.append(" - Trait: ").append(trait).append('\n');
+            switch (trait) {
+                case "FirstThreadOnMacOS": {
+                    jvmArguments.add(new RuledArgument(
+                            Collections.singletonList(
+                                    new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.MACOS))
+                            ),
+                            Collections.singletonList("-XstartOnFirstThread")
+                    ));
+                    break;
+                }
+                case "texturepacks":
+                case "no-texturepacks": {
+                    // HMCL hasn't support checking whether a game version supports texture packs.
+                    break;
+                }
+                default: {
+                    message.append(" - Trait: ").append(trait).append('\n');
+                    break;
+                }
             }
         }
 
