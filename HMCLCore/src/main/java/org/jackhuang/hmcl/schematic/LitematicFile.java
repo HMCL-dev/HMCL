@@ -136,7 +136,6 @@ public final class LitematicFile {
 
     }
 
-
     public @NotNull Path getFile() {
         return file;
     }
