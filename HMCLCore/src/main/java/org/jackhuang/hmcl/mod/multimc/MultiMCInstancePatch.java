@@ -348,9 +348,9 @@ public final class MultiMCInstancePatch {
                     ));
                     break;
                 }
-                case "texturepacks":
+                case "XR:Initial": // Flag for chat report. See https://discord.com/channels/132965178051526656/134843027553255425/1380885829702127616
+                case "texturepacks": // HMCL hasn't support checking whether a game version supports texture packs.
                 case "no-texturepacks": {
-                    // HMCL hasn't support checking whether a game version supports texture packs.
                     break;
                 }
                 default: {
