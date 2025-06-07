@@ -489,6 +489,8 @@ public final class Accounts {
                 return i18n("account.methods.microsoft.error.country_unavailable");
             } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
                 return i18n("account.methods.microsoft.error.missing_xbox_account");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.BANNED) {
+                return i18n("account.methods.microsoft.error.banned");
             } else {
                 return i18n("account.methods.microsoft.error.unknown", errorCode);
             }
