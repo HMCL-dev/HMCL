@@ -79,7 +79,6 @@ public class ModrinthModpackExportTask extends Task<Void> {
         if (isDisabled) {
             env = new HashMap<>();
             env.put("client", "optional");
-            env.put("server", "optional"); 
         }
 
         List<URL> downloads = new ArrayList<>();
@@ -138,7 +137,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
                 }
             }
 
-            zip.putDirectory(runDirectory, "overrides", path -> {
+            zip.putDirectory(runDirectory, "client-overrides", path -> {
                 String relativePath = path.toString().replace(File.separatorChar, '/');
                 if (filesInManifest.contains(relativePath)) {
                     return false;
