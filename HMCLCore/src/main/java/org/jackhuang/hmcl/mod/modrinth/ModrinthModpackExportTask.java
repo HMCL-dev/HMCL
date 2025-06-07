@@ -32,7 +32,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
         this.repository = repository;
         this.version = version;
         this.info = info.validate();
-        this.modpackFile = new File(modpackFile.getParentFile(), modpackFile.getName());
+        this.modpackFile = modpackFile;
 
         onDone().register(event -> {
             if (event.isFailed()) modpackFile.delete();
