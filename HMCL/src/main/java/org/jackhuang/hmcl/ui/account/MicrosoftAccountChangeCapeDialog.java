@@ -157,8 +157,8 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
 
             if (I18n.hasKey(key)) {
                 displayName = i18n(key);
-            }else{
-                LOG.error("Cannot find key " + key + " in resource bundle");
+            } else {
+                LOG.warning("Cannot find key " + key + " in resource bundle");
                 displayName = cape.getAlias();
             }
 
@@ -179,7 +179,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
 
     private Task<?> loadCapePreview() {
         return Task.runAsync(() -> {
-            String imagePath = "/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias());
+            String imagePath = "/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias()) + ".png";
             URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
 
             if(imageURL != null){
