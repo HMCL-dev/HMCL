@@ -145,6 +145,11 @@ public class MicrosoftAccountSkinPane extends StackPane {
         MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("account.skin.select_model"), i18n("account.skin.upload"), MessageDialogPane.MessageType.QUESTION);
         builder.addAction(i18n("account.skin.model.default"), () -> future.complete(TextureModel.WIDE));
         builder.addAction(i18n("account.skin.model.slim"), () -> future.complete(TextureModel.SLIM));
+
+        builder.addCancel(()->{
+            updateSkinButtonSpinnerPane.hideSpinner();
+        });
+
         Controllers.dialog(builder.build());
 
         return Task.runAsync(() -> {
