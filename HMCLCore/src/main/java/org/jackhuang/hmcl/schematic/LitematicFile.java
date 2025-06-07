@@ -64,83 +64,65 @@ public final class LitematicFile {
         else if (!(versionTag instanceof IntTag))
             throw new IOException("Version tag is not an integer");
 
-
         Tag metadataTag = root.get("Metadata");
         if (metadataTag == null)
             throw new IOException("Metadata tag not found");
         else if (!(metadataTag instanceof CompoundTag))
             throw new IOException("Metadata tag is not a compound tag");
 
-        return new LitematicFile(file, root);
+        int regions = 0;
+        Tag regionsTag = root.get("Regions");
+        if (regionsTag instanceof CompoundTag)
+            regions = ((CompoundTag) regionsTag).size();
+
+        return new LitematicFile(file, (CompoundTag) metadataTag,
+                ((IntTag) versionTag).getValue(),
+                tryGetInt(root.get("SubVersion")),
+                tryGetInt(root.get("MinecraftDataVersion")),
+                regions
+        );
     }
 
     private final @NotNull Path file;
-    private final @NotNull CompoundTag root;
 
-    private LitematicFile(@NotNull Path file, @NotNull CompoundTag root) {
+    private final int version;
+    private final int subVersion;
+    private final int minecraftDataVersion;
+    private final int regionCount;
+    private final int[] previewImageData;
+    private final String name;
+    private final String author;
+    private final String description;
+    private final Instant timeCreated;
+    private final Instant timeModified;
+    private final int totalBlocks;
+    private final int totalVolume;
+    private final Point3D enclosingSize;
+
+    private LitematicFile(@NotNull Path file, @NotNull CompoundTag metadata,
+                          int version, int subVersion, int minecraftDataVersion, int regionCount) {
         this.file = file;
-        this.root = root;
-    }
+        this.version = version;
+        this.subVersion = subVersion;
+        this.minecraftDataVersion = minecraftDataVersion;
+        this.regionCount = regionCount;
 
-    private @NotNull CompoundTag getMetadata() {
-        return root.get("Metadata");
-    }
+        Tag previewImageData = metadata.get("PreviewImageData");
+        this.previewImageData = previewImageData instanceof IntArrayTag
+                ? ((IntArrayTag) previewImageData).getValue()
+                : null;
 
-    public @NotNull Path getFile() {
-        return file;
-    }
+        this.name = tryGetString(metadata.get("Name"));
+        this.author = tryGetString(metadata.get("Author"));
+        this.description = tryGetString(metadata.get("Description"));
+        this.timeCreated = tryGetLongTimestamp(metadata.get("TimeCreated"));
+        this.timeModified = tryGetLongTimestamp(metadata.get("TimeModified"));
+        this.totalBlocks = tryGetInt(metadata.get("TotalBlocks"));
+        this.totalVolume = tryGetInt(metadata.get("TotalVolume"));
 
-    public int getVersion() {
-        return root.<IntTag>get("Version").getValue();
-    }
 
-    public int getSubVersion() {
-        return tryGetInt(root.get("SubVersion"));
-    }
-
-    public int getMinecraftDataVersion() {
-        return tryGetInt(root.get("MinecraftDataVersion"));
-    }
-
-    public int[] getPreviewImageData() {
-        Tag previewImageData = getMetadata().get("PreviewImageData");
-        if (previewImageData instanceof IntArrayTag) {
-            return ((IntArrayTag) previewImageData).getValue().clone();
-        } else {
-            return null;
-        }
-    }
-
-    public String getName() {
-        return tryGetString(getMetadata().get("Name"));
-    }
-
-    public String getAuthor() {
-        return tryGetString(getMetadata().get("Author"));
-    }
-
-    public String getDescription() {
-        return tryGetString(getMetadata().get("Description"));
-    }
-
-    public Instant getTimeCreated() {
-        return tryGetLongTimestamp(getMetadata().get("TimeCreated"));
-    }
-
-    public Instant getTimeModified() {
-        return tryGetLongTimestamp(getMetadata().get("TimeModified"));
-    }
-
-    public int getTotalBlocks() {
-        return tryGetInt(getMetadata().get("TotalBlocks"));
-    }
-
-    public int getTotalVolume() {
-        return tryGetInt(getMetadata().get("TotalVolume"));
-    }
-
-    public Point3D getEnclosingSize() {
-        Tag enclosingSizeTag = getMetadata().get("EnclosingSize");
+        Point3D enclosingSize = null;
+        Tag enclosingSizeTag = metadata.get("EnclosingSize");
         if (enclosingSizeTag instanceof CompoundTag) {
             CompoundTag list = (CompoundTag) enclosingSizeTag;
             int x = tryGetInt(list.get("x"));
@@ -148,16 +130,65 @@ public final class LitematicFile {
             int z = tryGetInt(list.get("z"));
 
             if (x >= 0 && y >= 0 && z >= 0)
-                return new Point3D(x, y, z);
+                enclosingSize = new Point3D(x, y, z);
         }
+        this.enclosingSize = enclosingSize;
 
-        return null;
+    }
+
+    public @NotNull Path getFile() {
+        return file;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public int getSubVersion() {
+        return subVersion;
+    }
+
+    public int getMinecraftDataVersion() {
+        return minecraftDataVersion;
+    }
+
+    public int[] getPreviewImageData() {
+        return previewImageData != null ? previewImageData.clone() : null;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Instant getTimeCreated() {
+        return timeCreated;
+    }
+
+    public Instant getTimeModified() {
+        return timeModified;
+    }
+
+    public int getTotalBlocks() {
+        return totalBlocks;
+    }
+
+    public int getTotalVolume() {
+        return totalVolume;
+    }
+
+    public Point3D getEnclosingSize() {
+        return enclosingSize;
     }
 
     public int getRegionCount() {
-        Tag regions = root.get("Regions");
-        if (regions instanceof CompoundTag)
-            return ((CompoundTag) regions).size();
-        else return 0;
+        return regionCount;
     }
 }
