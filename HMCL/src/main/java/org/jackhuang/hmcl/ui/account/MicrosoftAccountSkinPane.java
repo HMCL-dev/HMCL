@@ -146,7 +146,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
         builder.addAction(i18n("account.skin.model.default"), () -> future.complete(TextureModel.WIDE));
         builder.addAction(i18n("account.skin.model.slim"), () -> future.complete(TextureModel.SLIM));
 
-        builder.addCancel(()->{
+        builder.addCancel(() -> {
             updateSkinButtonSpinnerPane.hideSpinner();
         });
 
