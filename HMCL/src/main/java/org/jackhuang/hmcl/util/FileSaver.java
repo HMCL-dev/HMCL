@@ -68,11 +68,6 @@ public final class FileSaver extends Thread {
         Objects.requireNonNull(file);
         Objects.requireNonNull(content);
 
-        if (shutdown) {
-            saveSync(file, content);
-            return;
-        }
-
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
             if (runningLock.tryLock()) { // Wait for the previous FileSaver to stop
@@ -93,7 +88,6 @@ public final class FileSaver extends Thread {
                 });
             }
 
-            // Do we really need a shutdown hook?
             if (installedShutdownHook.compareAndSet(false, true))
                 Runtime.getRuntime().addShutdownHook(new Thread(FileSaver::onExit, "SettingsSaverShutdownHook"));
         }
