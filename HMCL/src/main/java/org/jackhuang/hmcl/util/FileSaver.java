@@ -91,7 +91,7 @@ public final class FileSaver extends Thread {
     }
 
     private FileSaver() {
-        super("SettingsSaver");
+        super("FileSaver");
     }
 
     private boolean stopped = false;
