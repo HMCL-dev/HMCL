@@ -98,13 +98,13 @@ public final class FileSaver extends Thread {
                 if (shutdown) {
                     stopCurrentSaver();
                 } else {
-                    Pair<Path, String> head = queue.poll(60, TimeUnit.SECONDS);
+                    Pair<Path, String> head = queue.poll(30, TimeUnit.SECONDS);
                     if (head == null || head == SHUTDOWN) {
                         stopCurrentSaver();
                     } else {
                         map.put(head.getKey(), head.getValue());
                         //noinspection BusyWait
-                        Thread.sleep(100); // Waiting for more changes
+                        Thread.sleep(200); // Waiting for more changes
                     }
                 }
 
