@@ -14,6 +14,7 @@ chardet = "2.5.0"
 twelvemonkeys = "3.12.0"
 jna = "5.17.0"
 pci-ids = "0.4.0"
+java-info = "1.0"
 
 # plugins
 shadow = "8.3.6"
@@ -36,6 +37,7 @@ twelvemonkeys-imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp"
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }
+java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
