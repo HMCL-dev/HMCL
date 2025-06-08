@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
@@ -56,23 +55,7 @@ public final class FileSaver extends Thread {
 
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
-            if (runningLock.tryLock()) { // Wait for the previous FileSaver to stop
-                try {
-                    new FileSaver().start();
-                } finally {
-                    runningLock.unlock();
-                }
-            } else {
-                // This method is often called on the FX thread; we should avoid blocking the FX thread.
-                Schedulers.defaultScheduler().execute(() -> {
-                    runningLock.lock();
-                    try {
-                        new FileSaver().start();
-                    } finally {
-                        runningLock.unlock();
-                    }
-                });
-            }
+            new FileSaver().start();
         }
     }
 
