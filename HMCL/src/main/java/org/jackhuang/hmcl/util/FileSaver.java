@@ -48,21 +48,6 @@ public final class FileSaver extends Thread {
         }
     }
 
-    private static void onExit() {
-        shutdown();
-        runningLock.lock();
-        try {
-            HashMap<Path, String> map = new HashMap<>();
-            for (Pair<Path, String> pair : queue) {
-                if (pair != SHUTDOWN)
-                    map.put(pair.getKey(), pair.getValue());
-            }
-            doSave(map);
-        } finally {
-            runningLock.unlock();
-        }
-    }
-
     public static void save(Path file, String content) {
         Objects.requireNonNull(file);
         Objects.requireNonNull(content);
@@ -171,7 +156,18 @@ public final class FileSaver extends Thread {
 
         @Override
         public void run() {
-            onExit();
+            shutdown();
+            runningLock.lock();
+            try {
+                HashMap<Path, String> map = new HashMap<>();
+                for (Pair<Path, String> pair : queue) {
+                    if (pair != SHUTDOWN)
+                        map.put(pair.getKey(), pair.getValue());
+                }
+                doSave(map);
+            } finally {
+                runningLock.unlock();
+            }
         }
     }
 }
