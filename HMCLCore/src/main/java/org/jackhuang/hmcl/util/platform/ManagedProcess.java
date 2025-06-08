@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
 
@@ -90,7 +91,7 @@ public final class ManagedProcess {
      * @return PID
      */
     public long getPID() throws UnsupportedOperationException {
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() >= 9) {
+        if (JavaRuntime.CURRENT_VERSION >= 9) {
             // Method Process.pid() is provided (Java 9 or later). Invoke it to get the pid.
             try {
                 return (long) MethodHandles.publicLookup()
@@ -106,7 +107,7 @@ public final class ManagedProcess {
                 // However, this method is supplied since Java 9.
                 // So, there is no ways to get the pid.
                 throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on Windows.");
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX || OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS || OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 // On Linux or Mac, we can get field UnixProcess.pid field to get the pid.
                 // All the Java version is accepted.
                 // See https://github.com/openjdk/jdk/blob/jdk8-b120/jdk/src/solaris/classes/java/lang/UNIXProcess.java.linux
@@ -115,7 +116,7 @@ public final class ManagedProcess {
                     pidField.setAccessible(true);
                     return pidField.getInt(process);
                 } catch (NoSuchFieldException | IllegalAccessException e) {
-                    throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on OSX / Linux.", e);
+                    throw new UnsupportedOperationException("Cannot get the pid of a Process on Java 8 on macOS/Linux.", e);
                 }
             } else {
                 // Unknown Operating System, no fallback available.

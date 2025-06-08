@@ -17,12 +17,12 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.reflect.TypeToken;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
@@ -35,9 +35,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -51,10 +49,13 @@ import java.util.*;
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -171,34 +172,18 @@ public final class Accounts {
             config().getAccountStorages().setAll(portable);
     }
 
-    @SuppressWarnings("unchecked")
     private static void loadGlobalAccountStorages() {
-        Path globalAccountsFile = Metadata.HMCL_DIRECTORY.resolve("accounts.json");
+        Path globalAccountsFile = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("accounts.json");
         if (Files.exists(globalAccountsFile)) {
             try (Reader reader = Files.newBufferedReader(globalAccountsFile)) {
-                globalAccountStorages.setAll((List<Map<Object, Object>>)
-                        Config.CONFIG_GSON.fromJson(reader, new TypeToken<List<Map<Object, Object>>>() {
-                        }.getType()));
+                globalAccountStorages.setAll(Config.CONFIG_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class))));
             } catch (Throwable e) {
                 LOG.warning("Failed to load global accounts", e);
             }
         }
 
-        InvocationDispatcher<String> dispatcher = InvocationDispatcher.runOn(Lang::thread, json -> {
-            LOG.info("Saving global accounts");
-            synchronized (globalAccountsFile) {
-                try {
-                    synchronized (globalAccountsFile) {
-                        FileUtils.saveSafely(globalAccountsFile, json);
-                    }
-                } catch (IOException e) {
-                    LOG.error("Failed to save global accounts", e);
-                }
-            }
-        });
-
         globalAccountStorages.addListener(onInvalidating(() ->
-                dispatcher.accept(Config.CONFIG_GSON.toJson(globalAccountStorages))));
+                FileSaver.save(globalAccountsFile, Config.CONFIG_GSON.toJson(globalAccountStorages))));
     }
 
     private static Account parseAccount(Map<Object, Object> storage) {
@@ -278,6 +263,30 @@ public final class Accounts {
         if (selected == null && !accounts.isEmpty()) {
             selected = accounts.get(0);
         }
+
+        if (!globalConfig().isEnableOfflineAccount())
+            for (Account account : accounts) {
+                if (account instanceof MicrosoftAccount) {
+                    globalConfig().setEnableOfflineAccount(true);
+                    break;
+                }
+            }
+
+        if (!globalConfig().isEnableOfflineAccount())
+            accounts.addListener(new ListChangeListener<Account>() {
+                @Override
+                public void onChanged(Change<? extends Account> change) {
+                    while (change.next()) {
+                        for (Account account : change.getAddedSubList()) {
+                            if (account instanceof MicrosoftAccount) {
+                                accounts.removeListener(this);
+                                globalConfig().setEnableOfflineAccount(true);
+                                return;
+                            }
+                        }
+                    }
+                }
+            });
 
         selectedAccount.set(selected);
 
@@ -364,7 +373,7 @@ public final class Accounts {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
         if (authlibinjectorLocation == null) {
             return new AuthlibInjectorDownloader(
-                    Metadata.HMCL_DIRECTORY.resolve("authlib-injector.jar"),
+                    Metadata.DEPENDENCIES_DIRECTORY.resolve("universal").resolve("authlib-injector.jar"),
                     DownloadProviders::getDownloadProvider) {
                 @Override
                 public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {
@@ -373,7 +382,7 @@ public final class Accounts {
                         return local;
                     }
                     // search authlib-injector.jar in current directory, it's used as a fallback
-                    return parseArtifact(Paths.get("authlib-injector.jar"));
+                    return parseArtifact(Metadata.CURRENT_DIRECTORY.resolve("authlib-injector.jar"));
                 }
             };
         } else {
@@ -465,6 +474,8 @@ public final class Accounts {
                 return i18n("account.methods.microsoft.error.country_unavailable");
             } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
                 return i18n("account.methods.microsoft.error.missing_xbox_account");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.BANNED) {
+                return i18n("account.methods.microsoft.error.banned");
             } else {
                 return i18n("account.methods.microsoft.error.unknown", errorCode);
             }

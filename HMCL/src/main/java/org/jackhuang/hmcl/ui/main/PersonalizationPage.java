@@ -33,8 +33,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -75,11 +75,8 @@ public class PersonalizationPage extends StackPane {
 
             ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
             picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
-            picker.setOnAction(e -> {
-                Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
-                config().setTheme(theme);
-                Controllers.getScene().getStylesheets().setAll(theme.getStylesheets(config().getLauncherFontFamily()));
-            });
+            picker.setOnAction(e ->
+                    config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
@@ -107,11 +104,13 @@ public class PersonalizationPage extends StackPane {
             backgroundSublist.setHasSubtitle(true);
 
             backgroundItem.loadChildren(Arrays.asList(
-                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT),
+                    new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
+                            .setTooltip(i18n("launcher.background.default.tooltip")),
                     new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
                     new MultiFileItem.Option<>(i18n("launcher.background.translucent"), EnumBackgroundImage.TRANSLUCENT),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
+                            .addExtensionFilter(FXUtils.getImageExtensionFilter())
                             .bindBidirectional(config().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
                             .setValidators(new URLValidator(true))
@@ -259,12 +258,13 @@ public class PersonalizationPage extends StackPane {
                         hBox.setSpacing(8);
 
                         FontComboBox cboFont = new FontComboBox();
-                        cboFont.valueProperty().bindBidirectional(config().launcherFontFamilyProperty());
+                        cboFont.setValue(config().getLauncherFontFamily());
+                        FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
                         JFXButton clearButton = new JFXButton();
                         clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1, -1));
-                        clearButton.setOnAction(e -> config().setLauncherFontFamily(null));
+                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1));
+                        clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         hBox.getChildren().setAll(cboFont, clearButton);
 
@@ -272,15 +272,7 @@ public class PersonalizationPage extends StackPane {
                     }
                 }
 
-                Label lblFontDisplay = new Label("Hello Minecraft! Launcher");
-                lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(config().getLauncherFontFamily(), 12),
-                        config().launcherFontFamilyProperty()));
-                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
-                    Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue));
-                });
-
-                vbox.getChildren().add(lblFontDisplay);
+                vbox.getChildren().add(new Label("Hello Minecraft! Launcher"));
 
                 fontPane.getContent().add(vbox);
             }

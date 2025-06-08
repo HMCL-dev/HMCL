@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.chardet.DetectedCharset;
+import org.glavo.chardet.UniversalDetector;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
@@ -30,11 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -132,6 +130,24 @@ public final class FileUtils {
         return new String(Files.readAllBytes(file), charset);
     }
 
+    public static String readTextMaybeNativeEncoding(Path file) throws IOException {
+        byte[] bytes = Files.readAllBytes(file);
+
+        if (OperatingSystem.NATIVE_CHARSET == UTF_8)
+            return new String(bytes, UTF_8);
+
+        UniversalDetector detector = new UniversalDetector();
+        detector.handleData(bytes);
+        detector.dataEnd();
+
+        DetectedCharset detectedCharset = detector.getDetectedCharset();
+        if (detectedCharset != null && detectedCharset.isSupported()
+                && (detectedCharset == DetectedCharset.UTF_8 || detectedCharset == DetectedCharset.US_ASCII))
+            return new String(bytes, UTF_8);
+        else
+            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
+    }
+
     /**
      * Write plain text to file. Characters are encoded into bytes using UTF-8.
      * <p>
@@ -199,7 +215,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -212,7 +228,7 @@ public final class FileUtils {
      * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
      * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
      *
-     * @param file  the path to the file
+     * @param file the path to the file
      * @param data the data being written to file
      * @throws IOException if an I/O error occurs
      */
@@ -590,5 +606,9 @@ public final class FileUtils {
         }
 
         Files.move(tmpFile, file, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static String printFileStructure(Path path, int maxDepth) throws IOException {
+        return DirectoryStructurePrinter.list(path, maxDepth);
     }
 }

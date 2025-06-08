@@ -23,7 +23,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.PseudoClass;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -33,7 +32,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.setting.Theme;
@@ -60,8 +59,8 @@ public class InstallerItem extends Control {
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
 
-    private final ObjectProperty<EventHandler<? super MouseEvent>> installActionProperty = new SimpleObjectProperty<>(this, "installAction");
-    private final ObjectProperty<EventHandler<? super MouseEvent>> removeActionProperty = new SimpleObjectProperty<>(this, "removeAction");
+    private final ObjectProperty<Runnable> onInstall = new SimpleObjectProperty<>(this, "onInstall");
+    private final ObjectProperty<Runnable> onRemove = new SimpleObjectProperty<>(this, "onRemove");
 
     public interface State {
     }
@@ -170,12 +169,28 @@ public class InstallerItem extends Control {
         return resolvedStateProperty;
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> installActionProperty() {
-        return installActionProperty;
+    public ObjectProperty<Runnable> onInstallProperty() {
+        return onInstall;
     }
 
-    public ObjectProperty<EventHandler<? super MouseEvent>> removeActionProperty() {
-        return removeActionProperty;
+    public Runnable getOnInstall() {
+        return onInstall.get();
+    }
+
+    public void setOnInstall(Runnable onInstall) {
+        this.onInstall.set(onInstall);
+    }
+
+    public ObjectProperty<Runnable> onRemoveProperty() {
+        return onRemove;
+    }
+
+    public Runnable getOnRemove() {
+        return onRemove.get();
+    }
+
+    public void setOnRemove(Runnable onRemove) {
+        this.onRemove.set(onRemove);
     }
 
     @Override
@@ -266,7 +281,13 @@ public class InstallerItem extends Control {
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
-                    item.resolvedStateProperty.bind(item.versionProperty);
+                    item.resolvedStateProperty.bind(Bindings.createObjectBinding(() -> {
+                        InstalledState itemVersion = item.versionProperty.get();
+                        if (itemVersion != null) {
+                            return itemVersion;
+                        }
+                        return InstallableState.INSTANCE;
+                    }, item.versionProperty));
                 }
             }
 
@@ -347,7 +368,9 @@ public class InstallerItem extends Control {
                     }
                     return i18n("install.installer.version", s.version);
                 } else if (state instanceof InstallableState) {
-                    return i18n("install.installer.not_installed");
+                    return control.style == Style.CARD
+                            ? i18n("install.installer.do_not_install")
+                            : i18n("install.installer.not_installed");
                 } else if (state instanceof IncompatibleState) {
                     return i18n("install.installer.incompatible", i18n("install.installer." + ((IncompatibleState) state).incompatibleItemName));
                 } else {
@@ -363,27 +386,34 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = new JFXButton();
-            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1));
+            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1));
             removeButton.getStyleClass().add("toggle-icon4");
             if (control.id.equals(MINECRAFT.getPatchId())) {
                 removeButton.setVisible(false);
             } else {
-                removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> control.resolvedStateProperty.get() instanceof InstalledState, control.resolvedStateProperty));
+                removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
+                    State state = control.resolvedStateProperty.get();
+                    return state instanceof InstalledState && !((InstalledState) state).external;
+                }, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());
-            removeButton.onMouseClickedProperty().bind(control.removeActionProperty);
+            removeButton.setOnAction(e -> {
+                Runnable onRemove = control.getOnRemove();
+                if (onRemove != null)
+                    onRemove.run();
+            });
             buttonsContainer.getChildren().add(removeButton);
 
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
-                                    SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1) :
-                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1),
+                                    SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), -1) :
+                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1),
                     control.resolvedStateProperty
             ));
             installButton.getStyleClass().add("toggle-icon4");
             installButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
-                if (control.installActionProperty.get() == null) {
+                if (control.getOnInstall() == null) {
                     return false;
                 }
 
@@ -396,18 +426,27 @@ public class InstallerItem extends Control {
                 }
 
                 return false;
-            }, control.resolvedStateProperty, control.installActionProperty));
+            }, control.resolvedStateProperty, control.onInstall));
             installButton.managedProperty().bind(installButton.visibleProperty());
-            installButton.onMouseClickedProperty().bind(control.installActionProperty);
+            installButton.setOnAction(e -> {
+                Runnable onInstall = control.getOnInstall();
+                if (onInstall != null)
+                    onInstall.run();
+            });
             buttonsContainer.getChildren().add(installButton);
 
             FXUtils.onChangeAndOperate(installButton.visibleProperty(), clickable -> {
                 if (clickable) {
-                    container.onMouseClickedProperty().bind(control.installActionProperty);
+                    container.setOnMouseClicked(event -> {
+                        Runnable onInstall = control.getOnInstall();
+                        if (onInstall != null && event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                            onInstall.run();
+                            event.consume();
+                        }
+                    });
                     pane.setCursor(Cursor.HAND);
                 } else {
-                    container.onMouseClickedProperty().unbind();
-                    container.onMouseClickedProperty().set(null);
+                    container.setOnMouseClicked(null);
                     pane.setCursor(Cursor.DEFAULT);
                 }
             });

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -32,7 +32,7 @@ import java.util.*;
 public class LaunchOptions implements Serializable {
 
     private File gameDir;
-    private JavaVersion java;
+    private JavaRuntime java;
     private String versionName;
     private String versionType;
     private String profileName;
@@ -49,7 +49,9 @@ public class LaunchOptions implements Serializable {
     private boolean fullscreen;
     private String serverIp;
     private String wrapper;
-    private Proxy proxy;
+    private Proxy.Type proxyType;
+    private String proxyHost;
+    private int proxyPort;
     private String proxyUser;
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
@@ -73,7 +75,7 @@ public class LaunchOptions implements Serializable {
     /**
      * The Java Environment that Minecraft runs on.
      */
-    public JavaVersion getJava() {
+    public JavaRuntime getJava() {
         return java;
     }
 
@@ -191,11 +193,16 @@ public class LaunchOptions implements Serializable {
         return wrapper;
     }
 
-    /**
-     * Proxy settings
-     */
-    public Proxy getProxy() {
-        return proxy;
+    public Proxy.Type getProxyType() {
+        return proxyType;
+    }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
     }
 
     /**
@@ -312,7 +319,7 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setJava(JavaVersion java) {
+        public Builder setJava(JavaRuntime java) {
             options.java = java;
             return this;
         }
@@ -402,8 +409,18 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setProxy(Proxy proxy) {
-            options.proxy = proxy;
+        public Builder setProxyType(Proxy.Type proxyType) {
+            options.proxyType = proxyType;
+            return this;
+        }
+
+        public Builder setProxyHost(String proxyHost) {
+            options.proxyHost = proxyHost;
+            return this;
+        }
+
+        public Builder setProxyPort(int proxyPort) {
+            options.proxyPort = proxyPort;
             return this;
         }
 

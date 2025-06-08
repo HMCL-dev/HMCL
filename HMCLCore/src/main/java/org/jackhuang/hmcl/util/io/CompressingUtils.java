@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -54,19 +54,16 @@ public final class CompressingUtils {
     }
 
     public static boolean testEncoding(Path zipFile, Charset encoding) throws IOException {
-        try (ZipFile zf = openZipFile(zipFile, encoding)) {
+        try (ZipArchiveReader zf = openZipFile(zipFile, encoding)) {
             return testEncoding(zf, encoding);
         }
     }
 
-    public static boolean testEncoding(ZipFile zipFile, Charset encoding) throws IOException {
-        Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) throws IOException {
         CharsetDecoder cd = newCharsetDecoder(encoding);
         CharBuffer cb = CharBuffer.allocate(32);
 
-        while (entries.hasMoreElements()) {
-            ZipArchiveEntry entry = entries.nextElement();
-
+        for (ZipArchiveEntry entry : zipFile.getEntries()) {
             if (entry.getGeneralPurposeBit().usesUTF8ForNames()) continue;
 
             cd.reset();
@@ -88,12 +85,12 @@ public final class CompressingUtils {
     }
 
     public static Charset findSuitableEncoding(Path zipFile) throws IOException {
-        try (ZipFile zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
+        try (ZipArchiveReader zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
             return findSuitableEncoding(zf);
         }
     }
 
-    public static Charset findSuitableEncoding(ZipFile zipFile) throws IOException {
+    public static Charset findSuitableEncoding(ZipArchiveReader zipFile) throws IOException {
         if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
         if (OperatingSystem.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, OperatingSystem.NATIVE_CHARSET))
             return OperatingSystem.NATIVE_CHARSET;
@@ -133,12 +130,12 @@ public final class CompressingUtils {
         throw new IOException("Cannot find suitable encoding for the zip.");
     }
 
-    public static ZipFile openZipFile(Path zipFile) throws IOException {
-        return new ZipFile(Files.newByteChannel(zipFile));
+    public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
+        return new ZipArchiveReader(Files.newByteChannel(zipFile));
     }
 
-    public static ZipFile openZipFile(Path zipFile, Charset charset) throws IOException {
-        return new ZipFile(Files.newByteChannel(zipFile), charset.name());
+    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
+        return new ZipArchiveReader(zipFile, charset);
     }
 
     public static final class Builder {
@@ -234,7 +231,7 @@ public final class CompressingUtils {
      * @return the plain text content of given file.
      */
     public static String readTextZipEntry(File zipFile, String name) throws IOException {
-        try (ZipFile s = new ZipFile(zipFile)) {
+        try (ZipArchiveReader s = new ZipArchiveReader(zipFile.toPath())) {
             return readTextZipEntry(s, name);
         }
     }
@@ -247,7 +244,7 @@ public final class CompressingUtils {
      * @throws IOException if the file is not a valid zip file.
      * @return the plain text content of given file.
      */
-    public static String readTextZipEntry(ZipFile zipFile, String name) throws IOException {
+    public static String readTextZipEntry(ZipArchiveReader zipFile, String name) throws IOException {
         return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
     }
 
@@ -260,7 +257,7 @@ public final class CompressingUtils {
      * @return the plain text content of given file.
      */
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
-        try (ZipFile s = openZipFile(zipFile, encoding)) {
+        try (ZipArchiveReader s = openZipFile(zipFile, encoding)) {
             return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
         }
     }

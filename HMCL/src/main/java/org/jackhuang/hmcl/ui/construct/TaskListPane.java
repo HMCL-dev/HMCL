@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
-import org.jackhuang.hmcl.download.java.JavaDownloadTask;
+import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
+import org.jackhuang.hmcl.java.JavaInstallTask;
 import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
@@ -146,21 +147,23 @@ public final class TaskListPane extends StackPane {
                 } else if (task instanceof ModpackUpdateTask) {
                     task.setName(i18n("modpack.update"));
                 } else if (task instanceof CurseInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.curse")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.curse")));
                 } else if (task instanceof MultiMCModpackInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.multimc")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.multimc")));
                 } else if (task instanceof ModrinthInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.modrinth")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.modrinth")));
                 } else if (task instanceof ServerModpackLocalInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.server")));
+                    task.setName(i18n("install.installing") + ": " + i18n("modpack.type.server"));
                 } else if (task instanceof HMCLModpackInstallTask) {
-                    task.setName(i18n("modpack.install", i18n("modpack.type.hmcl")));
+                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.hmcl")));
                 } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask) {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
                     task.setName(i18n("modpack.scan"));
-                } else if (task instanceof JavaDownloadTask) {
+                } else if (task instanceof MojangJavaDownloadTask) {
                     task.setName(i18n("download.java"));
+                } else if (task instanceof JavaInstallTask) {
+                    task.setName(i18n("java.installing"));
                 }
 
                 Platform.runLater(() -> {
@@ -267,21 +270,21 @@ public final class TaskListPane extends StackPane {
             BorderPane.setMargin(title, new Insets(0, 0, 0, 8));
             setPadding(new Insets(0, 0, 8, 4));
             setCenter(title);
-            setLeft(FXUtils.limitingSize(SVG.DOTS_HORIZONTAL.createIcon(Theme.blackFill(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.MORE_HORIZ.createIcon(Theme.blackFill(), 14), 14, 14));
         }
 
         public void begin() {
             if (started) return;
             started = true;
-            setLeft(FXUtils.limitingSize(SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), 14), 14, 14));
         }
 
         public void fail() {
-            setLeft(FXUtils.limitingSize(SVG.CLOSE.createIcon(Theme.blackFill(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.CLOSE.createIcon(Theme.blackFill(), 14), 14, 14));
         }
 
         public void succeed() {
-            setLeft(FXUtils.limitingSize(SVG.CHECK.createIcon(Theme.blackFill(), 14, 14), 14, 14));
+            setLeft(FXUtils.limitingSize(SVG.CHECK.createIcon(Theme.blackFill(), 14), 14, 14));
         }
 
         public void count() {

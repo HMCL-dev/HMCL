@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
@@ -101,7 +102,9 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     @Override
     public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
-        if (category != null) categoryId = ((CurseAddon.Category) category.getSelf()).getId();
+        if (category != null && category.getSelf() instanceof CurseAddon.Category) {
+            categoryId = ((CurseAddon.Category) category.getSelf()).getId();
+        }
         Response<List<CurseAddon>> response = HttpRequest.GET(PREFIX + "/v1/mods/search",
                         pair("gameId", "432"),
                         pair("classId", Integer.toString(section)),
@@ -113,8 +116,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                         pair("index", Integer.toString(pageOffset * pageSize)),
                         pair("pageSize", Integer.toString(pageSize)))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon>>>() {
-                }.getType());
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
         if (searchFilter.isEmpty()) {
             return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
         }
@@ -163,8 +165,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<FingerprintMatchesResult>>() {
-                }.getType());
+                .getJson(Response.typeOf(FingerprintMatchesResult.class));
 
         if (response.getData().getExactMatches() == null || response.getData().getExactMatches().isEmpty()) {
             return Optional.empty();
@@ -177,8 +178,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod getModById(String id) throws IOException {
         Response<CurseAddon> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id)
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<CurseAddon>>() {
-                }.getType());
+                .getJson(Response.typeOf(CurseAddon.class));
         return response.data.toMod();
     }
 
@@ -186,8 +186,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
         Response<CurseAddon.LatestFile> response = HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<CurseAddon.LatestFile>>() {
-                }.getType());
+                .getJson(Response.typeOf(CurseAddon.LatestFile.class));
         return response.getData().toVersion().getFile();
     }
 
@@ -196,16 +195,14 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         Response<List<CurseAddon.LatestFile>> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
                         pair("pageSize", "10000"))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon.LatestFile>>>() {
-                }.getType());
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
         return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
     }
 
     public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
         Response<List<CurseAddon.Category>> categories = HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432"))
                 .header("X-API-KEY", apiKey)
-                .getJson(new TypeToken<Response<List<CurseAddon.Category>>>() {
-                }.getType());
+                .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
         return reorganizeCategories(categories.getData(), section);
     }
 
@@ -284,6 +281,17 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     public static class Response<T> {
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(Class<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType);
+        }
+
+        @SuppressWarnings("unchecked")
+        public static <T> TypeToken<Response<T>> typeOf(TypeToken<T> responseType) {
+            return (TypeToken<Response<T>>) TypeToken.getParameterized(Response.class, responseType.getType());
+        }
+
         private final T data;
         private final Pagination pagination;
 

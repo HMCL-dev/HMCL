@@ -19,12 +19,13 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.Immutable;
 
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 /**
  *
@@ -86,8 +87,7 @@ public class RuledArgument implements Argument {
         public RuledArgument deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject obj = json.getAsJsonObject();
 
-            List<CompatibilityRule> rules = context.deserialize(obj.get("rules"), new TypeToken<List<CompatibilityRule>>() {
-            }.getType());
+            List<CompatibilityRule> rules = context.deserialize(obj.get("rules"), listTypeOf(CompatibilityRule.class).getType());
 
             JsonElement valuesElement;
             if (obj.has("values")) {
@@ -102,8 +102,7 @@ public class RuledArgument implements Argument {
             if (valuesElement.isJsonPrimitive()) {
                 values = Collections.singletonList(valuesElement.getAsString());
             } else {
-                values = context.deserialize(valuesElement, new TypeToken<List<String>>() {
-                }.getType());
+                values = context.deserialize(valuesElement, listTypeOf(String.class).getType());
             }
 
             return new RuledArgument(rules, values);

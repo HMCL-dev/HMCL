@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
@@ -34,6 +33,7 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class HelpPage extends SpinnerPane {
@@ -53,7 +53,7 @@ public class HelpPage extends SpinnerPane {
         IconedTwoLineListItem docPane = new IconedTwoLineListItem();
         docPane.setTitle(i18n("help.doc"));
         docPane.setSubtitle(i18n("help.detail"));
-        docPane.setExternalLink(Metadata.HELP_URL);
+        docPane.setExternalLink(Metadata.DOCS_URL);
         ComponentList doc = new ComponentList();
         doc.getContent().setAll(docPane);
         content.getChildren().add(doc);
@@ -63,8 +63,7 @@ public class HelpPage extends SpinnerPane {
 
     private void loadHelp() {
         showSpinner();
-        Task.<List<HelpCategory>>supplyAsync(() -> HttpRequest.GET("https://docs.hmcl.net/index.json").getJson(new TypeToken<List<HelpCategory>>() {
-        }.getType()))
+        Task.supplyAsync(() -> HttpRequest.GET(Metadata.DOCS_URL + "/index.json").getJson(listTypeOf(HelpCategory.class)))
                 .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();

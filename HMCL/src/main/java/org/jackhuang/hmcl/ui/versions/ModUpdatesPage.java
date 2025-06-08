@@ -24,6 +24,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
@@ -45,7 +46,6 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -73,6 +73,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         getStyleClass().add("gray-background");
 
         TableColumn<ModUpdateObject, Boolean> enabledColumn = new TableColumn<>();
+        CheckBox allEnabledBox = new CheckBox();
+        enabledColumn.setGraphic(allEnabledBox);
         enabledColumn.setCellFactory(CheckBoxTableCell.forTableColumn(enabledColumn));
         setupCellValueFactory(enabledColumn, ModUpdateObject::enabledProperty);
         enabledColumn.setEditable(true);
@@ -95,6 +97,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
+        FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
@@ -135,7 +138,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedMods().isEmpty()) {
-                        Controllers.dialog(i18n("mods.check_updates.failed") + "\n" +
+                        Controllers.dialog(i18n("mods.check_updates.failed_download") + "\n" +
                                         task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
@@ -153,7 +156,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         Path path = Paths.get("hmcl-mod-update-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
 
         Controllers.taskDialog(Task.runAsync(() -> {
-            CSVTable csvTable = CSVTable.createEmpty();
+            CSVTable csvTable = new CSVTable();
 
             csvTable.set(0, 0, "Source File Name");
             csvTable.set(1, 0, "Current Version");
@@ -167,10 +170,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 csvTable.set(3, i + 1, objects.get(i).source.get());
             }
 
-            csvTable.write(Files.newOutputStream(path));
+            csvTable.write(path);
 
             FXUtils.showFileInExplorer(path);
-        }).whenComplete(Schedulers.javafx() ,exception -> {
+        }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception == null) {
                 Controllers.dialog(path.toString(), i18n("message.success"));
             } else {
