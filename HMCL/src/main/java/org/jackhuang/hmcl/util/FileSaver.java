@@ -40,7 +40,6 @@ public final class FileSaver extends Thread {
     private static final BlockingQueue<Pair<Path, String>> queue = new LinkedBlockingQueue<>();
     private static final AtomicBoolean running = new AtomicBoolean(false);
     private static final ReentrantLock runningLock = new ReentrantLock();
-    private static final AtomicBoolean installedShutdownHook = new AtomicBoolean(false);
     private static volatile boolean shutdown = false;
 
     private static void doSave(Map<Path, String> map) {
@@ -68,6 +67,8 @@ public final class FileSaver extends Thread {
         Objects.requireNonNull(file);
         Objects.requireNonNull(content);
 
+        ShutdownHook.install();
+
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
             if (runningLock.tryLock()) { // Wait for the previous FileSaver to stop
@@ -87,9 +88,6 @@ public final class FileSaver extends Thread {
                     }
                 });
             }
-
-            if (installedShutdownHook.compareAndSet(false, true))
-                Runtime.getRuntime().addShutdownHook(new Thread(FileSaver::onExit, "SettingsSaverShutdownHook"));
         }
     }
 
@@ -158,6 +156,22 @@ public final class FileSaver extends Thread {
             throw new AssertionError("This thread cannot be interrupted", e);
         } finally {
             runningLock.unlock();
+        }
+    }
+
+    private static final class ShutdownHook extends Thread {
+
+        static {
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        }
+
+        static void install() {
+            // Ensure the shutdown hook is installed
+        }
+
+        @Override
+        public void run() {
+            onExit();
         }
     }
 }
