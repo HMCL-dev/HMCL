@@ -52,7 +52,7 @@ public final class FileSaver extends Thread {
         Objects.requireNonNull(file);
         Objects.requireNonNull(content);
 
-        ShutdownHook.install();
+        ShutdownHook.ensureInstalled();
 
         queue.add(Pair.pair(file, content));
         if (running.compareAndSet(false, true)) {
@@ -97,6 +97,7 @@ public final class FileSaver extends Thread {
     private boolean stopped = false;
 
     private void stopCurrentSaver() {
+        // Ensure that each saver calls `running.set(false)` at most once
         if (!stopped) {
             stopped = true;
             running.set(false);
@@ -150,7 +151,7 @@ public final class FileSaver extends Thread {
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
 
-        static void install() {
+        static void ensureInstalled() {
             // Ensure the shutdown hook is installed
         }
 
