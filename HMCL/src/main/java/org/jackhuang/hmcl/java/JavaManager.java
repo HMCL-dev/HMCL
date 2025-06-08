@@ -32,10 +32,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -162,7 +159,7 @@ public final class JavaManager {
             return javaRuntime;
         }
 
-        JavaInfo info = JavaInfo.fromExecutable(executable);
+        JavaInfo info = JavaInfoUtils.fromExecutable(executable, true);
         return JavaRuntime.of(executable, info, false);
     }
 
@@ -284,23 +281,6 @@ public final class JavaManager {
 
         GameJavaVersion suggestedJavaVersion =
                 (version != null && gameVersion != null && gameVersion.compareTo("1.7.10") >= 0) ? version.getJavaVersion() : null;
-
-        if (suggestedJavaVersion != null) {
-            for (JavaRuntime java : javaRuntimes) {
-                if (forceX86) {
-                    if (!java.getArchitecture().isX86())
-                        continue;
-                } else {
-                    if (java.getArchitecture() != Architecture.SYSTEM_ARCH)
-                        continue;
-                }
-
-                // 100% matched.
-                if (java.getParsedVersion() == suggestedJavaVersion.getMajorVersion()) {
-                    return java;
-                }
-            }
-        }
 
         JavaRuntime mandatory = null;
         JavaRuntime suggested = null;
@@ -501,7 +481,7 @@ public final class JavaManager {
                 info = JavaInfo.fromReleaseFile(releaseFile);
             } catch (IOException e) {
                 try {
-                    info = JavaInfo.fromExecutable(executable, false);
+                    info = JavaInfoUtils.fromExecutable(executable, false);
                 } catch (IOException e2) {
                     e2.addSuppressed(e);
                     LOG.warning("Failed to lookup Java executable at " + executable, e2);
@@ -526,7 +506,7 @@ public final class JavaManager {
 
         JavaInfo info = null;
         try {
-            info = JavaInfo.fromExecutable(executable);
+            info = JavaInfoUtils.fromExecutable(executable, true);
         } catch (IOException e) {
             LOG.warning("Failed to lookup Java executable at " + executable, e);
         }

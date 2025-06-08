@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -329,22 +330,17 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public boolean saveVersionSetting(String id) {
+    public void saveVersionSetting(String id) {
         if (!localVersionSettings.containsKey(id))
-            return false;
-        File file = getLocalVersionSettingFile(id);
-        if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-            return false;
-
-        LOG.info("Saving version setting: " + id);
-
+            return;
+        Path file = getLocalVersionSettingFile(id).toPath().toAbsolutePath().normalize();
         try {
-            FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
-            return true;
+            Files.createDirectories(file.getParent());
         } catch (IOException e) {
-            LOG.error("Unable to save version setting of " + id, e);
-            return false;
+            LOG.warning("Failed to create directory: " + file.getParent(), e);
         }
+
+        FileSaver.save(file, GSON.toJson(localVersionSettings.get(id)));
     }
 
     /**

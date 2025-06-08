@@ -41,9 +41,10 @@ dependencies {
     implementation(project(":HMCLCore"))
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.java.info)
 
     if (launcherExe == null) {
-        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.2")
+        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.3")
     }
 }
 
