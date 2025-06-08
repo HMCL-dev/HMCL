@@ -19,8 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -83,18 +82,20 @@ public final class ConfigHolder {
         LOG.info("Config location: " + configLocation);
 
         configInstance = loadConfig();
-        configInstance.addListener(source -> markConfigDirty());
+        configInstance.addListener(source -> FileSaver.save(configLocation, configInstance.toJson()));
 
         globalConfigInstance = loadGlobalConfig();
-        globalConfigInstance.addListener(source -> markGlobalConfigDirty());
+        globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
 
         Locale.setDefault(config().getLocalization().getLocale());
         I18n.setLocale(configInstance.getLocalization());
         LOG.setLogRetention(globalConfig().getLogRetention());
         Settings.init();
 
-        if (newlyCreated)
-            saveConfigSync();
+        if (newlyCreated) {
+            LOG.info("Creating config file " + configLocation);
+            FileUtils.saveSafely(configLocation, configInstance.toJson());
+        }
 
         if (!Files.isWritable(configLocation)) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
@@ -169,32 +170,8 @@ public final class ConfigHolder {
             }
         }
 
-        LOG.info("Creating an empty config");
         newlyCreated = true;
         return new Config();
-    }
-
-    private static final InvocationDispatcher<String> configWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
-        try {
-            writeToConfig(content);
-        } catch (IOException e) {
-            LOG.error("Failed to save config", e);
-        }
-    });
-
-    private static void writeToConfig(String content) throws IOException {
-        LOG.info("Saving config");
-        synchronized (configLocation) {
-            FileUtils.saveSafely(configLocation, content);
-        }
-    }
-
-    private static void markConfigDirty() {
-        configWriter.accept(configInstance.toJson());
-    }
-
-    private static void saveConfigSync() throws IOException {
-        writeToConfig(configInstance.toJson());
     }
 
     // Global Config
@@ -218,22 +195,4 @@ public final class ConfigHolder {
         return new GlobalConfig();
     }
 
-    private static final InvocationDispatcher<String> globalConfigWriter = InvocationDispatcher.runOn(Lang::thread, content -> {
-        try {
-            writeToGlobalConfig(content);
-        } catch (IOException e) {
-            LOG.error("Failed to save config", e);
-        }
-    });
-
-    private static void writeToGlobalConfig(String content) throws IOException {
-        LOG.info("Saving global config");
-        synchronized (GLOBAL_CONFIG_PATH) {
-            FileUtils.saveSafely(GLOBAL_CONFIG_PATH, content);
-        }
-    }
-
-    private static void markGlobalConfigDirty() {
-        globalConfigWriter.accept(globalConfigInstance.toJson());
-    }
 }
