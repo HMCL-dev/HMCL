@@ -39,10 +39,10 @@ public final class WorldBackupTask extends Task<Path> {
     private final Path backupsDir;
     private final boolean needLock;
 
-    public WorldBackupTask(World world, Path backupsDir) {
+    public WorldBackupTask(World world, Path backupsDir, boolean needLock) {
         this.world = world;
         this.backupsDir = backupsDir;
-        this.needLock = false;
+        this.needLock = needLock;
     }
 
     @Override

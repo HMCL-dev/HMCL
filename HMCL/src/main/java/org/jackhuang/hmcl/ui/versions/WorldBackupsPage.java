@@ -127,7 +127,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
     }
 
     void createBackup() {
-        Controllers.taskDialog(new WorldBackupTask(world, backupsDir).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
+        Controllers.taskDialog(new WorldBackupTask(world, backupsDir, false).setName(i18n("world.backup.processing")).thenApplyAsync(path -> {
             Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
             if (!matcher.matches()) {
                 throw new AssertionError("Wrong backup file name" + path);

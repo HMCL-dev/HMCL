@@ -60,7 +60,7 @@ public final class WorldPage extends DecoratorAnimatedPage implements DecoratorP
         this.world = world;
         this.backupsDir = backupsDir;
 
-        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.title", world.getWorldName())));
+        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
         this.header = new TabHeader(worldInfoTab, worldBackupsTab);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
