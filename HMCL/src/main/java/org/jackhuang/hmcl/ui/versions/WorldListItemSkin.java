@@ -95,13 +95,6 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             btnExport.getStyleClass().add("toggle-icon4");
             btnExport.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
             btnExport.setOnAction(event -> skinnable.export());
-
-            JFXButton btnBackup = new JFXButton();
-            right.getChildren().add(btnBackup);
-            FXUtils.installFastTooltip(btnBackup, i18n("world.backup"));
-            btnBackup.getStyleClass().add("toggle-icon4");
-            btnBackup.setGraphic(SVG.ARCHIVE.createIcon(Theme.blackFill(), -1));
-            btnBackup.setOnAction(event -> skinnable.showBackupPage());
         }
 
         getChildren().setAll(new RipplerContainer(root));

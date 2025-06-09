@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -44,20 +45,23 @@ public final class WorldPage extends DecoratorAnimatedPage implements DecoratorP
 
     private final ObjectProperty<State> state;
     private final World world;
+    private final Path backupsDir;
 
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
+    private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
     private final TransitionPane transitionPane = new TransitionPane();
 
     private FileChannel sessionLockChannel;
 
-    public WorldPage(World world) {
+    public WorldPage(World world, Path backupsDir) {
         this.world = world;
+        this.backupsDir = backupsDir;
 
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.title", world.getWorldName())));
-        this.header = new TabHeader(worldInfoTab);
+        this.header = new TabHeader(worldInfoTab, worldBackupsTab);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
                 GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
@@ -65,7 +69,8 @@ public final class WorldPage extends DecoratorAnimatedPage implements DecoratorP
         }
 
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(world.getFile()));
+        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
+        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
         header.select(worldInfoTab);
         transitionPane.setContent(worldInfoTab.getNode(), ContainerAnimations.NONE);
@@ -74,6 +79,7 @@ public final class WorldPage extends DecoratorAnimatedPage implements DecoratorP
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
+                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE)
                 .addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
         FXUtils.setLimitWidth(sideBar, 200);
 
@@ -97,23 +103,31 @@ public final class WorldPage extends DecoratorAnimatedPage implements DecoratorP
         return world;
     }
 
+    public Path getBackupsDir() {
+        return backupsDir;
+    }
+
     public boolean isReadOnly() {
         return sessionLockChannel == null;
     }
 
     @Override
     public boolean back() {
-        // FIXME: The lock is not released when returning directly to the home page
+        closePage();
+        return true;
+    }
+
+    @Override
+    public void closePage() {
         if (sessionLockChannel != null) {
             try {
                 sessionLockChannel.close();
-                LOG.info("Releases the lock on world  " + world.getFileName());
+                LOG.info("Releases the lock on world " + world.getFileName());
             } catch (IOException e) {
                 LOG.warning("Failed to close session lock channel", e);
             }
 
             sessionLockChannel = null;
         }
-        return true;
     }
 }
