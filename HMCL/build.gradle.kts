@@ -149,6 +149,7 @@ tasks.shadowJar {
                 "javafx.graphics/javafx.css",
                 "javafx.graphics/com.sun.javafx.stage",
                 "javafx.graphics/com.sun.prism",
+                "javafx.graphics/com.sun.javafx.scene",
                 "javafx.controls/com.sun.javafx.scene.control",
                 "javafx.controls/com.sun.javafx.scene.control.behavior",
                 "javafx.controls/javafx.scene.control.skin",

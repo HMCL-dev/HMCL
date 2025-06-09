@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.CrashReporter;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.ImageUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -111,6 +112,8 @@ public final class Launcher extends Application {
 
             // runLater to ensure ConfigHolder.init() finished initialization
             Platform.runLater(() -> {
+                ImageUtils.enableSmoothImageRendering();
+
                 // When launcher visibility is set to "hide and reopen" without Platform.implicitExit = false,
                 // Stage.show() cannot work again because JavaFX Toolkit have already shut down.
                 Platform.setImplicitExit(false);
