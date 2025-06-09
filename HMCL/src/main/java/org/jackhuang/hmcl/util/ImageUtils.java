@@ -63,19 +63,11 @@ public final class ImageUtils {
         @Override
         public NGNode doCreatePeer(Node node) {
             return new NGImageView() {
-                private boolean smooth = ImageView.SMOOTH_DEFAULT;
-
-                @Override
-                public void setSmooth(boolean s) {
-                    smooth = s;
-                    super.setSmooth(s);
-                }
-
                 @Override
                 protected void renderContent(Graphics g) {
                     try {
                         Texture tex = g.getResourceFactory().getCachedTexture((com.sun.prism.Image) GET_IMAGE.invokeExact((NGImageView) this), Texture.WrapMode.CLAMP_TO_EDGE);
-                        tex.setLinearFiltering(smooth);
+                        tex.setLinearFiltering(true);
                         tex.unlock();
                     } catch (Throwable e) {
                         throw new RuntimeException(e);
