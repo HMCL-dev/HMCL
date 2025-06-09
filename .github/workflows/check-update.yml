@@ -16,11 +16,11 @@ jobs:
         channel: [dev, stable]
         include:
           - channel: dev
-            ci_url: https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild
             tag_prefix: v
+            job_name: HMCL
           - channel: stable
-            ci_url: https://ci.huangyuhui.net/job/HMCL-stable/lastSuccessfulBuild
             tag_prefix: release-
+            job_name: HMCL-stable
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
         run: sudo apt-get install -y jq
       - name: Fetch last version
         run: |
-          wget -O ci.json "${{ matrix.ci_url }}/api/json"
+          wget -O ci.json "https://ci.huangyuhui.net/job/${{ matrix.job_name }}/lastSuccessfulBuild/api/json"
           
           export HMCL_EXE_FILE_NAME=`cat ci.json | jq -M -r '.artifacts[] | select(.fileName | endswith(".exe")) | .fileName'`
           if [ -z `echo $HMCL_EXE_FILE_NAME | grep -E "^HMCL-[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?\.exe\$"` ]; then exit 1; fi
@@ -44,14 +44,16 @@ jobs:
           echo "HMCL_COMMIT_SHA=$HMCL_COMMIT_SHA" >> $GITHUB_ENV
           echo "HMCL_TAG_NAME=${{ matrix.tag_prefix }}$HMCL_VERSION" >> $GITHUB_ENV
       - name: Check for existing tags
-        run: if [ -z "$(git tag -l "$HMCL_TAG_NAME")" ]; then echo "continue=true" >> $GITHUB_ENV; fi
+        run: if [ -z "$(git tag -l "${{ env.HMCL_TAG_NAME }}")" ]; then echo "continue=true" >> $GITHUB_ENV; fi
       - name: Download artifacts
         if: ${{ env.continue == 'true' }}
         run: |
-          for ext in exe jar sh; do
-            wget "${{ matrix.ci_url }}/artifact/HMCL/build/libs/HMCL-$HMCL_VERSION.$ext"
-            wget "${{ matrix.ci_url }}/artifact/HMCL/build/libs/HMCL-$HMCL_VERSION.$ext.sha256"
-          done
+          wget "https://ci.huangyuhui.net/job/${{ matrix.job_name }}/lastSuccessfulBuild/artifact/HMCL/build/libs/HMCL-${{ env.HMCL_VERSION }}.exe"
+          wget "https://ci.huangyuhui.net/job/${{ matrix.job_name }}/lastSuccessfulBuild/artifact/HMCL/build/libs/HMCL-${{ env.HMCL_VERSION }}.exe.sha256"
+          wget "https://ci.huangyuhui.net/job/${{ matrix.job_name }}/lastSuccessfulBuild/artifact/HMCL/build/libs/HMCL-${{ env.HMCL_VERSION }}.jar"
+          wget "https://ci.huangyuhui.net/job/${{ matrix.job_name }}/lastSuccessfulBuild/artifact/HMCL/build/libs/HMCL-${{ env.HMCL_VERSION }}.jar.sha256"
+          wget "https://ci.huangyuhui.net/job/${{ matrix.job_name }}/lastSuccessfulBuild/artifact/HMCL/build/libs/HMCL-${{ env.HMCL_VERSION }}.sh"
+          wget "https://ci.huangyuhui.net/job/${{ matrix.job_name }}/lastSuccessfulBuild/artifact/HMCL/build/libs/HMCL-${{ env.HMCL_VERSION }}.sh.sha256"
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
@@ -65,9 +67,9 @@ jobs:
           echo "" >> RELEASE_NOTE
           echo "| File Name | SHA-256 Checksum |"  >> RELEASE_NOTE
           echo "| ---  | --- |" >> RELEASE_NOTE
-          for ext in exe jar sh; do
-            echo "| [HMCL-$HMCL_VERSION.$ext](https://github.com/HMCL-dev/HMCL/releases/download/$HMCL_TAG_NAME/HMCL-$HMCL_VERSION.$ext) | \`$(cat HMCL-$HMCL_VERSION.$ext.sha256)\` |" >> RELEASE_NOTE
-          done
+          echo "| [HMCL-${{ env.HMCL_VERSION }}.exe](https://github.com/HMCL-dev/HMCL/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.exe) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.exe.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-${{ env.HMCL_VERSION }}.jar](https://github.com/HMCL-dev/HMCL/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.jar) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.jar.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-${{ env.HMCL_VERSION }}.sh](https://github.com/HMCL-dev/HMCL/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.sh) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.sh.sha256)\` |" >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
         uses: softprops/action-gh-release@v2
