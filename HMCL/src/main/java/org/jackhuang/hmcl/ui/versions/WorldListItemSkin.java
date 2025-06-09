@@ -43,6 +43,8 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
 
+        FXUtils.onClicked(skinnable, skinnable::showPage);
+
         World world = skinnable.getWorld();
 
         BorderPane root = new BorderPane();
@@ -64,6 +66,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
         {
             TwoLineListItem item = new TwoLineListItem();
             root.setCenter(item);
+            item.setMouseTransparent(true);
             if (world.getWorldName() != null)
                 item.setTitle(parseColorEscapes(world.getWorldName()));
             item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
@@ -99,20 +102,6 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             btnBackup.getStyleClass().add("toggle-icon4");
             btnBackup.setGraphic(SVG.ARCHIVE.createIcon(Theme.blackFill(), -1));
             btnBackup.setOnAction(event -> skinnable.showBackupPage());
-
-            JFXButton btnDatapack = new JFXButton();
-            right.getChildren().add(btnDatapack);
-            FXUtils.installFastTooltip(btnDatapack, i18n("world.datapack"));
-            btnDatapack.getStyleClass().add("toggle-icon4");
-            btnDatapack.setGraphic(SVG.EXTENSION.createIcon(Theme.blackFill(), -1));
-            btnDatapack.setOnAction(event -> skinnable.manageDatapacks());
-
-            JFXButton btnInfo = new JFXButton();
-            right.getChildren().add(btnInfo);
-            FXUtils.installFastTooltip(btnInfo, i18n("world.info"));
-            btnInfo.getStyleClass().add("toggle-icon4");
-            btnInfo.setGraphic(SVG.INFO.createIcon(Theme.blackFill(), -1));
-            btnInfo.setOnAction(event -> skinnable.showInfo());
         }
 
         getChildren().setAll(new RipplerContainer(root));

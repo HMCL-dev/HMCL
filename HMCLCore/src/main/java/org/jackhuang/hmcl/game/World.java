@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class World {
+public final class World {
 
     private final Path file;
     private String fileName;
@@ -293,7 +294,7 @@ public class World {
     private static boolean isLocked(Path sessionLockFile) {
         try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
             return fileChannel.tryLock() == null;
-        } catch (AccessDeniedException accessDeniedException) {
+        } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
             return true;
         } catch (NoSuchFileException noSuchFileException) {
             return false;
