@@ -389,7 +389,7 @@ public final class Lang {
 
     public static synchronized Timer getTimer() {
         if (timer == null) {
-            timer = new Timer();
+            timer = new Timer(true);
         }
         return timer;
     }

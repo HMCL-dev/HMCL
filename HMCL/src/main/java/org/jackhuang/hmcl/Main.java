@@ -19,11 +19,12 @@ package org.jackhuang.hmcl;
 
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.ui.AwtUtils;
-import org.jackhuang.hmcl.util.FractureiserDetector;
+import org.jackhuang.hmcl.util.ModuleHelper;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.ui.SwingUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -32,6 +33,7 @@ import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,31 +59,60 @@ public final class Main {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        LOG.start(Metadata.HMCL_DIRECTORY.resolve("logs"));
+        createHMCLDirectories();
+        LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
 
-        if (JavaVersion.CURRENT_JAVA.getParsedVersion() < 9)
+        if (JavaRuntime.CURRENT_VERSION < 9)
             // This environment check will take ~300ms
             thread(Main::fixLetsEncrypt, "CA Certificate Check", true);
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             initIcon();
 
         checkJavaFX();
         verifyJavaFX();
-        detectFractureiser();
+        addEnableNativeAccess();
+        enableUnsafeMemoryAccess();
 
         Launcher.main(args);
     }
 
     public static void exit(int exitCode) {
+        FileSaver.shutdown();
         LOG.shutdown();
         System.exit(exitCode);
     }
 
+    private static void createHMCLDirectories() {
+        if (!Files.isDirectory(Metadata.HMCL_CURRENT_DIRECTORY)) {
+            try {
+                Files.createDirectories(Metadata.HMCL_CURRENT_DIRECTORY);
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    try {
+                        Files.setAttribute(Metadata.HMCL_CURRENT_DIRECTORY, "dos:hidden", true);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to set hidden attribute of " + Metadata.HMCL_CURRENT_DIRECTORY, e);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace(System.err);
+                showErrorAndExit(i18n("fatal.create_hmcl_current_directory_failure", Metadata.HMCL_CURRENT_DIRECTORY));
+            }
+        }
+
+        if (!Files.isDirectory(Metadata.HMCL_GLOBAL_DIRECTORY)) {
+            try {
+                Files.createDirectories(Metadata.HMCL_GLOBAL_DIRECTORY);
+            } catch (IOException e) {
+                LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
+            }
+        }
+    }
+
     private static void initIcon() {
-        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/img/icon@8x.png"));
+        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(Main.class.getResource("/assets/img/icon-mac.png"));
         AwtUtils.setAppleIcon(image);
     }
 
@@ -91,13 +122,6 @@ public final class Main {
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
             showErrorAndExit("Exclamation mark(!) is not allowed in the path where HMCL is in.\n"
                     + "The path is " + currentDirectory);
-        }
-    }
-
-    private static void detectFractureiser() {
-        if (FractureiserDetector.detect()) {
-            LOG.error("Detected that this computer is infected by fractureiser");
-            showErrorAndExit(i18n("fatal.fractureiser"));
         }
     }
 
@@ -125,7 +149,33 @@ public final class Main {
             Class.forName("javafx.stage.Stage");           // javafx.graphics
             Class.forName("javafx.scene.control.Skin");    // javafx.controls
         } catch (Exception e) {
+            e.printStackTrace(System.err);
             showErrorAndExit(i18n("fatal.javafx.incomplete"));
+        }
+    }
+
+    private static void addEnableNativeAccess() {
+        if (JavaRuntime.CURRENT_VERSION > 21) {
+            try {
+                ModuleHelper.addEnableNativeAccess(Class.forName("javafx.stage.Stage")); // javafx.graphics
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace(System.err);
+                showErrorAndExit(i18n("fatal.javafx.incomplete"));
+            }
+        }
+    }
+
+    private static void enableUnsafeMemoryAccess() {
+        // https://openjdk.org/jeps/498
+        if (JavaRuntime.CURRENT_VERSION == 24 || JavaRuntime.CURRENT_VERSION == 25) {
+            try {
+                Class<?> clazz = Class.forName("sun.misc.Unsafe");
+                Method trySetMemoryAccessWarned = clazz.getDeclaredMethod("trySetMemoryAccessWarned");
+                trySetMemoryAccessWarned.setAccessible(true);
+                trySetMemoryAccessWarned.invoke(null);
+            } catch (Throwable e) {
+                e.printStackTrace(System.err);
+            }
         }
     }
 

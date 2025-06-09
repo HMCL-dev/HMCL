@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.MaintainTask;
 import org.jackhuang.hmcl.download.game.VersionJsonSaveTask;
 import org.jackhuang.hmcl.event.*;
@@ -96,10 +95,15 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public File getLibraryFile(Version version, Library lib) {
-        if ("local".equals(lib.getHint()) && lib.getFileName() != null)
-            return new File(getVersionRoot(version.getId()), "libraries/" + lib.getFileName());
-        else
-            return new File(getLibrariesDirectory(version), lib.getPath());
+        if ("local".equals(lib.getHint())) {
+            if (lib.getFileName() != null) {
+                return new File(getVersionRoot(version.getId()), "libraries/" + lib.getFileName());
+            }
+
+            return new File(getVersionRoot(version.getId()), "libraries/" + lib.getArtifact().getFileName());
+        }
+
+        return new File(getLibrariesDirectory(version), lib.getPath());
     }
 
     public Path getArtifactFile(Version version, Artifact artifact) {
@@ -499,18 +503,16 @@ public class DefaultGameRepository implements GameRepository {
      * read modpack configuration for a version.
      *
      * @param version version installed as modpack
-     * @param <M>     manifest type of ModpackConfiguration
      * @return modpack configuration object, or null if this version is not a modpack.
      * @throws VersionNotFoundException if version does not exist.
      * @throws IOException              if an i/o error occurs.
      */
     @Nullable
-    public <M> ModpackConfiguration<M> readModpackConfiguration(String version) throws IOException, VersionNotFoundException {
+    public ModpackConfiguration<?> readModpackConfiguration(String version) throws IOException, VersionNotFoundException {
         if (!hasVersion(version)) throw new VersionNotFoundException(version);
         File file = getModpackConfiguration(version);
         if (!file.exists()) return null;
-        return JsonUtils.GSON.fromJson(FileUtils.readText(file), new TypeToken<ModpackConfiguration<M>>() {
-        }.getType());
+        return JsonUtils.GSON.fromJson(FileUtils.readText(file), ModpackConfiguration.class);
     }
 
     public boolean isModpack(String version) {
@@ -519,6 +521,18 @@ public class DefaultGameRepository implements GameRepository {
 
     public ModManager getModManager(String version) {
         return new ModManager(this, version);
+    }
+
+    public Path getSavesDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("saves");
+    }
+
+    public Path getBackupsDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("backups");
+    }
+
+    public Path getSchematicsDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("schematics");
     }
 
     @Override

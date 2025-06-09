@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -74,17 +75,16 @@ public class MultiMCModpackExportTask extends Task<Void> {
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));
             LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedPreservingPatchesVersion(versionId), gameVersion);
             List<MultiMCManifest.MultiMCManifestComponent> components = new ArrayList<>();
-            components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, "net.minecraft", gameVersion));
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
-                    components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.minecraftforge", forgeVersion)));
-            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
-                    components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.neoforged", neoForgeVersion)));
-            analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
-                    components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "com.mumfrey.liteloader", liteLoaderVersion)));
-            analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
-                    components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "net.fabricmc.fabric-loader", fabricVersion)));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
-                    components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, "org.quiltmc.quilt-loader", quiltVersion)));
+            components.add(new MultiMCManifest.MultiMCManifestComponent(true, false, MultiMCComponents.getComponent(MINECRAFT), gameVersion));
+
+            for (Map.Entry<String, LibraryAnalyzer.LibraryType> pair : MultiMCComponents.getPairs()) {
+                if (pair.getValue().isModLoader()) {
+                    analyzer.getVersion(pair.getValue()).ifPresent(
+                            v -> components.add(new MultiMCManifest.MultiMCManifestComponent(false, false, pair.getKey(), v))
+                    );
+                }
+            }
+
             MultiMCManifest mmcPack = new MultiMCManifest(1, components);
             zip.putTextFile(JsonUtils.GSON.toJson(mmcPack), "mmc-pack.json");
 

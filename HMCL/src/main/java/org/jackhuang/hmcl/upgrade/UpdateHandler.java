@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.JavaVersion;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -113,9 +113,8 @@ public final class UpdateHandler {
 
             Task<?> task = new HMCLDownloadTask(version, downloaded);
 
-            TaskExecutor executor = task.executor(false);
+            TaskExecutor executor = task.executor();
             Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
-            executor.start();
             thread(() -> {
                 boolean success = executor.test();
 
@@ -177,7 +176,7 @@ public final class UpdateHandler {
 
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
-        commandline.add(JavaVersion.fromCurrentEnvironment().getBinary().toString());
+        commandline.add(JavaRuntime.getDefault().getBinary().toString());
         for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
             Object key = entry.getKey();
             if (key instanceof String && ((String) key).startsWith("hmcl.")) {
@@ -253,7 +252,7 @@ public final class UpdateHandler {
     private static boolean isFirstLaunchAfterUpgrade() {
         Path currentPath = JarUtils.thisJarPath();
         if (currentPath != null) {
-            Path updated = Metadata.HMCL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
+            Path updated = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
             if (currentPath.equals(updated.toAbsolutePath())) {
                 return true;
             }
@@ -262,7 +261,7 @@ public final class UpdateHandler {
     }
 
     private static void breakForceUpdateFeature() {
-        Path hmclVersionJson = Metadata.HMCL_DIRECTORY.resolve("hmclver.json");
+        Path hmclVersionJson = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("hmclver.json");
         if (Files.isRegularFile(hmclVersionJson)) {
             try {
                 Map<?, ?> content = new Gson().fromJson(FileUtils.readText(hmclVersionJson), Map.class);

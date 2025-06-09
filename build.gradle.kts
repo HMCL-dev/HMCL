@@ -55,7 +55,7 @@ subprojects {
     }
 }
 
-tasks.create("checkTranslations") {
+tasks.register("checkTranslations") {
     doLast {
         val hmclLangDir = file("HMCL/src/main/resources/assets/lang")
 
@@ -94,14 +94,19 @@ tasks.create("checkTranslations") {
             }
         }
 
+        zh_CN.forEach {
+            if (it.value.toString().contains("其它")) {
+                project.logger.warn("The misspelled '其它' in '${it.key}' should be replaced by '其他'")
+                success = false
+            }
+        }
+
         if (!success) {
             throw GradleException("Part of the translation is missing")
         }
     }
 }
 
-apply {
-    from("javafx.gradle.kts")
-}
+org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")

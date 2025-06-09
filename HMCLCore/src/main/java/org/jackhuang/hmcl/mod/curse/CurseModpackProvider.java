@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.JsonParseException;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -57,7 +57,7 @@ public final class CurseModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipFile zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
         CurseManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "manifest.json"), CurseManifest.class);
         String description = "No description";
         try {

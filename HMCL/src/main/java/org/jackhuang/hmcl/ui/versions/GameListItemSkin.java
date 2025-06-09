@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lazy;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
@@ -45,17 +44,17 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
-                new IconedMenuItem(SVG.ROCKET_LAUNCH_OUTLINE, i18n("version.launch.test"), () -> currentSkinnable.launch(), popup),
+                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), () -> currentSkinnable.launch(), popup),
                 new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> currentSkinnable.generateLaunchScript(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.GEAR_OUTLINE, i18n("version.manage.manage"), () -> currentSkinnable.modifyGameSettings(), popup),
+                new IconedMenuItem(SVG.SETTINGS, i18n("version.manage.manage"), () -> currentSkinnable.modifyGameSettings(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.PENCIL_OUTLINE, i18n("version.manage.rename"), () -> currentSkinnable.rename(), popup),
-                new IconedMenuItem(SVG.COPY, i18n("version.manage.duplicate"), () -> currentSkinnable.duplicate(), popup),
-                new IconedMenuItem(SVG.DELETE_OUTLINE, i18n("version.manage.remove"), () -> currentSkinnable.remove(), popup),
-                new IconedMenuItem(SVG.EXPORT, i18n("modpack.export"), () -> currentSkinnable.export(), popup),
+                new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), () -> currentSkinnable.rename(), popup),
+                new IconedMenuItem(SVG.FOLDER_COPY, i18n("version.manage.duplicate"), () -> currentSkinnable.duplicate(), popup),
+                new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), () -> currentSkinnable.remove(), popup),
+                new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), () -> currentSkinnable.export(), popup),
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.FOLDER_OUTLINE, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), () -> currentSkinnable.browse(), popup));
         return popup;
     });
 
@@ -79,33 +78,33 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         right.setAlignment(Pos.CENTER_RIGHT);
         if (skinnable.canUpdate()) {
             JFXButton btnUpgrade = new JFXButton();
-            btnUpgrade.setOnMouseClicked(e -> skinnable.update());
+            btnUpgrade.setOnAction(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
-            btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
-            runInFX(() -> FXUtils.installFastTooltip(btnUpgrade, i18n("version.update")));
+            btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(Theme.blackFill(), 24), 24, 24));
+            FXUtils.installFastTooltip(btnUpgrade, i18n("version.update"));
             right.getChildren().add(btnUpgrade);
         }
 
         {
             JFXButton btnLaunch = new JFXButton();
-            btnLaunch.setOnMouseClicked(e -> skinnable.launch());
+            btnLaunch.setOnAction(e -> skinnable.launch());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
-            runInFX(() -> FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test")));
+            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(Theme.blackFill(), 24), 24, 24));
+            FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
         }
 
         {
             JFXButton btnManage = new JFXButton();
-            btnManage.setOnMouseClicked(e -> {
+            btnManage.setOnAction(e -> {
                 currentSkinnable = skinnable;
                 popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
-            btnManage.setGraphic(FXUtils.limitingSize(SVG.DOTS_VERTICAL.createIcon(Theme.blackFill(), 24, 24), 24, 24));
-            runInFX(() -> FXUtils.installFastTooltip(btnManage, i18n("settings.game.management")));
+            btnManage.setGraphic(FXUtils.limitingSize(SVG.MORE_VERT.createIcon(Theme.blackFill(), 24), 24, 24));
+            FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }
 

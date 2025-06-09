@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -42,7 +40,7 @@ public final class StringUtils {
     public static String getStackTrace(StackTraceElement[] elements) {
         StringBuilder builder = new StringBuilder();
         for (StackTraceElement element : elements)
-            builder.append("\tat ").append(element).append(OperatingSystem.LINE_SEPARATOR);
+            builder.append("\tat ").append(element).append(System.lineSeparator());
         return builder.toString();
     }
 
@@ -52,6 +50,62 @@ public final class StringUtils {
 
     public static boolean isNotBlank(String str) {
         return !isBlank(str);
+    }
+
+    public static String normalizeWhitespaces(String str) {
+        if (str == null)
+            return "";
+
+        int start = 0;
+        int end = str.length();
+
+        while (start < str.length() && Character.isWhitespace(str.charAt(start))) {
+            start++;
+        }
+        while (end > start && Character.isWhitespace(str.charAt(end - 1))) {
+            end--;
+        }
+
+        if (end == start) {
+            return "";
+        }
+
+        StringBuilder builder = null;
+
+        int i = start;
+        while (i < end) {
+            char ch = str.charAt(i);
+            if (Character.isWhitespace(ch)) {
+                int whitespaceEnd = i + 1;
+                while (whitespaceEnd < end && Character.isWhitespace(str.charAt(whitespaceEnd))) {
+                    whitespaceEnd++;
+                }
+
+                if (whitespaceEnd - i > 1 || ch != ' ') {
+                    if (builder == null) {
+                        builder = new StringBuilder(end - start);
+                        builder.append(str, start, i);
+                    }
+                    builder.append(' ');
+                    i = whitespaceEnd ;
+                    continue;
+                }
+            }
+
+            if (builder != null) {
+                builder.append(ch);
+            }
+            i++;
+        }
+
+        return builder != null ? builder.toString() : str.substring(start, end);
+    }
+
+    public static String capitalizeFirst(String str) {
+        if (str == null || str.isEmpty())
+            return str;
+
+        return Character.toUpperCase(str.charAt(0)) + str.substring(1);
     }
 
     public static String substringBeforeLast(String str, char delimiter) {
@@ -346,9 +400,15 @@ public final class StringUtils {
     }
 
     public static String parseEscapeSequence(String str) {
-        StringBuilder builder = new StringBuilder();
+        int idx = str.indexOf('\033');
+        if (idx < 0)
+            return str;
+
+        StringBuilder builder = new StringBuilder(str.length());
         boolean inEscape = false;
-        for (int i = 0; i < str.length(); i++) {
+
+        builder.append(str, 0, idx);
+        for (int i = idx; i < str.length(); i++) {
             char ch = str.charAt(i);
             if (ch == '\033') {
                 inEscape = true;
@@ -371,15 +431,15 @@ public final class StringUtils {
         return result.toString();
     }
 
-    public static int MAX_SHORT_STRING_LENGTH = 77;
+    public static String truncate(String str, int limit) {
+        assert limit > 5;
 
-    public static Optional<String> truncate(String str) {
-        if (str.length() <= MAX_SHORT_STRING_LENGTH) {
-            return Optional.empty();
+        if (str.length() <= limit) {
+            return str;
         }
 
-        final int halfLength = (MAX_SHORT_STRING_LENGTH - 5) / 2;
-        return Optional.of(str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength));
+        final int halfLength = (limit - 5) / 2;
+        return str.substring(0, halfLength) + " ... " + str.substring(str.length() - halfLength);
     }
 
     public static boolean isASCII(String cs) {

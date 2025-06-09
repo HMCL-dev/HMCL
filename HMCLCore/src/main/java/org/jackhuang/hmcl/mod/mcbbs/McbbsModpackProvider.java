@@ -18,9 +18,8 @@
 package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.mod.*;
@@ -56,8 +55,7 @@ public final class McbbsModpackProvider implements ModpackProvider {
 
     @Override
     public void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
-        ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(modpackConfigurationJson, new TypeToken<ModpackConfiguration<McbbsModpackManifest>>() {
-        }.getType());
+        ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(modpackConfigurationJson, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
         if (!getName().equals(config.getType())) {
             throw new IllegalArgumentException("Incorrect manifest type, actual=" + config.getType() + ", expected=" + getName());
@@ -72,7 +70,7 @@ public final class McbbsModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipFile zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
         ZipArchiveEntry mcbbsPackMeta = zip.getEntry("mcbbs.packmeta");
         if (mcbbsPackMeta != null) {
             return fromManifestFile(zip.getInputStream(mcbbsPackMeta), encoding);

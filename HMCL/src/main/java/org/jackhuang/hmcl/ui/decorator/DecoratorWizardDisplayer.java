@@ -74,7 +74,7 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
     @Override
     public void navigateTo(Node page, Navigation.NavigationDirection nav) {
         displayer.navigateTo(page, nav);
-        navigate(page, nav.getAnimation().getAnimationProducer());
+        navigate(page, nav.getAnimation());
 
         String prefix = category == null ? "" : category + " - ";
 

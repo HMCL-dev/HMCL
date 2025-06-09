@@ -23,30 +23,16 @@ import com.google.gson.stream.JsonWriter;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @JsonAdapter(Theme.TypeAdapter.class)
-public class Theme {
+public final class Theme {
     public static final Theme BLUE = new Theme("blue", "#5C6BC0");
     public static final Color BLACK = Color.web("#292929");
     public static final Color[] SUGGESTED_COLORS = new Color[]{
@@ -57,58 +43,6 @@ public class Theme {
             Color.web("#9C27B0"), // purple
             Color.web("#B71C1C")  // red
     };
-
-    private static Charset cssCharset;
-
-    private static Charset getCssCharset() {
-        if (cssCharset != null)
-            return cssCharset;
-
-        Charset defaultCharset = Charset.defaultCharset();
-        if (defaultCharset != StandardCharsets.UTF_8) {
-            // https://bugs.openjdk.org/browse/JDK-8279328
-            // For JavaFX 17 or earlier, native encoding should be used
-            String jfxVersion = System.getProperty("javafx.version");
-            if (jfxVersion != null) {
-                Matcher matcher = Pattern.compile("^(?<version>[0-9]+)").matcher(jfxVersion);
-                if (matcher.find()) {
-                    int v = Lang.parseInt(matcher.group(), -1);
-                    if (v >= 18) {
-                        cssCharset = StandardCharsets.UTF_8;
-                    }
-                }
-            }
-        }
-
-        if (cssCharset == null)
-            cssCharset = defaultCharset;
-
-        return cssCharset;
-    }
-
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private static Optional<Font> font;
-
-    private static Optional<Font> tryLoadFont() {
-        //noinspection OptionalAssignedToNull
-        if (font != null) {
-            return font;
-        }
-
-        Path path = Paths.get("font.ttf");
-        if (!Files.isRegularFile(path)) {
-            path = Paths.get("font.otf");
-        }
-
-        if (Files.isRegularFile(path)) {
-            try {
-                return font = Optional.ofNullable(Font.loadFont(path.toAbsolutePath().toUri().toURL().toExternalForm(), 0));
-            } catch (MalformedURLException ignored) {
-            }
-        }
-
-        return font = Optional.empty();
-    }
 
     public static Theme getTheme() {
         Theme theme = config().getTheme();
@@ -133,6 +67,10 @@ public class Theme {
         return color;
     }
 
+    public Color getPaint() {
+        return paint;
+    }
+
     public boolean isCustom() {
         return name.startsWith("#");
     }
@@ -143,53 +81,6 @@ public class Theme {
 
     public Color getForegroundColor() {
         return isLight() ? Color.BLACK : Color.WHITE;
-    }
-
-    public String[] getStylesheets(String overrideFontFamily) {
-        String css = "/assets/css/blue.css";
-
-        String fontFamily = overrideFontFamily == null
-                ? System.getProperty("hmcl.font.override", System.getenv("HMCL_FONT"))
-                : overrideFontFamily;
-
-        String fontStyle = null;
-        if (fontFamily == null) {
-            Optional<Font> font = tryLoadFont();
-            if (font.isPresent()) {
-                fontFamily = font.get().getFamily();
-                fontStyle = font.get().getStyle();
-            }
-        }
-
-        if (fontFamily != null || !this.color.equalsIgnoreCase(BLUE.color)) {
-            Color textFill = getForegroundColor();
-            String fontCss = "";
-            if (fontFamily != null) {
-                fontCss = "-fx-font-family: \"" + fontFamily + "\";";
-                if (fontStyle != null && !fontStyle.isEmpty())
-                    fontCss += " -fx-font-style: \"" + fontStyle + "\";";
-            }
-
-            try {
-                File temp = File.createTempFile("hmcl", ".css");
-                String themeText = IOUtils.readFullyAsString(Theme.class.getResourceAsStream("/assets/css/custom.css"))
-                        .replace("%base-color%", color)
-                        .replace("%base-red%", Integer.toString((int) Math.ceil(paint.getRed() * 256)))
-                        .replace("%base-green%", Integer.toString((int) Math.ceil(paint.getGreen() * 256)))
-                        .replace("%base-blue%", Integer.toString((int) Math.ceil(paint.getBlue() * 256)))
-                        .replace("%base-rippler-color%", String.format("rgba(%d, %d, %d, 0.3)", (int) Math.ceil(paint.getRed() * 256), (int) Math.ceil(paint.getGreen() * 256), (int) Math.ceil(paint.getBlue() * 256)))
-                        .replace("%disabled-font-color%", String.format("rgba(%d, %d, %d, 0.7)", (int) Math.ceil(textFill.getRed() * 256), (int) Math.ceil(textFill.getGreen() * 256), (int) Math.ceil(textFill.getBlue() * 256)))
-                        .replace("%font-color%", getColorDisplayName(getForegroundColor()))
-                        .replace("%font%", fontCss);
-                FileUtils.writeText(temp, themeText, getCssCharset());
-                temp.deleteOnExit();
-                css = temp.toURI().toString();
-            } catch (IOException | NullPointerException e) {
-                LOG.error("Unable to create theme stylesheet. Fallback to blue theme.", e);
-            }
-        }
-
-        return new String[]{css, "/assets/css/root.css"};
     }
 
     public static Theme custom(String color) {
@@ -235,7 +126,7 @@ public class Theme {
     }
 
     public static String getColorDisplayName(Color c) {
-        return c != null ? String.format("#%02x%02x%02x", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)).toUpperCase(Locale.ROOT) : null;
+        return c != null ? String.format("#%02X%02X%02X", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)) : null;
     }
 
     private static ObjectBinding<Color> FOREGROUND_FILL;

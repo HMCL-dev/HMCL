@@ -5,20 +5,21 @@ import java.util.Objects;
 public final class Platform {
     public static final Platform UNKNOWN = new Platform(OperatingSystem.UNKNOWN, Architecture.UNKNOWN);
 
+    public static final Platform WINDOWS_X86 = new Platform(OperatingSystem.WINDOWS, Architecture.X86);
     public static final Platform WINDOWS_X86_64 = new Platform(OperatingSystem.WINDOWS, Architecture.X86_64);
     public static final Platform WINDOWS_ARM64 = new Platform(OperatingSystem.WINDOWS, Architecture.ARM64);
 
     public static final Platform LINUX_X86_64 = new Platform(OperatingSystem.LINUX, Architecture.X86_64);
     public static final Platform LINUX_ARM64 = new Platform(OperatingSystem.LINUX, Architecture.ARM64);
 
-    public static final Platform OSX_X86_64 = new Platform(OperatingSystem.OSX, Architecture.X86_64);
-    public static final Platform OSX_ARM64 = new Platform(OperatingSystem.OSX, Architecture.ARM64);
+    public static final Platform MACOS_X86_64 = new Platform(OperatingSystem.MACOS, Architecture.X86_64);
+    public static final Platform MACOS_ARM64 = new Platform(OperatingSystem.MACOS, Architecture.ARM64);
 
     public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
     public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
 
     public static boolean isCompatibleWithX86Java() {
-        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM == OSX_ARM64 || SYSTEM_PLATFORM == WINDOWS_ARM64;
+        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM == MACOS_ARM64 || SYSTEM_PLATFORM == WINDOWS_ARM64;
     }
 
     private final OperatingSystem os;
@@ -42,8 +43,8 @@ public final class Platform {
             switch (os) {
                 case WINDOWS:
                     return WINDOWS_X86_64;
-                case OSX:
-                    return OSX_X86_64;
+                case MACOS:
+                    return MACOS_X86_64;
                 case LINUX:
                     return LINUX_X86_64;
             }
@@ -51,8 +52,8 @@ public final class Platform {
             switch (os) {
                 case WINDOWS:
                     return WINDOWS_ARM64;
-                case OSX:
-                    return OSX_ARM64;
+                case MACOS:
+                    return MACOS_ARM64;
                 case LINUX:
                     return LINUX_ARM64;
             }
@@ -76,6 +77,10 @@ public final class Platform {
     @Override
     public int hashCode() {
         return Objects.hash(os, arch);
+    }
+
+    public boolean equals(OperatingSystem os, Architecture arch) {
+        return this.os == os && this.arch == arch;
     }
 
     @Override

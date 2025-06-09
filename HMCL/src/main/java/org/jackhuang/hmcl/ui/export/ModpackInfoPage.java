@@ -21,14 +21,14 @@ import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -43,7 +43,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.io.File;
 import java.util.*;
@@ -54,6 +54,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -78,7 +79,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleStringProperty authlibInjectorServer = new SimpleStringProperty();
     private final SimpleStringProperty launchArguments = new SimpleStringProperty("");
     private final SimpleStringProperty javaArguments = new SimpleStringProperty("");
-    private final ObjectProperty<EventHandler<? super MouseEvent>> next = new SimpleObjectProperty<>();
     private final SimpleStringProperty mcbbsThreadId = new SimpleStringProperty("");
 
     public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
@@ -97,8 +97,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         javaArguments.set(versionSetting.getJavaArgs());
 
         canIncludeLauncher = JarUtils.thisJarPath() != null;
-
-        next.set(e -> onNext());
     }
 
     private void onNext() {
@@ -178,9 +176,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
 
                 if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_SERVER) {
                     Hyperlink hyperlink = new Hyperlink(i18n("modpack.wizard.step.initialization.server"));
-                    hyperlink.setOnMouseClicked(e -> {
-                        FXUtils.openLink("https://docs.hmcl.net/modpack/serverpack.html");
-                    });
+                    hyperlink.setOnAction(e -> FXUtils.openLink(Metadata.DOCS_URL + "/modpack/serverpack.html"));
                     borderPane.setTop(hyperlink);
                 } else {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
@@ -292,12 +288,12 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             AtomicBoolean changedByTextField = new AtomicBoolean(false);
                             FXUtils.onChangeAndOperate(skinnable.minMemory, minMemory -> {
                                 changedByTextField.set(true);
-                                slider.setValue(minMemory.intValue() * 1.0 / OperatingSystem.TOTAL_MEMORY);
+                                slider.setValue(minMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
                                 changedByTextField.set(false);
                             });
                             slider.valueProperty().addListener((value, oldVal, newVal) -> {
                                 if (changedByTextField.get()) return;
-                                skinnable.minMemory.set((int) (value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
+                                skinnable.minMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
                             });
 
                             JFXTextField txtMinMemory = new JFXTextField();
@@ -306,7 +302,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                             FXUtils.setLimitWidth(txtMinMemory, 60);
                             validatingFields.add(txtMinMemory);
 
-                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MB"));
+                            lowerBoundPane.getChildren().setAll(label, slider, txtMinMemory, new Label("MiB"));
                         }
 
                         pane.getChildren().setAll(title, lowerBoundPane);
@@ -378,7 +374,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     borderPane.setBottom(hbox);
 
                     JFXButton nextButton = FXUtils.newRaisedButton(i18n("wizard.next"));
-                    nextButton.onMouseClickedProperty().bind(skinnable.next);
+                    nextButton.setOnAction(e -> skinnable.onNext());
                     nextButton.setPrefWidth(100);
                     nextButton.setPrefHeight(40);
                     nextButton.disableProperty().bind(
