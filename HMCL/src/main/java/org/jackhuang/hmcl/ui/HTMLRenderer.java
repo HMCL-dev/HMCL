@@ -151,6 +151,12 @@ public final class HTMLRenderer {
         children.add(textNode);
     }
 
+    private void appendAutoLineBreak(String text) {
+        AutoLineBreak textNode = new AutoLineBreak(text);
+        applyStyle(textNode);
+        children.add(textNode);
+    }
+
     private void appendImage(Node node) {
         String src = node.absUrl("src");
         URI imageUri = null;
@@ -230,7 +236,7 @@ public final class HTMLRenderer {
             case "h6":
             case "tr":
                 if (!children.isEmpty())
-                    appendText("\n\n");
+                    appendAutoLineBreak("\n\n");
                 break;
         }
 
@@ -252,8 +258,49 @@ public final class HTMLRenderer {
             case "h4":
             case "h5":
             case "h6":
-                appendText("\n");
+                appendAutoLineBreak("\n");
                 break;
+        }
+    }
+
+    private static boolean isSpacing(String text) {
+        if (text == null)
+            return true;
+
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch != ' ' && ch != '\t')
+                return false;
+        }
+        return true;
+    }
+
+    public void mergeLineBreaks() {
+        for (int i = 0; i < this.children.size(); i++) {
+            javafx.scene.Node child = this.children.get(i);
+            if (child instanceof AutoLineBreak) {
+                int lastAutoLineBreak = -1;
+
+                for (int j = i + 1; j < this.children.size(); j++) {
+                    javafx.scene.Node otherChild = this.children.get(j);
+
+                    if (otherChild instanceof AutoLineBreak) {
+                        lastAutoLineBreak = j;
+                    } else if (otherChild instanceof Text && isSpacing(((Text) otherChild).getText())) {
+                        // do nothing
+                    } else {
+                        break;
+                    }
+                }
+
+                if (lastAutoLineBreak > 0) {
+                    this.children.subList(i + 1, lastAutoLineBreak + 1).clear();
+
+                    if (((Text) child).getText().length() == 1) {
+                        ((Text) child).setText("\n\n");
+                    }
+                }
+            }
         }
     }
 
@@ -262,5 +309,11 @@ public final class HTMLRenderer {
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
         return textFlow;
+    }
+
+    private static final class AutoLineBreak extends Text {
+        public AutoLineBreak(String text) {
+            super(text);
+        }
     }
 }

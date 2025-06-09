@@ -281,7 +281,13 @@ public class InstallerItem extends Control {
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
-                    item.resolvedStateProperty.bind(item.versionProperty);
+                    item.resolvedStateProperty.bind(Bindings.createObjectBinding(() -> {
+                        InstalledState itemVersion = item.versionProperty.get();
+                        if (itemVersion != null) {
+                            return itemVersion;
+                        }
+                        return InstallableState.INSTANCE;
+                    }, item.versionProperty));
                 }
             }
 
@@ -362,7 +368,9 @@ public class InstallerItem extends Control {
                     }
                     return i18n("install.installer.version", s.version);
                 } else if (state instanceof InstallableState) {
-                    return i18n("install.installer.not_installed");
+                    return control.style == Style.CARD
+                            ? i18n("install.installer.do_not_install")
+                            : i18n("install.installer.not_installed");
                 } else if (state instanceof IncompatibleState) {
                     return i18n("install.installer.incompatible", i18n("install.installer." + ((IncompatibleState) state).incompatibleItemName));
                 } else {
@@ -378,12 +386,15 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = new JFXButton();
-            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1, -1));
+            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1));
             removeButton.getStyleClass().add("toggle-icon4");
             if (control.id.equals(MINECRAFT.getPatchId())) {
                 removeButton.setVisible(false);
             } else {
-                removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> control.resolvedStateProperty.get() instanceof InstalledState, control.resolvedStateProperty));
+                removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
+                    State state = control.resolvedStateProperty.get();
+                    return state instanceof InstalledState && !((InstalledState) state).external;
+                }, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());
             removeButton.setOnAction(e -> {
@@ -396,8 +407,8 @@ public class InstallerItem extends Control {
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
-                                    SVG.ARROW_RIGHT.createIcon(Theme.blackFill(), -1, -1) :
-                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1, -1),
+                                    SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), -1) :
+                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1),
                     control.resolvedStateProperty
             ));
             installButton.getStyleClass().add("toggle-icon4");

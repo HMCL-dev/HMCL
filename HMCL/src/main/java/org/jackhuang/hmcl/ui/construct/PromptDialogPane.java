@@ -49,6 +49,7 @@ public class PromptDialogPane extends DialogPane {
     public PromptDialogPane(Builder builder) {
         this.builder = builder;
         setTitle(builder.title);
+        setPrefWidth(560);
 
         GridPane body = new GridPane();
         body.setVgap(8);
@@ -72,13 +73,13 @@ public class PromptDialogPane extends DialogPane {
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, new Label(question.question.get()), textField);
                 } else {
-                    GridPane.setColumnSpan(textField, 2);
+                    GridPane.setColumnSpan(textField, 1);
                     body.addRow(rowIndex++, textField);
                 }
                 GridPane.setMargin(textField, new Insets(0, 0, 20, 0));
             } else if (question instanceof Builder.BooleanQuestion) {
                 HBox hBox = new HBox();
-                GridPane.setColumnSpan(hBox, 2);
+                GridPane.setColumnSpan(hBox, 1);
                 JFXCheckBox checkBox = new JFXCheckBox();
                 hBox.getChildren().setAll(checkBox);
                 HBox.setMargin(checkBox, new Insets(0, 0, 0, -10));
@@ -95,12 +96,12 @@ public class PromptDialogPane extends DialogPane {
                 if (StringUtils.isNotBlank(question.question.get())) {
                     body.addRow(rowIndex++, new Label(question.question.get()), comboBox);
                 } else {
-                    GridPane.setColumnSpan(comboBox, 2);
+                    GridPane.setColumnSpan(comboBox, 1);
                     body.addRow(rowIndex++, comboBox);
                 }
             } else if (question instanceof Builder.HintQuestion) {
                 HintPane pane = new HintPane();
-                GridPane.setColumnSpan(pane, 2);
+                GridPane.setColumnSpan(pane, 1);
                 pane.textProperty().bind(question.question);
                 body.addRow(rowIndex++, pane);
             }

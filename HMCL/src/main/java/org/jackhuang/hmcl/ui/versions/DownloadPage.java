@@ -55,9 +55,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -215,6 +212,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToHeight(true);
 
             HBox descriptionPane = new HBox(8);
+            descriptionPane.setMinHeight(Region.USE_PREF_SIZE);
             descriptionPane.setAlignment(Pos.CENTER);
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
@@ -308,7 +306,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                         ComponentList sublist = new ComponentList(() -> {
                             ArrayList<ModItem> items = new ArrayList<>(versions.size());
-                            for (RemoteMod.Version v: versions) {
+                            for (RemoteMod.Version v : versions) {
                                 items.add(new ModItem(v, control));
                             }
                             return items;
@@ -388,20 +386,20 @@ public class DownloadPage extends Control implements DecoratorPage {
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.getName());
-                    content.setSubtitle(FORMATTER.format(dataItem.getDatePublished()));
+                    content.setSubtitle(I18n.formatDateTime(dataItem.getDatePublished()));
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
                             content.getTags().add(i18n("mods.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                         case Beta:
                             content.getTags().add(i18n("mods.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                         case Release:
                             content.getTags().add(i18n("mods.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                     }
 
@@ -442,7 +440,25 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModVersion extends JFXDialogLayout {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
-            this.setHeading(new HBox(new Label(i18n("mods.download.title", version.getName()))));
+            RemoteModRepository.Type type = selfPage.repository.getType();
+
+            String title;
+            switch (type) {
+                case WORLD:
+                    title = "world.download.title";
+                    break;
+                case MODPACK:
+                    title = "modpack.download.title";
+                    break;
+                case RESOURCE_PACK:
+                    title = "resourcepack.download.title";
+                    break;
+                case MOD:
+                default:
+                    title = "mods.download.title";
+                    break;
+            }
+            this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -464,14 +480,17 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(i18n("mods.install"));
-            downloadButton.getStyleClass().add("dialog-accept");
-            downloadButton.setOnAction(e -> {
-                if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
-                    fireEvent(new DialogCloseEvent());
-                }
-                selfPage.download(version);
-            });
+            JFXButton downloadButton = null;
+            if (selfPage.callback != null) {
+                downloadButton = new JFXButton(type == RemoteModRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                downloadButton.getStyleClass().add("dialog-accept");
+                downloadButton.setOnAction(e -> {
+                    if (type == RemoteModRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                        fireEvent(new DialogCloseEvent());
+                    }
+                    selfPage.download(version);
+                });
+            }
 
             JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
@@ -486,7 +505,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.getStyleClass().add("dialog-cancel");
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            this.setActions(downloadButton, saveAsButton, cancelButton);
+            if (downloadButton == null) {
+                this.setActions(saveAsButton, cancelButton);
+            } else {
+                this.setActions(downloadButton, saveAsButton, cancelButton);
+            }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
@@ -527,8 +550,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
     }
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL).withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     public interface DownloadCallback {
         void download(Profile profile, @Nullable String version, RemoteMod.Version file);

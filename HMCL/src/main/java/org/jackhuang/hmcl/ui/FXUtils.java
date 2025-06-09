@@ -24,13 +24,13 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.WeakListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.value.*;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -79,10 +79,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -253,20 +253,6 @@ public final class FXUtils {
         });
     }
 
-    public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
-        });
-    }
-
-    public static Node wrapMargin(Node node, Insets insets) {
-        StackPane.setMargin(node, insets);
-        return new StackPane(node);
-    }
-
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
         if (field instanceof JFXTextField) {
             if (validate) {
@@ -393,7 +379,7 @@ public final class FXUtils {
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
         else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
             openCommand = "/usr/bin/xdg-open";
@@ -424,31 +410,15 @@ public final class FXUtils {
         });
     }
 
-    private static String which(String command) {
-        String path = System.getenv("PATH");
-        if (path == null)
-            return null;
-
-        for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
-            try {
-                Path program = Paths.get(item, command);
-                if (Files.isExecutable(program))
-                    return program.toRealPath().toString();
-            } catch (Throwable ignored) {
-            }
-        }
-        return null;
-    }
-
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
         String[] openCommands;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && which("dbus-send") != null)
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -514,10 +484,10 @@ public final class FXUtils {
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
-                    String path = which(browser);
+                    Path path = SystemUtils.which(browser);
                     if (path != null) {
                         try {
-                            Runtime.getRuntime().exec(new String[]{browser, link});
+                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
                             return;
                         } catch (Throwable ignored) {
                         }
@@ -528,7 +498,7 @@ public final class FXUtils {
             try {
                 java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                     try {
                         Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
                     } catch (IOException ex) {
@@ -582,7 +552,7 @@ public final class FXUtils {
             focusedListener = (observable, oldFocused, newFocused) -> {
                 if (oldFocused && !newFocused) {
                     if (textField.validate()) {
-                        uppdateProperty();
+                        updateProperty();
                     } else {
                         // Rollback to old value
                         updateTextField();
@@ -594,7 +564,7 @@ public final class FXUtils {
                 if (oldScene != null && newScene == null) {
                     // Component is being removed from scene
                     if (textField.validate()) {
-                        uppdateProperty();
+                        updateProperty();
                     }
                 }
             };
@@ -604,7 +574,7 @@ public final class FXUtils {
             };
         }
 
-        public void uppdateProperty() {
+        public void updateProperty() {
             String newText = textField.getText();
             @SuppressWarnings("unchecked")
             T newValue = converter == null ? (T) newText : converter.fromString(newText);
@@ -620,20 +590,80 @@ public final class FXUtils {
         }
     }
 
-    public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().bindBidirectional(property);
-    }
+    private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
+        private final WeakReference<JFXComboBox<E>> comboBoxRef;
+        private final WeakReference<Property<E>> propertyRef;
+        private final int hashCode;
 
-    public static void unbindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().unbindBidirectional(property);
-    }
+        private boolean updating = false;
 
-    public static void bindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().bindBidirectional(property);
-    }
+        private EnumBidirectionalBinding(JFXComboBox<E> comboBox, Property<E> property) {
+            this.comboBoxRef = new WeakReference<>(comboBox);
+            this.propertyRef = new WeakReference<>(property);
+            this.hashCode = System.identityHashCode(comboBox) ^ System.identityHashCode(property);
+        }
 
-    public static void unbindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().unbindBidirectional(property);
+        @Override
+        public void invalidated(Observable sourceProperty) {
+            if (!updating) {
+                final JFXComboBox<E> comboBox = comboBoxRef.get();
+                final Property<E> property = propertyRef.get();
+
+                if (comboBox == null || property == null) {
+                    if (comboBox != null) {
+                        comboBox.getSelectionModel().selectedItemProperty().removeListener(this);
+                    }
+
+                    if (property != null) {
+                        property.removeListener(this);
+                    }
+                } else {
+                    updating = true;
+                    try {
+                        if (property == sourceProperty) {
+                            E newValue = property.getValue();
+                            comboBox.getSelectionModel().select(newValue);
+                        } else {
+                            E newValue = comboBox.getSelectionModel().getSelectedItem();
+                            property.setValue(newValue);
+                        }
+                    } finally {
+                        updating = false;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return comboBoxRef.get() == null || propertyRef.get() == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof EnumBidirectionalBinding))
+                return false;
+
+            EnumBidirectionalBinding<?> that = (EnumBidirectionalBinding<?>) o;
+
+            final JFXComboBox<E> comboBox = this.comboBoxRef.get();
+            final Property<E> property = this.propertyRef.get();
+
+            final JFXComboBox<?> thatComboBox = that.comboBoxRef.get();
+            final Property<?> thatProperty = that.propertyRef.get();
+
+            if (comboBox == null || property == null || thatComboBox == null || thatProperty == null)
+                return false;
+
+            return comboBox == thatComboBox && property == thatProperty;
+        }
     }
 
     /**
@@ -642,20 +672,18 @@ public final class FXUtils {
      *
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
-     * @see #unbindEnum(JFXComboBox)
+     * @see #unbindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
     public static <T extends Enum<T>> void bindEnum(JFXComboBox<T> comboBox, Property<T> property) {
-        unbindEnum(comboBox);
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
 
-        T currentValue = property.getValue();
-        @SuppressWarnings("unchecked")
-        T[] enumConstants = (T[]) currentValue.getClass().getEnumConstants();
-        ChangeListener<Number> listener = (a, b, newValue) -> property.setValue(enumConstants[newValue.intValue()]);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
 
-        comboBox.getSelectionModel().select(currentValue.ordinal());
-        comboBox.getProperties().put("FXUtils.bindEnum.listener", listener);
-        comboBox.getSelectionModel().selectedIndexProperty().addListener(listener);
+        comboBox.getSelectionModel().select(property.getValue());
+        comboBox.getSelectionModel().selectedItemProperty().addListener(binding);
+        property.addListener(binding);
     }
 
     /**
@@ -666,11 +694,10 @@ public final class FXUtils {
      * @see #bindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
-    public static void unbindEnum(JFXComboBox<? extends Enum<?>> comboBox) {
-        @SuppressWarnings("unchecked")
-        ChangeListener<Number> listener = (ChangeListener<Number>) comboBox.getProperties().remove("FXUtils.bindEnum.listener");
-        if (listener != null)
-            comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
+    public static <T extends Enum<T>> void unbindEnum(JFXComboBox<T> comboBox, Property<T> property) {
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
     }
 
     public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
@@ -732,6 +759,8 @@ public final class FXUtils {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
         }
@@ -1010,6 +1039,8 @@ public final class FXUtils {
         }
     };
 
+    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -1024,6 +1055,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void copyOnDoubleClick(Labeled label) {
+        label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                String text = label.getText();
+                if (text != null && !text.isEmpty()) {
+                    copyText(label.getText());
+                    e.consume();
+                }
             }
         });
     }

@@ -18,15 +18,48 @@
 package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
+import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class SystemUtils {
-    private SystemUtils() {}
+    private SystemUtils() {
+    }
+
+    public static @Nullable Path which(String command) {
+        String path = System.getenv("PATH");
+        if (path == null)
+            return null;
+
+        try {
+            for (String item : path.split(File.pathSeparator)) {
+                try {
+                    Path program = Paths.get(item, command);
+                    if (Files.isExecutable(program))
+                        return program.toRealPath();
+                } catch (Throwable ignored) {
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+
+        return null;
+    }
 
     public static int callExternalProcess(String... command) throws IOException, InterruptedException {
         return callExternalProcess(Arrays.asList(command));
@@ -41,6 +74,39 @@ public final class SystemUtils {
         managedProcess.pumpInputStream(SystemUtils::onLogLine);
         managedProcess.pumpErrorStream(SystemUtils::onLogLine);
         return managedProcess.getProcess().waitFor();
+    }
+
+    public static String run(String... command) throws Exception {
+        return run(Arrays.asList(command),
+                inputStream -> IOUtils.readFullyAsString(inputStream, OperatingSystem.NATIVE_CHARSET));
+    }
+
+    public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {
+        File nul = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                ? new File("NUL")
+                : new File("/dev/null");
+
+        Process process = new ProcessBuilder(command)
+                .redirectInput(nul)
+                .redirectError(nul)
+                .start();
+        try {
+            InputStream inputStream = process.getInputStream();
+            CompletableFuture<T> future = CompletableFuture.supplyAsync(
+                    Lang.wrap(() -> convert.apply(inputStream)),
+                    Schedulers.io());
+
+            if (!process.waitFor(15, TimeUnit.SECONDS))
+                throw new TimeoutException();
+
+            if (process.exitValue() != 0)
+                throw new IOException("Bad exit code: " + process.exitValue());
+
+            return future.get();
+        } finally {
+            if (process.isAlive())
+                process.destroy();
+        }
     }
 
     public static boolean supportJVMAttachment() {

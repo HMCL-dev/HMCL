@@ -63,6 +63,7 @@ import java.util.stream.Collectors;
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -131,13 +132,14 @@ public final class LauncherHelper {
         boolean integrityCheck = repository.unmarkVersionLaunchedAbnormally(selectedVersion);
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
+        List<String> javaArguments = new ArrayList<>(0);
 
         AtomicReference<JavaRuntime> javaVersionRef = new AtomicReference<>();
 
         TaskExecutor executor = checkGameState(profile, setting, version.get())
                 .thenComposeAsync(java -> {
                     javaVersionRef.set(Objects.requireNonNull(java));
-                    version.set(NativePatcher.patchNative(version.get(), gameVersion.orElse(null), java, setting));
+                    version.set(NativePatcher.patchNative(repository, version.get(), gameVersion.orElse(null), java, setting, javaArguments));
                     if (setting.isNotCheckGame())
                         return null;
                     return Task.allOf(
@@ -155,7 +157,7 @@ public final class LauncherHelper {
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
                                 if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getMesaLoader(java, renderer);
+                                    Library lib = NativePatcher.getMesaLoader(java);
                                     if (lib == null)
                                         return null;
                                     File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
@@ -182,7 +184,8 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, scriptFile != null);
+                    LaunchOptions launchOptions = repository.getLaunchOptions(
+                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModManager(selectedVersion).getModsDirectory(), 10));
 
@@ -551,8 +554,9 @@ public final class LauncherHelper {
                 }
 
                 // Cannot allocate too much memory exceeding free space.
-                if (OperatingSystem.TOTAL_MEMORY > 0 && OperatingSystem.TOTAL_MEMORY < setting.getMaxMemory()) {
-                    suggestions.add(i18n("launch.advice.not_enough_space", OperatingSystem.TOTAL_MEMORY));
+                long totalMemorySizeMB = (long) MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+                if (totalMemorySizeMB > 0 && totalMemorySizeMB < setting.getMaxMemory()) {
+                    suggestions.add(i18n("launch.advice.not_enough_space", totalMemorySizeMB));
                 }
 
                 VersionNumber forgeVersion = analyzer.getVersion(LibraryAnalyzer.LibraryType.FORGE)
@@ -891,9 +895,6 @@ public final class LauncherHelper {
         }
 
     }
-
-    private static final String ORACLEJDK_DOWNLOAD_LINK = "https://www.java.com/download/";
-    private static final String OPENJDK_DOWNLOAD_LINK = "https://learn.microsoft.com/java/openjdk/download";
 
     public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
 

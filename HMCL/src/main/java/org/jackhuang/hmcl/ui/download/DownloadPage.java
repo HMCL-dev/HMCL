@@ -43,7 +43,10 @@ import org.jackhuang.hmcl.ui.construct.TabControl;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.*;
+import org.jackhuang.hmcl.ui.versions.DownloadListPage;
+import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
+import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -54,13 +57,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
@@ -77,10 +79,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
+        this(null);
+    }
+
+    public DownloadPage(String uploadVersion) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack(Versions::downloadModpackImpl, false);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, file) -> {
+                Versions.downloadModpackImpl(profile, uploadVersion, file);
+            }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Versions.importModpack());
@@ -100,43 +108,16 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
-        {
-            AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("game"));
-                        item.setLeftGraphic(wrap(SVG.GAMEPAD));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(newGameTab));
-                        item.setOnAction(e -> tab.select(newGameTab));
-                    })
-                    .addNavigationDrawerItem(settingsItem -> {
-                        settingsItem.setTitle(i18n("modpack"));
-                        settingsItem.setLeftGraphic(wrap(SVG.PACK));
-                        settingsItem.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modpackTab));
-                        settingsItem.setOnAction(e -> tab.select(modpackTab));
-                    })
-                    .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("mods"));
-                        item.setLeftGraphic(wrap(SVG.PUZZLE));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(modTab));
-                        item.setOnAction(e -> tab.select(modTab));
-                    })
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("resourcepack"));
-                        item.setLeftGraphic(wrap(SVG.TEXTURE_BOX));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(resourcePackTab));
-                        item.setOnAction(e -> tab.select(resourcePackTab));
-                    })
-                    .addNavigationDrawerItem(item -> {
-                        item.setTitle(i18n("world"));
-                        item.setLeftGraphic(wrap(SVG.EARTH));
-                        item.activeProperty().bind(tab.getSelectionModel().selectedItemProperty().isEqualTo(worldTab));
-                        item.setOnAction(e -> selectTabIfCurseForgeAvailable(worldTab));
-                    });
-            FXUtils.setLimitWidth(sideBar, 200);
-            setLeft(sideBar);
-        }
+        AdvancedListBox sideBar = new AdvancedListBox()
+                .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
+                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER)
+                .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2)
+                .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
+                .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION)
+                .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
+                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
+        FXUtils.setLimitWidth(sideBar, 200);
+        setLeft(sideBar);
 
         setCenter(transitionPane);
     }
@@ -158,7 +139,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    private static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
+    public static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
@@ -322,7 +303,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public Object finish(Map<String, Object> settings) {
-            settings.put("title", i18n("install.new_game"));
+            settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
             settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
