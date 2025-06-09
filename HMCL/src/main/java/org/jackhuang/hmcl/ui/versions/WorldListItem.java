@@ -65,7 +65,7 @@ public final class WorldListItem extends Control {
         FXUtils.openFolder(world.getFile().toFile());
     }
 
-    public void showPage() {
-        Controllers.navigate(new WorldPage(world, backupsDir));
+    public void showManagePage() {
+        Controllers.navigate(new WorldManagePage(world, backupsDir));
     }
 }

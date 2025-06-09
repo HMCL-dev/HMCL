@@ -43,7 +43,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
 
-        FXUtils.onClicked(skinnable, skinnable::showPage);
+        FXUtils.onClicked(skinnable, skinnable::showManagePage);
 
         World world = skinnable.getWorld();
 
@@ -95,6 +95,13 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             btnExport.getStyleClass().add("toggle-icon4");
             btnExport.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
             btnExport.setOnAction(event -> skinnable.export());
+
+            JFXButton btnManage = new JFXButton();
+            right.getChildren().add(btnManage);
+            FXUtils.installFastTooltip(btnManage, i18n("world.manage"));
+            btnManage.getStyleClass().add("toggle-icon4");
+            btnManage.setGraphic(SVG.SETTINGS.createIcon(Theme.blackFill(), -1));
+            btnManage.setOnAction(event -> skinnable.showManagePage());
         }
 
         getChildren().setAll(new RipplerContainer(root));

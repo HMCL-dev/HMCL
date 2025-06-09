@@ -41,7 +41,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class WorldPage extends DecoratorAnimatedPage implements DecoratorPage {
+public final class WorldManagePage extends DecoratorAnimatedPage implements DecoratorPage {
 
     private final ObjectProperty<State> state;
     private final World world;
@@ -56,7 +56,7 @@ public final class WorldPage extends DecoratorAnimatedPage implements DecoratorP
 
     private FileChannel sessionLockChannel;
 
-    public WorldPage(World world, Path backupsDir) {
+    public WorldManagePage(World world, Path backupsDir) {
         this.world = world;
         this.backupsDir = backupsDir;
 

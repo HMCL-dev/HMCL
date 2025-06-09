@@ -48,13 +48,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author Glavo
  */
 public final class WorldInfoPage extends SpinnerPane {
-    private final WorldPage worldPage;
+    private final WorldManagePage worldManagePage;
     private final World world;
     private CompoundTag levelDat;
 
-    public WorldInfoPage(WorldPage worldPage) {
-        this.worldPage = worldPage;
-        this.world = worldPage.getWorld();
+    public WorldInfoPage(WorldManagePage worldManagePage) {
+        this.worldManagePage = worldManagePage;
+        this.world = worldManagePage.getWorld();
 
         this.setLoading(true);
         Task.supplyAsync(this::loadWorldInfo)
@@ -172,7 +172,7 @@ public final class WorldInfoPage extends SpinnerPane {
             OptionToggleButton allowCheatsButton = new OptionToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
-                allowCheatsButton.setDisable(worldPage.isReadOnly());
+                allowCheatsButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = dataTag.get("allowCommands");
 
                 if (tag instanceof ByteTag) {
@@ -195,7 +195,7 @@ public final class WorldInfoPage extends SpinnerPane {
             OptionToggleButton generateFeaturesButton = new OptionToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
-                generateFeaturesButton.setDisable(worldPage.isReadOnly());
+                generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = worldGenSettings != null ? worldGenSettings.get("generate_features") : dataTag.get("MapFeatures");
 
                 if (tag instanceof ByteTag) {
@@ -222,7 +222,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 difficultyPane.setLeft(label);
 
                 JFXComboBox<Difficulty> difficultyBox = new JFXComboBox<>(Difficulty.items);
-                difficultyBox.setDisable(worldPage.isReadOnly());
+                difficultyBox.setDisable(worldManagePage.isReadOnly());
                 BorderPane.setAlignment(difficultyBox, Pos.CENTER_RIGHT);
                 difficultyPane.setRight(difficultyBox);
 
@@ -328,7 +328,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 playerGameTypePane.setLeft(label);
 
                 JFXComboBox<GameType> gameTypeBox = new JFXComboBox<>(GameType.items);
-                gameTypeBox.setDisable(worldPage.isReadOnly());
+                gameTypeBox.setDisable(worldManagePage.isReadOnly());
                 BorderPane.setAlignment(gameTypeBox, Pos.CENTER_RIGHT);
                 playerGameTypePane.setRight(gameTypeBox);
 
@@ -359,7 +359,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 healthPane.setLeft(label);
 
                 JFXTextField healthField = new JFXTextField();
-                healthField.setDisable(worldPage.isReadOnly());
+                healthField.setDisable(worldManagePage.isReadOnly());
                 healthField.setPrefWidth(50);
                 healthField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(healthField, Pos.CENTER_RIGHT);
@@ -393,7 +393,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 foodLevelPane.setLeft(label);
 
                 JFXTextField foodLevelField = new JFXTextField();
-                foodLevelField.setDisable(worldPage.isReadOnly());
+                foodLevelField.setDisable(worldManagePage.isReadOnly());
                 foodLevelField.setPrefWidth(50);
                 foodLevelField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(foodLevelField, Pos.CENTER_RIGHT);
@@ -427,7 +427,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 xpLevelPane.setLeft(label);
 
                 JFXTextField xpLevelField = new JFXTextField();
-                xpLevelField.setDisable(worldPage.isReadOnly());
+                xpLevelField.setDisable(worldManagePage.isReadOnly());
                 xpLevelField.setPrefWidth(50);
                 xpLevelField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(xpLevelField, Pos.CENTER_RIGHT);

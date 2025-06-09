@@ -69,10 +69,10 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
     private final boolean isReadOnly;
     private final Pattern backupFileNamePattern;
 
-    public WorldBackupsPage(WorldPage worldPage) {
-        this.world = worldPage.getWorld();
-        this.backupsDir = worldPage.getBackupsDir();
-        this.isReadOnly = worldPage.isReadOnly();
+    public WorldBackupsPage(WorldManagePage worldManagePage) {
+        this.world = worldManagePage.getWorld();
+        this.backupsDir = worldManagePage.getBackupsDir();
+        this.isReadOnly = worldManagePage.isReadOnly();
         this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
 
         refresh();

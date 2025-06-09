@@ -42,8 +42,8 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
     private final Path worldDir;
     private final Datapack datapack;
 
-    public DatapackListPage(WorldPage worldPage) {
-        this.worldDir = worldPage.getWorld().getFile();
+    public DatapackListPage(WorldManagePage worldManagePage) {
+        this.worldDir = worldManagePage.getWorld().getFile();
 
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
