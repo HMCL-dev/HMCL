@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -157,7 +156,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         Path path = Paths.get("hmcl-mod-update-list-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".csv").toAbsolutePath();
 
         Controllers.taskDialog(Task.runAsync(() -> {
-            CSVTable csvTable = CSVTable.createEmpty();
+            CSVTable csvTable = new CSVTable();
 
             csvTable.set(0, 0, "Source File Name");
             csvTable.set(1, 0, "Current Version");
@@ -171,7 +170,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 csvTable.set(3, i + 1, objects.get(i).source.get());
             }
 
-            csvTable.write(Files.newOutputStream(path));
+            csvTable.write(path);
 
             FXUtils.showFileInExplorer(path);
         }).whenComplete(Schedulers.javafx(), exception -> {

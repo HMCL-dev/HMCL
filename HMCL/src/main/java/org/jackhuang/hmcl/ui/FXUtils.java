@@ -31,7 +31,6 @@ import javafx.beans.value.*;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -84,7 +83,6 @@ import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -255,20 +253,6 @@ public final class FXUtils {
         });
     }
 
-    public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
-        });
-    }
-
-    public static Node wrapMargin(Node node, Insets insets) {
-        StackPane.setMargin(node, insets);
-        return new StackPane(node);
-    }
-
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
         if (field instanceof JFXTextField) {
             if (validate) {
@@ -395,7 +379,7 @@ public final class FXUtils {
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
         else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
             openCommand = "/usr/bin/xdg-open";
@@ -426,31 +410,15 @@ public final class FXUtils {
         });
     }
 
-    private static String which(String command) {
-        String path = System.getenv("PATH");
-        if (path == null)
-            return null;
-
-        for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
-            try {
-                Path program = Paths.get(item, command);
-                if (Files.isExecutable(program))
-                    return program.toRealPath().toString();
-            } catch (Throwable ignored) {
-            }
-        }
-        return null;
-    }
-
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
         String[] openCommands;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && which("dbus-send") != null)
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -516,10 +484,10 @@ public final class FXUtils {
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
-                    String path = which(browser);
+                    Path path = SystemUtils.which(browser);
                     if (path != null) {
                         try {
-                            Runtime.getRuntime().exec(new String[]{browser, link});
+                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
                             return;
                         } catch (Throwable ignored) {
                         }
@@ -530,7 +498,7 @@ public final class FXUtils {
             try {
                 java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                     try {
                         Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
                     } catch (IOException ex) {
@@ -620,22 +588,6 @@ public final class FXUtils {
             T value = property.getValue();
             textField.setText(converter == null ? (String) value : converter.toString(value));
         }
-    }
-
-    public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().unbindBidirectional(property);
-    }
-
-    public static void bindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().bindBidirectional(property);
-    }
-
-    public static void unbindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().unbindBidirectional(property);
     }
 
     private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
@@ -807,6 +759,8 @@ public final class FXUtils {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
         }
@@ -1085,6 +1039,8 @@ public final class FXUtils {
         }
     };
 
+    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -1099,6 +1055,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void copyOnDoubleClick(Labeled label) {
+        label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                String text = label.getText();
+                if (text != null && !text.isEmpty()) {
+                    copyText(label.getText());
+                    e.consume();
+                }
             }
         });
     }

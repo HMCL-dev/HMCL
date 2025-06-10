@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.mod.multimc;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
@@ -28,11 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Enumeration;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public final class MultiMCModpackProvider implements ModpackProvider {
     public static final MultiMCModpackProvider INSTANCE = new MultiMCModpackProvider();
@@ -55,28 +52,12 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
     }
 
-    private static boolean testPath(Path root) {
-        return Files.exists(root.resolve("instance.cfg"));
-    }
-
-    public static Path getRootPath(Path root) throws IOException {
-        if (testPath(root)) return root;
-        try (Stream<Path> stream = Files.list(root)) {
-            Path candidate = stream.filter(Files::isDirectory).findAny()
-                    .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
-            if (testPath(candidate)) return candidate;
-            throw new IOException("Not a valid MultiMC modpack");
-        }
-    }
-
-    private static String getRootEntryName(ZipFile file) throws IOException {
+    private static String getRootEntryName(ZipArchiveReader file) throws IOException {
         final String instanceFileName = "instance.cfg";
 
         if (file.getEntry(instanceFileName) != null) return "";
 
-        Enumeration<ZipArchiveEntry> entries = file.getEntries();
-        while (entries.hasMoreElements()) {
-            ZipArchiveEntry entry = entries.nextElement();
+        for (ZipArchiveEntry entry : file.getEntries()) {
             String entryName = entry.getName();
 
             int idx = entryName.indexOf('/');
@@ -90,7 +71,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipFile modpackFile, Path modpackPath, Charset encoding) throws IOException {
+    public Modpack readManifest(ZipArchiveReader modpackFile, Path modpackPath, Charset encoding) throws IOException {
         String rootEntryName = getRootEntryName(modpackFile);
         MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, rootEntryName);
 

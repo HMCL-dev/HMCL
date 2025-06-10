@@ -22,18 +22,12 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
-public class JFXHyperlink extends Hyperlink {
-
-    public JFXHyperlink() {
-        super();
-
-        setGraphic(SVG.LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 16, 16));
-    }
+public final class JFXHyperlink extends Hyperlink {
 
     public JFXHyperlink(String text) {
         super(text);
 
-        setGraphic(SVG.LAUNCH_OUTLINE.createIcon(Theme.blackFill(), 16, 16));
+        setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), 16));
     }
 
     public void setExternalLink(String externalLink) {

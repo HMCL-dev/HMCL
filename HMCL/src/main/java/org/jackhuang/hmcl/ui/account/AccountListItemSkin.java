@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -115,10 +116,10 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         });
         btnMove.getStyleClass().add("toggle-icon4");
         if (skinnable.getAccount().isPortable()) {
-            btnMove.setGraphic(SVG.EARTH.createIcon(Theme.blackFill(), -1, -1));
+            btnMove.setGraphic(SVG.PUBLIC.createIcon(Theme.blackFill(), -1));
             FXUtils.installFastTooltip(btnMove, i18n("account.move_to_global"));
         } else {
-            btnMove.setGraphic(SVG.EXPORT.createIcon(Theme.blackFill(), -1, -1));
+            btnMove.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
             FXUtils.installFastTooltip(btnMove, i18n("account.move_to_portable"));
         }
         spinnerMove.setContent(btnMove);
@@ -140,7 +141,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
                     .start();
         });
         btnRefresh.getStyleClass().add("toggle-icon4");
-        btnRefresh.setGraphic(SVG.REFRESH.createIcon(Theme.blackFill(), -1, -1));
+        btnRefresh.setGraphic(SVG.REFRESH.createIcon(Theme.blackFill(), -1));
         FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh"));
         spinnerRefresh.setContent(btnRefresh);
         right.getChildren().add(spinnerRefresh);
@@ -157,10 +158,9 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             }
         });
         btnUpload.getStyleClass().add("toggle-icon4");
-        btnUpload.setGraphic(SVG.HANGER.createIcon(Theme.blackFill(), -1, -1));
+        btnUpload.setGraphic(SVG.CHECKROOM.createIcon(Theme.blackFill(), -1));
         FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
-        spinnerUpload.managedProperty().bind(spinnerUpload.visibleProperty());
-        spinnerUpload.visibleProperty().bind(skinnable.canUploadSkin());
+        btnUpload.disableProperty().bind(Bindings.not(skinnable.canUploadSkin()));
         spinnerUpload.setContent(btnUpload);
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
@@ -170,7 +170,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
         btnUpload.getStyleClass().add("toggle-icon4");
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
-        btnCopyUUID.setGraphic(SVG.COPY.createIcon(Theme.blackFill(), -1, -1));
+        btnCopyUUID.setGraphic(SVG.CONTENT_COPY.createIcon(Theme.blackFill(), -1));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
         spinnerCopyUUID.setContent(btnCopyUUID);
         right.getChildren().add(spinnerCopyUUID);
@@ -179,7 +179,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnRemove.setOnAction(e -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::remove, null));
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.DELETE_OUTLINE.createIcon(Theme.blackFill(), -1, -1));
+        btnRemove.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1));
         FXUtils.installFastTooltip(btnRemove, i18n("button.delete"));
         right.getChildren().add(btnRemove);
         root.setRight(right);

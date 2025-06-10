@@ -212,6 +212,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setFitToHeight(true);
 
             HBox descriptionPane = new HBox(8);
+            descriptionPane.setMinHeight(Region.USE_PREF_SIZE);
             descriptionPane.setAlignment(Pos.CENTER);
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
@@ -390,15 +391,15 @@ public class DownloadPage extends Control implements DecoratorPage {
                     switch (dataItem.getVersionType()) {
                         case Alpha:
                             content.getTags().add(i18n("mods.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                         case Beta:
                             content.getTags().add(i18n("mods.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                         case Release:
                             content.getTags().add(i18n("mods.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 24, 24));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                     }
 
@@ -439,9 +440,25 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModVersion extends JFXDialogLayout {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
-            boolean isModpack = selfPage.repository.getType() == RemoteModRepository.Type.MODPACK;
+            RemoteModRepository.Type type = selfPage.repository.getType();
 
-            this.setHeading(new HBox(new Label(i18n(isModpack ? "modpack.download.title" : "mods.download.title", version.getName()))));
+            String title;
+            switch (type) {
+                case WORLD:
+                    title = "world.download.title";
+                    break;
+                case MODPACK:
+                    title = "modpack.download.title";
+                    break;
+                case RESOURCE_PACK:
+                    title = "resourcepack.download.title";
+                    break;
+                case MOD:
+                default:
+                    title = "mods.download.title";
+                    break;
+            }
+            this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -463,14 +480,17 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXButton downloadButton = new JFXButton(isModpack ? i18n("install.modpack") : i18n("mods.install"));
-            downloadButton.getStyleClass().add("dialog-accept");
-            downloadButton.setOnAction(e -> {
-                if (isModpack || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
-                    fireEvent(new DialogCloseEvent());
-                }
-                selfPage.download(version);
-            });
+            JFXButton downloadButton = null;
+            if (selfPage.callback != null) {
+                downloadButton = new JFXButton(type == RemoteModRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
+                downloadButton.getStyleClass().add("dialog-accept");
+                downloadButton.setOnAction(e -> {
+                    if (type == RemoteModRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
+                        fireEvent(new DialogCloseEvent());
+                    }
+                    selfPage.download(version);
+                });
+            }
 
             JFXButton saveAsButton = new JFXButton(i18n("mods.save_as"));
             saveAsButton.getStyleClass().add("dialog-accept");
@@ -485,7 +505,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.getStyleClass().add("dialog-cancel");
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            this.setActions(downloadButton, saveAsButton, cancelButton);
+            if (downloadButton == null) {
+                this.setActions(saveAsButton, cancelButton);
+            } else {
+                this.setActions(downloadButton, saveAsButton, cancelButton);
+            }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));

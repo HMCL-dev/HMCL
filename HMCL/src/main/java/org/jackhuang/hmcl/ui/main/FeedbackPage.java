@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+import org.jackhuang.hmcl.Metadata;
+
 public class FeedbackPage extends SpinnerPane {
 
     public FeedbackPage() {
@@ -45,7 +47,7 @@ public class FeedbackPage extends SpinnerPane {
             users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             users.setTitle(i18n("feedback.qq_group"));
             users.setSubtitle(i18n("feedback.qq_group.statement"));
-            users.setExternalLink("https://docs.hmcl.net/groups.html");
+            users.setExternalLink(Metadata.GROUPS_URL);
 
             IconedTwoLineListItem github = new IconedTwoLineListItem();
             github.setImage(FXUtils.newBuiltinImage("/assets/img/github.png"));

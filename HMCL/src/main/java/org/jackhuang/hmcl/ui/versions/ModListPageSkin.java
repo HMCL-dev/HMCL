@@ -141,11 +141,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             // Toolbar Normal
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("mods.add"), SVG.PLUS, skinnable::add),
+                    createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
-                    createToolbarButton2(i18n("download"), SVG.DOWNLOAD_OUTLINE, skinnable::download),
-                    createToolbarButton2(i18n("search"), SVG.MAGNIFY, () -> changeToolbar(searchBar))
+                    createToolbarButton2(i18n("download"), SVG.DOWNLOAD, skinnable::download),
+                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
             // Toolbar Selecting
@@ -290,7 +290,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             StringBuilder message = new StringBuilder(localModFile.getFileName());
             if (isNotBlank(localModFile.getGameVersion()))
-                message.append(", ").append(i18n("game.version")).append(": ").append(localModFile.getGameVersion());
+                message.append(", ").append(i18n("mods.game.version")).append(": ").append(localModFile.getGameVersion());
             if (isNotBlank(localModFile.getAuthors()))
                 message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
             this.message = message.toString();
@@ -398,6 +398,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
+            FXUtils.copyOnDoubleClick(description);
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
@@ -445,7 +446,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
-                                            null
+                                            (profile, version, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
                                     ));
                                 });
                                 button.setDisable(false);
@@ -519,15 +520,15 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             setSelectable();
 
             restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(Theme.blackFill(), 24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFORMATION_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
 
             container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
 

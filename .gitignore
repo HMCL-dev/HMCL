@@ -42,7 +42,6 @@ minecraft-exported-crash-info*
 .nb-gradle
 
 *.exe
-!/HMCL/src/main/resources/assets/HMCLauncher.exe
 
 # macos
 .DS_Store
@@ -53,3 +52,4 @@ minecraft-exported-crash-info*
 # test
 /hmcl.json
 /.hmcl.json
+/.hmcl/

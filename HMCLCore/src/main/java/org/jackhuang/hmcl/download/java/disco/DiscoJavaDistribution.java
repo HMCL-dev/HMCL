@@ -40,12 +40,12 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             EnumSet.of(JDK, JRE),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64, PPC64LE, S390X, SPARCV9)),
-            pair(OSX, EnumSet.of(X86_64, ARM64))),
+            pair(MACOS, EnumSet.of(X86_64, ARM64))),
     LIBERICA("BellSoft Liberica", "liberica", "BellSoft",
             EnumSet.of(JDK, JRE, JDKFX, JREFX),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64LE)),
-            pair(OSX, EnumSet.of(X86_64, ARM64))) {
+            pair(MACOS, EnumSet.of(X86_64, ARM64))) {
         @Override
         public boolean testVersion(DiscoJavaRemoteVersion version) {
             if (!super.testVersion(version))
@@ -59,23 +59,23 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             EnumSet.of(JDK, JRE, JDKFX, JREFX),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64LE)),
-            pair(OSX, EnumSet.of(X86_64, ARM64))),
+            pair(MACOS, EnumSet.of(X86_64, ARM64))),
     GRAALVM("Oracle GraalVM", "graalvm", "Oracle",
             EnumSet.of(JDK),
             pair(WINDOWS, EnumSet.of(X86_64)),
             pair(LINUX, EnumSet.of(X86_64, ARM64)),
-            pair(OSX, EnumSet.of(X86_64, ARM64))),
+            pair(MACOS, EnumSet.of(X86_64, ARM64))),
     SEMERU("IBM Semeru (OpenJ9)", "semeru", "IBM",
             EnumSet.of(JDK, JRE),
             pair(WINDOWS, EnumSet.of(X86_64)),
             pair(LINUX, EnumSet.of(X86_64, ARM64, PPC64LE, S390X)),
-            pair(OSX, EnumSet.of(X86_64, ARM64))
+            pair(MACOS, EnumSet.of(X86_64, ARM64))
     ),
     CORRETTO("Amazon Corretto", "corretto", "Amazon",
             EnumSet.of(JDK),
             pair(WINDOWS, EnumSet.of(X86_64)),
             pair(LINUX, EnumSet.of(X86_64, ARM64)),
-            pair(OSX, EnumSet.of(X86_64, ARM64))
+            pair(MACOS, EnumSet.of(X86_64, ARM64))
     );
 
     public static DiscoJavaDistribution of(String name) {
