@@ -18,10 +18,12 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXPopup;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -29,8 +31,7 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
@@ -41,14 +42,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class WorldListItemSkin extends SkinBase<WorldListItem> {
 
+    private final BorderPane root;
+
     public WorldListItemSkin(WorldListItem skinnable) {
         super(skinnable);
 
-        FXUtils.onClicked(skinnable, skinnable::showManagePage);
-
         World world = skinnable.getWorld();
 
-        BorderPane root = new BorderPane();
+        root = new BorderPane();
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8));
 
@@ -83,39 +84,53 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             root.setRight(right);
             right.setAlignment(Pos.CENTER_RIGHT);
 
-            JFXButton btnSeedMap = new JFXButton();
-            right.getChildren().add(btnSeedMap);
-            FXUtils.installFastTooltip(btnSeedMap, i18n("world.seed_map"));
-            btnSeedMap.getStyleClass().add("toggle-icon4");
-            btnSeedMap.setGraphic(SVG.EXPLORE.createIcon(Theme.blackFill(), -1));
-            if (world.getSeed() == null || world.getGameVersion() == null || GameVersionNumber.compare(world.getGameVersion(), "1.7") < 0) {
-                btnSeedMap.setDisable(true);
-            } else {
-                btnSeedMap.setOnAction(event -> skinnable.showSeedMap());
-            }
-
-            JFXButton btnExport = new JFXButton();
-            right.getChildren().add(btnExport);
-            FXUtils.installFastTooltip(btnExport, i18n("world.export"));
-            btnExport.getStyleClass().add("toggle-icon4");
-            btnExport.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
-            btnExport.setOnAction(event -> skinnable.export());
-
-            JFXButton btnReveal = new JFXButton();
-            right.getChildren().add(btnReveal);
-            FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
-            btnReveal.setOnAction(event -> skinnable.reveal());
-
-            JFXButton btnManage = new JFXButton();
-            right.getChildren().add(btnManage);
-            FXUtils.installFastTooltip(btnManage, i18n("world.manage"));
-            btnManage.getStyleClass().add("toggle-icon4");
-            btnManage.setGraphic(SVG.SETTINGS.createIcon(Theme.blackFill(), -1));
-            btnManage.setOnAction(event -> skinnable.showManagePage());
+            JFXButton btnMore = new JFXButton();
+            right.getChildren().add(btnMore);
+            btnMore.getStyleClass().add("toggle-icon4");
+            btnMore.setGraphic(SVG.MORE_VERT.createIcon(Theme.blackFill(), -1));
+            btnMore.setOnAction(event -> showPopupMenu(JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight()));
         }
 
-        getChildren().setAll(new RipplerContainer(root));
+        RipplerContainer container = new RipplerContainer(root);
+        container.setOnMouseClicked(event -> {
+            if (event.getClickCount() != 1)
+                return;
+
+            if (event.getButton() == MouseButton.PRIMARY)
+                skinnable.showManagePage();
+            else if (event.getButton() == MouseButton.SECONDARY)
+                showPopupMenu(JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+        });
+
+        getChildren().setAll(container);
+    }
+
+    // Popup Menu
+
+    public void showPopupMenu(JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        PopupMenu popupMenu = new PopupMenu();
+        JFXPopup popup = new JFXPopup(popupMenu);
+
+        WorldListItem item = getSkinnable();
+        World world = item.getWorld();
+
+        popupMenu.getContent().addAll(
+                new IconedMenuItem(SVG.SETTINGS, i18n("world.manage"), item::showManagePage, popup));
+
+
+        if (world.getSeed() != null && world.getGameVersion() != null && GameVersionNumber.compare(world.getGameVersion(), "1.7") >= 0) {
+            popupMenu.getContent().addAll(
+                    new MenuSeparator(),
+                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), item::openSeedMap, popup),
+                    new IconedMenuItem(SVG.LANDSCAPE, i18n("world.chunkbase.biome"), item::openBiomeFinder, popup)
+            );
+        }
+
+        popupMenu.getContent().addAll(
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), item::export, popup),
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), item::reveal, popup));
+
+        popup.show(root, JFXPopup.PopupVPosition.TOP, hPosition, initOffsetX, initOffsetY);
     }
 }

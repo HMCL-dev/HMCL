@@ -67,23 +67,40 @@ public final class WorldListItem extends Control {
         FXUtils.openFolder(world.getFile().toFile());
     }
 
-    public void showSeedMap() {
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(Objects.requireNonNull(world.getGameVersion()));
-        long seed = Objects.requireNonNull(world.getSeed());
+    public void openChunkBaseApp(String app, String platform) {
+        StringBuilder builder = new StringBuilder("https://www.chunkbase.com/apps/");
+        builder.append(app);
+        builder.append("#seed=").append(world.getSeed());
 
-        String versionSelector = "1_7"; // 1.7 is the minimum Minecraft version supported by chunkbase
+        if (platform != null) {
+            builder.append("&platform=").append(platform);
+        }
+
+        FXUtils.openLink(builder.toString());
+    }
+
+    private String getChunkbaseBiomePlatform() {
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(Objects.requireNonNull(world.getGameVersion()));
+
         for (String candidateVersion : new String[]{
                 "1.21.5", "1.21.4", "1.21.2", "1.21", "1.20", "1.19.3", "1.19",
                 "1.18", "1.17", "1.16", "1.15", "1.14", "1.13", "1.12", "1.11",
                 "1.10", "1.9", "1.8"
         }) {
             if (gameVersion.compareTo(candidateVersion) >= 0) {
-                versionSelector = candidateVersion.replace('.', '_');
-                break;
+                return "java_" + candidateVersion.replace('.', '_');
             }
         }
 
-        FXUtils.openLink(String.format("https://www.chunkbase.com/apps/seed-map#seed=%d&platform=java_%s", seed, versionSelector));
+        return "java_1_7"; // 1.7 is the minimum Minecraft version supported by chunkbase
+    }
+
+    public void openSeedMap() {
+        openChunkBaseApp("seed-map", getChunkbaseBiomePlatform());
+    }
+
+    public void openBiomeFinder() {
+        openChunkBaseApp("biome-finder", getChunkbaseBiomePlatform());
     }
 
     public void showManagePage() {
