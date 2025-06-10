@@ -24,6 +24,7 @@ import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +51,7 @@ public final class World {
     private String gameVersion;
     private long lastPlayed;
     private Image icon;
+    private Long seed;
     private boolean isLocked;
 
     public World(Path file) throws IOException {
@@ -66,7 +68,7 @@ public final class World {
     private void loadFromDirectory() throws IOException {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");
-        getWorldName(levelDat);
+        loadWorldInfo(levelDat);
         isLocked = isLocked(getSessionLockFile());
 
         Path iconFile = file.resolve("icon.png");
@@ -109,6 +111,10 @@ public final class World {
         return gameVersion;
     }
 
+    public @Nullable Long getSeed() {
+        return seed;
+    }
+
     public Image getIcon() {
         return icon;
     }
@@ -122,7 +128,7 @@ public final class World {
         if (!Files.exists(levelDat))
             throw new IOException("Not a valid world zip file since level.dat cannot be found.");
 
-        getWorldName(levelDat);
+        loadWorldInfo(levelDat);
 
         Path iconFile = root.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -155,7 +161,7 @@ public final class World {
         }
     }
 
-    private void getWorldName(Path levelDat) throws IOException {
+    private void loadWorldInfo(Path levelDat) throws IOException {
         CompoundTag nbt = parseLevelDat(levelDat);
 
         CompoundTag data = nbt.get("Data");
@@ -178,6 +184,20 @@ public final class World {
 
             if (version.get("Name") instanceof StringTag)
                 gameVersion = version.<StringTag>get("Name").getValue();
+        }
+
+        Tag worldGenSettings = data.get("WorldGenSettings");
+        if (worldGenSettings instanceof CompoundTag) {
+            Tag seedTag = ((CompoundTag) worldGenSettings).get("seed");
+            if (seedTag instanceof LongTag) {
+                seed = ((LongTag) seedTag).getValue();
+            }
+        }
+        if (seed == null) {
+            Tag seedTag = data.get("RandomSeed");
+            if (seedTag instanceof LongTag) {
+                seed = ((LongTag) seedTag).getValue();
+            }
         }
     }
 

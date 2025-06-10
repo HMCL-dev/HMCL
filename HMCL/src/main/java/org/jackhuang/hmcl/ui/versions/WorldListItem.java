@@ -24,9 +24,11 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -63,6 +65,25 @@ public final class WorldListItem extends Control {
 
     public void reveal() {
         FXUtils.openFolder(world.getFile().toFile());
+    }
+
+    public void showSeedMap() {
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(Objects.requireNonNull(world.getGameVersion()));
+        long seed = Objects.requireNonNull(world.getSeed());
+
+        String versionSelector = "1_7"; // 1.7 is the minimum Minecraft version supported by chunkbase
+        for (String candidateVersion : new String[]{
+                "1.21.5", "1.21.4", "1.21.2", "1.21", "1.20", "1.19.3", "1.19",
+                "1.18", "1.17", "1.16", "1.15", "1.14", "1.13", "1.12", "1.11",
+                "1.10", "1.9", "1.8"
+        }) {
+            if (gameVersion.compareTo(candidateVersion) >= 0) {
+                versionSelector = candidateVersion.replace('.', '_');
+                break;
+            }
+        }
+
+        FXUtils.openLink(String.format("https://www.chunkbase.com/apps/seed-map#seed=%d&platform=java_%s", seed, versionSelector));
     }
 
     public void showManagePage() {

@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
 
@@ -82,12 +83,16 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             root.setRight(right);
             right.setAlignment(Pos.CENTER_RIGHT);
 
-            JFXButton btnReveal = new JFXButton();
-            right.getChildren().add(btnReveal);
-            FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-            btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
-            btnReveal.setOnAction(event -> skinnable.reveal());
+            JFXButton btnSeedMap = new JFXButton();
+            right.getChildren().add(btnSeedMap);
+            FXUtils.installFastTooltip(btnSeedMap, i18n("world.seed_map"));
+            btnSeedMap.getStyleClass().add("toggle-icon4");
+            btnSeedMap.setGraphic(SVG.EXPLORE.createIcon(Theme.blackFill(), -1));
+            if (world.getSeed() == null || world.getGameVersion() == null || GameVersionNumber.compare(world.getGameVersion(), "1.7") < 0) {
+                btnSeedMap.setDisable(true);
+            } else {
+                btnSeedMap.setOnAction(event -> skinnable.showSeedMap());
+            }
 
             JFXButton btnExport = new JFXButton();
             right.getChildren().add(btnExport);
@@ -95,6 +100,13 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             btnExport.getStyleClass().add("toggle-icon4");
             btnExport.setGraphic(SVG.OUTPUT.createIcon(Theme.blackFill(), -1));
             btnExport.setOnAction(event -> skinnable.export());
+
+            JFXButton btnReveal = new JFXButton();
+            right.getChildren().add(btnReveal);
+            FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
+            btnReveal.getStyleClass().add("toggle-icon4");
+            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+            btnReveal.setOnAction(event -> skinnable.reveal());
 
             JFXButton btnManage = new JFXButton();
             right.getChildren().add(btnManage);
