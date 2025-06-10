@@ -95,21 +95,19 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox();
-        if (world.getSeed() != null) {
-            PopupMenu chunkBaseMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(chunkBaseMenu);
+        if (ChunkBaseApp.isSupported(world)) {
+            PopupMenu popupMenu = new PopupMenu();
+            JFXPopup popup = new JFXPopup(popupMenu);
 
-            if (ChunkBaseApp.isSupported(world)) {
-                chunkBaseMenu.getContent().addAll(
-                        new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
-                        new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
-                        new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
-                );
+            popupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
+                    new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
+                    new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
+            );
 
-                if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
-                    chunkBaseMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"),
-                            () -> ChunkBaseApp.openEndCityFinder(world), popup));
-                }
+            if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
+                popupMenu.getContent().add(
+                        new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
             }
 
             toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
@@ -118,7 +116,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                     chunkBaseMenuItem.getWidth(), 0)));
         }
-
         toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile().toFile()), null);
 
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
