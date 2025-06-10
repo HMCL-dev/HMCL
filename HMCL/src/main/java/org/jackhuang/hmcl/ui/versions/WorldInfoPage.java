@@ -20,17 +20,24 @@ package org.jackhuang.hmcl.ui.versions;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.effect.BoxBlur;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 
 import java.io.IOException;
@@ -123,9 +130,22 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane randomSeedPane = new BorderPane();
             {
+
+                HBox left = new HBox(8);
+                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                left.setAlignment(Pos.CENTER_LEFT);
+                randomSeedPane.setLeft(left);
+
                 Label label = new Label(i18n("world.info.random_seed"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                randomSeedPane.setLeft(label);
+
+                SimpleBooleanProperty visibility = new SimpleBooleanProperty();
+                StackPane visibilityButton = new StackPane();
+                visibilityButton.setCursor(Cursor.HAND);
+                FXUtils.setLimitWidth(visibilityButton, 12);
+                FXUtils.setLimitHeight(visibilityButton, 12);
+                FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
+
+                left.getChildren().setAll(label, visibilityButton);
 
                 Label randomSeedLabel = new Label();
                 FXUtils.copyOnDoubleClick(randomSeedLabel);
@@ -136,6 +156,14 @@ public final class WorldInfoPage extends SpinnerPane {
                 if (tag instanceof LongTag) {
                     randomSeedLabel.setText(tag.getValue().toString());
                 }
+
+                BoxBlur blur = new BoxBlur();
+                blur.setIterations(3);
+                FXUtils.onChangeAndOperate(visibility, isVisibility -> {
+                    SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
+                    visibilityButton.getChildren().setAll(icon.createIcon(Theme.blackFill(), 12));
+                    randomSeedLabel.setEffect(isVisibility ? null : blur);
+                });
             }
 
             BorderPane lastPlayedPane = new BorderPane();
