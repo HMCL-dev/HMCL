@@ -24,11 +24,9 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -65,42 +63,6 @@ public final class WorldListItem extends Control {
 
     public void reveal() {
         FXUtils.openFolder(world.getFile().toFile());
-    }
-
-    public void openChunkBaseApp(String app, String platform) {
-        StringBuilder builder = new StringBuilder("https://www.chunkbase.com/apps/");
-        builder.append(app);
-        builder.append("#seed=").append(world.getSeed());
-
-        if (platform != null) {
-            builder.append("&platform=").append(platform);
-        }
-
-        FXUtils.openLink(builder.toString());
-    }
-
-    private String getChunkbaseBiomePlatform() {
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(Objects.requireNonNull(world.getGameVersion()));
-
-        for (String candidateVersion : new String[]{
-                "1.21.5", "1.21.4", "1.21.2", "1.21", "1.20", "1.19.3", "1.19",
-                "1.18", "1.17", "1.16", "1.15", "1.14", "1.13", "1.12", "1.11",
-                "1.10", "1.9", "1.8"
-        }) {
-            if (gameVersion.compareTo(candidateVersion) >= 0) {
-                return "java_" + candidateVersion.replace('.', '_');
-            }
-        }
-
-        return "java_1_7"; // 1.7 is the minimum Minecraft version supported by chunkbase
-    }
-
-    public void openSeedMap() {
-        openChunkBaseApp("seed-map", getChunkbaseBiomePlatform());
-    }
-
-    public void openBiomeFinder() {
-        openChunkBaseApp("biome-finder", getChunkbaseBiomePlatform());
     }
 
     public void showManagePage() {

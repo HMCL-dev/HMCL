@@ -52,6 +52,7 @@ public final class World {
     private long lastPlayed;
     private Image icon;
     private Long seed;
+    private boolean largeBiomes;
     private boolean isLocked;
 
     public World(Path file) throws IOException {
@@ -113,6 +114,10 @@ public final class World {
 
     public @Nullable Long getSeed() {
         return seed;
+    }
+
+    public boolean isLargeBiomes() {
+        return largeBiomes;
     }
 
     public Image getIcon() {
@@ -198,6 +203,13 @@ public final class World {
             if (seedTag instanceof LongTag) {
                 seed = ((LongTag) seedTag).getValue();
             }
+        }
+
+        // FIXME: Only work for 1.15 and below
+        if (data.get("generatorName") instanceof StringTag) {
+            largeBiomes = "largeBiomes".equals(data.<StringTag>get("generatorName").getValue());
+        } else {
+            largeBiomes = false;
         }
     }
 

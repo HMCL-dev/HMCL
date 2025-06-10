@@ -17,18 +17,23 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.geometry.Insets;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.ChunkBaseApp;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -76,15 +81,48 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         transitionPane.setContent(worldInfoTab.getNode(), ContainerAnimations.NONE);
         FXUtils.onChange(header.getSelectionModel().selectedItemProperty(), newValue ->
                 transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE));
+        setCenter(transitionPane);
+
+        BorderPane left = new BorderPane();
+        FXUtils.setLimitWidth(left, 200);
+        VBox.setVgrow(left, Priority.ALWAYS);
+        setLeft(left);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE)
                 .addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
-        FXUtils.setLimitWidth(sideBar, 200);
+        left.setTop(sideBar);
 
-        setLeft(sideBar);
-        setCenter(transitionPane);
+        AdvancedListBox toolbar = new AdvancedListBox();
+        if (world.getSeed() != null) {
+            PopupMenu chunkBaseMenu = new PopupMenu();
+            JFXPopup popup = new JFXPopup(chunkBaseMenu);
+
+            if (ChunkBaseApp.isSupported(world)) {
+                chunkBaseMenu.getContent().addAll(
+                        new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
+                        new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
+                        new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
+                );
+
+                if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
+                    chunkBaseMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"),
+                            () -> ChunkBaseApp.openEndCityFinder(world), popup));
+                }
+            }
+
+            toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
+                    chunkBaseMenuItem.setOnAction(e ->
+                            popup.show(chunkBaseMenuItem,
+                                    JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                    chunkBaseMenuItem.getWidth(), 0)));
+        }
+
+        toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile().toFile()), null);
+
+        BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
+        left.setBottom(toolbar);
 
         // Does it need to be done in the background?
         try {

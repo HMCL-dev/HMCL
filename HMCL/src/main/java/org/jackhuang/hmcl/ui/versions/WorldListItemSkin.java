@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.ChunkBaseApp;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
@@ -117,13 +118,18 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
         popupMenu.getContent().addAll(
                 new IconedMenuItem(SVG.SETTINGS, i18n("world.manage"), item::showManagePage, popup));
 
-
-        if (world.getSeed() != null && world.getGameVersion() != null && GameVersionNumber.compare(world.getGameVersion(), "1.7") >= 0) {
+        if (ChunkBaseApp.isSupported(world)) {
             popupMenu.getContent().addAll(
                     new MenuSeparator(),
-                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), item::openSeedMap, popup),
-                    new IconedMenuItem(SVG.LANDSCAPE, i18n("world.chunkbase.biome"), item::openBiomeFinder, popup)
+                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
+                    new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
+                    new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
             );
+
+            if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
+                popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"),
+                        () -> ChunkBaseApp.openEndCityFinder(world), popup));
+            }
         }
 
         popupMenu.getContent().addAll(
