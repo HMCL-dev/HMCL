@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.*;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -28,10 +29,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * A class that describes a Minecraft dependency.
@@ -40,13 +38,47 @@ import java.util.Optional;
  */
 @Immutable
 public class Library implements Comparable<Library>, Validation {
+    /**
+     * <p>A possible native descriptors can be: [variant-]os[-key]</p>
+     *
+     * <p>
+     * Variant can be empty string, 'native', or 'natives'.
+     * Key can be empty string, system arch, or system arch bit count.
+     * </p>
+     */
+    private static final String[] POSSIBLE_NATIVE_DESCRIPTORS;
+
+    static {
+        String[] keys = {
+                "",
+                Architecture.SYSTEM_ARCH.name().toLowerCase(Locale.ROOT),
+                Architecture.SYSTEM_ARCH.getBits().getBit()
+        }, variants = {"", "native", "natives"};
+
+        POSSIBLE_NATIVE_DESCRIPTORS = new String[keys.length * variants.length];
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < keys.length; i++) {
+            for (int j = 0; j < variants.length; j++) {
+                if (!variants[j].isEmpty()) {
+                    builder.append(variants[j]).append('-');
+                }
+                builder.append(OperatingSystem.CURRENT_OS.getMojangName());
+                if (!keys[i].isEmpty()) {
+                    builder.append('-').append(keys[i]);
+                }
+
+                POSSIBLE_NATIVE_DESCRIPTORS[i * variants.length + j] = builder.toString();
+                builder.setLength(0);
+            }
+        }
+    }
 
     @SerializedName("name")
     private final Artifact artifact;
     private final String url;
     private final LibrariesDownloadInfo downloads;
     private final ExtractRules extract;
-    private final Map<OperatingSystem, String> natives;
+    private final Map<String, String> natives;
     private final List<CompatibilityRule> rules;
     private final List<String> checksums;
 
@@ -64,7 +96,7 @@ public class Library implements Comparable<Library>, Validation {
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
-    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
+    public Library(Artifact artifact, String url, LibrariesDownloadInfo downloads, List<String> checksums, ExtractRules extract, Map<String, String> natives, List<CompatibilityRule> rules, String hint, String filename) {
         this.artifact = artifact;
         this.url = url;
         this.downloads = downloads;
@@ -93,13 +125,27 @@ public class Library implements Comparable<Library>, Validation {
     }
 
     public String getClassifier() {
-        if (artifact.getClassifier() == null)
-            if (natives != null && natives.containsKey(OperatingSystem.CURRENT_OS))
-                return natives.get(OperatingSystem.CURRENT_OS).replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
-            else
-                return null;
-        else
+        if (artifact.getClassifier() == null) {
+            if (natives != null) {
+                for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
+                    String nd = natives.get(nativeDescriptor);
+                    if (nd != null) {
+                        return nd.replace("${arch}", Architecture.SYSTEM_ARCH.getBits().getBit());
+                    }
+                }
+            } else if (downloads != null && downloads.getClassifiers() != null) {
+                for (String nativeDescriptor : POSSIBLE_NATIVE_DESCRIPTORS) {
+                    LibraryDownloadInfo info = downloads.getClassifiers().get(nativeDescriptor);
+                    if (info != null) {
+                        return nativeDescriptor;
+                    }
+                }
+            }
+
+            return null;
+        } else {
             return artifact.getClassifier();
+        }
     }
 
     public ExtractRules getExtract() {
@@ -111,10 +157,17 @@ public class Library implements Comparable<Library>, Validation {
     }
 
     public boolean isNative() {
-        return natives != null && appliesToCurrentEnvironment();
+        if (!appliesToCurrentEnvironment()) {
+            return false;
+        }
+        if (natives != null) {
+            return true;
+        }
+
+        return downloads != null && downloads.getClassifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
-    protected LibraryDownloadInfo getRawDownloadInfo() {
+    public LibraryDownloadInfo getRawDownloadInfo() {
         if (downloads != null) {
             if (isNative())
                 return downloads.getClassifiers().get(getClassifier());
@@ -123,6 +176,10 @@ public class Library implements Comparable<Library>, Validation {
         } else {
             return null;
         }
+    }
+
+    public Artifact getArtifact() {
+        return artifact;
     }
 
     public String getPath() {
@@ -137,10 +194,26 @@ public class Library implements Comparable<Library>, Validation {
         LibraryDownloadInfo temp = getRawDownloadInfo();
         String path = getPath();
         return new LibraryDownloadInfo(path,
-                Optional.ofNullable(temp).map(LibraryDownloadInfo::getUrl).orElse(Optional.ofNullable(url).orElse(Constants.DEFAULT_LIBRARY_URL) + path),
+                computePath(temp, path),
                 temp != null ? temp.getSha1() : null,
                 temp != null ? temp.getSize() : 0
         );
+    }
+
+    private String computePath(LibraryDownloadInfo raw, String path) {
+        if (raw != null) {
+            String url = raw.getUrl();
+            if (url != null) {
+                return url;
+            }
+        }
+
+        String repo = Lang.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
+        if (!repo.endsWith("/")) {
+            repo += '/';
+        }
+
+        return repo + path;
     }
 
     public boolean hasDownloadURL() {
@@ -159,6 +232,7 @@ public class Library implements Comparable<Library>, Validation {
 
     /**
      * Hint for how to locate the library file.
+     *
      * @return null for default, "local" for location in version/&lt;version&gt;/libraries/filename
      */
     @Nullable
@@ -168,6 +242,7 @@ public class Library implements Comparable<Library>, Validation {
 
     /**
      * Available when hint is "local"
+     *
      * @return the filename of the local library in version/&lt;version&gt;/libraries/$filename
      */
     @Nullable

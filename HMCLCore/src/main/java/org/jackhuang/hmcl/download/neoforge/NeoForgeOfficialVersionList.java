@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Lang.wrap;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemoteVersion> {
     private final DownloadProvider downloadProvider;
@@ -56,8 +57,20 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                 }
 
                 for (String version : results[1].versions) {
-                    int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
-                    String mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                    String mcVersion;
+
+                    try {
+                        int si1 = version.indexOf('.'), si2 = version.indexOf('.', version.indexOf('.') + 1);
+                        int majorVersion = Integer.parseInt(version.substring(0, si1));
+                        if (majorVersion == 0) { // Snapshot version.
+                            mcVersion = version.substring(si1 + 1, si2);
+                        } else {
+                            mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                        }
+                    } catch (RuntimeException e) {
+                        LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);
+                        continue;
+                    }
 
                     versions.put(mcVersion, new NeoForgeRemoteVersion(
                             mcVersion, NeoForgeRemoteVersion.normalize(version),

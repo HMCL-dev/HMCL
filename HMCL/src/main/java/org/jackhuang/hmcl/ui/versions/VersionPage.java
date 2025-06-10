@@ -59,6 +59,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<InstallerListPage> installerListTab = new TabHeader.Tab<>("installerListTab");
     private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
+    private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
@@ -71,8 +72,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         installerListTab.setNodeSupplier(loadVersionFor(InstallerListPage::new));
         modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
         worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
+        schematicsTab.setNodeSupplier(loadVersionFor(SchematicsPage::new));
 
-        tab = new TabHeader(versionSettingsTab, installerListTab, modListTab, worldListTab);
+        tab = new TabHeader(versionSettingsTab, installerListTab, modListTab, worldListTab, schematicsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
@@ -135,6 +137,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             modListTab.getNode().loadVersion(profile, version);
         if (worldListTab.isInitialized())
             worldListTab.getNode().loadVersion(profile, version);
+        if (schematicsTab.isInitialized())
+            schematicsTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
     }
 
@@ -271,11 +275,20 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
                 worldListItem.setOnAction(e -> control.tab.select(control.worldListTab));
 
+                AdvancedListItem schematicsListItem = new AdvancedListItem();
+                schematicsListItem.getStyleClass().add("navigation-drawer-item");
+                schematicsListItem.setTitle(i18n("schematics.manage"));
+                schematicsListItem.setLeftGraphic(wrap(SVG.SCHEMA));
+                schematicsListItem.setActionButtonVisible(false);
+                schematicsListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.schematicsTab));
+                schematicsListItem.setOnAction(e -> control.tab.select(control.schematicsTab));
+
                 AdvancedListBox sideBar = new AdvancedListBox()
                         .add(versionSettingsItem)
                         .add(installerListItem)
                         .add(modListItem)
-                        .add(worldListItem);
+                        .add(worldListItem)
+                        .add(schematicsListItem);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
@@ -286,6 +299,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
                         new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
                         new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
+                        new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), () -> control.onBrowse("schematics"), browsePopup),
                         new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
                         new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
                         new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup)

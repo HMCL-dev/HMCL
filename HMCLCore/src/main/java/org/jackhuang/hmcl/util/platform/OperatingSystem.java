@@ -17,10 +17,13 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.KeyValuePairProperties;
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinTypes;
+import org.jackhuang.hmcl.util.platform.windows.WindowsVersion;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -29,10 +32,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,26 +51,37 @@ public enum OperatingSystem {
      */
     LINUX("linux"),
     /**
-     * Mac OS X.
+     * macOS.
      */
-    OSX("osx"),
+    MACOS("macos", "osx"),
     /**
      * FreeBSD.
      */
-    FREEBSD("freebsd"),
+    FREEBSD("freebsd", "linux"),
     /**
      * Unknown operating system.
      */
     UNKNOWN("universal");
 
     private final String checkedName;
+    private final String mojangName;
 
     OperatingSystem(String checkedName) {
         this.checkedName = checkedName;
+        this.mojangName = checkedName;
+    }
+
+    OperatingSystem(String checkedName, String mojangName) {
+        this.checkedName = checkedName;
+        this.mojangName = mojangName;
     }
 
     public String getCheckedName() {
         return checkedName;
+    }
+
+    public String getMojangName() {
+        return mojangName;
     }
 
     public boolean isLinuxOrBSD() {
@@ -87,20 +98,6 @@ public enum OperatingSystem {
     public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
 
     /**
-     * The total memory/MB this computer have.
-     */
-    public static final int TOTAL_MEMORY;
-
-    /**
-     * The suggested memory size/MB for Minecraft to allocate.
-     */
-    public static final int SUGGESTED_MEMORY;
-
-    public static final String PATH_SEPARATOR = File.pathSeparator;
-    public static final String FILE_SEPARATOR = File.separator;
-    public static final String LINE_SEPARATOR = System.lineSeparator();
-
-    /**
      * The system default charset.
      */
     public static final Charset NATIVE_CHARSET;
@@ -110,6 +107,11 @@ public enum OperatingSystem {
      * When the version number is not recognized or on another system, the value will be -1.
      */
     public static final int SYSTEM_BUILD_NUMBER;
+
+    /**
+     * The version number is non-null if and only if the operating system is {@linkplain #WINDOWS}.
+     */
+    public static final @Nullable WindowsVersion WINDOWS_VERSION;
 
     /**
      * The name of current operating system.
@@ -129,8 +131,6 @@ public enum OperatingSystem {
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
     private static final String[] INVALID_RESOURCE_FULLNAMES;
-
-    private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
     static {
         String nativeEncoding = System.getProperty("native.encoding");
@@ -157,58 +157,71 @@ public enum OperatingSystem {
         NATIVE_CHARSET = nativeCharset;
 
         if (CURRENT_OS == WINDOWS) {
-            String versionNumber = null;
-            int buildNumber = -1;
+            int codePage = -1;
+            WindowsVersion windowsVersion = null;
 
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                    Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
-                            .matcher(reader.readLine().trim());
-
-                    if (matcher.find()) {
-                        versionNumber = matcher.group("version");
-                        buildNumber = Integer.parseInt(matcher.group("build"));
-                    }
-                }
-                process.destroy();
-            } catch (Throwable ignored) {
+            Kernel32 kernel32 = Kernel32.INSTANCE;
+            // Get Windows version number
+            if (kernel32 != null) {
+                WinTypes.OSVERSIONINFOEXW osVersionInfo = new WinTypes.OSVERSIONINFOEXW();
+                if (kernel32.GetVersionExW(osVersionInfo)) {
+                    windowsVersion = new WindowsVersion(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.dwBuildNumber);
+                } else
+                    System.err.println("Failed to obtain OS version number (" + kernel32.GetLastError() + ")");
             }
 
-            if (versionNumber == null) {
-                versionNumber = System.getProperty("os.version");
+            if (windowsVersion == null) {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                        Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
+                                .matcher(reader.readLine().trim());
+                        if (matcher.find())
+                            windowsVersion = new WindowsVersion(matcher.group("version"));
+                    }
+                    process.destroy();
+                } catch (Throwable ignored) {
+                }
+            }
+
+            if (windowsVersion == null)
+                windowsVersion = new WindowsVersion(System.getProperty("os.version"));
+
+            // Get Code Page
+
+            if (kernel32 != null)
+                codePage = kernel32.GetACP();
+            else {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                        Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
+                                .matcher(reader.readLine().trim());
+
+                        if (matcher.find())
+                            codePage = Integer.parseInt(matcher.group("cp"));
+                    }
+                    process.destroy();
+                } catch (Throwable ignored) {
+                }
             }
 
             String osName = System.getProperty("os.name");
 
             // Java 17 or earlier recognizes Windows 11 as Windows 10
-            if (osName.equals("Windows 10") && buildNumber >= 22000) {
+            if (osName.equals("Windows 10") && windowsVersion.compareTo(WindowsVersion.WINDOWS_11) >= 0)
                 osName = "Windows 11";
-            }
-
-            int codePage = -1;
-            try {
-                Process process = Runtime.getRuntime().exec(new String[]{"chcp.com"});
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
-                    Matcher matcher = Pattern.compile("(?<cp>[0-9]+)$")
-                            .matcher(reader.readLine().trim());
-
-                    if (matcher.find()) {
-                        codePage = Integer.parseInt(matcher.group("cp"));
-                    }
-                }
-                process.destroy();
-            } catch (Throwable ignored) {
-            }
 
             SYSTEM_NAME = osName;
-            SYSTEM_VERSION = versionNumber;
-            SYSTEM_BUILD_NUMBER = buildNumber;
+            SYSTEM_VERSION = windowsVersion.toString();
+            SYSTEM_BUILD_NUMBER = windowsVersion.getBuild();
+            WINDOWS_VERSION = windowsVersion;
             CODE_PAGE = codePage;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
             SYSTEM_VERSION = System.getProperty("os.version");
             SYSTEM_BUILD_NUMBER = -1;
+            WINDOWS_VERSION = null;
             CODE_PAGE = -1;
         }
 
@@ -217,7 +230,7 @@ public enum OperatingSystem {
             Path osReleaseFile = Paths.get("/etc/os-release");
             if (Files.exists(osReleaseFile)) {
                 try {
-                    osRelease = KeyValuePairProperties.load(osReleaseFile);
+                    osRelease = KeyValuePairUtils.loadProperties(osReleaseFile);
                 } catch (IOException e) {
                     e.printStackTrace(System.err);
                 }
@@ -225,13 +238,6 @@ public enum OperatingSystem {
         }
         OS_RELEASE_NAME = osRelease.get("NAME");
         OS_RELEASE_PRETTY_NAME = osRelease.get("PRETTY_NAME");
-
-        PhysicalMemoryStatus physicalMemoryStatus = getPhysicalMemoryStatus();
-        TOTAL_MEMORY = physicalMemoryStatus != PhysicalMemoryStatus.INVALID
-                ? (int) (physicalMemoryStatus.getTotal() / 1024 / 1024)
-                : 1024;
-
-        SUGGESTED_MEMORY = TOTAL_MEMORY >= 32768 ? 8192 : (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
 
         // setup the invalid names
         if (CURRENT_OS == WINDOWS) {
@@ -260,7 +266,7 @@ public enum OperatingSystem {
         name = name.trim().toLowerCase(Locale.ROOT);
 
         if (name.contains("mac") || name.contains("darwin") || name.contains("osx"))
-            return OSX;
+            return MACOS;
         else if (name.contains("win"))
             return WINDOWS;
         else if (name.contains("solaris") || name.contains("linux") || name.contains("unix") || name.contains("sunos"))
@@ -272,79 +278,7 @@ public enum OperatingSystem {
     }
 
     public static boolean isWindows7OrLater() {
-        if (CURRENT_OS != WINDOWS) {
-            return false;
-        }
-
-        int major;
-        int dotIndex = SYSTEM_VERSION.indexOf('.');
-        try {
-            if (dotIndex < 0) {
-                major = Integer.parseInt(SYSTEM_VERSION);
-            } else {
-                major = Integer.parseInt(SYSTEM_VERSION.substring(0, dotIndex));
-            }
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-
-        // Windows XP:      NT 5.1~5.2
-        // Windows Vista:   NT 6.0
-        // Windows 7:       NT 6.1
-
-        return major >= 6 && !SYSTEM_VERSION.startsWith("6.0");
-    }
-
-    @SuppressWarnings("deprecation")
-    public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
-        if (CURRENT_OS == LINUX) {
-            try {
-                long free = 0, available = 0, total = 0;
-                for (String line : Files.readAllLines(Paths.get("/proc/meminfo"))) {
-                    Matcher matcher = MEMINFO_PATTERN.matcher(line);
-                    if (matcher.find()) {
-                        String key = matcher.group("key");
-                        String value = matcher.group("value");
-                        if ("MemAvailable".equals(key)) {
-                            available = Long.parseLong(value) * 1024;
-                        }
-                        if ("MemFree".equals(key)) {
-                            free = Long.parseLong(value) * 1024;
-                        }
-                        if ("MemTotal".equals(key)) {
-                            total = Long.parseLong(value) * 1024;
-                        }
-                    }
-                }
-                if (total > 0) {
-                    return new PhysicalMemoryStatus(total, available > 0 ? available : free);
-                }
-            } catch (IOException e) {
-                e.printStackTrace(System.err);
-            }
-        }
-
-        try {
-            java.lang.management.OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-            if (bean instanceof com.sun.management.OperatingSystemMXBean) {
-                com.sun.management.OperatingSystemMXBean sunBean =
-                        (com.sun.management.OperatingSystemMXBean)
-                                java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-                return new PhysicalMemoryStatus(sunBean.getTotalPhysicalMemorySize(), sunBean.getFreePhysicalMemorySize());
-            }
-        } catch (NoClassDefFoundError ignored) {
-        }
-        return PhysicalMemoryStatus.INVALID;
-    }
-
-    @SuppressWarnings("removal")
-    public static void forceGC() {
-        System.gc();
-        try {
-            System.runFinalization();
-            System.gc();
-        } catch (NoSuchMethodError ignored) {
-        }
+        return WINDOWS_VERSION != null && WINDOWS_VERSION.compareTo(WindowsVersion.WINDOWS_7) >= 0;
     }
 
     public static Path getWorkingDirectory(String folder) {
@@ -356,7 +290,7 @@ public enum OperatingSystem {
             case WINDOWS:
                 String appdata = System.getenv("APPDATA");
                 return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
-            case OSX:
+            case MACOS:
                 return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
             default:
                 return Paths.get(home, folder).toAbsolutePath();
@@ -400,47 +334,4 @@ public enum OperatingSystem {
         return true;
     }
 
-    public static class PhysicalMemoryStatus {
-        private final long total;
-        private final long available;
-
-        public PhysicalMemoryStatus(long total, long available) {
-            this.total = total;
-            this.available = available;
-        }
-
-        public long getTotal() {
-            return total;
-        }
-
-        public double getTotalGB() {
-            return toGigaBytes(total);
-        }
-
-        public long getUsed() {
-            return hasAvailable() ? total - available : 0;
-        }
-
-        public double getUsedGB() {
-            return toGigaBytes(getUsed());
-        }
-
-        public long getAvailable() {
-            return available;
-        }
-
-        public double getAvailableGB() {
-            return toGigaBytes(available);
-        }
-
-        public boolean hasAvailable() {
-            return available >= 0;
-        }
-
-        public static double toGigaBytes(long bytes) {
-            return bytes / 1024. / 1024. / 1024.;
-        }
-
-        public static final PhysicalMemoryStatus INVALID = new PhysicalMemoryStatus(0, -1);
-    }
 }

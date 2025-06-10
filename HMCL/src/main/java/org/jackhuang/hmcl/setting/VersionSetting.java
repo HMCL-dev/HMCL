@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -47,7 +48,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable, Observable {
 
-    private transient ObservableHelper helper = new ObservableHelper(this);
+    private static final int SUGGESTED_MEMORY;
+
+    static {
+        double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+        SUGGESTED_MEMORY = totalMemoryMB >= 32768
+                ? 8192
+                : Integer.max((int) (Math.round(totalMemoryMB / 4.0 / 128.0) * 128), 256);
+    }
+
+    private final transient ObservableHelper helper = new ObservableHelper(this);
 
     public VersionSetting() {
         PropertyUtils.attachListener(this, helper);
@@ -219,7 +229,7 @@ public final class VersionSetting implements Cloneable, Observable {
         permSizeProperty.set(permSize);
     }
 
-    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
+    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", SUGGESTED_MEMORY);
 
     public IntegerProperty maxMemoryProperty() {
         return maxMemoryProperty;
@@ -734,7 +744,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("javaArgs", src.getJavaArgs());
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
             obj.addProperty("environmentVariables", src.getEnvironmentVariables());
-            obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? OperatingSystem.SUGGESTED_MEMORY : src.getMaxMemory());
+            obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
             obj.addProperty("autoMemory", src.isAutoMemory());
             obj.addProperty("permSize", src.getPermSize());
@@ -801,8 +811,8 @@ public final class VersionSetting implements Cloneable, Observable {
                 return null;
             JsonObject obj = (JsonObject) json;
 
-            int maxMemoryN = parseJsonPrimitive(Optional.ofNullable(obj.get("maxMemory")).map(JsonElement::getAsJsonPrimitive).orElse(null), OperatingSystem.SUGGESTED_MEMORY);
-            if (maxMemoryN <= 0) maxMemoryN = OperatingSystem.SUGGESTED_MEMORY;
+            int maxMemoryN = parseJsonPrimitive(Optional.ofNullable(obj.get("maxMemory")).map(JsonElement::getAsJsonPrimitive).orElse(null), SUGGESTED_MEMORY);
+            if (maxMemoryN <= 0) maxMemoryN = SUGGESTED_MEMORY;
 
             VersionSetting vs = new VersionSetting();
 

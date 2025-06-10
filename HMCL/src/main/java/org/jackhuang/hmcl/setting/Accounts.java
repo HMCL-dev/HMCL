@@ -35,9 +35,7 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -175,7 +173,7 @@ public final class Accounts {
     }
 
     private static void loadGlobalAccountStorages() {
-        Path globalAccountsFile = Metadata.HMCL_DIRECTORY.resolve("accounts.json");
+        Path globalAccountsFile = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("accounts.json");
         if (Files.exists(globalAccountsFile)) {
             try (Reader reader = Files.newBufferedReader(globalAccountsFile)) {
                 globalAccountStorages.setAll(Config.CONFIG_GSON.fromJson(reader, listTypeOf(mapTypeOf(Object.class, Object.class))));
@@ -184,21 +182,8 @@ public final class Accounts {
             }
         }
 
-        InvocationDispatcher<String> dispatcher = InvocationDispatcher.runOn(Lang::thread, json -> {
-            LOG.info("Saving global accounts");
-            synchronized (globalAccountsFile) {
-                try {
-                    synchronized (globalAccountsFile) {
-                        FileUtils.saveSafely(globalAccountsFile, json);
-                    }
-                } catch (IOException e) {
-                    LOG.error("Failed to save global accounts", e);
-                }
-            }
-        });
-
         globalAccountStorages.addListener(onInvalidating(() ->
-                dispatcher.accept(Config.CONFIG_GSON.toJson(globalAccountStorages))));
+                FileSaver.save(globalAccountsFile, Config.CONFIG_GSON.toJson(globalAccountStorages))));
     }
 
     private static Account parseAccount(Map<Object, Object> storage) {
@@ -388,7 +373,7 @@ public final class Accounts {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
         if (authlibinjectorLocation == null) {
             return new AuthlibInjectorDownloader(
-                    Metadata.HMCL_DIRECTORY.resolve("authlib-injector.jar"),
+                    Metadata.DEPENDENCIES_DIRECTORY.resolve("universal").resolve("authlib-injector.jar"),
                     DownloadProviders::getDownloadProvider) {
                 @Override
                 public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {
@@ -397,7 +382,7 @@ public final class Accounts {
                         return local;
                     }
                     // search authlib-injector.jar in current directory, it's used as a fallback
-                    return parseArtifact(Paths.get("authlib-injector.jar"));
+                    return parseArtifact(Metadata.CURRENT_DIRECTORY.resolve("authlib-injector.jar"));
                 }
             };
         } else {
@@ -489,6 +474,8 @@ public final class Accounts {
                 return i18n("account.methods.microsoft.error.country_unavailable");
             } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
                 return i18n("account.methods.microsoft.error.missing_xbox_account");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.BANNED) {
+                return i18n("account.methods.microsoft.error.banned");
             } else {
                 return i18n("account.methods.microsoft.error.unknown", errorCode);
             }
