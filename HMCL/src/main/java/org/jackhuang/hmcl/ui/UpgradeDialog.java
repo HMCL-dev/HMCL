@@ -51,7 +51,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
         Task.supplyAsync(Schedulers.io(), () -> {
             Document document = Jsoup.parse(new URL(url), 30 * 1000);
             Node node = document.selectFirst("#nowchange");
-            if (node == null)
+            if (node == null || !node.nodeName().equalsIgnoreCase("h1"))
                 throw new IOException("Cannot find #nowchange in document");
 
             HTMLRenderer renderer = new HTMLRenderer(uri -> {
