@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.validation.base.ValidatorBase;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
@@ -35,6 +38,9 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+
+import javafx.util.Duration;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -83,6 +89,7 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
 
+    private boolean showMethodSwitcher;
     private AccountFactory<?> factory;
 
     private final Label lblErrorMessage;
@@ -104,16 +111,22 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     }
 
     public CreateAccountPane(AccountFactory<?> factory) {
-        boolean showMethodSwitcher = factory == null;
         if (factory == null) {
-            String preferred = config().getPreferredLoginType();
-            try {
-                factory = Accounts.getAccountFactory(preferred);
-            } catch (IllegalArgumentException e) {
-                factory = Accounts.FACTORY_OFFLINE;
+            if (AccountListPage.RESTRICTED.get()) {
+                showMethodSwitcher = false;
+                factory = Accounts.FACTORY_MICROSOFT;
+            } else {
+                showMethodSwitcher = true;
+                String preferred = config().getPreferredLoginType();
+                try {
+                    factory = Accounts.getAccountFactory(preferred);
+                } catch (IllegalArgumentException e) {
+                    factory = Accounts.FACTORY_OFFLINE;
+                }
             }
+        } else {
+            showMethodSwitcher = false;
         }
-
         this.factory = factory;
 
         {
@@ -255,16 +268,33 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         };
 
         if (factory instanceof OfflineAccountFactory && username != null && !USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
-            Controllers.confirm(
+            JFXButton btnYes = new JFXButton(i18n("button.ok"));
+            btnYes.getStyleClass().add("dialog-error");
+            btnYes.setOnAction(e -> doCreate.run());
+            btnYes.setDisable(true);
+
+            int countdown = 10;
+            KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
+            for (int i = 0; i < countdown; i++) {
+                keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                        new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
+            }
+            keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
+                    new KeyValue(btnYes.textProperty(), i18n("button.ok")),
+                    new KeyValue(btnYes.disableProperty(), false));
+
+            Timeline timeline = new Timeline(keyFrames);
+            Controllers.confirmAction(
                     i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
                     MessageDialogPane.MessageType.WARNING,
-                    doCreate,
+                    btnYes,
                     () -> {
-                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                        timeline.stop();
                         body.setDisable(false);
                         spinner.hideSpinner();
                     }
             );
+            timeline.play();
         } else {
             doCreate.run();
         }
@@ -310,6 +340,27 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 }
             });
 
+                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
+                    runInFX(() -> deviceCode.set(value));
+                }));
+                FlowPane box = new FlowPane();
+                box.setHgap(8);
+                JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
+                birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
+                JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
+                profileLink.setExternalLink("https://account.live.com/editprof.aspx");
+                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
+                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
+                JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
+                deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
+                JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
+                forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
+                JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
+                createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
+                JFXHyperlink bannedQueryLink = new JFXHyperlink(i18n("account.methods.ban_query"));
+                bannedQueryLink.setExternalLink("https://enforcement.xbox.com/enforcement/showenforcementhistory");
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink, bannedQueryLink);
+                GridPane.setColumnSpan(box, 2);
             holder.add(Accounts.MICROSOFT_OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
                 runInFX(() -> deviceCode.set(value));
             }));
@@ -340,6 +391,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             btnAccept.setDisable(false);
 
+                JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
+                officialWebsite.setExternalLink(Metadata.PUBLISH_URL);
             detailsPane = vbox;
         } else if (factory == Accounts.FACTORY_LITTLE_SKIN) {
             VBox vbox = new VBox(8);
@@ -467,7 +520,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.PLUS.createIcon(Theme.blackFill(), 20, 20));
+                btnAddServer.setGraphic(SVG.ADD.createIcon(Theme.blackFill(), 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());

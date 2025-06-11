@@ -41,6 +41,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpgradeDialog extends JFXDialogLayout {
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
+        maxWidthProperty().bind(Controllers.getScene().widthProperty().multiply(0.7));
+        maxHeightProperty().bind(Controllers.getScene().heightProperty().multiply(0.7));
+
         setHeading(new Label(i18n("update.changelog")));
         setBody(new ProgressIndicator());
 
@@ -48,7 +51,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
         Task.supplyAsync(Schedulers.io(), () -> {
             Document document = Jsoup.parse(new URL(url), 30 * 1000);
             Node node = document.selectFirst("#nowchange");
-            if (node == null)
+            if (node == null || !"h1".equals(node.nodeName()))
                 throw new IOException("Cannot find #nowchange in document");
 
             HTMLRenderer renderer = new HTMLRenderer(uri -> {
@@ -57,15 +60,20 @@ public final class UpgradeDialog extends JFXDialogLayout {
             });
 
             do {
+                if ("h1".equals(node.nodeName()) && !"nowchange".equals(node.attr("id"))) {
+                    break;
+                }
                 renderer.appendNode(node);
                 node = node.nextSibling();
             } while (node != null);
 
+            renderer.mergeLineBreaks();
             return renderer.render();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 ScrollPane scrollPane = new ScrollPane(result);
                 scrollPane.setFitToWidth(true);
+                FXUtils.smoothScrolling(scrollPane);
                 setBody(scrollPane);
             } else {
                 LOG.warning("Failed to load update log, trying to open it in browser");

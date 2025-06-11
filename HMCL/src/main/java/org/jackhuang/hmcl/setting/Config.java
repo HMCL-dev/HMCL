@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.ToNumberPolicy;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -47,7 +48,7 @@ import java.net.Proxy;
 import java.util.Map;
 import java.util.TreeMap;
 
-public final class Config implements Cloneable, Observable {
+public final class Config implements Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
 
@@ -60,6 +61,7 @@ public final class Config implements Cloneable, Observable {
             .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
             .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
             .setPrettyPrinting()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
     @Nullable
@@ -221,11 +223,6 @@ public final class Config implements Cloneable, Observable {
 
     public String toJson() {
         return CONFIG_GSON.toJson(this);
-    }
-
-    @Override
-    public Config clone() {
-        return fromJson(this.toJson());
     }
 
     // Getters & Setters & Properties

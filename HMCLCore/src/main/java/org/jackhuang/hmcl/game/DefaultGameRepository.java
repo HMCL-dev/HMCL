@@ -95,10 +95,15 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public File getLibraryFile(Version version, Library lib) {
-        if ("local".equals(lib.getHint()) && lib.getFileName() != null)
-            return new File(getVersionRoot(version.getId()), "libraries/" + lib.getFileName());
-        else
-            return new File(getLibrariesDirectory(version), lib.getPath());
+        if ("local".equals(lib.getHint())) {
+            if (lib.getFileName() != null) {
+                return new File(getVersionRoot(version.getId()), "libraries/" + lib.getFileName());
+            }
+
+            return new File(getVersionRoot(version.getId()), "libraries/" + lib.getArtifact().getFileName());
+        }
+
+        return new File(getLibrariesDirectory(version), lib.getPath());
     }
 
     public Path getArtifactFile(Version version, Artifact artifact) {
@@ -516,6 +521,18 @@ public class DefaultGameRepository implements GameRepository {
 
     public ModManager getModManager(String version) {
         return new ModManager(this, version);
+    }
+
+    public Path getSavesDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("saves");
+    }
+
+    public Path getBackupsDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("backups");
+    }
+
+    public Path getSchematicsDirectory(String id) {
+        return getRunDirectory(id).toPath().resolve("schematics");
     }
 
     @Override

@@ -181,6 +181,7 @@ public final class JavaInstallPage extends WizardSinglePage {
             pane.setLeft(new Label(name));
 
             Label valueLabel = FXUtils.truncatedLabel(value, 60);
+            FXUtils.copyOnDoubleClick(valueLabel);
             BorderPane.setAlignment(valueLabel, Pos.CENTER_RIGHT);
             pane.setCenter(valueLabel);
 

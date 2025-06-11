@@ -20,13 +20,16 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.*;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.ObservableHelper;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -36,22 +39,28 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
  */
 @JsonAdapter(VersionSetting.Serializer.class)
-public final class VersionSetting implements Cloneable {
+public final class VersionSetting implements Cloneable, Observable {
 
-    private boolean global = false;
+    private static final int SUGGESTED_MEMORY;
 
-    public boolean isGlobal() {
-        return global;
+    static {
+        double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+        SUGGESTED_MEMORY = totalMemoryMB >= 32768
+                ? 8192
+                : Integer.max((int) (Math.round(totalMemoryMB / 4.0 / 128.0) * 128), 256);
     }
 
-    public void setGlobal(boolean global) {
-        this.global = global;
+    private final transient ObservableHelper helper = new ObservableHelper(this);
+
+    public VersionSetting() {
+        PropertyUtils.attachListener(this, helper);
     }
 
     private final BooleanProperty usesGlobalProperty = new SimpleBooleanProperty(this, "usesGlobal", true);
@@ -220,7 +229,7 @@ public final class VersionSetting implements Cloneable {
         permSizeProperty.set(permSize);
     }
 
-    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
+    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", SUGGESTED_MEMORY);
 
     public IntegerProperty maxMemoryProperty() {
         return maxMemoryProperty;
@@ -708,79 +717,21 @@ public final class VersionSetting implements Cloneable {
         }
     }
 
-    public void addPropertyChangedListener(InvalidationListener listener) {
-        usesGlobalProperty.addListener(listener);
-        javaVersionProperty.addListener(listener);
-        javaDirProperty.addListener(listener);
-        wrapperProperty.addListener(listener);
-        permSizeProperty.addListener(listener);
-        maxMemoryProperty.addListener(listener);
-        minMemoryProperty.addListener(listener);
-        autoMemory.addListener(listener);
-        preLaunchCommandProperty.addListener(listener);
-        postExitCommand.addListener(listener);
-        javaArgsProperty.addListener(listener);
-        minecraftArgsProperty.addListener(listener);
-        environmentVariablesProperty.addListener(listener);
-        noJVMArgsProperty.addListener(listener);
-        notCheckGameProperty.addListener(listener);
-        notCheckJVMProperty.addListener(listener);
-        notPatchNativesProperty.addListener(listener);
-        showLogsProperty.addListener(listener);
-        serverIpProperty.addListener(listener);
-        fullscreenProperty.addListener(listener);
-        widthProperty.addListener(listener);
-        heightProperty.addListener(listener);
-        gameDirTypeProperty.addListener(listener);
-        gameDirProperty.addListener(listener);
-        processPriorityProperty.addListener(listener);
-        rendererProperty.addListener(listener);
-        useNativeGLFW.addListener(listener);
-        useNativeOpenAL.addListener(listener);
-        launcherVisibilityProperty.addListener(listener);
-        defaultJavaPathProperty.addListener(listener);
-        nativesDirProperty.addListener(listener);
-        nativesDirTypeProperty.addListener(listener);
-        versionIcon.addListener(listener);
+    @Override
+    public void addListener(InvalidationListener listener) {
+        helper.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(InvalidationListener listener) {
+        helper.removeListener(listener);
     }
 
     @Override
     public VersionSetting clone() {
-        VersionSetting versionSetting = new VersionSetting();
-        versionSetting.setUsesGlobal(isUsesGlobal());
-        versionSetting.setJavaVersionType(getJavaVersionType());
-        versionSetting.setJavaVersion(getJavaVersion());
-        versionSetting.setDefaultJavaPath(getDefaultJavaPath());
-        versionSetting.setJavaDir(getJavaDir());
-        versionSetting.setWrapper(getWrapper());
-        versionSetting.setPermSize(getPermSize());
-        versionSetting.setMaxMemory(getMaxMemory());
-        versionSetting.setMinMemory(getMinMemory());
-        versionSetting.setAutoMemory(isAutoMemory());
-        versionSetting.setPreLaunchCommand(getPreLaunchCommand());
-        versionSetting.setPostExitCommand(getPostExitCommand());
-        versionSetting.setJavaArgs(getJavaArgs());
-        versionSetting.setMinecraftArgs(getMinecraftArgs());
-        versionSetting.setEnvironmentVariables(getEnvironmentVariables());
-        versionSetting.setNoJVMArgs(isNoJVMArgs());
-        versionSetting.setNotCheckGame(isNotCheckGame());
-        versionSetting.setNotCheckJVM(isNotCheckJVM());
-        versionSetting.setNotPatchNatives(isNotPatchNatives());
-        versionSetting.setShowLogs(isShowLogs());
-        versionSetting.setServerIp(getServerIp());
-        versionSetting.setFullscreen(isFullscreen());
-        versionSetting.setWidth(getWidth());
-        versionSetting.setHeight(getHeight());
-        versionSetting.setGameDirType(getGameDirType());
-        versionSetting.setGameDir(getGameDir());
-        versionSetting.setProcessPriority(getProcessPriority());
-        versionSetting.setRenderer(getRenderer());
-        versionSetting.setUseNativeGLFW(isUseNativeGLFW());
-        versionSetting.setUseNativeOpenAL(isUseNativeOpenAL());
-        versionSetting.setLauncherVisibility(getLauncherVisibility());
-        versionSetting.setNativesDir(getNativesDir());
-        versionSetting.setVersionIcon(getVersionIcon());
-        return versionSetting;
+        VersionSetting cloned = new VersionSetting();
+        PropertyUtils.copyProperties(this, cloned);
+        return cloned;
     }
 
     public static class Serializer implements JsonSerializer<VersionSetting>, JsonDeserializer<VersionSetting> {
@@ -793,7 +744,7 @@ public final class VersionSetting implements Cloneable {
             obj.addProperty("javaArgs", src.getJavaArgs());
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
             obj.addProperty("environmentVariables", src.getEnvironmentVariables());
-            obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? OperatingSystem.SUGGESTED_MEMORY : src.getMaxMemory());
+            obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
             obj.addProperty("autoMemory", src.isAutoMemory());
             obj.addProperty("permSize", src.getPermSize());
@@ -860,8 +811,8 @@ public final class VersionSetting implements Cloneable {
                 return null;
             JsonObject obj = (JsonObject) json;
 
-            int maxMemoryN = parseJsonPrimitive(Optional.ofNullable(obj.get("maxMemory")).map(JsonElement::getAsJsonPrimitive).orElse(null), OperatingSystem.SUGGESTED_MEMORY);
-            if (maxMemoryN <= 0) maxMemoryN = OperatingSystem.SUGGESTED_MEMORY;
+            int maxMemoryN = parseJsonPrimitive(Optional.ofNullable(obj.get("maxMemory")).map(JsonElement::getAsJsonPrimitive).orElse(null), SUGGESTED_MEMORY);
+            if (maxMemoryN <= 0) maxMemoryN = SUGGESTED_MEMORY;
 
             VersionSetting vs = new VersionSetting();
 

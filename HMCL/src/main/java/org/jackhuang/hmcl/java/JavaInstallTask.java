@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.java;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
+import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Hex;

@@ -55,7 +55,7 @@ subprojects {
     }
 }
 
-tasks.create("checkTranslations") {
+tasks.register("checkTranslations") {
     doLast {
         val hmclLangDir = file("HMCL/src/main/resources/assets/lang")
 
@@ -107,8 +107,6 @@ tasks.create("checkTranslations") {
     }
 }
 
-apply {
-    from("javafx.gradle.kts")
-}
+org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
