@@ -44,7 +44,7 @@ dependencies {
     implementation(libs.java.info)
 
     if (launcherExe == null) {
-        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.3")
+        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.4")
     }
 }
 
