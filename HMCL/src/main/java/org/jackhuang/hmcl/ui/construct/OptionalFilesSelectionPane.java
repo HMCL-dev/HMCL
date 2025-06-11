@@ -116,7 +116,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
             setSelectable();
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFORMATION_OUTLINE.createIcon(Theme.blackFill(), 24, 24), 24, 24));
+            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
             getContainer().getChildren().setAll(container);
         }
 
@@ -170,8 +170,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
             Label description = new Label(mod.getDescription());
             setBody(description);
 
-            JFXHyperlink pageButton = new JFXHyperlink();
-            pageButton.setText(i18n("mods.url"));
+            JFXHyperlink pageButton = new JFXHyperlink(i18n("mods.url"));
             pageButton.setOnAction(e -> FXUtils.openLink(mod.getPageUrl()));
             getActions().add(pageButton);
 
