@@ -313,13 +313,12 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             detailsContainer.getChildren().remove(detailsPane);
             lblErrorMessage.setText("");
         }
-
         if (!factory.isAvailable()) {
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
             hintPane.setSegment(i18n("account.methods.snapshot"));
 
             JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.snapshot.website"));
-            officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
+            officialWebsite.setExternalLink(Metadata.PUBLISH_URL);
 
             btnAccept.setDisable(true);
             detailsPane = hintPane;
@@ -340,27 +339,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 }
             });
 
-                holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
-                    runInFX(() -> deviceCode.set(value));
-                }));
-                FlowPane box = new FlowPane();
-                box.setHgap(8);
-                JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-                birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
-                JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
-                profileLink.setExternalLink("https://account.live.com/editprof.aspx");
-                JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
-                purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
-                JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
-                deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
-                JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
-                forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
-                JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
-                createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                JFXHyperlink bannedQueryLink = new JFXHyperlink(i18n("account.methods.ban_query"));
-                bannedQueryLink.setExternalLink("https://enforcement.xbox.com/enforcement/showenforcementhistory");
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink, bannedQueryLink);
-                GridPane.setColumnSpan(box, 2);
             holder.add(Accounts.MICROSOFT_OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> {
                 runInFX(() -> deviceCode.set(value));
             }));
@@ -378,7 +356,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
             JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
             createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-            box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
+            JFXHyperlink bannedQueryLink = new JFXHyperlink(i18n("account.methods.ban_query"));
+            bannedQueryLink.setExternalLink("https://enforcement.xbox.com/enforcement/showenforcementhistory");
+            box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink, bannedQueryLink);
             GridPane.setColumnSpan(box, 2);
 
             if (!IntegrityChecker.isOfficial()) {
@@ -391,8 +371,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
             btnAccept.setDisable(false);
 
-                JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
-                officialWebsite.setExternalLink(Metadata.PUBLISH_URL);
             detailsPane = vbox;
         } else if (factory == Accounts.FACTORY_LITTLE_SKIN) {
             VBox vbox = new VBox(8);

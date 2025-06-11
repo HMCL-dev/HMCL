@@ -173,7 +173,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     littleSkinItem.getStyleClass().add("navigation-drawer-item");
                     littleSkinItem.setActionButtonVisible(false);
                     littleSkinItem.setTitle("LittleSkin");
-                    littleSkinItem.setLeftGraphic(wrap(SVG.SERVER));
+                    littleSkinItem.setLeftGraphic(wrap(SVG.DRESSER));
                     littleSkinItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_LITTLE_SKIN)));
                     boxMethods.getChildren().add(littleSkinItem);
 
