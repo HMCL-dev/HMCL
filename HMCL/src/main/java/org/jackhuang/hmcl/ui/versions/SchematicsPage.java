@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -206,6 +207,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
                 }
             }
+        } catch (NoSuchFileException ignored) {
         } catch (IOException e) {
             LOG.warning("Failed to load schematics in " + dir, e);
         }
