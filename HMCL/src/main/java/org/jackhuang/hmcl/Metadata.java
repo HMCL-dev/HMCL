@@ -47,7 +47,7 @@ public final class Metadata {
     public static final String CONTACT_URL = DOCS_URL + "/help.html";
     public static final String CHANGELOG_URL = DOCS_URL + "/changelog/";
     public static final String EULA_URL = DOCS_URL + "/eula/hmcl.html";
-    public static final String GROUPS_URL = DOCS_URL + "/groups.html";
+    public static final String GROUPS_URL = "https://www.bilibili.com/opus/905435541874409529";
 
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
     public static final String GITHUB_SHA = JarUtils.getManifestAttribute("GitHub-SHA", null);
