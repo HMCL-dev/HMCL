@@ -356,11 +356,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                     currentFilterID.set(filterID.get());
 
+                    int pageOffset = control.pageOffset.get();
                     getSkinnable().search(gameVersionField.getSelectionModel().getSelectedItem(),
                             Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
                                     .map(CategoryIndented::getCategory)
                                     .orElse(null),
-                            control.pageOffset.get(),
+                            pageOffset == -1 ? 0 : pageOffset,
                             nameField.getText(),
                             sortComboBox.getSelectionModel().getSelectedItem());
                 };
@@ -432,13 +433,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         int pageOffset = control.pageOffset.get();
                         int pageCount = control.pageCount.get();
 
-                        boolean disablePrevious = pageOffset == 0;
+                        boolean disableAll = pageCount >= -1 && pageCount <= 1;
+
+                        boolean disablePrevious = disableAll || pageOffset == 0;
                         firstPageButton.setDisable(disablePrevious);
                         previousPageButton.setDisable(disablePrevious);
 
-                        boolean disableNext = pageOffset == pageCount - 1;
+                        boolean disableNext = disableAll || pageOffset == pageCount - 1;
                         nextPageButton.setDisable(disableNext);
-                        lastPageButton.setDisable(disableNext || pageCount == -1);
+                        lastPageButton.setDisable(disableNext);
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
