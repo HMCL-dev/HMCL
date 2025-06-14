@@ -26,7 +26,6 @@ import java.util.function.*;
 import java.util.stream.Stream;
 
 /**
- *
  * @author huangyuhui
  */
 public final class Lang {
@@ -48,9 +47,10 @@ public final class Lang {
 
     /**
      * Construct a mutable map by given key-value pairs.
+     *
      * @param pairs entries in the new map
-     * @param <K> the type of keys
-     * @param <V> the type of values
+     * @param <K>   the type of keys
+     * @param <V>   the type of values
      * @return the map which contains data in {@code pairs}.
      */
     @SafeVarargs
@@ -60,9 +60,10 @@ public final class Lang {
 
     /**
      * Construct a mutable map by given key-value pairs.
+     *
      * @param pairs entries in the new map
-     * @param <K> the type of keys
-     * @param <V> the type of values
+     * @param <K>   the type of keys
+     * @param <V>   the type of values
      * @return the map which contains data in {@code pairs}.
      */
     public static <K, V> Map<K, V> mapOf(Iterable<Pair<K, V>> pairs) {
@@ -122,9 +123,10 @@ public final class Lang {
 
     /**
      * Cast {@code obj} to V dynamically.
-     * @param obj the object reference to be cast.
+     *
+     * @param obj   the object reference to be cast.
      * @param clazz the class reference of {@code V}.
-     * @param <V> the type that {@code obj} is being cast to.
+     * @param <V>   the type that {@code obj} is being cast to.
      * @return {@code obj} in the type of {@code V}.
      */
     public static <V> Optional<V> tryCast(Object obj, Class<V> clazz) {
@@ -133,6 +135,16 @@ public final class Lang {
         } else {
             return Optional.empty();
         }
+    }
+
+    public static <V> V getOrThrow(Map<?, ?> map, String key, Class<V> clazz) {
+        Object value = map.get(key);
+        if (value == null)
+            throw new IllegalArgumentException(key + " is missing");
+        else if (!clazz.isInstance(value))
+            throw new IllegalArgumentException(key + " has the wrong type: expected: " + clazz.getName() + ", actual: " + value.getClass().getName());
+        else
+            return clazz.cast(value);
     }
 
     public static <T> T getOrDefault(List<T> a, int index, T defaultValue) {
@@ -154,8 +166,8 @@ public final class Lang {
     /**
      * Join two collections into one list.
      *
-     * @param a one collection, to be joined.
-     * @param b another collection to be joined.
+     * @param a   one collection, to be joined.
+     * @param b   another collection to be joined.
      * @param <T> the super type of elements in {@code a} and {@code b}
      * @return the joint collection
      */
@@ -185,6 +197,7 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run.
      * @return the reference of the started thread
      */
@@ -194,8 +207,9 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run
-     * @param name the name of thread
+     * @param name     the name of thread
      * @return the reference of the started thread
      */
     public static Thread thread(Runnable runnable, String name) {
@@ -204,8 +218,9 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run
-     * @param name the name of thread
+     * @param name     the name of thread
      * @param isDaemon true if thread will be terminated when only daemon threads are running.
      * @return the reference of the started thread
      */
@@ -258,7 +273,8 @@ public final class Lang {
 
     /**
      * Find the first non-null reference in given list.
-     * @param t nullable references list.
+     *
+     * @param t   nullable references list.
      * @param <T> the type of nullable references
      * @return the first non-null reference.
      */

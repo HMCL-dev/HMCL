@@ -81,4 +81,8 @@ public abstract class AccountFactory<T extends Account> {
      * @return account stored in local storage. Credentials may expired, and you should refresh account state later.
      */
     public abstract T fromStorage(Map<Object, Object> storage);
+
+    public boolean isAvailable() {
+        return true;
+    }
 }
