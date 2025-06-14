@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -96,7 +97,10 @@ public final class MultiMCInstancePatch {
     @SerializedName("jarMods")
     private final List<Library> jarMods;
 
-    public MultiMCInstancePatch(int formatVersion, String id, String version, AssetIndexInfo assetIndex, String minecraftArguments, List<String> jvmArgs, String mainClass, int[] javaMajors, Library mainJar, List<String> traits, List<String> tweakers, List<Library> libraries0, List<Library> libraries1, List<Library> mavenFiles, List<Library> jarMods) {
+    @SerializedName("requires")
+    private final List<MultiMCManifest.MultiMCManifestCachedRequires> requires;
+
+    public MultiMCInstancePatch(int formatVersion, String id, String version, AssetIndexInfo assetIndex, String minecraftArguments, List<String> jvmArgs, String mainClass, int[] javaMajors, Library mainJar, List<String> traits, List<String> tweakers, List<Library> libraries0, List<Library> libraries1, List<Library> mavenFiles, List<Library> jarMods, List<MultiMCManifest.MultiMCManifestCachedRequires> requires) {
         this.formatVersion = formatVersion;
         this.id = id;
         this.version = version;
@@ -112,6 +116,7 @@ public final class MultiMCInstancePatch {
         this.libraries1 = libraries1;
         this.mavenFiles = mavenFiles;
         this.jarMods = jarMods;
+        this.requires = requires;
     }
 
     public int getFormatVersion() {
@@ -175,6 +180,10 @@ public final class MultiMCInstancePatch {
 
     public List<Library> getJarMods() {
         return nonNullOrEmpty(jarMods);
+    }
+
+    public List<MultiMCManifest.MultiMCManifestCachedRequires> getRequires() {
+        return nonNullOrEmpty(requires);
     }
 
     private static <T> List<T> nonNullOrEmpty(List<T> value) {
@@ -257,6 +266,8 @@ public final class MultiMCInstancePatch {
         }
 
         for (MultiMCInstancePatch patch : patches) {
+            Objects.requireNonNull(patch, "patch");
+
             if (patch.getFormatVersion() != 1) {
                 throw new UnsupportedOperationException(
                         String.format("Unsupported JSON-Patch[%s] format version: %d", patch.getID(), patch.getFormatVersion())
