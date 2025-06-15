@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
@@ -123,6 +122,14 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
         public final EventManager<OpenBrowserEvent> onOpenBrowser = new EventManager<>();
 
+        private final String clientId;
+        private final String clientSecret;
+
+        public Factory(String clientId, String clientSecret) {
+            this.clientId = clientId;
+            this.clientSecret = clientSecret;
+        }
+
         @Override
         public OAuth.Session startServer() throws IOException, AuthenticationException {
             if (StringUtils.isBlank(getClientId())) {
@@ -130,21 +137,24 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             }
 
             IOException exception = null;
-            for (int port : new int[]{29111, 29112, 29113, 29114, 29115}) {
+            for (int port = 29111; port < 29116; port++) {
                 try {
                     OAuthServer server = new OAuthServer(port);
                     server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, true);
                     return server;
                 } catch (IOException e) {
-                    exception = e;
+                    if (exception == null) {
+                        exception = new IOException();
+                    }
+                    exception.addSuppressed(e);
                 }
             }
             throw exception;
         }
 
         @Override
-        public void grantDeviceCode(String userCode, String verificationURI) {
-            onGrantDeviceCode.fireEvent(new GrantDeviceCodeEvent(this, userCode, verificationURI));
+        public void grantDeviceCode(String userCode, String verificationURI, String verificationUriComplete) {
+            onGrantDeviceCode.fireEvent(new GrantDeviceCodeEvent(this, userCode, verificationURI, verificationUriComplete));
         }
 
         @Override
@@ -157,14 +167,12 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         @Override
         public String getClientId() {
-            return System.getProperty("hmcl.microsoft.auth.id",
-                    JarUtils.getManifestAttribute("Microsoft-Auth-Id", ""));
+            return clientId;
         }
 
         @Override
         public String getClientSecret() {
-            return System.getProperty("hmcl.microsoft.auth.secret",
-                    JarUtils.getManifestAttribute("Microsoft-Auth-Secret", ""));
+            return clientSecret;
         }
 
         @Override
@@ -176,11 +184,13 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     public static class GrantDeviceCodeEvent extends Event {
         private final String userCode;
         private final String verificationUri;
+        private final String verificationUriComplete;
 
-        public GrantDeviceCodeEvent(Object source, String userCode, String verificationUri) {
+        public GrantDeviceCodeEvent(Object source, String userCode, String verificationUri, String verificationUriComplete) {
             super(source);
             this.userCode = userCode;
             this.verificationUri = verificationUri;
+            this.verificationUriComplete = verificationUriComplete;
         }
 
         public String getUserCode() {
@@ -189,6 +199,10 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         public String getVerificationUri() {
             return verificationUri;
+        }
+
+        public String getVerificationUriComplete() {
+            return verificationUriComplete;
         }
     }
 
