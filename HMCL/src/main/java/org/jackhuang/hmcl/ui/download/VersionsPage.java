@@ -92,6 +92,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final JFXCheckBox chkRelease;
     private final JFXCheckBox chkSnapshot;
     private final JFXCheckBox chkOld;
+    private final JFXCheckBox chkAprilFools;
     private final ComponentList centrePane;
     private final StackPane center;
 
@@ -139,7 +140,10 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         chkOld = new JFXCheckBox(i18n("version.game.old"));
                         HBox.setMargin(chkOld, new Insets(10, 0, 10, 0));
 
-                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld);
+                        chkAprilFools = new JFXCheckBox(i18n("version.game.aprilfools"));
+                        HBox.setMargin(chkAprilFools, new Insets(10, 0, 10, 0));
+
+                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld, chkAprilFools);
                     }
 
                     list = new JFXListView<>();
@@ -151,18 +155,19 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         HBox refreshPane = new HBox();
                         refreshPane.setAlignment(Pos.CENTER_RIGHT);
 
-                        btnRefresh = new JFXButton(i18n("button.refresh"));
+                        btnRefresh = new JFXButton();
                         btnRefresh.getStyleClass().add("jfx-tool-bar-button");
                         btnRefresh.setOnAction(e -> onRefresh());
 
-                        JFXButton btnSearch = new JFXButton(i18n("search"));
+                        JFXButton btnSearch = new JFXButton();
                         btnSearch.getStyleClass().add("jfx-tool-bar-button");
                         btnSearch.setGraphic(wrap(SVG.SEARCH.createIcon(Theme.blackFill(), -1)));
 
                         searchBar = new HBox();
                         {
                             searchBar.setAlignment(Pos.CENTER);
-                            searchBar.setPadding(new Insets(0, 5, 0, 0));
+                            searchBar.setPadding(new Insets(0, 0, 0, 0));
+                            searchBar.setMaxWidth(130);
 
                             JFXTextField searchField = new JFXTextField();
                             searchField.setPromptText(i18n("search"));
@@ -235,6 +240,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkSnapshot.setVisible(hasType);
         chkOld.setManaged(hasType);
         chkOld.setVisible(hasType);
+        chkAprilFools.setManaged(hasType);
+        chkAprilFools.setVisible(hasType);
 
         if (hasType) {
             centrePane.getContent().setAll(toolbarPane, list);
@@ -269,6 +276,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         chkRelease.selectedProperty().addListener(listener);
         chkSnapshot.selectedProperty().addListener(listener);
         chkOld.selectedProperty().addListener(listener);
+        chkAprilFools.selectedProperty().addListener(listener);
         queryString.addListener(listener);
 
         btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1)));
@@ -297,6 +305,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             return chkSnapshot.isSelected();
                         case OLD:
                             return chkOld.isSelected();
+                        case APRILFOOLS:
+                            return chkAprilFools.isSelected();
                         default:
                             return true;
                     }
@@ -321,6 +331,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                             chkRelease.setSelected(true);
                             chkSnapshot.setSelected(true);
                             chkOld.setSelected(true);
+                            chkAprilFools.setSelected(true);
                         } else {
                             list.getItems().setAll(items);
                         }
@@ -417,6 +428,16 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         content.getTags().setAll(i18n("version.game.snapshot"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
                         content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
+                        break;
+                    case APRILFOOLS:
+                        content.getTags().setAll(i18n("version.game.aprilfools"));
+                        content.setImage(VersionIconType.COMMAND.getIcon());
+                        if (remoteVersion.getGameVersion().startsWith("2.0")) {
+                            content.setExternalLink(i18n("wiki.version.game.snapshot", "2.0"));
+                        }
+                        else {
+                            content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
+                        }
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));
