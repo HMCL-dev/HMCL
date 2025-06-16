@@ -69,7 +69,7 @@ public final class EventManager<T extends Event> {
         register(t -> runnable.run(), priority);
     }
 
-    public synchronized Event.Result fireEvent(T event) {
+    public Event.Result fireEvent(T event) {
         Consumer<T> compiled = this.compiled;
         if (compiled == null) {
             synchronized (this) {
