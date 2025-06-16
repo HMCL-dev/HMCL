@@ -203,7 +203,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedOfficialPage() {
-        return i18n("mods.curseforge");
+        if (repository instanceof ModrinthRemoteModRepository) {
+            return i18n("mods.modrinth");
+        } else {
+            return i18n("mods.curseforge");
+        }
     }
 
     protected Profile.ProfileVersion getProfileVersion() {
