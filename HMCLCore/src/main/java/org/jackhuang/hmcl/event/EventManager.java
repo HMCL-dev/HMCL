@@ -30,6 +30,8 @@ import java.util.function.Consumer;
  */
 public final class EventManager<T extends Event> {
 
+    private static final EventPriority[] PRIORITIES = EventPriority.values();
+
     private final SimpleMultimap<EventPriority, Consumer<T>, CopyOnWriteArraySet<Consumer<T>>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
 
@@ -61,7 +63,7 @@ public final class EventManager<T extends Event> {
     }
 
     public synchronized Event.Result fireEvent(T event) {
-        for (EventPriority priority : EventPriority.values()) {
+        for (EventPriority priority : PRIORITIES) {
             for (Consumer<T> handler : handlers.get(priority))
                 handler.accept(event);
         }
