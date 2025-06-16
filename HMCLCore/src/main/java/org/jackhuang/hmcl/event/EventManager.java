@@ -20,9 +20,12 @@ package org.jackhuang.hmcl.event;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 
 import java.lang.ref.WeakReference;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 
 /**
  *
@@ -30,10 +33,9 @@ import java.util.function.Consumer;
  */
 public final class EventManager<T extends Event> {
 
-    private static final EventPriority[] PRIORITIES = EventPriority.values();
-
     private final SimpleMultimap<EventPriority, Consumer<T>, CopyOnWriteArraySet<Consumer<T>>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
+    private volatile Consumer<T> compiled;
 
     public Consumer<T> registerWeak(Consumer<T> consumer) {
         register(new WeakListener(consumer));
@@ -50,8 +52,11 @@ public final class EventManager<T extends Event> {
     }
 
     public synchronized void register(Consumer<T> consumer, EventPriority priority) {
-        if (!handlers.get(priority).contains(consumer))
-            handlers.put(priority, consumer);
+        if (handlers.get(priority).contains(consumer)) {
+            return;
+        }
+        handlers.put(priority, consumer);
+        compiled = null;
     }
 
     public void register(Runnable runnable) {
@@ -63,10 +68,24 @@ public final class EventManager<T extends Event> {
     }
 
     public synchronized Event.Result fireEvent(T event) {
-        for (EventPriority priority : PRIORITIES) {
-            for (Consumer<T> handler : handlers.get(priority))
-                handler.accept(event);
+        Consumer<T> compiled = this.compiled;
+        if (compiled == null) {
+            synchronized (this) {
+                if (this.compiled == null) {
+                    Consumer<T>[] handlers = this.handlers
+                        .keys()
+                        .stream()
+                        .sorted(Comparator.comparingInt(Enum::ordinal))
+                        .map(this.handlers::get)
+                        .flatMap(Collection::stream)
+                        .toArray((IntFunction<Consumer<T>[]>) Consumer[]::new);
+                    compiled = compileHandlers(handlers);
+                    this.compiled = compiled;
+                }
+            }
         }
+
+        compiled.accept(event);
 
         if (event.hasResult())
             return event.getResult();
@@ -76,6 +95,33 @@ public final class EventManager<T extends Event> {
 
     public synchronized void unregister(Consumer<T> consumer) {
         handlers.removeValue(consumer);
+        compiled = null;
+    }
+
+    private static <T> Consumer<T> compileHandlers(Consumer<T>[] handlers) {
+        switch (handlers.length) {
+            case 0:
+                return (ignored) -> {};
+            case 1:
+                return handlers[0];
+            case 2:
+                return handlers[0].andThen(handlers[1]);
+            case 3:
+                Consumer<T> handler1 = handlers[0];
+                Consumer<T> handler2 = handlers[1];
+                Consumer<T> handler3 = handlers[2];
+                return t -> {
+                    handler1.accept(t);
+                    handler2.accept(t);
+                    handler3.accept(t);
+                };
+            default:
+                return (t) -> {
+                    for (Consumer<T> handler : handlers) {
+                        handler.accept(t);
+                    }
+                };
+        }
     }
 
     private class WeakListener implements Consumer<T> {
