@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.event;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
@@ -32,6 +32,8 @@ import java.util.function.IntFunction;
  * @author huangyuhui
  */
 public final class EventManager<T extends Event> {
+
+    private static final EventPriority[] PRIORITIES = EventPriority.values();
 
     private final SimpleMultimap<EventPriority, Consumer<T>, CopyOnWriteArraySet<Consumer<T>>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
@@ -72,10 +74,7 @@ public final class EventManager<T extends Event> {
         if (compiled == null) {
             synchronized (this) {
                 if (this.compiled == null) {
-                    Consumer<T>[] handlers = this.handlers
-                        .keys()
-                        .stream()
-                        .sorted(Comparator.comparingInt(Enum::ordinal))
+                    Consumer<T>[] handlers = Arrays.stream(PRIORITIES)
                         .map(this.handlers::get)
                         .flatMap(Collection::stream)
                         .toArray((IntFunction<Consumer<T>[]>) Consumer[]::new);
