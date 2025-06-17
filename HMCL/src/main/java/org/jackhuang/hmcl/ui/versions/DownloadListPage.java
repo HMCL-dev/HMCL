@@ -42,6 +42,7 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -189,7 +190,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedCategory(String category) {
-        return i18n("curse.category." + category);
+        return repository instanceof ModrinthRemoteModRepository
+                ? i18n("modrinth.category." + category)
+                : i18n("curse.category." + category);
     }
 
     private String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
@@ -200,7 +203,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedOfficialPage() {
-        return i18n("mods.curseforge");
+        if (repository instanceof ModrinthRemoteModRepository) {
+            return i18n("mods.modrinth");
+        } else {
+            return i18n("mods.curseforge");
+        }
     }
 
     protected Profile.ProfileVersion getProfileVersion() {
