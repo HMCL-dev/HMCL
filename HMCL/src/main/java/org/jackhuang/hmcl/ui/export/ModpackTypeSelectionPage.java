@@ -26,7 +26,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -55,7 +54,6 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         this.getChildren().setAll(
                 title,
                 createButton(MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
-                createButton(MODPACK_TYPE_MULTIMC, MultiMCModpackExportTask.OPTION),
                 createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION)
         );
     }
@@ -98,6 +96,5 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
     public static final String MODPACK_TYPE = "modpack.type";
 
     public static final String MODPACK_TYPE_MCBBS = "mcbbs";
-    public static final String MODPACK_TYPE_MULTIMC = "multimc";
     public static final String MODPACK_TYPE_SERVER = "server";
 }
