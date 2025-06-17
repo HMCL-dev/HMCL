@@ -12,6 +12,7 @@ jobs:
   check-update:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
     strategy:
+      fail-fast: false
       matrix:
         channel: [dev, stable]
         include:
