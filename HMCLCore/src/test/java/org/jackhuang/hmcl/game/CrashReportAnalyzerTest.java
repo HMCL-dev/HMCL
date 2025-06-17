@@ -47,42 +47,42 @@ public class CrashReportAnalyzerTest {
     @Test
     public void jdk9() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/java9.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/java9.txt")),
                 CrashReportAnalyzer.Rule.JDK_9);
     }
 
     @Test
     public void jadeForestOptifine() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/jade_forest_optifine.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/jade_forest_optifine.txt")),
                 CrashReportAnalyzer.Rule.JADE_FOREST_OPTIFINE);
     }
 
     @Test
     public void rtssForestSodium() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/rtss_forest_sodium.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/rtss_forest_sodium.txt")),
                 CrashReportAnalyzer.Rule.RTSS_FOREST_SODIUM);
     }
 
     @Test
     public void jvm32() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/jvm_32bit.txt")),
                 CrashReportAnalyzer.Rule.JVM_32BIT);
     }
 
     @Test
     public void jvm321() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/jvm_32bit2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/jvm_32bit2.txt")),
                 CrashReportAnalyzer.Rule.JVM_32BIT);
     }
 
     @Test
     public void modResolution() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/mod_resolution.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION);
         assertEquals(("Errors were found!\n" +
                         " - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!\n" +
@@ -94,7 +94,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void forgemodResolution() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/forgemod_resolution.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/forgemod_resolution.txt")),
                 CrashReportAnalyzer.Rule.FORGEMOD_RESOLUTION);
         assertEquals(("\tMod ID: 'vampirism', Requested by: 'werewolves', Expected range: '[1.9.0-beta.1,)', Actual version: '[MISSING]'\n").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
@@ -103,7 +103,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void forgeFoundDuplicateMods() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_found_duplicate_mods.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/forge_found_duplicate_mods.txt")),
                 CrashReportAnalyzer.Rule.FORGE_FOUND_DUPLICATE_MODS);
         assertEquals(("\tMod ID: 'jei' from mod files: REIPluginCompatibilities-forge-12.0.93.jar, jei-1.20.1-forge-15.2.0.27.jar\n").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
@@ -112,7 +112,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void modResolutionCollection() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/mod_resolution_collection.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/mod_resolution_collection.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_COLLECTION);
         assertEquals("tabtps-fabric", result.getMatcher().group("sourcemod"));
         assertEquals("{fabricloader @ [>=0.11.1]}", result.getMatcher().group("destmod"));
@@ -121,7 +121,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void forgeEroor() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/forge_error.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/forge_error.txt")),
                 CrashReportAnalyzer.Rule.FORGE_ERROR);
         assertEquals(("\nnet.minecraftforge.fml.common.MissingModsException: Mod pixelmon (Pixelmon) requires [forge@[14.23.5.2860,)]\n" +
                         "\tat net.minecraftforge.fml.common.Loader.sortModList(Loader.java:264) ~[Loader.class:?]\n" +
@@ -148,14 +148,14 @@ public class CrashReportAnalyzerTest {
     @Test
     public void modResolution0() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod_resolution0.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/mod_resolution0.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION0);
     }
 
     @Test
     public void tooOldJava() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/too_old_java.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/too_old_java.txt")),
                 CrashReportAnalyzer.Rule.TOO_OLD_JAVA);
         assertEquals("60", result.getMatcher().group("expected"));
     }
@@ -163,7 +163,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void tooOldJava1() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/too_old_java.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/too_old_java.txt")),
                 CrashReportAnalyzer.Rule.TOO_OLD_JAVA);
         assertEquals("52", result.getMatcher().group("expected"));
     }
@@ -171,7 +171,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void tooOldJava2() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/too_old_java2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/too_old_java2.txt")),
                 CrashReportAnalyzer.Rule.TOO_OLD_JAVA);
         assertEquals("52", result.getMatcher().group("expected"));
     }
@@ -179,14 +179,14 @@ public class CrashReportAnalyzerTest {
     @Test
     public void javaVersionIsTooHigh() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/java_version_is_too_high.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/java_version_is_too_high.txt")),
                 CrashReportAnalyzer.Rule.JAVA_VERSION_IS_TOO_HIGH);
     }
 
     @Test
     public void securityException() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/security.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/security.txt")),
                 CrashReportAnalyzer.Rule.FILE_CHANGED);
         assertEquals("assets/minecraft/texts/splashes.txt", result.getMatcher().group("file"));
     }
@@ -194,7 +194,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void noClassDefFoundError1() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/no_class_def_found_error.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/no_class_def_found_error.txt")),
                 CrashReportAnalyzer.Rule.NO_CLASS_DEF_FOUND_ERROR);
         assertEquals("blk", result.getMatcher().group("class"));
     }
@@ -202,7 +202,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void noClassDefFoundError2() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/no_class_def_found_error2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/no_class_def_found_error2.txt")),
                 CrashReportAnalyzer.Rule.NO_CLASS_DEF_FOUND_ERROR);
         assertEquals("cer", result.getMatcher().group("class"));
     }
@@ -210,7 +210,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void fileAlreadyExists() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/file_already_exists.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/file_already_exists.txt")),
                 CrashReportAnalyzer.Rule.FILE_ALREADY_EXISTS);
         assertEquals(
                 "D:\\Games\\Minecraft\\Minecraft Longtimeusing\\.minecraft\\versions\\1.12.2-forge1.12.2-14.23.5.2775\\config\\pvpsettings.txt",
@@ -220,7 +220,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void loaderExceptionModCrash() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/loader_exception_mod_crash.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
         assertEquals("Better PvP", result.getMatcher().group("name"));
         assertEquals("xaerobetterpvp", result.getMatcher().group("id"));
@@ -229,7 +229,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void loaderExceptionModCrash2() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/loader_exception_mod_crash2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash2.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
         assertEquals("Inventory Sort", result.getMatcher().group("name"));
         assertEquals("invsort", result.getMatcher().group("id"));
@@ -238,7 +238,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void loaderExceptionModCrash3() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/loader_exception_mod_crash3.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash3.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
         assertEquals("SuperOres", result.getMatcher().group("name"));
         assertEquals("superores", result.getMatcher().group("id"));
@@ -247,7 +247,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void loaderExceptionModCrash4() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/loader_exception_mod_crash4.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/loader_exception_mod_crash4.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FORGE);
         assertEquals("Kathairis", result.getMatcher().group("name"));
         assertEquals("kathairis", result.getMatcher().group("id"));
@@ -256,7 +256,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void loadingErrorFabric() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/loading_error_fabric.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/loading_error_fabric.txt")),
                 CrashReportAnalyzer.Rule.LOADING_CRASHED_FABRIC);
         assertEquals("test", result.getMatcher().group("id"));
     }
@@ -264,56 +264,56 @@ public class CrashReportAnalyzerTest {
     @Test
     public void graphicsDriver() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/graphics_driver.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/graphics_driver.txt")),
                 CrashReportAnalyzer.Rule.GRAPHICS_DRIVER);
     }
 
     @Test
     public void graphicsDriverJVM() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/graphics_driver.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/graphics_driver.txt")),
                 CrashReportAnalyzer.Rule.GRAPHICS_DRIVER);
     }
 
     @Test
     public void splashScreen() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/splashscreen.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/splashscreen.txt")),
                 CrashReportAnalyzer.Rule.GRAPHICS_DRIVER);
     }
 
     @Test
     public void macosFailedToFindServicePortForDisplay() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/macos_failed_to_find_service_port_for_display.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/macos_failed_to_find_service_port_for_display.txt")),
                 CrashReportAnalyzer.Rule.MACOS_FAILED_TO_FIND_SERVICE_PORT_FOR_DISPLAY);
     }
 
     @Test
     public void modName() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/mod_name.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/mod_name.txt")),
                 CrashReportAnalyzer.Rule.MOD_NAME);
     }
 
     @Test
     public void openj9() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/openj9.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/openj9.txt")),
                 CrashReportAnalyzer.Rule.OPENJ9);
     }
 
     @Test
     public void resolutionTooHigh() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/resourcepack_resolution.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/resourcepack_resolution.txt")),
                 CrashReportAnalyzer.Rule.RESOLUTION_TOO_HIGH);
     }
 
     @Test
     public void bootstrapFailed() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/bootstrap.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/bootstrap.txt")),
                 CrashReportAnalyzer.Rule.BOOTSTRAP_FAILED);
         assertEquals("prefab", result.getMatcher().group("id"));
     }
@@ -321,7 +321,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void mixinApplyModFailed() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/mixin_apply_mod_failed.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/mixin_apply_mod_failed.txt")),
                 CrashReportAnalyzer.Rule.MIXIN_APPLY_MOD_FAILED);
         assertEquals("enhancedblockentities", result.getMatcher().group("id"));
     }
@@ -329,7 +329,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void unsatisfiedLinkError() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/unsatisfied_link_error.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/unsatisfied_link_error.txt")),
                 CrashReportAnalyzer.Rule.UNSATISFIED_LINK_ERROR);
         assertEquals("lwjgl.dll", result.getMatcher().group("name"));
     }
@@ -337,35 +337,35 @@ public class CrashReportAnalyzerTest {
     @Test
     public void outOfMemoryMC() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/out_of_memory.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/out_of_memory.txt")),
                 CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
     }
 
     @Test
     public void outOfMemoryJVM() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/out_of_memory.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/out_of_memory.txt")),
                 CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
     }
 
     @Test
     public void outOfMemoryJVM1() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/out_of_memory2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/out_of_memory2.txt")),
                 CrashReportAnalyzer.Rule.OUT_OF_MEMORY);
     }
 
     @Test
     public void memoryExceeded() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/memory_exceeded.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/memory_exceeded.txt")),
                 CrashReportAnalyzer.Rule.MEMORY_EXCEEDED);
     }
 
     @Test
     public void config() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/config.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/config.txt")),
                 CrashReportAnalyzer.Rule.CONFIG);
         assertEquals("jumbofurnace", result.getMatcher().group("id"));
         assertEquals("jumbofurnace-server.toml", result.getMatcher().group("file"));
@@ -374,7 +374,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void fabricWarnings() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric_warnings.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/fabric_warnings.txt")),
                 CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
         assertEquals((" - Conflicting versions found for fabric-api-base: used 0.3.0+a02b446313, also found 0.3.0+a02b44633d, 0.3.0+a02b446318\n" +
                         " - Conflicting versions found for fabric-rendering-data-attachment-v1: used 0.1.5+a02b446313, also found 0.1.5+a02b446318\n" +
@@ -390,7 +390,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void fabricWarnings1() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric_warnings2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/fabric_warnings2.txt")),
                 CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
         assertEquals(("net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!\n" +
                         "A potential solution has been determined:\n" +
@@ -404,7 +404,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void fabricWarnings2() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric_warnings3.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/fabric_warnings3.txt")),
                 CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
         assertEquals(("net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!\n" +
                         "确定了一种可能的解决方法，这样做可能会解决你的问题：\n" +
@@ -420,7 +420,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void fabricConflicts() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-conflict.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/fabric-mod-conflict.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_CONFLICT);
         assertEquals("phosphor", result.getMatcher().group("sourcemod"));
         assertEquals("{starlight @ [*]}", result.getMatcher().group("destmod"));
@@ -429,7 +429,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void fabricMissing() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-mod-missing.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/fabric-mod-missing.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING);
         assertEquals("pca", result.getMatcher().group("sourcemod"));
         assertEquals("{fabric @ [>=0.39.2]}", result.getMatcher().group("destmod"));
@@ -438,35 +438,35 @@ public class CrashReportAnalyzerTest {
     @Test
     public void fabric0_12() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-version-0.12.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/fabric-version-0.12.txt")),
                 CrashReportAnalyzer.Rule.FABRIC_VERSION_0_12);
     }
 
     @Test
     public void twilightForestOptiFineIncompatible() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/twilightforest_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/mod/twilightforest_optifine_incompatibility.txt")),
                 CrashReportAnalyzer.Rule.TWILIGHT_FOREST_OPTIFINE);
     }
 
     @Test
     public void performantOptiFineIncompatible() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/performant_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/mod/performant_optifine_incompatibility.txt")),
                 CrashReportAnalyzer.Rule.PERFORMANT_FOREST_OPTIFINE);
     }
 
     @Test
     public void neoforgeForestOptiFineIncompatible() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/neoforgeforest_optifine_incompatibility.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/mod/neoforgeforest_optifine_incompatibility.txt")),
                 CrashReportAnalyzer.Rule.NEOFORGE_FOREST_OPTIFINE);
     }
 
     @Test
     public void fabricMissingMinecraft() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/fabric-minecraft.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/fabric-minecraft.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION_MISSING_MINECRAFT);
         assertEquals("fabric", result.getMatcher().group("mod"));
         assertEquals("[~1.16.2-alpha.20.28.a]", result.getMatcher().group("version"));
@@ -475,161 +475,161 @@ public class CrashReportAnalyzerTest {
     @Test
     public void optifineRepeatInstallation() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_repeat_installation.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/optifine_repeat_installation.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_REPEAT_INSTALLATION);
     }
 
     @Test
     public void incompleteForgeInstallation() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/incomplete_forge_installation.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test
     public void incompleteForgeInstallation2() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/incomplete_forge_installation2.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test
     public void incompleteForgeInstallation3() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation3.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/incomplete_forge_installation3.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test
     public void incompleteForgeInstallation4() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation4.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/incomplete_forge_installation4.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test
     public void incompleteForgeInstallation5() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation5.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/incomplete_forge_installation5.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test
     public void incompleteForgeInstallation6() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation6.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/incomplete_forge_installation6.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test
     public void incompleteForgeInstallation7() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/incomplete_forge_installation7.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/incomplete_forge_installation7.txt")),
                 CrashReportAnalyzer.Rule.INCOMPLETE_FORGE_INSTALLATION);
     }
 
     @Test
     public void forgeRepeatInstallation() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/forge_repeat_installation.txt")),
                 CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
     }
 
     @Test
     public void forgeRepeatInstallation1() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/forge_repeat_installation2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/forge_repeat_installation2.txt")),
                 CrashReportAnalyzer.Rule.FORGE_REPEAT_INSTALLATION);
     }
 
     @Test
     public void needJDK11() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk11.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/need_jdk11.txt")),
                 CrashReportAnalyzer.Rule.NEED_JDK11);
     }
 
     @Test
     public void needJDK112() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk112.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/need_jdk112.txt")),
                 CrashReportAnalyzer.Rule.NEED_JDK11);
     }
 
     @Test
     public void needJDK113() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/need_jdk113.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/need_jdk113.txt")),
                 CrashReportAnalyzer.Rule.NEED_JDK11);
     }
 
     @Test
     public void optifineIsNotCompatibleWithForge() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/optifine_is_not_compatible_with_forge.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Test
     public void optifineIsNotCompatibleWithForge1() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge2.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/optifine_is_not_compatible_with_forge2.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Test
     public void optifineIsNotCompatibleWithForge2() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge3.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/optifine_is_not_compatible_with_forge3.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Test
     public void optifineIsNotCompatibleWithForge3() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge4.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/optifine_is_not_compatible_with_forge4.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Test
     public void optifineIsNotCompatibleWithForge4() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge5.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/optifine_is_not_compatible_with_forge5.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Test
     public void optifineIsNotCompatibleWithForge5() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/optifine_is_not_compatible_with_forge6.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/optifine_is_not_compatible_with_forge6.txt")),
                 CrashReportAnalyzer.Rule.OPTIFINE_IS_NOT_COMPATIBLE_WITH_FORGE);
     }
 
     @Test
     public void shadersMod() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/shaders_mod.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/shaders_mod.txt")),
                 CrashReportAnalyzer.Rule.SHADERS_MOD);
     }
 
     @Test
     public void installMixinbootstrap() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/logs/install_mixinbootstrap.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/logs/install_mixinbootstrap.txt")),
                 CrashReportAnalyzer.Rule.INSTALL_MIXINBOOTSTRAP);
     }
 
     @Test
     public void nightconfigfixes() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/night_config_fixes.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/night_config_fixes.txt")),
                 CrashReportAnalyzer.Rule.NIGHT_CONFIG_FIXES);
     }
 
     @Test
     public void customNpc() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/customnpc.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/mod/customnpc.txt")),
                 CrashReportAnalyzer.Rule.ENTITY);
         assertEquals("customnpcs.CustomNpc (noppes.npcs.entity.EntityCustomNpc)",
                 result.getMatcher().group("type"));
@@ -644,7 +644,7 @@ public class CrashReportAnalyzerTest {
     @Test
     public void tconstruct() throws IOException {
         CrashReportAnalyzer.Result result = findResultByRule(
-                CrashReportAnalyzer.anaylze(loadLog("/crash-report/mod/tconstruct.txt")),
+                CrashReportAnalyzer.analyze(loadLog("/crash-report/mod/tconstruct.txt")),
                 CrashReportAnalyzer.Rule.BLOCK);
         assertEquals("Block{tconstruct:seared_drain}[active=true,facing=north]",
                 result.getMatcher().group("type"));

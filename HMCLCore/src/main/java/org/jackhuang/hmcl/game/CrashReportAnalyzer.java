@@ -209,7 +209,7 @@ public final class CrashReportAnalyzer {
         }
     }
 
-    public static Set<Result> anaylze(String log) {
+    public static Set<Result> analyze(String log) {
         Set<Result> results = new HashSet<>();
         for (Rule rule : Rule.values()) {
             Matcher matcher = rule.pattern.matcher(log);
