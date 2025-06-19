@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.mod.ModpackCompletionException;
-import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
-import org.jackhuang.hmcl.mod.Modpack;
-import org.jackhuang.hmcl.mod.UnsupportedModpackException;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -38,6 +35,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -74,6 +72,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         settings.put(PROFILE, profile);
     }
 
+    @SuppressWarnings("unchecked")
     private Task<?> finishModpackInstallingAsync(Map<String, Object> settings) {
         File selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), File.class).orElse(null);
         ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
@@ -97,7 +96,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 if (serverModpackManifest != null) {
                     return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)), (Set<? extends ModpackFile>) settings.get(LocalModpackPage.MODPACK_SELECTED_FILES));
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -112,7 +111,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack, (Set<? extends ModpackFile>) settings.get(LocalModpackPage.MODPACK_SELECTED_FILES))
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }
