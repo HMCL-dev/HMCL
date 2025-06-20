@@ -118,7 +118,7 @@ public final class SystemUtils {
     }
 
     /**
-     * <p>A low performance of {@link Process#waitFor()}</p>
+     * <p>A low performance implementation of {@link Process#waitFor()}</p>
      *
      * <p>
      * On Windows, JVM invoke
