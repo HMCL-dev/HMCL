@@ -73,7 +73,7 @@ public final class SystemUtils {
         ManagedProcess managedProcess = new ManagedProcess(processBuilder);
         managedProcess.pumpInputStream(SystemUtils::onLogLine);
         managedProcess.pumpErrorStream(SystemUtils::onLogLine);
-        return managedProcess.getProcess().waitFor();
+        return waitFor(managedProcess.getProcess());
     }
 
     public static String run(String... command) throws Exception {
@@ -96,7 +96,7 @@ public final class SystemUtils {
                     Lang.wrap(() -> convert.apply(inputStream)),
                     Schedulers.io());
 
-            if (!process.waitFor(15, TimeUnit.SECONDS))
+            if (SystemUtils.waitFor(process, 15, TimeUnit.SECONDS))
                 throw new TimeoutException();
 
             if (process.exitValue() != 0)
@@ -115,5 +115,59 @@ public final class SystemUtils {
 
     private static void onLogLine(String log) {
         LOG.info(log);
+    }
+
+    /**
+     * <p>A low performance of {@link Process#waitFor()}</p>
+     *
+     * <p>
+     * On Windows, JVM invoke
+     * <a href="https://github.com/openjdk/jdk/blob/b77bd5fd6a6f7ddbed90300fba790da4fb683275/src/java.base/windows/native/libjava/ProcessImpl_md.c#L428-L459">WaitForMultipleObjects</a>
+     * to wait the specific process and VM thread interrupt flag at the same time.
+     * However, this API might throw unexpected exception, causing a IOException on Java level.
+     * </p>
+     *
+     * <p>
+     * The following codes replace native implementation with software ones.
+     * </p>
+     */
+    public static int waitFor(Process process) throws InterruptedException {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return process.waitFor();
+        }
+
+        while (true) {
+            try {
+                return process.exitValue();
+            } catch (IllegalThreadStateException e2) {
+                // noinspection BusyWait
+                Thread.sleep(1000);
+            }
+        }
+    }
+
+    /**
+     * See {@link #waitFor(Process)}
+     */
+    public static boolean waitFor(Process process, long timeout, TimeUnit unit) throws InterruptedException {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+            return process.waitFor(timeout, unit);
+        }
+
+        long startTime = System.nanoTime();
+        long rem = unit.toNanos(timeout);
+
+        do {
+            try {
+                process.exitValue();
+                return true;
+            } catch (IllegalThreadStateException ex) {
+                if (rem > 0)
+                    Thread.sleep(
+                            Math.min(TimeUnit.NANOSECONDS.toMillis(rem) + 1, 100));
+            }
+            rem = unit.toNanos(timeout) - (System.nanoTime() - startTime);
+        } while (rem > 0);
+        return false;
     }
 }

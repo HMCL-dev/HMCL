@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +55,7 @@ final class ExitWaiter implements Runnable {
     @Override
     public void run() {
         try {
-            int exitCode = process.getProcess().waitFor();
+            int exitCode = SystemUtils.waitFor(process.getProcess());
 
             for (Thread thread : joins)
                 thread.join();
