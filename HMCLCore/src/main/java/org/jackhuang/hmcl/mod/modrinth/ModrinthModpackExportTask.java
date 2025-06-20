@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
@@ -46,7 +47,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         boolean isDisabled = repository.getModManager(version).isDisabled(file);
         if (isDisabled) {
-            relativePath = repository.getModManager(version).enableMod(Path.of(relativePath)).toString();
+            relativePath = repository.getModManager(version).enableMod(Paths.get(relativePath)).toString();
         }
 
         LocalModFile localModFile = null;
