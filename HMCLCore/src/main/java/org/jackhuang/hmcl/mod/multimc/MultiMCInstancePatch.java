@@ -47,7 +47,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -190,12 +189,14 @@ public final class MultiMCInstancePatch {
         return value != null && !value.isEmpty() ? value : Collections.emptyList();
     }
 
-    private static <T, K> List<T> dropDuplicate(List<T> original, Function<T, K> mapper) {
-        Set<K> values = new HashSet<>();
+    private static <T> List<T> dropDuplicate(List<T> original) {
+        // TODO: Maybe new ArrayList(new LinkedHashSet(original)) ?
+
+        Set<T> values = new HashSet<>();
         List<T> result = new ArrayList<>();
 
         for (T item : original) {
-            if (values.add(mapper.apply(item))) {
+            if (values.add(item)) {
                 result.add(item);
             }
         }
@@ -285,6 +286,8 @@ public final class MultiMCInstancePatch {
         Library mainJar;
         List<String> traits;
         List<String> tweakers;
+        /* TODO: MultiMC use a slightly different way to store jars containing jni files.
+            Transforming them to Official Scheme might boost compatibility with other launchers. */
         List<Library> libraries;
         List<Library> mavenOnlyFiles;
         List<String> jarModFileNames;
@@ -338,10 +341,9 @@ public final class MultiMCInstancePatch {
             }
         }
 
-        traits = dropDuplicate(traits, Function.identity());
-        tweakers = dropDuplicate(tweakers, Function.identity());
-        libraries = dropDuplicate(libraries, Library::getName);
-        jarModFileNames = dropDuplicate(jarModFileNames, Function.identity());
+        traits = dropDuplicate(traits);
+        tweakers = dropDuplicate(tweakers);
+        jarModFileNames = dropDuplicate(jarModFileNames);
 
         for (String tweaker : tweakers) {
             minecraftArguments.add("--tweakClass");
