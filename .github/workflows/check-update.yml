@@ -67,9 +67,9 @@ jobs:
           echo "" >> RELEASE_NOTE
           echo "| File Name | SHA-256 Checksum |"  >> RELEASE_NOTE
           echo "| ---  | --- |" >> RELEASE_NOTE
-          echo "| [HMCL-${{ env.HMCL_VERSION }}.exe](https://github.com/HMCL-dev/HMCL/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.exe) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.exe.sha256)\` |" >> RELEASE_NOTE
-          echo "| [HMCL-${{ env.HMCL_VERSION }}.jar](https://github.com/HMCL-dev/HMCL/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.jar) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.jar.sha256)\` |" >> RELEASE_NOTE
-          echo "| [HMCL-${{ env.HMCL_VERSION }}.sh](https://github.com/HMCL-dev/HMCL/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.sh) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.sh.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-${{ env.HMCL_VERSION }}.exe](https://github.com/${{ github.repository }}/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.exe) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.exe.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-${{ env.HMCL_VERSION }}.jar](https://github.com/${{ github.repository }}/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.jar) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.jar.sha256)\` |" >> RELEASE_NOTE
+          echo "| [HMCL-${{ env.HMCL_VERSION }}.sh](https://github.com/${{ github.repository }}/releases/download/${{ env.HMCL_TAG_NAME }}/HMCL-${{ env.HMCL_VERSION }}.sh) | \`$(cat HMCL-${{ env.HMCL_VERSION }}.sh.sha256)\` |" >> RELEASE_NOTE
       - name: Create release
         if: ${{ env.continue == 'true' }}
         uses: softprops/action-gh-release@v2
