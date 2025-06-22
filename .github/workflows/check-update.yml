@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   check-update:
-    if: ${{ github.repository_owner == 'HMCL-dev' }}
+    if: ${{ github.event_name != 'schedule' || github.repository_owner == 'HMCL-dev' }}
     strategy:
       fail-fast: false
       matrix:
