@@ -17,6 +17,7 @@ dependencies {
     api(libs.chardet)
     api(libs.jna)
     api(libs.pci.ids)
+    api(libs.zipfs)
 
     compileOnlyApi(libs.jetbrains.annotations)
 

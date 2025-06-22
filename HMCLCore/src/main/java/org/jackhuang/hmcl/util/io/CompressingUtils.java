@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.util.io;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
-import org.jackhuang.hmcl.util.Lang;
+import net.burningtnt.zipfs.ZipFileSystemProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -27,11 +27,18 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
-import java.nio.file.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.*;
-import java.util.zip.ZipError;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.zip.ZipException;
 
 /**
@@ -41,10 +48,7 @@ import java.util.zip.ZipException;
  */
 public final class CompressingUtils {
 
-    private static final FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
-            .filter(it -> "jar".equalsIgnoreCase(it.getScheme()))
-            .findFirst()
-            .orElse(null);
+    private static final FileSystemProvider ZIPFS_PROVIDER = new ZipFileSystemProvider();
 
     private CompressingUtils() {
     }
@@ -208,17 +212,9 @@ public final class CompressingUtils {
         if (useTempFile)
             env.put("useTempFile", true);
         try {
-            if (ZIPFS_PROVIDER == null)
-                throw new FileSystemNotFoundException("Module jdk.zipfs does not exist");
-
             return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
-        } catch (ZipError error) {
-            // Since Java 8 throws ZipError stupidly
-            throw new ZipException(error.getMessage());
         } catch (UnsupportedOperationException ex) {
             throw new ZipException("Not a zip file");
-        } catch (FileSystemNotFoundException ex) {
-            throw Lang.apply(new ZipException("Java Environment is broken"), it -> it.initCause(ex));
         }
     }
 
