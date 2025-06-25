@@ -21,7 +21,10 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-public class HMCLMultiMCBootstrap {
+public final class HMCLMultiMCBootstrap {
+    private HMCLMultiMCBootstrap() {
+    }
+
     public static void main(String[] args) throws Exception {
         String mainClass = read("hmcl.mmc.bootstrap.main");
         String installerInfo = read("hmcl.mmc.bootstrap.installer");
