@@ -22,3 +22,16 @@ dependencies {
 
     testImplementation(libs.jna.platform)
 }
+
+tasks.processResources {
+    listOf(
+        "HMCLTransformerDiscoveryService",
+        "HMCLMultiMCBootstrap"
+    ).map { project(":$it").tasks["jar"] as Jar }.forEach { p ->
+        dependsOn(p)
+
+        into("assets/game") {
+            from(p.outputs.files)
+        }
+    }
+}

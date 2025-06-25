@@ -19,11 +19,13 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackProvider;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackProvider;
+import org.jackhuang.hmcl.mod.multimc.MultiMCComponents;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
@@ -71,6 +73,10 @@ public final class ModpackHelper {
             pair(ServerModpackProvider.INSTANCE.getName(), ServerModpackProvider.INSTANCE),
             pair(HMCLModpackProvider.INSTANCE.getName(), HMCLModpackProvider.INSTANCE)
     );
+
+    static {
+        MultiMCComponents.setImplementation(Metadata.FULL_TITLE);
+    }
 
     @Nullable
     public static ModpackProvider getProviderByType(String type) {
