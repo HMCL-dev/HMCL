@@ -18,8 +18,8 @@ minecraft-exported-crash-info*
 /build/
 /HMCL/build/
 /HMCLCore/build/
-/HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
+/minecraft/libraries/HMCLMultiMCBootstrap/build/
 /buildSrc/build/
 
 # idea
@@ -28,12 +28,14 @@ minecraft-exported-crash-info*
 /HMCL/out/
 /HMCLCore/out/
 /minecraft/libraries/HMCLTransformerDiscoveryService/out/
+/minecraft/libraries/HMCLMultiMCBootstrap/out/
 
 # eclipse
 /bin/
 /HMCL/bin/
 /HMCLCore/bin/
 /minecraft/libraries/HMCLTransformerDiscoveryService/bin/
+/minecraft/libraries/HMCLMultiMCBootstrap/bin/
 .classpath
 .project
 .settings
