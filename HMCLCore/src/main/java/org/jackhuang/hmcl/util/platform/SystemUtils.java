@@ -96,7 +96,7 @@ public final class SystemUtils {
                     Lang.wrap(() -> convert.apply(inputStream)),
                     Schedulers.io());
 
-            if (SystemUtils.waitFor(process, 15, TimeUnit.SECONDS))
+            if (!SystemUtils.waitFor(process, 15, TimeUnit.SECONDS))
                 throw new TimeoutException();
 
             if (process.exitValue() != 0)
