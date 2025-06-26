@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -34,9 +35,18 @@ public final class HMCLMultiMCBootstrap {
         System.out.println(installerInfo);
         System.out.println("GAME MAY CRASH DUE TO BUGS. TEST YOUR GAME ON OFFICIAL MMC BEFORE REPORTING BUGS TO AUTHORS.");
 
-        Method method = Class.forName(mainClass).getDeclaredMethod("main", String[].class);
-        method.setAccessible(true);
-        method.invoke(null, (Object) args);
+        Method[] methods = Class.forName(mainClass).getMethods();
+        for (Method method : methods) {
+            // https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.1.4
+            if ("main".equals(method.getName()) &&
+                    Modifier.isStatic(method.getModifiers()) &&
+                    method.getReturnType() == void.class &&
+                    method.getParameterCount() == 1 &&
+                    method.getParameters()[0].getType() == String[].class
+            ) {
+                method.invoke(null, (Object) args);
+            }
+        }
     }
 
     private static String read(String key) {
