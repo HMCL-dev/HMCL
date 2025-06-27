@@ -44,15 +44,12 @@ public abstract class ParseModDataTask extends DefaultTask {
             Pattern.compile("^/projects/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/mc-mods/minecraft/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
-            Pattern.compile("^//minecraft/mc-mods/(?<modid>eyes-mod)$") // Workaround for Eye Blocks
     };
 
     private static String parseCurseforge(String url) {
         URI res = URI.create(url);
 
-        if (!"http".equals(res.getScheme())
-                && !"https".equals(res.getScheme())
-                && !"www.curseforge.com".equals(res.getHost())) { // Workaround for DakerACG
+        if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
             return "";
         }
 
