@@ -72,6 +72,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jackhuang.hmcl.util.javafx.MappedProperty;
 
 import java.io.IOException;
 import java.util.List;
@@ -178,6 +179,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Bindings.bindContent(pane.getChildren(), pinnedVersionNodes);
         Label text = new Label(i18n("version.pinned"));
         text.setStyle("-fx-font-size: 15px; -fx-font-weight: bold");
+        text.visibleProperty().bind(Bindings.createBooleanBinding(() -> !pinnedVersions.isEmpty(), pinnedVersions));
         pinnedVersionsBox.getChildren().addAll(text, pane);
 
         updatePane = new StackPane();
