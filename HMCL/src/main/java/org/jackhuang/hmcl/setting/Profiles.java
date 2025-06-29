@@ -101,7 +101,7 @@ public final class Profiles {
 
     private static void checkProfiles() {
         if (profiles.isEmpty()) {
-            Profile current = new Profile(Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), new VersionSetting(), null, true);
+            Profile current = new Profile(Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), new VersionSetting(), null, true, null);
             Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY);
             Platform.runLater(() -> profiles.addAll(current, home));
         }
