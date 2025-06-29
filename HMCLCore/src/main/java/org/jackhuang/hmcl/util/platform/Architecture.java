@@ -205,7 +205,7 @@ public enum Architecture {
             if (CURRENT_ARCH == X86_64) {
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
-                    if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
+                    if (SystemUtils.waitFor(process, 3, TimeUnit.SECONDS) && process.exitValue() == 0
                             && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET).trim())) {
                         sysArch = ARM64;
                     }
@@ -221,7 +221,7 @@ public enum Architecture {
                 if (new File(uname).exists()) {
                     try {
                         Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
-                        if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                        if (SystemUtils.waitFor(process, 3, TimeUnit.SECONDS) && process.exitValue() == 0) {
                             sysArch = parseArchName(IOUtils.readFullyAsString(process.getInputStream(), OperatingSystem.NATIVE_CHARSET).trim());
                         }
                     } catch (Throwable e) {
