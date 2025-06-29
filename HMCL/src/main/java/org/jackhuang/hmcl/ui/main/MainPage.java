@@ -35,10 +35,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
@@ -64,6 +61,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jackhuang.hmcl.util.javafx.MappedProperty;
 
 import java.util.List;
 import java.util.Objects;
@@ -87,10 +85,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
+    private final ObservableList<String> pinnedVersions = FXCollections.observableArrayList();
     private final ObservableList<Node> versionNodes;
+    private final ObservableList<Node> pinnedVersionNodes;
     private Profile profile;
 
     private TransitionPane announcementPane;
+    private final VBox pinnedVersionsBox = new VBox(16);
     private final StackPane updatePane;
     private final JFXButton menuButton;
 
@@ -151,8 +152,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
             announcementPane = new TransitionPane();
             announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
 
-            getChildren().add(announcementPane);
+            pinnedVersionsBox.getChildren().add(announcementPane);
         }
+
+        this.pinnedVersionNodes = MappedObservableList.create(pinnedVersions, this::createQuickLaunch);
+        FlowPane pane = new FlowPane();
+        pane.setHgap(8);
+        pane.setVgap(8);
+        Bindings.bindContent(pane.getChildren(), pinnedVersionNodes);
+        Label text = new Label(i18n("version.pinned"));
+        text.setStyle("-fx-font-size: 15px; -fx-font-weight: bold");
+        text.visibleProperty().bind(Bindings.createBooleanBinding(() -> !pinnedVersions.isEmpty(), pinnedVersions));
+        pinnedVersionsBox.getChildren().addAll(text, pane);
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
@@ -162,7 +173,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
         FXUtils.onClicked(updatePane, this::onUpgrade);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
-
         {
             HBox hBox = new HBox();
             hBox.setSpacing(12);
@@ -271,7 +281,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
 
-        getChildren().addAll(updatePane, launchPane);
+        getChildren().addAll(pinnedVersionsBox, updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
@@ -283,6 +293,37 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
+    }
+
+    private Node createQuickLaunch(String versionName) {
+        Version version = profile.getRepository().getVersion(versionName);
+        VBox card = new VBox();
+        card.getStyleClass().add("card");
+        card.setSpacing(16);
+        card.setMinHeight(100);
+        card.setMinWidth(100);
+        card.alignmentProperty().set(Pos.CENTER);
+        ImageView image = new ImageView(profile.getRepository().getVersionIconImage(versionName));
+        image.setScaleX(1.5);
+        image.setScaleY(1.5);
+        image.setScaleZ(1.5);
+        Label name = new Label(version.getId());
+        VBox.setMargin(image, new Insets(4, 0, 0, 0));
+        VBox.setMargin(name, new Insets(4, 0, 0, 0));
+        name.setStyle("-fx-font-size: 13px; -fx-font-weight: bold");
+        card.getChildren().addAll(image, name);
+        card.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                if (e.isShiftDown()) {
+                    Versions.testGame(Profiles.getSelectedProfile(), versionName);
+                    return;
+                }
+                Versions.launch(Profiles.getSelectedProfile(), versionName);
+            }
+        });
+        FXUtils.installFastTooltip(card, i18n("version.doubleClickToLaunch"));
+
+        return card;
     }
 
     private void showUpdate(boolean show) {
@@ -404,5 +445,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.checkFxUserThread();
         this.profile = profile;
         this.versions.setAll(versions);
+        Bindings.unbindContent(this.pinnedVersions, profile.getPinnedVersions());
+        Bindings.bindContent(
+                this.pinnedVersions,
+                profile.getPinnedVersions()
+        );
     }
 }
