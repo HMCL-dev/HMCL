@@ -22,18 +22,14 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
-import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
@@ -93,9 +89,6 @@ public final class ExportWizardProvider implements WizardProvider {
                 switch (modpackType) {
                     case ModpackTypeSelectionPage.MODPACK_TYPE_MCBBS:
                         exportTask = exportAsMcbbs(exportInfo, dest);
-                        break;
-                    case ModpackTypeSelectionPage.MODPACK_TYPE_MULTIMC:
-                        exportTask = exportAsMultiMC(exportInfo, dest);
                         break;
                     case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
                         exportTask = exportAsServer(exportInfo, dest);
@@ -164,50 +157,6 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
-            }
-
-            @Override
-            public Collection<Task<?>> getDependencies() {
-                return Collections.singleton(dependency);
-            }
-        };
-    }
-
-    private Task<?> exportAsMultiMC(ModpackExportInfo exportInfo, File modpackFile) {
-        return new Task<Void>() {
-            Task<?> dependency;
-
-            @Override
-            public void execute() {
-                VersionSetting vs = profile.getVersionSetting(version);
-                dependency = new MultiMCModpackExportTask(profile.getRepository(), version, exportInfo.getWhitelist(),
-                        new MultiMCInstanceConfiguration(
-                                "OneSix",
-                                exportInfo.getName() + "-" + exportInfo.getVersion(),
-                                null,
-                                Lang.toIntOrNull(vs.getPermSize()),
-                                vs.getWrapper(),
-                                vs.getPreLaunchCommand(),
-                                null,
-                                exportInfo.getDescription(),
-                                null,
-                                exportInfo.getJavaArguments(),
-                                vs.isFullscreen(),
-                                vs.getWidth(),
-                                vs.getHeight(),
-                                vs.getMaxMemory(),
-                                exportInfo.getMinMemory(),
-                                vs.isShowLogs(),
-                                /* showConsoleOnError */ true,
-                                /* autoCloseConsole */ false,
-                                /* overrideMemory */ true,
-                                /* overrideJavaLocation */ false,
-                                /* overrideJavaArgs */ true,
-                                /* overrideConsole */ true,
-                                /* overrideCommands */ true,
-                                /* overrideWindow */ true,
-                                /* iconKey */ null // TODO
-                        ), modpackFile);
             }
 
             @Override
