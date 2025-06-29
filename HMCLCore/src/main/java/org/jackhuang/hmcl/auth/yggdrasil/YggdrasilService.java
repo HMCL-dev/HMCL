@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,11 +121,7 @@ public class YggdrasilService {
         return response;
     }
 
-    public boolean validate(String accessToken) throws AuthenticationException {
-        return validate(accessToken, null);
-    }
-
-    public boolean validate(String accessToken, String clientToken) throws AuthenticationException {
+    public boolean validate(String accessToken, @Nullable String clientToken) throws AuthenticationException {
         Objects.requireNonNull(accessToken);
 
         try {
