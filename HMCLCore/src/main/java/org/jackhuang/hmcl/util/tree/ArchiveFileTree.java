@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.util.tree;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.ArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
 
         String name = namePath.toString();
         if (name.endsWith(".jar") || name.endsWith(".zip")) {
-            return new ZipFileTree(new ZipFile(file));
+            return new ZipFileTree(new ZipArchiveReader(file));
         } else if (name.endsWith(".tar") || name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
             return TarFileTree.open(file);
         } else {

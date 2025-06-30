@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.validation.base.ValidatorBase;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
@@ -35,6 +38,9 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+
+import javafx.util.Duration;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -106,12 +112,17 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
     public CreateAccountPane(AccountFactory<?> factory) {
         if (factory == null) {
-            showMethodSwitcher = true;
-            String preferred = config().getPreferredLoginType();
-            try {
-                factory = Accounts.getAccountFactory(preferred);
-            } catch (IllegalArgumentException e) {
-                factory = Accounts.FACTORY_OFFLINE;
+            if (AccountListPage.RESTRICTED.get()) {
+                showMethodSwitcher = false;
+                factory = Accounts.FACTORY_MICROSOFT;
+            } else {
+                showMethodSwitcher = true;
+                String preferred = config().getPreferredLoginType();
+                try {
+                    factory = Accounts.getAccountFactory(preferred);
+                } catch (IllegalArgumentException e) {
+                    factory = Accounts.FACTORY_OFFLINE;
+                }
             }
         } else {
             showMethodSwitcher = false;
@@ -257,16 +268,33 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         };
 
         if (factory instanceof OfflineAccountFactory && username != null && !USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
-            Controllers.confirm(
+            JFXButton btnYes = new JFXButton(i18n("button.ok"));
+            btnYes.getStyleClass().add("dialog-error");
+            btnYes.setOnAction(e -> doCreate.run());
+            btnYes.setDisable(true);
+
+            int countdown = 10;
+            KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
+            for (int i = 0; i < countdown; i++) {
+                keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                        new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
+            }
+            keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
+                    new KeyValue(btnYes.textProperty(), i18n("button.ok")),
+                    new KeyValue(btnYes.disableProperty(), false));
+
+            Timeline timeline = new Timeline(keyFrames);
+            Controllers.confirmAction(
                     i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
                     MessageDialogPane.MessageType.WARNING,
-                    doCreate,
+                    btnYes,
                     () -> {
-                        lblErrorMessage.setText(i18n("account.methods.offline.name.invalid"));
+                        timeline.stop();
                         body.setDisable(false);
                         spinner.hideSpinner();
                     }
             );
+            timeline.play();
         } else {
             doCreate.run();
         }
@@ -320,7 +348,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
+                JFXHyperlink bannedQueryLink = new JFXHyperlink(i18n("account.methods.ban_query"));
+                bannedQueryLink.setExternalLink("https://enforcement.xbox.com/enforcement/showenforcementhistory");
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink, bannedQueryLink);
                 GridPane.setColumnSpan(box, 2);
 
                 if (!IntegrityChecker.isOfficial()) {
@@ -337,7 +367,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
 
                 JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
-                officialWebsite.setExternalLink("https://hmcl.huangyuhui.net");
+                officialWebsite.setExternalLink(Metadata.PUBLISH_URL);
 
                 vbox.getChildren().setAll(hintPane, officialWebsite);
                 btnAccept.setDisable(true);
@@ -460,7 +490,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.PLUS.createIcon(Theme.blackFill(), 20, 20));
+                btnAddServer.setGraphic(SVG.ADD.createIcon(Theme.blackFill(), 20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());

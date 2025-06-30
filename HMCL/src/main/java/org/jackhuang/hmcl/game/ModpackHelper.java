@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
@@ -83,7 +83,7 @@ public final class ModpackHelper {
     }
 
     public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {
-        try (ZipFile zipFile = CompressingUtils.openZipFile(file, charset)) {
+        try (ZipArchiveReader zipFile = CompressingUtils.openZipFile(file, charset)) {
             // Order for trying detecting manifest is necessary here.
             // Do not change to iterating providers.
             for (ModpackProvider provider : new ModpackProvider[]{

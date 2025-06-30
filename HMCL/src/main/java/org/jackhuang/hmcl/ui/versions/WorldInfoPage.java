@@ -20,29 +20,28 @@ package org.jackhuang.hmcl.ui.versions;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.effect.BoxBlur;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.DoubleValidator;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.Arrays;
@@ -55,30 +54,37 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public final class WorldInfoPage extends StackPane implements DecoratorPage {
+public final class WorldInfoPage extends SpinnerPane {
+    private final WorldManagePage worldManagePage;
     private final World world;
     private CompoundTag levelDat;
 
-    private final ObjectProperty<State> stateProperty;
+    public WorldInfoPage(WorldManagePage worldManagePage) {
+        this.worldManagePage = worldManagePage;
+        this.world = worldManagePage.getWorld();
 
-    public WorldInfoPage(World world) {
-        this.world = world;
-        this.stateProperty = new SimpleObjectProperty<>(State.fromTitle(i18n("world.info.title", world.getWorldName())));
-
-        this.getChildren().add(new ProgressIndicator());
-        Task.supplyAsync(world::readLevelDat)
+        this.setLoading(true);
+        Task.supplyAsync(this::loadWorldInfo)
                 .whenComplete(Schedulers.javafx(), ((result, exception) -> {
                     if (exception == null) {
                         this.levelDat = result;
-                        loadWorldInfo();
+                        updateControls();
+                        setLoading(false);
                     } else {
                         LOG.warning("Failed to load level.dat", exception);
-                        this.getChildren().setAll(new Label(i18n("world.info.failed")));
+                        setFailedReason(i18n("world.info.failed"));
                     }
                 })).start();
     }
 
-    private void loadWorldInfo() {
+    private CompoundTag loadWorldInfo() throws IOException {
+        if (!Files.isDirectory(world.getFile()))
+            throw new IOException("Not a valid world directory");
+
+        return world.readLevelDat();
+    }
+
+    private void updateControls() {
         CompoundTag dataTag = levelDat.get("Data");
         CompoundTag worldGenSettings = dataTag.get("WorldGenSettings");
 
@@ -86,7 +92,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        getChildren().setAll(scrollPane);
+        setContent(scrollPane);
 
         VBox rootPane = new VBox();
         rootPane.setFillWidth(true);
@@ -103,6 +109,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
                 Label worldNameLabel = new Label();
+                FXUtils.copyOnDoubleClick(worldNameLabel);
                 worldNameLabel.setText(world.getWorldName());
                 BorderPane.setAlignment(worldNameLabel, Pos.CENTER_RIGHT);
                 worldNamePane.setRight(worldNameLabel);
@@ -115,6 +122,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 gameVersionPane.setLeft(label);
 
                 Label gameVersionLabel = new Label();
+                FXUtils.copyOnDoubleClick(gameVersionLabel);
                 gameVersionLabel.setText(world.getGameVersion());
                 BorderPane.setAlignment(gameVersionLabel, Pos.CENTER_RIGHT);
                 gameVersionPane.setRight(gameVersionLabel);
@@ -122,11 +130,25 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
 
             BorderPane randomSeedPane = new BorderPane();
             {
+
+                HBox left = new HBox(8);
+                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                left.setAlignment(Pos.CENTER_LEFT);
+                randomSeedPane.setLeft(left);
+
                 Label label = new Label(i18n("world.info.random_seed"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                randomSeedPane.setLeft(label);
+
+                SimpleBooleanProperty visibility = new SimpleBooleanProperty();
+                StackPane visibilityButton = new StackPane();
+                visibilityButton.setCursor(Cursor.HAND);
+                FXUtils.setLimitWidth(visibilityButton, 12);
+                FXUtils.setLimitHeight(visibilityButton, 12);
+                FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
+
+                left.getChildren().setAll(label, visibilityButton);
 
                 Label randomSeedLabel = new Label();
+                FXUtils.copyOnDoubleClick(randomSeedLabel);
                 BorderPane.setAlignment(randomSeedLabel, Pos.CENTER_RIGHT);
                 randomSeedPane.setRight(randomSeedLabel);
 
@@ -134,6 +156,14 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 if (tag instanceof LongTag) {
                     randomSeedLabel.setText(tag.getValue().toString());
                 }
+
+                BoxBlur blur = new BoxBlur();
+                blur.setIterations(3);
+                FXUtils.onChangeAndOperate(visibility, isVisibility -> {
+                    SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
+                    visibilityButton.getChildren().setAll(icon.createIcon(Theme.blackFill(), 12));
+                    randomSeedLabel.setEffect(isVisibility ? null : blur);
+                });
             }
 
             BorderPane lastPlayedPane = new BorderPane();
@@ -143,6 +173,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 lastPlayedPane.setLeft(label);
 
                 Label lastPlayedLabel = new Label();
+                FXUtils.copyOnDoubleClick(lastPlayedLabel);
                 lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
                 BorderPane.setAlignment(lastPlayedLabel, Pos.CENTER_RIGHT);
                 lastPlayedPane.setRight(lastPlayedLabel);
@@ -155,6 +186,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 timePane.setLeft(label);
 
                 Label timeLabel = new Label();
+                FXUtils.copyOnDoubleClick(timeLabel);
                 BorderPane.setAlignment(timeLabel, Pos.CENTER_RIGHT);
                 timePane.setRight(timeLabel);
 
@@ -168,6 +200,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
             OptionToggleButton allowCheatsButton = new OptionToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
+                allowCheatsButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = dataTag.get("allowCommands");
 
                 if (tag instanceof ByteTag) {
@@ -190,6 +223,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
             OptionToggleButton generateFeaturesButton = new OptionToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
+                generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = worldGenSettings != null ? worldGenSettings.get("generate_features") : dataTag.get("MapFeatures");
 
                 if (tag instanceof ByteTag) {
@@ -216,6 +250,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 difficultyPane.setLeft(label);
 
                 JFXComboBox<Difficulty> difficultyBox = new JFXComboBox<>(Difficulty.items);
+                difficultyBox.setDisable(worldManagePage.isReadOnly());
                 BorderPane.setAlignment(difficultyBox, Pos.CENTER_RIGHT);
                 difficultyPane.setRight(difficultyBox);
 
@@ -258,6 +293,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 locationPane.setLeft(label);
 
                 Label locationLabel = new Label();
+                FXUtils.copyOnDoubleClick(locationLabel);
                 BorderPane.setAlignment(locationLabel, Pos.CENTER_RIGHT);
                 locationPane.setRight(locationLabel);
 
@@ -276,6 +312,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 lastDeathLocationPane.setLeft(label);
 
                 Label lastDeathLocationLabel = new Label();
+                FXUtils.copyOnDoubleClick(lastDeathLocationLabel);
                 BorderPane.setAlignment(lastDeathLocationLabel, Pos.CENTER_RIGHT);
                 lastDeathLocationPane.setRight(lastDeathLocationLabel);
 
@@ -297,6 +334,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 spawnPane.setLeft(label);
 
                 Label spawnLabel = new Label();
+                FXUtils.copyOnDoubleClick(spawnLabel);
                 BorderPane.setAlignment(spawnLabel, Pos.CENTER_RIGHT);
                 spawnPane.setRight(spawnLabel);
 
@@ -318,6 +356,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 playerGameTypePane.setLeft(label);
 
                 JFXComboBox<GameType> gameTypeBox = new JFXComboBox<>(GameType.items);
+                gameTypeBox.setDisable(worldManagePage.isReadOnly());
                 BorderPane.setAlignment(gameTypeBox, Pos.CENTER_RIGHT);
                 playerGameTypePane.setRight(gameTypeBox);
 
@@ -348,6 +387,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 healthPane.setLeft(label);
 
                 JFXTextField healthField = new JFXTextField();
+                healthField.setDisable(worldManagePage.isReadOnly());
                 healthField.setPrefWidth(50);
                 healthField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(healthField, Pos.CENTER_RIGHT);
@@ -381,6 +421,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 foodLevelPane.setLeft(label);
 
                 JFXTextField foodLevelField = new JFXTextField();
+                foodLevelField.setDisable(worldManagePage.isReadOnly());
                 foodLevelField.setPrefWidth(50);
                 foodLevelField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(foodLevelField, Pos.CENTER_RIGHT);
@@ -414,6 +455,7 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
                 xpLevelPane.setLeft(label);
 
                 JFXTextField xpLevelField = new JFXTextField();
+                xpLevelField.setDisable(worldManagePage.isReadOnly());
                 xpLevelField.setPrefWidth(50);
                 xpLevelField.setAlignment(Pos.CENTER_RIGHT);
                 BorderPane.setAlignment(xpLevelField, Pos.CENTER_RIGHT);
@@ -456,11 +498,6 @@ public final class WorldInfoPage extends StackPane implements DecoratorPage {
         } catch (IOException e) {
             LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
         }
-    }
-
-    @Override
-    public ReadOnlyObjectProperty<State> stateProperty() {
-        return stateProperty;
     }
 
     private static final class Dimension {
