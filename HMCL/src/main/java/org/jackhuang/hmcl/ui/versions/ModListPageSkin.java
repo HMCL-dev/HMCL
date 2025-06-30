@@ -272,8 +272,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    private static Task<Image> loadModIcon(LocalModFile modFile) {
-        int size = 40;
+    private static Task<Image> loadModIcon(LocalModFile modFile, int size) {
         return Task.supplyAsync(() -> {
             if (StringUtils.isNotBlank(modFile.getLogoPath())) {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
@@ -360,7 +359,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
 
             ImageView imageView = new ImageView(); 
-            loadModIcon(modInfo.getModInfo())
+            loadModIcon(modInfo.getModInfo(), 40)
                 .whenComplete(Schedulers.javafx(), (image, exception) -> {
                     imageView.setImage(image);
                 }).start();
@@ -490,6 +489,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
+        ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
@@ -506,6 +506,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
+            imageView.setFitWidth(24);
+            imageView.setFitHeight(24);
+            imageView.setPreserveRatio(true);
+            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 24, 24, true, true));
+
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
 
@@ -517,7 +522,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -526,6 +531,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
+
+            loadModIcon(dataItem.getModInfo(), 24)
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
+                    imageView.setImage(image);
+                }).start();
+
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
             switch (dataItem.getModInfo().getModLoaderType()) {
