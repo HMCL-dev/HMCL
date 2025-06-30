@@ -274,29 +274,82 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     private static Task<Image> loadModIcon(LocalModFile modFile, int size) {
         return Task.supplyAsync(() -> {
+            List<String> iconPaths = new ArrayList<>();
+            
             if (StringUtils.isNotBlank(modFile.getLogoPath())) {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
-                    Path iconPath = fs.getPath(modFile.getLogoPath());
-                    if (Files.exists(iconPath)) {
-                        try (InputStream stream = Files.newInputStream(iconPath)) {
-                            return new Image(stream, size, size, true, true);
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Failed to load image " + modFile.getLogoPath(), e);
-                }
+                iconPaths.add(modFile.getLogoPath());
             }
 
-            String iconPath;
-            switch (modFile.getModLoaderType()) {
-                case FORGE: iconPath = "/assets/img/forge.png"; break;
-                case NEO_FORGED: iconPath = "/assets/img/neoforge.png"; break; 
-                case FABRIC: iconPath = "/assets/img/fabric.png"; break;
-                case QUILT: iconPath = "/assets/img/quilt.png"; break;
-                case LITE_LOADER: iconPath = "/assets/img/liteloader.png"; break;
-                default: iconPath = "/assets/img/command.png"; break;
+            iconPaths.addAll(Arrays.asList(
+                "icon.png",
+                "logo.png", 
+                "mod_logo.png",
+                "pack.png",
+                "logoFile.png",
+                "assets/icon.png",
+                "assets/logo.png", 
+                "assets/mod_icon.png",
+                "assets/mod_logo.png", 
+                "META-INF/icon.png",
+                "META-INF/logo.png",
+                "META-INF/mod_icon.png",
+                "textures/icon.png",
+                "textures/logo.png",
+                "textures/mod_icon.png",
+                "resources/icon.png", 
+                "resources/logo.png",
+                "resources/mod_icon.png"
+            ));
+
+            String modId = modFile.getId();
+            if (StringUtils.isNotBlank(modId)) {
+                iconPaths.addAll(Arrays.asList(
+                    "assets/" + modId + "/icon.png",
+                    "assets/" + modId + "/logo.png",
+                    "assets/" + modId.replace("-", "") + "/icon.png", 
+                    "assets/" + modId.replace("-", "") + "/logo.png",
+                    modId + ".png",
+                    modId + "-logo.png",
+                    modId + "-icon.png",
+                    modId + "_logo.png", 
+                    modId + "_icon.png",
+                    "textures/" + modId + "/icon.png",
+                    "textures/" + modId + "/logo.png", 
+                    "resources/" + modId + "/icon.png",
+                    "resources/" + modId + "/logo.png"
+                ));
             }
-            return FXUtils.newBuiltinImage(iconPath, size, size, true, true);
+
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+                for (String path : iconPaths) {
+                    Path iconPath = fs.getPath(path);
+                    if (Files.exists(iconPath)) {
+                        try (InputStream stream = Files.newInputStream(iconPath)) {
+                            Image image = new Image(stream, size, size, true, true);
+                            if (!image.isError() && 
+                                image.getWidth() > 0 && 
+                                image.getHeight() > 0 && 
+                                Math.abs(image.getWidth() - image.getHeight()) < 1) {
+                                return image;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load mod icons", e);
+            }
+
+            String defaultIcon;
+            switch (modFile.getModLoaderType()) {
+                case FORGE: defaultIcon = "/assets/img/forge.png"; break;
+                case NEO_FORGED: defaultIcon = "/assets/img/neoforge.png"; break; 
+                case FABRIC: defaultIcon = "/assets/img/fabric.png"; break;
+                case QUILT: defaultIcon = "/assets/img/quilt.png"; break;
+                case LITE_LOADER: defaultIcon = "/assets/img/liteloader.png"; break;
+                default: defaultIcon = "/assets/img/command.png"; break;
+            }
+
+            return FXUtils.newBuiltinImage(defaultIcon, size, size, true, true);
         });
     }
 
