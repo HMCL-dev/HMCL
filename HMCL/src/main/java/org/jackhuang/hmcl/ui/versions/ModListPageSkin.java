@@ -280,7 +280,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     Path iconPath = fs.getPath(modFile.getLogoPath());
                     if (Files.exists(iconPath)) {
                         try (InputStream stream = Files.newInputStream(iconPath)) {
-                                return new Image(stream, size, size, true, true);
+                            return new Image(stream, size, size, true, true);
                         }
                     }
                 } catch (Exception e) {
