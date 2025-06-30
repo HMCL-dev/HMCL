@@ -19,12 +19,20 @@ package org.jackhuang.hmcl.mod;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.image.Image;
+
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -61,7 +69,13 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         this.version = version;
         this.gameVersion = gameVersion;
         this.url = url;
-        this.logoPath = logoPath;
+        
+        String validatedLogoPath = validateLogoPath(file, logoPath);
+        if (validatedLogoPath != null) {
+            this.logoPath = validatedLogoPath;
+        } else {
+            this.logoPath = findLogoPath(file, mod.getId());
+        }
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -200,6 +214,82 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     @Override
     public int hashCode() {
         return Objects.hash(getFileName());
+    }
+
+    private String validateLogoPath(Path modFile, String path) {
+        if (StringUtils.isBlank(path)) return null;
+        
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
+            Path iconPath = fs.getPath(path);
+            if (!Files.exists(iconPath)) return null;
+
+            try (InputStream stream = Files.newInputStream(iconPath)) {
+                Image image = new Image(stream, 40, 40, true, true);
+                
+                if (!image.isError() && 
+                    image.getWidth() > 0 && 
+                    image.getHeight() > 0 && 
+                    Math.abs(image.getWidth() - image.getHeight()) < 1) {
+                    return path;
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to validate mod icon from: " + path, e);
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to access mod file for icon validation: " + path, e);
+        }
+        
+        return null;
+    }
+
+    private String findLogoPath(Path modFile, String modId) {
+        List<String> defaultPaths = new ArrayList<>(Arrays.asList(
+            "icon.png",
+            "logo.png", 
+            "mod_logo.png",
+            "pack.png",
+            "logoFile.png",
+            "assets/icon.png",
+            "assets/logo.png",
+            "assets/mod_icon.png",
+            "assets/mod_logo.png",
+            "META-INF/icon.png",
+            "META-INF/logo.png",
+            "META-INF/mod_icon.png",
+            "textures/icon.png",
+            "textures/logo.png",
+            "textures/mod_icon.png",
+            "resources/icon.png",
+            "resources/logo.png",
+            "resources/mod_icon.png"
+        ));
+
+        if (StringUtils.isNotBlank(modId)) {
+            defaultPaths.addAll(Arrays.asList(
+                "assets/" + modId + "/icon.png",
+                "assets/" + modId + "/logo.png",
+                "assets/" + modId.replace("-", "") + "/icon.png",
+                "assets/" + modId.replace("-", "") + "/logo.png",
+                modId + ".png",
+                modId + "-logo.png",
+                modId + "-icon.png",
+                modId + "_logo.png", 
+                modId + "_icon.png",
+                "textures/" + modId + "/icon.png",
+                "textures/" + modId + "/logo.png",
+                "resources/" + modId + "/icon.png",
+                "resources/" + modId + "/logo.png"
+            ));
+        }
+
+        for (String path : defaultPaths) {
+            String validatedPath = validateLogoPath(modFile, path);
+            if (validatedPath != null) {
+                return validatedPath;
+            }
+        }
+        
+        return null;
     }
 
     public static class ModUpdate {

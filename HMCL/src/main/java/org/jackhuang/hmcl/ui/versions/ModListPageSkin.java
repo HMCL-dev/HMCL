@@ -338,43 +338,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
                             try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
+                                return new Image(stream, 40, 40, true, true);
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load image " + logoPath, e);
-                            }
-                        }
-                    }
-
-                    List<String> defaultPaths = new ArrayList<>(Arrays.asList(
-                            "icon.png",
-                            "logo.png",
-                            "mod_logo.png",
-                            "pack.png",
-                            "logoFile.png"
-                    ));
-
-                    String id = modInfo.getModInfo().getId();
-                    if (StringUtils.isNotBlank(id)) {
-                        defaultPaths.addAll(Arrays.asList(
-                                "assets/" + id + "/icon.png",
-                                "assets/" + id.replace("-", "") + "/icon.png",
-                                id + ".png",
-                                id + "-logo.png",
-                                id + "-icon.png",
-                                id + "_logo.png",
-                                id + "_icon.png"
-                        ));
-                    }
-
-                    for (String path : defaultPaths) {
-                        Path iconPath = fs.getPath(path);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
                             }
                         }
                     }
