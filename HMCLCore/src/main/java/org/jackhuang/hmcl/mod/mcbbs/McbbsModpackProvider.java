@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
 
 public final class McbbsModpackProvider implements ModpackProvider {
     public static final McbbsModpackProvider INSTANCE = new McbbsModpackProvider();
@@ -46,7 +47,7 @@ public final class McbbsModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack, Set<? extends ModpackFile> selectedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof McbbsModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
