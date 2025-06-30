@@ -441,6 +441,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
             FXUtils.copyOnDoubleClick(description);
+            FXUtils.installFastTooltip(description, modInfo.getModInfo().getDescription().toString());
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
