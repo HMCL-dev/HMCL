@@ -272,6 +272,35 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
+    private static Task<Image> loadModIcon(LocalModFile modFile) {
+        int size = 40;
+        return Task.supplyAsync(() -> {
+            if (StringUtils.isNotBlank(modFile.getLogoPath())) {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+                    Path iconPath = fs.getPath(modFile.getLogoPath());
+                    if (Files.exists(iconPath)) {
+                        try (InputStream stream = Files.newInputStream(iconPath)) {
+                                return new Image(stream, size, size, true, true);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to load image " + modFile.getLogoPath(), e);
+                }
+            }
+
+            String iconPath;
+            switch (modFile.getModLoaderType()) {
+                case FORGE: iconPath = "/assets/img/forge.png"; break;
+                case NEO_FORGED: iconPath = "/assets/img/neoforge.png"; break; 
+                case FABRIC: iconPath = "/assets/img/fabric.png"; break;
+                case QUILT: iconPath = "/assets/img/quilt.png"; break;
+                case LITE_LOADER: iconPath = "/assets/img/liteloader.png"; break;
+                default: iconPath = "/assets/img/command.png"; break;
+            }
+            return FXUtils.newBuiltinImage(iconPath, size, size, true, true);
+        });
+    }
+
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
@@ -330,32 +359,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            ImageView imageView = new ImageView();
-            Task.supplyAsync(() -> {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
-                    String logoPath = modInfo.getModInfo().getLogoPath();
-                    if (StringUtils.isNotBlank(logoPath)) {
-                        Path iconPath = fs.getPath(logoPath);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                return new Image(stream, 40, 40, true, true);
-                            } catch (Throwable e) {
-                                LOG.warning("Failed to load image " + logoPath, e);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Failed to load icon", e);
-                }
-
-                return null;
-            }).whenComplete(Schedulers.javafx(), (image, exception) -> {
-                if (image != null) {
+            ImageView imageView = new ImageView(); 
+            loadModIcon(modInfo.getModInfo())
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
                     imageView.setImage(image);
-                } else {
-                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
-                }
-            }).start();
+                }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
