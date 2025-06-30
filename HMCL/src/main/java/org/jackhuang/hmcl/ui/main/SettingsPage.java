@@ -44,6 +44,8 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -139,6 +141,42 @@ public final class SettingsPage extends SettingsView {
 
             Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", logFile)));
             FXUtils.showFileInExplorer(logFile);
+        });
+    }
+
+    @Override
+    protected void onExportAllLogs() {
+        thread(() -> {
+            Path logDir = LOG.getLogFile().getParent();
+            Path zipFile = Paths.get("hmcl-all-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip");
+
+            LOG.info("Exporting all logs to " + zipFile);
+            try {
+                try (OutputStream os = Files.newOutputStream(zipFile);
+                     ZipOutputStream zos = new ZipOutputStream(os)) {
+
+                    Files.walk(logDir)
+                            .filter(path -> !Files.isDirectory(path))
+                            .forEach(path -> {
+                                try {
+                                    String zipEntryName = logDir.relativize(path).toString();
+                                    zos.putNextEntry(new ZipEntry(zipEntryName));
+                                    Files.copy(path, zos);
+                                    zos.closeEntry();
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to add file to zip: " + path, e);
+                                }
+                            });
+                }
+
+                Platform.runLater(() -> {
+                    Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", zipFile));
+                    FXUtils.showFileInExplorer(zipFile);
+                });
+            } catch (IOException e) {
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
+                LOG.warning("Failed to export all logs", e);
+            }
         });
     }
 
