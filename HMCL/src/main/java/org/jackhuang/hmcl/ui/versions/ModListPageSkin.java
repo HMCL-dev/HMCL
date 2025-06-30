@@ -434,6 +434,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
                 subtitleParts.add(modInfo.getModInfo().getVersion()); 
             }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
+                subtitleParts.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
+            }
             title.setSubtitle(String.join(", ", subtitleParts));
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
