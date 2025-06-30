@@ -422,16 +422,19 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (modInfo.getMod() != null) {
                 title.getTags().add(modInfo.getMod().getDisplayName());
             }
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
-                title.getTags().add(i18n("game.version") + ": " + modInfo.getModInfo().getGameVersion());
-            }
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                title.getTags().add(modInfo.getModInfo().getVersion());
-            }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
-            title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
+
+            List<String> subtitleParts = new ArrayList<>();
+            subtitleParts.add(FileUtils.getName(modInfo.getModInfo().getFile()));
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
+                subtitleParts.add(modInfo.getModInfo().getGameVersion());
+            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
+                subtitleParts.add(modInfo.getModInfo().getVersion()); 
+            }
+            title.setSubtitle(String.join(", ", subtitleParts));
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
