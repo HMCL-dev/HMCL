@@ -15,7 +15,7 @@ twelvemonkeys = "3.12.0"
 jna = "5.17.0"
 pci-ids = "0.4.0"
 java-info = "1.0"
-zipfs = "31fb19a23d"
+zipfs = "c4cfc75446"
 
 # plugins
 shadow = "8.3.6"
