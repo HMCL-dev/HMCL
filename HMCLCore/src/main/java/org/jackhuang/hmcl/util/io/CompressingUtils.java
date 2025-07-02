@@ -17,25 +17,21 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import net.burningtnt.zipfs.ZipFileSystemProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -57,44 +53,7 @@ public final class CompressingUtils {
         return charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
     }
 
-    public static boolean testEncoding(Path zipFile, Charset encoding) throws IOException {
-        try (ZipArchiveReader zf = openZipFile(zipFile, encoding)) {
-            return testEncoding(zf, encoding);
-        }
-    }
-
-    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) throws IOException {
-        CharsetDecoder cd = newCharsetDecoder(encoding);
-        CharBuffer cb = CharBuffer.allocate(32);
-
-        for (ZipArchiveEntry entry : zipFile.getEntries()) {
-            if (entry.getGeneralPurposeBit().usesUTF8ForNames()) continue;
-
-            cd.reset();
-            byte[] ba = entry.getRawName();
-            int clen = (int)(ba.length * cd.maxCharsPerByte());
-            if (clen == 0) continue;
-            if (clen <= cb.capacity())
-                ((Buffer) cb).clear(); // cast to prevent "java.lang.NoSuchMethodError: java.nio.CharBuffer.clear()Ljava/nio/CharBuffer;" when compiling with Java 9+
-            else
-                cb = CharBuffer.allocate(clen);
-
-            ByteBuffer bb = ByteBuffer.wrap(ba, 0, ba.length);
-            CoderResult cr = cd.decode(bb, cb, true);
-            if (!cr.isUnderflow()) return false;
-            cr = cd.flush(cb);
-            if (!cr.isUnderflow()) return false;
-        }
-        return true;
-    }
-
     public static Charset findSuitableEncoding(Path zipFile) throws IOException {
-        try (ZipArchiveReader zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
-            return findSuitableEncoding(zf);
-        }
-    }
-
-    public static Charset findSuitableEncoding(ZipArchiveReader zipFile) throws IOException {
         if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
         if (OperatingSystem.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, OperatingSystem.NATIVE_CHARSET))
             return OperatingSystem.NATIVE_CHARSET;
@@ -132,6 +91,14 @@ public final class CompressingUtils {
         }
 
         throw new IOException("Cannot find suitable encoding for the zip.");
+    }
+
+    private static boolean testEncoding(Path file, Charset encoding) throws IOException {
+        try (FileSystem ignored = ZIPFS_PROVIDER.newFileSystem(file, Collections.singletonMap("encoding", encoding.name()))) {
+            return true;
+        } catch (ZipException e) {
+            return false;
+        }
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
