@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
@@ -89,10 +91,10 @@ public class MicrosoftAccountSkinPane extends StackPane {
         BorderPane pane = new BorderPane();
         pane.setCenter(canvasPane);
 
-        GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(0, 0, 0, 10));
+        FlowPane flowPane = new FlowPane();
+        flowPane.setPadding(new Insets(0, 0, 0, 0));
 
-        StackPane skinOptionPane = new StackPane(gridPane);
+        StackPane skinOptionPane = new StackPane(flowPane);
         skinOptionPane.setMaxWidth(300);
 
         updateCanvas().start();
@@ -104,7 +106,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
         JFXButton uploadSkinButton = new JFXButton(i18n("account.skin.upload"));
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
         updateSkinButtonSpinnerPane.setPrefSize(150, 40);
-        uploadSkinButton.getStyleClass().add("jfx-button-raised");
+        uploadSkinButton.getStyleClass().add("jfx-button-border");
         uploadSkinButton.setOnAction(event -> {
             updateSkinButtonSpinnerPane.showSpinner();
             Task<?> task = uploadSkin();
@@ -117,12 +119,13 @@ public class MicrosoftAccountSkinPane extends StackPane {
 
         JFXButton changeCapeButton = new JFXButton(i18n("account.cape.change"));
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
-        changeCapeButton.getStyleClass().add("jfx-button-raised");
+        changeCapeButton.getStyleClass().add("jfx-button-border");
         changeCapeButton.setOnAction(event -> Controllers.dialog(accountChangeCapeDialog));
-        gridPane.addRow(0, updateSkinButtonSpinnerPane);
-        gridPane.addRow(0, changeCapeButton);
+        flowPane.setAlignment(Pos.CENTER_RIGHT);
+        flowPane.getChildren().add(updateSkinButtonSpinnerPane);
+        flowPane.getChildren().add(changeCapeButton);
 
-        pane.setRight(skinOptionPane);
+        pane.setBottom(skinOptionPane);
 
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
@@ -146,9 +149,7 @@ public class MicrosoftAccountSkinPane extends StackPane {
         builder.addAction(i18n("account.skin.model.default"), () -> future.complete(TextureModel.WIDE));
         builder.addAction(i18n("account.skin.model.slim"), () -> future.complete(TextureModel.SLIM));
 
-        builder.addCancel(() -> {
-            updateSkinButtonSpinnerPane.hideSpinner();
-        });
+        builder.addCancel(updateSkinButtonSpinnerPane::hideSpinner);
 
         Controllers.dialog(builder.build());
 
