@@ -1080,6 +1080,23 @@
     -jfx-mask-type: CIRCLE;
 }
 
+.announcement-close-button {
+    -fx-announcement-close-button-size: 20px;
+    -fx-pref-width: -fx-announcement-close-button-size;
+    -fx-max-width: -fx-announcement-close-button-size;
+    -fx-min-width: -fx-announcement-close-button-size;
+    -fx-pref-height: -fx-announcement-close-button-size;
+    -fx-max-height: -fx-announcement-close-button-size;
+    -fx-min-height: -fx-announcement-close-button-size;
+    -fx-background-radius: 50px;
+    -fx-background-color: transparent;
+}
+
+.announcement-close-button .jfx-rippler {
+    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-mask-type: CIRCLE;
+}
+
 .transparent {
     -fx-background-color: null;
 }
