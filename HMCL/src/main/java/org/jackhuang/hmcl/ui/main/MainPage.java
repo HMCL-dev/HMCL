@@ -61,7 +61,6 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-import org.jackhuang.hmcl.util.javafx.MappedProperty;
 
 import java.util.List;
 import java.util.Objects;
@@ -303,6 +302,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         card.setMinHeight(100);
         card.setMinWidth(100);
         card.alignmentProperty().set(Pos.CENTER);
+        card.setCursor(Cursor.HAND);
         ImageView image = new ImageView(profile.getRepository().getVersionIconImage(versionName));
         image.setScaleX(1.5);
         image.setScaleY(1.5);
@@ -445,7 +445,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.checkFxUserThread();
         this.profile = profile;
         this.versions.setAll(versions);
-        Bindings.unbindContent(this.pinnedVersions, profile.getPinnedVersions());
         Bindings.bindContent(
                 this.pinnedVersions,
                 profile.getPinnedVersions()
