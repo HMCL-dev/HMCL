@@ -179,8 +179,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         Versions.testGame(getProfile(), getVersion());
     }
 
-    private void pinVersion(AdvancedListItem button) {
-        if (getVersion() == null) return;
+    private void pinVersion() {
         if (currentVersionPinned.get()) {
             currentVersionPinned.set(false);
             getProfile().getPinnedVersions().remove(getVersion());
@@ -283,24 +282,19 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         new IconedMenuItem(null, i18n("version.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("version.manage.clean.tooltip"))
                 );
 
-                AdvancedListItem pinVersionItem = new AdvancedListItem();
-                pinVersionItem.getStyleClass().add("navigation-drawer-item");
-                pinVersionItem.setLeftGraphic(wrap(SVG.THUMBTACK));
-
-                pinVersionItem.titleProperty().bind(
-                        Bindings.createStringBinding(
-                                () -> control.currentVersionPinned.get() ? i18n("version.unpin") : i18n("version.pin"),
-                                control.currentVersionPinned
-                        )
-                );
-                pinVersionItem.activeProperty().bind(control.currentVersionPinned);
-                pinVersionItem.setOnAction(e -> control.pinVersion(pinVersionItem));
-
                 AdvancedListBox toolbar = new AdvancedListBox()
                         .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
                         })
-                        .add(pinVersionItem)
+                        .addNavigationDrawerItem("", SVG.THUMBTACK, control::pinVersion, pinVersionItem -> {
+                            pinVersionItem.titleProperty().bind(
+                                    Bindings.createStringBinding(
+                                            () -> control.currentVersionPinned.get() ? i18n("version.unpin") : i18n("version.pin"),
+                                            control.currentVersionPinned
+                                    )
+                            );
+                            pinVersionItem.activeProperty().bindBidirectional(control.currentVersionPinned);
+                        })
                         .addNavigationDrawerItem(i18n("version.launch.test"), SVG.ROCKET_LAUNCH, control::testGame)
                         .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
