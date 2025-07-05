@@ -22,6 +22,7 @@ package org.jackhuang.hmcl.game;
  * @author huangyuhui
  */
 public enum ReleaseType {
+    APRILFOOLS("aprilfools"),
     RELEASE("release"),
     SNAPSHOT("snapshot"),
     MODIFIED("modified"),
