@@ -52,7 +52,6 @@ import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthCompletionTask;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthInstallTask;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
@@ -156,7 +155,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installing") + ": " + i18n("modpack.type.server"));
                 } else if (task instanceof HMCLModpackInstallTask) {
                     task.setName(i18n("modpack.installing.given", i18n("modpack.type.hmcl")));
-                } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask) {
+                } else if (task instanceof McbbsModpackExportTask || task instanceof ServerModpackExportTask) {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
                     task.setName(i18n("modpack.scan"));
