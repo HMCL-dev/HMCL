@@ -32,6 +32,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -106,6 +107,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private TransitionPane announcementPane;
     private final VBox pinnedVersionsBox = new VBox(16);
+    private final ScrollPane pinnedVersionsScroll = new ScrollPane(pinnedVersionsBox);
     private final StackPane updatePane;
     private final JFXButton menuButton;
 
@@ -125,7 +127,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         state.setValue(new State(null, titleNode, false, false, true));
 
-        setPadding(new Insets(20));
+        pinnedVersionsScroll.setFitToWidth(true);
+        FXUtils.smoothScrolling(pinnedVersionsScroll);
+        pinnedVersionsBox.setPadding(new Insets(20, 20, 80, 20));
 
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
             String title;
@@ -303,9 +307,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
+            StackPane.setMargin(launchPane, new Insets(20));
         }
 
-        getChildren().addAll(pinnedVersionsBox, updatePane, launchPane);
+        getChildren().addAll(pinnedVersionsScroll, updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
@@ -327,8 +332,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
         VBox card = new VBox();
         card.getStyleClass().add("card");
         card.setSpacing(16);
-        card.setMinHeight(100);
-        card.setMinWidth(100);
+        card.setPrefHeight(100);
+        card.setPrefWidth(100);
         card.alignmentProperty().set(Pos.CENTER);
         card.setCursor(Cursor.HAND);
         ImageView image = new ImageView(profile.getRepository().getVersionIconImage(versionName));
