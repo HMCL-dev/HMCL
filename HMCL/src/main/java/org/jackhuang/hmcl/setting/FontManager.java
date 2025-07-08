@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -35,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -78,7 +80,7 @@ public final class FontManager {
             return null;
     });
 
-    private static final ObjectProperty<Font> fontProperty;
+    private static final ObjectProperty<FontReference> fontProperty;
 
     static {
         String fontFamily = config().getLauncherFontFamily();
@@ -87,10 +89,9 @@ public final class FontManager {
         if (fontFamily == null)
             fontFamily = System.getenv("HMCL_FONT");
 
-        Font font = fontFamily == null ? DEFAULT_FONT.get() : Font.font(fontFamily, DEFAULT_FONT_SIZE);
-        fontProperty = new SimpleObjectProperty<>(font);
+        fontProperty = new SimpleObjectProperty<>(fontFamily == null ? new FontReference(DEFAULT_FONT.get()) : new FontReference(fontFamily));
 
-        LOG.info("Font: " + (font != null ? font.getName() : Font.getDefault().getName()));
+        LOG.info("Font: " + fontFamily);
         fontProperty.addListener((obs, oldValue, newValue) -> {
             if (newValue != null)
                 config().setLauncherFontFamily(newValue.getFamily());
@@ -189,20 +190,53 @@ public final class FontManager {
         }
     }
 
-    public static ObjectProperty<Font> fontProperty() {
+    public static ObjectProperty<FontReference> fontProperty() {
         return fontProperty;
     }
 
-    public static Font getFont() {
+    public static FontReference getFont() {
         return fontProperty.get();
     }
 
-    public static void setFont(Font font) {
+    public static void setFont(FontReference font) {
         fontProperty.set(font);
     }
 
     public static void setFontFamily(String fontFamily) {
-        setFont(fontFamily != null ? Font.font(fontFamily, DEFAULT_FONT_SIZE) : null);
+        setFont(fontFamily != null ? new FontReference(fontFamily) : null);
+    }
+
+    public static final class FontReference {
+        private final String family;
+        private final @Nullable String style;
+
+        public FontReference(String family) {
+            this.family = family;
+            this.style = null;
+        }
+
+        public FontReference(String family, @Nullable String style) {
+            this.family = Objects.requireNonNull(family);
+            this.style = style;
+        }
+
+        public FontReference(Font font) {
+            this.family = font.getFamily();
+            this.style = font.getStyle();
+        }
+
+        public String getFamily() {
+            return family;
+        }
+
+        public @Nullable String getStyle() {
+            return style;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("FontReference[family='%s', style='%s']", family, style);
+        }
     }
 
     private FontManager() {

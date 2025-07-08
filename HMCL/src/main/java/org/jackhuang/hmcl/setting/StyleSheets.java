@@ -22,7 +22,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -80,9 +79,9 @@ public final class StyleSheets {
 
     private static String getFontStyleSheet() {
         final String defaultCss = "/assets/css/font.css";
-        final Font font = FontManager.getFont();
+        final FontManager.FontReference font = FontManager.getFont();
 
-        if (font == null || font == Font.getDefault())
+        if (font == null || "System".equals(font.getFamily()))
             return defaultCss;
 
         String fontFamily = font.getFamily();
