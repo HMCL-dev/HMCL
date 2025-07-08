@@ -206,6 +206,7 @@ public final class FontManager {
         setFont(fontFamily != null ? new FontReference(fontFamily) : null);
     }
 
+    // https://github.com/HMCL-dev/HMCL/issues/4072
     public static final class FontReference {
         private final String family;
         private final @Nullable String style;
