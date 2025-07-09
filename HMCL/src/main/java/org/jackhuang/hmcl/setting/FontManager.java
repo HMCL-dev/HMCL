@@ -235,6 +235,19 @@ public final class FontManager {
         }
 
         @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof FontReference))
+                return false;
+            FontReference that = (FontReference) o;
+            return Objects.equals(family, that.family) && Objects.equals(style, that.style);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(family, style);
+        }
+
+        @Override
         public String toString() {
             return String.format("FontReference[family='%s', style='%s']", family, style);
         }
