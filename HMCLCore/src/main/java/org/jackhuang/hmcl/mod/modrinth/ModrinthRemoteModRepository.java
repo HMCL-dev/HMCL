@@ -48,7 +48,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
-    private static final String PREFIX = "https://api.modrinth.com";
+    private static final String PREFIX = System.getProperty("hmcl.modrinth.prefix", "https://api.modrinth.com");
+    private static final String DOWNLOAD_PREFIX = System.getProperty("hmcl.modrinth.download.prefix", "");
 
     private final String projectType;
 
@@ -562,6 +563,13 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod.File toFile() {
+            if (!DOWNLOAD_PREFIX.isEmpty()) {
+                return new RemoteMod.File(
+                    hashes,
+                    StringUtils.replaceSitePrefix(url, DOWNLOAD_PREFIX),
+                    filename
+                );
+            }
             return new RemoteMod.File(hashes, url, filename);
         }
     }
