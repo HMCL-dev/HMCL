@@ -99,7 +99,7 @@ public final class FontManager {
 
         fontProperty = new SimpleObjectProperty<>(fontReference);
 
-        LOG.info("Font: " + fontFamily);
+        LOG.info("Font: " + (fontReference != null ? fontReference.getFamily() : Font.getDefault().getName()));
         fontProperty.addListener((obs, oldValue, newValue) -> {
             if (newValue != null)
                 config().setLauncherFontFamily(newValue.getFamily());
