@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
@@ -89,7 +90,14 @@ public final class FontManager {
         if (fontFamily == null)
             fontFamily = System.getenv("HMCL_FONT");
 
-        fontProperty = new SimpleObjectProperty<>(fontFamily == null ? new FontReference(DEFAULT_FONT.get()) : new FontReference(fontFamily));
+        FontReference fontReference;
+        if (fontFamily == null) {
+            Font defaultFont = DEFAULT_FONT.get();
+            fontReference = defaultFont != null ? new FontReference(defaultFont) : null;
+        } else
+            fontReference = new FontReference(fontFamily);
+
+        fontProperty = new SimpleObjectProperty<>(fontReference);
 
         LOG.info("Font: " + fontFamily);
         fontProperty.addListener((obs, oldValue, newValue) -> {
@@ -208,25 +216,20 @@ public final class FontManager {
 
     // https://github.com/HMCL-dev/HMCL/issues/4072
     public static final class FontReference {
-        private final String family;
+        private final @NotNull String family;
         private final @Nullable String style;
 
-        public FontReference(String family) {
-            this.family = family;
+        public FontReference(@NotNull String family) {
+            this.family = Objects.requireNonNull(family);
             this.style = null;
         }
 
-        public FontReference(String family, @Nullable String style) {
-            this.family = Objects.requireNonNull(family);
-            this.style = style;
-        }
-
-        public FontReference(Font font) {
+        public FontReference(@NotNull Font font) {
             this.family = font.getFamily();
             this.style = font.getStyle();
         }
 
-        public String getFamily() {
+        public @NotNull String getFamily() {
             return family;
         }
 
