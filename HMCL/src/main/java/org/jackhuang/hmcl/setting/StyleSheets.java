@@ -114,11 +114,7 @@ public final class StyleSheets {
 
         StringBuilder builder = new StringBuilder();
         builder.append(".root {");
-        if (fontFamily == null)
-            // https://github.com/HMCL-dev/HMCL/pull/3423
-            builder.append("-fx-font-family: -fx-base-font-family;");
-        else
-            builder.append("-fx-font-family:\"").append(fontFamily).append("\";");
+        builder.append("-fx-font-family:\"").append(fontFamily).append("\";");
 
         if (weight != null)
             builder.append("-fx-font-weight:").append(weight).append(";");
