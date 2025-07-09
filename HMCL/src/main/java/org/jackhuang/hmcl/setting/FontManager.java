@@ -26,6 +26,8 @@ import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -35,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -78,7 +81,7 @@ public final class FontManager {
             return null;
     });
 
-    private static final ObjectProperty<Font> fontProperty;
+    private static final ObjectProperty<FontReference> fontProperty;
 
     static {
         String fontFamily = config().getLauncherFontFamily();
@@ -87,10 +90,16 @@ public final class FontManager {
         if (fontFamily == null)
             fontFamily = System.getenv("HMCL_FONT");
 
-        Font font = fontFamily == null ? DEFAULT_FONT.get() : Font.font(fontFamily, DEFAULT_FONT_SIZE);
-        fontProperty = new SimpleObjectProperty<>(font);
+        FontReference fontReference;
+        if (fontFamily == null) {
+            Font defaultFont = DEFAULT_FONT.get();
+            fontReference = defaultFont != null ? new FontReference(defaultFont) : null;
+        } else
+            fontReference = new FontReference(fontFamily);
 
-        LOG.info("Font: " + (font != null ? font.getName() : Font.getDefault().getName()));
+        fontProperty = new SimpleObjectProperty<>(fontReference);
+
+        LOG.info("Font: " + (fontReference != null ? fontReference.getFamily() : "System"));
         fontProperty.addListener((obs, oldValue, newValue) -> {
             if (newValue != null)
                 config().setLauncherFontFamily(newValue.getFamily());
@@ -189,20 +198,62 @@ public final class FontManager {
         }
     }
 
-    public static ObjectProperty<Font> fontProperty() {
+    public static ObjectProperty<FontReference> fontProperty() {
         return fontProperty;
     }
 
-    public static Font getFont() {
+    public static FontReference getFont() {
         return fontProperty.get();
     }
 
-    public static void setFont(Font font) {
+    public static void setFont(FontReference font) {
         fontProperty.set(font);
     }
 
     public static void setFontFamily(String fontFamily) {
-        setFont(fontFamily != null ? Font.font(fontFamily, DEFAULT_FONT_SIZE) : null);
+        setFont(fontFamily != null ? new FontReference(fontFamily) : null);
+    }
+
+    // https://github.com/HMCL-dev/HMCL/issues/4072
+    public static final class FontReference {
+        private final @NotNull String family;
+        private final @Nullable String style;
+
+        public FontReference(@NotNull String family) {
+            this.family = Objects.requireNonNull(family);
+            this.style = null;
+        }
+
+        public FontReference(@NotNull Font font) {
+            this.family = font.getFamily();
+            this.style = font.getStyle();
+        }
+
+        public @NotNull String getFamily() {
+            return family;
+        }
+
+        public @Nullable String getStyle() {
+            return style;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof FontReference))
+                return false;
+            FontReference that = (FontReference) o;
+            return Objects.equals(family, that.family) && Objects.equals(style, that.style);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(family, style);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("FontReference[family='%s', style='%s']", family, style);
+        }
     }
 
     private FontManager() {
