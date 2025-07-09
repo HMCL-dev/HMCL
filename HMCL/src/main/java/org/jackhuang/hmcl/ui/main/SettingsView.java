@@ -198,13 +198,15 @@ public abstract class SettingsView extends StackPane {
                     if (LOG.getLogFile() == null)
                         openLogFolderButton.setDisable(true);
 
-                    JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
-                    logButton.setOnAction(e -> onExportLogs());
-                    logButton.getStyleClass().add("jfx-button-border");
+                    JFXButton exportRecentLogsButton = new JFXButton(i18n("settings.launcher.launcher_log.export_recent"));
+                    exportRecentLogsButton.setOnAction(e -> onExportRecentLogs());
+                    exportRecentLogsButton.getStyleClass().add("jfx-button-border");
+                    if (LOG.getLogFile() == null)
+                        exportRecentLogsButton.setDisable(true);
 
                     HBox buttonBox = new HBox();
                     buttonBox.setSpacing(10);
-                    buttonBox.getChildren().addAll(openLogFolderButton, logButton);
+                    buttonBox.getChildren().addAll(openLogFolderButton, exportRecentLogsButton);
                     BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                     debugPane.setRight(buttonBox);
 
@@ -223,9 +225,9 @@ public abstract class SettingsView extends StackPane {
 
     protected abstract void onUpdate();
 
-    protected abstract void onExportLogs();
-
     protected abstract void onSponsor();
 
     protected abstract void clearCacheDirectory();
+
+    protected abstract void onExportRecentLogs();
 }
