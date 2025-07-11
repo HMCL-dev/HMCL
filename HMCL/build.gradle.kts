@@ -90,18 +90,12 @@ fun attachSignature(jar: File) {
     }
 }
 
-val java11 = sourceSets.create("java11") {
-    java {
-        srcDir("src/main/java11")
-    }
-}
-
 tasks.withType<JavaCompile> {
     sourceCompatibility = "11"
     targetCompatibility = "11"
 }
 
-tasks.getByName<JavaCompile>(java11.compileJavaTaskName) {
+tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
@@ -177,13 +171,6 @@ tasks.shadowJar {
         attachSignature(jarPath)
         createChecksum(jarPath)
     }
-}
-
-tasks.processResources {
-    into("META-INF/versions/11") {
-        from(sourceSets["java11"].output)
-    }
-    dependsOn(tasks["java11Classes"])
 }
 
 val makeExecutables by tasks.registering {
