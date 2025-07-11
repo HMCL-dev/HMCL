@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.i18n;
+package org.jackhuang.hmcl.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,11 +28,9 @@ import java.util.ResourceBundle;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-final class UTF8Control extends ResourceBundle.Control {
+public final class UTF8Control extends ResourceBundle.Control {
 
-    public static final UTF8Control INSTANCE = new UTF8Control();
-
-    private UTF8Control() {}
+    public UTF8Control() {}
 
     @Override
     public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload) throws IOException {
