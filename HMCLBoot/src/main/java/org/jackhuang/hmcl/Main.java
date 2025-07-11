@@ -64,7 +64,9 @@ public final class Main {
         if (checkJavaVersion(System.getProperty("java.version"))) {
             EntryPoint.main(args);
         } else {
-            SwingUtils.showErrorDialog(BootProperties.getResourceBundle().getString("boot.unsupported_java_version"));
+            String errorMessage = BootProperties.getResourceBundle().getString("boot.unsupported_java_version");
+            System.err.println(errorMessage);
+            SwingUtils.showErrorDialog(errorMessage);
             System.exit(1);
         }
     }
