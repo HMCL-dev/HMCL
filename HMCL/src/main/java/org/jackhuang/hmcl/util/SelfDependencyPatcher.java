@@ -41,9 +41,8 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.Main;
+import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.ui.SwingUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -246,7 +245,7 @@ public final class SelfDependencyPatcher {
             }
         } else {
             LOG.info("User choose not to download JavaFX");
-            Main.exit(0);
+            EntryPoint.exit(0);
         }
         throw new AssertionError();
     }

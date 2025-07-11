@@ -101,6 +101,7 @@ public final class ConfigHolder {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     && configLocation.getFileSystem() == FileSystems.getDefault()
                     && configLocation.toFile().canWrite()) {
+                LOG.warning("Config at " + configLocation + " is not writable, but it seems to be a Samba share or OpenJDK bug");
                 // There are some serious problems with the implementation of Samba or OpenJDK
                 throw new SambaException();
             } else {
