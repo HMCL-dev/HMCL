@@ -25,24 +25,11 @@ import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.Collections;
 import java.util.concurrent.CancellationException;
 
-import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -60,10 +47,6 @@ public final class EntryPoint {
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         checkDirectoryPath();
-
-        if (JavaRuntime.CURRENT_VERSION < 9)
-            // This environment check will take ~300ms
-            thread(EntryPoint::fixLetsEncrypt, "CA Certificate Check", true);
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             initIcon();
@@ -185,38 +168,5 @@ public final class EntryPoint {
     private static void showErrorAndExit(String message) {
         SwingUtils.showErrorDialog(message);
         exit(1);
-    }
-
-    private static void fixLetsEncrypt() {
-        try {
-            KeyStore defaultKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            Path ksPath = Paths.get(System.getProperty("java.home"), "lib", "security", "cacerts");
-
-            try (InputStream ksStream = Files.newInputStream(ksPath)) {
-                defaultKeyStore.load(ksStream, "changeit".toCharArray());
-            }
-
-            KeyStore letsEncryptKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            try (InputStream letsEncryptFile = EntryPoint.class.getResourceAsStream("/assets/lekeystore.jks")) {
-                letsEncryptKeyStore.load(letsEncryptFile, "supersecretpassword".toCharArray());
-            }
-
-            KeyStore merged = KeyStore.getInstance(KeyStore.getDefaultType());
-            merged.load(null, new char[0]);
-            for (String alias : Collections.list(letsEncryptKeyStore.aliases()))
-                merged.setCertificateEntry(alias, letsEncryptKeyStore.getCertificate(alias));
-            for (String alias : Collections.list(defaultKeyStore.aliases()))
-                merged.setCertificateEntry(alias, defaultKeyStore.getCertificate(alias));
-
-            TrustManagerFactory instance = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            instance.init(merged);
-            SSLContext tls = SSLContext.getInstance("TLS");
-            tls.init(null, instance.getTrustManagers(), null);
-            HttpsURLConnection.setDefaultSSLSocketFactory(tls.getSocketFactory());
-            LOG.info("Added Lets Encrypt root certificates as additional trust");
-        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException |
-                 KeyManagementException e) {
-            LOG.error("Failed to load lets encrypt certificate. Expect problems", e);
-        }
     }
 }
