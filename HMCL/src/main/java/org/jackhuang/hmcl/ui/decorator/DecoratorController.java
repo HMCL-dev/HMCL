@@ -173,10 +173,18 @@ public class DecoratorController {
 
         try {
             // For JavaFX 12+
-            MouseButton button = MouseButton.valueOf("BACK");
+            MouseButton backButton = MouseButton.valueOf("BACK");
+            MouseButton forwardButton = MouseButton.valueOf("FORWARD");
             navigator.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
-                if (e.getButton() == button) {
+                if (e.getButton() == backButton) {
                     back();
+                    e.consume();
+                }
+            });
+
+            // Prevent unexpected button click animation when click BACK and FORWARD mouse button.
+            navigator.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
+                if (e.getTarget() instanceof StackPane && (e.getButton() == forwardButton || e.getButton() == backButton)) {
                     e.consume();
                 }
             });
