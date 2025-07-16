@@ -1,4 +1,5 @@
 [versions]
+hmclauncher = "3.6.0.6"
 jetbrains-annotations = "26.0.1"
 kala-compress = "1.27.1-1"
 simple-png-javafx = "0.3.0"
@@ -20,6 +21,7 @@ java-info = "1.0"
 shadow = "8.3.6"
 
 [libraries]
+hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclauncher" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 kala-compress-zip = { module = "org.glavo.kala:kala-compress-archivers-zip", version.ref = "kala-compress" }
 kala-compress-tar = { module = "org.glavo.kala:kala-compress-archivers-tar", version.ref = "kala-compress" }
