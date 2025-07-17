@@ -42,6 +42,7 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -189,7 +190,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedCategory(String category) {
-        return i18n("curse.category." + category);
+        return repository instanceof ModrinthRemoteModRepository
+                ? i18n("modrinth.category." + category)
+                : i18n("curse.category." + category);
     }
 
     private String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
@@ -200,7 +203,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedOfficialPage() {
-        return i18n("mods.curseforge");
+        if (repository instanceof ModrinthRemoteModRepository) {
+            return i18n("mods.modrinth");
+        } else {
+            return i18n("mods.curseforge");
+        }
     }
 
     protected Profile.ProfileVersion getProfileVersion() {
@@ -356,11 +363,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                     currentFilterID.set(filterID.get());
 
+                    int pageOffset = control.pageOffset.get();
                     getSkinnable().search(gameVersionField.getSelectionModel().getSelectedItem(),
                             Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
                                     .map(CategoryIndented::getCategory)
                                     .orElse(null),
-                            control.pageOffset.get(),
+                            pageOffset == -1 ? 0 : pageOffset,
                             nameField.getText(),
                             sortComboBox.getSelectionModel().getSelectedItem());
                 };
@@ -432,13 +440,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         int pageOffset = control.pageOffset.get();
                         int pageCount = control.pageCount.get();
 
-                        boolean disablePrevious = pageOffset == 0;
+                        boolean disableAll = pageCount >= -1 && pageCount <= 1;
+
+                        boolean disablePrevious = disableAll || pageOffset == 0;
                         firstPageButton.setDisable(disablePrevious);
                         previousPageButton.setDisable(disablePrevious);
 
-                        boolean disableNext = pageOffset == pageCount - 1;
+                        boolean disableNext = disableAll || pageOffset == pageCount - 1;
                         nextPageButton.setDisable(disableNext);
-                        lastPageButton.setDisable(disableNext || pageCount == -1);
+                        lastPageButton.setDisable(disableNext);
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
@@ -450,6 +460,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             }
                         }
 
+                        changeButton.value.run();
+                    });
+
+                    FXUtils.onChange(control.pageOffset, pageOffsetN -> {
                         changeButton.value.run();
                     });
 

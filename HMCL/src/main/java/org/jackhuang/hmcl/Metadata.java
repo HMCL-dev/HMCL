@@ -19,20 +19,27 @@ package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 
 /**
  * Stores metadata about this application.
  */
 public final class Metadata {
-    private Metadata() {}
+    private Metadata() {
+    }
 
     public static final String NAME = "HMCL";
     public static final String FULL_NAME = "Hello Minecraft! Launcher";
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getManifestAttribute("Implementation-Version", "@develop@"));
+
+    public static final int MINIMUM_REQUIRED_JAVA_VERSION = 8;
+    public static final int MINIMUM_SUPPORTED_JAVA_VERSION = 11;
 
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
@@ -46,13 +53,16 @@ public final class Metadata {
     public static final String CONTACT_URL = DOCS_URL + "/help.html";
     public static final String CHANGELOG_URL = DOCS_URL + "/changelog/";
     public static final String EULA_URL = DOCS_URL + "/eula/hmcl.html";
-    public static final String GROUPS_URL = DOCS_URL + "/groups.html";
+    public static final String GROUPS_URL = "https://www.bilibili.com/opus/905435541874409529";
 
     public static final String BUILD_CHANNEL = JarUtils.getManifestAttribute("Build-Channel", "nightly");
     public static final String GITHUB_SHA = JarUtils.getManifestAttribute("GitHub-SHA", null);
 
+    public static final Path CURRENT_DIRECTORY = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
-    public static final Path HMCL_DIRECTORY;
+    public static final Path HMCL_GLOBAL_DIRECTORY;
+    public static final Path HMCL_CURRENT_DIRECTORY;
+    public static final Path DEPENDENCIES_DIRECTORY;
 
     static {
         String hmclHome = System.getProperty("hmcl.home");
@@ -60,16 +70,22 @@ public final class Metadata {
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
-                    HMCL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath();
+                    HMCL_GLOBAL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath().normalize();
                 } else {
-                    HMCL_DIRECTORY = Paths.get(System.getProperty("user.home", "."), ".local", "share", "hmcl").toAbsolutePath();
+                    HMCL_GLOBAL_DIRECTORY = Paths.get(System.getProperty("user.home"), ".local", "share", "hmcl").toAbsolutePath().normalize();
                 }
             } else {
-                HMCL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
+                HMCL_GLOBAL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
             }
         } else {
-            HMCL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
+            HMCL_GLOBAL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
         }
+
+        String hmclCurrentDir = System.getProperty("hmcl.dir");
+        HMCL_CURRENT_DIRECTORY = hmclCurrentDir != null
+                ? Paths.get(hmclCurrentDir).toAbsolutePath().normalize()
+                : CURRENT_DIRECTORY.resolve(".hmcl");
+        DEPENDENCIES_DIRECTORY = HMCL_CURRENT_DIRECTORY.resolve("dependencies");
     }
 
     public static boolean isStable() {
@@ -82,5 +98,33 @@ public final class Metadata {
 
     public static boolean isNightly() {
         return !isStable() && !isDev();
+    }
+
+    public static @Nullable String getSuggestedJavaDownloadLink() {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW)
+            return "https://www.loongnix.cn/zh/api/java/downloads-jdk21/index.html";
+        else {
+            EnumSet<Architecture> supportedArchitectures;
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+                supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.X86, Architecture.ARM64);
+            else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+                supportedArchitectures = EnumSet.of(
+                        Architecture.X86_64, Architecture.X86,
+                        Architecture.ARM64, Architecture.ARM32,
+                        Architecture.RISCV64, Architecture.LOONGARCH64
+                );
+            else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+                supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.ARM64);
+            else
+                supportedArchitectures = EnumSet.noneOf(Architecture.class);
+
+            if (supportedArchitectures.contains(Architecture.SYSTEM_ARCH))
+                return String.format("https://docs.hmcl.net/downloads/%s/%s.html",
+                        OperatingSystem.CURRENT_OS.getCheckedName(),
+                        Architecture.SYSTEM_ARCH.getCheckedName()
+                );
+            else
+                return null;
+        }
     }
 }

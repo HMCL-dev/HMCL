@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -248,37 +245,31 @@ public final class CommandBuilder {
     }
 
     public static boolean hasExecutionPolicy() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
             return true;
-        }
+        if (!OperatingSystem.isWindows7OrLater())
+            return false;
+
         try {
-            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Get-ExecutionPolicy"});
-            if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroy();
-                return false;
-            }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), OperatingSystem.NATIVE_CHARSET))) {
-                String policy = reader.readLine();
-                return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
-            }
+            String policy = SystemUtils.run("powershell.exe", "-NoProfile", "-Command", "Get-ExecutionPolicy").trim();
+            return "Unrestricted".equalsIgnoreCase(policy) || "RemoteSigned".equalsIgnoreCase(policy);
         } catch (Throwable ignored) {
         }
         return false;
     }
 
     public static boolean setExecutionPolicy() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
             return true;
-        }
+        if (!OperatingSystem.isWindows7OrLater())
+            return false;
+
         try {
-            final Process process = Runtime.getRuntime().exec(new String[]{"powershell", "-Command", "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser"});
-            if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroy();
-                return false;
-            }
+            SystemUtils.run("powershell.exe", "-NoProfile", "-Command", "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser");
+            return true;
         } catch (Throwable ignored) {
+            return false;
         }
-        return true;
     }
 
     private static boolean containsEscape(String str, String escapeChars) {

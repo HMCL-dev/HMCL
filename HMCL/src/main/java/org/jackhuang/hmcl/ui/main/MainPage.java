@@ -79,7 +79,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
     private final PopupMenu menu = new PopupMenu();
-    private final JFXPopup popup = new JFXPopup(menu);
+
+    private final StackPane popupWrapper = new StackPane(menu);
+    private final JFXPopup popup = new JFXPopup(popupWrapper);
 
     private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
@@ -321,7 +323,27 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void onMenu() {
-        popup.show(menuButton, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -menuButton.getHeight());
+        Node contentNode;
+        if (menu.getContent().isEmpty()) {
+            Label placeholder = new Label(i18n("version.empty"));
+            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: gray; -fx-font-style: italic;");
+            contentNode = placeholder;
+        } else {
+            contentNode = menu;
+        }
+
+        popupWrapper.getChildren().setAll(contentNode);
+
+        if (popup.isShowing()) {
+            popup.hide();
+        }
+        popup.show(
+                menuButton,
+                JFXPopup.PopupVPosition.BOTTOM,
+                JFXPopup.PopupHPosition.RIGHT,
+                0,
+                -menuButton.getHeight()
+        );
     }
 
     private void onUpgrade() {

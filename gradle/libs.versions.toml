@@ -1,4 +1,5 @@
 [versions]
+hmclauncher = "3.6.0.6"
 jetbrains-annotations = "26.0.1"
 kala-compress = "1.27.1-1"
 simple-png-javafx = "0.3.0"
@@ -12,11 +13,15 @@ nanohttpd = "2.3.1"
 jsoup = "1.19.1"
 chardet = "2.5.0"
 twelvemonkeys = "3.12.0"
+jna = "5.17.0"
+pci-ids = "0.4.0"
+java-info = "1.0"
 
 # plugins
 shadow = "8.3.6"
 
 [libraries]
+hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclauncher" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 kala-compress-zip = { module = "org.glavo.kala:kala-compress-archivers-zip", version.ref = "kala-compress" }
 kala-compress-tar = { module = "org.glavo.kala:kala-compress-archivers-tar", version.ref = "kala-compress" }
@@ -31,6 +36,10 @@ nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 chardet = { module = "org.glavo:chardet", version.ref = "chardet" }
 twelvemonkeys-imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
+pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }
+java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

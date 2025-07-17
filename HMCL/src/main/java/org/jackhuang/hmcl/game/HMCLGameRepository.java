@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.ProxyManager;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,18 +151,24 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         Version fromVersion = getVersion(srcId);
 
-        if (Files.exists(dstDir)) throw new IOException("Version exists");
-        FileUtils.copyDirectory(srcDir, dstDir);
+        List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
+        blackList.add(srcId + ".jar");
+        blackList.add(srcId + ".json");
+        if (!copySaves)
+            blackList.add("saves");
 
-        Path fromJson = dstDir.resolve(srcId + ".json");
-        Path fromJar = dstDir.resolve(srcId + ".jar");
+        if (Files.exists(dstDir)) throw new IOException("Version exists");
+        FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
+
+        Path fromJson = srcDir.resolve(srcId + ".json");
+        Path fromJar = srcDir.resolve(srcId + ".jar");
         Path toJson = dstDir.resolve(dstId + ".json");
         Path toJar = dstDir.resolve(dstId + ".jar");
 
         if (Files.exists(fromJar)) {
-            Files.move(fromJar, toJar);
+            Files.copy(fromJar, toJar);
         }
-        Files.move(fromJson, toJson);
+        Files.copy(fromJson, toJson);
 
         FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
 
@@ -174,12 +181,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         File srcGameDir = getRunDirectory(srcId);
         File dstGameDir = getRunDirectory(dstId);
-
-        List<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
-        blackList.add(srcId + ".jar");
-        blackList.add(srcId + ".json");
-        if (!copySaves)
-            blackList.add("saves");
 
         if (originalGameDirType != GameDirectoryType.VERSION_FOLDER)
             FileUtils.copyDirectory(srcGameDir.toPath(), dstGameDir.toPath(), path -> Modpack.acceptFile(path, blackList, null));
@@ -203,6 +204,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     /**
      * Create new version setting if version id has no version setting.
+     *
      * @param id the version id.
      * @return new version setting, null if given version does not exist.
      */
@@ -225,7 +227,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
      * Get the version setting for version id.
      *
      * @param id version id
-     *
      * @return corresponding version setting, null if the version has no its own version setting.
      */
     @Nullable
@@ -329,26 +330,22 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public boolean saveVersionSetting(String id) {
+    public void saveVersionSetting(String id) {
         if (!localVersionSettings.containsKey(id))
-            return false;
-        File file = getLocalVersionSettingFile(id);
-        if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-            return false;
-
-        LOG.info("Saving version setting: " + id);
-
+            return;
+        Path file = getLocalVersionSettingFile(id).toPath().toAbsolutePath().normalize();
         try {
-            FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
-            return true;
+            Files.createDirectories(file.getParent());
         } catch (IOException e) {
-            LOG.error("Unable to save version setting of " + id, e);
-            return false;
+            LOG.warning("Failed to create directory: " + file.getParent(), e);
         }
+
+        FileSaver.save(file, GSON.toJson(localVersionSettings.get(id)));
     }
 
     /**
      * Make version use self version settings instead of the global one.
+     *
      * @param id the version id.
      * @return specialized version setting, null if given version does not exist.
      */
@@ -383,7 +380,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
                 .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
-                        OperatingSystem.getPhysicalMemoryStatus().getAvailable(),
+                        SystemInfo.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
                 ) / 1024 / 1024))
                 .setMinMemory(vs.getMinMemory())
@@ -415,8 +412,12 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
+
         if (config().hasProxy()) {
-            builder.setProxy(ProxyManager.getProxy());
+            builder.setProxyType(config().getProxyType());
+            builder.setProxyHost(config().getProxyHost());
+            builder.setProxyPort(config().getProxyPort());
+
             if (config().hasProxyAuth()) {
                 builder.setProxyUser(config().getProxyUser());
                 builder.setProxyPass(config().getProxyPass());
