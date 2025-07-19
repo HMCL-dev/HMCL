@@ -43,7 +43,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.AbstractMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -122,23 +128,47 @@ public final class SettingsPage extends SettingsView {
     }
 
     @Override
-    protected void onExportLogs() {
-        // We cannot determine which file is JUL using.
-        // So we write all the logs to a new file.
+    protected void onExportRecentLogs() {
         thread(() -> {
-            Path logFile = Paths.get("hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
+            Path logDir = LOG.getLogFile().getParent();
+            Path zipFile = Paths.get("hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip");
 
-            LOG.info("Exporting logs to " + logFile);
-            try (OutputStream output = Files.newOutputStream(logFile)) {
-                LOG.exportLogs(output);
+            LOG.info("Exporting recent logs to " + zipFile);
+            try {
+                // Get 5 most recent files
+                List<Path> recentFiles = Files.walk(logDir)
+                        .filter(path -> !Files.isDirectory(path))
+                        .map(path -> {
+                            try {
+                                return new AbstractMap.SimpleEntry<>(path, Files.getLastModifiedTime(path).toMillis());
+                            } catch (IOException e) {
+                                return new AbstractMap.SimpleEntry<>(path, 0L);
+                            }
+                        })
+                        .sorted((a, b) -> Long.compare(b.getValue(), a.getValue())) // Sort by newest first
+                        .limit(5)
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toList());
+
+                try (OutputStream os = Files.newOutputStream(zipFile);
+                     ZipOutputStream zos = new ZipOutputStream(os)) {
+
+                    for (Path path : recentFiles) {
+                        String zipEntryName = logDir.relativize(path).toString();
+                        zos.putNextEntry(new ZipEntry(zipEntryName));
+                        Files.copy(path, zos);
+                        zos.closeEntry();
+                    }
+                }
+
+                Platform.runLater(() -> {
+                    Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", zipFile));
+                    FXUtils.showFileInExplorer(zipFile);
+                });
             } catch (IOException e) {
                 Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
-                LOG.warning("Failed to export logs", e);
-                return;
+                LOG.warning("Failed to export recent logs", e);
             }
-
-            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", logFile)));
-            FXUtils.showFileInExplorer(logFile);
         });
     }
 
