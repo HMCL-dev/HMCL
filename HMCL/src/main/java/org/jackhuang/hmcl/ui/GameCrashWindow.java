@@ -269,10 +269,17 @@ public class GameCrashWindow extends Stage {
 
     private void exportGameCrashInfo() {
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
-        Path crashReportFile = repository.getRunDirectory(version.getId()).toPath().resolve("hmcl-game-crash-report.log");
+        Path crashReportFile;
+        try {
+            crashReportFile = Files.createTempFile("hmcl-game-crash-report-", ".log");
+        } catch (IOException e) {
+            LOG.warning("Failed to create temporary crash report file, using run directory instead", e);
+            crashReportFile = repository.getRunDirectory(version.getId()).toPath().resolve("hmcl-game-crash-report.log");
+        }
 
+        Path finalCrashReportFile = crashReportFile;
         CompletableFuture.supplyAsync(() -> {
-            try (BufferedWriter report = Files.newBufferedWriter(crashReportFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            try (BufferedWriter report = Files.newBufferedWriter(finalCrashReportFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 report.write("=== HMCL Game Crash Report ===\n");
                 report.write("HMCL Version: " + Metadata.VERSION + "\n");
                 report.write("Current Directory: " + Metadata.CURRENT_DIRECTORY + "\n");
@@ -376,7 +383,7 @@ public class GameCrashWindow extends Stage {
                 LOG.warning("Failed to write crash report file", e);
             }
             return logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
-        }).thenComposeAsync(logs -> LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString(), crashReportFile)).handleAsync((result, exception) -> {
+        }).thenComposeAsync(logs -> LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString(), finalCrashReportFile)).handleAsync((result, exception) -> {
             Alert alert;
 
             if (exception == null) {
