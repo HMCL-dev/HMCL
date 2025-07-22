@@ -279,9 +279,9 @@ public class GameCrashWindow extends Stage {
                         report.append("HMCL Global Directory: ").append(Metadata.HMCL_GLOBAL_DIRECTORY).append("\n");
                         report.append("HMCL Current Directory: ").append(Metadata.HMCL_CURRENT_DIRECTORY).append("\n");
                         report.append("HMCL Jar Path: ").append(Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found")).append("\n");
-                        report.append("HMCL Log File: ").append(Lang.requireNonNullElse(LOG.getLogFile(), "In Memory")).append("\n\n");
+                        report.append("HMCL Log File: ").append(Lang.requireNonNullElse(LOG.getLogFile(), "In Memory")).append("\n");
 
-                        report.append("== System Information ==\n");
+                        report.append("\n== System Information ==\n");
                         report.append("Operating System: ").append(OperatingSystem.OS_RELEASE_PRETTY_NAME == null
                                 ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION
                                 : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')').append("\n");
@@ -303,9 +303,9 @@ public class GameCrashWindow extends Stage {
                             report.append("XDG Current Desktop: ").append(System.getenv("XDG_CURRENT_DESKTOP")).append("\n");
                         }
 
-                        report.append("Total Memory: ").append(total_memory).append("\n\n");
+                        report.append("Total Memory: ").append(total_memory).append("\n");
 
-                        report.append("== Hardware Information ==\n");
+                        report.append("\n== Hardware Information ==\n");
 
                         CentralProcessor cpu = SystemInfo.getCentralProcessor();
                         if (cpu != null) {
@@ -339,9 +339,7 @@ public class GameCrashWindow extends Stage {
                             report.append("\n");
                         }
 
-                        report.append("\n");
-
-                        report.append("== Java Information ==\n");
+                        report.append("\n== Java Information ==\n");
                         report.append("Java Architecture: ").append(Architecture.CURRENT_ARCH.getDisplayName()).append("\n");
                         report.append("Java Version: ").append(System.getProperty("java.version")).append(", ").append(System.getProperty("java.vendor")).append("\n");
                         report.append("Java VM Version: ").append(System.getProperty("java.vm.name")).append(" (").append(System.getProperty("java.vm.info")).append("), ").append(System.getProperty("java.vm.vendor")).append("\n");
@@ -351,7 +349,7 @@ public class GameCrashWindow extends Stage {
                         report.append("JVM Max Memory: ").append(MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory())).append("\n");
                         report.append("Allocated Memory: ").append(memory).append("\n");
 
-                        report.append("== Game Information ==\n");
+                        report.append("\n== Game Information ==\n");
                         report.append("Game Version: ").append(version.getId()).append("\n");
                         report.append("Game Directory: ").append(launchOptions.getGameDir().getAbsolutePath()).append("\n");
 
