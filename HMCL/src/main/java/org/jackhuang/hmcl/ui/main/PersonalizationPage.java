@@ -254,7 +254,7 @@ public class PersonalizationPage extends StackPane {
                     }));
                     FXUtils.onChange(cboAntiAliasing.valueProperty(), value ->
                             globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
-                                    .orElse("auto")));
+                                    .orElse(null)));
 
                     fontAntiAliasingPane.setRight(cboAntiAliasing);
                 }
