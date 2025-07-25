@@ -91,10 +91,6 @@ public final class IOUtils {
         return new String(readFully(stream), charset);
     }
 
-    public static void copyTo(InputStream src, OutputStream dest) throws IOException {
-        src.transferTo(dest);
-    }
-
     public static void copyTo(InputStream src, OutputStream dest, byte[] buf) throws IOException {
         while (true) {
             int len = src.read(buf);
