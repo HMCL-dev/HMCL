@@ -17,13 +17,28 @@
  */
 package org.jackhuang.hmcl.util;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+
 /**
  * @author Glavo
  */
 public final class ModuleHelper {
 
     public static void addEnableNativeAccess(Class<?> clazzInModule) {
-        // do nothing
+        Module module = clazzInModule.getModule();
+        if (module.isNamed()) {
+            try {
+                MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup());
+                MethodHandle implAddEnableNativeAccess = lookup.findVirtual(Module.class, "implAddEnableNativeAccess", MethodType.methodType(Module.class));
+                Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module);
+            } catch (Throwable e) {
+                e.printStackTrace(System.err);
+            }
+        } else {
+            System.err.println("TODO: Add enable native access for anonymous modules is not yet supported");
+        }
     }
 
     private ModuleHelper() {

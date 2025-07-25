@@ -21,16 +21,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 
+import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.ui.SwingUtils;
+import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -103,16 +103,6 @@ public final class UpdateHandler {
             return;
         }
 
-        if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
-            MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version.update"), i18n("message.error"), MessageType.ERROR);
-            String downloadLink = Metadata.getSuggestedJavaDownloadLink();
-            if (downloadLink != null)
-                builder.addHyperLink(i18n("fatal.deprecated_java_version.download_link", 21), downloadLink);
-            builder.ok(null);
-            Controllers.dialog(builder.build());
-            return;
-        }
-
         Controllers.dialog(new UpgradeDialog(version, () -> {
             Path downloaded;
             try {
@@ -136,7 +126,7 @@ public final class UpdateHandler {
                         }
 
                         requestUpdate(downloaded, getCurrentLocation());
-                        Main.exit(0);
+                        EntryPoint.exit(0);
                     } catch (IOException e) {
                         LOG.warning("Failed to update to " + version, e);
                         Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));

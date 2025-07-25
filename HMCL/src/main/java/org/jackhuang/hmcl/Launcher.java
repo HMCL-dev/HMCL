@@ -81,13 +81,14 @@ public final class Launcher extends Application {
         try {
             try {
                 ConfigHolder.init();
-            } catch (SambaException ignored) {
-                Main.showWarningAndContinue(i18n("fatal.samba"));
+            } catch (SambaException e) {
+                showAlert(AlertType.WARNING, i18n("fatal.samba"));
             } catch (IOException e) {
                 LOG.error("Failed to load config", e);
                 checkConfigInTempDir();
                 checkConfigOwner();
-                Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
+                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
+                EntryPoint.exit(1);
             }
 
             // https://lapcatsoftware.com/articles/app-translocation.html
@@ -106,7 +107,7 @@ public final class Launcher extends Application {
             }
 
             if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
-                Main.showWarningAndContinue(i18n("fatal.illegal_char"));
+                showAlert(AlertType.WARNING, i18n("fatal.illegal_char"));
             }
 
             // runLater to ensure ConfigHolder.init() finished initialization
@@ -169,7 +170,7 @@ public final class Launcher extends Application {
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
                 && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
-            Main.exit(0);
+            EntryPoint.exit(0);
         }
     }
 
@@ -209,7 +210,7 @@ public final class Launcher extends Application {
             Clipboard.getSystemClipboard()
                     .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
         }
-        Main.exit(1);
+        EntryPoint.exit(1);
     }
 
     @Override
