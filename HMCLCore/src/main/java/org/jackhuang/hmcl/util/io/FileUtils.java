@@ -327,18 +327,9 @@ public final class FileUtils {
 
     /**
      * Move file to trash.
-     * <p>
-     * This method is only implemented in Java 9. Please check we are using Java 9 by invoking isMovingToTrashSupported.
-     * Example:
-     * <pre>{@code
-     * if (FileUtils.isMovingToTrashSupported()) {
-     *     FileUtils.moveToTrash(file);
-     * }
-     * }</pre>
      *
      * @param file the file being moved to trash.
      * @return false if moveToTrash does not exist, or platform does not support Desktop.Action.MOVE_TO_TRASH
-     * @see FileUtils#isMovingToTrashSupported()
      */
     public static boolean moveToTrash(File file) {
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
@@ -394,24 +385,6 @@ public final class FileUtils {
         try {
             return java.awt.Desktop.getDesktop().moveToTrash(file);
         } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Check if {@code java.awt.Desktop.moveToTrash} exists.
-     *
-     * @return true if the method exists.
-     */
-    public static boolean isMovingToTrashSupported() {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
-            return true;
-        }
-
-        try {
-            java.awt.Desktop.class.getMethod("moveToTrash", File.class);
-            return true;
-        } catch (ReflectiveOperationException e) {
             return false;
         }
     }

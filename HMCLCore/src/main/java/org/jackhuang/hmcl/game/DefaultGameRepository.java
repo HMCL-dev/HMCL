@@ -246,7 +246,7 @@ public class DefaultGameRepository implements GameRepository {
         try {
             versions.remove(id);
 
-            if (FileUtils.isMovingToTrashSupported() && FileUtils.moveToTrash(removedFile)) {
+            if (FileUtils.moveToTrash(removedFile)) {
                 return true;
             }
 
