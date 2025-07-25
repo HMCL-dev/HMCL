@@ -19,14 +19,15 @@ package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.ui.AwtUtils;
-import org.jackhuang.hmcl.util.ModuleHelper;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.util.concurrent.CancellationException;
 
@@ -140,7 +141,18 @@ public final class EntryPoint {
     private static void addEnableNativeAccess() {
         if (JavaRuntime.CURRENT_VERSION > 21) {
             try {
-                ModuleHelper.addEnableNativeAccess(Class.forName("javafx.stage.Stage")); // javafx.graphics
+                // javafx.graphics
+                Module module = Class.forName("javafx.stage.Stage").getModule();
+                if (module.isNamed()) {
+                    try {
+                        MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup());
+                        MethodHandle implAddEnableNativeAccess = lookup.findVirtual(Module.class,
+                                "implAddEnableNativeAccess", MethodType.methodType(Module.class));
+                        Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module);
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.err);
+                    }
+                }
             } catch (ClassNotFoundException e) {
                 LOG.error("Failed to add enable native access for JavaFX", e);
                 showErrorAndExit(i18n("fatal.javafx.incomplete"));
@@ -153,9 +165,9 @@ public final class EntryPoint {
         if (JavaRuntime.CURRENT_VERSION == 24 || JavaRuntime.CURRENT_VERSION == 25) {
             try {
                 Class<?> clazz = Class.forName("sun.misc.Unsafe");
-                Method trySetMemoryAccessWarned = clazz.getDeclaredMethod("trySetMemoryAccessWarned");
-                trySetMemoryAccessWarned.setAccessible(true);
-                trySetMemoryAccessWarned.invoke(null);
+                boolean ignored = (boolean) MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+                        .findStatic(clazz, "trySetMemoryAccessWarned", MethodType.methodType(boolean.class))
+                        .invokeExact();
             } catch (Throwable e) {
                 LOG.warning("Failed to enable unsafe memory access", e);
             }

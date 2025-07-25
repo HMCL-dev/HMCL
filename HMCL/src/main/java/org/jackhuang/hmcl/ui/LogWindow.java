@@ -224,7 +224,7 @@ public final class LogWindow extends Stage {
 
                 try {
                     if (gameProcess.isRunning()) {
-                        GameDumpGenerator.writeDumpTo(gameProcess.getPID(), dumpFile);
+                        GameDumpGenerator.writeDumpTo(gameProcess.getProcess().pid(), dumpFile);
                         FXUtils.showFileInExplorer(dumpFile);
                     }
                 } catch (Throwable e) {
