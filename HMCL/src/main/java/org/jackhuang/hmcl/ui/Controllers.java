@@ -188,8 +188,9 @@ public final class Controllers {
         }
 
         if (grayAntiAliasing) {
-            System.getProperties().putIfAbsent("prism.lcdtext", "false");
-            LOG.info("Disable sub-pixel antialiasing");
+            if (System.getProperties().putIfAbsent("prism.lcdtext", "false") == null) {
+                LOG.info("Disable sub-pixel antialiasing");
+            }
         }
 
         Controllers.stage = stage;
