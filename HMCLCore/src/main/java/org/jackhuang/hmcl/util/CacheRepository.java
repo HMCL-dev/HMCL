@@ -21,7 +21,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -288,7 +287,7 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), ETagIndex.class);
+                ETagIndex indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
                 ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
@@ -424,7 +423,7 @@ public class CacheRepository {
             try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 FileLock lock = channel.lock();
                 try {
-                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), mapTypeOf(String.class, Object.class));
+                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), mapTypeOf(String.class, Object.class));
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);

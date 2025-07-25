@@ -62,21 +62,6 @@ public final class IOUtils {
         }
     }
 
-    /**
-     * Read all bytes to a buffer from given input stream. The stream will not be closed.
-     *
-     * @param stream the InputStream being read.
-     * @return all bytes read from the stream
-     * @throws IOException if an I/O error occurs.
-     */
-    public static byte[] readFullyWithoutClosing(InputStream stream) throws IOException {
-        return stream.readAllBytes();
-    }
-
-    public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
-        return new String(stream.readAllBytes(), UTF_8);
-    }
-
     public static byte[] readFully(InputStream stream) throws IOException {
         try (stream) {
             return stream.readAllBytes();
