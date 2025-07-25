@@ -30,7 +30,6 @@ import java.nio.charset.*;
 import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
-import java.util.zip.ZipError;
 import java.util.zip.ZipException;
 
 /**
@@ -211,9 +210,6 @@ public final class CompressingUtils {
                 throw new FileSystemNotFoundException("Module jdk.zipfs does not exist");
 
             return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
-        } catch (ZipError error) {
-            // Since Java 8 throws ZipError stupidly
-            throw new ZipException(error.getMessage());
         } catch (UnsupportedOperationException ex) {
             throw new ZipException("Not a zip file");
         } catch (FileSystemNotFoundException ex) {
