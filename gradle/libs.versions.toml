@@ -1,5 +1,5 @@
 [versions]
-hmclauncher = "3.6.0.6"
+hmclauncher = "3.7.0.0"
 jetbrains-annotations = "26.0.1"
 kala-compress = "1.27.1-1"
 simple-png-javafx = "0.3.0"
