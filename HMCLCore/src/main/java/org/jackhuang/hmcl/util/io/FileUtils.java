@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -393,10 +392,7 @@ public final class FileUtils {
         }
 
         try {
-            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
-            Method moveToTrash = desktop.getClass().getMethod("moveToTrash", File.class);
-            moveToTrash.invoke(desktop, file);
-            return true;
+            return java.awt.Desktop.getDesktop().moveToTrash(file);
         } catch (Exception e) {
             return false;
         }

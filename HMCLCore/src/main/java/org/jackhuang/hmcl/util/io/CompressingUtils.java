@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -59,7 +58,7 @@ public final class CompressingUtils {
         }
     }
 
-    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) throws IOException {
+    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) {
         CharsetDecoder cd = newCharsetDecoder(encoding);
         CharBuffer cb = CharBuffer.allocate(32);
 
@@ -71,7 +70,7 @@ public final class CompressingUtils {
             int clen = (int)(ba.length * cd.maxCharsPerByte());
             if (clen == 0) continue;
             if (clen <= cb.capacity())
-                ((Buffer) cb).clear(); // cast to prevent "java.lang.NoSuchMethodError: java.nio.CharBuffer.clear()Ljava/nio/CharBuffer;" when compiling with Java 9+
+                cb.clear();
             else
                 cb = CharBuffer.allocate(clen);
 

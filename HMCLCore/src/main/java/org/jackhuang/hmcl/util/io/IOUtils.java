@@ -78,7 +78,7 @@ public final class IOUtils {
     public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
         ByteArrayOutputStream result = new ByteArrayOutputStream(Math.max(stream.available(), 32));
         copyTo(stream, result);
-        return result.toString("UTF-8");
+        return result.toString(UTF_8);
     }
 
     /**
@@ -101,11 +101,11 @@ public final class IOUtils {
     }
 
     public static String readFullyAsString(InputStream stream) throws IOException {
-        return readFully(stream).toString("UTF-8");
+        return readFully(stream).toString(UTF_8);
     }
 
     public static String readFullyAsString(InputStream stream, Charset charset) throws IOException {
-        return readFully(stream).toString(charset.name());
+        return readFully(stream).toString(charset);
     }
 
     public static void copyTo(InputStream src, OutputStream dest) throws IOException {
