@@ -74,7 +74,7 @@ public final class IOUtils {
     }
 
     public static String readFullyAsStringWithClosing(InputStream stream) throws IOException {
-        return new String(readFullyWithoutClosing(stream), UTF_8);
+        return new String(stream.readAllBytes(), UTF_8);
     }
 
     public static byte[] readFully(InputStream stream) throws IOException {
