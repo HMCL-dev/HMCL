@@ -44,9 +44,6 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-            System.getProperties().putIfAbsent("prism.lcdtext", "false");
-
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 

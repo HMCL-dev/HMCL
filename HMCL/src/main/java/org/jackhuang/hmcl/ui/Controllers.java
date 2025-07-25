@@ -175,6 +175,23 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
+        boolean grayAntiAliasing = false;
+        if (System.getProperty("prism.lcdtext") == null) {
+            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+            if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                // do nothing
+            } else if ("gray".equalsIgnoreCase(fontAntiAliasing)) {
+                grayAntiAliasing = true;
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                grayAntiAliasing = true;
+            }
+        }
+
+        if (grayAntiAliasing) {
+            System.getProperties().putIfAbsent("prism.lcdtext", "false");
+            LOG.info("Disable sub-pixel antialiasing");
+        }
+
         Controllers.stage = stage;
 
         stageSizeChangeListener = o -> {
