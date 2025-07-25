@@ -178,12 +178,12 @@ public final class Controllers {
         if (System.getProperty("prism.lcdtext") == null) {
             String fontAntiAliasing = globalConfig().getFontAntiAliasing();
             if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
-                System.getProperties().put("prism.lcdtext", "true");
                 LOG.info("Enable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "true");
             } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
                     || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
-                System.getProperties().put("prism.lcdtext", "false");
                 LOG.info("Disable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "false");
             }
         }
 
