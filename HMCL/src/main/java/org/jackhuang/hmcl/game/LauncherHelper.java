@@ -126,17 +126,9 @@ public final class LauncherHelper {
     }
 
     private void launch0() {
-		int _stale = 0;
-		for (var iterator = PROCESSES.iterator(); iterator.hasNext(); ) {
-			var process = iterator.next();
-			if (process.get() == null) {
-				iterator.remove();
-				_stale++;
-			}
-		}
-        if (_stale > 0)
-            LOG.warning("Removed stale ManagedProcess objects: "+_stale);
-        
+        // https://github.com/HMCL-dev/HMCL/pull/4121
+        PROCESSES.removeIf(it -> it.get() == null);
+
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
