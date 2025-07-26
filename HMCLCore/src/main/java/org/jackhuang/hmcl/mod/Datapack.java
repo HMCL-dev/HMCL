@@ -165,12 +165,8 @@ public class Datapack {
                         boolean enabled = Files.exists(mcmeta);
 
                         try {
-                            PackMcMeta pack;
-                            if (enabled) {
-                                pack = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
-                            } else {
-                                pack = JsonUtils.fromNonNullJson(Files.readString(mcmetaDisabled), PackMcMeta.class);
-                            }
+                            PackMcMeta pack = enabled ? JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class)
+                                    : JsonUtils.fromNonNullJson(Files.readString(mcmetaDisabled), PackMcMeta.class);
                             info.add(new Pack(enabled ? mcmeta : mcmetaDisabled, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
                             LOG.warning("Failed to read datapack " + subDir, e);
