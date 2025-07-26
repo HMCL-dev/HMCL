@@ -158,7 +158,7 @@ public final class ConfigHolder {
                 LOG.warning("Failed to get owner");
             }
             try {
-                String content = FileUtils.readText(configLocation);
+                String content = Files.readString(configLocation);
                 Config deserialized = Config.fromJson(content);
                 if (deserialized == null) {
                     LOG.info("Config is empty");
@@ -180,7 +180,7 @@ public final class ConfigHolder {
     private static GlobalConfig loadGlobalConfig() throws IOException {
         if (Files.exists(GLOBAL_CONFIG_PATH)) {
             try {
-                String content = FileUtils.readText(GLOBAL_CONFIG_PATH);
+                String content = Files.readString(GLOBAL_CONFIG_PATH);
                 GlobalConfig deserialized = GlobalConfig.fromJson(content);
                 if (deserialized == null) {
                     LOG.info("Config is empty");

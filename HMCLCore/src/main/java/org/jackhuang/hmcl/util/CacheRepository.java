@@ -66,7 +66,7 @@ public class CacheRepository {
             }
 
             if (Files.isRegularFile(indexFile)) {
-                ETagIndex raw = GSON.fromJson(FileUtils.readText(indexFile), ETagIndex.class);
+                ETagIndex raw = GSON.fromJson(Files.readString(indexFile), ETagIndex.class);
                 if (raw == null)
                     index = new HashMap<>();
                 else
@@ -410,7 +410,7 @@ public class CacheRepository {
             try {
                 indexFile = cacheDirectory.resolve(name + ".json");
                 if (Files.isRegularFile(indexFile)) {
-                    joinEntries(fromNonNullJson(FileUtils.readText(indexFile), mapTypeOf(String.class, Object.class)));
+                    joinEntries(fromNonNullJson(Files.readString(indexFile), mapTypeOf(String.class, Object.class)));
                 }
             } catch (IOException | JsonParseException e) {
                 LOG.warning("Unable to read storage {" + name + "} file");

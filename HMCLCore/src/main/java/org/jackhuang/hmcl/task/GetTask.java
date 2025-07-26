@@ -17,13 +17,12 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.util.io.FileUtils;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -67,7 +66,7 @@ public final class GetTask extends FetchTask<String> {
 
     @Override
     protected void useCachedResult(Path cachedFile) throws IOException {
-        setResult(FileUtils.readText(cachedFile));
+        setResult(Files.readString(cachedFile));
     }
 
     @Override
@@ -84,7 +83,7 @@ public final class GetTask extends FetchTask<String> {
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(charset.name());
+                String result = baos.toString(charset);
                 setResult(result);
 
                 if (checkETag) {
