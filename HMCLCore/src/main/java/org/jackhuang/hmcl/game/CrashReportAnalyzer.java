@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.game;
 
 import org.intellij.lang.annotations.Language;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.*;
@@ -226,7 +226,7 @@ public final class CrashReportAnalyzer {
     public static String findCrashReport(String log) throws IOException, InvalidPathException {
         Matcher matcher = CRASH_REPORT_LOCATION_PATTERN.matcher(log);
         if (matcher.find()) {
-            return FileUtils.readText(Paths.get(matcher.group("location")));
+            return Files.readString(Paths.get(matcher.group("location")));
         } else {
             return null;
         }

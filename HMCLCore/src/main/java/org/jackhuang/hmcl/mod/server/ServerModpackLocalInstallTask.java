@@ -27,10 +27,10 @@ import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,7 +71,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         ModpackConfiguration<ServerModpackManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(ServerModpackManifest.class));
+                config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");

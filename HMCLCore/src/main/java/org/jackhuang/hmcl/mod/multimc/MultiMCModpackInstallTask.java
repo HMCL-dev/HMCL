@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -111,7 +110,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
             try {
                 if (json.exists()) {
-                    config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
+                    config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                     if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                         throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
@@ -146,7 +145,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                         throw new IllegalArgumentException("Json-Patch isn't a file: " + componentID);
                     }
 
-                    MultiMCInstancePatch patch = MultiMCInstancePatch.read(componentID, FileUtils.readText(patchPath, StandardCharsets.UTF_8));
+                    MultiMCInstancePatch patch = MultiMCInstancePatch.read(componentID, Files.readString(patchPath));
                     patches.add(Task.supplyAsync(() -> patch)); // TODO: Task.completed has unclear compatibility issue.
                 } else {
                     patches.add(

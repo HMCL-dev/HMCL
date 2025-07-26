@@ -170,7 +170,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
+        FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
@@ -194,7 +194,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         File file = getLocalVersionSettingFile(id);
         if (file.exists())
             try {
-                VersionSetting versionSetting = GSON.fromJson(FileUtils.readText(file), VersionSetting.class);
+                VersionSetting versionSetting = GSON.fromJson(Files.readString(file.toPath()), VersionSetting.class);
                 initLocalVersionSetting(id, versionSetting);
             } catch (Exception ex) {
                 // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
@@ -427,7 +427,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         File json = getModpackConfiguration(version);
         if (json.exists()) {
             try {
-                String jsonText = FileUtils.readText(json);
+                String jsonText = Files.readString(json.toPath());
                 ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
                 ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
                 if (provider != null) provider.injectLaunchOptions(jsonText, builder);

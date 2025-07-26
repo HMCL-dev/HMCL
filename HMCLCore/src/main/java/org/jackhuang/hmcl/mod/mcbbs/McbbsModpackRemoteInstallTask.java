@@ -24,10 +24,10 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +65,7 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
         ModpackConfiguration<McbbsModpackManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+                config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (!MODPACK_TYPE.equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");

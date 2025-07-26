@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -265,7 +264,7 @@ public final class UpdateHandler {
         Path hmclVersionJson = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("hmclver.json");
         if (Files.isRegularFile(hmclVersionJson)) {
             try {
-                Map<?, ?> content = new Gson().fromJson(FileUtils.readText(hmclVersionJson), Map.class);
+                Map<?, ?> content = new Gson().fromJson(Files.readString(hmclVersionJson), Map.class);
                 Object ver = content.get("ver");
                 if (ver instanceof String && ((String) ver).startsWith("3.")) {
                     Files.delete(hmclVersionJson);

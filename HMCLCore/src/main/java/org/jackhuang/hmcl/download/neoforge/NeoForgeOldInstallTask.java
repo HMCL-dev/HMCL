@@ -274,9 +274,9 @@ public class NeoForgeOldInstallTask extends Task<Version> {
     @Override
     public void preExecute() throws Exception {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            profile = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
+            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath(profile.getJson())), Version.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
 
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());

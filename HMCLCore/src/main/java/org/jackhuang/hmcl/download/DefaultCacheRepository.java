@@ -63,8 +63,9 @@ public class DefaultCacheRepository extends CacheRepository {
 
         lock.writeLock().lock();
         try {
-            if (Files.isRegularFile(indexFile))
-                index = JsonUtils.fromNonNullJson(FileUtils.readText(indexFile), Index.class);
+            if (Files.isRegularFile(indexFile)) {
+                index = JsonUtils.fromNonNullJson(Files.readString(indexFile), Index.class);
+            }
             else
                 index = new Index();
         } catch (IOException | JsonParseException e) {

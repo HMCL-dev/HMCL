@@ -130,7 +130,7 @@ public class Datapack {
             } else if (Files.exists(mcmeta)) { // single datapack
                 isMultiple = false;
                 try {
-                    PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
+                    PackMcMeta pack = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
                     Platform.runLater(() -> info.add(new Pack(path, FileUtils.getNameWithoutExtension(path), pack.getPackInfo().getDescription(), this)));
                 } catch (IOException | JsonParseException e) {
                     LOG.warning("Failed to read datapack " + path, e);
@@ -165,8 +165,12 @@ public class Datapack {
                         boolean enabled = Files.exists(mcmeta);
 
                         try {
-                            PackMcMeta pack = enabled ? JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class)
-                                    : JsonUtils.fromNonNullJson(FileUtils.readText(mcmetaDisabled), PackMcMeta.class);
+                            PackMcMeta pack;
+                            if (enabled) {
+                                pack = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
+                            } else {
+                                pack = JsonUtils.fromNonNullJson(Files.readString(mcmetaDisabled), PackMcMeta.class);
+                            }
                             info.add(new Pack(enabled ? mcmeta : mcmetaDisabled, FileUtils.getName(subDir), pack.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
                             LOG.warning("Failed to read datapack " + subDir, e);
@@ -186,7 +190,7 @@ public class Datapack {
                                 continue;
                             name = StringUtils.substringBeforeLast(name, ".zip");
 
-                            PackMcMeta pack = JsonUtils.fromNonNullJson(FileUtils.readText(mcmeta), PackMcMeta.class);
+                            PackMcMeta pack = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
                             info.add(new Pack(subDir, name, pack.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
                             LOG.warning("Failed to read datapack " + subDir, e);

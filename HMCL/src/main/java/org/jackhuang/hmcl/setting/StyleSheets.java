@@ -23,7 +23,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -68,7 +67,7 @@ public final class StyleSheets {
                 Path temp = Files.createTempFile("hmcl", ".css");
                 // For JavaFX 17 or earlier, CssParser uses the default charset
                 // https://bugs.openjdk.org/browse/JDK-8279328
-                FileUtils.writeText(temp, styleSheet, Charset.defaultCharset());
+                Files.writeString(temp, styleSheet, Charset.defaultCharset());
                 temp.toFile().deleteOnExit();
                 return temp.toUri().toString();
             } catch (IOException | NullPointerException e) {

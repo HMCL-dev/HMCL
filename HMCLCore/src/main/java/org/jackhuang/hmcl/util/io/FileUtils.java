@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
@@ -113,22 +112,6 @@ public final class FileUtils {
         else return getName(path);
     }
 
-    public static String readText(File file) throws IOException {
-        return readText(file, UTF_8);
-    }
-
-    public static String readText(File file, Charset charset) throws IOException {
-        return new String(Files.readAllBytes(file.toPath()), charset);
-    }
-
-    public static String readText(Path file) throws IOException {
-        return readText(file, UTF_8);
-    }
-
-    public static String readText(Path file, Charset charset) throws IOException {
-        return new String(Files.readAllBytes(file), charset);
-    }
-
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
         byte[] bytes = Files.readAllBytes(file);
 
@@ -159,7 +142,7 @@ public final class FileUtils {
      * @throws IOException if an I/O error occurs
      */
     public static void writeText(File file, String text) throws IOException {
-        writeText(file, text, UTF_8);
+        writeText(file.toPath(), text);
     }
 
     /**
@@ -174,39 +157,8 @@ public final class FileUtils {
      * @throws IOException if an I/O error occurs
      */
     public static void writeText(Path file, String text) throws IOException {
-        writeText(file, text, UTF_8);
-    }
-
-    /**
-     * Write plain text to file.
-     * <p>
-     * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
-     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
-     * All characters in text will be written into the file in binary format. Existing data will be erased.
-     *
-     * @param file    the path to the file
-     * @param text    the text being written to file
-     * @param charset the charset to use for encoding
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeText(File file, String text, Charset charset) throws IOException {
-        writeBytes(file, text.getBytes(charset));
-    }
-
-    /**
-     * Write plain text to file.
-     * <p>
-     * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
-     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
-     * All characters in text will be written into the file in binary format. Existing data will be erased.
-     *
-     * @param file    the path to the file
-     * @param text    the text being written to file
-     * @param charset the charset to use for encoding
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeText(Path file, String text, Charset charset) throws IOException {
-        writeBytes(file, text.getBytes(charset));
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, text);
     }
 
     /**
