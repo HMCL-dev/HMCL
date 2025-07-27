@@ -32,6 +32,7 @@ val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" els
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
+val littleSkinClientId = System.getenv("LITTLT_SKIN_CLIENT_ID") ?: "866" // TODO
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
 
@@ -136,6 +137,7 @@ tasks.shadowJar {
             "Microsoft-Auth-Id" to microsoftAuthId,
             "Microsoft-Auth-Secret" to microsoftAuthSecret,
             "CurseForge-Api-Key" to curseForgeApiKey,
+            "LittleSkin-Client-Id" to littleSkinClientId,
             "Build-Channel" to versionType,
             "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(
