@@ -53,7 +53,7 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
         if (platform.getOperatingSystem() == OperatingSystem.LINUX)
             params.put("lib_c_type", "glibc");
 
-        this.fetchPackagesTask = new GetTask(downloadProvider.injectURLWithCandidatesOld(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
+        this.fetchPackagesTask = new GetTask(downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(API_ROOT + "/packages", params)));
     }
 
     @Override

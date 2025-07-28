@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -86,7 +85,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     @Override
     public void preExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        dependent = new GetTask(new URL(manifest.getManifest().getFileApi() + "/server-manifest.json"));
+        dependent = new GetTask(URI.create(manifest.getManifest().getFileApi() + "/server-manifest.json"));
     }
 
     @Override

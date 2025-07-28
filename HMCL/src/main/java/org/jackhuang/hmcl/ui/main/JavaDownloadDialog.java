@@ -327,7 +327,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (version == null)
                 return;
 
-            Controllers.taskDialog(new GetTask2(downloadProvider.injectURLWithCandidates(version.getLinks().getPkgInfoUri()))
+            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().getPkgInfoUri()))
                     .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
@@ -347,7 +347,7 @@ public final class JavaDownloadDialog extends StackPane {
                         if (StringUtils.isNotBlank(fileInfo.getChecksum()))
                             getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.getChecksumType(), fileInfo.getChecksum()));
                         else if (StringUtils.isNotBlank(fileInfo.getChecksumUri()))
-                            getIntegrityCheck = new GetTask2(downloadProvider.injectURLWithCandidates(fileInfo.getChecksumUri()))
+                            getIntegrityCheck = new GetTask(downloadProvider.injectURLWithCandidates(fileInfo.getChecksumUri()))
                                     .thenApplyAsync(checksum -> {
                                         checksum = checksum.trim();
 

@@ -129,7 +129,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                 URI url = URI.create(urlString);
                 if (urlString.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
-                    Controllers.taskDialog(new GetTask2(url).whenComplete(Schedulers.javafx(), (result, e) -> {
+                    Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
                             reject.accept(i18n("modpack.type.server.malformed"));

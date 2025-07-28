@@ -54,7 +54,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, GameJavaVersion javaVersion, String platform) {
         this.target = target;
         this.downloadProvider = downloadProvider;
-        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidatesOld(
+        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(
                 "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"))
         .thenComposeAsync(javaDownloadsJson -> {
             MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
@@ -66,7 +66,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
             for (MojangJavaDownloads.JavaDownload download : candidates) {
                 if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.getMajorVersion()) {
                     this.download = download;
-                    return new GetTask(downloadProvider.injectURLWithCandidatesOld(download.getManifest().getUrl()));
+                    return new GetTask(downloadProvider.injectURLWithCandidates(download.getManifest().getUrl()));
                 }
             }
             throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
