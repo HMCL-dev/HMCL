@@ -347,7 +347,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                     }
 
                     List<URL> mappingsUrl = dependencyManager.getDownloadProvider()
-                            .injectURLWithCandidates(mappings.getUrl());
+                            .injectURLWithCandidatesOld(mappings.getUrl());
                     FileDownloadTask mappingsTask = new FileDownloadTask(
                             mappingsUrl,
                             new File(output),

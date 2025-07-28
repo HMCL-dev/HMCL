@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 public final class ResponseCodeException extends IOException {
@@ -25,6 +26,27 @@ public final class ResponseCodeException extends IOException {
     private final URL url;
     private final int responseCode;
     private final String data;
+
+    public ResponseCodeException(URI url, int responseCode) {
+        super("Unable to request url " + url + ", response code: " + responseCode);
+        this.url = NetworkUtils.toURL(url);
+        this.responseCode = responseCode;
+        this.data = null;
+    }
+
+    public ResponseCodeException(URI url, int responseCode, Throwable cause) {
+        super("Unable to request url " + url + ", response code: " + responseCode, cause);
+        this.url = NetworkUtils.toURL(url);
+        this.responseCode = responseCode;
+        this.data = null;
+    }
+
+    public ResponseCodeException(URI url, int responseCode, String data) {
+        super("Unable to request url " + url + ", response code: " + responseCode + ", data: " + data);
+        this.url = NetworkUtils.toURL(url);
+        this.responseCode = responseCode;
+        this.data = data;
+    }
 
     public ResponseCodeException(URL url, int responseCode) {
         super("Unable to request url " + url + ", response code: " + responseCode);

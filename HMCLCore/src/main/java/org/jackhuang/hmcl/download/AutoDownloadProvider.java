@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
@@ -56,12 +57,12 @@ public class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public List<URL> injectURLWithCandidates(String baseURL) {
+    public List<URI> injectURLWithCandidates(String baseURL) {
         return fileProvider.injectURLWithCandidates(baseURL);
     }
 
     @Override
-    public List<URL> injectURLsWithCandidates(List<String> urls) {
+    public List<URI> injectURLsWithCandidates(List<String> urls) {
         return fileProvider.injectURLsWithCandidates(urls);
     }
 

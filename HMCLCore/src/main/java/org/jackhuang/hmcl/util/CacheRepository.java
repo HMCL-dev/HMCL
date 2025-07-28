@@ -24,7 +24,10 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLConnection;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -157,6 +160,90 @@ public class CacheRepository {
         return cache;
     }
 
+    public Path getCachedRemoteFile(URI uri) throws IOException {
+        lock.readLock().lock();
+        ETagItem eTagItem;
+        try {
+            eTagItem = index.get(uri.toString());
+        } finally {
+            lock.readLock().unlock();
+        }
+        if (eTagItem == null) throw new IOException("Cannot find the URL");
+        if (StringUtils.isBlank(eTagItem.hash) || !fileExists(SHA1, eTagItem.hash)) throw new FileNotFoundException();
+        Path file = getFile(SHA1, eTagItem.hash);
+        if (Files.getLastModifiedTime(file).toMillis() != eTagItem.localLastModified) {
+            String hash = DigestUtils.digestToString(SHA1, file);
+            if (!Objects.equals(hash, eTagItem.hash))
+                throw new IOException("This file is modified");
+        }
+        return file;
+    }
+
+    public void removeRemoteEntry(URI uri) {
+        lock.readLock().lock();
+        try {
+            index.remove(uri.toString());
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void injectRequest(URI uri, HttpRequest.Builder builder) {
+        lock.readLock().lock();
+        ETagItem eTagItem;
+        try {
+            eTagItem = index.get(uri.toString());
+        } finally {
+            lock.readLock().unlock();
+        }
+        if (eTagItem == null) return;
+        if (eTagItem.eTag != null)
+            builder.setHeader("If-None-Match", eTagItem.eTag);
+        // if (eTagItem.getRemoteLastModified() != null)
+        //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
+    }
+
+    public void cacheRemoteFile(HttpResponse<?> response, Path downloaded) throws IOException {
+        cacheData(response, () -> {
+            String hash = DigestUtils.digestToString(SHA1, downloaded);
+            Path cached = cacheFile(downloaded, SHA1, hash);
+            return new CacheResult(hash, cached);
+        });
+    }
+
+    public void cacheText(HttpResponse<?> response, String text) throws IOException {
+        cacheBytes(response, text.getBytes(UTF_8));
+    }
+
+    public void cacheBytes(HttpResponse<?> response, byte[] bytes) throws IOException {
+        cacheData(response, () -> {
+            String hash = DigestUtils.digestToString(SHA1, bytes);
+            Path cached = getFile(SHA1, hash);
+            FileUtils.writeBytes(cached, bytes);
+            return new CacheResult(hash, cached);
+        });
+    }
+
+    private synchronized void cacheData(HttpResponse<?> response,
+                                       ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
+        String eTag = response.headers().firstValue("ETag").orElse(null);
+        if (eTag == null) return;
+        String uri = response.uri().toString();
+        String lastModified = response.headers().firstValue("Last-Modified").orElse(null);
+        CacheResult cacheResult = cacheSupplier.get();
+        ETagItem eTagItem = new ETagItem(uri, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
+        Lock writeLock = lock.writeLock();
+        writeLock.lock();
+        try {
+            index.compute(eTagItem.url, updateEntity(eTagItem));
+            saveETagIndex();
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    //region old
+
     public Path getCachedRemoteFile(URLConnection conn) throws IOException {
         String url = conn.getURL().toString();
         lock.readLock().lock();
@@ -240,6 +327,8 @@ public class CacheRepository {
             writeLock.unlock();
         }
     }
+
+    //endregion old
 
     private static class CacheResult {
         public String hash;

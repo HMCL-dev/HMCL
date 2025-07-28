@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.*;
 
@@ -45,6 +46,10 @@ public final class NetworkUtils {
             .build();
 
     private NetworkUtils() {
+    }
+
+    public static boolean isHttpUri(URI uri) {
+        return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
     }
 
     public static String withQuery(String baseUrl, Map<String, String> params) {
@@ -394,6 +399,14 @@ public final class NetworkUtils {
         }
     }
 
+    public static URL toURL(URI uri) {
+        try {
+            return uri.toURL();
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
     public static boolean isURL(String str) {
         try {
             new URL(str);
@@ -413,19 +426,11 @@ public final class NetworkUtils {
 
     // ==== Shortcut methods for encoding/decoding URLs in UTF-8 ====
     public static String encodeURL(String toEncode) {
-        try {
-            return URLEncoder.encode(toEncode, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new Error();
-        }
+        return URLEncoder.encode(toEncode, UTF_8);
     }
 
     public static String decodeURL(String toDecode) {
-        try {
-            return URLDecoder.decode(toDecode, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new Error();
-        }
+        return URLDecoder.decode(toDecode, UTF_8);
     }
     // ====
 }

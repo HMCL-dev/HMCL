@@ -116,7 +116,7 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
 
-        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
+        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidatesOld(url);
         task = new FileDownloadTask(urls, jar,
                 library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
         task.setCacheRepository(cacheRepository);

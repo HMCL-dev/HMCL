@@ -17,9 +17,11 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 import static java.util.Objects.requireNonNull;
@@ -27,6 +29,12 @@ import static java.util.Objects.requireNonNull;
 public class DownloadException extends IOException {
 
     private final URL url;
+
+    public DownloadException(URI uri, @NotNull Throwable cause) {
+        super("Unable to download " + uri + ", " + cause.getMessage(), requireNonNull(cause));
+
+        this.url = NetworkUtils.toURL(uri);
+    }
 
     public DownloadException(URL url, @NotNull Throwable cause) {
         super("Unable to download " + url + ", " + cause.getMessage(), requireNonNull(cause));

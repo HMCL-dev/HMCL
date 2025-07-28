@@ -54,7 +54,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
     public MojangJavaDownloadTask(DownloadProvider downloadProvider, Path target, GameJavaVersion javaVersion, String platform) {
         this.target = target;
         this.downloadProvider = downloadProvider;
-        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidates(
+        this.javaDownloadsTask = new GetTask(downloadProvider.injectURLWithCandidatesOld(
                 "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json"))
         .thenComposeAsync(javaDownloadsJson -> {
             MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
@@ -66,7 +66,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
             for (MojangJavaDownloads.JavaDownload download : candidates) {
                 if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.getMajorVersion()) {
                     this.download = download;
-                    return new GetTask(downloadProvider.injectURLWithCandidates(download.getManifest().getUrl()));
+                    return new GetTask(downloadProvider.injectURLWithCandidatesOld(download.getManifest().getUrl()));
                 }
             }
             throw new UnsupportedPlatformException("Candidates: " + JsonUtils.GSON.toJson(candidates));
@@ -103,7 +103,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
                     File tempFile = target.resolve(entry.getKey() + ".lzma").toFile();
-                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidatesOld(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = target.resolve(entry.getKey() + ".tmp");
@@ -121,7 +121,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
-                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidatesOld(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     if (file.isExecutable()) {
                         dependencies.add(task.thenRunAsync(() -> dest.toFile().setExecutable(true)));

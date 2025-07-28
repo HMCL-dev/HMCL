@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -59,12 +60,31 @@ public interface DownloadProvider {
      * @param baseURL original URL provided by Mojang and Forge.
      * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
      */
-    default List<URL> injectURLWithCandidates(String baseURL) {
+    default List<URI> injectURLWithCandidates(String baseURL) {
+        return List.of(URI.create(injectURL(baseURL)));
+    }
+
+    default List<URI> injectURLsWithCandidates(List<String> urls) {
+        return urls.stream().flatMap(url -> injectURLWithCandidates(url).stream()).collect(Collectors.toList());
+    }
+
+    /**
+     * Inject into original URL provided by Mojang and Forge.
+     *
+     * Since there are many provided URLs that are written in JSONs and are unmodifiable,
+     * this method provides a way to change them.
+     *
+     * @param baseURL original URL provided by Mojang and Forge.
+     * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
+     */
+    @Deprecated(forRemoval = true)
+    default List<URL> injectURLWithCandidatesOld(String baseURL) {
         return Collections.singletonList(NetworkUtils.toURL(injectURL(baseURL)));
     }
 
-    default List<URL> injectURLsWithCandidates(List<String> urls) {
-        return urls.stream().flatMap(url -> injectURLWithCandidates(url).stream()).collect(Collectors.toList());
+    @Deprecated(forRemoval = true)
+    default List<URL> injectURLsWithCandidatesOld(List<String> urls) {
+        return urls.stream().flatMap(url -> injectURLWithCandidatesOld(url).stream()).collect(Collectors.toList());
     }
 
     /**

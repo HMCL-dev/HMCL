@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.auth.offline;
 import com.google.gson.annotations.SerializedName;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
-import org.jackhuang.hmcl.task.FetchTask;
+import org.jackhuang.hmcl.task.FetchTask2;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
@@ -33,14 +33,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -179,8 +177,8 @@ public class Skin {
 
                             return Task.allOf(
                                     Task.supplyAsync(result::getModel),
-                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(new URL(String.format("%s/textures/%s", realCslApi, result.getHash())), 3),
-                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(new URL(String.format("%s/textures/%s", realCslApi, result.getCapeHash())), 3)
+                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getHash())), 3),
+                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getCapeHash())), 3)
                             );
                         }).thenApplyAsync(result -> {
                             if (result == null) {
@@ -230,10 +228,10 @@ public class Skin {
         return new Skin(type, cslApi, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
     }
 
-    private static class FetchBytesTask extends FetchTask<InputStream> {
+    private static class FetchBytesTask extends FetchTask2<InputStream> {
 
-        public FetchBytesTask(URL url, int retry) {
-            super(Collections.singletonList(url), retry);
+        public FetchBytesTask(URI uri, int retry) {
+            super(List.of(uri), retry);
         }
 
         @Override
@@ -247,7 +245,7 @@ public class Skin {
         }
 
         @Override
-        protected Context getContext(URLConnection conn, boolean checkETag) throws IOException {
+        protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag) throws IOException {
             return new Context() {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -263,7 +261,7 @@ public class Skin {
                     setResult(new ByteArrayInputStream(baos.toByteArray()));
 
                     if (checkETag) {
-                        repository.cacheBytes(baos.toByteArray(), conn);
+                        repository.cacheBytes(response, baos.toByteArray());
                     }
                 }
             };

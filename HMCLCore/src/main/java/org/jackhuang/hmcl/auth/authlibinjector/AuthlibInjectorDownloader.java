@@ -96,7 +96,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         }
 
         try {
-            new FileDownloadTask(downloadProvider.get().injectURLWithCandidates(latest.downloadUrl), artifactLocation.toFile(),
+            new FileDownloadTask(downloadProvider.get().injectURLWithCandidatesOld(latest.downloadUrl), artifactLocation.toFile(),
                     Optional.ofNullable(latest.checksums.get("sha256"))
                             .map(checksum -> new IntegrityCheck("SHA-256", checksum))
                             .orElse(null))
@@ -110,7 +110,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
 
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
         IOException exception = null;
-        for (URL url : downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL)) {
+        for (URL url : downloadProvider.get().injectURLWithCandidatesOld(LATEST_BUILD_URL)) {
             try {
                 return HttpRequest.GET(url.toExternalForm()).getJson(AuthlibInjectorVersionInfo.class);
             } catch (IOException | JsonParseException e) {

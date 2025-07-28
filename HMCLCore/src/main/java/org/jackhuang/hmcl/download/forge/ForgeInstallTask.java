@@ -68,7 +68,7 @@ public final class ForgeInstallTask extends Task<Version> {
         installer = Files.createTempFile("forge-installer", ".jar");
 
         dependent = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
+                dependencyManager.getDownloadProvider().injectURLsWithCandidatesOld(remote.getUrls()),
                 installer.toFile(), null);
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);

@@ -97,7 +97,7 @@ public final class OptiFineInstallTask extends Task<Version> {
 
         if (installer == null) {
             FileDownloadTask task = new FileDownloadTask(
-                    dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
+                    dependencyManager.getDownloadProvider().injectURLsWithCandidatesOld(remote.getUrls()),
                     dest.toFile(), null);
             task.setCacheRepository(dependencyManager.getCacheRepository());
             task.setCaching(true);
