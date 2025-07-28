@@ -67,7 +67,7 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     private static final String GAME_META_URL = "https://meta.fabricmc.net/v2/versions/game";
 
     private List<String> getGameVersions(String metaUrl) throws IOException {
-        String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
+        String json = NetworkUtils.doGetOld(downloadProvider.injectURLWithCandidates(metaUrl));
         return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
                 .stream().map(GameVersion::getVersion).collect(Collectors.toList());
     }

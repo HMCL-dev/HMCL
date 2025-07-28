@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -227,13 +228,14 @@ public class YggdrasilService {
         }
     }
 
+    // TODO: URI
     private static String request(URL url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
-                return NetworkUtils.doGet(url);
+                return NetworkUtils.doGet(url.toURI());
             else
-                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
-        } catch (IOException e) {
+                return NetworkUtils.doPost(url.toURI(), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+        } catch (IOException | URISyntaxException e) {
             throw new ServerDisconnectException(e);
         }
     }

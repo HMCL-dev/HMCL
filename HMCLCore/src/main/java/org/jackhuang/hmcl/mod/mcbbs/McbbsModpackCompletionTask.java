@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -204,7 +205,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                         return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
                                                     } catch (IOException e) {
                                                         try {
-                                                            String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID())));
+                                                            String result = NetworkUtils.doGet(URI.create(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID())));
                                                             CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                                             return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
                                                         } catch (FileNotFoundException fof) {
@@ -213,7 +214,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                             return file;
                                                         } catch (IOException | JsonParseException e2) {
                                                             try {
-                                                                String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID())));
+                                                                String result = NetworkUtils.doGet(URI.create(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID())));
                                                                 CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                                                 return file.withFileName(mod.getFileName()).withURL(mod.getDownloadURL());
                                                             } catch (FileNotFoundException fof) {

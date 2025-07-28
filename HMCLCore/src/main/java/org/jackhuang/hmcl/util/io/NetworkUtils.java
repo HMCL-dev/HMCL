@@ -18,13 +18,17 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.*;
 
@@ -35,6 +39,10 @@ public final class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
     private static final int TIME_OUT = 8000;
+
+    public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofMillis(TIME_OUT))
+            .build();
 
     private NetworkUtils() {
     }
@@ -99,10 +107,10 @@ public final class NetworkUtils {
     }
 
     /**
-     * @see <a href=
-     *      "https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
      * @param location the url to be URL encoded
      * @return encoded URL
+     * @see <a href=
+     * "https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
      */
     public static String encodeLocation(String location) {
         StringBuilder sb = new StringBuilder();
@@ -138,10 +146,10 @@ public final class NetworkUtils {
      * This method is a work-around that aims to solve problem when "Location" in
      * stupid server's response is not encoded.
      *
-     * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      * @param conn the stupid http connection.
      * @return manually redirected http connection.
      * @throws IOException if an I/O error occurs.
+     * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      */
     public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
         int redirect = 0;
@@ -178,13 +186,144 @@ public final class NetworkUtils {
         return conn;
     }
 
-    public static String doGet(URL url) throws IOException {
-        HttpURLConnection con = createHttpConnection(url);
-        con = resolveConnection(con);
-        return IOUtils.readFullyAsString(con.getInputStream());
+    public static <T> HttpResponse<T> resolveResponse(HttpResponse<T> response,
+                                                      HttpResponse.BodyHandler<T> responseBodyHandler,
+                                                      @Nullable List<URI> redirects) throws IOException {
+        assert response.request().method().equals("GET");
+
+        int redirect = 0;
+        while (true) {
+            int code = response.statusCode();
+            URI oldUri = response.uri();
+            String originMethod = response.request().method();
+            if (code >= 300 && code <= 308 && code != 306 && code != 304) {
+                URI newUri = oldUri.resolve(response.headers().firstValue("Location")
+                        .orElseThrow(() -> new IOException("no location header")));
+                if (!newUri.getScheme().equals("http") && !newUri.getScheme().equals("https"))
+                    throw new IOException("bad redirect target: " + newUri);
+
+                if (redirects != null)
+                    redirects.add(newUri);
+                if (redirect > 20)
+                    throw new IOException("Too much redirects");
+
+                HttpRequest.Builder builder = HttpRequest.newBuilder(newUri);
+                switch (code) {
+                    case 301:
+                    case 302:
+                        if (originMethod.equals("POST"))
+                            builder.GET();
+                        else
+                            builder.method(originMethod, response.request().bodyPublisher()
+                                    .orElse(HttpRequest.BodyPublishers.noBody()));
+                        break;
+                    case 303:
+                        builder.GET();
+                        break;
+                    case 307:
+                    case 308:
+                        builder.method(originMethod, response.request().bodyPublisher()
+                                .orElse(HttpRequest.BodyPublishers.noBody()));
+                }
+
+                response.request().headers().map().forEach((key, values) -> {
+                    for (String value : values) {
+                        builder.setHeader(key, value);
+                    }
+                });
+
+                try {
+                    response = HTTP_CLIENT.send(builder.build(), responseBodyHandler);
+                } catch (InterruptedException e) {
+                    throw new IOException(e);
+                }
+
+                redirect++;
+            } else {
+                return response;
+            }
+        }
     }
 
-    public static String doGet(List<URL> urls) throws IOException {
+    public static <T> T readResponse(HttpResponse<T> response) throws IOException {
+        if (response.statusCode() / 100 == 4) {
+            throw new FileNotFoundException(response.uri().toString());
+        }
+
+        if (response.statusCode() / 100 != 2) {
+            throw new ResponseCodeException(response.uri().toURL(), response.statusCode());
+        }
+
+        return response.body();
+    }
+
+    public static String doGet(URI uri) throws IOException {
+        try {
+            var request = HttpRequest.newBuilder(uri).build();
+            var bodyHandler = HttpResponse.BodyHandlers.ofString();
+            HttpResponse<String> response = resolveResponse(
+                    HTTP_CLIENT.send(request, bodyHandler), bodyHandler, null);
+            readResponse(response);
+            return response.body();
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public static String doGet(List<URI> uris) throws IOException { // TODO: rename
+        List<IOException> exceptions = null;
+        for (URI uri : uris) {
+            try {
+                return doGet(uri);
+            } catch (IOException e) {
+                if (exceptions == null) {
+                    exceptions = new ArrayList<>(1);
+                }
+                exceptions.add(e);
+            }
+        }
+
+        if (exceptions == null) {
+            throw new IOException("No candidate URL");
+        } else if (exceptions.size() == 1) {
+            throw exceptions.get(0);
+        } else {
+            IOException exception = new IOException("Failed to doGet");
+            for (IOException e : exceptions) {
+                exception.addSuppressed(e);
+            }
+            throw exception;
+        }
+    }
+
+    public static String doPost(URI uri, String post) throws IOException {
+        return doPost(uri, post, "application/x-www-form-urlencoded");
+    }
+
+    public static String doPost(URI u, Map<String, String> params) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        if (params != null) {
+            for (Map.Entry<String, String> e : params.entrySet())
+                sb.append(e.getKey()).append("=").append(e.getValue()).append("&");
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return doPost(u, sb.toString());
+    }
+
+    public static String doPost(URI uri, String post, String contentType) throws IOException {
+        try {
+            return readResponse(HTTP_CLIENT.send(HttpRequest.newBuilder(uri)
+                            .POST(HttpRequest.BodyPublishers.ofString(post))
+                            .setHeader("Content-Type", contentType + "; charset=utf-8")
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString()));
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Deprecated
+    public static String doGetOld(List<URL> urls) throws IOException {
         List<IOException> exceptions = null;
         for (URL url : urls) {
             try {
@@ -210,34 +349,6 @@ public final class NetworkUtils {
             }
             throw exception;
         }
-    }
-
-    public static String doPost(URL u, Map<String, String> params) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        if (params != null) {
-            for (Map.Entry<String, String> e : params.entrySet())
-                sb.append(e.getKey()).append("=").append(e.getValue()).append("&");
-            sb.deleteCharAt(sb.length() - 1);
-        }
-        return doPost(u, sb.toString());
-    }
-
-    public static String doPost(URL u, String post) throws IOException {
-        return doPost(u, post, "application/x-www-form-urlencoded");
-    }
-
-    public static String doPost(URL url, String post, String contentType) throws IOException {
-        byte[] bytes = post.getBytes(UTF_8);
-
-        HttpURLConnection con = createHttpConnection(url);
-        con.setRequestMethod("POST");
-        con.setDoOutput(true);
-        con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
-        con.setRequestProperty("Content-Length", "" + bytes.length);
-        try (OutputStream os = con.getOutputStream()) {
-            os.write(bytes);
-        }
-        return readData(con);
     }
 
     public static String readData(HttpURLConnection con) throws IOException {

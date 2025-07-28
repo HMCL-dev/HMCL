@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -257,7 +258,7 @@ public class MicrosoftService {
     public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
-        return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
+        return Optional.ofNullable(GSON.fromJson(request(URI.create("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
     }
 
     public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
@@ -287,7 +288,7 @@ public class MicrosoftService {
         }
     }
 
-    private static String request(URL url, Object payload) throws AuthenticationException {
+    private static String request(URI url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
                 return NetworkUtils.doGet(url);
