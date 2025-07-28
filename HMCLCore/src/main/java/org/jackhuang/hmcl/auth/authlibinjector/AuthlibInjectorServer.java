@@ -17,15 +17,14 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpResponse;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +32,7 @@ import java.util.Optional;
 
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,33 +56,33 @@ public class AuthlibInjectorServer implements Observable {
     private static final Gson GSON = new GsonBuilder().create();
 
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
+        // TODO: need test
         try {
             url = addHttpsIfMissing(url);
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
 
-            String ali = conn.getHeaderField("x-authlib-injector-api-location");
+            URI uri = URI.create(url);
+            HttpResponse<String> response = NetworkUtils.HTTP_CLIENT.send(java.net.http.HttpRequest.newBuilder(uri)
+                    .header("Accept-Language", Locale.getDefault().toLanguageTag())
+                    .build(), HttpResponse.BodyHandlers.ofString());
+
+            String ali = response.headers().firstValue("x-authlib-injector-api-location").orElse(null);
             if (ali != null) {
-                URL absoluteAli = new URL(conn.getURL(), ali);
+                URI absoluteAli = uri.resolve(ali);
                 if (!urlEqualsIgnoreSlash(url, absoluteAli.toString())) {
-                    conn.disconnect();
                     url = absoluteAli.toString();
-                    conn = (HttpURLConnection) absoluteAli.openConnection();
-                    conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+                    response = NetworkUtils.HTTP_CLIENT.send(java.net.http.HttpRequest.newBuilder(absoluteAli)
+                            .header("Accept-Language", Locale.getDefault().toLanguageTag())
+                            .build(), HttpResponse.BodyHandlers.ofString());
                 }
             }
 
             if (!url.endsWith("/"))
                 url += "/";
 
-            try {
-                AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                server.refreshMetadata(new String(conn.getInputStream().readAllBytes(), UTF_8));
-                return server;
-            } finally {
-                conn.disconnect();
-            }
-        } catch (IllegalArgumentException e) {
+            AuthlibInjectorServer server = new AuthlibInjectorServer(url);
+            server.refreshMetadata(NetworkUtils.readResponse(response));
+            return server;
+        } catch (IllegalArgumentException | InterruptedException e) {
             throw new IOException(e);
         }
     }
@@ -103,7 +103,7 @@ public class AuthlibInjectorServer implements Observable {
         return a.equals(b);
     }
 
-    private String url;
+    private final String url;
     @Nullable
     private String metadataResponse;
     private long metadataTimestamp;

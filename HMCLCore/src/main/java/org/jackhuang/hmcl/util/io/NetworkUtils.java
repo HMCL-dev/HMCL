@@ -327,35 +327,6 @@ public final class NetworkUtils {
         }
     }
 
-    @Deprecated
-    public static String doGetOld(List<URL> urls) throws IOException {
-        List<IOException> exceptions = null;
-        for (URL url : urls) {
-            try {
-                HttpURLConnection con = createHttpConnection(url);
-                con = resolveConnection(con);
-                return IOUtils.readFullyAsString(con.getInputStream());
-            } catch (IOException e) {
-                if (exceptions == null) {
-                    exceptions = new ArrayList<>(1);
-                }
-                exceptions.add(e);
-            }
-        }
-
-        if (exceptions == null) {
-            throw new IOException("No candidate URL");
-        } else if (exceptions.size() == 1) {
-            throw exceptions.get(0);
-        } else {
-            IOException exception = new IOException("Failed to doGet");
-            for (IOException e : exceptions) {
-                exception.addSuppressed(e);
-            }
-            throw exception;
-        }
-    }
-
     public static String readData(HttpURLConnection con) throws IOException {
         try {
             try (InputStream stdout = con.getInputStream()) {
@@ -408,15 +379,6 @@ public final class NetworkUtils {
             return uri.toURL();
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
-        }
-    }
-
-    public static boolean isURL(String str) {
-        try {
-            new URL(str);
-            return true;
-        } catch (MalformedURLException e) {
-            return false;
         }
     }
 
