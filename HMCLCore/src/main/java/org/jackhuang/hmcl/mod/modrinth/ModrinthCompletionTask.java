@@ -121,7 +121,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
 
-            FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
+            var task = new FileDownloadTask(file.getDownloads(), filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
             dependencies.add(task.withCounter("hmcl.modpack.download"));

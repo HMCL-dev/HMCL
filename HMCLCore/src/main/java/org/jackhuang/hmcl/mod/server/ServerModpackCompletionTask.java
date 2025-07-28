@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -153,8 +154,8 @@ public class ServerModpackCompletionTask extends Task<Void> {
             if (download) {
                 total++;
                 dependencies.add(new FileDownloadTask(
-                        new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath())),
-                        actualPath.toFile(),
+                        URI.create(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath())),
+                        actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
                         .withCounter("hmcl.modpack.download"));
             }

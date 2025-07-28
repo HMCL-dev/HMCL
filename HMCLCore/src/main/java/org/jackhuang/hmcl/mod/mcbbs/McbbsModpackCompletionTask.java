@@ -248,7 +248,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                 McbbsModpackManifest.CurseFile curseFile = (McbbsModpackManifest.CurseFile) file;
                                 if (StringUtils.isNotBlank(curseFile.getFileName())) {
                                     if (!modManager.hasSimpleMod(curseFile.getFileName())) {
-                                        FileDownloadTask task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()).toFile());
+                                        var task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()));
                                         task.setCacheRepository(dependency.getCacheRepository());
                                         task.setCaching(true);
                                         dependencies.add(task.withCounter("hmcl.modpack.download"));
@@ -298,8 +298,8 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         if (file instanceof McbbsModpackManifest.AddonFile) {
             McbbsModpackManifest.AddonFile addonFile = (McbbsModpackManifest.AddonFile) file;
             return new FileDownloadTask(
-                    new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(addonFile.getPath())),
-                    modManager.getSimpleModPath(addonFile.getPath()).toFile(),
+                    URI.create(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(addonFile.getPath())),
+                    modManager.getSimpleModPath(addonFile.getPath()),
                     addonFile.getHash() != null ? new FileDownloadTask.IntegrityCheck("SHA-1", addonFile.getHash()) : null);
         } else if (file instanceof McbbsModpackManifest.CurseFile) {
             // we download it later.

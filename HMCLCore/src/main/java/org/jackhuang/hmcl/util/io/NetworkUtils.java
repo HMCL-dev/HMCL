@@ -370,6 +370,10 @@ public final class NetworkUtils {
         }
     }
 
+    public static String detectFileName(URI uri) throws IOException {
+        return detectFileName(uri.toURL());
+    }
+
     public static String detectFileName(URL url) throws IOException {
         HttpURLConnection conn = resolveConnection(createHttpConnection(url));
         int code = conn.getResponseCode();

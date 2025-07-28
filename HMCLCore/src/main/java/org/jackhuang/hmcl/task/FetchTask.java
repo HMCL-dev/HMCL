@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -189,36 +187,13 @@ public abstract class FetchTask<T> extends Task<T> {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+                speedEvent.channel(FetchTask2.SpeedEvent.class).fireEvent(new FetchTask2.SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
             }
         }, 0, 1000);
     }
 
     private static void updateDownloadSpeed(int speed) {
         downloadSpeed.addAndGet(speed);
-    }
-
-    public static class SpeedEvent extends Event {
-        private final int speed;
-
-        public SpeedEvent(Object source, int speed) {
-            super(source);
-
-            this.speed = speed;
-        }
-
-        /**
-         * Download speed in byte/sec.
-         * @return download speed
-         */
-        public int getSpeed() {
-            return speed;
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder(this).append("speed", speed).toString();
-        }
     }
 
     protected static abstract class Context implements Closeable {

@@ -48,8 +48,8 @@ public final class NeoForgeInstallTask extends Task<Version> {
         installer = Files.createTempFile("neoforge-installer", ".jar");
 
         dependent = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLsWithCandidatesOld(remoteVersion.getUrls()),
-                installer.toFile(), null
+                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()),
+                installer, null
         );
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);

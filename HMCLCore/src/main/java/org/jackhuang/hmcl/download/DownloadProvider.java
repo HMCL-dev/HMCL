@@ -36,8 +36,8 @@ public interface DownloadProvider {
 
     String getAssetBaseURL();
 
-    default List<URL> getAssetObjectCandidates(String assetObjectLocation) {
-        return Collections.singletonList(NetworkUtils.toURL(getAssetBaseURL() + assetObjectLocation));
+    default List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(URI.create(getAssetBaseURL() + assetObjectLocation));
     }
 
     /**
