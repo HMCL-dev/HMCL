@@ -39,6 +39,7 @@ public final class Main {
         try {
             int major;
             int dot = javaVersion.indexOf('.');
+            int dash = javaVersion.indexOf('-');
 
             if (dot >= 0) {
                 major = Integer.parseInt(javaVersion.substring(0, dot));
@@ -51,7 +52,11 @@ public final class Main {
                             : Integer.parseInt(javaVersion.substring(begin));
                 }
             } else {
-                major = Integer.parseInt(javaVersion);
+                if (dash >= 0) {
+                    major = Integer.parseInt(javaVersion.substring(0, dash));
+                } else {
+                    major = Integer.parseInt(javaVersion);
+                }
             }
 
             return major >= MINIMUM_JAVA_VERSION;
