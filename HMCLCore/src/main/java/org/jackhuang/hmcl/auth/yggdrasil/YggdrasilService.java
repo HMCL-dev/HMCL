@@ -33,9 +33,9 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -151,18 +151,18 @@ public class YggdrasilService {
 
     public void uploadSkin(UUID uuid, String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         try {
-            HttpURLConnection con = NetworkUtils.createHttpConnection(provider.getSkinUploadURL(uuid));
-            con.setRequestMethod("PUT");
-            con.setRequestProperty("Authorization", "Bearer " + accessToken);
-            con.setDoOutput(true);
-            try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
+            var builder = HttpRequest.newBuilder(provider.getSkinUploadURL(uuid))
+                    .header("Authorization", "Bearer " + accessToken);
+
+            try (var request = new HttpMultipartRequest(builder, "PUT")) {
                 request.param("model", isSlim ? "slim" : "");
                 try (InputStream fis = Files.newInputStream(file)) {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }
             }
-            requireEmpty(NetworkUtils.readData(con));
-        } catch (IOException e) {
+
+            requireEmpty(NetworkUtils.readResponse(NetworkUtils.HTTP_CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofString())));
+        } catch (IOException | InterruptedException e) {
             throw new AuthenticationException(e);
         }
     }
@@ -228,14 +228,13 @@ public class YggdrasilService {
         }
     }
 
-    // TODO: URI
-    private static String request(URL url, Object payload) throws AuthenticationException {
+    private static String request(URI uri, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
-                return NetworkUtils.doGet(url.toURI());
+                return NetworkUtils.doGet(uri);
             else
-                return NetworkUtils.doPost(url.toURI(), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
-        } catch (IOException | URISyntaxException e) {
+                return NetworkUtils.doPost(uri, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+        } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
     }

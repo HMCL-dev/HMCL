@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -263,27 +264,25 @@ public class MicrosoftService {
 
     public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         try {
-            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile/skins"));
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "Bearer " + accessToken);
-            con.setDoOutput(true);
-            try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
+            java.net.http.HttpRequest.Builder builder = java.net.http.HttpRequest.newBuilder(URI.create("https://api.minecraftservices.com/minecraft/profile/skins"))
+                    .header("Authorization", "Bearer " + accessToken);
+            try (var request = new HttpMultipartRequest(builder, "POST")) {
                 request.param("variant", isSlim ? "slim" : "classic");
                 try (InputStream fis = Files.newInputStream(file)) {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }
             }
 
-            String response = NetworkUtils.readData(con);
-            if (StringUtils.isBlank(response)) {
-                if (con.getResponseCode() / 100 != 2)
-                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+            var response = NetworkUtils.HTTP_CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+            if (StringUtils.isBlank(response.body())) {
+                if (response.statusCode() / 100 != 2)
+                    throw new ResponseCodeException(response.uri(), response.statusCode());
             } else {
-                MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
-                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
-                    throw new AuthenticationException("Failed to upload skin, response code: " + con.getResponseCode() + ", response: " + response);
+                MinecraftErrorResponse profileResponse = GSON.fromJson(response.body(), MinecraftErrorResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || response.statusCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to upload skin, response code: " + response.statusCode() + ", response: " + response.body());
             }
-        } catch (IOException | JsonParseException e) {
+        } catch (IOException | JsonParseException | InterruptedException e) {
             throw new AuthenticationException(e);
         }
     }
