@@ -87,6 +87,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -844,14 +846,12 @@ public final class FXUtils {
         }
     }
 
-    public static Image loadImage(URL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
-        if (connection instanceof HttpURLConnection) {
-            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
-        }
-
-        try (InputStream input = connection.getInputStream()) {
-            String path = url.getPath();
+    public static Image loadImage(URI uri) throws Exception {
+        HttpResponse<InputStream> response = NetworkUtils.resolveResponse(NetworkUtils.HTTP_CLIENT.send(HttpRequest.newBuilder(uri)
+                        .build(), HttpResponse.BodyHandlers.ofInputStream()),
+                HttpResponse.BodyHandlers.ofInputStream(), null);
+        try (InputStream input = response.body()) {
+            String path = uri.getPath();
             if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
                 return loadWebPImage(input);
             else {

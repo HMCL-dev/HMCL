@@ -195,9 +195,9 @@ public abstract class HttpRequest {
                     if (con.getResponseCode() / 100 != 2) {
                         if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
                             try {
-                                throw new ResponseCodeException(url, con.getResponseCode(), NetworkUtils.readData(con));
+                                throw new ResponseCodeException(NetworkUtils.toURI(url), con.getResponseCode(), NetworkUtils.readData(con));
                             } catch (IOException e) {
-                                throw new ResponseCodeException(url, con.getResponseCode(), e);
+                                throw new ResponseCodeException(NetworkUtils.toURI(url), con.getResponseCode(), e);
                             }
                         }
                     }

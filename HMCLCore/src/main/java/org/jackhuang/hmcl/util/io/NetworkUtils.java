@@ -256,7 +256,7 @@ public final class NetworkUtils {
         }
 
         if (response.statusCode() / 100 != 2) {
-            throw new ResponseCodeException(response.uri().toURL(), response.statusCode());
+            throw new ResponseCodeException(response.uri(), response.statusCode());
         }
 
         return response.body();
@@ -342,42 +342,32 @@ public final class NetworkUtils {
     }
 
     public static String detectFileName(URI uri) throws IOException {
-        return detectFileName(uri.toURL());
-    }
+        try {
+            HttpResponse<Void> response = resolveResponse(HTTP_CLIENT.send(HttpRequest.newBuilder(uri).build(),
+                    HttpResponse.BodyHandlers.discarding()), HttpResponse.BodyHandlers.discarding(), null);
+            int code = response.statusCode();
+            if (code / 100 == 4)
+                throw new FileNotFoundException();
+            if (code / 100 != 2)
+                throw new IOException(uri + ": response code " + code);
 
-    public static String detectFileName(URL url) throws IOException {
-        HttpURLConnection conn = resolveConnection(createHttpConnection(url));
-        int code = conn.getResponseCode();
-        if (code / 100 == 4)
-            throw new FileNotFoundException();
-        if (code / 100 != 2)
-            throw new IOException(url + ": response code " + conn.getResponseCode());
+            String disposition = response.headers().firstValue("Content-Disposition").orElse(null);
+            if (disposition == null || !disposition.contains("filename=")) {
+                String u = response.uri().toString();
+                return decodeURL(substringAfterLast(u, '/'));
+            } else {
+                return decodeURL(removeSurrounding(substringAfter(disposition, "filename="), "\""));
+            }
 
-        return detectFileName(conn);
-    }
-
-    public static String detectFileName(HttpURLConnection conn) {
-        String disposition = conn.getHeaderField("Content-Disposition");
-        if (disposition == null || !disposition.contains("filename=")) {
-            String u = conn.getURL().toString();
-            return decodeURL(substringAfterLast(u, '/'));
-        } else {
-            return decodeURL(removeSurrounding(substringAfter(disposition, "filename="), "\""));
+        } catch (InterruptedException e) {
+            throw new IOException(e);
         }
     }
 
-    public static URL toURL(String str) {
+    public static URI toURI(URL url) {
         try {
-            return new URL(str);
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
-    public static URL toURL(URI uri) {
-        try {
-            return uri.toURL();
-        } catch (MalformedURLException e) {
+            return url.toURI();
+        } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }
     }

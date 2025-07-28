@@ -166,7 +166,7 @@ public class MicrosoftService {
                 .accept("application/json").createConnection();
 
         if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/entitlements/mcstore"), request.getResponseCode());
+            throw new ResponseCodeException(URI.create("https://api.minecraftservices.com/entitlements/mcstore"), request.getResponseCode());
         }
 
         // Get Minecraft Account UUID
@@ -249,7 +249,7 @@ public class MicrosoftService {
         if (responseCode == HTTP_NOT_FOUND) {
             throw new NoMinecraftJavaEditionProfileException();
         } else if (responseCode != 200) {
-            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/minecraft/profile"), responseCode);
+            throw new ResponseCodeException(URI.create("https://api.minecraftservices.com/minecraft/profile"), responseCode);
         }
 
         String result = NetworkUtils.readData(conn);
