@@ -46,7 +46,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public class FileDownloadTask extends FetchTask2<Void> {
+public class FileDownloadTask extends FetchTask<Void> {
 
     public static class IntegrityCheck {
         private final String algorithm;

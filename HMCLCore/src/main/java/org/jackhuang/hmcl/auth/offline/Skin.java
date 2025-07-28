@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.auth.offline;
 import com.google.gson.annotations.SerializedName;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
-import org.jackhuang.hmcl.task.FetchTask2;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
@@ -227,7 +227,7 @@ public class Skin {
         return new Skin(type, cslApi, "slim".equals(textureModel) ? TextureModel.SLIM : TextureModel.WIDE, localSkinPath, localCapePath);
     }
 
-    private static class FetchBytesTask extends FetchTask2<InputStream> {
+    private static class FetchBytesTask extends FetchTask<InputStream> {
 
         public FetchBytesTask(URI uri, int retry) {
             super(List.of(uri), retry);

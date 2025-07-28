@@ -47,14 +47,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public abstract class FetchTask2<T> extends Task<T> {
+public abstract class FetchTask<T> extends Task<T> {
     protected final List<URI> uris;
     protected final int retry;
     protected boolean caching;
     protected CacheRepository repository = CacheRepository.getInstance();
     protected HttpClient httpClient = NetworkUtils.HTTP_CLIENT;
 
-    public FetchTask2(@NotNull List<@NotNull URI> uris, int retry) {
+    public FetchTask(@NotNull List<@NotNull URI> uris, int retry) {
         Objects.requireNonNull(uris);
 
         this.uris = List.copyOf(uris);

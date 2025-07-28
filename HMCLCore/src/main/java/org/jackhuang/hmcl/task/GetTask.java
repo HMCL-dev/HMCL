@@ -34,7 +34,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * @author huangyuhui
  */
-public final class GetTask extends FetchTask2<String> {
+public final class GetTask extends FetchTask<String> {
 
     private static final int DEFAULT_RETRY = 3;
 

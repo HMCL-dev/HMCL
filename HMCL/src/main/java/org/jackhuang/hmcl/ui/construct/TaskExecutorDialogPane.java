@@ -41,7 +41,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class TaskExecutorDialogPane extends BorderPane {
     private TaskExecutor executor;
     private TaskCancellationAction onCancel;
-    private final Consumer<FetchTask2.SpeedEvent> speedEventHandler;
+    private final Consumer<FetchTask.SpeedEvent> speedEventHandler;
 
     private final Label lblTitle;
     private final Label lblProgress;
@@ -106,7 +106,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             String finalUnit = unit;
             Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
         };
-        FileDownloadTask.speedEvent.channel(FetchTask2.SpeedEvent.class).registerWeak(speedEventHandler);
+        FileDownloadTask.speedEvent.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
 
         onEscPressed(this, btnCancel::fire);
     }
