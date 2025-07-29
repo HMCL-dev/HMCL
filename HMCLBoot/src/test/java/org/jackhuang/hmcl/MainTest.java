@@ -36,13 +36,13 @@ public final class MainTest {
         assertEquals(21, Main.getJavaFeatureVersion("21"));
         assertEquals(26, Main.getJavaFeatureVersion("26-ea"));
 
-        assertEquals(-1 , Main.getJavaFeatureVersion(null));
-        assertEquals(-1 , Main.getJavaFeatureVersion(""));
-        assertEquals(-1 , Main.getJavaFeatureVersion("0"));
-        assertEquals(-1 , Main.getJavaFeatureVersion("0.8"));
-        assertEquals(-1 , Main.getJavaFeatureVersion("abc"));
-        assertEquals(-1 , Main.getJavaFeatureVersion("1.abc"));
-        assertEquals(-1 , Main.getJavaFeatureVersion(".1"));
-        assertEquals(-1 , Main.getJavaFeatureVersion("1111111111111111111111"));
+        assertEquals(-1, Main.getJavaFeatureVersion(null));
+        assertEquals(-1, Main.getJavaFeatureVersion(""));
+        assertEquals(-1, Main.getJavaFeatureVersion("0"));
+        assertEquals(-1, Main.getJavaFeatureVersion("0.8"));
+        assertEquals(-1, Main.getJavaFeatureVersion("abc"));
+        assertEquals(-1, Main.getJavaFeatureVersion("1.abc"));
+        assertEquals(-1, Main.getJavaFeatureVersion(".1"));
+        assertEquals(-1, Main.getJavaFeatureVersion("1111111111111111111111"));
     }
 }
