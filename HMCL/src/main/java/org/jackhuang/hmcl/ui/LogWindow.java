@@ -186,7 +186,7 @@ public final class LogWindow extends Stage {
         }
 
         private void onTerminateGame() {
-            LauncherHelper.stopManagedProcesses();
+            LogWindow.this.gameProcess.stop();
         }
 
         private void onClear() {
