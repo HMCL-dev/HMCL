@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXSpinner;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -31,6 +27,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
@@ -63,6 +61,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.List;
 import java.util.Locale;
@@ -89,9 +88,11 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final StackPane failedPane;
     private final StackPane emptyPane;
     private final TransitionPane root;
-    private final JFXCheckBox chkRelease;
-    private final JFXCheckBox chkSnapshot;
-    private final JFXCheckBox chkOld;
+    private final ToggleGroup versionTypeGroup;
+    private final JFXRadioButton radioRelease;
+    private final JFXRadioButton radioSnapshot;
+    private final JFXRadioButton radioAprilFools;
+    private final JFXRadioButton radioOld;
     private final ComponentList centrePane;
     private final StackPane center;
 
@@ -129,17 +130,25 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     HBox checkPane = new HBox();
                     checkPane.setSpacing(10);
                     {
-                        chkRelease = new JFXCheckBox(i18n("version.game.releases"));
-                        chkRelease.setSelected(true);
-                        HBox.setMargin(chkRelease, new Insets(10, 0, 10, 0));
+                        versionTypeGroup = new ToggleGroup();
 
-                        chkSnapshot = new JFXCheckBox(i18n("version.game.snapshots"));
-                        HBox.setMargin(chkSnapshot, new Insets(10, 0, 10, 0));
+                        var margin = new Insets(10, 0, 10, 0);
 
-                        chkOld = new JFXCheckBox(i18n("version.game.old"));
-                        HBox.setMargin(chkOld, new Insets(10, 0, 10, 0));
+                        radioRelease = new JFXRadioButton(i18n("version.game.releases"));
+                        radioRelease.setSelected(true);
+                        HBox.setMargin(radioRelease, margin);
 
-                        checkPane.getChildren().setAll(chkRelease, chkSnapshot, chkOld);
+                        radioSnapshot = new JFXRadioButton(i18n("version.game.snapshots"));
+                        HBox.setMargin(radioSnapshot, margin);
+
+                        radioAprilFools = new JFXRadioButton(i18n("version.game.april_fools"));
+                        HBox.setMargin(radioAprilFools, margin);
+
+                        radioOld = new JFXRadioButton(i18n("version.game.old"));
+                        HBox.setMargin(radioOld, margin);
+
+                        versionTypeGroup.getToggles().setAll(radioRelease, radioSnapshot, radioAprilFools, radioOld);
+                        checkPane.getChildren().setAll(radioRelease, radioSnapshot, radioAprilFools, radioOld);
                     }
 
                     list = new JFXListView<>();
@@ -229,12 +238,10 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         versionList = downloadProvider.getVersionListById(libraryId);
         boolean hasType = versionList.hasType();
-        chkRelease.setManaged(hasType);
-        chkRelease.setVisible(hasType);
-        chkSnapshot.setManaged(hasType);
-        chkSnapshot.setVisible(hasType);
-        chkOld.setManaged(hasType);
-        chkOld.setVisible(hasType);
+        for (Toggle toggle : versionTypeGroup.getToggles()) {
+            ((JFXRadioButton) toggle).setManaged(hasType);
+            ((JFXRadioButton) toggle).setVisible(hasType);
+        }
 
         if (hasType) {
             centrePane.getContent().setAll(toolbarPane, list);
@@ -266,10 +273,8 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
             list.getItems().setAll(versions);
         };
-        chkRelease.selectedProperty().addListener(listener);
-        chkSnapshot.selectedProperty().addListener(listener);
-        chkOld.selectedProperty().addListener(listener);
         queryString.addListener(listener);
+        versionTypeGroup.selectedToggleProperty().addListener(listener);
 
         btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1)));
 
@@ -291,12 +296,17 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 .filter(it -> {
                     switch (it.getVersionType()) {
                         case RELEASE:
-                            return chkRelease.isSelected();
+                            return radioRelease.isSelected();
                         case PENDING:
+                            return radioSnapshot.isSelected();
                         case SNAPSHOT:
-                            return chkSnapshot.isSelected();
+                            if (GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial()) {
+                                return radioAprilFools.isSelected();
+                            } else {
+                                return radioSnapshot.isSelected();
+                            }
                         case OLD:
-                            return chkOld.isSelected();
+                            return radioOld.isSelected();
                         default:
                             return true;
                     }
@@ -318,9 +328,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                         root.setContent(emptyPane, ContainerAnimations.FADE);
                     } else {
                         if (items.isEmpty()) {
-                            chkRelease.setSelected(true);
-                            chkSnapshot.setSelected(true);
-                            chkOld.setSelected(true);
+                            radioRelease.setSelected(true);
                         } else {
                             list.getItems().setAll(items);
                         }
