@@ -42,7 +42,7 @@ public final class Logger {
         return message;
     }
 
-
+    static final String PACKAGE_PREFIX = "org.jackhuang.hmcl.";
     static final String CLASS_NAME = Logger.class.getName();
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
@@ -69,9 +69,15 @@ public final class Logger {
         builder.setLength(0);
         builder.append('[');
         TIME_FORMATTER.formatTo(Instant.ofEpochMilli(event.time), builder);
-        builder.append("] [")
-                .append(event.caller)
-                .append('/')
+        builder.append("] [");
+
+        if (event.caller != null && event.caller.startsWith(PACKAGE_PREFIX)) {
+            builder.append("@.").append(event.caller, PACKAGE_PREFIX.length(), event.caller.length());
+        } else {
+            builder.append(event.caller);
+        }
+
+        builder.append('/')
                 .append(event.level)
                 .append("] ")
                 .append(filterForbiddenToken(event.message));
@@ -143,35 +149,33 @@ public final class Logger {
                 log(Level.WARNING, caller, "Failed to list log files in " + dir, e);
             }
 
-            if (list.size() <= logRetention) {
-                return;
-            }
+            if (list.size() > logRetention) {
+                list.sort((a, b) -> {
+                    int[] v1 = a.getValue();
+                    int[] v2 = b.getValue();
 
-            list.sort((a, b) -> {
-                int[] v1 = a.getValue();
-                int[] v2 = b.getValue();
+                    assert v1.length == v2.length;
 
-                assert v1.length == v2.length;
-
-                for (int i = 0; i < v1.length; i++) {
-                    int c = Integer.compare(v1[i], v2[i]);
-                    if (c != 0)
-                        return c;
-                }
-
-                return 0;
-            });
-
-            for (int i = 0, end = list.size() - logRetention; i < end; i++) {
-                Path file = list.get(i).getKey();
-
-                try {
-                    if (!Files.isSameFile(file, logFile)) {
-                        log(Level.INFO, caller, "Delete old log file " + file, null);
-                        Files.delete(file);
+                    for (int i = 0; i < v1.length; i++) {
+                        int c = Integer.compare(v1[i], v2[i]);
+                        if (c != 0)
+                            return c;
                     }
-                } catch (IOException e) {
-                    log(Level.WARNING, caller, "Failed to delete log file " + file, e);
+
+                    return 0;
+                });
+
+                for (int i = 0, end = list.size() - logRetention; i < end; i++) {
+                    Path file = list.get(i).getKey();
+
+                    try {
+                        if (!Files.isSameFile(file, logFile)) {
+                            log(Level.INFO, caller, "Delete old log file " + file, null);
+                            Files.delete(file);
+                        }
+                    } catch (IOException e) {
+                        log(Level.WARNING, caller, "Failed to delete log file " + file, e);
+                    }
                 }
             }
         }
@@ -290,7 +294,7 @@ public final class Logger {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         try {
             exportLogs(output);
-            return output.toString("UTF-8");
+            return output.toString(UTF_8);
         } catch (IOException e) {
             log(Level.WARNING, CLASS_NAME + ".getLogs", "Failed to export logs", e);
             return "";

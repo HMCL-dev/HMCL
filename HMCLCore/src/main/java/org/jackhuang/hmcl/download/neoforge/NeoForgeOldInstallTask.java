@@ -37,7 +37,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,7 +135,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                 classpath.add(file.toString());
             }
             classpath.add(jar.toString());
-            command.add(String.join(OperatingSystem.PATH_SEPARATOR, classpath));
+            command.add(String.join(File.pathSeparator, classpath));
 
             command.add(mainClass);
 
@@ -275,9 +274,9 @@ public class NeoForgeOldInstallTask extends Task<Version> {
     @Override
     public void preExecute() throws Exception {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            profile = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
+            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath(profile.getJson())), Version.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
 
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
@@ -407,7 +406,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                         dependencyManager.checkLibraryCompletionAsync(neoForgeVersion, true)));
 
         setResult(neoForgeVersion
-                .setPriority(30000)
+                .setPriority(Version.PRIORITY_LOADER)
                 .setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
                 .setVersion(selfVersion));
     }

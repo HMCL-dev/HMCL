@@ -89,7 +89,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
         ret.textFillProperty().bind(Theme.foregroundFillBinding());
-        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1, -1)));
+        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1)));
         ret.setText(text);
         ret.setOnAction(e -> onClick.run());
         return ret;
@@ -98,7 +98,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
     public static JFXButton createToolbarButton2(String text, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(svg.createIcon(Theme.blackFill(), -1, -1)));
+        ret.setGraphic(wrap(svg.createIcon(Theme.blackFill(), -1)));
         ret.setText(text);
         ret.setOnAction(e -> onClick.run());
         return ret;
@@ -108,7 +108,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-decorator-button");
         ret.textFillProperty().bind(Theme.foregroundFillBinding());
-        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1, -1)));
+        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1)));
         FXUtils.installFastTooltip(ret, tooltip);
         ret.setOnAction(e -> onClick.run());
         return ret;

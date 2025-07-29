@@ -24,9 +24,6 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
-
         options.encoding = "UTF-8"
     }
 
@@ -55,7 +52,7 @@ subprojects {
     }
 }
 
-tasks.create("checkTranslations") {
+tasks.register("checkTranslations") {
     doLast {
         val hmclLangDir = file("HMCL/src/main/resources/assets/lang")
 
@@ -107,8 +104,6 @@ tasks.create("checkTranslations") {
     }
 }
 
-apply {
-    from("javafx.gradle.kts")
-}
+org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")

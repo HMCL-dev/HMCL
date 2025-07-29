@@ -149,10 +149,27 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     protected void onInstall() {
-        if (!txtModpackName.validate()) return;
-        controller.getSettings().put(MODPACK_NAME, txtModpackName.getText());
-        controller.getSettings().put(MODPACK_CHARSET, charset);
-        controller.onFinish();
+        String name = txtModpackName.getText();
+
+        // Check for non-ASCII characters.
+        if (!StringUtils.isASCII(name)) {
+            Controllers.dialog(new MessageDialogPane.Builder(
+                    i18n("install.name.invalid"),
+                    i18n("message.warning"),
+                    MessageDialogPane.MessageType.QUESTION)
+                    .yesOrNo(() -> {
+                        controller.getSettings().put(MODPACK_NAME, name);
+                        controller.getSettings().put(MODPACK_CHARSET, charset);
+                        controller.onFinish();
+                    }, () -> {
+                        // The user selects Cancel and does nothing.
+                    })
+                    .build());
+        } else {
+            controller.getSettings().put(MODPACK_NAME, name);
+            controller.getSettings().put(MODPACK_CHARSET, charset);
+            controller.onFinish();
+        }
     }
 
     protected void onDescribe() {

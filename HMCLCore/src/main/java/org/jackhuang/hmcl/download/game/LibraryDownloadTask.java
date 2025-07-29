@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -164,7 +163,7 @@ public class LibraryDownloadTask extends Task<Void> {
         JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data));
         JarEntry entry = jar.getNextJarEntry();
         while (entry != null) {
-            byte[] eData = IOUtils.readFullyWithoutClosing(jar);
+            byte[] eData = jar.readAllBytes();
             if (entry.getName().equals("checksums.sha1")) {
                 hashes = new String(eData, StandardCharsets.UTF_8).split("\n");
             }
