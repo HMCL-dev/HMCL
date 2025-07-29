@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.util.Pair;
 
 import java.io.*;
 import java.net.*;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
@@ -185,18 +184,6 @@ public final class NetworkUtils {
             }
         }
         return conn;
-    }
-
-    public static <T> T readResponse(HttpResponse<T> response) throws IOException {
-        if (response.statusCode() / 100 == 4) {
-            throw new FileNotFoundException(response.uri().toString());
-        }
-
-        if (response.statusCode() / 100 != 2) {
-            throw new ResponseCodeException(response.uri(), response.statusCode());
-        }
-
-        return response.body();
     }
 
     public static String doGet(URI uri) throws IOException {
