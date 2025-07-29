@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -32,7 +33,6 @@ import java.util.Optional;
 
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ public class AuthlibInjectorServer implements Observable {
 
             try {
                 AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                server.refreshMetadata(IOUtils.readFullyAsStringWithClosing(conn.getInputStream()));
+                server.refreshMetadata(new String(conn.getInputStream().readAllBytes(), UTF_8));
                 return server;
             } finally {
                 conn.disconnect();

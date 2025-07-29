@@ -87,7 +87,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
             if (configuration == null) {
                 // Load configuration from disk
                 try {
-                    configuration = JsonUtils.fromNonNullJson(FileUtils.readText(configurationFile), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+                    configuration = JsonUtils.fromNonNullJson(Files.readString(configurationFile.toPath()), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
                 } catch (IOException | JsonParseException e) {
                     throw new IOException("Malformed modpack configuration");
                 }

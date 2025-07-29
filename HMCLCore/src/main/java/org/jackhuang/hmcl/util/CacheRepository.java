@@ -21,7 +21,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -67,7 +66,7 @@ public class CacheRepository {
             }
 
             if (Files.isRegularFile(indexFile)) {
-                ETagIndex raw = GSON.fromJson(FileUtils.readText(indexFile), ETagIndex.class);
+                ETagIndex raw = GSON.fromJson(Files.readString(indexFile), ETagIndex.class);
                 if (raw == null)
                     index = new HashMap<>();
                 else
@@ -288,7 +287,7 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), ETagIndex.class);
+                ETagIndex indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
                 ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
@@ -411,7 +410,7 @@ public class CacheRepository {
             try {
                 indexFile = cacheDirectory.resolve(name + ".json");
                 if (Files.isRegularFile(indexFile)) {
-                    joinEntries(fromNonNullJson(FileUtils.readText(indexFile), mapTypeOf(String.class, Object.class)));
+                    joinEntries(fromNonNullJson(Files.readString(indexFile), mapTypeOf(String.class, Object.class)));
                 }
             } catch (IOException | JsonParseException e) {
                 LOG.warning("Unable to read storage {" + name + "} file");
@@ -424,7 +423,7 @@ public class CacheRepository {
             try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 FileLock lock = channel.lock();
                 try {
-                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), mapTypeOf(String.class, Object.class));
+                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), mapTypeOf(String.class, Object.class));
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);

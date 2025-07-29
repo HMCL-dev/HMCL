@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -84,7 +83,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
     public void execute() throws Exception {
         AssetIndex index;
         try {
-            index = JsonUtils.fromNonNullJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+            index = JsonUtils.fromNonNullJson(Files.readString(assetIndexFile), AssetIndex.class);
         } catch (IOException | JsonParseException e) {
             throw new GameAssetIndexDownloadTask.GameAssetIndexMalformedException();
         }

@@ -175,7 +175,7 @@ public final class OptiFineInstallTask extends Task<Version> {
 
             Path launchWrapperVersionText = fs.getPath("launchwrapper-of.txt");
             if (Files.exists(launchWrapperVersionText)) {
-                String launchWrapperVersion = FileUtils.readText(launchWrapperVersionText).trim();
+                String launchWrapperVersion = Files.readString(launchWrapperVersionText).trim();
                 Path launchWrapperJar = fs.getPath("launchwrapper-of-" + launchWrapperVersion + ".jar");
 
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper-of", launchWrapperVersion));
@@ -192,7 +192,7 @@ public final class OptiFineInstallTask extends Task<Version> {
 
             Path buildofText = fs.getPath("buildof.txt");
             if (Files.exists(buildofText)) {
-                String buildof = FileUtils.readText(buildofText).trim();
+                String buildof = Files.readString(buildofText).trim();
                 VersionNumber buildofVer = VersionNumber.asVersion(buildof);
 
                 if (LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {

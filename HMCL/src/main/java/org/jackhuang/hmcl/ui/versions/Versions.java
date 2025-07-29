@@ -43,7 +43,6 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
@@ -110,10 +109,8 @@ public final class Versions {
 
     public static void deleteVersion(Profile profile, String version) {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
-        boolean isMovingToTrashSupported = FileUtils.isMovingToTrashSupported();
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
-                isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
-                        i18n("version.manage.remove.confirm", version);
+                i18n("version.manage.remove.confirm.trash", version, version + "_removed");
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");

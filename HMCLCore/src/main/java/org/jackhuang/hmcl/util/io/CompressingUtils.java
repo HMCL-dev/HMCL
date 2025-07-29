@@ -24,14 +24,12 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
-import java.util.zip.ZipError;
 import java.util.zip.ZipException;
 
 /**
@@ -59,7 +57,7 @@ public final class CompressingUtils {
         }
     }
 
-    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) throws IOException {
+    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) {
         CharsetDecoder cd = newCharsetDecoder(encoding);
         CharBuffer cb = CharBuffer.allocate(32);
 
@@ -71,7 +69,7 @@ public final class CompressingUtils {
             int clen = (int)(ba.length * cd.maxCharsPerByte());
             if (clen == 0) continue;
             if (clen <= cb.capacity())
-                ((Buffer) cb).clear(); // cast to prevent "java.lang.NoSuchMethodError: java.nio.CharBuffer.clear()Ljava/nio/CharBuffer;" when compiling with Java 9+
+                cb.clear();
             else
                 cb = CharBuffer.allocate(clen);
 
@@ -212,9 +210,6 @@ public final class CompressingUtils {
                 throw new FileSystemNotFoundException("Module jdk.zipfs does not exist");
 
             return ZIPFS_PROVIDER.newFileSystem(zipFile, env);
-        } catch (ZipError error) {
-            // Since Java 8 throws ZipError stupidly
-            throw new ZipException(error.getMessage());
         } catch (UnsupportedOperationException ex) {
             throw new ZipException("Not a zip file");
         } catch (FileSystemNotFoundException ex) {

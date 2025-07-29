@@ -1,12 +1,14 @@
-name: Check Style
+name: Check Codes
 
 on:
   push:
     paths:
       - '**.java'
+      - '**.properties'
   pull_request:
     paths:
       - '**.java'
+      - '**.properties'
 
 jobs:
   build:
@@ -19,7 +21,5 @@ jobs:
           distribution: 'zulu'
           java-version: '11'
           java-package: 'jdk+fx'
-      - name: Check style main
-        run: ./gradlew checkstyleMain --no-daemon
-      - name: Check style test
-        run: ./gradlew checkstyleTest --no-daemon
+      - name: Check Codes
+        run: ./gradlew checkstyleMain checkstyleTest checkTranslations --no-daemon --parallel

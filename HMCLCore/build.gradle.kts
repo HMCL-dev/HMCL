@@ -2,6 +2,15 @@ plugins {
     `java-library`
 }
 
+tasks.withType<JavaCompile> {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
+}
+
+tasks.compileJava {
+    options.compilerArgs.add("--add-exports=jdk.attach/sun.tools.attach=ALL-UNNAMED")
+}
+
 dependencies {
     api(libs.kala.compress.zip)
     api(libs.kala.compress.tar)

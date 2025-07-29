@@ -15,17 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl;
 
 /**
- * @author Glavo
+ * This is a dummy class and will be overwritten in the shadow jar.
  */
-public final class ModuleHelper {
-
-    public static void addEnableNativeAccess(Class<?> clazzInModule) {
-        // do nothing
+public final class EntryPoint {
+    private EntryPoint() {
     }
 
-    private ModuleHelper() {
+    public static void main(String[] args) {
+        throw new AssertionError("This method should not be called, please verify that the HMCL is complete.");
     }
 }

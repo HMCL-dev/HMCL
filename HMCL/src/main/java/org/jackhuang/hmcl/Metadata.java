@@ -93,4 +93,5 @@ public final class Metadata {
     public static boolean isNightly() {
         return !isStable() && !isDev();
     }
+
 }

@@ -166,7 +166,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Version readVersionJson(File file) throws IOException, JsonParseException {
-        String jsonText = FileUtils.readText(file);
+        String jsonText = Files.readString(file.toPath());
         try {
             // Try TLauncher version json format
             return JsonUtils.fromNonNullJson(jsonText, TLauncherVersion.class).toVersion();
@@ -214,7 +214,7 @@ public class DefaultGameRepository implements GameRepository {
 
             if (fromVersion.getId().equals(fromVersion.getJar()))
                 fromVersion = fromVersion.setJar(null);
-            FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(to)));
+            FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(to)));
 
             // fix inheritsFrom of versions that inherits from version [from].
             for (Version version : getVersions()) {
@@ -246,7 +246,7 @@ public class DefaultGameRepository implements GameRepository {
         try {
             versions.remove(id);
 
-            if (FileUtils.isMovingToTrashSupported() && FileUtils.moveToTrash(removedFile)) {
+            if (FileUtils.moveToTrash(removedFile)) {
                 return true;
             }
 
@@ -384,7 +384,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public AssetIndex getAssetIndex(String version, String assetId) throws IOException {
         try {
-            return Objects.requireNonNull(JsonUtils.GSON.fromJson(FileUtils.readText(getIndexFile(version, assetId)), AssetIndex.class));
+            return Objects.requireNonNull(JsonUtils.GSON.fromJson(Files.readString(getIndexFile(version, assetId)), AssetIndex.class));
         } catch (JsonParseException | NullPointerException e) {
             throw new IOException("Asset index file malformed", e);
         }
@@ -445,7 +445,7 @@ public class DefaultGameRepository implements GameRepository {
         if (!Files.isRegularFile(indexFile))
             return assetsDir;
 
-        String assetIndexContent = FileUtils.readText(indexFile);
+        String assetIndexContent = Files.readString(indexFile);
         AssetIndex index = JsonUtils.GSON.fromJson(assetIndexContent, AssetIndex.class);
 
         if (index == null)
@@ -512,7 +512,7 @@ public class DefaultGameRepository implements GameRepository {
         if (!hasVersion(version)) throw new VersionNotFoundException(version);
         File file = getModpackConfiguration(version);
         if (!file.exists()) return null;
-        return JsonUtils.GSON.fromJson(FileUtils.readText(file), ModpackConfiguration.class);
+        return JsonUtils.GSON.fromJson(Files.readString(file.toPath()), ModpackConfiguration.class);
     }
 
     public boolean isModpack(String version) {

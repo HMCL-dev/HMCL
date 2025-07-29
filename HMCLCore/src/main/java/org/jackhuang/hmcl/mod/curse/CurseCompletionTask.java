@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -87,7 +88,7 @@ public final class CurseCompletionTask extends Task<Void> {
             try {
                 File manifestFile = new File(repository.getVersionRoot(version), "manifest.json");
                 if (manifestFile.exists())
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), CurseManifest.class);
+                    this.manifest = JsonUtils.GSON.fromJson(Files.readString(manifestFile.toPath()), CurseManifest.class);
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }

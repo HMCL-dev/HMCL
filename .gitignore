@@ -18,6 +18,7 @@ minecraft-exported-crash-info*
 /build/
 /HMCL/build/
 /HMCLCore/build/
+/HMCLBoot/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLMultiMCBootstrap/build/
 /buildSrc/build/

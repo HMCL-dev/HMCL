@@ -65,7 +65,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             try {
                 File manifestFile = repository.getModpackConfiguration(version);
                 if (manifestFile.exists()) {
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModpackConfiguration.typeOf(ServerModpackManifest.class));
+                    this.manifest = JsonUtils.GSON.fromJson(Files.readString(manifestFile.toPath()), ModpackConfiguration.typeOf(ServerModpackManifest.class));
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read Server modpack manifest.json", e);
