@@ -160,7 +160,7 @@ public class YggdrasilService {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }
             }
-            requireEmpty(NetworkUtils.readString(con));
+            requireEmpty(NetworkUtils.readFullyAsString(con));
         } catch (IOException e) {
             throw new AuthenticationException(e);
         }

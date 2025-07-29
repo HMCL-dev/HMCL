@@ -18,18 +18,20 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.*;
 import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.zip.GZIPInputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.StringUtils.*;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -198,7 +200,7 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URI uri) throws IOException {
-        return readString(resolveConnection(createHttpConnection(uri)));
+        return readFullyAsString(resolveConnection(createHttpConnection(uri)));
     }
 
     public static String doGet(List<URI> uris) throws IOException {
@@ -252,24 +254,49 @@ public final class NetworkUtils {
         try (OutputStream os = con.getOutputStream()) {
             os.write(bytes);
         }
-        return readString(con);
+        return readFullyAsString(con);
     }
 
-    public static String readString(URLConnection con) throws IOException {
-        var contentEncoding = ContentEncoding.fromConnection(con);
-        try {
-            try (InputStream stdout = con.getInputStream()) {
-                return IOUtils.readFullyAsString(contentEncoding.wrap(stdout));
+    static final Pattern CHARSET_REGEX = Pattern.compile("\\s*(charset)\\s*=\\s*['|\"]?(?<charset>[^\"^';,]+)['|\"]?");
+
+    static Charset getCharsetFromContentType(String contentType) {
+        if (contentType == null || contentType.isBlank())
+            return UTF_8;
+
+        Matcher matcher = CHARSET_REGEX.matcher(contentType);
+        if (matcher.find()) {
+            String charsetName = matcher.group("charset");
+            try {
+                return Charset.forName(charsetName);
+            } catch (Throwable e) {
+                // Ignore invalid charset
+                LOG.warning("Bad charset name: " + charsetName + ", using UTF-8 instead", e);
             }
-        } catch (IOException e) {
-            if (con instanceof HttpURLConnection) {
-                try (InputStream stderr = ((HttpURLConnection) con).getErrorStream()) {
-                    if (stderr == null)
-                        throw e;
-                    return IOUtils.readFullyAsString(contentEncoding.wrap(stderr));
+        }
+        return UTF_8;
+    }
+
+    public static String readFullyAsString(URLConnection con) throws IOException {
+        try {
+            var contentEncoding = ContentEncoding.fromConnection(con);
+            Charset charset = getCharsetFromContentType(con.getHeaderField("Content-Type"));
+
+            try (InputStream stdout = con.getInputStream()) {
+                return IOUtils.readFullyAsString(contentEncoding.wrap(stdout), charset);
+            } catch (IOException e) {
+                if (con instanceof HttpURLConnection) {
+                    try (InputStream stderr = ((HttpURLConnection) con).getErrorStream()) {
+                        if (stderr == null)
+                            throw e;
+                        return IOUtils.readFullyAsString(contentEncoding.wrap(stderr), charset);
+                    }
+                } else {
+                    throw e;
                 }
-            } else {
-                throw e;
+            }
+        } finally {
+            if (con instanceof HttpURLConnection) {
+                ((HttpURLConnection) con).disconnect();
             }
         }
     }
@@ -309,31 +336,4 @@ public final class NetworkUtils {
     }
     // ====
 
-    private enum ContentEncoding {
-        NONE {
-            @Override
-            public InputStream wrap(InputStream inputStream) {
-                return inputStream;
-            }
-        },
-        GZIP {
-            @Override
-            public InputStream wrap(InputStream inputStream) throws IOException {
-                return new GZIPInputStream(inputStream);
-            }
-        };
-
-        public static @NotNull ContentEncoding fromConnection(URLConnection connection) throws IOException {
-            String encoding = connection.getContentEncoding();
-            if (connection.getContentEncoding() == null || connection.getContentEncoding().isEmpty()) {
-                return NONE;
-            } else if ("gzip".equalsIgnoreCase(encoding)) {
-                return GZIP;
-            } else {
-                throw new IOException("Unsupported content encoding: " + connection.getContentEncoding());
-            }
-        }
-
-        public abstract InputStream wrap(InputStream inputStream) throws IOException;
-    }
 }

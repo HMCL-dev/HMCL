@@ -251,7 +251,7 @@ public class MicrosoftService {
             throw new ResponseCodeException(URI.create("https://api.minecraftservices.com/minecraft/profile"), responseCode);
         }
 
-        String result = NetworkUtils.readString(conn);
+        String result = NetworkUtils.readFullyAsString(conn);
         return JsonUtils.fromNonNullJson(result, MinecraftProfileResponse.class);
     }
 
@@ -274,7 +274,7 @@ public class MicrosoftService {
                 }
             }
 
-            String response = NetworkUtils.readString(con);
+            String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
                     throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());

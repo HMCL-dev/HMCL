@@ -188,14 +188,14 @@ public abstract class HttpRequest {
                 if (con.getResponseCode() / 100 != 2) {
                     if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
                         try {
-                            throw new ResponseCodeException(NetworkUtils.toURI(url), con.getResponseCode(), NetworkUtils.readString(con));
+                            throw new ResponseCodeException(NetworkUtils.toURI(url), con.getResponseCode(), NetworkUtils.readFullyAsString(con));
                         } catch (IOException e) {
                             throw new ResponseCodeException(NetworkUtils.toURI(url), con.getResponseCode(), e);
                         }
                     }
                 }
 
-                return NetworkUtils.readString(con);
+                return NetworkUtils.readFullyAsString(con);
             }, retryTimes);
         }
     }
