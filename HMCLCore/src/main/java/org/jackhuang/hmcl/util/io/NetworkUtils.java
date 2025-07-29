@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -28,6 +29,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.zip.GZIPInputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -166,7 +168,7 @@ public final class NetworkUtils {
             Map<String, List<String>> properties = conn.getRequestProperties();
             String method = conn.getRequestMethod();
             int code = conn.getResponseCode();
-            if (code >= 300 && code <= 307 && code != 306 && code != 304) {
+            if (code >= 300 && code <= 308 && code != 306 && code != 304) {
                 String newURL = conn.getHeaderField("Location");
                 conn.disconnect();
 
@@ -263,19 +265,10 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URI uri) throws IOException {
-        try {
-            var request = HttpRequest.newBuilder(uri).build();
-            var bodyHandler = HttpResponse.BodyHandlers.ofString();
-            HttpResponse<String> response = resolveResponse(
-                    HTTP_CLIENT.send(request, bodyHandler), bodyHandler, null);
-            readResponse(response);
-            return response.body();
-        } catch (InterruptedException e) {
-            throw new IOException(e);
-        }
+        return readString(resolveConnection(createHttpConnection(uri)));
     }
 
-    public static String doGet(List<URI> uris) throws IOException { // TODO: rename
+    public static String doGet(List<URI> uris) throws IOException {
         List<IOException> exceptions = null;
         for (URI uri : uris) {
             try {
@@ -316,27 +309,34 @@ public final class NetworkUtils {
     }
 
     public static String doPost(URI uri, String post, String contentType) throws IOException {
-        try {
-            return readResponse(HTTP_CLIENT.send(HttpRequest.newBuilder(uri)
-                            .POST(HttpRequest.BodyPublishers.ofString(post))
-                            .setHeader("Content-Type", contentType + "; charset=utf-8")
-                            .build(),
-                    HttpResponse.BodyHandlers.ofString()));
-        } catch (InterruptedException e) {
-            throw new IOException(e);
+        byte[] bytes = post.getBytes(UTF_8);
+
+        HttpURLConnection con = createHttpConnection(uri);
+        con.setRequestMethod("POST");
+        con.setDoOutput(true);
+        con.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
+        con.setRequestProperty("Content-Length", String.valueOf(bytes.length));
+        try (OutputStream os = con.getOutputStream()) {
+            os.write(bytes);
         }
+        return readString(con);
     }
 
-    public static String readData(HttpURLConnection con) throws IOException {
+    public static String readString(URLConnection con) throws IOException {
+        var contentEncoding = ContentEncoding.fromConnection(con);
         try {
             try (InputStream stdout = con.getInputStream()) {
-                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding()) ? IOUtils.wrapFromGZip(stdout) : stdout);
+                return IOUtils.readFullyAsString(contentEncoding.wrap(stdout));
             }
         } catch (IOException e) {
-            try (InputStream stderr = con.getErrorStream()) {
-                if (stderr == null)
-                    throw e;
-                return IOUtils.readFullyAsString("gzip".equals(con.getContentEncoding()) ? IOUtils.wrapFromGZip(stderr) : stderr);
+            if (con instanceof HttpURLConnection) {
+                try (InputStream stderr = ((HttpURLConnection) con).getErrorStream()) {
+                    if (stderr == null)
+                        throw e;
+                    return IOUtils.readFullyAsString(contentEncoding.wrap(stderr));
+                }
+            } else {
+                throw e;
             }
         }
     }
@@ -381,4 +381,32 @@ public final class NetworkUtils {
         return URLDecoder.decode(toDecode, UTF_8);
     }
     // ====
+
+    private enum ContentEncoding {
+        NONE {
+            @Override
+            public InputStream wrap(InputStream inputStream) {
+                return inputStream;
+            }
+        },
+        GZIP {
+            @Override
+            public InputStream wrap(InputStream inputStream) throws IOException {
+                return new GZIPInputStream(inputStream);
+            }
+        };
+
+        public static @NotNull ContentEncoding fromConnection(URLConnection connection) throws IOException {
+            String encoding = connection.getContentEncoding();
+            if (connection.getContentEncoding() == null || connection.getContentEncoding().isEmpty()) {
+                return NONE;
+            } else if ("gzip".equalsIgnoreCase(encoding)) {
+                return GZIP;
+            } else {
+                throw new IOException("Unsupported content encoding: " + connection.getContentEncoding());
+            }
+        }
+
+        public abstract InputStream wrap(InputStream inputStream) throws IOException;
+    }
 }
