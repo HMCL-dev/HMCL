@@ -19,12 +19,10 @@ package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.*;
@@ -88,7 +86,7 @@ public final class NetworkUtils {
             scanner.useDelimiter("&");
             while (scanner.hasNext()) {
                 String[] nameValue = scanner.next().split(NAME_VALUE_SEPARATOR);
-                if (nameValue.length <= 0 || nameValue.length > 2) {
+                if (nameValue.length == 0 || nameValue.length > 2) {
                     throw new IllegalArgumentException("bad query string");
                 }
 
@@ -193,65 +191,6 @@ public final class NetworkUtils {
         return conn;
     }
 
-    public static <T> HttpResponse<T> resolveResponse(HttpResponse<T> response,
-                                                      HttpResponse.BodyHandler<T> responseBodyHandler,
-                                                      @Nullable List<URI> redirects) throws IOException {
-        assert response.request().method().equals("GET");
-
-        int redirect = 0;
-        while (true) {
-            int code = response.statusCode();
-            URI oldUri = response.uri();
-            String originMethod = response.request().method();
-            if (code >= 300 && code <= 308 && code != 306 && code != 304) {
-                URI newUri = oldUri.resolve(response.headers().firstValue("Location")
-                        .orElseThrow(() -> new IOException("no location header")));
-                if (!newUri.getScheme().equals("http") && !newUri.getScheme().equals("https"))
-                    throw new IOException("bad redirect target: " + newUri);
-
-                if (redirects != null)
-                    redirects.add(newUri);
-                if (redirect > 20)
-                    throw new IOException("Too much redirects");
-
-                HttpRequest.Builder builder = HttpRequest.newBuilder(newUri);
-                switch (code) {
-                    case 301:
-                    case 302:
-                        if (originMethod.equals("POST"))
-                            builder.GET();
-                        else
-                            builder.method(originMethod, response.request().bodyPublisher()
-                                    .orElse(HttpRequest.BodyPublishers.noBody()));
-                        break;
-                    case 303:
-                        builder.GET();
-                        break;
-                    case 307:
-                    case 308:
-                        builder.method(originMethod, response.request().bodyPublisher()
-                                .orElse(HttpRequest.BodyPublishers.noBody()));
-                }
-
-                response.request().headers().map().forEach((key, values) -> {
-                    for (String value : values) {
-                        builder.setHeader(key, value);
-                    }
-                });
-
-                try {
-                    response = HTTP_CLIENT.send(builder.build(), responseBodyHandler);
-                } catch (InterruptedException e) {
-                    throw new IOException(e);
-                }
-
-                redirect++;
-            } else {
-                return response;
-            }
-        }
-    }
-
     public static <T> T readResponse(HttpResponse<T> response) throws IOException {
         if (response.statusCode() / 100 == 4) {
             throw new FileNotFoundException(response.uri().toString());
@@ -342,25 +281,19 @@ public final class NetworkUtils {
     }
 
     public static String detectFileName(URI uri) throws IOException {
-        try {
-            HttpResponse<Void> response = resolveResponse(HTTP_CLIENT.send(HttpRequest.newBuilder(uri).build(),
-                    HttpResponse.BodyHandlers.discarding()), HttpResponse.BodyHandlers.discarding(), null);
-            int code = response.statusCode();
-            if (code / 100 == 4)
-                throw new FileNotFoundException();
-            if (code / 100 != 2)
-                throw new IOException(uri + ": response code " + code);
+        HttpURLConnection conn = resolveConnection(createHttpConnection(uri));
+        int code = conn.getResponseCode();
+        if (code / 100 == 4)
+            throw new FileNotFoundException();
+        if (code / 100 != 2)
+            throw new ResponseCodeException(uri, conn.getResponseCode());
 
-            String disposition = response.headers().firstValue("Content-Disposition").orElse(null);
-            if (disposition == null || !disposition.contains("filename=")) {
-                String u = response.uri().toString();
-                return decodeURL(substringAfterLast(u, '/'));
-            } else {
-                return decodeURL(removeSurrounding(substringAfter(disposition, "filename="), "\""));
-            }
-
-        } catch (InterruptedException e) {
-            throw new IOException(e);
+        String disposition = conn.getHeaderField("Content-Disposition");
+        if (disposition == null || !disposition.contains("filename=")) {
+            String u = conn.getURL().toString();
+            return decodeURL(substringAfterLast(u, '/'));
+        } else {
+            return decodeURL(removeSurrounding(substringAfter(disposition, "filename="), "\""));
         }
     }
 

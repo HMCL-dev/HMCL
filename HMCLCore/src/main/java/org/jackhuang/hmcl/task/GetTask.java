@@ -17,12 +17,10 @@
  */
 package org.jackhuang.hmcl.task;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpResponse;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,7 +72,7 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag) {
+    protected Context getContext(URLConnection connection, boolean checkETag) {
         return new Context() {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -91,7 +89,7 @@ public final class GetTask extends FetchTask<String> {
                 setResult(result);
 
                 if (checkETag) {
-                    repository.cacheText(response, result);
+                    repository.cacheText(connection, result);
                 }
             }
         };

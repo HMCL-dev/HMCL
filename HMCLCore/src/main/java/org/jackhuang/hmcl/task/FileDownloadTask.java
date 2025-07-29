@@ -21,12 +21,11 @@ import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
-import java.net.http.HttpResponse;
+import java.net.URLConnection;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -192,7 +191,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag) throws IOException {
+    protected Context getContext(URLConnection connection, boolean checkETag) throws IOException {
         Path temp = Files.createTempFile(null, null);
         RandomAccessFile rFile = new RandomAccessFile(temp.toFile(), "rw");
         MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
@@ -252,7 +251,7 @@ public class FileDownloadTask extends FetchTask<Void> {
                 }
 
                 if (checkETag) {
-                    repository.cacheRemoteFile(response, file);
+                    repository.cacheRemoteFile(connection, file);
                 }
             }
         };
