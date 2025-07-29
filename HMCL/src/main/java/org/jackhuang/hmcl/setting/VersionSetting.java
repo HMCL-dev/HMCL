@@ -589,6 +589,20 @@ public final class VersionSetting implements Cloneable, Observable {
         this.rendererProperty.set(renderer);
     }
 
+    private final BooleanProperty useDebugLog4j2ConfigProperty = new SimpleBooleanProperty(this, "useDebugLog4j2ConfigProperty", false);
+
+    public boolean isUseDebugLog4j2Config() {
+        return useDebugLog4j2ConfigProperty.get();
+    }
+
+    public BooleanProperty useDebugLog4j2ConfigProperty() {
+        return useDebugLog4j2ConfigProperty;
+    }
+
+    public void setUseDebugLog4j2Config(boolean u) {
+        this.useDebugLog4j2ConfigProperty.set(u);
+    }
+
     private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
 
     public boolean isUseNativeGLFW() {
@@ -764,6 +778,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
+            obj.addProperty("useDebugLog4j2Config", src.isUseDebugLog4j2Config());
             obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
             obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
@@ -840,7 +855,8 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
-            vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
+            vs.setUseDebugLog4j2Config(Optional.ofNullable(obj.get("useDebugLog4j2Config")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useDebugLog4j2Config")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
