@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLConnection;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
@@ -241,94 +240,6 @@ public class CacheRepository {
             writeLock.unlock();
         }
     }
-
-    //region old
-
-    public Path getCachedRemoteFile(URLConnection conn) throws IOException {
-        String url = conn.getURL().toString();
-        lock.readLock().lock();
-        ETagItem eTagItem;
-        try {
-            eTagItem = index.get(url);
-        } finally {
-            lock.readLock().unlock();
-        }
-        if (eTagItem == null) throw new IOException("Cannot find the URL");
-        if (StringUtils.isBlank(eTagItem.hash) || !fileExists(SHA1, eTagItem.hash)) throw new FileNotFoundException();
-        Path file = getFile(SHA1, eTagItem.hash);
-        if (Files.getLastModifiedTime(file).toMillis() != eTagItem.localLastModified) {
-            String hash = DigestUtils.digestToString(SHA1, file);
-            if (!Objects.equals(hash, eTagItem.hash))
-                throw new IOException("This file is modified");
-        }
-        return file;
-    }
-
-    public void removeRemoteEntry(URLConnection conn) {
-        String url = conn.getURL().toString();
-        lock.readLock().lock();
-        try {
-            index.remove(url);
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    public void injectConnection(URLConnection conn) {
-        String url = conn.getURL().toString();
-        lock.readLock().lock();
-        ETagItem eTagItem;
-        try {
-            eTagItem = index.get(url);
-        } finally {
-            lock.readLock().unlock();
-        }
-        if (eTagItem == null) return;
-        if (eTagItem.eTag != null)
-            conn.setRequestProperty("If-None-Match", eTagItem.eTag);
-        // if (eTagItem.getRemoteLastModified() != null)
-        //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
-    }
-
-    public void cacheRemoteFile(Path downloaded, URLConnection conn) throws IOException {
-        cacheData(() -> {
-            String hash = DigestUtils.digestToString(SHA1, downloaded);
-            Path cached = cacheFile(downloaded, SHA1, hash);
-            return new CacheResult(hash, cached);
-        }, conn);
-    }
-
-    public void cacheText(String text, URLConnection conn) throws IOException {
-        cacheBytes(text.getBytes(UTF_8), conn);
-    }
-
-    public void cacheBytes(byte[] bytes, URLConnection conn) throws IOException {
-        cacheData(() -> {
-            String hash = DigestUtils.digestToString(SHA1, bytes);
-            Path cached = getFile(SHA1, hash);
-            FileUtils.writeBytes(cached, bytes);
-            return new CacheResult(hash, cached);
-        }, conn);
-    }
-
-    public synchronized void cacheData(ExceptionalSupplier<CacheResult, IOException> cacheSupplier, URLConnection conn) throws IOException {
-        String eTag = conn.getHeaderField("ETag");
-        if (eTag == null) return;
-        String url = conn.getURL().toString();
-        String lastModified = conn.getHeaderField("Last-Modified");
-        CacheResult cacheResult = cacheSupplier.get();
-        ETagItem eTagItem = new ETagItem(url, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
-        Lock writeLock = lock.writeLock();
-        writeLock.lock();
-        try {
-            index.compute(eTagItem.url, updateEntity(eTagItem));
-            saveETagIndex();
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    //endregion old
 
     private static class CacheResult {
         public String hash;
