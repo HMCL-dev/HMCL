@@ -23,12 +23,13 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +88,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
 
     /**
-     * @param uri the URI of remote file.
+     * @param uri  the URI of remote file.
      * @param path the location that download to.
      */
     public FileDownloadTask(URI uri, Path path) {
@@ -95,8 +96,8 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     /**
-     * @param uri the URI of remote file.
-     * @param path the location that download to.
+     * @param uri            the URI of remote file.
+     * @param path           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck) {
@@ -104,10 +105,10 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     /**
-     * @param uri the URI of remote file.
-     * @param path the location that download to.
+     * @param uri            the URI of remote file.
+     * @param path           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry the times for retrying if downloading fails.
+     * @param retry          the times for retrying if downloading fails.
      */
     public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck, int retry) {
         this(List.of(uri), path, integrityCheck, retry);
@@ -115,6 +116,7 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     /**
      * Constructor.
+     *
      * @param uris uris of remote file, will be attempted in order.
      * @param file the location that download to.
      */
@@ -124,8 +126,9 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     /**
      * Constructor.
-     * @param uris uris of remote file, will be attempted in order.
-     * @param path the location that download to.
+     *
+     * @param uris           uris of remote file, will be attempted in order.
+     * @param path           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck) {
@@ -134,10 +137,11 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     /**
      * Constructor.
-     * @param uris uris of remote file, will be attempted in order.
-     * @param path the location that download to.
+     *
+     * @param uris           uris of remote file, will be attempted in order.
+     * @param path           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry the times for retrying if downloading fails.
+     * @param retry          the times for retrying if downloading fails.
      */
     public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck, int retry) {
         super(uris, retry);
@@ -193,8 +197,8 @@ public class FileDownloadTask extends FetchTask<Void> {
     @Override
     protected Context getContext(URLConnection connection, boolean checkETag) throws IOException {
         Path temp = Files.createTempFile(null, null);
-        RandomAccessFile rFile = new RandomAccessFile(temp.toFile(), "rw");
         MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
+        OutputStream fileOutput = Files.newOutputStream(temp);
 
         return new Context() {
             @Override
@@ -203,22 +207,22 @@ public class FileDownloadTask extends FetchTask<Void> {
                     digest.update(buffer, offset, len);
                 }
 
-                rFile.write(buffer, offset, len);
+                fileOutput.write(buffer, offset, len);
             }
 
             @Override
             public void close() throws IOException {
                 try {
-                    rFile.close();
+                    fileOutput.close();
                 } catch (IOException e) {
-                    LOG.warning("Failed to close file: " + rFile, e);
+                    LOG.warning("Failed to close file: " + temp, e);
                 }
 
                 if (!isSuccess()) {
                     try {
-                        Files.delete(temp);
+                        Files.deleteIfExists(temp);
                     } catch (IOException e) {
-                        LOG.warning("Failed to delete file: " + rFile, e);
+                        LOG.warning("Failed to delete file: " + temp, e);
                     }
                     return;
                 }
@@ -227,12 +231,10 @@ public class FileDownloadTask extends FetchTask<Void> {
                     handler.checkIntegrity(temp, file);
                 }
 
-                Files.deleteIfExists(file);
-                if (!FileUtils.makeDirectory(file.toFile().getAbsoluteFile().getParentFile()))
-                    throw new IOException("Unable to make parent directory " + file);
+                Files.createDirectories(file.toAbsolutePath().getParent());
 
                 try {
-                    FileUtils.moveFile(temp.toFile(), file.toFile()); // TODO
+                    Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
                 } catch (Exception e) {
                     throw new IOException("Unable to move temp file from " + temp + " to " + file, e);
                 }
@@ -260,7 +262,8 @@ public class FileDownloadTask extends FetchTask<Void> {
     public interface IntegrityCheckHandler {
         /**
          * Check whether the file is corrupted or not.
-         * @param filePath the file locates in (maybe in temp directory)
+         *
+         * @param filePath        the file locates in (maybe in temp directory)
          * @param destinationPath for real file name
          * @throws IOException if the file is corrupted
          */
