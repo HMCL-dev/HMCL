@@ -98,8 +98,8 @@ public final class NetworkUtils {
         return result;
     }
 
-    public static URLConnection createConnection(URL url) throws IOException {
-        URLConnection connection = url.openConnection();
+    public static URLConnection createConnection(URI uri) throws IOException {
+        URLConnection connection = uri.toURL().openConnection();
         connection.setUseCaches(false);
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
@@ -107,7 +107,7 @@ public final class NetworkUtils {
         return connection;
     }
 
-    public static HttpURLConnection createHttpConnection(URL url) throws IOException {
+    public static HttpURLConnection createHttpConnection(URI url) throws IOException {
         return (HttpURLConnection) createConnection(url);
     }
 
@@ -370,14 +370,6 @@ public final class NetworkUtils {
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
         }
-    }
-
-    public static boolean urlExists(URL url) throws IOException {
-        HttpURLConnection con = createHttpConnection(url);
-        con = resolveConnection(con);
-        int responseCode = con.getResponseCode();
-        con.disconnect();
-        return responseCode / 100 == 2;
     }
 
     // ==== Shortcut methods for encoding/decoding URLs in UTF-8 ====

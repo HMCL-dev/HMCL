@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -119,7 +120,7 @@ public abstract class HttpRequest {
     }
 
     public HttpURLConnection createConnection() throws IOException {
-        HttpURLConnection con = createHttpConnection(new URL(url));
+        HttpURLConnection con = createHttpConnection(URI.create(url));
         con.setRequestMethod(method);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             con.setRequestProperty(entry.getKey(), entry.getValue());
