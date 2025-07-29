@@ -856,7 +856,6 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
             vs.setUseDebugLog4j2Config(Optional.ofNullable(obj.get("useDebugLog4j2Config")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useDebugLog4j2Config")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
