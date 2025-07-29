@@ -21,7 +21,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.http.HttpRequest;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -29,14 +30,15 @@ public final class HttpMultipartRequest implements Closeable {
     private static final byte[] ENDL = {'\r', '\n'};
 
     private final String boundary = "*****" + System.currentTimeMillis() + "*****";
-    private final HttpRequest.Builder requestBuilder;
-    private final String method;
-
+    private final HttpURLConnection urlConnection;
     private final ByteArrayOutputStream stream;
 
-    public HttpMultipartRequest(HttpRequest.Builder requestBuilder, String method) throws IOException {
-        this.requestBuilder = requestBuilder;
-        this.method = method;
+    public HttpMultipartRequest(HttpURLConnection urlConnection) throws IOException {
+        this.urlConnection = urlConnection;
+        urlConnection.setDoOutput(true);
+        urlConnection.setUseCaches(false);
+        urlConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
         stream = new ByteArrayOutputStream();
     }
 
@@ -66,8 +68,9 @@ public final class HttpMultipartRequest implements Closeable {
     @Override
     public void close() throws IOException {
         addLine("--" + boundary + "--");
-
-        requestBuilder.setHeader("Content-Type", "multipart/form-data; boundary=" + boundary);
-        requestBuilder.method(method, HttpRequest.BodyPublishers.ofByteArray(stream.toByteArray()));
+        urlConnection.setRequestProperty("Content-Length", "" + stream.size());
+        try (OutputStream os = urlConnection.getOutputStream()) {
+            stream.writeTo(os);
+        }
     }
 }

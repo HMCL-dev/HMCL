@@ -33,9 +33,8 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -151,18 +150,18 @@ public class YggdrasilService {
 
     public void uploadSkin(UUID uuid, String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         try {
-            var builder = HttpRequest.newBuilder(provider.getSkinUploadURL(uuid))
-                    .header("Authorization", "Bearer " + accessToken);
-
-            try (var request = new HttpMultipartRequest(builder, "PUT")) {
+            HttpURLConnection con = NetworkUtils.createHttpConnection(provider.getSkinUploadURL(uuid));
+            con.setRequestMethod("PUT");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setDoOutput(true);
+            try (HttpMultipartRequest request = new HttpMultipartRequest(con)) {
                 request.param("model", isSlim ? "slim" : "");
                 try (InputStream fis = Files.newInputStream(file)) {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }
             }
-
-            requireEmpty(NetworkUtils.readResponse(NetworkUtils.HTTP_CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofString())));
-        } catch (IOException | InterruptedException e) {
+            requireEmpty(NetworkUtils.readString(con));
+        } catch (IOException e) {
             throw new AuthenticationException(e);
         }
     }

@@ -22,9 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.*;
-import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
@@ -40,10 +38,6 @@ public final class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
     private static final int TIME_OUT = 8000;
-
-    public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofMillis(TIME_OUT))
-            .build();
 
     private NetworkUtils() {
     }
