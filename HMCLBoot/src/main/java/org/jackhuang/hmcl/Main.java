@@ -28,45 +28,53 @@ public final class Main {
     private Main() {
     }
 
-    /**
-     * Check if the current Java version is compatible with HMCL.
-     */
-    static boolean checkJavaVersion(String javaVersion) {
-        if (javaVersion == null) {
-            return false;
+    static int findFirstNotNumber(String str, int start) {
+        if (start >= str.length())
+            return -1;
+
+        char ch = str.charAt(start);
+        if (ch < '0' || ch > '9')
+            return -1;
+
+        for (int i = start + 1; i < str.length(); i++) {
+            ch = str.charAt(i);
+            if (ch < '0' || ch > '9')
+                return i;
         }
+        return str.length();
+    }
+
+    static int getJavaFeatureVersion(String javaVersion) {
+        if (javaVersion == null)
+            return -1;
 
         try {
-            int major;
-            int dot = javaVersion.indexOf('.');
-            int dash = javaVersion.indexOf('-');
+            int end = findFirstNotNumber(javaVersion, 0);
+            if (end < 0)
+                return -1; // No valid version number found
 
-            if (dot >= 0) {
-                major = Integer.parseInt(javaVersion.substring(0, dot));
-                if (major == 1 && dot < javaVersion.length() - 1) {
-                    int begin = dot + 1;
-                    dot = javaVersion.indexOf('.', begin);
+            int major = Integer.parseInt(javaVersion.substring(0, end));
+            if (major > 1)
+                return major;
 
-                    major = dot > begin
-                            ? Integer.parseInt(javaVersion.substring(begin, dot))
-                            : Integer.parseInt(javaVersion.substring(begin));
-                }
-            } else {
-                if (dash >= 0) {
-                    major = Integer.parseInt(javaVersion.substring(0, dash));
-                } else {
-                    major = Integer.parseInt(javaVersion);
-                }
-            }
+            if (major < 1)
+                return -1; // Invalid major version
 
-            return major >= MINIMUM_JAVA_VERSION;
+            // Java 1.x versions
+            int start = end + 1;
+            end = findFirstNotNumber(javaVersion, start);
+
+            if (end < 0)
+                return -1; // No valid minor version found
+
+            return Integer.parseInt(javaVersion.substring(start, end));
         } catch (NumberFormatException e) {
-            return false;
+            return -1; // version number is too long
         }
     }
 
     public static void main(String[] args) throws Throwable {
-        if (checkJavaVersion(System.getProperty("java.version"))) {
+        if (getJavaFeatureVersion(System.getProperty("java.version")) >= MINIMUM_JAVA_VERSION) {
             EntryPoint.main(args);
         } else {
             String errorMessage = BootProperties.getResourceBundle().getString("boot.unsupported_java_version");
