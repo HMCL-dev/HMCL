@@ -151,7 +151,7 @@ public class DefaultLauncher extends Launcher {
         if (options.isUseDebugLog4j2Config()) {
             res.addDefault("-Dlog4j2.formatMsgNoLookups=", "false");
             res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
-        }else {
+        } else {
             String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
             if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
                 res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
