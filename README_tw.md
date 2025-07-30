@@ -69,4 +69,4 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 | `-Dhmcl.native.encoding=<encoding>`          | 覆蓋原生編碼                                                         |
 | `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆蓋 Microsoft OAuth App ID                                          |
 | `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆蓋 Microsoft OAuth App 金鑰                                        |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆蓋 Curseforge API 金鑰                                        |
+| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆蓋 CurseForge API 金鑰                                        |
