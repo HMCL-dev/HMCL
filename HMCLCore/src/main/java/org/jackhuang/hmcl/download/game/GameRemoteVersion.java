@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.game.ReleaseType;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
 import java.util.List;
@@ -56,7 +57,12 @@ public final class GameRemoteVersion extends RemoteVersion {
         if (!(o instanceof GameRemoteVersion))
             return 0;
 
-        return o.getReleaseDate().compareTo(getReleaseDate());
+        int dateCompare = o.getReleaseDate().compareTo(getReleaseDate());
+        if (dateCompare != 0) {
+            return dateCompare;
+        }
+
+        return GameVersionNumber.compare(getSelfVersion(), o.getSelfVersion());
     }
 
     private static Type getReleaseType(ReleaseType type) {

@@ -39,12 +39,13 @@ version = "$versionRoot.$buildNumber"
 
 dependencies {
     implementation(project(":HMCLCore"))
+    implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
 
     if (launcherExe == null) {
-        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.3")
+        implementation(libs.hmclauncher)
     }
 }
 
@@ -89,16 +90,13 @@ fun attachSignature(jar: File) {
     }
 }
 
-val java11 = sourceSets.create("java11") {
-    java {
-        srcDir("src/main/java11")
-    }
-}
-
-tasks.getByName<JavaCompile>(java11.compileJavaTaskName) {
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
+tasks.withType<JavaCompile> {
     sourceCompatibility = "11"
     targetCompatibility = "11"
+}
+
+tasks.compileJava {
+    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
 tasks.jar {
@@ -126,6 +124,7 @@ tasks.shadowJar {
         exclude(dependency("com.google.code.gson:.*:.*"))
         exclude(dependency("net.java.dev.jna:jna:.*"))
         exclude(dependency("libs:JFoenix:.*"))
+        exclude(project(":HMCLBoot"))
     }
 
     manifest {
@@ -172,13 +171,6 @@ tasks.shadowJar {
         attachSignature(jarPath)
         createChecksum(jarPath)
     }
-}
-
-tasks.processResources {
-    into("META-INF/versions/11") {
-        from(sourceSets["java11"].output)
-    }
-    dependsOn(tasks["java11Classes"])
 }
 
 val makeExecutables by tasks.registering {

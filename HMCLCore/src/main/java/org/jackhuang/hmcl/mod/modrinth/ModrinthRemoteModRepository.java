@@ -46,6 +46,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODS = new ModrinthRemoteModRepository("mod");
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
+    public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
     private static final String PREFIX = "https://api.modrinth.com";
 

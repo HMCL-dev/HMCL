@@ -45,8 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -96,7 +96,10 @@ public final class MultiMCInstancePatch {
     @SerializedName("jarMods")
     private final List<Library> jarMods;
 
-    public MultiMCInstancePatch(int formatVersion, String id, String version, AssetIndexInfo assetIndex, String minecraftArguments, List<String> jvmArgs, String mainClass, int[] javaMajors, Library mainJar, List<String> traits, List<String> tweakers, List<Library> libraries0, List<Library> libraries1, List<Library> mavenFiles, List<Library> jarMods) {
+    @SerializedName("requires")
+    private final List<MultiMCManifest.MultiMCManifestCachedRequires> requires;
+
+    public MultiMCInstancePatch(int formatVersion, String id, String version, AssetIndexInfo assetIndex, String minecraftArguments, List<String> jvmArgs, String mainClass, int[] javaMajors, Library mainJar, List<String> traits, List<String> tweakers, List<Library> libraries0, List<Library> libraries1, List<Library> mavenFiles, List<Library> jarMods, List<MultiMCManifest.MultiMCManifestCachedRequires> requires) {
         this.formatVersion = formatVersion;
         this.id = id;
         this.version = version;
@@ -112,6 +115,7 @@ public final class MultiMCInstancePatch {
         this.libraries1 = libraries1;
         this.mavenFiles = mavenFiles;
         this.jarMods = jarMods;
+        this.requires = requires;
     }
 
     public int getFormatVersion() {
@@ -177,16 +181,22 @@ public final class MultiMCInstancePatch {
         return nonNullOrEmpty(jarMods);
     }
 
+    public List<MultiMCManifest.MultiMCManifestCachedRequires> getRequires() {
+        return nonNullOrEmpty(requires);
+    }
+
     private static <T> List<T> nonNullOrEmpty(List<T> value) {
         return value != null && !value.isEmpty() ? value : Collections.emptyList();
     }
 
-    private static <T, K> List<T> dropDuplicate(List<T> original, Function<T, K> mapper) {
-        Set<K> values = new HashSet<>();
+    private static <T> List<T> dropDuplicate(List<T> original) {
+        // TODO: Maybe new ArrayList(new LinkedHashSet(original)) ?
+
+        Set<T> values = new HashSet<>();
         List<T> result = new ArrayList<>();
 
         for (T item : original) {
-            if (values.add(mapper.apply(item))) {
+            if (values.add(item)) {
                 result.add(item);
             }
         }
@@ -257,6 +267,8 @@ public final class MultiMCInstancePatch {
         }
 
         for (MultiMCInstancePatch patch : patches) {
+            Objects.requireNonNull(patch, "patch");
+
             if (patch.getFormatVersion() != 1) {
                 throw new UnsupportedOperationException(
                         String.format("Unsupported JSON-Patch[%s] format version: %d", patch.getID(), patch.getFormatVersion())
@@ -274,6 +286,8 @@ public final class MultiMCInstancePatch {
         Library mainJar;
         List<String> traits;
         List<String> tweakers;
+        /* TODO: MultiMC use a slightly different way to store jars containing jni files.
+            Transforming them to Official Scheme might boost compatibility with other launchers. */
         List<Library> libraries;
         List<Library> mavenOnlyFiles;
         List<String> jarModFileNames;
@@ -327,10 +341,9 @@ public final class MultiMCInstancePatch {
             }
         }
 
-        traits = dropDuplicate(traits, Function.identity());
-        tweakers = dropDuplicate(tweakers, Function.identity());
-        libraries = dropDuplicate(libraries, Library::getName);
-        jarModFileNames = dropDuplicate(jarModFileNames, Function.identity());
+        traits = dropDuplicate(traits);
+        tweakers = dropDuplicate(tweakers);
+        jarModFileNames = dropDuplicate(jarModFileNames);
 
         for (String tweaker : tweakers) {
             minecraftArguments.add("--tweakClass");

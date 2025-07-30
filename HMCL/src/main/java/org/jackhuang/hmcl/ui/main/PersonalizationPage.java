@@ -18,12 +18,14 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
@@ -32,6 +34,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Theme;
@@ -45,8 +48,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.Locale;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
@@ -275,6 +281,46 @@ public class PersonalizationPage extends StackPane {
                 vbox.getChildren().add(new Label("Hello Minecraft! Launcher"));
 
                 fontPane.getContent().add(vbox);
+            }
+
+            {
+                BorderPane fontAntiAliasingPane = new BorderPane();
+                {
+                    Label left = new Label(i18n("settings.launcher.font.anti_aliasing"));
+                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    fontAntiAliasingPane.setLeft(left);
+                }
+
+                {
+                    @SuppressWarnings("unchecked")
+                    JFXComboBox<Optional<FontSmoothingType>> cboAntiAliasing = new JFXComboBox<>(FXCollections.observableArrayList(
+                            Optional.empty(),
+                            Optional.of(FontSmoothingType.LCD),
+                            Optional.of(FontSmoothingType.GRAY)
+                    ));
+                    String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+                    if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                        cboAntiAliasing.setValue(Optional.of(FontSmoothingType.LCD));
+                    } else if ("gray".equalsIgnoreCase(fontAntiAliasing)) {
+                        cboAntiAliasing.setValue(Optional.of(FontSmoothingType.GRAY));
+                    } else {
+                        cboAntiAliasing.setValue(Optional.empty());
+                    }
+                    cboAntiAliasing.setConverter(FXUtils.stringConverter(value -> {
+                        if (value.isPresent()) {
+                            return i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT));
+                        } else {
+                            return i18n("settings.launcher.font.anti_aliasing.auto");
+                        }
+                    }));
+                    FXUtils.onChange(cboAntiAliasing.valueProperty(), value ->
+                            globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
+                                    .orElse(null)));
+
+                    fontAntiAliasingPane.setRight(cboAntiAliasing);
+                }
+
+                fontPane.getContent().add(fontAntiAliasingPane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.font")), fontPane);

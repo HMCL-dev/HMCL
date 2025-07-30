@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,7 +99,7 @@ public final class CurseInstallTask extends Task<Void> {
         ModpackConfiguration<CurseManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(CurseManifest.class));
+                config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(CurseManifest.class));
 
                 if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");

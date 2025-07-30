@@ -315,7 +315,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label("MiB"));
+                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
                 }
 
                 StackPane progressBarPane = new StackPane();

@@ -21,10 +21,10 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -67,7 +67,7 @@ public class CacheRepository {
             }
 
             if (Files.isRegularFile(indexFile)) {
-                ETagIndex raw = GSON.fromJson(FileUtils.readText(indexFile), ETagIndex.class);
+                ETagIndex raw = GSON.fromJson(Files.readString(indexFile), ETagIndex.class);
                 if (raw == null)
                     index = new HashMap<>();
                 else
@@ -158,12 +158,11 @@ public class CacheRepository {
         return cache;
     }
 
-    public Path getCachedRemoteFile(URLConnection conn) throws IOException {
-        String url = conn.getURL().toString();
+    public Path getCachedRemoteFile(URI uri) throws IOException {
         lock.readLock().lock();
         ETagItem eTagItem;
         try {
-            eTagItem = index.get(url);
+            eTagItem = index.get(uri.toString());
         } finally {
             lock.readLock().unlock();
         }
@@ -178,11 +177,10 @@ public class CacheRepository {
         return file;
     }
 
-    public void removeRemoteEntry(URLConnection conn) {
-        String url = conn.getURL().toString();
+    public void removeRemoteEntry(URI uri) {
         lock.readLock().lock();
         try {
-            index.remove(url);
+            index.remove(uri.toString());
         } finally {
             lock.readLock().unlock();
         }
@@ -204,34 +202,34 @@ public class CacheRepository {
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }
 
-    public void cacheRemoteFile(Path downloaded, URLConnection conn) throws IOException {
-        cacheData(() -> {
+    public void cacheRemoteFile(URLConnection connection, Path downloaded) throws IOException {
+        cacheData(connection, () -> {
             String hash = DigestUtils.digestToString(SHA1, downloaded);
             Path cached = cacheFile(downloaded, SHA1, hash);
             return new CacheResult(hash, cached);
-        }, conn);
+        });
     }
 
-    public void cacheText(String text, URLConnection conn) throws IOException {
-        cacheBytes(text.getBytes(UTF_8), conn);
+    public void cacheText(URLConnection connection, String text) throws IOException {
+        cacheBytes(connection, text.getBytes(UTF_8));
     }
 
-    public void cacheBytes(byte[] bytes, URLConnection conn) throws IOException {
-        cacheData(() -> {
+    public void cacheBytes(URLConnection connection, byte[] bytes) throws IOException {
+        cacheData(connection, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
             FileUtils.writeBytes(cached, bytes);
             return new CacheResult(hash, cached);
-        }, conn);
+        });
     }
 
-    public synchronized void cacheData(ExceptionalSupplier<CacheResult, IOException> cacheSupplier, URLConnection conn) throws IOException {
-        String eTag = conn.getHeaderField("ETag");
-        if (eTag == null) return;
-        String url = conn.getURL().toString();
-        String lastModified = conn.getHeaderField("Last-Modified");
+    private void cacheData(URLConnection connection, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
+        String eTag = connection.getHeaderField("ETag");
+        if (eTag == null || eTag.isEmpty()) return;
+        String uri = connection.getURL().toString();
+        String lastModified = connection.getHeaderField("Last-Modified");
         CacheResult cacheResult = cacheSupplier.get();
-        ETagItem eTagItem = new ETagItem(url, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
+        ETagItem eTagItem = new ETagItem(uri, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
@@ -288,7 +286,7 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), ETagIndex.class);
+                ETagIndex indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
                 ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
@@ -411,7 +409,7 @@ public class CacheRepository {
             try {
                 indexFile = cacheDirectory.resolve(name + ".json");
                 if (Files.isRegularFile(indexFile)) {
-                    joinEntries(fromNonNullJson(FileUtils.readText(indexFile), mapTypeOf(String.class, Object.class)));
+                    joinEntries(fromNonNullJson(Files.readString(indexFile), mapTypeOf(String.class, Object.class)));
                 }
             } catch (IOException | JsonParseException e) {
                 LOG.warning("Unable to read storage {" + name + "} file");
@@ -424,7 +422,7 @@ public class CacheRepository {
             try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
                 FileLock lock = channel.lock();
                 try {
-                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(IOUtils.readFullyAsStringWithClosing(Channels.newInputStream(channel)), mapTypeOf(String.class, Object.class));
+                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), mapTypeOf(String.class, Object.class));
                     if (indexOnDisk == null) indexOnDisk = new HashMap<>();
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);

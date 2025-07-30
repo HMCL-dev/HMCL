@@ -61,7 +61,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -236,7 +236,7 @@ public class DecoratorController {
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(new URL(backgroundImageUrl));
+                        image = FXUtils.loadImage(URI.create(backgroundImageUrl));
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -373,8 +373,9 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
+            // FIXME: Get WorldPage working first, and revisit this later
+            page.closePage();
             if (page.isPageCloseable()) {
-                page.closePage();
                 return;
             }
         }

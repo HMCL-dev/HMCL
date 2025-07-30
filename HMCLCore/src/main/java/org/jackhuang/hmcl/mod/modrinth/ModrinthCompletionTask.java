@@ -80,7 +80,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             try {
                 File manifestFile = new File(repository.getVersionRoot(version), "modrinth.index.json");
                 if (manifestFile.exists())
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModrinthManifest.class);
+                    this.manifest = JsonUtils.GSON.fromJson(Files.readString(manifestFile.toPath()), ModrinthManifest.class);
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
@@ -121,7 +121,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
 
-            FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
+            var task = new FileDownloadTask(file.getDownloads(), filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
             dependencies.add(task.withCounter("hmcl.modpack.download"));

@@ -25,9 +25,12 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.WeakListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.value.*;
+import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
@@ -66,6 +69,7 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -79,6 +83,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
@@ -105,6 +111,11 @@ public final class FXUtils {
 
     public static final int JAVAFX_MAJOR_VERSION;
 
+    /// @see Platform.Preferences
+    public static final @Nullable ObservableMap<String, Object> PREFERENCES;
+    public static final @Nullable ObservableBooleanValue DARK_MODE;
+    public static final @Nullable Boolean REDUCED_MOTION;
+
     static {
         String jfxVersion = System.getProperty("javafx.version");
         int majorVersion = -1;
@@ -115,6 +126,40 @@ public final class FXUtils {
             }
         }
         JAVAFX_MAJOR_VERSION = majorVersion;
+
+        ObservableMap<String, Object> preferences = null;
+        ObservableBooleanValue darkMode = null;
+        Boolean reducedMotion = null;
+        if (JAVAFX_MAJOR_VERSION >= 22) {
+            try {
+                MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+                Class<?> preferencesClass = Class.forName("javafx.application.Platform$Preferences");
+                @SuppressWarnings("unchecked")
+                var preferences0 = (ObservableMap<String, Object>) lookup.findStatic(Platform.class, "getPreferences", MethodType.methodType(preferencesClass))
+                        .invoke();
+                preferences = preferences0;
+
+                @SuppressWarnings("unchecked")
+                var colorSchemeProperty =
+                        (ReadOnlyObjectProperty<? extends Enum<?>>)
+                                lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                        .invoke(preferences);
+
+                darkMode = Bindings.createBooleanBinding(() ->
+                        "DARK".equals(colorSchemeProperty.get().name()), colorSchemeProperty);
+
+                if (JAVAFX_MAJOR_VERSION >= 24) {
+                    reducedMotion = (boolean)
+                            lookup.findVirtual(preferencesClass, "isReducedMotion", MethodType.methodType(boolean.class))
+                                    .invoke(preferences);
+                }
+            } catch (Throwable e) {
+                LOG.warning("Failed to get preferences", e);
+            }
+        }
+        PREFERENCES = preferences;
+        DARK_MODE = darkMode;
+        REDUCED_MOTION = reducedMotion;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
@@ -328,8 +373,15 @@ public final class FXUtils {
     private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
 
+    public static void installTooltip(Node node, Duration showDelay, Duration showDuration, Duration hideDelay, Tooltip tooltip) {
+        tooltip.setShowDelay(showDelay);
+        tooltip.setShowDuration(showDuration);
+        tooltip.setHideDelay(hideDelay);
+        Tooltip.install(node, tooltip);
+    }
+
     public static void installFastTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installFastTooltip(Node node, String tooltip) {
@@ -337,7 +389,7 @@ public final class FXUtils {
     }
 
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installSlowTooltip(Node node, String tooltip) {
@@ -792,14 +844,14 @@ public final class FXUtils {
         }
     }
 
-    public static Image loadImage(URL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
+    public static Image loadImage(URI uri) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(uri);
         if (connection instanceof HttpURLConnection) {
             connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
         }
 
         try (InputStream input = connection.getInputStream()) {
-            String path = url.getPath();
+            String path = uri.getPath();
             if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
                 return loadWebPImage(input);
             else {

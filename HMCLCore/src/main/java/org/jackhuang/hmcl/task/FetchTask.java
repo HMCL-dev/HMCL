@@ -24,36 +24,38 @@ import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
-    protected final List<URL> urls;
+    protected final List<URI> uris;
     protected final int retry;
     protected boolean caching;
     protected CacheRepository repository = CacheRepository.getInstance();
 
-    public FetchTask(List<URL> urls, int retry) {
-        Objects.requireNonNull(urls);
+    public FetchTask(@NotNull List<@NotNull URI> uris, int retry) {
+        Objects.requireNonNull(uris);
 
-        this.urls = urls.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        this.uris = List.copyOf(uris);
         this.retry = retry;
 
-        if (this.urls.isEmpty())
+        if (this.uris.isEmpty())
             throw new IllegalArgumentException("At least one URL is required");
 
         setExecutor(download());
@@ -67,18 +69,19 @@ public abstract class FetchTask<T> extends Task<T> {
         this.repository = repository;
     }
 
-    protected void beforeDownload(URL url) throws IOException {}
+    protected void beforeDownload(URI uri) throws IOException {
+    }
 
     protected abstract void useCachedResult(Path cachedFile) throws IOException;
 
     protected abstract EnumCheckETag shouldCheckETag();
 
-    protected abstract Context getContext(URLConnection conn, boolean checkETag) throws IOException;
+    protected abstract Context getContext(URLConnection connection, boolean checkETag) throws IOException;
 
     @Override
     public void execute() throws Exception {
         Exception exception = null;
-        URL failedURL = null;
+        URI failedURI = null;
         boolean checkETag;
         switch (shouldCheckETag()) {
             case CHECK_E_TAG: checkETag = true; break;
@@ -87,7 +90,7 @@ public abstract class FetchTask<T> extends Task<T> {
         }
 
         int repeat = 0;
-        download: for (URL url : urls) {
+        download: for (URI uri : uris) {
             for (int retryTime = 0; retryTime < retry; retryTime++) {
                 if (isCancelled()) {
                     break download;
@@ -95,11 +98,11 @@ public abstract class FetchTask<T> extends Task<T> {
 
                 List<String> redirects = null;
                 try {
-                    beforeDownload(url);
+                    beforeDownload(uri);
 
                     updateProgress(0);
 
-                    URLConnection conn = NetworkUtils.createConnection(url);
+                    URLConnection conn = NetworkUtils.createConnection(uri);
                     if (checkETag) repository.injectConnection(conn);
 
                     if (conn instanceof HttpURLConnection) {
@@ -111,21 +114,21 @@ public abstract class FetchTask<T> extends Task<T> {
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
                             // Handle cache
                             try {
-                                Path cache = repository.getCachedRemoteFile(conn);
+                                Path cache = repository.getCachedRemoteFile(conn.getURL().toURI());
                                 useCachedResult(cache);
                                 return;
                             } catch (IOException e) {
-                                LOG.warning("Unable to use cached file, redownload " + url, e);
-                                repository.removeRemoteEntry(conn);
+                                LOG.warning("Unable to use cached file, redownload " + uri, e);
+                                repository.removeRemoteEntry(conn.getURL().toURI());
                                 // Now we must reconnect the server since 304 may result in empty content,
                                 // if we want to redownload the file, we must reconnect the server without etag settings.
                                 retryTime--;
                                 continue;
                             }
                         } else if (responseCode / 100 == 4) {
-                            throw new FileNotFoundException(url.toString());
+                            throw new FileNotFoundException(uri.toString());
                         } else if (responseCode / 100 != 2) {
-                            throw new ResponseCodeException(url, responseCode);
+                            throw new ResponseCodeException(uri, responseCode);
                         }
                     }
 
@@ -164,21 +167,21 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     return;
                 } catch (FileNotFoundException ex) {
-                    failedURL = url;
+                    failedURI = uri;
                     exception = ex;
-                    LOG.warning("Failed to download " + url + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    LOG.warning("Failed to download " + uri + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
 
                     break; // we will not try this URL again
                 } catch (IOException ex) {
-                    failedURL = url;
+                    failedURI = uri;
                     exception = ex;
-                    LOG.warning("Failed to download " + url + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    LOG.warning("Failed to download " + uri + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
                 }
             }
         }
 
         if (exception != null)
-            throw new DownloadException(failedURL, exception);
+            throw new DownloadException(failedURI, exception);
     }
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
@@ -209,6 +212,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
         /**
          * Download speed in byte/sec.
+         *
          * @return download speed
          */
         public int getSpeed() {
@@ -240,7 +244,7 @@ public abstract class FetchTask<T> extends Task<T> {
         NOT_CHECK_E_TAG,
         CACHED
     }
-    
+
     protected static final class DownloadState {
         private final int startPosition;
         private final int endPosition;

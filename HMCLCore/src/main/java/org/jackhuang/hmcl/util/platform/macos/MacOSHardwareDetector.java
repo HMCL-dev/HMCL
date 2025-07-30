@@ -49,7 +49,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
         try {
             Map<String, String> values = SystemUtils.run(Arrays.asList("/usr/sbin/sysctl", "machdep.cpu"),
-                    inputStream -> KeyValuePairUtils.loadProperties(
+                    inputStream -> KeyValuePairUtils.loadPairs(
                             new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
 
             String brandString = values.get("machdep.cpu.brand_string");

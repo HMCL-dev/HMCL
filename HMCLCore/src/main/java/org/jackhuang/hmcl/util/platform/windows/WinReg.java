@@ -25,6 +25,7 @@ import com.sun.jna.ptr.PointerByReference;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -174,6 +175,26 @@ public abstract class WinReg {
                                 throw new RuntimeException("The string does not end with \\0");
 
                             return lpData.getWideString(0L);
+                        }
+                        case WinConstants.REG_MULTI_SZ: {
+                            String str = new String(lpData.getByteArray(0L, cbData), StandardCharsets.UTF_16LE);
+
+                            var result = new ArrayList<String>();
+                            for (int start = 0; start < str.length(); ) {
+                                final int end = str.indexOf('\0', start);
+                                if (end < 0) {
+                                    result.add(str.substring(start));
+                                    break;
+                                } else if (end == start && end == str.length() - 1) {
+                                    // The terminator of the array
+                                    break;
+                                }
+
+                                result.add(str.substring(start, end));
+                                start = end + 1;
+                            }
+
+                            return result.toArray(new String[0]);
                         }
                         default:
                             throw new RuntimeException("Unknown reg type: " + type);
