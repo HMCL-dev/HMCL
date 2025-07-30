@@ -69,3 +69,4 @@ Make sure you have Java 11 or later installed.
 | `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding                                                                  |
 | `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID                                                               |
 | `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App Secret                                                           |
+| `-Dhmcl.curseforge.apikey=<Api Key>`          | Override Curseforge API Key                                                                  |
