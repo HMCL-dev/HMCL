@@ -94,7 +94,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private Profile profile;
     private WeakListenerHolder listenerHolder;
     private String versionId;
-
+    private final HBox windowSizeHBox = new HBox();
     private final VBox rootPane;
     private final JFXTextField txtWidth;
     private final JFXTextField txtHeight;
@@ -392,12 +392,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 BorderPane right = new BorderPane();
                 dimensionPane.setRight(right);
                 {
-                    HBox hbox = new HBox();
-                    right.setLeft(hbox);
-                    hbox.setPrefWidth(210);
-                    hbox.setSpacing(3);
-                    hbox.setAlignment(Pos.CENTER);
-                    BorderPane.setAlignment(hbox, Pos.CENTER);
+                    right.setLeft(windowSizeHBox);
+                    windowSizeHBox.setPrefWidth(210);
+                    windowSizeHBox.setSpacing(3);
+                    windowSizeHBox.setAlignment(Pos.CENTER);
+                    BorderPane.setAlignment(windowSizeHBox, Pos.CENTER);
                     {
                         txtWidth = new JFXTextField();
                         txtWidth.setPromptText("800");
@@ -413,7 +412,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         FXUtils.setValidateWhileTextChanged(txtHeight, true);
                         txtHeight.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
 
-                        hbox.getChildren().setAll(txtWidth, x, txtHeight);
+                        windowSizeHBox.getChildren().setAll(txtWidth, x, txtHeight);
                     }
 
                     chkFullscreen = new JFXCheckBox();
@@ -589,6 +588,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 advancedVersionSettingPage.unbindProperties();
                 advancedVersionSettingPage = null;
             }
+
+            windowSizeHBox.visibleProperty().unbindBidirectional(chkFullscreen.selectedProperty());
         }
 
         // unbind data fields
@@ -608,7 +609,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
-
+        windowSizeHBox.visibleProperty().bind(Bindings.not(chkFullscreen.selectedProperty()));
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
         versionSetting.usesGlobalProperty().addListener(usesGlobalListener);
