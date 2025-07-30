@@ -23,10 +23,12 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -34,8 +36,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 final class WindowsGPUDetector {
-    public static final String DISPLAY_DEVICES_REGISTRY_PATH =
-            "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\";
 
     private static GraphicsCard.Type fromDacType(String adapterDACType) {
         if (StringUtils.isBlank(adapterDACType)
@@ -48,6 +48,8 @@ final class WindowsGPUDetector {
     }
 
     private static List<GraphicsCard> detectByCim() {
+        if (true)
+            throw new AssertionError("For testing"); // TODO: delete it
         try {
             String getCimInstance = OperatingSystem.SYSTEM_VERSION.startsWith("6.1")
                     ? "Get-WmiObject"
@@ -88,44 +90,58 @@ final class WindowsGPUDetector {
         }
     }
 
+    private static @Nullable String regValueToString(Object object) {
+        if (object == null) {
+            return null;
+        } else if (object instanceof String[]) {
+            return String.join(" ", (String[]) object);
+        } else {
+            return object.toString();
+        }
+    }
+
     private static List<GraphicsCard> detectByRegistry(WinReg reg) {
-        final WinReg.HKEY hkey = WinReg.HKEY.HKEY_CURRENT_USER_LOCAL_SETTINGS;
+        final WinReg.HKEY hkey = WinReg.HKEY.HKEY_LOCAL_MACHINE;
+        final String displayDevices = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\";
+        final Pattern graphicsCardPattern = Pattern.compile("\\\\[0-9]+\\\\?$");
 
         var result = new ArrayList<GraphicsCard>();
-        for (String subkey : reg.querySubKeys(hkey, DISPLAY_DEVICES_REGISTRY_PATH)) {
-            try {
-                Integer.parseInt(subkey);
+        for (String subkey : reg.querySubKeys(hkey, displayDevices)) {
+            if (!graphicsCardPattern.matcher(subkey).find())
+                continue;
 
-                Object name = reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString");
-                Object vendor = reg.queryValue(hkey, subkey, "ProviderName");
-                Object driverVersion = reg.queryValue(hkey, subkey, "DriverVersion");
-                Object dacType = reg.queryValue(hkey, subkey, "HardwareInformation.DacType");
+            String name = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString"));
+            String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
+            String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
+            String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
 
-                GraphicsCard.Builder builder = GraphicsCard.builder();
-                if (name instanceof String)
-                    builder.setName(GraphicsCard.cleanName((String) name));
-                if (vendor instanceof String)
-                    builder.setVendor(HardwareVendor.of((String) vendor));
-                if (driverVersion instanceof String)
-                    builder.setDriverVersion(((String) driverVersion));
-                if (dacType instanceof String)
-                    builder.setType(fromDacType((String) dacType));
-                result.add(builder.build());
-            } catch (NumberFormatException ignored) {
-            }
+            GraphicsCard.Builder builder = GraphicsCard.builder();
+            if (name != null)
+                builder.setName(GraphicsCard.cleanName(name));
+            if (vendor != null)
+                builder.setVendor(HardwareVendor.of(vendor));
+            if (driverVersion != null)
+                builder.setDriverVersion(driverVersion);
+            if (dacType != null)
+                builder.setType(fromDacType(dacType));
+            result.add(builder.build());
         }
         return result;
     }
 
-    static List<GraphicsCard> detect() {
-        WinReg reg = WinReg.INSTANCE;
-        if (reg != null) {
-            List<GraphicsCard> res = detectByRegistry(reg);
-            if (!res.isEmpty())
-                return res;
+    static @Nullable List<GraphicsCard> detect() {
+        try {
+            WinReg reg = WinReg.INSTANCE;
+            if (reg != null) {
+                List<GraphicsCard> res = detectByRegistry(reg);
+                if (!res.isEmpty())
+                    return res;
+            }
+            return detectByCim();
+        } catch (Throwable e) {
+            LOG.warning("Failed to get graphics cards", e);
+            return null;
         }
-
-        return detectByCim();
     }
 
     private WindowsGPUDetector() {
