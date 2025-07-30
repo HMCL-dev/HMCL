@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.When;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -41,6 +42,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
@@ -141,49 +143,26 @@ public class PersonalizationPage extends StackPane {
                 hbox.setPadding(new Insets(0, 0, 0, 10));
 
                 Label label1 = new Label(i18n("settings.launcher.background.settings.opacity"));
-                Label label2 = new Label("%");
 
-                double opa = config().getBackgroundImageOpacity();
-                JFXSlider slider = new JFXSlider(0, 1, opa);
+                JFXSlider slider = new JFXSlider(0, 100, config().getBackgroundImageOpacity());
+                slider.setShowTickMarks(true);
+                slider.setMajorTickUnit(10);
+                slider.setMinorTickCount(1);
+                slider.setBlockIncrement(1.);
+                slider.setSnapToTicks(true);
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
-                JFXTextField textOpacity = new JFXTextField();
-                textOpacity.setText(BigDecimal.valueOf(opa * 100).setScale(2, RoundingMode.HALF_UP).toString());
-                textOpacity.setPrefWidth(60);
+                Label textOpacity = new Label();
 
-                AtomicReference<Double> lastValidOpacity = new AtomicReference<>(slider.getValue());
+                StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
+                textOpacity.textProperty().bind(valueBinding);
+                slider.setValueFactory(s -> valueBinding);
+
                 slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                    double opacity = newValue.doubleValue();
-                    textOpacity.setText(BigDecimal.valueOf(opacity * 100).setScale(2, RoundingMode.HALF_UP).toString());
-                    lastValidOpacity.set(opacity);
-                    config().setBackgroundImageOpacity(opacity);
-                });
-                textOpacity.focusedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (!newValue) {
-                        try {
-                            String text = textOpacity.getText().trim();
-                            double opacity = Double.parseDouble(text) / 100;
-                            if (opacity >= 0 && opacity <= 1) {
-                                slider.setValue(opacity);
-                            } else if (opacity < 0) {
-                                slider.setValue(0);
-                                textOpacity.setText("0.00");
-                            } else if (opacity > 1) {
-                                slider.setValue(1);
-                                textOpacity.setText("100.00");
-                            }
-                        } catch (NumberFormatException ignored) {
-                            slider.setValue(lastValidOpacity.get());
-                            textOpacity.setText(BigDecimal.valueOf(lastValidOpacity.get() * 100).setScale(2, RoundingMode.HALF_UP).toString());
-                        }
-                    }
+                    config().setBackgroundImageOpacity(newValue.intValue());
                 });
 
-                slider.setValueFactory(slider1 -> Bindings.createStringBinding(() -> String.format("%.2f", slider1.getValue()), slider1.valueProperty()));
-
-                HBox.setMargin(label2, new Insets(0, 10, 0, 0));
-
-                hbox.getChildren().setAll(label1, slider, textOpacity, label2);
+                hbox.getChildren().setAll(label1, slider, textOpacity);
                 bgSettings.getChildren().add(hbox);
             }
             //hide the opacity setting when selecting a translucency type

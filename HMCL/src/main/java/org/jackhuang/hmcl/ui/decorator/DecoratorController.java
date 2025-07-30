@@ -128,16 +128,13 @@ public class DecoratorController {
         // Setup background
         decorator.setContentBackground(getBackground());
         changeBackgroundListener = o -> updateBackground();
-        changeSettingsListener = (observable, oldValue, newValue) -> {
-            double newValueDouble = newValue.doubleValue();
-            if (Double.isNaN(lastValue) || Math.abs(newValueDouble - lastValue) > threshold) {
+        config().backgroundImageOpacityProperty().addListener((observable, oldValue, newValue) -> {
+            int newValueInt = newValue.intValue();
+            if (newValueInt == 0 || newValueInt == 100 || Math.abs(newValueInt - lastOpacity) > opacityThreshold) {
                 updateBackground();
-                lastValue = newValueDouble;
-            } else if (config().getBackgroundImageOpacity() == 0 || config().getBackgroundImageOpacity() == 1) {
-                updateBackground();
+                lastOpacity = newValueInt;
             }
-        };
-        config().backgroundImageOpacityProperty().addListener(changeSettingsListener);
+        });
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
         config().backgroundImageTypeProperty().addListener(weakListener);
         config().backgroundImageProperty().addListener(weakListener);
@@ -199,14 +196,11 @@ public class DecoratorController {
     //FXThread
     private int changeBackgroundCount = 0;
 
-    private double lastValue = Double.NaN;
-    private final double threshold = 0.05;//Determine how often the background is refreshed when the opacity is modified
-
+    private int lastOpacity = 100;
+    private final int opacityThreshold = 5; //Determine how often the background is refreshed when the opacity is modified
 
     @SuppressWarnings("FieldCanBeLocal") // Strong reference
     private final InvalidationListener changeBackgroundListener;
-    @SuppressWarnings("FieldCanBeLocal")
-    private final ChangeListener<Number> changeSettingsListener;
 
     private void updateBackground() {
         LOG.info("updateBackground");
@@ -254,11 +248,10 @@ public class DecoratorController {
         return createBackgroundWithOpacity(image, config().getBackgroundImageOpacity());
     }
 
-    private Background createBackgroundWithOpacity(Image image, double opacity) {
-        if (opacity == 0) {
+    private Background createBackgroundWithOpacity(Image image, int opacity) {
+        if (opacity <= 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        }
-        if (opacity == 1) {
+        } else if (opacity >= 100) {
             return new Background(new BackgroundImage(
                     image,
                     BackgroundRepeat.NO_REPEAT,
@@ -266,32 +259,26 @@ public class DecoratorController {
                     BackgroundPosition.DEFAULT,
                     new BackgroundSize(800, 480, false, false, true, true)
             ));
-        }
-        LOG.info(String.valueOf(opacity));
-        BackgroundImage backgroundImage = getImageWithOpacity(image, opacity);
-
-        return new Background(backgroundImage);
-    }
-
-    private static BackgroundImage getImageWithOpacity(Image image, double opacity) {
-        WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
-        PixelReader pixelReader = image.getPixelReader();
-        PixelWriter pixelWriter = tempImage.getPixelWriter();
-        for (int y = 0; y < image.getHeight(); y++) {
-            for (int x = 0; x < image.getWidth(); x++) {
-                Color color = pixelReader.getColor(x, y);
-                Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity);
-                pixelWriter.setColor(x, y, newColor);
+        } else {
+            WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
+            PixelReader pixelReader = image.getPixelReader();
+            PixelWriter pixelWriter = tempImage.getPixelWriter();
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    Color color = pixelReader.getColor(x, y);
+                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity / 100);
+                    pixelWriter.setColor(x, y, newColor);
+                }
             }
-        }
 
-        return new BackgroundImage(
-                tempImage,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundPosition.DEFAULT,
-                new BackgroundSize(800, 480, false, false, true, true)
-        );
+            return new Background(new BackgroundImage(
+                    tempImage,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundPosition.DEFAULT,
+                    new BackgroundSize(800, 480, false, false, true, true)
+            ));
+        }
     }
 
     /**
