@@ -29,6 +29,8 @@ public class ModpackExportInfo {
 
     private List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
 
+    private boolean priorityModrinthDownload;
+
     public ModpackExportInfo() {}
 
     public List<String> getWhitelist() {
@@ -186,6 +188,14 @@ public class ModpackExportInfo {
         return this;
     }
 
+    public boolean isPriorityModrinthDownload() {
+        return priorityModrinthDownload;
+    }
+
+    public void setPriorityModrinthDownload(boolean priorityModrinthDownload) {
+        this.priorityModrinthDownload = priorityModrinthDownload;
+    }
+
     public ModpackExportInfo validate() throws NullPointerException {
         return this;
     }
@@ -200,6 +210,7 @@ public class ModpackExportInfo {
         private boolean requireLaunchArguments;
         private boolean requireJavaArguments;
         private boolean requireOrigins;
+        private boolean requirePriorityModrinthDownload;
 
         public Options() {
         }
@@ -238,6 +249,10 @@ public class ModpackExportInfo {
 
         public boolean isRequireOrigins() {
             return requireOrigins;
+        }
+
+        public boolean isRequirePriorityModrinthDownload() {
+            return requirePriorityModrinthDownload;
         }
 
         public Options requireUrl() {
@@ -281,5 +296,9 @@ public class ModpackExportInfo {
             return this;
         }
 
+        public Options requirePriorityModrinthDownload() {
+            requirePriorityModrinthDownload = true;
+            return this;
+        }
     }
 }

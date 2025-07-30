@@ -43,12 +43,13 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
     private final String fileApi;
     private final List<ModpackConfiguration.FileInformation> files;
     private final List<Addon> addons;
+    private final boolean priorityModrinthDownload;
 
     public ServerModpackManifest() {
-        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList());
+        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList(), false);
     }
 
-    public ServerModpackManifest(String name, String author, String version, String description, String fileApi, List<ModpackConfiguration.FileInformation> files, List<Addon> addons) {
+    public ServerModpackManifest(String name, String author, String version, String description, String fileApi, List<ModpackConfiguration.FileInformation> files, List<Addon> addons, boolean priorityModrinthDownload) {
         this.name = name;
         this.author = author;
         this.version = version;
@@ -56,6 +57,7 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
         this.fileApi = fileApi;
         this.files = files;
         this.addons = addons;
+        this.priorityModrinthDownload = priorityModrinthDownload;
     }
 
     public String getName() {
@@ -84,6 +86,10 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
 
     public List<Addon> getAddons() {
         return addons;
+    }
+
+    public boolean isPriorityModrinthDownload() {
+        return priorityModrinthDownload;
     }
 
     @Override

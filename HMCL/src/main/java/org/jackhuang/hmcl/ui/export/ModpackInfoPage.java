@@ -80,6 +80,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleStringProperty launchArguments = new SimpleStringProperty("");
     private final SimpleStringProperty javaArguments = new SimpleStringProperty("");
     private final SimpleStringProperty mcbbsThreadId = new SimpleStringProperty("");
+    private final SimpleBooleanProperty priorityModrinthDownload = new SimpleBooleanProperty();
 
     public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
         this.controller = controller;
@@ -122,6 +123,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         exportInfo.setLaunchArguments(launchArguments.get());
         exportInfo.setJavaArguments(javaArguments.get());
         exportInfo.setAuthlibInjectorServer(authlibInjectorServer.get());
+        exportInfo.setPriorityModrinthDownload(priorityModrinthDownload.get());
 
         if (StringUtils.isNotBlank(mcbbsThreadId.get())) {
             exportInfo.setOrigins(Collections.singletonList(new McbbsModpackManifest.Origin(
@@ -361,6 +363,19 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         JFXToggleButton button = new JFXToggleButton();
                         button.setDisable(!skinnable.canIncludeLauncher);
                         button.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
+                        button.setSize(8);
+                        button.setMinHeight(16);
+                        button.setMaxHeight(16);
+                        pane.setRight(button);
+                    }
+
+                    if (skinnable.options.isRequirePriorityModrinthDownload()) {
+                        BorderPane pane = new BorderPane();
+                        pane.setLeft(new Label(i18n("modpack.wizard.step.initialization.server.priority_modrinth_download")));
+                        list.getContent().add(pane);
+
+                        JFXToggleButton button = new JFXToggleButton();
+                        button.selectedProperty().bindBidirectional(skinnable.priorityModrinthDownload);
                         button.setSize(8);
                         button.setMinHeight(16);
                         button.setMaxHeight(16);
