@@ -42,6 +42,8 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
     @Override
     public List<GraphicsCard> detectGraphicsCards() {
+        if (!OperatingSystem.isWindows7OrLater())
+            return null;
         return WindowsGPUDetector.detect();
     }
 
