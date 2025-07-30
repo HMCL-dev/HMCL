@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,8 +116,8 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
 
-        List<URL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
-        task = new FileDownloadTask(urls, jar,
+        List<URI> uris = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
+        task = new FileDownloadTask(uris, jar.toPath(),
                 library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
         task.setCacheRepository(cacheRepository);
         task.setCaching(true);

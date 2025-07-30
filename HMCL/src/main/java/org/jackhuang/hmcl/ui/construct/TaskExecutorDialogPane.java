@@ -26,9 +26,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +41,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class TaskExecutorDialogPane extends BorderPane {
     private TaskExecutor executor;
     private TaskCancellationAction onCancel;
-    private final Consumer<FileDownloadTask.SpeedEvent> speedEventHandler;
+    private final Consumer<FetchTask.SpeedEvent> speedEventHandler;
 
     private final Label lblTitle;
     private final Label lblProgress;
@@ -108,7 +106,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             String finalUnit = unit;
             Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
         };
-        FileDownloadTask.speedEvent.channel(FileDownloadTask.SpeedEvent.class).registerWeak(speedEventHandler);
+        FileDownloadTask.speedEvent.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
 
         onEscPressed(this, btnCancel::fire);
     }

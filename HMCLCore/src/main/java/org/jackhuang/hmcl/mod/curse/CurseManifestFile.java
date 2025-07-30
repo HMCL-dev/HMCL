@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Objects;
 
 /**
@@ -84,15 +84,15 @@ public final class CurseManifestFile implements Validation {
     }
 
     @Nullable
-    public URL getUrl() {
+    public URI getUrl() {
         if (url == null) {
             if (fileName != null) {
-                return NetworkUtils.toURL(NetworkUtils.encodeLocation(String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)));
+                return URI.create(NetworkUtils.encodeLocation(String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)));
             } else {
                 return null;
             }
         } else {
-            return NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
+            return URI.create(NetworkUtils.encodeLocation(url));
         }
     }
 

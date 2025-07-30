@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -48,7 +47,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -346,12 +345,12 @@ public class ForgeNewInstallTask extends Task<Version> {
                         throw new Exception("client_mappings download info not found");
                     }
 
-                    List<URL> mappingsUrl = dependencyManager.getDownloadProvider()
+                    List<URI> mappingsUrl = dependencyManager.getDownloadProvider()
                             .injectURLWithCandidates(mappings.getUrl());
-                    FileDownloadTask mappingsTask = new FileDownloadTask(
+                    var mappingsTask = new FileDownloadTask(
                             mappingsUrl,
-                            new File(output),
-                            IntegrityCheck.of("SHA-1", mappings.getSha1()));
+                            Path.of(output),
+                            FileDownloadTask.IntegrityCheck.of("SHA-1", mappings.getSha1()));
                     mappingsTask.setCaching(true);
                     mappingsTask.setCacheRepository(dependencyManager.getCacheRepository());
                     return mappingsTask;

@@ -49,7 +49,7 @@ public final class NeoForgeInstallTask extends Task<Version> {
 
         dependent = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()),
-                installer.toFile(), null
+                installer, null
         );
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);

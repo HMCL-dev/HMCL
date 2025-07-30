@@ -844,14 +844,14 @@ public final class FXUtils {
         }
     }
 
-    public static Image loadImage(URL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
+    public static Image loadImage(URI uri) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(uri);
         if (connection instanceof HttpURLConnection) {
             connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
         }
 
         try (InputStream input = connection.getInputStream()) {
-            String path = url.getPath();
+            String path = uri.getPath();
             if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
                 return loadWebPImage(input);
             else {
