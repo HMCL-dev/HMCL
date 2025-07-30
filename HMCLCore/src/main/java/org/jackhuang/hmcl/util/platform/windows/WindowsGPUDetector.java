@@ -48,8 +48,6 @@ final class WindowsGPUDetector {
     }
 
     private static List<GraphicsCard> detectByCim() {
-        if (true)
-            throw new AssertionError("For testing"); // TODO: delete it
         try {
             String getCimInstance = OperatingSystem.SYSTEM_VERSION.startsWith("6.1")
                     ? "Get-WmiObject"
