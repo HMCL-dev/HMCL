@@ -277,11 +277,11 @@ public final class Config implements Observable {
         this.backgroundImageUrl.set(backgroundImageUrl);
     }
 
-    public Double getBackgroundImageOpacity(){
+    public Double getBackgroundImageOpacity() {
         return backgroundImageOpacity.get();
     }
 
-    public void setBackgroundImageOpacity(double backgroundImageOpacity){
+    public void setBackgroundImageOpacity(double backgroundImageOpacity) {
         this.backgroundImageOpacity.set(backgroundImageOpacity);
     }
 

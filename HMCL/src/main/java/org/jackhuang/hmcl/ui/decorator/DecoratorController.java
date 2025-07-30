@@ -255,7 +255,7 @@ public class DecoratorController {
     }
 
     private Background createBackgroundWithOpacity(Image image, double opacity) {
-        if (opacity == 0){
+        if (opacity == 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
         }
         if (opacity == 1) {

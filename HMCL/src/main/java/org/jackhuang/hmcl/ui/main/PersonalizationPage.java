@@ -159,7 +159,7 @@ public class PersonalizationPage extends StackPane {
                     config().setBackgroundImageOpacity(opacity);
                 });
                 textOpacity.focusedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (!newValue){
+                    if (!newValue) {
                         try {
                             String text = textOpacity.getText().trim();
                             double opacity = Double.parseDouble(text) / 100;
