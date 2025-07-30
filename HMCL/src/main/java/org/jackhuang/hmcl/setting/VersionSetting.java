@@ -164,7 +164,7 @@ public final class VersionSetting implements Cloneable, Observable {
 
     // Path to lwjgl natives directory
 
-    private final StringProperty nativesDirProperty = new SimpleStringProperty(this, "nativesDirProperty", "");
+    private final StringProperty nativesDirProperty = new SimpleStringProperty(this, "nativesDirProperty+", "");
 
     public StringProperty nativesDirProperty() {
         return nativesDirProperty;
@@ -589,7 +589,7 @@ public final class VersionSetting implements Cloneable, Observable {
         this.rendererProperty.set(renderer);
     }
 
-    private final BooleanProperty useDebugLog4j2ConfigProperty = new SimpleBooleanProperty(this, "useDebugLog4j2ConfigProperty", false);
+    private final BooleanProperty useDebugLog4j2ConfigProperty = new SimpleBooleanProperty(this, "useDebugLog4j2Config", false);
 
     public boolean isUseDebugLog4j2Config() {
         return useDebugLog4j2ConfigProperty.get();
