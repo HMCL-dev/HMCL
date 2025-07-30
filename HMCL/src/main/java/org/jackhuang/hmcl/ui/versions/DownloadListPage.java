@@ -119,7 +119,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         if (!searchInitialized) {
             searchInitialized = true;
-            search("", null, 0, "", RemoteModRepository.SortType.POPULARITY);
+            search("", null, 0, "", RemoteModRepository.SortType.POPULARITY, RemoteModRepository.LoaderType.ALL);
         }
 
         if (versionSelection) {
@@ -158,7 +158,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         FXUtils.runInFX(() -> selectedVersion.set(versionID));
     }
 
-    private void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {
+    private void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort, RemoteModRepository.LoaderType loader) {
         retrySearch = null;
         setLoading(true);
         setFailed(false);
@@ -174,7 +174,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         : "";
             }
         }).thenApplyAsync(
-                gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
+                gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC, loader)
         ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (searchID != currentSearchID) {
                 return;
@@ -188,7 +188,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             } else {
                 failed.set(true);
                 pageCount.set(-1);
-                retrySearch = () -> search(userGameVersion, category, pageOffset, searchFilter, sort);
+                retrySearch = () -> search(userGameVersion, category, pageOffset, searchFilter, sort, loader);
             }
         }).executor(true);
     }
@@ -361,6 +361,16 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 sortComboBox.getSelectionModel().select(0);
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.category")), categoryStackPane, new Label(i18n("search.sort")), sortStackPane);
 
+                StackPane loaderStackPane = new StackPane();
+                JFXComboBox<RemoteModRepository.LoaderType> loaderComboBox = new JFXComboBox<>();
+                loaderStackPane.getChildren().setAll(loaderComboBox);
+                loaderComboBox.prefWidthProperty().bind(loaderStackPane.widthProperty());
+                loaderComboBox.getStyleClass().add("fit-width");
+                loaderComboBox.setConverter(stringConverter(loaderType -> i18n("mods.loader." + loaderType.name().toLowerCase(Locale.ROOT))));
+                loaderComboBox.getItems().setAll(RemoteModRepository.LoaderType.values());
+                loaderComboBox.getSelectionModel().select(0);
+                searchPane.addRow(rowIndex++, new Label(i18n("mods.loader")), loaderStackPane);
+
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
                 EventHandler<ActionEvent> searchAction = e -> {
@@ -376,7 +386,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                     .orElse(null),
                             pageOffset == -1 ? 0 : pageOffset,
                             nameField.getText(),
-                            sortComboBox.getSelectionModel().getSelectedItem());
+                            sortComboBox.getSelectionModel().getSelectedItem(),
+                            loaderComboBox.getSelectionModel().getSelectedItem());
                 };
 
                 control.listenerHolder.add(FXUtils.observeWeak(
@@ -386,7 +397,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         gameVersionField.getSelectionModel().selectedItemProperty(),
                         categoryComboBox.getSelectionModel().selectedItemProperty(),
                         nameField.textProperty(),
-                        sortComboBox.getSelectionModel().selectedItemProperty()
+                        sortComboBox.getSelectionModel().selectedItemProperty(),
+                        loaderComboBox.getSelectionModel().selectedItemProperty()
                 ));
 
                 HBox actionsBox = new HBox(8);
@@ -493,6 +505,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 gameVersionField.setOnAction(searchAction);
                 categoryComboBox.setOnAction(searchAction);
                 sortComboBox.setOnAction(searchAction);
+                loaderComboBox.setOnAction(searchAction);
             }
 
             SpinnerPane spinnerPane = new SpinnerPane();
