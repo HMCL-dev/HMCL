@@ -123,15 +123,8 @@ public class DownloadSettingsPage extends StackPane {
                 }
 
                 {
-                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-                    VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
-                    hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
-                    hintPane.setText(i18n("settings.launcher.download.threads.hint"));
-                    downloadThreads.getChildren().add(hintPane);
-                }
-
-                {
                     HBox hbox = new HBox(8);
+                    hbox.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the hint
                     hbox.setAlignment(Pos.CENTER);
                     hbox.setPadding(new Insets(0, 0, 0, 30));
                     hbox.disableProperty().bind(config().autoDownloadThreadsProperty());
@@ -157,6 +150,14 @@ public class DownloadSettingsPage extends StackPane {
 
                     hbox.getChildren().setAll(label, slider, threadsField);
                     downloadThreads.getChildren().add(hbox);
+                }
+
+                {
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                    hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
+                    hintPane.setText(i18n("settings.launcher.download.threads.hint"));
+                    downloadThreads.getChildren().add(hintPane);
                 }
             }
 
