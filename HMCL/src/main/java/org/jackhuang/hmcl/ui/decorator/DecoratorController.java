@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -128,17 +129,11 @@ public class DecoratorController {
         // Setup background
         decorator.setContentBackground(getBackground());
         changeBackgroundListener = o -> updateBackground();
-        config().backgroundImageOpacityProperty().addListener((observable, oldValue, newValue) -> {
-            int newValueInt = newValue.intValue();
-            if (newValueInt == 0 || newValueInt == 100 || Math.abs(newValueInt - lastOpacity) > opacityThreshold) {
-                updateBackground();
-                lastOpacity = newValueInt;
-            }
-        });
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
         config().backgroundImageTypeProperty().addListener(weakListener);
         config().backgroundImageProperty().addListener(weakListener);
         config().backgroundImageUrlProperty().addListener(weakListener);
+        config().backgroundImageOpacityProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -196,9 +191,6 @@ public class DecoratorController {
     //FXThread
     private int changeBackgroundCount = 0;
 
-    private int lastOpacity = 100;
-    private final int opacityThreshold = 5; //Determine how often the background is refreshed when the opacity is modified
-
     @SuppressWarnings("FieldCanBeLocal") // Strong reference
     private final InvalidationListener changeBackgroundListener;
 
@@ -240,7 +232,7 @@ public class DecoratorController {
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
             case TRANSLUCENT:
-                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
+                return new Background(new BackgroundFill(new Color(1, 1, 1, Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.), CornerRadii.EMPTY, Insets.EMPTY));
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();

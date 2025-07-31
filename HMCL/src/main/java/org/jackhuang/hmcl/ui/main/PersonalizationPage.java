@@ -42,14 +42,10 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -58,6 +54,20 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
+
+    private static int snapOpacity(double val) {
+        if (val <= 0) {
+            return 0;
+        } else if (Double.isNaN(val) || val >= 100.) {
+            return 100;
+        }
+
+        int prevTick = (int) (val / 5);
+        int prevTickValue = prevTick * 5;
+        int nextTickValue = (prevTick + 1) * 5;
+
+        return (val - prevTickValue) > (nextTickValue - val) ? nextTickValue : prevTickValue;
+    }
 
     public PersonalizationPage() {
         VBox content = new VBox(10);
@@ -130,25 +140,17 @@ public class PersonalizationPage extends StackPane {
                             .then(i18n("launcher.background.default"))
                             .otherwise(config().backgroundImageProperty()));
 
-            componentList.getContent().add(backgroundItem);
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
-        }
-
-        {
-            VBox bgSettings = new VBox(16);
-            bgSettings.getStyleClass().add("card-non-transparent");
+            HBox opacityItem = new HBox(8);
             {
-                HBox hbox = new HBox(8);
-                hbox.setAlignment(Pos.CENTER);
-                hbox.setPadding(new Insets(0, 0, 0, 10));
+                opacityItem.setAlignment(Pos.CENTER);
 
-                Label label1 = new Label(i18n("settings.launcher.background.settings.opacity"));
+                Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
 
                 JFXSlider slider = new JFXSlider(0, 100, config().getBackgroundImageOpacity());
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
-                slider.setBlockIncrement(1.);
+                slider.setBlockIncrement(5);
                 slider.setSnapToTicks(true);
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
@@ -158,18 +160,28 @@ public class PersonalizationPage extends StackPane {
                 textOpacity.textProperty().bind(valueBinding);
                 slider.setValueFactory(s -> valueBinding);
 
-                slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                    config().setBackgroundImageOpacity(newValue.intValue());
+                slider.valueProperty().addListener((observable, oldValue, newValue) ->
+                        config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
+
+                config().backgroundImageTypeProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue != EnumBackgroundImage.TRANSLUCENT && oldValue != EnumBackgroundImage.TRANSLUCENT)
+                        return;
+
+                    final int opacity = snapOpacity(slider.getValue());
+                    if (newValue == EnumBackgroundImage.TRANSLUCENT) {
+                        if (opacity == 100)
+                            slider.setValue(50);
+                    } else {
+                        slider.setValue(100);
+                    }
                 });
 
-                hbox.getChildren().setAll(label1, slider, textOpacity);
-                bgSettings.getChildren().add(hbox);
+                opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
-            //hide the opacity setting when selecting a translucency type
-            config().backgroundImageTypeProperty().addListener((observable, oldValue, newValue) -> bgSettings.setVisible(newValue != EnumBackgroundImage.TRANSLUCENT));
-            content.getChildren().add(bgSettings);
-        }
 
+            componentList.getContent().setAll(backgroundItem, opacityItem);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
+        }
 
         {
             ComponentList logPane = new ComponentSublist();
