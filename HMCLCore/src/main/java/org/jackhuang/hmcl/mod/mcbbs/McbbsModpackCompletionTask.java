@@ -173,6 +173,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
                 Path manifestFile = repository.getModpackConfiguration(version).toPath();
+                Files.createDirectories(manifestFile.getParent());
                 JsonUtils.writeToJsonFile(manifestFile,
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()

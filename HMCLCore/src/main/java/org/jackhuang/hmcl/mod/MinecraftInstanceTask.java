@@ -75,7 +75,9 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
         }
 
         ModpackConfiguration<T> configuration = new ModpackConfiguration<>(manifest, type, name, version, overrides);
-        JsonUtils.writeToJsonFile(jsonFile.toPath(), configuration);
+        Path jsonPath = jsonFile.toPath();
+        Files.createDirectories(jsonPath.getParent());
+        JsonUtils.writeToJsonFile(jsonPath, configuration);
         setResult(configuration);
     }
 }

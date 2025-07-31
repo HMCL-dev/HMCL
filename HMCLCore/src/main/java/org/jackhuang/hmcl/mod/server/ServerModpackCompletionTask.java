@@ -179,6 +179,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     public void postExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
         Path manifestFile = repository.getModpackConfiguration(version).toPath();
+        Files.createDirectories(manifestFile.getParent());
         JsonUtils.writeToJsonFile(manifestFile, new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles()));
     }
 }

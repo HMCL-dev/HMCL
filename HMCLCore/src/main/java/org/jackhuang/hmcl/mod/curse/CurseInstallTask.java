@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -136,6 +137,7 @@ public final class CurseInstallTask extends Task<Void> {
         }
 
         Path root = repository.getVersionRoot(name).toPath();
+        Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), JsonUtils.GSON.toJson(manifest));
     }
 }
