@@ -18,14 +18,14 @@
 package org.jackhuang.hmcl.util;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
@@ -39,17 +39,13 @@ import java.nio.file.StandardOpenOption;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.gson.JsonUtils.fromMaybeMalformedJson;
-import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
-import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CacheRepository {
@@ -167,7 +163,7 @@ public class CacheRepository {
         lock.readLock().lock();
         ETagItem eTagItem;
         try {
-            eTagItem = index.get(uri.toString());
+            eTagItem = index.get(NetworkUtils.dropQuery(uri).toString());
         } finally {
             lock.readLock().unlock();
         }
@@ -185,14 +181,19 @@ public class CacheRepository {
     public void removeRemoteEntry(URI uri) {
         lock.readLock().lock();
         try {
-            index.remove(uri.toString());
+            index.remove(NetworkUtils.dropQuery(uri).toString());
         } finally {
             lock.readLock().unlock();
         }
     }
 
     public void injectConnection(URLConnection conn) {
-        String url = conn.getURL().toString();
+        String url;
+        try {
+            url = NetworkUtils.dropQuery(conn.getURL().toURI()).toString();
+        } catch (URISyntaxException e) {
+            return;
+        }
         lock.readLock().lock();
         ETagItem eTagItem;
         try {
@@ -279,16 +280,15 @@ public class CacheRepository {
     }
 
     @SafeVarargs
-    private final Map<String, ETagItem> joinETagIndexes(Collection<ETagItem>... indexes) {
-        Map<String, ETagItem> eTags = new ConcurrentHashMap<>();
-
-        Stream<ETagItem> stream = Arrays.stream(indexes).filter(Objects::nonNull).map(Collection::stream)
-                .reduce(Stream.empty(), Stream::concat);
-
-        stream.forEach(eTag -> {
-            eTags.compute(eTag.url, updateEntity(eTag));
-        });
-
+    private Map<String, ETagItem> joinETagIndexes(Collection<ETagItem>... indexes) {
+        Map<String, ETagItem> eTags = new LinkedHashMap<>();
+        for (Collection<ETagItem> eTagItems : indexes) {
+            if (eTagItems != null) {
+                for (ETagItem eTag : eTagItems) {
+                    eTags.compute(eTag.url, updateEntity(eTag));
+                }
+            }
+        }
         return eTags;
     }
 
@@ -296,15 +296,22 @@ public class CacheRepository {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             FileLock lock = channel.lock();
             try {
-                ETagIndex indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), ETagIndex.class);
+                ETagIndex indexOnDisk;
+                try {
+                    indexOnDisk = GSON.fromJson(
+                            // Should not be closed
+                            new BufferedReader(new InputStreamReader(Channels.newInputStream(channel))),
+                            ETagIndex.class
+                    );
+                } catch (JsonSyntaxException e) {
+                    indexOnDisk = null;
+                }
+
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
-                ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
-                while (writeTo.hasRemaining()) {
-                    if (channel.write(writeTo) == 0) {
-                        throw new IOException("No value is written");
-                    }
-                }
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Channels.newOutputStream(channel), UTF_8));
+                JsonUtils.GSON.toJson(new ETagIndex(newIndex.values()), writer);
+                writer.flush();
                 this.index = newIndex;
             } finally {
                 lock.release();

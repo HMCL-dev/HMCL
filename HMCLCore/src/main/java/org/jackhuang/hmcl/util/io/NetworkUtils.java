@@ -94,6 +94,10 @@ public final class NetworkUtils {
     }
 
     public static URI dropQuery(URI u) {
+        if (u.getRawQuery() == null && u.getRawFragment() == null) {
+            return u;
+        }
+
         try {
             return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), null, null);
         } catch (URISyntaxException e) {
