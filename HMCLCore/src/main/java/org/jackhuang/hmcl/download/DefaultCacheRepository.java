@@ -200,6 +200,7 @@ public class DefaultCacheRepository extends CacheRepository {
     private void saveIndex() {
         if (indexFile == null || index == null) return;
         try {
+            Files.createDirectories(indexFile.getParent());
             JsonUtils.writeToJsonFile(indexFile, index);
         } catch (IOException e) {
             LOG.error("Unable to save index.json", e);
