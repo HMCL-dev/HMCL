@@ -93,7 +93,7 @@ public class ModrinthInstallTask extends Task<Void> {
         ModpackConfiguration<ModrinthManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(ModrinthManifest.class));
+                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(ModrinthManifest.class));
 
                 if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Modrinth modpack. Cannot update this version.");
@@ -132,7 +132,7 @@ public class ModrinthInstallTask extends Task<Void> {
             }
         }
 
-        File root = repository.getVersionRoot(name);
-        FileUtils.writeText(new File(root, "modrinth.index.json"), JsonUtils.GSON.toJson(manifest));
+        Path root = repository.getVersionRoot(name).toPath();
+        FileUtils.writeText(root.resolve("modrinth.index.json"), JsonUtils.GSON.toJson(manifest));
     }
 }

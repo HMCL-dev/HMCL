@@ -170,7 +170,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();

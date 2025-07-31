@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
@@ -65,7 +64,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             try {
                 File manifestFile = repository.getModpackConfiguration(version);
                 if (manifestFile.exists()) {
-                    this.manifest = JsonUtils.GSON.fromJson(Files.readString(manifestFile.toPath()), ModpackConfiguration.typeOf(ServerModpackManifest.class));
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile.toPath(), ModpackConfiguration.typeOf(ServerModpackManifest.class));
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read Server modpack manifest.json", e);
@@ -179,7 +178,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     @Override
     public void postExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        File manifestFile = repository.getModpackConfiguration(version);
-        FileUtils.writeText(manifestFile, JsonUtils.GSON.toJson(new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles())));
+        Path manifestFile = repository.getModpackConfiguration(version).toPath();
+        JsonUtils.writeToJsonFile(manifestFile, new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles()));
     }
 }
