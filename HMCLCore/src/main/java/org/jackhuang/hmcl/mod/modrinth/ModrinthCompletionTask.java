@@ -78,7 +78,7 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             try {
                 Path manifestFile = repository.getVersionRoot(version).toPath().resolve("modrinth.index.json");
-                if (Files.notExists(manifestFile))
+                if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
