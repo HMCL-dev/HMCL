@@ -219,7 +219,9 @@ public class DefaultGameRepository implements GameRepository {
             // fix inheritsFrom of versions that inherits from version [from].
             for (Version version : getVersions()) {
                 if (from.equals(version.getInheritsFrom())) {
-                    JsonUtils.writeToJsonFile(getVersionJson(version.getId()).toPath(), version.setInheritsFrom(to));
+                    Path targetPath = getVersionJson(version.getId()).toPath();
+                    Files.createDirectories(targetPath.getParent());
+                    JsonUtils.writeToJsonFile(targetPath, version.setInheritsFrom(to));
                 }
             }
             return true;
