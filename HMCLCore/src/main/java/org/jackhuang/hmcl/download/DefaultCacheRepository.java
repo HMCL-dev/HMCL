@@ -29,7 +29,10 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -65,8 +68,7 @@ public class DefaultCacheRepository extends CacheRepository {
         try {
             if (Files.isRegularFile(indexFile)) {
                 index = JsonUtils.fromNonNullJson(Files.readString(indexFile), Index.class);
-            }
-            else
+            } else
                 index = new Index();
         } catch (IOException | JsonParseException e) {
             LOG.warning("Unable to read index file", e);
@@ -82,7 +84,7 @@ public class DefaultCacheRepository extends CacheRepository {
      * If cannot be verified, the library will not be cached.
      *
      * @param library the library being cached
-     * @param jar the file of library
+     * @param jar     the file of library
      */
     public void tryCacheLibrary(Library library, Path jar) {
         lock.readLock().lock();
@@ -171,8 +173,8 @@ public class DefaultCacheRepository extends CacheRepository {
      * Caches the library file to repository.
      *
      * @param library the library to cache
-     * @param path the file being cached, must be verified
-     * @param forge true if this library is provided by Forge
+     * @param path    the file being cached, must be verified
+     * @param forge   true if this library is provided by Forge
      * @return cached file location
      * @throws IOException if failed to calculate hash code of {@code path} or copy the file to cache
      */
@@ -200,8 +202,11 @@ public class DefaultCacheRepository extends CacheRepository {
     private void saveIndex() {
         if (indexFile == null || index == null) return;
         try {
-            Files.createDirectories(indexFile.getParent());
-            JsonUtils.writeToJsonFile(indexFile, index);
+            FileUtils.saveSafely(indexFile, outputStream -> {
+                try (var writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
+                    JsonUtils.GSON.toJson(index, writer);
+                }
+            });
         } catch (IOException e) {
             LOG.error("Unable to save index.json", e);
         }
@@ -209,15 +214,15 @@ public class DefaultCacheRepository extends CacheRepository {
 
     /**
      * {
-     *     "libraries": {
-     *         // allow a library has multiple hash code.
-     *         [
-     *             "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
-     *             "hash": "blablabla",
-     *             "type": "forge"
-     *         ]
-     *     }
-     *     // assets and versions will not be included in index.
+     * "libraries": {
+     * // allow a library has multiple hash code.
+     * [
+     * "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
+     * "hash": "blablabla",
+     * "type": "forge"
+     * ]
+     * }
+     * // assets and versions will not be included in index.
      * }
      */
     private static final class Index implements Validation {

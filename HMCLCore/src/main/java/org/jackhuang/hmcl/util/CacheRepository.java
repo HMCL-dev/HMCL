@@ -22,10 +22,12 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -229,7 +231,12 @@ public class CacheRepository {
     private void cacheData(URLConnection connection, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
         String eTag = connection.getHeaderField("ETag");
         if (eTag == null || eTag.isEmpty()) return;
-        String uri = connection.getURL().toString();
+        String uri;
+        try {
+            uri = NetworkUtils.dropQuery(connection.getURL().toURI()).toString();
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
         String lastModified = connection.getHeaderField("Last-Modified");
         CacheResult cacheResult = cacheSupplier.get();
         ETagItem eTagItem = new ETagItem(uri, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);

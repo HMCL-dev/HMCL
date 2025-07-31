@@ -93,6 +93,14 @@ public final class NetworkUtils {
         return result;
     }
 
+    public static URI dropQuery(URI u) {
+        try {
+            return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), null, null);
+        } catch (URISyntaxException e) {
+            throw new AssertionError("Unreachable", e);
+        }
+    }
+
     public static URLConnection createConnection(URI uri) throws IOException {
         URLConnection connection = uri.toURL().openConnection();
         connection.setUseCaches(false);
