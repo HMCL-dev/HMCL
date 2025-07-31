@@ -138,6 +138,6 @@ public final class CurseInstallTask extends Task<Void> {
 
         Path root = repository.getVersionRoot(name).toPath();
         Files.createDirectories(root);
-        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), JsonUtils.GSON.toJson(manifest));
+        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
     }
 }
