@@ -44,6 +44,13 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
+        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU")))
+            System.getProperties().putIfAbsent("prism.forceGPU", "true");
+
+        String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
+        if (animationFrameRate != null)
+            System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
