@@ -276,7 +276,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-            FXUtils.onClicked(node, () -> profile.setSelectedVersion(version.getId()));
+            FXUtils.onClicked(node, () -> {
+                profile.setSelectedVersion(version.getId());
+                popup.hide();
+            });
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
