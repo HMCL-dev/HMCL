@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.FileNotFoundException;
@@ -44,7 +45,9 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.gson.JsonUtils.*;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.fromMaybeMalformedJson;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CacheRepository {
@@ -67,7 +70,7 @@ public class CacheRepository {
             }
 
             if (Files.isRegularFile(indexFile)) {
-                ETagIndex raw = GSON.fromJson(Files.readString(indexFile), ETagIndex.class);
+                ETagIndex raw = JsonUtils.fromJsonFile(indexFile, ETagIndex.class);
                 if (raw == null)
                     index = new HashMap<>();
                 else
@@ -289,7 +292,7 @@ public class CacheRepository {
                 ETagIndex indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), ETagIndex.class);
                 Map<String, ETagItem> newIndex = joinETagIndexes(indexOnDisk == null ? null : indexOnDisk.eTag, index.values());
                 channel.truncate(0);
-                ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
+                ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(new ETagIndex(newIndex.values())).getBytes(UTF_8));
                 while (writeTo.hasRemaining()) {
                     if (channel.write(writeTo) == 0) {
                         throw new IOException("No value is written");
@@ -427,7 +430,7 @@ public class CacheRepository {
                     indexOnDisk.putAll(storage);
                     channel.truncate(0);
 
-                    ByteBuffer writeTo = ByteBuffer.wrap(GSON.toJson(storage).getBytes(UTF_8));
+                    ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(storage).getBytes(UTF_8));
                     while (writeTo.hasRemaining()) {
                         if (channel.write(writeTo) == 0) {
                             throw new IOException("No value is written");

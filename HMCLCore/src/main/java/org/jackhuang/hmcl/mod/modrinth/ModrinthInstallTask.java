@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,7 +92,7 @@ public class ModrinthInstallTask extends Task<Void> {
         ModpackConfiguration<ModrinthManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(ModrinthManifest.class));
+                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(ModrinthManifest.class));
 
                 if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Modrinth modpack. Cannot update this version.");
@@ -132,7 +131,8 @@ public class ModrinthInstallTask extends Task<Void> {
             }
         }
 
-        File root = repository.getVersionRoot(name);
-        FileUtils.writeText(new File(root, "modrinth.index.json"), JsonUtils.GSON.toJson(manifest));
+        Path root = repository.getVersionRoot(name).toPath();
+        Files.createDirectories(root);
+        JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
     }
 }

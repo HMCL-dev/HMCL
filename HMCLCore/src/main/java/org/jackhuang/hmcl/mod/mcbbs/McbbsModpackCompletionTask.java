@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,6 +112,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 }
 
                 Path rootPath = repository.getVersionRoot(version).toPath();
+                Files.createDirectories(rootPath);
 
                 Map<McbbsModpackManifest.File, McbbsModpackManifest.File> localFiles = manifest.getFiles().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
 
@@ -173,15 +173,15 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 manifest = remoteManifest.setFiles(newFiles);
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
-                File manifestFile = repository.getModpackConfiguration(version);
-                FileUtils.writeText(manifestFile, JsonUtils.GSON.toJson(
+                Path manifestFile = repository.getModpackConfiguration(version).toPath();
+                JsonUtils.writeToJsonFile(manifestFile,
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()
                                         .flatMap(file -> file instanceof McbbsModpackManifest.AddonFile
                                                 ? Stream.of((McbbsModpackManifest.AddonFile) file)
                                                 : Stream.empty())
                                         .map(file -> new ModpackConfiguration.FileInformation(file.getPath(), file.getHash()))
-                                        .collect(Collectors.toList()))));
+                                        .collect(Collectors.toList())));
             })));
         }).thenComposeAsync(unused -> {
             AtomicBoolean allNameKnown = new AtomicBoolean(true);
@@ -240,7 +240,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
                         manifest = newManifest;
                         configuration = configuration.setManifest(newManifest);
-                        FileUtils.writeText(configurationFile, JsonUtils.GSON.toJson(configuration));
+                        JsonUtils.writeToJsonFile(configurationFile.toPath(), configuration);
 
                         for (McbbsModpackManifest.File file : newManifest.getFiles())
                             if (file instanceof McbbsModpackManifest.CurseFile) {
