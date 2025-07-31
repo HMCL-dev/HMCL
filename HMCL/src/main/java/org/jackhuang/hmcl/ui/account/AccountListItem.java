@@ -32,11 +32,9 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
-import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -98,9 +96,6 @@ public class AccountListItem extends RadioButton {
 
     public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
-            if (account instanceof MicrosoftAccount && Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-                throw new OAuthServer.MicrosoftAuthenticationNotSupportedException();
-            }
             account.clearCache();
             try {
                 account.logIn();
