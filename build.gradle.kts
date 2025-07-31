@@ -50,6 +50,10 @@ subprojects {
             mavenLocal()
         }
     }
+
+    tasks.register("checkstyle") {
+        dependsOn(tasks["checkstyleMain"], tasks["checkstyleTest"])
+    }
 }
 
 tasks.register("checkTranslations") {

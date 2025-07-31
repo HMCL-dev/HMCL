@@ -22,4 +22,4 @@ jobs:
           java-version: '11'
           java-package: 'jdk+fx'
       - name: Check Codes
-        run: ./gradlew checkstyleMain checkstyleTest checkTranslations --no-daemon --parallel
+        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel
