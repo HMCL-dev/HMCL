@@ -19,14 +19,15 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -52,8 +53,8 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(downloadProvider.getVersionListURL()).getJsonAsync(GameRemoteVersions.class)
+    public Task<?> refreshAsync() {
+        return new GetTask(URI.create(downloadProvider.getVersionListURL())).thenGetJsonAsync(GameRemoteVersions.class)
                 .thenAcceptAsync(root -> {
                     GameRemoteVersions unlistedVersions = null;
 

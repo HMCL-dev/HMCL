@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -66,6 +67,10 @@ public final class NetworkUtils {
             sb.append(encodeURL(param.getValue()));
         }
         return sb.toString();
+    }
+
+    public static List<URI> withQuery(List<URI> list, Map<String, String> params) {
+        return list.stream().map(uri -> URI.create(withQuery(uri.toString(), params))).collect(Collectors.toList());
     }
 
     public static List<Pair<String, String>> parseQuery(URI uri) {
