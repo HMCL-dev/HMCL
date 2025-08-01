@@ -74,14 +74,11 @@ public abstract class VersionList<T extends RemoteVersion> {
     public Task<?> loadAsync() {
         return Task.composeAsync(() -> {
             lock.readLock().lock();
-            boolean loaded;
-
             try {
-                loaded = isLoaded();
+                return isLoaded() ? null : refreshAsync();
             } finally {
                 lock.readLock().unlock();
             }
-            return loaded ? null : refreshAsync();
         });
     }
 
