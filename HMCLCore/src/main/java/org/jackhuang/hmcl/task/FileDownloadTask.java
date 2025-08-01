@@ -84,6 +84,7 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     private final Path file;
     private final IntegrityCheck integrityCheck;
+    private boolean caching;
     private Path candidate;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
 
@@ -153,6 +154,10 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     public Path getPath() {
         return file;
+    }
+
+    public void setCaching(boolean caching) {
+        this.caching = caching;
     }
 
     public FileDownloadTask setCandidate(Path candidate) {
