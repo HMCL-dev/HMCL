@@ -188,6 +188,8 @@ public class CacheRepository {
     }
 
     public void injectConnection(URLConnection conn) {
+        conn.setUseCaches(true);
+
         String url;
         try {
             url = NetworkUtils.dropQuery(conn.getURL().toURI()).toString();

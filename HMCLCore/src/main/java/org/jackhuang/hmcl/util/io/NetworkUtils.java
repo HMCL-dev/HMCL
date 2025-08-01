@@ -107,7 +107,6 @@ public final class NetworkUtils {
 
     public static URLConnection createConnection(URI uri) throws IOException {
         URLConnection connection = uri.toURL().openConnection();
-        connection.setUseCaches(false);
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
         connection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
@@ -164,9 +163,10 @@ public final class NetworkUtils {
      * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      */
     public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
+        final boolean useCache = conn.getUseCaches();
         int redirect = 0;
         while (true) {
-            conn.setUseCaches(false);
+            conn.setUseCaches(useCache);
             conn.setConnectTimeout(TIME_OUT);
             conn.setReadTimeout(TIME_OUT);
             conn.setInstanceFollowRedirects(false);

@@ -84,13 +84,19 @@ public abstract class FetchTask<T> extends Task<T> {
         URI failedURI = null;
         boolean checkETag;
         switch (shouldCheckETag()) {
-            case CHECK_E_TAG: checkETag = true; break;
-            case NOT_CHECK_E_TAG: checkETag = false; break;
-            default: return;
+            case CHECK_E_TAG:
+                checkETag = true;
+                break;
+            case NOT_CHECK_E_TAG:
+                checkETag = false;
+                break;
+            default:
+                return;
         }
 
         int repeat = 0;
-        download: for (URI uri : uris) {
+        download:
+        for (URI uri : uris) {
             for (int retryTime = 0; retryTime < retry; retryTime++) {
                 if (isCancelled()) {
                     break download;
@@ -116,9 +122,10 @@ public abstract class FetchTask<T> extends Task<T> {
                             try {
                                 Path cache = repository.getCachedRemoteFile(conn.getURL().toURI());
                                 useCachedResult(cache);
+                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
                                 return;
                             } catch (IOException e) {
-                                LOG.warning("Unable to use cached file, redownload " + uri, e);
+                                LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
                                 repository.removeRemoteEntry(conn.getURL().toURI());
                                 // Now we must reconnect the server since 304 may result in empty content,
                                 // if we want to redownload the file, we must reconnect the server without etag settings.
