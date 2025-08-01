@@ -35,6 +35,7 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -50,6 +51,7 @@ public class CacheRepository {
     private Path commonDirectory;
     private Path cacheDirectory;
     private Path indexFile;
+    private FileTime indexFileLastModified;
     private Map<URI, ETagItem> index;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -61,16 +63,16 @@ public class CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile)) {
+                FileTime lastModified = Lang.ignoringException(() -> Files.getLastModifiedTime(indexFile));
                 ETagIndex raw = JsonUtils.fromJsonFile(indexFile, ETagIndex.class);
-                if (raw == null)
-                    index = new HashMap<>();
-                else
-                    index = joinETagIndexes(raw.eTag);
-            } else
-                index = new HashMap<>();
+                index = raw != null ? joinETagIndexes(raw.eTag) : new LinkedHashMap<>();
+                indexFileLastModified = lastModified;
+            } else {
+                index = new LinkedHashMap<>();
+            }
         } catch (IOException | JsonParseException e) {
             LOG.warning("Unable to read index file", e);
-            index = new HashMap<>();
+            index = new LinkedHashMap<>();
         } finally {
             lock.writeLock().unlock();
         }
@@ -278,29 +280,29 @@ public class CacheRepository {
     }
 
     public void saveETagIndex() throws IOException {
-        try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-            FileLock lock = channel.lock();
-            try {
-                ETagIndex indexOnDisk;
+        try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+             FileLock lock = channel.lock()) {
+            FileTime lastModified = Lang.ignoringException(() -> Files.getLastModifiedTime(indexFile));
+            if (indexFileLastModified == null || lastModified == null || indexFileLastModified.compareTo(lastModified) < 0) {
                 try {
-                    indexOnDisk = GSON.fromJson(
+                    ETagIndex indexOnDisk = GSON.fromJson(
                             // Should not be closed
                             new BufferedReader(new InputStreamReader(Channels.newInputStream(channel))),
                             ETagIndex.class
                     );
-                } catch (JsonSyntaxException e) {
-                    indexOnDisk = null;
+                    if (indexOnDisk != null)
+                        index = joinETagIndexes(index.values(), indexOnDisk.eTag);
+                } catch (JsonSyntaxException ignored) {
                 }
-
-                Map<URI, ETagItem> newIndex = joinETagIndexes(index.values(), indexOnDisk == null ? null : indexOnDisk.eTag);
-                channel.truncate(0);
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Channels.newOutputStream(channel), UTF_8));
-                JsonUtils.GSON.toJson(new ETagIndex(newIndex.values()), writer);
-                writer.flush();
-                this.index = newIndex;
-            } finally {
-                lock.release();
             }
+
+            channel.truncate(0);
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Channels.newOutputStream(channel), UTF_8));
+            JsonUtils.GSON.toJson(new ETagIndex(index.values()), writer);
+            writer.flush();
+            channel.force(true);
+
+            this.indexFileLastModified = Lang.ignoringException(() -> Files.getLastModifiedTime(indexFile));
         }
     }
 
