@@ -19,16 +19,17 @@ package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     public Task<?> refreshAsync(String gameVersion) {
         String lookupVersion = toLookupVersion(gameVersion);
 
-        return Task.supplyAsync(() -> HttpRequest.GET(apiRoot + "/forge/minecraft/" + lookupVersion).getJson(listTypeOf(ForgeVersion.class)))
+        return new GetTask(URI.create(apiRoot + "/forge/minecraft/" + lookupVersion)).thenGetJsonAsync(listTypeOf(ForgeVersion.class))
                 .thenAcceptAsync(forgeVersions -> {
                     lock.writeLock().lock();
                     try {

@@ -20,11 +20,12 @@ package org.jackhuang.hmcl.download.neoforge;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.HttpRequest;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -65,7 +66,7 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
 
     @Override
     public Task<?> refreshAsync(String gameVersion) {
-        return Task.supplyAsync(() -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).getJson(listTypeOf(NeoForgeVersion.class)))
+        return new GetTask(URI.create(apiRoot + "/neoforge/list/" + gameVersion)).thenGetJsonAsync(listTypeOf(NeoForgeVersion.class))
                 .thenAcceptAsync(neoForgeVersions -> {
                     lock.writeLock().lock();
 
