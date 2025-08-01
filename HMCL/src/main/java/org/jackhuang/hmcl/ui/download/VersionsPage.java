@@ -309,7 +309,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     public void refresh() {
         VersionList<?> currentVersionList = versionList;
         root.setContent(spinner, ContainerAnimations.FADE);
-        executor = currentVersionList.refreshAsync(gameVersion).whenComplete(Schedulers.io(), (result, exception) -> {
+        executor = currentVersionList.refreshAsync(gameVersion).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
             if (exception == null) {
                 List<RemoteVersion> items = loadVersions();
 
