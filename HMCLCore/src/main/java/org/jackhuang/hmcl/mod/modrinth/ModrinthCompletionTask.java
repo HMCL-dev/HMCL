@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -78,9 +77,9 @@ public class ModrinthCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                File manifestFile = new File(repository.getVersionRoot(version), "modrinth.index.json");
-                if (manifestFile.exists())
-                    this.manifest = JsonUtils.GSON.fromJson(Files.readString(manifestFile.toPath()), ModrinthManifest.class);
+                Path manifestFile = repository.getVersionRoot(version).toPath().resolve("modrinth.index.json");
+                if (Files.exists(manifestFile))
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
@@ -121,7 +120,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
 
-            FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
+            var task = new FileDownloadTask(file.getDownloads(), filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
             dependencies.add(task.withCounter("hmcl.modpack.download"));

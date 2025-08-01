@@ -29,7 +29,6 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
@@ -125,18 +124,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
             titleBar.getStyleClass().add("title");
             titleBar.setLeft(new Label(title));
 
-            Node hideNode = SVG.CLOSE.createIcon(Theme.blackFill(), 20);
-            hideNode.setCursor(Cursor.HAND);
-            titleBar.setRight(hideNode);
-            FXUtils.onClicked(hideNode, () -> {
-                if (announcementPane != null) {
-                    if (Metadata.isDev()) {
-                        config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
-                    }
-
-                    announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
+            JFXButton btnHide = new JFXButton();
+            btnHide.setOnAction(e -> {
+                announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
+                if (Metadata.isDev()) {
+                    config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
                 }
             });
+            btnHide.getStyleClass().add("announcement-close-button");
+            btnHide.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 20));
+            titleBar.setRight(btnHide);
 
             TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
             body.setLineSpacing(4);
@@ -279,7 +276,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-            FXUtils.onClicked(node, () -> profile.setSelectedVersion(version.getId()));
+            FXUtils.onClicked(node, () -> {
+                profile.setSelectedVersion(version.getId());
+                popup.hide();
+            });
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);

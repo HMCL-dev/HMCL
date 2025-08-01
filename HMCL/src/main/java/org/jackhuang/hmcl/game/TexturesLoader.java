@@ -45,7 +45,7 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -110,7 +110,7 @@ public final class TexturesLoader {
         if (!Files.isRegularFile(file)) {
             // download it
             try {
-                new FileDownloadTask(new URL(texture.getUrl()), file.toFile()).run();
+                new FileDownloadTask(URI.create(texture.getUrl()), file).run();
                 LOG.info("Texture downloaded: " + texture.getUrl());
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {

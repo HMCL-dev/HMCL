@@ -28,10 +28,7 @@ import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
@@ -47,7 +44,8 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
@@ -75,18 +73,18 @@ public final class Versions {
 
     public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
         Path modpack;
-        URL downloadURL;
+        URI downloadURL;
         try {
             modpack = Files.createTempFile("modpack", ".zip");
-            downloadURL = new URL(file.getFile().getUrl());
-        } catch (IOException e) {
+            downloadURL = new URI(file.getFile().getUrl());
+        } catch (IOException | URISyntaxException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
         Controllers.taskDialog(
-                new FileDownloadTask(downloadURL, modpack.toFile())
+                new FileDownloadTask(downloadURL, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 if (version != null) {

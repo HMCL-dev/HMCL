@@ -411,8 +411,15 @@ public final class JavaManager {
         if (System.getenv("PATH") != null) {
             String[] paths = System.getenv("PATH").split(File.pathSeparator);
             for (String path : paths) {
+                // https://github.com/HMCL-dev/HMCL/issues/4079
+                // https://github.com/Meloong-Git/PCL/issues/4261
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && path.toLowerCase(Locale.ROOT)
+                        .contains("\\common files\\oracle\\java\\")) {
+                    continue;
+                }
+
                 try {
-                    tryAddJavaExecutable(javaRuntimes, Paths.get(path, OperatingSystem.CURRENT_OS.getJavaExecutable()));
+                    tryAddJavaExecutable(javaRuntimes, Path.of(path, OperatingSystem.CURRENT_OS.getJavaExecutable()));
                 } catch (InvalidPathException ignored) {
                 }
             }

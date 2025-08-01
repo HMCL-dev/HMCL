@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -102,7 +101,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new CustomException();
                 }
             })).thenComposeAsync(wrap(unused1 -> {
-                return executor.one(new GetTask(new URL(manifest.getFileApi() + "/manifest.json")));
+                return executor.one(new GetTask(URI.create(manifest.getFileApi() + "/manifest.json")));
             })).thenComposeAsync(wrap(remoteManifestJson -> {
                 McbbsModpackManifest remoteManifest;
                 // We needs to update modpack from online server.
@@ -113,6 +112,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 }
 
                 Path rootPath = repository.getVersionRoot(version).toPath();
+                Files.createDirectories(rootPath);
 
                 Map<McbbsModpackManifest.File, McbbsModpackManifest.File> localFiles = manifest.getFiles().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
 
@@ -173,15 +173,15 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 manifest = remoteManifest.setFiles(newFiles);
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
-                File manifestFile = repository.getModpackConfiguration(version);
-                FileUtils.writeText(manifestFile, JsonUtils.GSON.toJson(
+                Path manifestFile = repository.getModpackConfiguration(version).toPath();
+                JsonUtils.writeToJsonFile(manifestFile,
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()
                                         .flatMap(file -> file instanceof McbbsModpackManifest.AddonFile
                                                 ? Stream.of((McbbsModpackManifest.AddonFile) file)
                                                 : Stream.empty())
                                         .map(file -> new ModpackConfiguration.FileInformation(file.getPath(), file.getHash()))
-                                        .collect(Collectors.toList()))));
+                                        .collect(Collectors.toList())));
             })));
         }).thenComposeAsync(unused -> {
             AtomicBoolean allNameKnown = new AtomicBoolean(true);
@@ -204,7 +204,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                         return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
                                                     } catch (IOException e) {
                                                         try {
-                                                            String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID())));
+                                                            String result = NetworkUtils.doGet(URI.create(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID())));
                                                             CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                                             return file.withFileName(mod.getFileNameOnDisk()).withURL(mod.getDownloadURL());
                                                         } catch (FileNotFoundException fof) {
@@ -213,7 +213,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                             return file;
                                                         } catch (IOException | JsonParseException e2) {
                                                             try {
-                                                                String result = NetworkUtils.doGet(NetworkUtils.toURL(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID())));
+                                                                String result = NetworkUtils.doGet(URI.create(String.format("https://addons-ecs.forgesvc.net/api/v2/addon/%d/file/%d", file.getProjectID(), file.getFileID())));
                                                                 CurseMetaMod mod = JsonUtils.fromNonNullJson(result, CurseMetaMod.class);
                                                                 return file.withFileName(mod.getFileName()).withURL(mod.getDownloadURL());
                                                             } catch (FileNotFoundException fof) {
@@ -240,14 +240,14 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
                         manifest = newManifest;
                         configuration = configuration.setManifest(newManifest);
-                        FileUtils.writeText(configurationFile, JsonUtils.GSON.toJson(configuration));
+                        JsonUtils.writeToJsonFile(configurationFile.toPath(), configuration);
 
                         for (McbbsModpackManifest.File file : newManifest.getFiles())
                             if (file instanceof McbbsModpackManifest.CurseFile) {
                                 McbbsModpackManifest.CurseFile curseFile = (McbbsModpackManifest.CurseFile) file;
                                 if (StringUtils.isNotBlank(curseFile.getFileName())) {
                                     if (!modManager.hasSimpleMod(curseFile.getFileName())) {
-                                        FileDownloadTask task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()).toFile());
+                                        var task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()));
                                         task.setCacheRepository(dependency.getCacheRepository());
                                         task.setCaching(true);
                                         dependencies.add(task.withCounter("hmcl.modpack.download"));
@@ -297,8 +297,8 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         if (file instanceof McbbsModpackManifest.AddonFile) {
             McbbsModpackManifest.AddonFile addonFile = (McbbsModpackManifest.AddonFile) file;
             return new FileDownloadTask(
-                    new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(addonFile.getPath())),
-                    modManager.getSimpleModPath(addonFile.getPath()).toFile(),
+                    URI.create(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(addonFile.getPath())),
+                    modManager.getSimpleModPath(addonFile.getPath()),
                     addonFile.getHash() != null ? new FileDownloadTask.IntegrityCheck("SHA-1", addonFile.getHash()) : null);
         } else if (file instanceof McbbsModpackManifest.CurseFile) {
             // we download it later.

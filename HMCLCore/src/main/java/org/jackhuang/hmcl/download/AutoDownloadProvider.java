@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -51,17 +51,17 @@ public class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public List<URL> getAssetObjectCandidates(String assetObjectLocation) {
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
         return fileProvider.getAssetObjectCandidates(assetObjectLocation);
     }
 
     @Override
-    public List<URL> injectURLWithCandidates(String baseURL) {
+    public List<URI> injectURLWithCandidates(String baseURL) {
         return fileProvider.injectURLWithCandidates(baseURL);
     }
 
     @Override
-    public List<URL> injectURLsWithCandidates(List<String> urls) {
+    public List<URI> injectURLsWithCandidates(List<String> urls) {
         return fileProvider.injectURLsWithCandidates(urls);
     }
 

@@ -72,8 +72,7 @@ public final class AuthlibInjectorServers implements Validation {
         if (ConfigHolder.isNewlyCreated() && Files.exists(configLocation)) {
             AuthlibInjectorServers configInstance;
             try {
-                String content = Files.readString(configLocation);
-                configInstance = JsonUtils.GSON.fromJson(content, AuthlibInjectorServers.class);
+                configInstance = JsonUtils.fromJsonFile(configLocation, AuthlibInjectorServers.class);
             } catch (IOException | JsonParseException e) {
                 LOG.warning("Malformed authlib-injectors.json", e);
                 return;
