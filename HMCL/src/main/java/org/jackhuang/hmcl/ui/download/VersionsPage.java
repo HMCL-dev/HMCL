@@ -339,6 +339,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             // https://github.com/HMCL-dev/HMCL/issues/938
             System.gc();
         });
+        executor.start();
     }
 
     @Override
