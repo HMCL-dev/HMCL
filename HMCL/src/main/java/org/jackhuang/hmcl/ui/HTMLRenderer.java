@@ -22,6 +22,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.task.Task;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
@@ -190,11 +191,11 @@ public final class HTMLRenderer {
                 }
             }
 
-            Image image = FXUtils.newRemoteImage(uri.toString(), width, height, true, true, false);
-            if (image.isError()) {
-                LOG.warning("Failed to load image: " + uri, image.getException());
-            } else {
-                ImageView imageView = new ImageView(image);
+            Task<Image> task = FXUtils.getRemoteImageTask(uri.toString(), width, height, true, true);
+            task.start();
+
+            try {
+                ImageView imageView = new ImageView(task.getResult());
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
                     if (target != null) {
@@ -204,6 +205,8 @@ public final class HTMLRenderer {
                 }
                 children.add(imageView);
                 return;
+            } catch (Throwable e) {
+                LOG.warning("Failed to load image: " + uri, e);
             }
         }
 

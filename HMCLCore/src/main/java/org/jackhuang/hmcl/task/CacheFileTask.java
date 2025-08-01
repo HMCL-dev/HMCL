@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,10 +93,7 @@ public final class CacheFileTask extends FetchTask<Path> {
                 }
 
                 try {
-                    repository.cacheRemoteFile(connection, temp);
-                    setResult(repository.getCachedRemoteFile(connection.getURL().toURI()));
-                } catch (URISyntaxException e) {
-                    throw new IOException(e);
+                    setResult(repository.cacheRemoteFile(connection, temp));
                 } finally {
                     try {
                         Files.deleteIfExists(temp);

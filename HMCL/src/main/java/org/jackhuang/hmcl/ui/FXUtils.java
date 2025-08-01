@@ -29,6 +29,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.*;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
@@ -60,6 +61,8 @@ import javafx.util.StringConverter;
 import org.glavo.png.PNGType;
 import org.glavo.png.PNGWriter;
 import org.glavo.png.javafx.PNGJavaFXUtils;
+import org.jackhuang.hmcl.task.CacheFileTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.*;
@@ -87,8 +90,12 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -975,6 +982,55 @@ public final class FXUtils {
                 }).start();
             }
         });
+        return image;
+    }
+
+    public static Task<Image> getRemoteImageTask(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(URI.create(url))
+                .thenApplyAsync(file -> {
+                    try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
+                        var header = new byte[12];
+                        var buffer = ByteBuffer.wrap(header);
+
+                        //noinspection StatementWithEmptyBody
+                        while (channel.read(buffer) > 0) {
+                        }
+
+                        channel.position(0L);
+                        if (!buffer.hasRemaining()) {
+                            // WebP File
+                            if (header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F' &&
+                                    header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
+
+                                WebPImageReaderSpi spi = new WebPImageReaderSpi();
+                                ImageReader reader = spi.createReaderInstance(null);
+
+                                try (ImageInputStream imageInput = ImageIO.createImageInputStream(Channels.newInputStream(channel))) {
+                                    reader.setInput(imageInput, true, true);
+                                    return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()),
+                                            requestedWidth, requestedHeight, preserveRatio, smooth);
+                                } finally {
+                                    reader.dispose();
+                                }
+                            }
+                        }
+
+                        return new Image(Channels.newInputStream(channel), requestedWidth, requestedHeight, preserveRatio, smooth);
+                    }
+                });
+    }
+
+    public static ObservableValue<Image> newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        var image = new SimpleObjectProperty<Image>();
+        getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        image.set(result);
+                    } else {
+                        LOG.warning("An exception encountered while loading remote image: " + url, exception);
+                    }
+                })
+                .start();
         return image;
     }
 

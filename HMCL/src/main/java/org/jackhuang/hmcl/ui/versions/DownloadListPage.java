@@ -35,7 +35,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -45,7 +44,6 @@ import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -63,8 +61,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -546,7 +542,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
                             LOG.debug("Icon: " + dataItem.getIconUrl());
-                            imageView.setImage(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true, true));
+                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
                         }
                     }
                 });
