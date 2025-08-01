@@ -60,7 +60,7 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
                     } catch (Exception e) {
                         if (sourceIndex == backends.length - 1) {
                             LOG.warning("Failed to fetch versions list from all sources", e);
-                            return null;
+                            throw e;
                         } else {
                             LOG.warning("Failed to fetch versions list and try to fetch from other source", e);
                             return refreshAsync(gameVersion, sourceIndex + 1);
