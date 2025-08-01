@@ -44,6 +44,8 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
+    protected static final int DEFAULT_RETRY = 3;
+
     protected final List<URI> uris;
     protected final int retry;
     protected CacheRepository repository = CacheRepository.getInstance();
@@ -59,8 +61,6 @@ public abstract class FetchTask<T> extends Task<T> {
 
         setExecutor(download());
     }
-
-
 
     public void setCacheRepository(CacheRepository repository) {
         this.repository = repository;

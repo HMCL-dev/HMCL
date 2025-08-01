@@ -35,7 +35,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author Glavo
  */
-public class CacheFileTask extends FetchTask<Path> {
+public final class CacheFileTask extends FetchTask<Path> {
+
+    public CacheFileTask(@NotNull URI uri) {
+        super(List.of(uri), DEFAULT_RETRY);
+    }
+
     public CacheFileTask(@NotNull URI uri, int retry) {
         super(List.of(uri), retry);
     }
@@ -103,5 +108,4 @@ public class CacheFileTask extends FetchTask<Path> {
             }
         };
     }
-
 }
