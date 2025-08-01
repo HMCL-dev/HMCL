@@ -41,7 +41,7 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 If you want to submit a pull request, here are some requirements:
 
 * IDE: IntelliJ IDEA
-* Compiler: Java 11+
+* Compiler: Java 17+
 * Do NOT modify `gradle` files
 
 ### Compilation
