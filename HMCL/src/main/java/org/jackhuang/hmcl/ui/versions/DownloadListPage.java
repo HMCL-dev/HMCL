@@ -229,6 +229,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
+        private final JFXListView<RemoteMod> listView;
+
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
@@ -449,6 +451,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         boolean disableNext = disableAll || pageOffset == pageCount - 1;
                         nextPageButton.setDisable(disableNext);
                         lastPageButton.setDisable(disableNext);
+
+                        scrollToTop();
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
@@ -504,7 +508,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                 });
 
-                JFXListView<RemoteMod> listView = new JFXListView<>();
+                listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
                 FXUtils.onClicked(listView, () -> {
@@ -547,6 +551,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
             }
 
             getChildren().setAll(pane);
+        }
+
+        private void scrollToTop() {
+            listView.scrollTo(0);
         }
 
         private static class CategoryIndented {
