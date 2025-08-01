@@ -52,7 +52,7 @@ public class CacheRepository {
     private Path cacheDirectory;
     private Path indexFile;
     private FileTime indexFileLastModified;
-    private Map<URI, ETagItem> index;
+    private LinkedHashMap<URI, ETagItem> index;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void changeDirectory(Path commonDir) {
@@ -63,20 +63,23 @@ public class CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile)) {
-                FileTime lastModified = Lang.ignoringException(() -> Files.getLastModifiedTime(indexFile));
-                ETagIndex raw = JsonUtils.fromJsonFile(indexFile, ETagIndex.class);
-                index = raw != null ? joinETagIndexes(raw.eTag) : new LinkedHashMap<>();
-                indexFileLastModified = lastModified;
+                try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ);
+                     @SuppressWarnings("unused") FileLock lock = channel.tryLock(0, Long.MAX_VALUE, true)) {
+                    FileTime lastModified = Lang.ignoringException(() -> Files.getLastModifiedTime(indexFile));
+                    ETagIndex raw = JsonUtils.GSON.fromJson(new BufferedReader(Channels.newReader(channel, UTF_8)), ETagIndex.class);
+                    index = raw != null ? joinETagIndexes(raw.eTag) : new LinkedHashMap<>();
+                    indexFileLastModified = lastModified;
+                }
             } else {
                 index = new LinkedHashMap<>();
             }
         } catch (IOException | JsonParseException e) {
             LOG.warning("Unable to read index file", e);
             index = new LinkedHashMap<>();
+            indexFileLastModified = null;
         } finally {
             lock.writeLock().unlock();
         }
-
     }
 
     public Path getCommonDirectory() {
@@ -267,8 +270,8 @@ public class CacheRepository {
     }
 
     @SafeVarargs
-    private Map<URI, ETagItem> joinETagIndexes(Collection<ETagItem>... indexes) {
-        Map<URI, ETagItem> eTags = new LinkedHashMap<>();
+    private LinkedHashMap<URI, ETagItem> joinETagIndexes(Collection<ETagItem>... indexes) {
+        var eTags = new LinkedHashMap<URI, ETagItem>();
         for (Collection<ETagItem> eTagItems : indexes) {
             if (eTagItems != null) {
                 for (ETagItem eTag : eTagItems) {
@@ -281,23 +284,25 @@ public class CacheRepository {
 
     public void saveETagIndex() throws IOException {
         try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
-             FileLock lock = channel.lock()) {
+             @SuppressWarnings("unused") FileLock lock = channel.lock()) {
             FileTime lastModified = Lang.ignoringException(() -> Files.getLastModifiedTime(indexFile));
             if (indexFileLastModified == null || lastModified == null || indexFileLastModified.compareTo(lastModified) < 0) {
                 try {
                     ETagIndex indexOnDisk = GSON.fromJson(
                             // Should not be closed
-                            new BufferedReader(new InputStreamReader(Channels.newInputStream(channel))),
+                            new BufferedReader(Channels.newReader(channel, UTF_8)),
                             ETagIndex.class
                     );
-                    if (indexOnDisk != null)
+                    if (indexOnDisk != null) {
                         index = joinETagIndexes(index.values(), indexOnDisk.eTag);
+                        indexFileLastModified = lastModified;
+                    }
                 } catch (JsonSyntaxException ignored) {
                 }
             }
 
             channel.truncate(0);
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(Channels.newOutputStream(channel), UTF_8));
+            BufferedWriter writer = new BufferedWriter(Channels.newWriter(channel, UTF_8));
             JsonUtils.GSON.toJson(new ETagIndex(index.values()), writer);
             writer.flush();
             channel.force(true);
