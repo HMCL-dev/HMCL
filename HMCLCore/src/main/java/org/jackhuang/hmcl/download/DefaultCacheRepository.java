@@ -203,6 +203,7 @@ public class DefaultCacheRepository extends CacheRepository {
     private void saveIndex() {
         if (indexFile == null || index == null) return;
         try {
+            Files.createDirectories(indexFile.getParent());
             FileUtils.saveSafely(indexFile, outputStream -> {
                 try (var writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
                     JsonUtils.GSON.toJson(index, writer);
