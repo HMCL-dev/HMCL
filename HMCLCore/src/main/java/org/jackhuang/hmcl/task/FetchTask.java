@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
@@ -76,7 +78,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected abstract EnumCheckETag shouldCheckETag();
 
-    protected abstract Context getContext(URLConnection connection, boolean checkETag) throws IOException;
+    protected abstract Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException;
 
     @Override
     public void execute() throws Exception {
@@ -103,18 +105,64 @@ public abstract class FetchTask<T> extends Task<T> {
                 }
 
                 List<String> redirects = null;
+                String bmclapiHash = null;
                 try {
                     beforeDownload(uri);
-
                     updateProgress(0);
 
                     URLConnection conn = NetworkUtils.createConnection(uri);
-                    if (checkETag) repository.injectConnection(conn);
 
                     if (conn instanceof HttpURLConnection) {
-                        redirects = new ArrayList<>();
+                        var httpConnection = (HttpURLConnection) conn;
 
-                        conn = NetworkUtils.resolveConnection((HttpURLConnection) conn, redirects);
+                        redirects = new ArrayList<>();
+                        if (checkETag) repository.injectConnection(httpConnection);
+                        Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
+
+                        bmclapiHash = httpConnection.getHeaderField("x-bmclapi-hash");
+                        if (DigestUtils.isSha1Digest(bmclapiHash)) {
+                            Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
+                            if (cache.isPresent()) {
+                                useCachedResult(cache.get());
+                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                                return;
+                            }
+                        } else {
+                            bmclapiHash = null;
+                        }
+
+                        int redirect = 0;
+                        while (true) {
+                            int code = httpConnection.getResponseCode();
+                            if (code >= 300 && code <= 308 && code != 306 && code != 304) {
+                                URL prevUrl = httpConnection.getURL();
+                                String location = httpConnection.getHeaderField("Location");
+                                httpConnection.disconnect();
+
+                                if (redirect > 20) {
+                                    throw new IOException("Too much redirects");
+                                }
+                                if (location == null || location.isBlank()) {
+                                    throw new IOException("Redirected to an empty location");
+                                }
+
+                                URL target = new URL(prevUrl, NetworkUtils.encodeLocation(location));
+                                redirects.add(target.toString());
+                                HttpURLConnection redirected = (HttpURLConnection) target.openConnection();
+                                redirected.setUseCaches(checkETag);
+                                redirected.setConnectTimeout(NetworkUtils.TIME_OUT);
+                                redirected.setReadTimeout(NetworkUtils.TIME_OUT);
+                                redirected.setInstanceFollowRedirects(false);
+                                requestProperties
+                                        .forEach((key, value) -> value.forEach(element ->
+                                                redirected.addRequestProperty(key, element)));
+                                httpConnection = redirected;
+                                redirect++;
+                            } else {
+                                break;
+                            }
+                        }
+                        conn = httpConnection;
                         int responseCode = ((HttpURLConnection) conn).getResponseCode();
 
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
@@ -140,7 +188,8 @@ public abstract class FetchTask<T> extends Task<T> {
                     }
 
                     long contentLength = conn.getContentLength();
-                    try (Context context = getContext(conn, checkETag); InputStream stream = conn.getInputStream()) {
+                    try (Context context = getContext(conn, checkETag, bmclapiHash);
+                         InputStream stream = conn.getInputStream()) {
                         int lastDownloaded = 0, downloaded = 0;
                         byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                         while (true) {

@@ -244,7 +244,7 @@ public class Skin {
         }
 
         @Override
-        protected Context getContext(URLConnection connection, boolean checkETag) throws IOException {
+        protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
             return new Context() {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 

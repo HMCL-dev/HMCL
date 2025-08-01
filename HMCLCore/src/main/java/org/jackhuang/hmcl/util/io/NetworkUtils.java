@@ -39,7 +39,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
-    private static final int TIME_OUT = 8000;
+    public static final int TIME_OUT = 8000;
 
     private NetworkUtils() {
     }
@@ -114,7 +114,11 @@ public final class NetworkUtils {
         URLConnection connection = uri.toURL().openConnection();
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
-        connection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+        if (connection instanceof HttpURLConnection) {
+            var httpConnection = (HttpURLConnection) connection;
+            httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+            httpConnection.setInstanceFollowRedirects(false);
+        }
         return connection;
     }
 
@@ -154,10 +158,6 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
-    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
-        return resolveConnection(conn, null);
-    }
-
     /**
      * This method is a work-around that aims to solve problem when "Location" in
      * stupid server's response is not encoded.
@@ -167,7 +167,7 @@ public final class NetworkUtils {
      * @throws IOException if an I/O error occurs.
      * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      */
-    public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
         final boolean useCache = conn.getUseCaches();
         int redirect = 0;
         while (true) {
@@ -182,9 +182,6 @@ public final class NetworkUtils {
                 String newURL = conn.getHeaderField("Location");
                 conn.disconnect();
 
-                if (redirects != null) {
-                    redirects.add(newURL);
-                }
                 if (redirect > 20) {
                     throw new IOException("Too much redirects");
                 }
