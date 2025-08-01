@@ -29,7 +29,6 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -52,7 +51,6 @@ public class CacheRepository {
     private Path cacheDirectory;
     private Path indexFile;
     private Map<URI, ETagItem> index;
-    private final Map<String, Storage> storages = new HashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void changeDirectory(Path commonDir) {
@@ -62,10 +60,6 @@ public class CacheRepository {
 
         lock.writeLock().lock();
         try {
-            for (Storage storage : storages.values()) {
-                storage.changeDirectory(cacheDirectory);
-            }
-
             if (Files.isRegularFile(indexFile)) {
                 ETagIndex raw = JsonUtils.fromJsonFile(indexFile, ETagIndex.class);
                 if (raw == null)
@@ -89,15 +83,6 @@ public class CacheRepository {
 
     public Path getCacheDirectory() {
         return cacheDirectory;
-    }
-
-    public Storage getStorage(String key) {
-        lock.readLock().lock();
-        try {
-            return storages.computeIfAbsent(key, Storage::new);
-        } finally {
-            lock.readLock().unlock();
-        }
     }
 
     protected Path getFile(String algorithm, String hash) {
@@ -393,81 +378,6 @@ public class CacheRepository {
                     ", localLastModified=" + localLastModified +
                     ", remoteLastModified='" + remoteLastModified + '\'' +
                     ']';
-        }
-    }
-
-    /**
-     * Universal cache
-     */
-    public static final class Storage {
-        private final String name;
-        private Map<String, Object> storage;
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
-        private Path indexFile;
-
-        public Storage(String name) {
-            this.name = name;
-        }
-
-        public Object getEntry(String key) {
-            lock.readLock().lock();
-            try {
-                return storage.get(key);
-            } finally {
-                lock.readLock().unlock();
-            }
-        }
-
-        public void putEntry(String key, Object value) {
-            lock.writeLock().lock();
-            try {
-                storage.put(key, value);
-                saveToFile();
-            } finally {
-                lock.writeLock().unlock();
-            }
-        }
-
-        private void joinEntries(Map<String, Object> storage) {
-            this.storage.putAll(storage);
-        }
-
-        private void changeDirectory(Path cacheDirectory) {
-            lock.writeLock().lock();
-            try {
-                indexFile = cacheDirectory.resolve(name + ".json");
-                if (Files.isRegularFile(indexFile)) {
-                    joinEntries(fromNonNullJson(Files.readString(indexFile), mapTypeOf(String.class, Object.class)));
-                }
-            } catch (IOException | JsonParseException e) {
-                LOG.warning("Unable to read storage {" + name + "} file");
-            } finally {
-                lock.writeLock().unlock();
-            }
-        }
-
-        public void saveToFile() {
-            try (FileChannel channel = FileChannel.open(indexFile, StandardOpenOption.READ, StandardOpenOption.WRITE)) {
-                FileLock lock = channel.lock();
-                try {
-                    Map<String, Object> indexOnDisk = fromMaybeMalformedJson(new String(Channels.newInputStream(channel).readAllBytes(), UTF_8), mapTypeOf(String.class, Object.class));
-                    if (indexOnDisk == null) indexOnDisk = new HashMap<>();
-                    indexOnDisk.putAll(storage);
-                    channel.truncate(0);
-
-                    ByteBuffer writeTo = ByteBuffer.wrap(JsonUtils.GSON.toJson(storage).getBytes(UTF_8));
-                    while (writeTo.hasRemaining()) {
-                        if (channel.write(writeTo) == 0) {
-                            throw new IOException("No value is written");
-                        }
-                    }
-                    this.storage = indexOnDisk;
-                } finally {
-                    lock.release();
-                }
-            } catch (IOException e) {
-                LOG.warning("Unable to write storage {" + name + "} file");
-            }
         }
     }
 

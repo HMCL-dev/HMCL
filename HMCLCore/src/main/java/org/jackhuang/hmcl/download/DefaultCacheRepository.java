@@ -212,19 +212,17 @@ public class DefaultCacheRepository extends CacheRepository {
         }
     }
 
-    /**
-     * {
-     * "libraries": {
-     * // allow a library has multiple hash code.
-     * [
-     * "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
-     * "hash": "blablabla",
-     * "type": "forge"
-     * ]
-     * }
-     * // assets and versions will not be included in index.
-     * }
-     */
+    /// ```json
+    /// "libraries": {
+    ///     // allow a library has multiple hash code.
+    ///     [
+    ///         "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
+    ///         "hash": "blablabla",
+    ///         "type": "forge"
+    ///      ]
+    /// }
+    /// ```
+    /// assets and versions will not be included in index.
     private static final class Index implements Validation {
         private final Set<LibraryIndex> libraries;
 
