@@ -49,6 +49,8 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -67,7 +69,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -96,7 +97,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     private final StackPane center;
 
     private final VersionList<?> versionList;
-    private CompletableFuture<?> executor;
+    private Task<?> executor;
 
     private final HBox searchBar;
     private final StringProperty queryString = new SimpleStringProperty();
@@ -308,7 +309,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     public void refresh() {
         VersionList<?> currentVersionList = versionList;
         root.setContent(spinner, ContainerAnimations.FADE);
-        executor = currentVersionList.refreshAsync(gameVersion).whenComplete((result, exception) -> {
+        executor = currentVersionList.refreshAsync(gameVersion).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
             if (exception == null) {
                 List<RemoteVersion> items = loadVersions();
 
@@ -338,6 +339,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             // https://github.com/HMCL-dev/HMCL/issues/938
             System.gc();
         });
+        executor.start();
     }
 
     @Override
@@ -348,8 +350,9 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
     @Override
     public void cleanup(Map<String, Object> settings) {
         settings.remove(libraryId);
-        if (executor != null)
-            executor.cancel(true);
+        // fixme
+//        if (executor != null)
+//            executor.cancel(true);
     }
 
     private void onRefresh() {

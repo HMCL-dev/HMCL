@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.task;
 
+import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -29,7 +32,6 @@ import java.util.List;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- *
  * @author huangyuhui
  */
 public final class GetTask extends FetchTask<String> {
@@ -95,4 +97,11 @@ public final class GetTask extends FetchTask<String> {
         };
     }
 
+    public <T> Task<T> thenGetJsonAsync(Class<T> type) {
+        return thenGetJsonAsync(TypeToken.get(type));
+    }
+
+    public <T> Task<T> thenGetJsonAsync(TypeToken<T> type) {
+        return thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
+    }
 }

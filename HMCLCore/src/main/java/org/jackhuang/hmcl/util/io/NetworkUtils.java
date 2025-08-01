@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -68,6 +69,10 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
+    public static List<URI> withQuery(List<URI> list, Map<String, String> params) {
+        return list.stream().map(uri -> URI.create(withQuery(uri.toString(), params))).collect(Collectors.toList());
+    }
+
     public static List<Pair<String, String>> parseQuery(URI uri) {
         return parseQuery(uri.getRawQuery());
     }
@@ -93,9 +98,20 @@ public final class NetworkUtils {
         return result;
     }
 
+    public static URI dropQuery(URI u) {
+        if (u.getRawQuery() == null && u.getRawFragment() == null) {
+            return u;
+        }
+
+        try {
+            return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), null, null);
+        } catch (URISyntaxException e) {
+            throw new AssertionError("Unreachable", e);
+        }
+    }
+
     public static URLConnection createConnection(URI uri) throws IOException {
         URLConnection connection = uri.toURL().openConnection();
-        connection.setUseCaches(false);
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
         connection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
@@ -152,9 +168,10 @@ public final class NetworkUtils {
      * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      */
     public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
+        final boolean useCache = conn.getUseCaches();
         int redirect = 0;
         while (true) {
-            conn.setUseCaches(false);
+            conn.setUseCaches(useCache);
             conn.setConnectTimeout(TIME_OUT);
             conn.setReadTimeout(TIME_OUT);
             conn.setInstanceFollowRedirects(false);
