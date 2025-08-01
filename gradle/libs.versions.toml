@@ -17,6 +17,9 @@ jna = "5.17.0"
 pci-ids = "0.4.0"
 java-info = "1.0"
 
+# testing
+junit = "5.13.4"
+
 # plugins
 shadow = "8.3.6"
 
@@ -40,6 +43,9 @@ jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }
 java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
+
+# testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
