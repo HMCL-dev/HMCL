@@ -58,9 +58,6 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.png.PNGType;
-import org.glavo.png.PNGWriter;
-import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -176,18 +173,8 @@ public final class FXUtils {
     );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
-    private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
 
     public static void shutdown() {
-        for (Map.Entry<String, Path> entry : remoteImageCache.entrySet()) {
-            try {
-                Files.deleteIfExists(entry.getValue());
-            } catch (IOException e) {
-                LOG.warning(String.format("Failed to delete cache file %s.", entry.getValue()), e);
-            }
-            remoteImageCache.remove(entry.getKey());
-        }
-
         builtinImageCache.clear();
     }
 
@@ -908,81 +895,6 @@ public final class FXUtils {
         } catch (IllegalArgumentException e) {
             throw new ResourceNotFoundError("Cannot access image: " + url, e);
         }
-    }
-
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url the url of image. The image resource should be a file on the internet.
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url) {
-        return newRemoteImage(url, 0, 0, false, false, false);
-    }
-
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url             the url of image. The image resource should be a file on the internet.
-     * @param requestedWidth  the image's bounding box width
-     * @param requestedHeight the image's bounding box height
-     * @param preserveRatio   indicates whether to preserve the aspect ratio of
-     *                        the original image when scaling to fit the image within the
-     *                        specified bounding box
-     * @param smooth          indicates whether to use a better quality filtering
-     *                        algorithm or a faster one when scaling this image to fit within
-     *                        the specified bounding box
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
-        Path currentPath = remoteImageCache.get(url);
-        if (currentPath != null) {
-            if (Files.isReadable(currentPath)) {
-                try (InputStream inputStream = Files.newInputStream(currentPath)) {
-                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
-                } catch (IOException e) {
-                    LOG.warning("An exception encountered while reading data from cached image file.", e);
-                }
-            }
-
-            // The file is unavailable or unreadable.
-            remoteImageCache.remove(url);
-
-            try {
-                Files.deleteIfExists(currentPath);
-            } catch (IOException e) {
-                LOG.warning("An exception encountered while deleting broken cached image file.", e);
-            }
-        }
-
-        Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
-        image.progressProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
-                Task.runAsync(() -> {
-                    Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
-                          OutputStream outputStream = Files.newOutputStream(newPath);
-                          PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
-                    ) {
-                        writer.write(PNGJavaFXUtils.asArgbImage(image));
-                    } catch (IOException e) {
-                        try {
-                            Files.delete(newPath);
-                        } catch (IOException e2) {
-                            e2.addSuppressed(e);
-                            throw e2;
-                        }
-                        throw e;
-                    }
-                    if (remoteImageCache.putIfAbsent(url, newPath) != null) {
-                        Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
-                    }
-                }).start();
-            }
-        });
-        return image;
     }
 
     public static Task<Image> getRemoteImageTask(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
