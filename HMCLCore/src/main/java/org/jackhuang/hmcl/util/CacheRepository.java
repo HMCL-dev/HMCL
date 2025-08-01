@@ -72,6 +72,7 @@ public class CacheRepository {
                 }
             } else {
                 index = new LinkedHashMap<>();
+                indexFileLastModified = null;
             }
         } catch (IOException | JsonParseException e) {
             LOG.warning("Unable to read index file", e);
