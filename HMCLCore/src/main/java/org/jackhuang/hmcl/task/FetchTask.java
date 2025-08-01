@@ -115,7 +115,6 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (conn instanceof HttpURLConnection) {
                         var httpConnection = (HttpURLConnection) conn;
 
-                        redirects = new ArrayList<>();
                         if (checkETag) repository.injectConnection(httpConnection);
                         Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
 
@@ -131,23 +130,27 @@ public abstract class FetchTask<T> extends Task<T> {
                             bmclapiHash = null;
                         }
 
-                        int redirect = 0;
                         while (true) {
                             int code = httpConnection.getResponseCode();
                             if (code >= 300 && code <= 308 && code != 306 && code != 304) {
-                                URL prevUrl = httpConnection.getURL();
-                                String location = httpConnection.getHeaderField("Location");
-                                httpConnection.disconnect();
-
-                                if (redirect > 20) {
+                                if (redirects == null) {
+                                    redirects = new ArrayList<>();
+                                } else if (redirects.size() >= 20) {
+                                    httpConnection.disconnect();
                                     throw new IOException("Too much redirects");
                                 }
+
+                                URL prevUrl = httpConnection.getURL();
+                                String location = httpConnection.getHeaderField("Location");
+
+                                httpConnection.disconnect();
                                 if (location == null || location.isBlank()) {
                                     throw new IOException("Redirected to an empty location");
                                 }
 
                                 URL target = new URL(prevUrl, NetworkUtils.encodeLocation(location));
                                 redirects.add(target.toString());
+
                                 HttpURLConnection redirected = (HttpURLConnection) target.openConnection();
                                 redirected.setUseCaches(checkETag);
                                 redirected.setConnectTimeout(NetworkUtils.TIME_OUT);
@@ -157,7 +160,6 @@ public abstract class FetchTask<T> extends Task<T> {
                                         .forEach((key, value) -> value.forEach(element ->
                                                 redirected.addRequestProperty(key, element)));
                                 httpConnection = redirected;
-                                redirect++;
                             } else {
                                 break;
                             }
