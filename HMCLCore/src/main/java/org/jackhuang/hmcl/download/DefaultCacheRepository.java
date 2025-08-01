@@ -37,8 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -46,7 +44,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class DefaultCacheRepository extends CacheRepository {
     private Path librariesDir;
     private Path indexFile;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private Index index = null;
 
     public DefaultCacheRepository() {
@@ -67,9 +64,13 @@ public class DefaultCacheRepository extends CacheRepository {
         lock.writeLock().lock();
         try {
             if (Files.isRegularFile(indexFile)) {
-                index = JsonUtils.fromNonNullJson(Files.readString(indexFile), Index.class);
-            } else
+                index = JsonUtils.fromJsonFile(indexFile, Index.class);
+                if (index == null) {
+                    throw new JsonParseException("Index file is empty or invalid");
+                }
+            } else {
                 index = new Index();
+            }
         } catch (IOException | JsonParseException e) {
             LOG.warning("Unable to read index file", e);
             index = new Index();
@@ -215,13 +216,13 @@ public class DefaultCacheRepository extends CacheRepository {
     /// ```json
     /// "libraries": {
     ///     // allow a library has multiple hash code.
-    ///     [
+    ///         [
     ///         "name": "net.minecraftforge:forge:1.11.2-13.20.0.2345",
     ///         "hash": "blablabla",
     ///         "type": "forge"
-    ///      ]
+    ///         ]
     /// }
-    /// ```
+    ///```
     /// assets and versions will not be included in index.
     private static final class Index implements Validation {
         private final Set<LibraryIndex> libraries;

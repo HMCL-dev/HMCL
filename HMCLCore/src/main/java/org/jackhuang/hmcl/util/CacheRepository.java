@@ -53,7 +53,7 @@ public class CacheRepository {
     private Path indexFile;
     private FileTime indexFileLastModified;
     private LinkedHashMap<URI, ETagItem> index;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    protected final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public void changeDirectory(Path commonDir) {
         commonDirectory = commonDir;
