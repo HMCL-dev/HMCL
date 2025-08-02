@@ -376,7 +376,7 @@ public class ForgeNewInstallTask extends Task<Version> {
 
         Map<String, String> vars = new HashMap<>();
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
             for (Map.Entry<String, String> entry : profile.getData().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
@@ -385,6 +385,8 @@ public class ForgeNewInstallTask extends Task<Version> {
                         Collections.emptyMap(),
                         str -> {
                             Path dest = Files.createTempFile(tempDir, null, null);
+                            tree.extractTo();
+
                             FileUtils.copyFile(fs.getPath(str), dest);
                             return dest.toString();
                         }));

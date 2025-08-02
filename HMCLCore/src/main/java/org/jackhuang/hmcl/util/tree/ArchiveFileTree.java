@@ -35,6 +35,8 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /**
  * @author Glavo
  */
@@ -171,11 +173,23 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
             Files.setLastModifiedTime(targetFile, lastModifiedTime);
     }
 
+    public void extractTo(@NotNull String entryPath, @NotNull Path targetFile) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+
+        extractTo(entry, targetFile);
+    }
+
     public void extractTo(@NotNull E entry, @NotNull Path targetFile) throws IOException {
         try (InputStream input = getInputStream(entry)) {
             Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
         }
-        copyAttributes(entry, targetFile);
+        try {
+            copyAttributes(entry, targetFile);
+        } catch (Throwable e) {
+            LOG.warning("Failed to copy attributes to " + targetFile, e);
+        }
     }
 
     public abstract boolean isLink(E entry);
