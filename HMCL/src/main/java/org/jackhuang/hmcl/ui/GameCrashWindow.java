@@ -36,20 +36,28 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -59,9 +67,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameCrashWindow extends Stage {
     private final Version version;
@@ -262,28 +270,199 @@ public class GameCrashWindow extends Stage {
     }
 
     private void exportGameCrashInfo() {
-        Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
+        String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
+        Path logFile = Paths.get("minecraft-exported-crash-info-" + time + ".zip").toAbsolutePath();
+        Path crashReportFile;
+        try {
+            crashReportFile = Files.createTempFile("hmcl-game-crash-report-", ".log");
+        } catch (IOException e) {
+            LOG.warning("Failed to create temporary crash report file, using run directory instead", e);
+            crashReportFile = repository.getRunDirectory(version.getId()).toPath().resolve("hmcl-game-crash-report.txt");
+        }
 
-        CompletableFuture.supplyAsync(() ->
-                        logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
-                .thenComposeAsync(logs ->
-                        LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
-                .handleAsync((result, exception) -> {
-                    Alert alert;
+        Path finalCrashReportFile = crashReportFile;
+        CompletableFuture.supplyAsync(() -> {
+            try (BufferedWriter report = Files.newBufferedWriter(finalCrashReportFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                report.write("=== HMCL Game Crash Report ===\n");
+                report.write("Generation Time: " + time + "\n");
+                report.write("Exit Type: " + exitType + "\n");
 
-                    if (exception == null) {
-                        FXUtils.showFileInExplorer(logFile);
-                        alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                report.write("\n== HMCL Information ==\n");
+                report.write("HMCL Version: " + Metadata.VERSION + "\n");
+                report.write("Current Directory: " + Metadata.CURRENT_DIRECTORY + "\n");
+                report.write("HMCL Global Directory: " + Metadata.HMCL_GLOBAL_DIRECTORY + "\n");
+                report.write("HMCL Current Directory: " + Metadata.HMCL_CURRENT_DIRECTORY + "\n");
+                report.write("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found") + "\n");
+                report.write("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory") + "\n");
+                report.write("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()) + "\n");
+                report.write("Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName() + "\n");
+                report.write("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n");
+                report.write("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n");
+                report.write("Java Home: " + System.getProperty("java.home") + "\n");
+
+                report.write("\n== System Information ==\n");
+                report.write("Operating System: " + (OperatingSystem.OS_RELEASE_PRETTY_NAME == null
+                        ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION
+                        : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')') + "\n");
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    report.write("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER") + "\n");
+                }
+
+                report.write("System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName() + "\n");
+                report.write("Native Encoding: " + OperatingSystem.NATIVE_CHARSET + "\n");
+                report.write("JNU Encoding: " + System.getProperty("sun.jnu.encoding") + "\n");
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    report.write("Code Page: " + OperatingSystem.CODE_PAGE + "\n");
+                }
+
+                if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                    report.write("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE") + "\n");
+                    report.write("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP") + "\n");
+                }
+
+                report.write("Total Memory: " + total_memory + "\n");
+
+                report.write("\n== Hardware Information ==\n");
+
+                // CPU information
+                CentralProcessor cpu = SystemInfo.getCentralProcessor();
+                if (cpu != null) {
+                    report.write("CPU: " + cpu.toString().replace("\n", " ") + "\n");
+                }
+
+                // Graphics cards information
+                List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
+                if (graphicsCards != null) {
+                    if (graphicsCards.isEmpty()) {
+                        report.write("GPU: Not Found\n");
+                    } else if (graphicsCards.size() == 1) {
+                        report.write("GPU: " + graphicsCards.get(0).toString().replace("\n", " ") + "\n");
                     } else {
-                        LOG.warning("Failed to export game crash info", exception);
-                        alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception));
+                        int index = 1;
+                        for (GraphicsCard graphicsCard : graphicsCards) {
+                            report.write("GPU " + (index++) + ": " + graphicsCard.toString().replace("\n", " ") + "\n");
+                        }
                     }
+                }
 
-                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                    alert.showAndWait();
+                // Memory information
+                long totalMemorySize = SystemInfo.getTotalMemorySize();
+                long usedMemorySize = SystemInfo.getUsedMemorySize();
+                report.append("Memory: " + DataSizeUnit.format(usedMemorySize) + " / " + DataSizeUnit.format(totalMemorySize));
+                if (totalMemorySize > 0 && usedMemorySize > 0) {
+                    report.append(" (" + (int) (((double) usedMemorySize / totalMemorySize) * 100) + "%)\n");
+                } else {
+                    report.append("\n");
+                }
 
-                    return null;
-                });
+                report.write("\n== Java Information ==\n");
+                report.write("Game Java Version: " + java + "\n");
+                report.write("Game Java Path: " + launchOptions.getJava().getBinary().toAbsolutePath() + "\n");
+                report.write("Game Min Memory: " + launchOptions.getMinMemory() + "\n");
+                report.write("Game Max Memory: " + launchOptions.getMaxMemory() + "\n");
+
+                report.write("\n== Game Information ==\n");
+                report.write("Game Version: " + version.getId() + "\n");
+                report.write("IsModpack: " + repository.isModpack(version.getId()) + "\n");
+                report.write("Game RunDirectory: " + repository.getRunDirectory(version.getId()) + "\n");
+                report.write("Game VersionJson: " + repository.getVersionJson(version.getId()) + "\n");
+                report.write("Game VersionJar: " + repository.getVersionJar(version.getId()) + "\n");
+                report.write("Game AssetDirectory: " + repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId()) + "\n");
+                report.write("Game AssetIndexUrl: " + version.getAssetIndex().getUrl() + "\n");
+                report.write("Game MainClass: " + version.getMainClass() + "\n");
+                report.write("ServerIP: " + launchOptions.getServerIp() + "\n");
+                report.write("EnvironmentVariables: " + launchOptions.getEnvironmentVariables() + "\n");
+                report.write("Fullscreen: " + launchOptions.isFullscreen() + "\n");
+                report.write("WindowWidth: " + launchOptions.getWidth() + "\n");
+                report.write("WindowHeight: " + launchOptions.getHeight() + "\n");
+                report.write("PreLaunchCommand: " + launchOptions.getPreLaunchCommand() + "\n");
+                report.write("PostExitCommand: " + launchOptions.getPostExitCommand() + "\n");
+                report.write("isUseNativeOpenAL: " + launchOptions.isUseNativeOpenAL() + "\n");
+                report.write("isUseNativeGLFW: " + launchOptions.isUseNativeGLFW() + "\n");
+                if (managedProcess.getClasspath() != null)
+                    report.write("ClassPath: " + managedProcess.getClasspath());
+
+                report.write("\n== Available Java Runtimes ==\n");
+                try {
+                    Collection<JavaRuntime> allJavaRuntimes = JavaManager.getAllJava();
+                    if (allJavaRuntimes.isEmpty()) {
+                        report.write("No Java runtimes found\n");
+                    } else {
+                        for (JavaRuntime runtime : allJavaRuntimes) {
+                            report.write(String.format("%s %s (%s, %s): %s\n",
+                                    runtime.isJDK() ? "JDK" : "JRE",
+                                    runtime.getVersion(),
+                                    runtime.getPlatform().getArchitecture().getDisplayName(),
+                                    Lang.requireNonNullElse(runtime.getVendor(), "Unknown"),
+                                    runtime.getBinary()));
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    report.write("Failed to get Java runtime information.\n");
+                    LOG.warning("Failed to get Java runtime information.", e);
+                }
+
+                report.write("\n== Mod Loader Information ==\n");
+                for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                    if (!type.getPatchId().isEmpty()) {
+                        analyzer.getVersion(type).ifPresent(ver -> {
+                            try {
+                                report.write(type.getPatchId() + ": " + ver + "\n");
+                            } catch (IOException ignored) {
+                            }
+                        });
+                    }
+                }
+
+                report.write("\n== HMCL Crash Analysis ==\n");
+                for (Node node : reasonTextFlow.getChildren()) {
+                    if (node instanceof Text) {
+                        report.write(((Text) node).getText());
+                    }
+                }
+                report.write("\n\n");
+
+                report.write("\n== Game Mod Directory Structure ==\n");
+                report.write(FileUtils.printFileStructure(repository.getModManager(version.getId()).getModsDirectory(), 10));
+
+                report.write("\n\n");
+
+                report.write("\n== Game Resourcepacks Directory Structure ==\n");
+                report.write(FileUtils.printFileStructure(Paths.get(repository.getRunDirectory(version.getId()).getAbsolutePath()).resolve("resourcepacks"), 10));
+
+                report.write("\n\n");
+
+                report.write("\n== Game Shaderpacks Directory Structure ==\n");
+                report.write(FileUtils.printFileStructure(Paths.get(repository.getRunDirectory(version.getId()).getAbsolutePath()).resolve("shaderpacks"), 10));
+
+                report.write("\n\n");
+
+                report.write("\n== Game Config Directory Structure ==\n");
+                report.write(FileUtils.printFileStructure(Paths.get(repository.getRunDirectory(version.getId()).getAbsolutePath()).resolve("config"), 10));
+
+                report.flush();
+            } catch (IOException e) {
+                LOG.warning("Failed to write crash report file", e);
+            }
+            return logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
+        }).thenComposeAsync(logs -> LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString(), finalCrashReportFile)).handleAsync((result, exception) -> {
+            Alert alert;
+
+            if (exception == null) {
+                FXUtils.showFileInExplorer(logFile);
+                alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+            } else {
+                LOG.warning("Failed to export game crash info", exception);
+                alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception));
+            }
+
+            alert.setTitle(i18n("settings.launcher.launcher_log.export"));
+            alert.showAndWait();
+
+            return null;
+        });
     }
 
     private final class View extends VBox {
