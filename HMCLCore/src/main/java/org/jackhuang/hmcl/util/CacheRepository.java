@@ -261,11 +261,13 @@ public class CacheRepository {
             if (oldItem == null) {
                 return newItem;
             } else if (force || oldItem.compareTo(newItem) < 0) {
-                Path cached = getFile(SHA1, oldItem.hash);
-                try {
-                    Files.deleteIfExists(cached);
-                } catch (IOException e) {
-                    LOG.warning("Cannot delete old file");
+                if (!oldItem.hash.equalsIgnoreCase(newItem.hash)) {
+                    Path cached = getFile(SHA1, oldItem.hash);
+                    try {
+                        Files.deleteIfExists(cached);
+                    } catch (IOException e) {
+                        LOG.warning("Cannot delete old file");
+                    }
                 }
                 return newItem;
             } else {
