@@ -925,7 +925,10 @@ public final class FXUtils {
                             }
                         }
 
-                        return new Image(Channels.newInputStream(channel), requestedWidth, requestedHeight, preserveRatio, smooth);
+                        Image image = new Image(Channels.newInputStream(channel), requestedWidth, requestedHeight, preserveRatio, smooth);
+                        if (image.isError())
+                            throw image.getException();
+                        return image;
                     }
                 });
     }
