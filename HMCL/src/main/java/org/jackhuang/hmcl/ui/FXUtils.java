@@ -45,10 +45,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
@@ -82,6 +79,7 @@ import javax.imageio.stream.ImageInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -916,14 +914,14 @@ public final class FXUtils {
 
                                 WebPImageReaderSpi spi = new WebPImageReaderSpi();
                                 ImageReader reader = spi.createReaderInstance(null);
-
+                                BufferedImage bufferedImage;
                                 try (ImageInputStream imageInput = ImageIO.createImageInputStream(Channels.newInputStream(channel))) {
                                     reader.setInput(imageInput, true, true);
-                                    return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()),
-                                            requestedWidth, requestedHeight, preserveRatio, smooth);
+                                    bufferedImage = reader.read(0, reader.getDefaultReadParam());
                                 } finally {
                                     reader.dispose();
                                 }
+                                return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
                             }
                         }
 

@@ -122,10 +122,12 @@ public final class SwingFXUtils {
     }
 
     public static WritableImage toFXImage(BufferedImage bimg, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        if (requestedWidth <= 0. || requestedHeight <= 0.) {
+            return toFXImage(bimg, null);
+        }
+
         int width = (int) requestedWidth;
         int height = (int) requestedHeight;
-
-        assert width > 0 && height > 0;
 
         // Calculate actual dimensions if preserveRatio is true
         if (preserveRatio) {
@@ -142,17 +144,18 @@ public final class SwingFXUtils {
         // Create scaled BufferedImage
         BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE);
         Graphics2D g2d = scaledImage.createGraphics();
+        try {
+            if (smooth) {
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            }
 
-        if (smooth) {
-            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.drawImage(bimg, 0, 0, width, height, null);
+        } finally {
+            g2d.dispose();
         }
 
-        g2d.drawImage(bimg, 0, 0, width, height, null);
-        g2d.dispose();
-
-        // Convert to JavaFX Image using the existing method
         return toFXImage(scaledImage, null);
     }
 }
