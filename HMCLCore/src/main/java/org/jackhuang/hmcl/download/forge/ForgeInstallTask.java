@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -39,7 +38,6 @@ import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 
 /**
- *
  * @author huangyuhui
  */
 public final class ForgeInstallTask extends Task<Version> {
@@ -115,17 +113,17 @@ public final class ForgeInstallTask extends Task<Version> {
      * Detect Forge installer type.
      *
      * @param dependencyManager game repository
-     * @param version version.json
-     * @param installer the Forge installer, either the new or old one.
+     * @param version           version.json
+     * @param installer         the Forge installer, either the new or old one.
      * @return true for new, false for old
-     * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
+     * @throws IOException              if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
     public static boolean detectForgeInstallerType(DependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
-        if (!gameVersion.isPresent()) throw new IOException();
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
+        if (gameVersion.isEmpty()) throw new IOException();
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
+            String installProfileText = tree.readTextEntry("install_profile.json");
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (installProfile.containsKey("spec")) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
@@ -148,17 +146,17 @@ public final class ForgeInstallTask extends Task<Version> {
      * This method will try to identify this installer whether it is in old or new format.
      *
      * @param dependencyManager game repository
-     * @param version version.json
-     * @param installer the Forge installer, either the new or old one.
+     * @param version           version.json
+     * @param installer         the Forge installer, either the new or old one.
      * @return the task to install library
-     * @throws IOException if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
+     * @throws IOException              if unable to read compressed content of installer file, or installer file is corrupted, or the installer is not the one we want.
      * @throws VersionMismatchException if required game version of installer does not match the actual one.
      */
     public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
-        if (!gameVersion.isPresent()) throw new IOException();
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
+        if (gameVersion.isEmpty()) throw new IOException();
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
+            String installProfileText = tree.readTextEntry("install_profile.json");
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (installProfile.containsKey("spec")) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
