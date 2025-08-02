@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXCheckBox;
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
@@ -37,17 +36,17 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
+public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;
+    private Path backupsDir;
     private List<World> worlds;
     private Profile profile;
     private String id;
@@ -62,7 +61,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
             if (worlds != null)
                 itemsProperty().setAll(worlds.stream()
                         .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                        .map(WorldListItem::new).collect(Collectors.toList()));
+                        .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
         });
     }
 
@@ -71,36 +70,39 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
         return new WorldListPageSkin();
     }
 
+    @Override
     public void loadVersion(Profile profile, String id) {
         this.profile = profile;
         this.id = id;
-        this.savesDir = profile.getRepository().getRunDirectory(id).toPath().resolve("saves");
+        this.savesDir = profile.getRepository().getSavesDirectory(id);
+        this.backupsDir = profile.getRepository().getBackupsDirectory(id);
         refresh();
     }
 
-    public CompletableFuture<?> refresh() {
+    public void refresh() {
         if (profile == null || id == null)
-            return CompletableFuture.completedFuture(null);
+            return;
 
         setLoading(true);
-        return CompletableFuture
-                .runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).orElse(null))
+        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).orElse(null))
                 .thenApplyAsync(unused -> {
                     try (Stream<World> stream = World.getWorlds(savesDir)) {
                         return stream.parallel().collect(Collectors.toList());
                     }
                 })
-                .whenCompleteAsync((result, exception) -> {
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     worlds = result;
                     setLoading(false);
-                    if (exception == null)
-                        itemsProperty().setAll(result.stream()
-                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .map(WorldListItem::new).collect(Collectors.toList()));
+                    if (exception == null) {
+                        itemsProperty().setAll(result.stream().filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                                .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
+                    } else {
+                        LOG.warning("Failed to load world list page", exception);
+                    }
 
                     // https://github.com/HMCL-dev/HMCL/issues/938
                     System.gc();
-                }, Platform::runLater);
+                }).start();
     }
 
     public void add() {
@@ -126,7 +128,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name))));
+                                    itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name)), backupsDir));
                                     resolve.run();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
@@ -155,7 +157,7 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
         this.showAll.set(showAll);
     }
 
-    private class WorldListPageSkin extends ToolbarListPageSkin<WorldListPage> {
+    private final class WorldListPageSkin extends ToolbarListPageSkin<WorldListPage> {
 
         WorldListPageSkin() {
             super(WorldListPage.this);
@@ -169,8 +171,8 @@ public class WorldListPage extends ListPageBase<WorldListItem> implements Versio
 
             return Arrays.asList(chkShowAll,
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG.PLUS, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD_OUTLINE, skinnable::download));
+                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download));
         }
     }
 }

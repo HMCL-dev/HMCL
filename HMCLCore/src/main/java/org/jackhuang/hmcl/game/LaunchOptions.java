@@ -49,7 +49,9 @@ public class LaunchOptions implements Serializable {
     private boolean fullscreen;
     private String serverIp;
     private String wrapper;
-    private Proxy proxy;
+    private Proxy.Type proxyType;
+    private String proxyHost;
+    private int proxyPort;
     private String proxyUser;
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
@@ -191,11 +193,16 @@ public class LaunchOptions implements Serializable {
         return wrapper;
     }
 
-    /**
-     * Proxy settings
-     */
-    public Proxy getProxy() {
-        return proxy;
+    public Proxy.Type getProxyType() {
+        return proxyType;
+    }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
     }
 
     /**
@@ -402,8 +409,18 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setProxy(Proxy proxy) {
-            options.proxy = proxy;
+        public Builder setProxyType(Proxy.Type proxyType) {
+            options.proxyType = proxyType;
+            return this;
+        }
+
+        public Builder setProxyHost(String proxyHost) {
+            options.proxyHost = proxyHost;
+            return this;
+        }
+
+        public Builder setProxyPort(int proxyPort) {
+            options.proxyPort = proxyPort;
             return this;
         }
 

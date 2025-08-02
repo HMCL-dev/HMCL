@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,21 +59,21 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public List<URL> getAssetObjectCandidates(String assetObjectLocation) {
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
         return downloadProviderCandidates.stream()
                 .flatMap(d -> d.getAssetObjectCandidates(assetObjectLocation).stream())
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<URL> injectURLWithCandidates(String baseURL) {
+    public List<URI> injectURLWithCandidates(String baseURL) {
         return downloadProviderCandidates.stream()
                 .flatMap(d -> d.injectURLWithCandidates(baseURL).stream())
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<URL> injectURLsWithCandidates(List<String> urls) {
+    public List<URI> injectURLsWithCandidates(List<String> urls) {
         return downloadProviderCandidates.stream()
                 .flatMap(d -> d.injectURLsWithCandidates(urls).stream())
                 .collect(Collectors.toList());

@@ -25,7 +25,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
  * @author huangyuhui
  */
 public final class DigestUtils {
@@ -34,6 +33,19 @@ public final class DigestUtils {
     }
 
     private static final int STREAM_BUFFER_LENGTH = 1024;
+
+    public static boolean isSha1Digest(String digest) {
+        if (digest == null || digest.length() != 40) return false;
+
+        for (int i = 0; i < digest.length(); i++) {
+            char ch = digest.charAt(i);
+            if ((ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     public static MessageDigest getDigest(String algorithm) {
         try {

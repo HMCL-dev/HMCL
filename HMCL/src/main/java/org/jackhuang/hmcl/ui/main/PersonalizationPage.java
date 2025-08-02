@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
@@ -34,9 +36,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Theme;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -44,8 +47,11 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
@@ -74,11 +80,8 @@ public class PersonalizationPage extends StackPane {
 
             ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
             picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
-            picker.setOnAction(e -> {
-                Theme theme = Theme.custom(Theme.getColorDisplayName(picker.getValue()));
-                config().setTheme(theme);
-                Controllers.getScene().getStylesheets().setAll(theme.getStylesheets(config().getLauncherFontFamily()));
-            });
+            picker.setOnAction(e ->
+                    config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
@@ -200,12 +203,13 @@ public class PersonalizationPage extends StackPane {
                         hBox.setSpacing(8);
 
                         FontComboBox cboFont = new FontComboBox();
-                        cboFont.valueProperty().bindBidirectional(config().launcherFontFamilyProperty());
+                        cboFont.setValue(config().getLauncherFontFamily());
+                        FXUtils.onChange(cboFont.valueProperty(), FontManager::setFontFamily);
 
                         JFXButton clearButton = new JFXButton();
                         clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1, -1));
-                        clearButton.setOnAction(e -> config().setLauncherFontFamily(null));
+                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1));
+                        clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         hBox.getChildren().setAll(cboFont, clearButton);
 
@@ -213,17 +217,49 @@ public class PersonalizationPage extends StackPane {
                     }
                 }
 
-                Label lblFontDisplay = new Label("Hello Minecraft! Launcher");
-                lblFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(config().getLauncherFontFamily(), 12),
-                        config().launcherFontFamilyProperty()));
-                config().launcherFontFamilyProperty().addListener((a, b, newValue) -> {
-                    Controllers.getScene().getStylesheets().setAll(Theme.getTheme().getStylesheets(newValue));
-                });
-
-                vbox.getChildren().add(lblFontDisplay);
+                vbox.getChildren().add(new Label("Hello Minecraft! Launcher"));
 
                 fontPane.getContent().add(vbox);
+            }
+
+            {
+                BorderPane fontAntiAliasingPane = new BorderPane();
+                {
+                    Label left = new Label(i18n("settings.launcher.font.anti_aliasing"));
+                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    fontAntiAliasingPane.setLeft(left);
+                }
+
+                {
+                    @SuppressWarnings("unchecked")
+                    JFXComboBox<Optional<FontSmoothingType>> cboAntiAliasing = new JFXComboBox<>(FXCollections.observableArrayList(
+                            Optional.empty(),
+                            Optional.of(FontSmoothingType.LCD),
+                            Optional.of(FontSmoothingType.GRAY)
+                    ));
+                    String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+                    if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                        cboAntiAliasing.setValue(Optional.of(FontSmoothingType.LCD));
+                    } else if ("gray".equalsIgnoreCase(fontAntiAliasing)) {
+                        cboAntiAliasing.setValue(Optional.of(FontSmoothingType.GRAY));
+                    } else {
+                        cboAntiAliasing.setValue(Optional.empty());
+                    }
+                    cboAntiAliasing.setConverter(FXUtils.stringConverter(value -> {
+                        if (value.isPresent()) {
+                            return i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT));
+                        } else {
+                            return i18n("settings.launcher.font.anti_aliasing.auto");
+                        }
+                    }));
+                    FXUtils.onChange(cboAntiAliasing.valueProperty(), value ->
+                            globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
+                                    .orElse(null)));
+
+                    fontAntiAliasingPane.setRight(cboAntiAliasing);
+                }
+
+                fontPane.getContent().add(fontAntiAliasingPane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.font")), fontPane);

@@ -53,10 +53,9 @@ public final class MultiFileItem<T> extends VBox {
         setSpacing(8);
 
         group.selectedToggleProperty().addListener((a, b, newValue) -> {
+            selectedData.set(newValue != null ? (T) newValue.getUserData() : null);
             if (toggleSelectedListener != null)
                 toggleSelectedListener.accept(newValue);
-
-            selectedData.set(newValue != null ? (T) newValue.getUserData() : null);
         });
         selectedData.addListener((a, b, newValue) -> {
             Optional<Toggle> selecting = group.getToggles().stream()

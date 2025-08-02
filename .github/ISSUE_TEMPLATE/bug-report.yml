@@ -20,16 +20,6 @@ body:
         * Your launcher is the **latest nightly build**. You can click [here](https://zkitefly.github.io/HMCL-Snapshot-Update/en) to download the latest nightly build.
 
         If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
-  - type: input
-    id: platform
-    attributes:
-      label: 平台 | Platform
-      description: |
-        请输入你遇到问题的平台。
-        Please enter the platform on which you encountered the bug.
-      placeholder: e.g. Windows 11
-    validations:
-      required: true
   - type: textarea
     id: bug-report
     attributes:

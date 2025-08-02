@@ -9,12 +9,12 @@ body:
       请确认 Issues 列表无重复的项目。
       Please make sure that no duplicate issues have already been submitted.
 - type: textarea
-  id: description
+  id: summary
   attributes:
-    label: 描述 | Description
+    label: 概述 | Summary
     description: |
-      请详细描述你想加入的新功能。
-      Please describe the new feature in detail.
+      请介绍你想加入的新功能。
+      Please describe the new feature.
   validations:
     required: true
 - type: textarea
@@ -26,3 +26,10 @@ body:
       Please describe why you want to add the feature or enhancement to HMCL.
   validations:
     required: true
+- type: textarea
+  id: description
+  attributes:
+    label: 详情 | Description
+    description: |
+      在这里可以补充描述该功能的具体实现方式或建议。（可选）
+      Describe implementation details or suggestions here. (Optional)

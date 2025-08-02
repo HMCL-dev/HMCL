@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -31,6 +30,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -45,7 +45,7 @@ public class GameCrashWindowTest {
 
         ManagedProcess process = new ManagedProcess(null, Arrays.asList("commands", "2"));
 
-        String logs = FileUtils.readText(new File("../HMCLCore/src/test/resources/logs/too_old_java.txt"));
+        String logs = Files.readString(new File("../HMCLCore/src/test/resources/logs/too_old_java.txt").toPath());
 
         CountDownLatch latch = new CountDownLatch(1);
         FXUtils.runInFX(() -> {

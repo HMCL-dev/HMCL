@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -155,6 +156,21 @@ public final class PropertyUtils {
                     PropertyHandle src = factory.apply(from);
                     PropertyHandle target = factory.apply(to);
                     target.accessor.setValue(src.accessor.getValue());
+                });
+    }
+
+    public static void copyProperties(Object from, Object to, Predicate<String> predicate) {
+        Class<?> type = from.getClass();
+        while (!type.isInstance(to))
+            type = type.getSuperclass();
+
+        getPropertyHandleFactories(type)
+                .forEach((name, factory) -> {
+                    if (predicate.test(name)) {
+                        PropertyHandle src = factory.apply(from);
+                        PropertyHandle target = factory.apply(to);
+                        target.accessor.setValue(src.accessor.getValue());
+                    }
                 });
     }
 

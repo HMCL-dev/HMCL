@@ -24,8 +24,5 @@
     -fx-base-disabled-text-fill: rgba(256, 256, 256, 0.7);
     -fx-base-text-fill: white;
 
-    /* https://github.com/HMCL-dev/HMCL/pull/3423 */
-    -fx-font-family: -fx-base-font-family;
-
     -theme-thumb: rgba(92, 107, 192, 0.7);
 }

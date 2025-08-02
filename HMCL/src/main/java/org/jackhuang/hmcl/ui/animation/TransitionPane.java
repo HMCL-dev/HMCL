@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.animation;
 
-import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.scene.Node;
@@ -26,6 +25,8 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TransitionPane extends StackPane implements AnimationHandler {
+    private static final Duration DEFAULT_DURATION = Duration.millis(200);
+
     private Duration duration;
     private Node previousNode, currentNode;
 
@@ -55,7 +56,7 @@ public class TransitionPane extends StackPane implements AnimationHandler {
     }
 
     public void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, Duration.millis(160));
+        setContent(newView, transition, DEFAULT_DURATION);
     }
 
     public void setContent(Node newView, AnimationProducer transition, Duration duration) {
@@ -64,26 +65,25 @@ public class TransitionPane extends StackPane implements AnimationHandler {
         updateContent(newView);
 
         if (previousNode == EMPTY_PANE) {
-            setMouseTransparent(false);
             getChildren().setAll(newView);
             return;
         }
 
-        if (AnimationUtils.isAnimationEnabled()) {
+        if (AnimationUtils.isAnimationEnabled() && transition != ContainerAnimations.NONE) {
+            setMouseTransparent(true);
             transition.init(this);
 
             // runLater or "init" will not work
             Platform.runLater(() -> {
                 Timeline newAnimation = new Timeline();
-                newAnimation.getKeyFrames().addAll(transition.animate(this));
-                newAnimation.getKeyFrames().add(new KeyFrame(duration, e -> {
+                newAnimation.getKeyFrames().setAll(transition.animate(this));
+                newAnimation.setOnFinished(e -> {
                     setMouseTransparent(false);
                     getChildren().remove(previousNode);
-                }));
+                });
                 FXUtils.playAnimation(this, "transition_pane", newAnimation);
             });
         } else {
-            setMouseTransparent(false);
             getChildren().remove(previousNode);
         }
     }
@@ -98,8 +98,6 @@ public class TransitionPane extends StackPane implements AnimationHandler {
 
         if (previousNode == newView)
             previousNode = EMPTY_PANE;
-
-        setMouseTransparent(true);
 
         currentNode = newView;
 

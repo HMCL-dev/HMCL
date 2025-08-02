@@ -61,6 +61,8 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
      * @param profile null if creating a new profile.
      */
     public ProfilePage(Profile profile) {
+        getStyleClass().add("gray-background");
+
         this.profile = profile;
         String profileDisplayName = Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse("");
 

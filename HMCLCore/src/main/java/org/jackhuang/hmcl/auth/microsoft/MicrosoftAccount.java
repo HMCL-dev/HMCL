@@ -84,7 +84,7 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated) {
+        if (!authenticated || System.currentTimeMillis() > session.getNotAfter()) {
             if (service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
                 authenticated = true;
             } else {

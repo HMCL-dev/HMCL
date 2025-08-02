@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -69,6 +70,12 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                         } else {
                             if (executor.getException() == null)
                                 return;
+
+                            if (executor.getException() instanceof CancellationException) {
+                                onEnd();
+                                return;
+                            }
+
                             String appendix = StringUtils.getStackTrace(executor.getException());
                             if (settings.get("failure_callback") instanceof WizardProvider.FailureCallback)
                                 ((WizardProvider.FailureCallback) settings.get("failure_callback")).onFail(settings, executor.getException(), () -> onEnd());

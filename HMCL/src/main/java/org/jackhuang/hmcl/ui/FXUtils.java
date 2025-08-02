@@ -24,10 +24,17 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
+import javafx.beans.WeakListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.*;
-import javafx.geometry.Insets;
+import javafx.collections.ObservableMap;
+import javafx.event.Event;
+import javafx.event.EventDispatcher;
+import javafx.event.EventType;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -38,10 +45,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
@@ -51,9 +55,8 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.png.PNGType;
-import org.glavo.png.PNGWriter;
-import org.glavo.png.javafx.PNGJavaFXUtils;
+import org.jackhuang.hmcl.task.CacheFileTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.*;
@@ -63,6 +66,7 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -75,17 +79,25 @@ import javax.imageio.stream.ImageInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.ref.WeakReference;
 import java.net.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -101,6 +113,11 @@ public final class FXUtils {
 
     public static final int JAVAFX_MAJOR_VERSION;
 
+    /// @see Platform.Preferences
+    public static final @Nullable ObservableMap<String, Object> PREFERENCES;
+    public static final @Nullable ObservableBooleanValue DARK_MODE;
+    public static final @Nullable Boolean REDUCED_MOTION;
+
     static {
         String jfxVersion = System.getProperty("javafx.version");
         int majorVersion = -1;
@@ -111,6 +128,40 @@ public final class FXUtils {
             }
         }
         JAVAFX_MAJOR_VERSION = majorVersion;
+
+        ObservableMap<String, Object> preferences = null;
+        ObservableBooleanValue darkMode = null;
+        Boolean reducedMotion = null;
+        if (JAVAFX_MAJOR_VERSION >= 22) {
+            try {
+                MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+                Class<?> preferencesClass = Class.forName("javafx.application.Platform$Preferences");
+                @SuppressWarnings("unchecked")
+                var preferences0 = (ObservableMap<String, Object>) lookup.findStatic(Platform.class, "getPreferences", MethodType.methodType(preferencesClass))
+                        .invoke();
+                preferences = preferences0;
+
+                @SuppressWarnings("unchecked")
+                var colorSchemeProperty =
+                        (ReadOnlyObjectProperty<? extends Enum<?>>)
+                                lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                        .invoke(preferences);
+
+                darkMode = Bindings.createBooleanBinding(() ->
+                        "DARK".equals(colorSchemeProperty.get().name()), colorSchemeProperty);
+
+                if (JAVAFX_MAJOR_VERSION >= 24) {
+                    reducedMotion = (boolean)
+                            lookup.findVirtual(preferencesClass, "isReducedMotion", MethodType.methodType(boolean.class))
+                                    .invoke(preferences);
+                }
+            } catch (Throwable e) {
+                LOG.warning("Failed to get preferences", e);
+            }
+        }
+        PREFERENCES = preferences;
+        DARK_MODE = darkMode;
+        REDUCED_MOTION = reducedMotion;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
@@ -120,18 +171,8 @@ public final class FXUtils {
     );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
-    private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
 
     public static void shutdown() {
-        for (Map.Entry<String, Path> entry : remoteImageCache.entrySet()) {
-            try {
-                Files.deleteIfExists(entry.getValue());
-            } catch (IOException e) {
-                LOG.warning(String.format("Failed to delete cache file %s.", entry.getValue()), e);
-            }
-            remoteImageCache.remove(entry.getKey());
-        }
-
         builtinImageCache.clear();
     }
 
@@ -234,18 +275,19 @@ public final class FXUtils {
                 });
     }
 
-    public static <K, T> void setupCellValueFactory(JFXTreeTableColumn<K, T> column, Function<K, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> {
-            if (column.validateValue(param))
-                return mapper.apply(param.getValue().getValue());
-            else
-                return column.getComputedValue(param);
+    @SuppressWarnings("unchecked")
+    public static <T extends Event> void ignoreEvent(Node node, EventType<T> type, Predicate<? super T> filter) {
+        EventDispatcher oldDispatcher = node.getEventDispatcher();
+        node.setEventDispatcher((event, tail) -> {
+            EventType<?> t = event.getEventType();
+            while (t != null && t != type)
+                t = t.getSuperType();
+            if (t == type && filter.test((T) event)) {
+                return tail.dispatchEvent(event);
+            } else {
+                return oldDispatcher.dispatchEvent(event, tail);
+            }
         });
-    }
-
-    public static Node wrapMargin(Node node, Insets insets) {
-        StackPane.setMargin(node, insets);
-        return new StackPane(node);
     }
 
     public static void setValidateWhileTextChanged(Node field, boolean validate) {
@@ -323,8 +365,15 @@ public final class FXUtils {
     private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
 
+    public static void installTooltip(Node node, Duration showDelay, Duration showDuration, Duration hideDelay, Tooltip tooltip) {
+        tooltip.setShowDelay(showDelay);
+        tooltip.setShowDuration(showDuration);
+        tooltip.setHideDelay(hideDelay);
+        Tooltip.install(node, tooltip);
+    }
+
     public static void installFastTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installFastTooltip(Node node, String tooltip) {
@@ -332,7 +381,7 @@ public final class FXUtils {
     }
 
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installSlowTooltip(Node node, String tooltip) {
@@ -374,7 +423,7 @@ public final class FXUtils {
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
         else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
             openCommand = "/usr/bin/xdg-open";
@@ -405,31 +454,15 @@ public final class FXUtils {
         });
     }
 
-    private static String which(String command) {
-        String path = System.getenv("PATH");
-        if (path == null)
-            return null;
-
-        for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
-            try {
-                Path program = Paths.get(item, command);
-                if (Files.isExecutable(program))
-                    return program.toRealPath().toString();
-            } catch (Throwable ignored) {
-            }
-        }
-        return null;
-    }
-
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
         String[] openCommands;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && which("dbus-send") != null)
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -495,10 +528,10 @@ public final class FXUtils {
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
-                    String path = which(browser);
+                    Path path = SystemUtils.which(browser);
                     if (path != null) {
                         try {
-                            Runtime.getRuntime().exec(new String[]{browser, link});
+                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
                             return;
                         } catch (Throwable ignored) {
                         }
@@ -509,7 +542,7 @@ public final class FXUtils {
             try {
                 java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                     try {
                         Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
                     } catch (IOException ex) {
@@ -563,7 +596,7 @@ public final class FXUtils {
             focusedListener = (observable, oldFocused, newFocused) -> {
                 if (oldFocused && !newFocused) {
                     if (textField.validate()) {
-                        uppdateProperty();
+                        updateProperty();
                     } else {
                         // Rollback to old value
                         updateTextField();
@@ -575,7 +608,7 @@ public final class FXUtils {
                 if (oldScene != null && newScene == null) {
                     // Component is being removed from scene
                     if (textField.validate()) {
-                        uppdateProperty();
+                        updateProperty();
                     }
                 }
             };
@@ -585,7 +618,7 @@ public final class FXUtils {
             };
         }
 
-        public void uppdateProperty() {
+        public void updateProperty() {
             String newText = textField.getText();
             @SuppressWarnings("unchecked")
             T newValue = converter == null ? (T) newText : converter.fromString(newText);
@@ -601,20 +634,80 @@ public final class FXUtils {
         }
     }
 
-    public static void bindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().bindBidirectional(property);
-    }
+    private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
+        private final WeakReference<JFXComboBox<E>> comboBoxRef;
+        private final WeakReference<Property<E>> propertyRef;
+        private final int hashCode;
 
-    public static void unbindBoolean(JFXToggleButton toggleButton, Property<Boolean> property) {
-        toggleButton.selectedProperty().unbindBidirectional(property);
-    }
+        private boolean updating = false;
 
-    public static void bindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().bindBidirectional(property);
-    }
+        private EnumBidirectionalBinding(JFXComboBox<E> comboBox, Property<E> property) {
+            this.comboBoxRef = new WeakReference<>(comboBox);
+            this.propertyRef = new WeakReference<>(property);
+            this.hashCode = System.identityHashCode(comboBox) ^ System.identityHashCode(property);
+        }
 
-    public static void unbindBoolean(JFXCheckBox checkBox, Property<Boolean> property) {
-        checkBox.selectedProperty().unbindBidirectional(property);
+        @Override
+        public void invalidated(Observable sourceProperty) {
+            if (!updating) {
+                final JFXComboBox<E> comboBox = comboBoxRef.get();
+                final Property<E> property = propertyRef.get();
+
+                if (comboBox == null || property == null) {
+                    if (comboBox != null) {
+                        comboBox.getSelectionModel().selectedItemProperty().removeListener(this);
+                    }
+
+                    if (property != null) {
+                        property.removeListener(this);
+                    }
+                } else {
+                    updating = true;
+                    try {
+                        if (property == sourceProperty) {
+                            E newValue = property.getValue();
+                            comboBox.getSelectionModel().select(newValue);
+                        } else {
+                            E newValue = comboBox.getSelectionModel().getSelectedItem();
+                            property.setValue(newValue);
+                        }
+                    } finally {
+                        updating = false;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return comboBoxRef.get() == null || propertyRef.get() == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof EnumBidirectionalBinding))
+                return false;
+
+            EnumBidirectionalBinding<?> that = (EnumBidirectionalBinding<?>) o;
+
+            final JFXComboBox<E> comboBox = this.comboBoxRef.get();
+            final Property<E> property = this.propertyRef.get();
+
+            final JFXComboBox<?> thatComboBox = that.comboBoxRef.get();
+            final Property<?> thatProperty = that.propertyRef.get();
+
+            if (comboBox == null || property == null || thatComboBox == null || thatProperty == null)
+                return false;
+
+            return comboBox == thatComboBox && property == thatProperty;
+        }
     }
 
     /**
@@ -623,20 +716,18 @@ public final class FXUtils {
      *
      * @param comboBox the combo box being bound with {@code property}.
      * @param property the property being bound with {@code combo box}.
-     * @see #unbindEnum(JFXComboBox)
+     * @see #unbindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
     public static <T extends Enum<T>> void bindEnum(JFXComboBox<T> comboBox, Property<T> property) {
-        unbindEnum(comboBox);
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
 
-        T currentValue = property.getValue();
-        @SuppressWarnings("unchecked")
-        T[] enumConstants = (T[]) currentValue.getClass().getEnumConstants();
-        ChangeListener<Number> listener = (a, b, newValue) -> property.setValue(enumConstants[newValue.intValue()]);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
 
-        comboBox.getSelectionModel().select(currentValue.ordinal());
-        comboBox.getProperties().put("FXUtils.bindEnum.listener", listener);
-        comboBox.getSelectionModel().selectedIndexProperty().addListener(listener);
+        comboBox.getSelectionModel().select(property.getValue());
+        comboBox.getSelectionModel().selectedItemProperty().addListener(binding);
+        property.addListener(binding);
     }
 
     /**
@@ -647,11 +738,10 @@ public final class FXUtils {
      * @see #bindEnum(JFXComboBox, Property)
      * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
      */
-    public static void unbindEnum(JFXComboBox<? extends Enum<?>> comboBox) {
-        @SuppressWarnings("unchecked")
-        ChangeListener<Number> listener = (ChangeListener<Number>) comboBox.getProperties().remove("FXUtils.bindEnum.listener");
-        if (listener != null)
-            comboBox.getSelectionModel().selectedIndexProperty().removeListener(listener);
+    public static <T extends Enum<T>> void unbindEnum(JFXComboBox<T> comboBox, Property<T> property) {
+        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
+        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
+        property.removeListener(binding);
     }
 
     public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
@@ -713,6 +803,8 @@ public final class FXUtils {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
         }
@@ -744,14 +836,14 @@ public final class FXUtils {
         }
     }
 
-    public static Image loadImage(URL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
+    public static Image loadImage(URI uri) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(uri);
         if (connection instanceof HttpURLConnection) {
             connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
         }
 
         try (InputStream input = connection.getInputStream()) {
-            String path = url.getPath();
+            String path = uri.getPath();
             if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
                 return loadWebPImage(input);
             else {
@@ -803,78 +895,55 @@ public final class FXUtils {
         }
     }
 
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url the url of image. The image resource should be a file on the internet.
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url) {
-        return newRemoteImage(url, 0, 0, false, false, false);
+    public static Task<Image> getRemoteImageTask(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(URI.create(url))
+                .thenApplyAsync(file -> {
+                    try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
+                        var header = new byte[12];
+                        var buffer = ByteBuffer.wrap(header);
+
+                        //noinspection StatementWithEmptyBody
+                        while (channel.read(buffer) > 0) {
+                        }
+
+                        channel.position(0L);
+                        if (!buffer.hasRemaining()) {
+                            // WebP File
+                            if (header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F' &&
+                                    header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
+
+                                WebPImageReaderSpi spi = new WebPImageReaderSpi();
+                                ImageReader reader = spi.createReaderInstance(null);
+                                BufferedImage bufferedImage;
+                                try (ImageInputStream imageInput = ImageIO.createImageInputStream(Channels.newInputStream(channel))) {
+                                    reader.setInput(imageInput, true, true);
+                                    bufferedImage = reader.read(0, reader.getDefaultReadParam());
+                                } finally {
+                                    reader.dispose();
+                                }
+                                return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
+                            }
+                        }
+
+                        Image image = new Image(Channels.newInputStream(channel), requestedWidth, requestedHeight, preserveRatio, smooth);
+                        if (image.isError())
+                            throw image.getException();
+                        return image;
+                    }
+                });
     }
 
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url             the url of image. The image resource should be a file on the internet.
-     * @param requestedWidth  the image's bounding box width
-     * @param requestedHeight the image's bounding box height
-     * @param preserveRatio   indicates whether to preserve the aspect ratio of
-     *                        the original image when scaling to fit the image within the
-     *                        specified bounding box
-     * @param smooth          indicates whether to use a better quality filtering
-     *                        algorithm or a faster one when scaling this image to fit within
-     *                        the specified bounding box
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
-        Path currentPath = remoteImageCache.get(url);
-        if (currentPath != null) {
-            if (Files.isReadable(currentPath)) {
-                try (InputStream inputStream = Files.newInputStream(currentPath)) {
-                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
-                } catch (IOException e) {
-                    LOG.warning("An exception encountered while reading data from cached image file.", e);
-                }
-            }
-
-            // The file is unavailable or unreadable.
-            remoteImageCache.remove(url);
-
-            try {
-                Files.deleteIfExists(currentPath);
-            } catch (IOException e) {
-                LOG.warning("An exception encountered while deleting broken cached image file.", e);
-            }
-        }
-
-        Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
-        image.progressProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
-                Task.runAsync(() -> {
-                    Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
-                          OutputStream outputStream = Files.newOutputStream(newPath);
-                          PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
-                    ) {
-                        writer.write(PNGJavaFXUtils.asArgbImage(image));
-                    } catch (IOException e) {
-                        try {
-                            Files.delete(newPath);
-                        } catch (IOException e2) {
-                            e2.addSuppressed(e);
-                            throw e2;
-                        }
-                        throw e;
+    public static ObservableValue<Image> newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        var image = new SimpleObjectProperty<Image>();
+        getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        image.set(result);
+                    } else {
+                        LOG.warning("An exception encountered while loading remote image: " + url, exception);
                     }
-                    if (remoteImageCache.putIfAbsent(url, newPath) != null) {
-                        Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
-                    }
-                }).start();
-            }
-        });
+                })
+                .start();
         return image;
     }
 
@@ -991,6 +1060,8 @@ public final class FXUtils {
         }
     };
 
+    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
+
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -1005,6 +1076,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void copyOnDoubleClick(Labeled label) {
+        label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                String text = label.getText();
+                if (text != null && !text.isEmpty()) {
+                    copyText(label.getText());
+                    e.consume();
+                }
             }
         });
     }

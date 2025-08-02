@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
@@ -153,7 +152,7 @@ public final class LocalModpackPage extends ModpackPage {
         String name = txtModpackName.getText();
 
         // Check for non-ASCII characters.
-        if (!StandardCharsets.US_ASCII.newEncoder().canEncode(name)) {
+        if (!StringUtils.isASCII(name)) {
             Controllers.dialog(new MessageDialogPane.Builder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),

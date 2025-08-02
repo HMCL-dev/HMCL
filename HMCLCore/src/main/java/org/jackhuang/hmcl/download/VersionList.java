@@ -17,17 +17,16 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SimpleMultimap;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * The remote version list.
  *
  * @param <T> The subclass of {@code RemoteVersion}, the type of RemoteVersion.
- *
  * @author huangyuhui
  */
 public abstract class VersionList<T extends RemoteVersion> {
@@ -48,6 +47,7 @@ public abstract class VersionList<T extends RemoteVersion> {
 
     /**
      * True if the version list that contains the remote versions which depends on the specific game version has been loaded.
+     *
      * @param gameVersion the remote version depends on
      */
     public boolean isLoaded(String gameVersion) {
@@ -61,44 +61,36 @@ public abstract class VersionList<T extends RemoteVersion> {
     /**
      * @return the task to reload the remote version list.
      */
-    public abstract CompletableFuture<?> refreshAsync();
+    public abstract Task<?> refreshAsync();
 
     /**
      * @param gameVersion the remote version depends on
      * @return the task to reload the remote version list.
      */
-    public CompletableFuture<?> refreshAsync(String gameVersion) {
+    public Task<?> refreshAsync(String gameVersion) {
         return refreshAsync();
     }
 
-    public CompletableFuture<?> loadAsync() {
-        return CompletableFuture.completedFuture(null)
-                .thenComposeAsync(unused -> {
-                    lock.readLock().lock();
-                    boolean loaded;
-
-                    try {
-                        loaded = isLoaded();
-                    } finally {
-                        lock.readLock().unlock();
-                    }
-                    return loaded ? CompletableFuture.completedFuture(null) : refreshAsync();
-                });
+    public Task<?> loadAsync() {
+        return Task.composeAsync(() -> {
+            lock.readLock().lock();
+            try {
+                return isLoaded() ? null : refreshAsync();
+            } finally {
+                lock.readLock().unlock();
+            }
+        });
     }
 
-    public CompletableFuture<?> loadAsync(String gameVersion) {
-        return CompletableFuture.completedFuture(null)
-                .thenComposeAsync(unused -> {
-                    lock.readLock().lock();
-                    boolean loaded;
-
-                    try {
-                        loaded = isLoaded(gameVersion);
-                    } finally {
-                        lock.readLock().unlock();
-                    }
-                    return loaded ? CompletableFuture.completedFuture(null) : refreshAsync(gameVersion);
-                });
+    public Task<?> loadAsync(String gameVersion) {
+        return Task.composeAsync(() -> {
+            lock.readLock().lock();
+            try {
+                return isLoaded(gameVersion) ? null : refreshAsync(gameVersion);
+            } finally {
+                lock.readLock().unlock();
+            }
+        });
     }
 
     protected Collection<T> getVersionsImpl(String gameVersion) {
@@ -123,7 +115,7 @@ public abstract class VersionList<T extends RemoteVersion> {
     /**
      * Get the specific remote version.
      *
-     * @param gameVersion the Minecraft version that remote versions belong to
+     * @param gameVersion   the Minecraft version that remote versions belong to
      * @param remoteVersion the version of the remote version.
      * @return the specific remote version, null if it is not found.
      */

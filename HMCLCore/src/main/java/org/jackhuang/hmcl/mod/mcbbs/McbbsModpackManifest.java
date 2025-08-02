@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
@@ -329,9 +329,9 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
             return fileName;
         }
 
-        public URL getUrl() {
-            return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
-                    : NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
+        public URI getUrl() {
+            return url == null ? URI.create("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
+                    : URI.create(NetworkUtils.encodeLocation(url));
         }
 
         public CurseFile withFileName(String fileName) {

@@ -24,6 +24,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.versions.VersionPage;
 
 import java.util.function.Consumer;
 
@@ -54,11 +56,36 @@ public class AdvancedListBox extends ScrollPane {
         return this;
     }
 
-    public AdvancedListBox addNavigationDrawerItem(Consumer<AdvancedListItem> fn) {
+    private AdvancedListItem createNavigationDrawerItem(String title, SVG leftGraphic) {
         AdvancedListItem item = new AdvancedListItem();
         item.getStyleClass().add("navigation-drawer-item");
         item.setActionButtonVisible(false);
-        fn.accept(item);
+        item.setTitle(title);
+        if (leftGraphic != null) {
+            item.setLeftGraphic(VersionPage.wrap(leftGraphic));
+        }
+        return item;
+    }
+
+    public AdvancedListBox addNavigationDrawerItem(String title, SVG leftGraphic, Runnable onAction) {
+        return addNavigationDrawerItem(title, leftGraphic, onAction, null);
+    }
+
+    public AdvancedListBox addNavigationDrawerItem(String title, SVG leftGraphic, Runnable onAction, Consumer<AdvancedListItem> initializer) {
+        AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
+        if (onAction != null) {
+            item.setOnAction(e -> onAction.run());
+        }
+        if (initializer != null) {
+            initializer.accept(item);
+        }
+        return add(item);
+    }
+
+    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title, SVG leftGraphic) {
+        AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
+        item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
+        item.setOnAction(e -> tabHeader.select(tab));
         return add(item);
     }
 

@@ -20,21 +20,20 @@ package org.jackhuang.hmcl.task;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 import static java.util.Objects.requireNonNull;
 
 public class DownloadException extends IOException {
 
-    private final URL url;
+    private final URI uri;
 
-    public DownloadException(URL url, @NotNull Throwable cause) {
-        super("Unable to download " + url + ", " + cause.getMessage(), requireNonNull(cause));
-
-        this.url = url;
+    public DownloadException(URI uri, @NotNull Throwable cause) {
+        super("Unable to download " + uri + ", " + cause.getMessage(), requireNonNull(cause));
+        this.uri = uri;
     }
 
-    public URL getUrl() {
-        return url;
+    public URI getUri() {
+        return uri;
     }
 }

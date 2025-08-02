@@ -30,7 +30,7 @@ import com.jfoenix.controls.JFXListCell;
 import javafx.beans.binding.Bindings;
 import javafx.scene.text.Font;
 
-public class FontComboBox extends JFXComboBox<String> {
+public final class FontComboBox extends JFXComboBox<String> {
 
     private boolean loaded = false;
 

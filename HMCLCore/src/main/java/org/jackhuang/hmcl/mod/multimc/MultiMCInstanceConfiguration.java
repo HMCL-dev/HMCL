@@ -58,6 +58,7 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
     private final boolean overrideConsole; // OverrideConsole
     private final boolean overrideCommands; // OverrideCommands
     private final boolean overrideWindow; // OverrideWindow
+    private final String iconKey;
 
     private final MultiMCManifest mmcPack;
 
@@ -94,6 +95,7 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
         wrapperCommand = readValue(p, "WrapperCommand");
         name = defaultName;
         notes = Optional.ofNullable(readValue(p, "notes")).orElse("");
+        iconKey = readValue(p, "iconKey");
     }
 
     /**
@@ -112,7 +114,7 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
         return value;
     }
 
-    public MultiMCInstanceConfiguration(String instanceType, String name, String gameVersion, Integer permGen, String wrapperCommand, String preLaunchCommand, String postExitCommand, String notes, String javaPath, String jvmArgs, boolean fullscreen, Integer width, Integer height, Integer maxMemory, Integer minMemory, boolean showConsole, boolean showConsoleOnError, boolean autoCloseConsole, boolean overrideMemory, boolean overrideJavaLocation, boolean overrideJavaArgs, boolean overrideConsole, boolean overrideCommands, boolean overrideWindow) {
+    public MultiMCInstanceConfiguration(String instanceType, String name, String gameVersion, Integer permGen, String wrapperCommand, String preLaunchCommand, String postExitCommand, String notes, String javaPath, String jvmArgs, boolean fullscreen, Integer width, Integer height, Integer maxMemory, Integer minMemory, boolean showConsole, boolean showConsoleOnError, boolean autoCloseConsole, boolean overrideMemory, boolean overrideJavaLocation, boolean overrideJavaArgs, boolean overrideConsole, boolean overrideCommands, boolean overrideWindow, String iconKey) {
         this.instanceType = instanceType;
         this.name = name;
         this.gameVersion = gameVersion;
@@ -138,6 +140,7 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
         this.overrideCommands = overrideCommands;
         this.overrideWindow = overrideWindow;
         this.mmcPack = null;
+        this.iconKey = iconKey;
     }
 
     public String getInstanceType() {
@@ -310,6 +313,10 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
         return overrideWindow;
     }
 
+    public String getIconKey() {
+        return iconKey;
+    }
+
     public Properties toProperties() {
         Properties p = new Properties();
         if (instanceType != null) p.setProperty("InstanceType", instanceType);
@@ -336,6 +343,7 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
         if (wrapperCommand != null) p.setProperty("WrapperCommand", wrapperCommand);
         if (name != null) p.setProperty("name", name);
         if (notes != null) p.setProperty("notes", notes);
+        if (iconKey != null) p.setProperty("iconKey", iconKey);
         return p;
     }
 

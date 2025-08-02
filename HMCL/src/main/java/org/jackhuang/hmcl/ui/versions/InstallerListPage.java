@@ -114,6 +114,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
             for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                 String libraryId = mark.getLibraryId();
                 String libraryVersion = mark.getLibraryVersion();
+                if ("mcbbs".equals(libraryId))
+                    continue;
 
                 // we have done this library above.
                 if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)
@@ -172,7 +174,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         @Override
         protected List<Node> initializeToolbar(InstallerListPage skinnable) {
             return Collections.singletonList(
-                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.PLUS, skinnable::installOffline)
+                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.ADD, skinnable::installOffline)
             );
         }
     }

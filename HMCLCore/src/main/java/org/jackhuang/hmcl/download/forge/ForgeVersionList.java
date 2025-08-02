@@ -19,14 +19,15 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  *
@@ -53,8 +54,8 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(FORGE_LIST).getJsonAsync(ForgeVersionRoot.class)
+    public Task<?> refreshAsync() {
+        return new GetTask(FORGE_LIST).thenGetJsonAsync(ForgeVersionRoot.class)
                 .thenAcceptAsync(root -> {
                     lock.writeLock().lock();
 
@@ -95,5 +96,5 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                 });
     }
 
-    public static final String FORGE_LIST = "https://hmcl-dev.github.io/metadata/forge/";
+    public static final URI FORGE_LIST = URI.create("https://hmcl-dev.github.io/metadata/forge/");
 }

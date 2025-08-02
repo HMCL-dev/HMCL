@@ -34,8 +34,8 @@ public final class Lazy<T> {
     }
 
     public T get() {
-        if (value == null) {
-            value = Objects.requireNonNull(supplier.get());
+        if (supplier != null) {
+            value = supplier.get();
             supplier = null;
         }
         return value;

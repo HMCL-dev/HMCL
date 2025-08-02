@@ -1,0 +1,25 @@
+name: Check Codes
+
+on:
+  push:
+    paths:
+      - '**.java'
+      - '**.properties'
+  pull_request:
+    paths:
+      - '**.java'
+      - '**.properties'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          java-package: 'jdk+fx'
+      - name: Check Codes
+        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel

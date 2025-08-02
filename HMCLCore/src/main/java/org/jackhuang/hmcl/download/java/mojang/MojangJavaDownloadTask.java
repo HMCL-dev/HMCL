@@ -103,7 +103,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
                     File tempFile = target.resolve(entry.getKey() + ".lzma").toFile();
-                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile.toPath(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = target.resolve(entry.getKey() + ".tmp");
@@ -121,7 +121,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
                     DownloadInfo download = file.getDownloads().get("raw");
-                    FileDownloadTask task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), dest.toFile(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), dest, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     if (file.isExecutable()) {
                         dependencies.add(task.thenRunAsync(() -> dest.toFile().setExecutable(true)));

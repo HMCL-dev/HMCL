@@ -157,23 +157,5 @@ public class SpinnerPane extends Control {
         }
     }
 
-    public interface State {}
-
-    public static class LoadedState implements State {}
-
-    public static class LoadingState implements State {}
-
-    public static class FailedState implements State {
-        private final String reason;
-
-        public FailedState(String reason) {
-            this.reason = reason;
-        }
-
-        public String getReason() {
-            return reason;
-        }
-    }
-
     public static final EventType<Event> FAILED_ACTION = new EventType<>(Event.ANY, "FAILED_ACTION");
 }

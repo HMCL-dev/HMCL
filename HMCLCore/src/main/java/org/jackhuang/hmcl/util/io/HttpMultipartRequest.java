@@ -52,7 +52,7 @@ public final class HttpMultipartRequest implements Closeable {
         addLine(String.format("Content-Disposition: form-data; name=\"%s\"; filename=\"%s\"", name, filename));
         addLine("Content-Type: " + contentType);
         addLine("");
-        IOUtils.copyTo(inputStream, stream);
+        inputStream.transferTo(stream);
         addLine("");
         return this;
     }

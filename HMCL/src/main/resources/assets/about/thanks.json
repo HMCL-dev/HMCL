@@ -50,7 +50,8 @@
   {
     "image" : "/assets/img/red_lnn.png",
     "title" : "Red_lnn",
-    "subtitleLocalized" : "about.thanks_to.red_lnn.statement"
+    "subtitleLocalized" : "about.thanks_to.red_lnn.statement",
+    "externalLink" : "https://redlnn.top"
   },
   {
     "image" : "/assets/img/mcmod.png",
