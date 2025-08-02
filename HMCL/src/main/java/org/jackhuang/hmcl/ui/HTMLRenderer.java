@@ -22,7 +22,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.task.Task;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
