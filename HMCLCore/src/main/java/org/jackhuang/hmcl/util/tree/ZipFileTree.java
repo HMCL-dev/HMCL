@@ -51,12 +51,17 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
     @Override
     public void close() throws IOException {
         if (closeReader)
-            file.close();
+            reader.close();
+    }
+
+    @Override
+    public ZipArchiveEntry getEntry(String name) throws IOException {
+        return reader.getEntry(name);
     }
 
     @Override
     public InputStream getInputStream(ZipArchiveEntry entry) throws IOException {
-        return getFile().getInputStream(entry);
+        return getReader().getInputStream(entry);
     }
 
     @Override
@@ -66,7 +71,7 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
 
     @Override
     public String getLink(ZipArchiveEntry entry) throws IOException {
-        return getFile().getUnixSymlink(entry);
+        return getReader().getUnixSymlink(entry);
     }
 
     @Override

@@ -21,9 +21,9 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -43,9 +43,9 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
 
     @Override
     public void execute() throws Exception {
-        Path subdirectory;
-        try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(charset).build()) {
-            subdirectory = ModpackHelper.findMinecraftDirectoryInManuallyCreatedModpack(zipFile.toString(), fs);
+        String subdirectory;
+        try (var tree = new ZipFileTree(CompressingUtils.openZipFile(zipFile, charset))) {
+            subdirectory = ModpackHelper.findMinecraftDirectoryInManuallyCreatedModpack(zipFile, tree).getFullName();
         }
 
         Path dest = Paths.get("externalgames").resolve(name);
@@ -53,7 +53,7 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
         setResult(dest);
 
         new Unzipper(zipFile, dest)
-                .setSubDirectory(subdirectory.toString())
+                .setSubDirectory(subdirectory)
                 .setTerminateIfSubDirectoryNotExists()
                 .setEncoding(charset)
                 .unzip();

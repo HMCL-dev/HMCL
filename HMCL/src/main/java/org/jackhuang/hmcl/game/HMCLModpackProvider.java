@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
-import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -28,7 +27,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,10 +63,10 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader file, Path path, Charset encoding) throws IOException, JsonParseException {
-        String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json");
+    public Modpack readManifest(ZipFileTree tree, Path file, Charset encoding) throws IOException, JsonParseException {
+        String manifestJson = tree.readTextEntry("modpack.json");
         Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
-        String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
+        String gameJson = tree.readTextEntry("minecraft/pack.json");
         Version game = JsonUtils.fromNonNullJson(gameJson, Version.class);
         if (game.getJar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))

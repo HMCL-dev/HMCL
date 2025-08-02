@@ -99,8 +99,19 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
     }
 
     @Override
+    public TarArchiveEntry getEntry(String name) throws IOException {
+        for (TarArchiveEntry entry : reader.getEntries()) {
+            if (entry.getName().equals(name)) {
+                return entry;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
     public InputStream getInputStream(TarArchiveEntry entry) throws IOException {
-        return file.getInputStream(entry);
+        return reader.getInputStream(entry);
     }
 
     @Override
@@ -121,7 +132,7 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
     @Override
     public void close() throws IOException {
         try {
-            file.close();
+            reader.close();
         } finally {
             if (tempFile != null) {
                 Runtime.getRuntime().removeShutdownHook(shutdownHook);

@@ -24,8 +24,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -50,16 +53,18 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
         }
     }
 
-    protected final F file;
-    protected final Dir<E> root = new Dir<>("");
+    protected final F reader;
+    protected final Dir<E> root = new Dir<>("", "");
 
-    public ArchiveFileTree(F file) {
-        this.file = file;
+    public ArchiveFileTree(F reader) {
+        this.reader = reader;
     }
 
-    public F getFile() {
-        return file;
+    public F getReader() {
+        return reader;
     }
+
+    public abstract @Nullable E getEntry(String name) throws IOException;
 
     public Dir<E> getRoot() {
         return root;
@@ -67,6 +72,7 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
 
     protected void addEntry(E entry) throws IOException {
         String[] path = entry.getName().split("/");
+        List<String> pathList = Arrays.asList(path);
 
         Dir<E> dir = root;
 
@@ -81,7 +87,10 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
                 throw new IOException("A file and a directory have the same name: " + entry.getName());
             }
 
-            dir = dir.subDirs.computeIfAbsent(item, Dir::new);
+            final int nameEnd = i + 1;
+            dir = dir.subDirs.computeIfAbsent(item, name ->
+                    new Dir<>(name,
+                            String.join("/", pathList.subList(0, nameEnd))));
         }
 
         if (entry.isDirectory()) {
@@ -106,6 +115,17 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
 
     public abstract InputStream getInputStream(E entry) throws IOException;
 
+    public String readTextEntry(String entryPath) throws IOException {
+        return readTextEntry(entryPath, StandardCharsets.UTF_8);
+    }
+
+    public String readTextEntry(String entryPath, Charset encoding) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+        return new String(getInputStream(entry).readAllBytes(), encoding);
+    }
+
     public abstract boolean isLink(E entry);
 
     public abstract String getLink(E entry) throws IOException;
@@ -117,13 +137,15 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
 
     public static final class Dir<E extends ArchiveEntry> {
         private final String name;
+        private final String fullName;
         private E entry;
 
         final Map<String, Dir<E>> subDirs = new HashMap<>();
         final Map<String, E> files = new HashMap<>();
 
-        public Dir(String name) {
+        public Dir(String name, String fullName) {
             this.name = name;
+            this.fullName = fullName;
         }
 
         public boolean isRoot() {
@@ -132,6 +154,10 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
 
         public @NotNull String getName() {
             return name;
+        }
+
+        public @NotNull String getFullName() {
+            return fullName;
         }
 
         public @Nullable E getEntry() {
