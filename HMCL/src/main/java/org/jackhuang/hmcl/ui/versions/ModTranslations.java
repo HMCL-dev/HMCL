@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.versions;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
