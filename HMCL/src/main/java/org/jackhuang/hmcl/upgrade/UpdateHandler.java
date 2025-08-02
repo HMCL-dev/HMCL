@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 
+import org.intellij.lang.annotations.RegExp;
 import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
@@ -35,6 +36,8 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -147,24 +150,23 @@ public final class UpdateHandler {
     private static void applyUpdate(Path target) throws IOException {
         LOG.info("Applying update to " + target);
 
-        Path self = getCurrentLocation();
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new IOException("Self verification failed");
         }
-        ExecutableHeaderHelper.copyWithHeader(self, target);
 
-        Optional<Path> newFilename = tryRename(target, Metadata.VERSION);
-        if (newFilename.isPresent()) {
-            LOG.info("Move " + target + " to " + newFilename.get());
+        Path self = getCurrentLocation();
+        Path newTarget = tryRename(target, UpdateChannel.getChannel(), Metadata.VERSION);
+        ExecutableHeaderHelper.copyWithHeader(self, newTarget);
+        if (!newTarget.equals(target)) {
+            LOG.info("Rename " + target + " to " + newTarget);
             try {
-                Files.move(target, newFilename.get());
-                target = newFilename.get();
+                Files.deleteIfExists(target);
             } catch (IOException e) {
-                LOG.warning("Failed to move target", e);
+                LOG.warning("Failed to delete old file " + target, e);
             }
         }
 
-        startJava(target);
+        startJava(newTarget);
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
@@ -191,6 +193,35 @@ public final class UpdateHandler {
                 .directory(Paths.get("").toAbsolutePath().toFile())
                 .inheritIO()
                 .start();
+    }
+
+    private static @NotNull Path tryRename(@NotNull Path path, @NotNull UpdateChannel newChannel, @NotNull String newVersion) {
+        String filename = path.getFileName().toString();
+        String newFileName = tryRename(filename, newChannel, newVersion);
+        return newFileName != null ? path.resolveSibling(newFileName) : path;
+    }
+
+    static @Nullable String tryRename(@NotNull String fileName, @NotNull UpdateChannel newChannel, @NotNull String newVersion) {
+        @RegExp final var prefixPattern = "[hH][mM][cC][lL]-";
+        @RegExp final var channelPattern = "(?:dev|stable)-";
+        @RegExp final var versionPattern = "\\d+(?:\\.\\d+)*(?:\\.(?:SNAPSHOT|(?:dev|unofficial)-[0-9a-f]{7}))?";
+        @RegExp final var suffixPattern = "\\.(?:jar|exe|sh)";
+
+        Matcher matcher = Pattern.compile(String.format(
+                        "^(?<prefix>%s)(?<channel>%s)?(?<version>%s)(?<suffix>%s)$",
+                        prefixPattern, channelPattern, versionPattern, suffixPattern))
+                .matcher(fileName);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(matcher.group("prefix"));
+        if (matcher.group("channel") != null)
+            builder.append(newChannel.channelName).append('-');
+        builder.append(newVersion);
+        builder.append(matcher.group("suffix"));
+        return builder.toString();
     }
 
     private static Optional<Path> tryRename(Path path, String newVersion) {
