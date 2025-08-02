@@ -64,7 +64,26 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
         return reader;
     }
 
-    public abstract @Nullable E getEntry(String name) throws IOException;
+    public @Nullable E getEntry(@NotNull String name) {
+        String[] path = name.split("/");
+        if (path.length == 0)
+            return root.getEntry();
+
+        Dir<E> dir = root;
+        for (int i = 0; i < path.length - 1; i++) {
+            dir = dir.getSubDirs().get(path[i]);
+            if (dir == null)
+                return null;
+        }
+
+        String fileName = path[path.length - 1];
+        E entry = dir.getFiles().get(fileName);
+        if (entry != null)
+            return null;
+
+        Dir<E> subDir = dir.getSubDirs().get(fileName);
+        return subDir != null ? subDir.getEntry() : null;
+    }
 
     public Dir<E> getRoot() {
         return root;

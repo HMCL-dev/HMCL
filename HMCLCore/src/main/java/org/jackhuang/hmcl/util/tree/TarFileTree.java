@@ -99,17 +99,6 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
     }
 
     @Override
-    public TarArchiveEntry getEntry(String name) throws IOException {
-        for (TarArchiveEntry entry : reader.getEntries()) {
-            if (entry.getName().equals(name)) {
-                return entry;
-            }
-        }
-
-        return null;
-    }
-
-    @Override
     public InputStream getInputStream(TarArchiveEntry entry) throws IOException {
         return reader.getInputStream(entry);
     }

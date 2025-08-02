@@ -21,6 +21,7 @@ import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,6 +143,10 @@ public final class CompressingUtils {
 
         zipReader.close();
         return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
+    }
+
+    public static ZipFileTree openZipFileTree(Path zipFile) throws IOException {
+        return new ZipFileTree(openZipFile(zipFile));
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {

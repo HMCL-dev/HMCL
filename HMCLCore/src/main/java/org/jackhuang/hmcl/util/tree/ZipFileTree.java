@@ -55,11 +55,6 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
     }
 
     @Override
-    public ZipArchiveEntry getEntry(String name) throws IOException {
-        return reader.getEntry(name);
-    }
-
-    @Override
     public InputStream getInputStream(ZipArchiveEntry entry) throws IOException {
         return getReader().getInputStream(entry);
     }

@@ -37,6 +37,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -328,12 +329,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             ImageView imageView = new ImageView();
             Task.supplyAsync(() -> {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
+                try (var tree = CompressingUtils.openZipFileTree(modInfo.getModInfo().getFile())) {
                     String logoPath = modInfo.getModInfo().getLogoPath();
                     if (StringUtils.isNotBlank(logoPath)) {
-                        Path iconPath = fs.getPath(logoPath);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
+                        ZipArchiveEntry iconEntry = tree.getEntry(logoPath);
+                        if (iconEntry != null) {
+                            try (InputStream stream = tree.getInputStream(iconEntry)) {
                                 Image image = new Image(stream, 40, 40, true, true);
                                 if (!image.isError() && image.getWidth() == image.getHeight())
                                     return image;
@@ -365,12 +366,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     }
 
                     for (String path : defaultPaths) {
-                        Path iconPath = fs.getPath(path);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
+                        ZipArchiveEntry iconEntry = tree.getEntry(path);
+                        if (iconEntry != null) {
+                            try (InputStream stream = tree.getInputStream(iconEntry)) {
                                 Image image = new Image(stream, 40, 40, true, true);
                                 if (!image.isError() && image.getWidth() == image.getHeight())
                                     return image;
+                            } catch (Throwable e) {
+                                LOG.warning("Failed to load image " + logoPath, e);
                             }
                         }
                     }
