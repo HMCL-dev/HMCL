@@ -84,6 +84,7 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     private final Path file;
     private final IntegrityCheck integrityCheck;
+    private boolean caching;
     private Path candidate;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
 
@@ -132,7 +133,7 @@ public class FileDownloadTask extends FetchTask<Void> {
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck) {
-        this(uris, path, integrityCheck, 3);
+        this(uris, path, integrityCheck, DEFAULT_RETRY);
     }
 
     /**
@@ -153,6 +154,10 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     public Path getPath() {
         return file;
+    }
+
+    public void setCaching(boolean caching) {
+        this.caching = caching;
     }
 
     public FileDownloadTask setCandidate(Path candidate) {

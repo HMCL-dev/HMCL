@@ -190,10 +190,12 @@ public final class HTMLRenderer {
                 }
             }
 
-            Image image = FXUtils.newRemoteImage(uri.toString(), width, height, true, true, false);
-            if (image.isError()) {
-                LOG.warning("Failed to load image: " + uri, image.getException());
-            } else {
+            try {
+                Image image = FXUtils.getRemoteImageTask(uri.toString(), width, height, true, true)
+                        .run();
+                if (image == null)
+                    throw new AssertionError("Image loading task returned null");
+
                 ImageView imageView = new ImageView(image);
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
@@ -204,6 +206,8 @@ public final class HTMLRenderer {
                 }
                 children.add(imageView);
                 return;
+            } catch (Throwable e) {
+                LOG.warning("Failed to load image: " + uri, e);
             }
         }
 

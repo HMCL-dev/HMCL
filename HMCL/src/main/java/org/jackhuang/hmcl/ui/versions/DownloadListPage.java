@@ -68,6 +68,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -542,7 +543,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .collect(Collectors.toList()));
 
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.setImage(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true, true));
+                            LOG.debug("Icon: " + dataItem.getIconUrl());
+                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
                         }
                     }
                 });

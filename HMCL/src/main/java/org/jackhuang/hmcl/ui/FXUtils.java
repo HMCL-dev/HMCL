@@ -29,6 +29,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.*;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
@@ -44,10 +45,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
@@ -57,9 +55,8 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.png.PNGType;
-import org.glavo.png.PNGWriter;
-import org.glavo.png.javafx.PNGJavaFXUtils;
+import org.jackhuang.hmcl.task.CacheFileTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.*;
@@ -82,13 +79,18 @@ import javax.imageio.stream.ImageInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -169,18 +171,8 @@ public final class FXUtils {
     );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
-    private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
 
     public static void shutdown() {
-        for (Map.Entry<String, Path> entry : remoteImageCache.entrySet()) {
-            try {
-                Files.deleteIfExists(entry.getValue());
-            } catch (IOException e) {
-                LOG.warning(String.format("Failed to delete cache file %s.", entry.getValue()), e);
-            }
-            remoteImageCache.remove(entry.getKey());
-        }
-
         builtinImageCache.clear();
     }
 
@@ -903,78 +895,55 @@ public final class FXUtils {
         }
     }
 
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url the url of image. The image resource should be a file on the internet.
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url) {
-        return newRemoteImage(url, 0, 0, false, false, false);
+    public static Task<Image> getRemoteImageTask(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(URI.create(url))
+                .thenApplyAsync(file -> {
+                    try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
+                        var header = new byte[12];
+                        var buffer = ByteBuffer.wrap(header);
+
+                        //noinspection StatementWithEmptyBody
+                        while (channel.read(buffer) > 0) {
+                        }
+
+                        channel.position(0L);
+                        if (!buffer.hasRemaining()) {
+                            // WebP File
+                            if (header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F' &&
+                                    header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
+
+                                WebPImageReaderSpi spi = new WebPImageReaderSpi();
+                                ImageReader reader = spi.createReaderInstance(null);
+                                BufferedImage bufferedImage;
+                                try (ImageInputStream imageInput = ImageIO.createImageInputStream(Channels.newInputStream(channel))) {
+                                    reader.setInput(imageInput, true, true);
+                                    bufferedImage = reader.read(0, reader.getDefaultReadParam());
+                                } finally {
+                                    reader.dispose();
+                                }
+                                return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
+                            }
+                        }
+
+                        Image image = new Image(Channels.newInputStream(channel), requestedWidth, requestedHeight, preserveRatio, smooth);
+                        if (image.isError())
+                            throw image.getException();
+                        return image;
+                    }
+                });
     }
 
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url             the url of image. The image resource should be a file on the internet.
-     * @param requestedWidth  the image's bounding box width
-     * @param requestedHeight the image's bounding box height
-     * @param preserveRatio   indicates whether to preserve the aspect ratio of
-     *                        the original image when scaling to fit the image within the
-     *                        specified bounding box
-     * @param smooth          indicates whether to use a better quality filtering
-     *                        algorithm or a faster one when scaling this image to fit within
-     *                        the specified bounding box
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
-        Path currentPath = remoteImageCache.get(url);
-        if (currentPath != null) {
-            if (Files.isReadable(currentPath)) {
-                try (InputStream inputStream = Files.newInputStream(currentPath)) {
-                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
-                } catch (IOException e) {
-                    LOG.warning("An exception encountered while reading data from cached image file.", e);
-                }
-            }
-
-            // The file is unavailable or unreadable.
-            remoteImageCache.remove(url);
-
-            try {
-                Files.deleteIfExists(currentPath);
-            } catch (IOException e) {
-                LOG.warning("An exception encountered while deleting broken cached image file.", e);
-            }
-        }
-
-        Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
-        image.progressProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
-                Task.runAsync(() -> {
-                    Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
-                          OutputStream outputStream = Files.newOutputStream(newPath);
-                          PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
-                    ) {
-                        writer.write(PNGJavaFXUtils.asArgbImage(image));
-                    } catch (IOException e) {
-                        try {
-                            Files.delete(newPath);
-                        } catch (IOException e2) {
-                            e2.addSuppressed(e);
-                            throw e2;
-                        }
-                        throw e;
+    public static ObservableValue<Image> newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        var image = new SimpleObjectProperty<Image>();
+        getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        image.set(result);
+                    } else {
+                        LOG.warning("An exception encountered while loading remote image: " + url, exception);
                     }
-                    if (remoteImageCache.putIfAbsent(url, newPath) != null) {
-                        Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
-                    }
-                }).start();
-            }
-        });
+                })
+                .start();
         return image;
     }
 
