@@ -63,7 +63,7 @@ public final class CacheFileTask extends FetchTask<Path> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag) throws IOException {
+    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
         assert checkETag;
 
         Path temp = Files.createTempFile("hmcl-download-", null);
