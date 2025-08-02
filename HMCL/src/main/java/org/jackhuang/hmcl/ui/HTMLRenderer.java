@@ -191,11 +191,13 @@ public final class HTMLRenderer {
                 }
             }
 
-            Task<Image> task = FXUtils.getRemoteImageTask(uri.toString(), width, height, true, true);
-            task.start();
-
             try {
-                ImageView imageView = new ImageView(task.getResult());
+                Image image = FXUtils.getRemoteImageTask(uri.toString(), width, height, true, true)
+                        .run();
+                if (image == null)
+                    throw new AssertionError("Image loading task returned null");
+
+                ImageView imageView = new ImageView(image);
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
                     if (target != null) {
