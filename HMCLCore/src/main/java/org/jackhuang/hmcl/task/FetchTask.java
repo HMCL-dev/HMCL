@@ -300,43 +300,6 @@ public abstract class FetchTask<T> extends Task<T> {
         CACHED
     }
 
-    protected static final class DownloadState {
-        private final int startPosition;
-        private final int endPosition;
-        private final int currentPosition;
-        private final boolean finished;
-
-        public DownloadState(int startPosition, int endPosition, int currentPosition) {
-            if (currentPosition < startPosition || currentPosition > endPosition) {
-                throw new IllegalArgumentException("Illegal download state: start " + startPosition + ", end " + endPosition + ", cur " + currentPosition);
-            }
-            this.startPosition = startPosition;
-            this.endPosition = endPosition;
-            this.currentPosition = currentPosition;
-            finished = currentPosition == endPosition;
-        }
-
-        public int getStartPosition() {
-            return startPosition;
-        }
-
-        public int getEndPosition() {
-            return endPosition;
-        }
-
-        public int getCurrentPosition() {
-            return currentPosition;
-        }
-
-        public boolean isFinished() {
-            return finished;
-        }
-    }
-
-    protected static final class DownloadMission {
-
-    }
-
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
     private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
     private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
