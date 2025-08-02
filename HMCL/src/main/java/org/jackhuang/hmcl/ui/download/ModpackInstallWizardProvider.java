@@ -18,11 +18,11 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
@@ -102,7 +102,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
             } catch (MismatchedModpackTypeException e) {
-                Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageType.ERROR);
+                Controllers.dialog(i18n("modpack.mismatched_type", e.getRequired(), e.getFound()), i18n("message.error"), MessageType.ERROR);
             } catch (IOException e) {
                 Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageType.ERROR);
             }
