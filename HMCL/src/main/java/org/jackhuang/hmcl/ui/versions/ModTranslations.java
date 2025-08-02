@@ -23,6 +23,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -121,9 +124,11 @@ public enum ModTranslations {
             return true;
         }
 
-        try {
-            String modData = IOUtils.readFullyAsString(ModTranslations.class.getResourceAsStream(resourceName));
-            mods = Arrays.stream(modData.split("\n")).filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());
+        //noinspection DataFlowIssue
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        ModTranslations.class.getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
+            mods = reader.lines().filter(line -> !line.startsWith("#")).map(Mod::new).collect(Collectors.toList());
             return true;
         } catch (Exception e) {
             LOG.warning("Failed to load " + resourceName, e);
