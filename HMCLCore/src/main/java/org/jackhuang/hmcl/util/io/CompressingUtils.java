@@ -145,12 +145,12 @@ public final class CompressingUtils {
         return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
     }
 
-    public static ZipFileTree openZipFileTree(Path zipFile) throws IOException {
-        return new ZipFileTree(openZipFile(zipFile));
-    }
-
     public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
         return new ZipArchiveReader(zipFile, charset);
+    }
+
+    public static ZipFileTree openZipFileTree(Path zipFile) throws IOException {
+        return new ZipFileTree(openZipFile(zipFile));
     }
 
     public static final class Builder {
@@ -199,19 +199,11 @@ public final class CompressingUtils {
     }
 
     public static FileSystem createReadOnlyZipFileSystem(Path zipFile) throws IOException {
-        return createReadOnlyZipFileSystem(zipFile, null);
-    }
-
-    public static FileSystem createReadOnlyZipFileSystem(Path zipFile, Charset charset) throws IOException {
-        return createZipFileSystem(zipFile, false, false, charset);
+        return createZipFileSystem(zipFile, false, false, null);
     }
 
     public static FileSystem createWritableZipFileSystem(Path zipFile) throws IOException {
-        return createWritableZipFileSystem(zipFile, null);
-    }
-
-    public static FileSystem createWritableZipFileSystem(Path zipFile, Charset charset) throws IOException {
-        return createZipFileSystem(zipFile, true, true, charset);
+        return createZipFileSystem(zipFile, true, true, null);
     }
 
     public static FileSystem createZipFileSystem(Path zipFile, boolean create, boolean useTempFile, Charset encoding) throws IOException {

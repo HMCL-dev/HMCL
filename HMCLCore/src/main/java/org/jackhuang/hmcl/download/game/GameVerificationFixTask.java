@@ -66,7 +66,7 @@ public final class GameVerificationFixTask extends Task<Void> {
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, gameVersion);
 
         if (jar.exists() && GameVersionNumber.compare(gameVersion, "1.6") < 0 && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
-            try (FileSystem fs = CompressingUtils.createWritableZipFileSystem(jar.toPath(), StandardCharsets.UTF_8)) {
+            try (FileSystem fs = CompressingUtils.createZipFileSystem(jar.toPath(), true, true, StandardCharsets.UTF_8)) {
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.DSA"));
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.SF"));
             }
