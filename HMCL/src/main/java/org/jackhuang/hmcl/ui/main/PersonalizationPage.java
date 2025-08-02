@@ -19,10 +19,12 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.When;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -30,10 +32,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
@@ -55,6 +54,20 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
+
+    private static int snapOpacity(double val) {
+        if (val <= 0) {
+            return 0;
+        } else if (Double.isNaN(val) || val >= 100.) {
+            return 100;
+        }
+
+        int prevTick = (int) (val / 5);
+        int prevTickValue = prevTick * 5;
+        int nextTickValue = (prevTick + 1) * 5;
+
+        return (val - prevTickValue) > (nextTickValue - val) ? nextTickValue : prevTickValue;
+    }
 
     public PersonalizationPage() {
         VBox content = new VBox(10);
@@ -127,7 +140,46 @@ public class PersonalizationPage extends StackPane {
                             .then(i18n("launcher.background.default"))
                             .otherwise(config().backgroundImageProperty()));
 
-            componentList.getContent().add(backgroundItem);
+            HBox opacityItem = new HBox(8);
+            {
+                opacityItem.setAlignment(Pos.CENTER);
+
+                Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
+
+                JFXSlider slider = new JFXSlider(0, 100, config().getBackgroundImageOpacity());
+                slider.setShowTickMarks(true);
+                slider.setMajorTickUnit(10);
+                slider.setMinorTickCount(1);
+                slider.setBlockIncrement(5);
+                slider.setSnapToTicks(true);
+                HBox.setHgrow(slider, Priority.ALWAYS);
+
+                Label textOpacity = new Label();
+
+                StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
+                textOpacity.textProperty().bind(valueBinding);
+                slider.setValueFactory(s -> valueBinding);
+
+                slider.valueProperty().addListener((observable, oldValue, newValue) ->
+                        config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
+
+                config().backgroundImageTypeProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue != EnumBackgroundImage.TRANSLUCENT && oldValue != EnumBackgroundImage.TRANSLUCENT)
+                        return;
+
+                    final int opacity = snapOpacity(slider.getValue());
+                    if (newValue == EnumBackgroundImage.TRANSLUCENT) {
+                        if (opacity == 100)
+                            slider.setValue(50);
+                    } else {
+                        slider.setValue(100);
+                    }
+                });
+
+                opacityItem.getChildren().setAll(label, slider, textOpacity);
+            }
+
+            componentList.getContent().setAll(backgroundItem, opacityItem);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
         }
 

@@ -87,6 +87,9 @@ public final class Config implements Observable {
     @SerializedName("bgurl")
     private StringProperty backgroundImageUrl = new SimpleStringProperty();
 
+    @SerializedName("bgImageOpacity")
+    private IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
+
     @SerializedName("commonDirType")
     private ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
 
@@ -272,6 +275,18 @@ public final class Config implements Observable {
 
     public void setBackgroundImageUrl(String backgroundImageUrl) {
         this.backgroundImageUrl.set(backgroundImageUrl);
+    }
+
+    public int getBackgroundImageOpacity() {
+        return backgroundImageOpacity.get();
+    }
+
+    public void setBackgroundImageOpacity(int backgroundImageOpacity) {
+        this.backgroundImageOpacity.set(backgroundImageOpacity);
+    }
+
+    public IntegerProperty backgroundImageOpacityProperty() {
+        return backgroundImageOpacity;
     }
 
     public EnumCommonDirectory getCommonDirType() {

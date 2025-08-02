@@ -31,6 +31,9 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -55,6 +58,7 @@ import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -73,8 +77,8 @@ import static java.util.stream.Collectors.toList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.newBuiltinImage;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DecoratorController {
     private static final String PROPERTY_DIALOG_CLOSE_HANDLER = DecoratorController.class.getName() + ".dialog.closeListener";
@@ -124,18 +128,12 @@ public class DecoratorController {
 
         // Setup background
         decorator.setContentBackground(getBackground());
-        changeBackgroundListener = o -> {
-            final int currentCount = ++this.changeBackgroundCount;
-            CompletableFuture.supplyAsync(this::getBackground, Schedulers.io())
-                    .thenAcceptAsync(background -> {
-                        if (this.changeBackgroundCount == currentCount)
-                            decorator.setContentBackground(background);
-                    }, Schedulers.javafx());
-        };
+        changeBackgroundListener = o -> updateBackground();
         WeakInvalidationListener weakListener = new WeakInvalidationListener(changeBackgroundListener);
         config().backgroundImageTypeProperty().addListener(weakListener);
         config().backgroundImageProperty().addListener(weakListener);
         config().backgroundImageUrlProperty().addListener(weakListener);
+        config().backgroundImageOpacityProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -196,6 +194,16 @@ public class DecoratorController {
     @SuppressWarnings("FieldCanBeLocal") // Strong reference
     private final InvalidationListener changeBackgroundListener;
 
+    private void updateBackground() {
+        LOG.info("updateBackground");
+        final int currentCount = ++this.changeBackgroundCount;
+        CompletableFuture.supplyAsync(this::getBackground, Schedulers.io())
+                .thenAcceptAsync(background -> {
+                    if (this.changeBackgroundCount == currentCount)
+                        decorator.setContentBackground(background);
+                }, Schedulers.javafx());
+    }
+
     private Background getBackground() {
         EnumBackgroundImage imageType = config().getBackgroundImageType();
 
@@ -224,12 +232,45 @@ public class DecoratorController {
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
             case TRANSLUCENT:
-                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
+                return new Background(new BackgroundFill(new Color(1, 1, 1, Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.), CornerRadii.EMPTY, Insets.EMPTY));
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
         }
-        return new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, new BackgroundSize(800, 480, false, false, true, true)));
+        return createBackgroundWithOpacity(image, config().getBackgroundImageOpacity());
+    }
+
+    private Background createBackgroundWithOpacity(Image image, int opacity) {
+        if (opacity <= 0) {
+            return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
+        } else if (opacity >= 100) {
+            return new Background(new BackgroundImage(
+                    image,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundPosition.DEFAULT,
+                    new BackgroundSize(800, 480, false, false, true, true)
+            ));
+        } else {
+            WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
+            PixelReader pixelReader = image.getPixelReader();
+            PixelWriter pixelWriter = tempImage.getPixelWriter();
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    Color color = pixelReader.getColor(x, y);
+                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity / 100);
+                    pixelWriter.setColor(x, y, newColor);
+                }
+            }
+
+            return new Background(new BackgroundImage(
+                    tempImage,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundPosition.DEFAULT,
+                    new BackgroundSize(800, 480, false, false, true, true)
+            ));
+        }
     }
 
     /**
