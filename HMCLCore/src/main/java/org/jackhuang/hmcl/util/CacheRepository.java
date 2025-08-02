@@ -24,8 +24,10 @@ import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
@@ -92,6 +94,7 @@ public class CacheRepository {
     }
 
     protected Path getFile(String algorithm, String hash) {
+        hash = hash.toLowerCase(Locale.ROOT);
         return getCacheDirectory().resolve(algorithm).resolve(hash.substring(0, 2)).resolve(hash);
     }
 
@@ -121,7 +124,7 @@ public class CacheRepository {
         return cache;
     }
 
-    public Optional<Path> checkExistentFile(Path original, String algorithm, String hash) {
+    public Optional<Path> checkExistentFile(@Nullable Path original, String algorithm, String hash) {
         if (fileExists(algorithm, hash))
             return Optional.of(getFile(algorithm, hash));
 
@@ -177,7 +180,7 @@ public class CacheRepository {
         }
     }
 
-    public void injectConnection(URLConnection conn) {
+    public void injectConnection(HttpURLConnection conn) {
         conn.setUseCaches(true);
 
         URI uri;
@@ -258,11 +261,13 @@ public class CacheRepository {
             if (oldItem == null) {
                 return newItem;
             } else if (force || oldItem.compareTo(newItem) < 0) {
-                Path cached = getFile(SHA1, oldItem.hash);
-                try {
-                    Files.deleteIfExists(cached);
-                } catch (IOException e) {
-                    LOG.warning("Cannot delete old file");
+                if (!oldItem.hash.equalsIgnoreCase(newItem.hash)) {
+                    Path cached = getFile(SHA1, oldItem.hash);
+                    try {
+                        Files.deleteIfExists(cached);
+                    } catch (IOException e) {
+                        LOG.warning("Cannot delete old file");
+                    }
                 }
                 return newItem;
             } else {

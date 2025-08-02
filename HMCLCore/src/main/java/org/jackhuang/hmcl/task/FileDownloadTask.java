@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -38,7 +39,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -70,15 +70,9 @@ public class FileDownloadTask extends FetchTask<Void> {
             return checksum;
         }
 
-        public MessageDigest createDigest() {
-            return getDigest(algorithm);
-        }
-
-        public void performCheck(MessageDigest digest) throws ChecksumMismatchException {
-            String actualChecksum = Hex.encodeHex(digest.digest());
-            if (!checksum.equalsIgnoreCase(actualChecksum)) {
-                throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
-            }
+        @Override
+        public String toString() {
+            return String.format("IntegrityCheck[algorithm='%s', checksum='%s']", algorithm, checksum);
         }
     }
 
@@ -200,11 +194,25 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag) throws IOException {
+    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
-        MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
-        OutputStream fileOutput = Files.newOutputStream(temp);
 
+        String algorithm;
+        String checksum;
+        if (integrityCheck != null) {
+            algorithm = integrityCheck.getAlgorithm();
+            checksum = integrityCheck.getChecksum();
+        } else if (bmclapiHash != null) {
+            algorithm = "SHA-1";
+            checksum = bmclapiHash;
+        } else {
+            algorithm = null;
+            checksum = null;
+        }
+
+        MessageDigest digest = algorithm != null ? DigestUtils.getDigest(algorithm) : null;
+
+        OutputStream fileOutput = Files.newOutputStream(temp);
         return new Context() {
             @Override
             public void write(byte[] buffer, int offset, int len) throws IOException {
@@ -245,13 +253,16 @@ public class FileDownloadTask extends FetchTask<Void> {
                 }
 
                 // Integrity check
-                if (integrityCheck != null) {
-                    integrityCheck.performCheck(digest);
+                if (checksum != null) {
+                    String actualChecksum = Hex.encodeHex(digest.digest());
+                    if (!checksum.equalsIgnoreCase(actualChecksum)) {
+                        throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+                    }
                 }
 
-                if (caching && integrityCheck != null) {
+                if (caching && algorithm != null) {
                     try {
-                        repository.cacheFile(file, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+                        repository.cacheFile(file, algorithm, checksum);
                     } catch (IOException e) {
                         LOG.warning("Failed to cache file", e);
                     }

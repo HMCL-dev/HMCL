@@ -72,7 +72,7 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag) {
+    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) {
         return new Context() {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 

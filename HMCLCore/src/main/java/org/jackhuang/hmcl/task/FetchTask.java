@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
@@ -73,7 +75,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected abstract EnumCheckETag shouldCheckETag();
 
-    protected abstract Context getContext(URLConnection connection, boolean checkETag) throws IOException;
+    protected abstract Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException;
 
     @Override
     public void execute() throws Exception {
@@ -100,18 +102,66 @@ public abstract class FetchTask<T> extends Task<T> {
                 }
 
                 List<String> redirects = null;
+                String bmclapiHash = null;
                 try {
                     beforeDownload(uri);
-
                     updateProgress(0);
 
                     URLConnection conn = NetworkUtils.createConnection(uri);
-                    if (checkETag) repository.injectConnection(conn);
 
                     if (conn instanceof HttpURLConnection) {
-                        redirects = new ArrayList<>();
+                        var httpConnection = (HttpURLConnection) conn;
 
-                        conn = NetworkUtils.resolveConnection((HttpURLConnection) conn, redirects);
+                        if (checkETag) repository.injectConnection(httpConnection);
+                        Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
+
+                        bmclapiHash = httpConnection.getHeaderField("x-bmclapi-hash");
+                        if (DigestUtils.isSha1Digest(bmclapiHash)) {
+                            Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
+                            if (cache.isPresent()) {
+                                useCachedResult(cache.get());
+                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                                return;
+                            }
+                        } else {
+                            bmclapiHash = null;
+                        }
+
+                        while (true) {
+                            int code = httpConnection.getResponseCode();
+                            if (code >= 300 && code <= 308 && code != 306 && code != 304) {
+                                if (redirects == null) {
+                                    redirects = new ArrayList<>();
+                                } else if (redirects.size() >= 20) {
+                                    httpConnection.disconnect();
+                                    throw new IOException("Too much redirects");
+                                }
+
+                                URL prevUrl = httpConnection.getURL();
+                                String location = httpConnection.getHeaderField("Location");
+
+                                httpConnection.disconnect();
+                                if (location == null || location.isBlank()) {
+                                    throw new IOException("Redirected to an empty location");
+                                }
+
+                                URL target = new URL(prevUrl, NetworkUtils.encodeLocation(location));
+                                redirects.add(target.toString());
+
+                                HttpURLConnection redirected = (HttpURLConnection) target.openConnection();
+                                redirected.setUseCaches(checkETag);
+                                redirected.setConnectTimeout(NetworkUtils.TIME_OUT);
+                                redirected.setReadTimeout(NetworkUtils.TIME_OUT);
+                                redirected.setInstanceFollowRedirects(false);
+                                requestProperties
+                                        .forEach((key, value) -> value.forEach(element ->
+                                                redirected.addRequestProperty(key, element)));
+                                httpConnection = redirected;
+                            } else {
+                                break;
+                            }
+                        }
+                        conn = httpConnection;
                         int responseCode = ((HttpURLConnection) conn).getResponseCode();
 
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
@@ -137,7 +187,8 @@ public abstract class FetchTask<T> extends Task<T> {
                     }
 
                     long contentLength = conn.getContentLength();
-                    try (Context context = getContext(conn, checkETag); InputStream stream = conn.getInputStream()) {
+                    try (Context context = getContext(conn, checkETag, bmclapiHash);
+                         InputStream stream = conn.getInputStream()) {
                         int lastDownloaded = 0, downloaded = 0;
                         byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                         while (true) {
@@ -173,13 +224,13 @@ public abstract class FetchTask<T> extends Task<T> {
                 } catch (FileNotFoundException ex) {
                     failedURI = uri;
                     exception = ex;
-                    LOG.warning("Failed to download " + uri + ", not found" + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
 
                     break; // we will not try this URL again
                 } catch (IOException ex) {
                     failedURI = uri;
                     exception = ex;
-                    LOG.warning("Failed to download " + uri + ", repeat times: " + (++repeat) + ((redirects == null || redirects.isEmpty()) ? "" : ", redirects: " + redirects), ex);
+                    LOG.warning("Failed to download " + uri + ", repeat times: " + (++repeat) + (redirects == null ? "" : ", redirects: " + redirects), ex);
                 }
             }
         }
@@ -247,43 +298,6 @@ public abstract class FetchTask<T> extends Task<T> {
         CHECK_E_TAG,
         NOT_CHECK_E_TAG,
         CACHED
-    }
-
-    protected static final class DownloadState {
-        private final int startPosition;
-        private final int endPosition;
-        private final int currentPosition;
-        private final boolean finished;
-
-        public DownloadState(int startPosition, int endPosition, int currentPosition) {
-            if (currentPosition < startPosition || currentPosition > endPosition) {
-                throw new IllegalArgumentException("Illegal download state: start " + startPosition + ", end " + endPosition + ", cur " + currentPosition);
-            }
-            this.startPosition = startPosition;
-            this.endPosition = endPosition;
-            this.currentPosition = currentPosition;
-            finished = currentPosition == endPosition;
-        }
-
-        public int getStartPosition() {
-            return startPosition;
-        }
-
-        public int getEndPosition() {
-            return endPosition;
-        }
-
-        public int getCurrentPosition() {
-            return currentPosition;
-        }
-
-        public boolean isFinished() {
-            return finished;
-        }
-    }
-
-    protected static final class DownloadMission {
-
     }
 
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
