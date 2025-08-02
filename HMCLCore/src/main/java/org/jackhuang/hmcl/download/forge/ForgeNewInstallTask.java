@@ -42,10 +42,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
-import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jetbrains.annotations.NotNull;
 
-import javax.print.DocFlavor;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -385,9 +383,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                         Collections.emptyMap(),
                         str -> {
                             Path dest = Files.createTempFile(tempDir, null, null);
-                            tree.extractTo();
-
-                            FileUtils.copyFile(fs.getPath(str), dest);
+                            tree.extractTo(str, dest);
                             return dest.toString();
                         }));
             }

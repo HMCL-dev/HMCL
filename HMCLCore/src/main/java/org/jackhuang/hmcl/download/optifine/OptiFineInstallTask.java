@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
@@ -232,13 +233,13 @@ public final class OptiFineInstallTask extends Task<Version> {
      */
     public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
-        if (!gameVersion.isPresent()) throw new IOException();
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            Path configClass = fs.getPath("Config.class");
-            if (!Files.exists(configClass)) configClass = fs.getPath("net/optifine/Config.class");
-            if (!Files.exists(configClass)) configClass = fs.getPath("notch/net/optifine/Config.class");
-            if (!Files.exists(configClass)) throw new IOException("Unrecognized installer");
-            ConstantPool pool = ConstantPoolScanner.parse(Files.readAllBytes(configClass), ConstantType.UTF8);
+        if (gameVersion.isEmpty()) throw new IOException();
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
+            ZipArchiveEntry configClass = tree.getEntry("Config.class");
+            if (configClass == null) configClass = tree.getEntry("net/optifine/Config.class");
+            if (configClass == null) configClass = tree.getEntry("notch/net/optifine/Config.class");
+            if (configClass == null) throw new IOException("Unrecognized installer");
+            ConstantPool pool = ConstantPoolScanner.parse(tree.readBinaryEntry(configClass), ConstantType.UTF8);
             List<String> constants = new ArrayList<>();
             pool.list(Utf8Constant.class).forEach(utf8 -> constants.add(utf8.get()));
             String mcVersion = getOrDefault(constants, constants.indexOf("MC_VERSION") + 1, null);

@@ -15,12 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
-import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;

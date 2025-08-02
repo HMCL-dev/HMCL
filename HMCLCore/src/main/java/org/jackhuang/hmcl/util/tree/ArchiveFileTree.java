@@ -27,7 +27,6 @@ import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -156,15 +155,21 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
         return getInputStream(entry);
     }
 
-    public String readTextEntry(@NotNull String entryPath) throws IOException {
-        return readTextEntry(entryPath, StandardCharsets.UTF_8);
+    public byte[] readBinaryEntry(@NotNull E entry) throws IOException {
+        try (InputStream input = getInputStream(entry)) {
+            return input.readAllBytes();
+        }
     }
 
-    public String readTextEntry(@NotNull String entryPath, @NotNull Charset encoding) throws IOException {
+    public String readTextEntry(@NotNull String entryPath) throws IOException {
         E entry = getEntry(entryPath);
         if (entry == null)
             throw new FileNotFoundException("Entry not found: " + entryPath);
-        return new String(getInputStream(entry).readAllBytes(), encoding);
+        return readTextEntry(entry);
+    }
+
+    public String readTextEntry(@NotNull E entry) throws IOException {
+        return new String(readBinaryEntry(entry), StandardCharsets.UTF_8);
     }
 
     protected void copyAttributes(@NotNull E source, @NotNull Path targetFile) throws IOException {
