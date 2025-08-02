@@ -46,9 +46,10 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
+    protected static final int DEFAULT_RETRY = 3;
+
     protected final List<URI> uris;
     protected final int retry;
-    protected boolean caching;
     protected CacheRepository repository = CacheRepository.getInstance();
 
     public FetchTask(@NotNull List<@NotNull URI> uris, int retry) {
@@ -61,10 +62,6 @@ public abstract class FetchTask<T> extends Task<T> {
             throw new IllegalArgumentException("At least one URL is required");
 
         setExecutor(download());
-    }
-
-    public void setCaching(boolean caching) {
-        this.caching = caching;
     }
 
     public void setCacheRepository(CacheRepository repository) {

@@ -203,20 +203,20 @@ public class CacheRepository {
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }
 
-    public void cacheRemoteFile(URLConnection connection, Path downloaded) throws IOException {
-        cacheData(connection, () -> {
+    public Path cacheRemoteFile(URLConnection connection, Path downloaded) throws IOException {
+        return cacheData(connection, () -> {
             String hash = DigestUtils.digestToString(SHA1, downloaded);
             Path cached = cacheFile(downloaded, SHA1, hash);
             return new CacheResult(hash, cached);
         });
     }
 
-    public void cacheText(URLConnection connection, String text) throws IOException {
-        cacheBytes(connection, text.getBytes(UTF_8));
+    public Path cacheText(URLConnection connection, String text) throws IOException {
+        return cacheBytes(connection, text.getBytes(UTF_8));
     }
 
-    public void cacheBytes(URLConnection connection, byte[] bytes) throws IOException {
-        cacheData(connection, () -> {
+    public Path cacheBytes(URLConnection connection, byte[] bytes) throws IOException {
+        return cacheData(connection, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
             FileUtils.writeBytes(cached, bytes);
@@ -224,9 +224,9 @@ public class CacheRepository {
         });
     }
 
-    private void cacheData(URLConnection connection, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
+    private Path cacheData(URLConnection connection, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
         String eTag = connection.getHeaderField("ETag");
-        if (StringUtils.isBlank(eTag)) return;
+        if (StringUtils.isBlank(eTag)) return null;
         URI uri;
         try {
             uri = NetworkUtils.dropQuery(connection.getURL().toURI());
@@ -243,6 +243,7 @@ public class CacheRepository {
         } finally {
             lock.writeLock().unlock();
         }
+        return cacheResult.cachedFile;
     }
 
     private static final class CacheResult {

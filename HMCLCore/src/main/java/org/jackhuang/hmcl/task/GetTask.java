@@ -36,8 +36,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public final class GetTask extends FetchTask<String> {
 
-    private static final int DEFAULT_RETRY = 3;
-
     private final Charset charset;
 
     public GetTask(URI url) {

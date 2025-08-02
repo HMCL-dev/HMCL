@@ -68,6 +68,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -229,6 +230,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
+        private final JFXListView<RemoteMod> listView = new JFXListView<>();
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
@@ -449,6 +451,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         boolean disableNext = disableAll || pageOffset == pageCount - 1;
                         nextPageButton.setDisable(disableNext);
                         lastPageButton.setDisable(disableNext);
+
+                        listView.scrollTo(0);
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
@@ -504,7 +508,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                 });
 
-                JFXListView<RemoteMod> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
                 FXUtils.onClicked(listView, () -> {
@@ -540,7 +543,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .collect(Collectors.toList()));
 
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.setImage(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true, true));
+                            LOG.debug("Icon: " + dataItem.getIconUrl());
+                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
                         }
                     }
                 });
