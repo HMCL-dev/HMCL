@@ -241,6 +241,10 @@ public class Library implements Comparable<Library>, Validation {
         return hint;
     }
 
+    public Library withoutCommunityFields() {
+        return new Library(artifact, url, downloads, checksums, extract, natives, rules, null, null);
+    }
+
     /**
      * Available when hint is "local"
      *
