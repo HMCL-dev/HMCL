@@ -29,7 +29,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 
 /**
@@ -64,22 +67,32 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
         return reader;
     }
 
-    public @Nullable E getEntry(@NotNull String name) {
-        String[] path = name.split("/");
-        if (path.length == 0)
-            return root.getEntry();
-
+    public @Nullable E getEntry(@NotNull String entryPath) {
         Dir<E> dir = root;
-        for (int i = 0; i < path.length - 1; i++) {
-            dir = dir.getSubDirs().get(path[i]);
-            if (dir == null)
+        String fileName;
+        if (entryPath.indexOf('/') < 0) {
+            fileName = entryPath;
+            if (fileName.isEmpty())
+                return root.getEntry();
+        } else {
+            String[] path = entryPath.split("/");
+            if (path.length == 0)
+                return root.getEntry();
+
+            for (int i = 0; i < path.length - 1; i++) {
+                String item = path[i];
+                if (item.isEmpty())
+                    continue;
+                dir = dir.getSubDirs().get(path[i]);
+                if (dir == null)
+                    return null;
+            }
+
+            fileName = path[path.length - 1];
+            E entry = dir.getFiles().get(fileName);
+            if (entry != null)
                 return null;
         }
-
-        String fileName = path[path.length - 1];
-        E entry = dir.getFiles().get(fileName);
-        if (entry != null)
-            return null;
 
         Dir<E> subDir = dir.getSubDirs().get(fileName);
         return subDir != null ? subDir.getEntry() : null;
@@ -134,15 +147,35 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
 
     public abstract InputStream getInputStream(E entry) throws IOException;
 
-    public String readTextEntry(String entryPath) throws IOException {
+    public @NotNull InputStream getInputStream(String entryPath) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+        return getInputStream(entry);
+    }
+
+    public String readTextEntry(@NotNull String entryPath) throws IOException {
         return readTextEntry(entryPath, StandardCharsets.UTF_8);
     }
 
-    public String readTextEntry(String entryPath, Charset encoding) throws IOException {
+    public String readTextEntry(@NotNull String entryPath, @NotNull Charset encoding) throws IOException {
         E entry = getEntry(entryPath);
         if (entry == null)
             throw new FileNotFoundException("Entry not found: " + entryPath);
         return new String(getInputStream(entry).readAllBytes(), encoding);
+    }
+
+    protected void copyAttributes(@NotNull E source, @NotNull Path targetFile) throws IOException {
+        FileTime lastModifiedTime = source.getLastModifiedTime();
+        if (lastModifiedTime != null)
+            Files.setLastModifiedTime(targetFile, lastModifiedTime);
+    }
+
+    public void extractTo(@NotNull E entry, @NotNull Path targetFile) throws IOException {
+        try (InputStream input = getInputStream(entry)) {
+            Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        copyAttributes(entry, targetFile);
     }
 
     public abstract boolean isLink(E entry);

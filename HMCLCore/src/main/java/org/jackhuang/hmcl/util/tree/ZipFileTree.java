@@ -20,9 +20,14 @@ package org.jackhuang.hmcl.util.tree;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
 
 /**
  * @author Glavo
@@ -52,6 +57,19 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
     public void close() throws IOException {
         if (closeReader)
             reader.close();
+    }
+
+    @Override
+    protected void copyAttributes(@NotNull ZipArchiveEntry source, @NotNull Path targetFile) throws IOException {
+        var fileAttributeView = Files.getFileAttributeView(targetFile, BasicFileAttributeView.class);
+        if (fileAttributeView == null)
+            return;
+
+        fileAttributeView.setTimes(
+                source.getLastModifiedTime(),
+                source.getLastAccessTime(),
+                source.getCreationTime()
+        );
     }
 
     @Override
