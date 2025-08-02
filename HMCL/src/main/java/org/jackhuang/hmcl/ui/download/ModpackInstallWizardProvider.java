@@ -102,7 +102,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
             } catch (MismatchedModpackTypeException e) {
-                Controllers.dialog(i18n("modpack.mismatched_type", e.getFound(), e.getRequired()), i18n("message.error"), MessageType.ERROR);
+                Controllers.dialog(i18n("modpack.mismatched_type", e.getRequired(), e.getFound()), i18n("message.error"), MessageType.ERROR);
             } catch (IOException e) {
                 Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageType.ERROR);
             }
