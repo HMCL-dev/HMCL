@@ -61,10 +61,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -135,6 +132,7 @@ public class DecoratorController {
         config().backgroundImageTypeProperty().addListener(weakListener);
         config().backgroundImageProperty().addListener(weakListener);
         config().backgroundImageUrlProperty().addListener(weakListener);
+        config().backgroundPaintProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -224,6 +222,8 @@ public class DecoratorController {
                 break;
             case TRANSLUCENT:
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
+            case PAINT:
+                return new Background(new BackgroundFill(Objects.requireNonNullElse(config().getBackgroundPaint(), Color.WHITE), CornerRadii.EMPTY, Insets.EMPTY));
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
