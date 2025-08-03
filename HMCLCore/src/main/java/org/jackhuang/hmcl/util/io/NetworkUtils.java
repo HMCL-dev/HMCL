@@ -303,7 +303,7 @@ public final class NetworkUtils {
 
     static final Pattern CHARSET_REGEX = Pattern.compile("\\s*(charset)\\s*=\\s*['|\"]?(?<charset>[^\"^';,]+)['|\"]?");
 
-    static Charset getCharsetFromContentType(String contentType) {
+    public static Charset getCharsetFromContentType(String contentType) {
         if (contentType == null || contentType.isBlank())
             return UTF_8;
 
