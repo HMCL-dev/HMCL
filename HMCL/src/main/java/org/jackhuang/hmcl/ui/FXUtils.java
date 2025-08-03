@@ -60,6 +60,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.io.DataUri;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -838,6 +839,18 @@ public final class FXUtils {
 
     public static Image loadImage(String url) throws Exception {
         URI uri = NetworkUtils.toURI(url);
+        if (DataUri.isDataUri(uri)) {
+            DataUri dataUri = new DataUri(uri);
+            if ("image/webp".equalsIgnoreCase(dataUri.getMediaType())) {
+                return loadWebPImage(new ByteArrayInputStream(dataUri.readBytes()));
+            } else {
+                Image image = new Image(new ByteArrayInputStream(dataUri.readBytes()));
+                if (image.isError())
+                    throw image.getException();
+                return image;
+            }
+        }
+
         URLConnection connection = NetworkUtils.createConnection(uri);
         if (connection instanceof HttpURLConnection) {
             connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);

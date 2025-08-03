@@ -19,22 +19,23 @@ package org.jackhuang.hmcl.util.io;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public final class DataUriTest {
 
-    private static String readString(String uri) {
-        return DataUri.readString(URI.create(uri));
+    private static String readString(String uri) throws IOException {
+        return new DataUri(URI.create(uri)).readString();
     }
 
-    private static byte[] readBytes(String uri) {
-        return DataUri.readBytes(URI.create(uri));
+    private static byte[] readBytes(String uri) throws IOException {
+        return new DataUri(URI.create(uri)).readBytes();
     }
 
     @Test
-    public void testReadString() {
+    public void testReadString() throws IOException {
         assertEquals("Hello, World!", readString("data:,Hello%2C%20World%21"));
         assertEquals("Hello, World!", readString("data:text/plain;base64,SGVsbG8sIFdvcmxkIQ=="));
         assertEquals("<h1>Hello, World!</h1>", readString("data:text/html,%3Ch1%3EHello%2C%20World%21%3C%2Fh1%3E"));
