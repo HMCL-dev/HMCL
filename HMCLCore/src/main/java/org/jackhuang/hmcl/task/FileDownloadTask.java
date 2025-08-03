@@ -19,10 +19,10 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Hex;
-import org.jackhuang.hmcl.util.UriUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -105,7 +105,7 @@ public class FileDownloadTask extends FetchTask<Void> {
      * @param path the location that download to.
      */
     public FileDownloadTask(String uri, Path path) {
-        this(List.of(UriUtils.toURI(uri)), path, null);
+        this(List.of(NetworkUtils.toURI(uri)), path, null);
     }
 
     /**
@@ -114,7 +114,7 @@ public class FileDownloadTask extends FetchTask<Void> {
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(String uri, Path path, IntegrityCheck integrityCheck) {
-        this(List.of(UriUtils.toURI(uri)), path, integrityCheck);
+        this(List.of(NetworkUtils.toURI(uri)), path, integrityCheck);
     }
 
     /**

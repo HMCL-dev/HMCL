@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.task;
 
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -36,25 +36,18 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public final class GetTask extends FetchTask<String> {
 
-    private final Charset charset;
-
-    public GetTask(URI url) {
-        this(url, UTF_8);
+    public GetTask(String uri) {
+        this(NetworkUtils.toURI(uri));
     }
 
-    public GetTask(URI url, Charset charset) {
-        this(List.of(url), charset);
+    public GetTask(URI url) {
+        this(List.of(url));
+        setName(url.toString());
     }
 
     public GetTask(List<URI> url) {
-        this(url, UTF_8);
-    }
-
-    public GetTask(List<URI> urls, Charset charset) {
-        super(urls);
-        this.charset = charset;
-
-        setName(urls.get(0).toString());
+        super(url);
+        setName(url.get(0).toString());
     }
 
     @Override
@@ -81,7 +74,7 @@ public final class GetTask extends FetchTask<String> {
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(charset);
+                String result = baos.toString(UTF_8);
                 setResult(result);
 
                 if (checkETag) {

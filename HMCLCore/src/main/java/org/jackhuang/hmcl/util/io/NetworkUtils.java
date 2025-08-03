@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.*;
@@ -120,6 +121,10 @@ public final class NetworkUtils {
             httpConnection.setInstanceFollowRedirects(false);
         }
         return connection;
+    }
+
+    public static HttpURLConnection createHttpConnection(String url) throws IOException {
+        return (HttpURLConnection) createConnection(toURI(url));
     }
 
     public static HttpURLConnection createHttpConnection(URI url) throws IOException {
@@ -326,6 +331,31 @@ public final class NetworkUtils {
 
     public static String decodeURL(String toDecode) {
         return URLDecoder.decode(toDecode, UTF_8);
+    }
+
+    /// @throws IllegalArgumentException if the string is not a valid URI
+    public static @NotNull URI toURI(@NotNull String uri) {
+        try {
+            return new URI(uri);
+        } catch (URISyntaxException e) {
+            try {
+                return new URI(uri.replaceAll(" ", "%20"));
+            } catch (URISyntaxException ignored) {
+                throw new IllegalArgumentException("Invalid URI: " + uri, e);
+            }
+        }
+    }
+
+    public static @NotNull URI toURI(@NotNull URL url) {
+        try {
+            return url.toURI();
+        } catch (URISyntaxException e) {
+            try {
+                return new URI(url.toExternalForm().replaceAll(" ", "%20"));
+            } catch (URISyntaxException ignored) {
+                throw new IllegalArgumentException("Invalid URI: " + url, e);
+            }
+        }
     }
     // ====
 
