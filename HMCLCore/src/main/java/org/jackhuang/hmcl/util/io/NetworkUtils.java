@@ -373,19 +373,16 @@ public final class NetworkUtils {
 
     /// @throws IllegalArgumentException if the string is not a valid URI
     public static @NotNull URI toURI(@NotNull String uri) {
-        return URI.create(encodeLocation(uri));
+        try {
+            return new URI(encodeLocation(uri));
+        } catch (URISyntaxException e) {
+            // Possibly an Internationalized Domain Name (IDN)
+            return URI.create(uri);
+        }
     }
 
     public static @NotNull URI toURI(@NotNull URL url) {
-        try {
-            return url.toURI();
-        } catch (URISyntaxException e) {
-            try {
-                return new URI(url.toExternalForm().replaceAll(" ", "%20"));
-            } catch (URISyntaxException ignored) {
-                throw new IllegalArgumentException("Invalid URI: " + url, e);
-            }
-        }
+        return toURI(url.toExternalForm());
     }
     // ====
 
