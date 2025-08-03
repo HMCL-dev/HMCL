@@ -159,16 +159,20 @@ public final class NetworkUtils {
 
         for (; i < location.length(); i++) {
             char ch = location.charAt(i);
-            if (Character.isHighSurrogate(ch)) {
-                if (i < location.length() - 1) {
+            if (Character.isSurrogate(ch)) {
+                if (Character.isHighSurrogate(ch) && i < location.length() - 1) {
                     char ch2 = location.charAt(i + 1);
                     if (Character.isLowSurrogate(ch2)) {
                         int codePoint = Character.toCodePoint(ch, ch2);
-                        builder.append(Character.toString(codePoint));
+                        builder.append(encodeURL(Character.toString(codePoint)));
                         i++;
                         continue;
                     }
                 }
+
+                // Invalid surrogate pair, encode as '?'
+                builder.append("%3F");
+                continue;
             }
 
             if (ch == ' ') {
@@ -178,30 +182,11 @@ public final class NetworkUtils {
                     builder.append('+');
             } else if (ch == '?') {
                 left = false;
+                builder.append('?');
             } else if (ch >= 0x80) {
                 builder.append(encodeURL(Character.toString(ch)));
             } else {
                 builder.append(ch);
-            }
-        }
-
-        for (char ch : location.toCharArray()) {
-            switch (ch) {
-                case ' ':
-                    if (left)
-                        builder.append("%20");
-                    else
-                        builder.append('+');
-                    break;
-                case '?':
-                    left = false;
-                    // fallthrough
-                default:
-                    if (ch >= 0x80)
-                        builder.append(encodeURL(Character.toString(ch)));
-                    else
-                        builder.append(ch);
-                    break;
             }
         }
 
