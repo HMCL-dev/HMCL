@@ -234,10 +234,10 @@ public class CacheRepository {
         }
         String lastModified = connection.getHeaderField("Last-Modified");
         CacheResult cacheResult = cacheSupplier.get();
-        ETagItem eTagItem = new ETagItem(uri, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
+        ETagItem eTagItem = new ETagItem(uri.toString(), eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
         lock.writeLock().lock();
         try {
-            index.compute(eTagItem.url, updateEntity(eTagItem, true));
+            index.compute(uri, updateEntity(eTagItem, true));
             saveETagIndex();
         } finally {
             lock.writeLock().unlock();
@@ -281,7 +281,7 @@ public class CacheRepository {
         for (Collection<ETagItem> eTagItems : indexes) {
             if (eTagItems != null) {
                 for (ETagItem eTag : eTagItems) {
-                    eTags.compute(eTag.url, updateEntity(eTag, false));
+                    eTags.compute(NetworkUtils.toURI(eTag.url), updateEntity(eTag, false));
                 }
             }
         }
@@ -330,7 +330,7 @@ public class CacheRepository {
     }
 
     private static final class ETagItem {
-        private final URI url;
+        private final String url;
         private final String eTag;
         private final String hash;
         @SerializedName("local")
@@ -345,7 +345,7 @@ public class CacheRepository {
             this(null, null, null, 0, null);
         }
 
-        public ETagItem(URI url, String eTag, String hash, long localLastModified, String remoteLastModified) {
+        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified) {
             this.url = url;
             this.eTag = eTag;
             this.hash = hash;
