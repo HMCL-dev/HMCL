@@ -133,7 +133,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException rce = (ResponseCodeException) exception.getCause();
                 int responseCode = rce.getResponseCode();
-                URI uri = rce.getUri();
+                String uri = rce.getUri();
                 if (responseCode == 404)
                     message += i18n("download.code.404", uri);
                 else

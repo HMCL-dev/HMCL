@@ -37,11 +37,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class CacheFileTask extends FetchTask<Path> {
 
     public CacheFileTask(@NotNull URI uri) {
-        super(List.of(uri), DEFAULT_RETRY);
-    }
-
-    public CacheFileTask(@NotNull URI uri, int retry) {
-        super(List.of(uri), retry);
+        super(List.of(uri));
     }
 
     @Override

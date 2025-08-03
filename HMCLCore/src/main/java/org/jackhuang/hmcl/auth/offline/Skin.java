@@ -176,8 +176,8 @@ public class Skin {
 
                             return Task.allOf(
                                     Task.supplyAsync(result::getModel),
-                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getHash())), 3),
-                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getCapeHash())), 3)
+                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getHash()))),
+                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getCapeHash())))
                             );
                         }).thenApplyAsync(result -> {
                             if (result == null) {
@@ -229,8 +229,8 @@ public class Skin {
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
 
-        public FetchBytesTask(URI uri, int retry) {
-            super(List.of(uri), retry);
+        public FetchBytesTask(URI uri) {
+            super(List.of(uri));
         }
 
         @Override

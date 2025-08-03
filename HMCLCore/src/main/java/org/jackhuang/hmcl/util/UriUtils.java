@@ -45,7 +45,11 @@ public final class UriUtils {
         try {
             return url.toURI();
         } catch (URISyntaxException e) {
-
+            try {
+                return new URI(url.toExternalForm().replaceAll(" ", "%20"));
+            } catch (URISyntaxException ignored) {
+                throw new IllegalArgumentException("Invalid URI: " + url, e);
+            }
         }
     }
 

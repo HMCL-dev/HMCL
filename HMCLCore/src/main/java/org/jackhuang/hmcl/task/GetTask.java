@@ -43,19 +43,15 @@ public final class GetTask extends FetchTask<String> {
     }
 
     public GetTask(URI url, Charset charset) {
-        this(url, charset, DEFAULT_RETRY);
-    }
-
-    public GetTask(URI url, Charset charset, int retry) {
-        this(List.of(url), charset, retry);
+        this(List.of(url), charset);
     }
 
     public GetTask(List<URI> url) {
-        this(url, UTF_8, DEFAULT_RETRY);
+        this(url, UTF_8);
     }
 
-    public GetTask(List<URI> urls, Charset charset, int retry) {
-        super(urls, retry);
+    public GetTask(List<URI> urls, Charset charset) {
+        super(urls);
         this.charset = charset;
 
         setName(urls.get(0).toString());

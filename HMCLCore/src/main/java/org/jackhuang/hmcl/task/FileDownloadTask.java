@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Hex;
+import org.jackhuang.hmcl.util.UriUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -100,13 +101,20 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     /**
+     * @param uri  the URI of remote file.
+     * @param path the location that download to.
+     */
+    public FileDownloadTask(String uri, Path path) {
+        this(List.of(UriUtils.toURI(uri)), path, null);
+    }
+
+    /**
      * @param uri            the URI of remote file.
      * @param path           the location that download to.
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry          the times for retrying if downloading fails.
      */
-    public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck, int retry) {
-        this(List.of(uri), path, integrityCheck, retry);
+    public FileDownloadTask(String uri, Path path, IntegrityCheck integrityCheck) {
+        this(List.of(UriUtils.toURI(uri)), path, integrityCheck);
     }
 
     /**
@@ -127,19 +135,7 @@ public class FileDownloadTask extends FetchTask<Void> {
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck) {
-        this(uris, path, integrityCheck, DEFAULT_RETRY);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uris           uris of remote file, will be attempted in order.
-     * @param path           the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry          the times for retrying if downloading fails.
-     */
-    public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck, int retry) {
-        super(uris, retry);
+        super(uris);
         this.file = path;
         this.integrityCheck = integrityCheck;
 

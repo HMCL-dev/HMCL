@@ -49,19 +49,25 @@ public abstract class FetchTask<T> extends Task<T> {
     protected static final int DEFAULT_RETRY = 3;
 
     protected final List<URI> uris;
-    protected final int retry;
+    protected int retry = DEFAULT_RETRY;
     protected CacheRepository repository = CacheRepository.getInstance();
 
-    public FetchTask(@NotNull List<@NotNull URI> uris, int retry) {
+    public FetchTask(@NotNull List<@NotNull URI> uris) {
         Objects.requireNonNull(uris);
 
         this.uris = List.copyOf(uris);
-        this.retry = retry;
 
         if (this.uris.isEmpty())
             throw new IllegalArgumentException("At least one URL is required");
 
         setExecutor(download());
+    }
+
+    public void setRetry(int retry) {
+        if (retry <= 0)
+            throw new IllegalArgumentException("Retry count must be greater than 0");
+
+        this.retry = retry;
     }
 
     public void setCacheRepository(CacheRepository repository) {
