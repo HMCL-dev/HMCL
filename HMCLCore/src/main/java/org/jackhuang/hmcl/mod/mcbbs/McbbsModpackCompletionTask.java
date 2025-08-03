@@ -200,7 +200,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                 McbbsModpackManifest.CurseFile file = (McbbsModpackManifest.CurseFile) rawFile;
                                                 if (StringUtils.isBlank(file.getFileName())) {
                                                     try {
-                                                        return file.withFileName(NetworkUtils.detectFileName(file.getUrl()));
+                                                        return file.withFileName(NetworkUtils.detectFileName(NetworkUtils.toURI(file.getUrl())));
                                                     } catch (IOException e) {
                                                         try {
                                                             String result = NetworkUtils.doGet(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID()));
