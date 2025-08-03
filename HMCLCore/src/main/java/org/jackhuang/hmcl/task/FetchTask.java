@@ -173,7 +173,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
                             // Handle cache
                             try {
-                                Path cache = repository.getCachedRemoteFile(conn.getURL().toURI());
+                                Path cache = repository.getCachedRemoteFile(NetworkUtils.toURI(conn.getURL()));
                                 useCachedResult(cache);
                                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
                                 return;

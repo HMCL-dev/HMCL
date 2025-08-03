@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -185,8 +184,8 @@ public class CacheRepository {
 
         URI uri;
         try {
-            uri = NetworkUtils.dropQuery(conn.getURL().toURI());
-        } catch (URISyntaxException e) {
+            uri = NetworkUtils.dropQuery(NetworkUtils.toURI(conn.getURL()));
+        } catch (IllegalArgumentException e) {
             return;
         }
         ETagItem eTagItem;
@@ -229,8 +228,8 @@ public class CacheRepository {
         if (StringUtils.isBlank(eTag)) return null;
         URI uri;
         try {
-            uri = NetworkUtils.dropQuery(connection.getURL().toURI());
-        } catch (URISyntaxException e) {
+            uri = NetworkUtils.dropQuery(NetworkUtils.toURI(connection.getURL()));
+        } catch (IllegalArgumentException e) {
             throw new IOException(e);
         }
         String lastModified = connection.getHeaderField("Last-Modified");
