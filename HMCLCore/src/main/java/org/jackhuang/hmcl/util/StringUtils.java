@@ -52,6 +52,16 @@ public final class StringUtils {
         return !isBlank(str);
     }
 
+    public static int indexOf(String str, char ch, int begin, int end) {
+        Objects.checkFromToIndex(begin, end, str.length());
+        for (int i = begin; i < end; i++) {
+            if (str.charAt(i) == ch) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static String normalizeWhitespaces(String str) {
         if (str == null)
             return "";
@@ -87,7 +97,7 @@ public final class StringUtils {
                         builder.append(str, start, i);
                     }
                     builder.append(' ');
-                    i = whitespaceEnd ;
+                    i = whitespaceEnd;
                     continue;
                 }
             }
