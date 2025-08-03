@@ -205,6 +205,10 @@ public final class NetworkUtils {
         return conn;
     }
 
+    public static String doGet(String uri) throws IOException {
+        return doGet(toURI(uri));
+    }
+
     public static String doGet(URI uri) throws IOException {
         return readFullyAsString(resolveConnection(createHttpConnection(uri)));
     }

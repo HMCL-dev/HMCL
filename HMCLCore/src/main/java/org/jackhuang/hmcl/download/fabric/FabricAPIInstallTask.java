@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -59,7 +58,7 @@ public final class FabricAPIInstallTask extends Task<Version> {
     @Override
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
-                URI.create(remote.getVersion().getFile().getUrl()),
+                remote.getVersion().getFile().getUrl(),
                 dependencyManager.getGameRepository().getRunDirectory(version.getId()).toPath().resolve("mods").resolve("fabric-api-" + remote.getVersion().getVersion() + ".jar"),
                 remote.getVersion().getFile().getIntegrityCheck())
         );
