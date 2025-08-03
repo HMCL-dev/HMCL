@@ -62,7 +62,7 @@ public final class Config implements Observable {
             .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
             .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
             .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
-            .registerTypeAdapter(PaintAdapter.class, new PaintAdapter())
+            .registerTypeAdapter(Paint.class, new PaintAdapter())
             .setPrettyPrinting()
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
