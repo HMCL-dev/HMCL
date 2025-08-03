@@ -319,14 +319,6 @@ public final class NetworkUtils {
         }
     }
 
-    public static URI toURI(URL url) {
-        try {
-            return url.toURI();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
     // ==== Shortcut methods for encoding/decoding URLs in UTF-8 ====
     public static String encodeURL(String toEncode) {
         return URLEncoder.encode(toEncode, UTF_8);

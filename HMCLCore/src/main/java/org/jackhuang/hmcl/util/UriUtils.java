@@ -17,8 +17,38 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 /**
  * @author Glavo
  */
-public final class URIUtils {
+public final class UriUtils {
+
+    /// @throws IllegalArgumentException if the string is not a valid URI
+    public static @NotNull URI toURI(@NotNull String uri) {
+        try {
+            return new URI(uri);
+        } catch (URISyntaxException e) {
+            try {
+                return new URI(uri.replaceAll(" ", "%20"));
+            } catch (URISyntaxException ignored) {
+                throw new IllegalArgumentException("Invalid URI: " + uri, e);
+            }
+        }
+    }
+
+    public static @NotNull URI toURI(@NotNull URL url) {
+        try {
+            return url.toURI();
+        } catch (URISyntaxException e) {
+
+        }
+    }
+
+    private UriUtils() {
+    }
 }
