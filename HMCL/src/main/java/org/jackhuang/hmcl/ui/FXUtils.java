@@ -897,7 +897,7 @@ public final class FXUtils {
     }
 
     public static Task<Image> getRemoteImageTask(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
-        return new CacheFileTask(URI.create(url))
+        return new CacheFileTask(url)
                 .thenApplyAsync(file -> {
                     try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
                         var header = new byte[12];

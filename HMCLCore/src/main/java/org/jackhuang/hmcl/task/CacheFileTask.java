@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -35,6 +36,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class CacheFileTask extends FetchTask<Path> {
+
+    public CacheFileTask(@NotNull String uri) {
+        super(List.of(NetworkUtils.toURI(uri)));
+    }
 
     public CacheFileTask(@NotNull URI uri) {
         super(List.of(uri));

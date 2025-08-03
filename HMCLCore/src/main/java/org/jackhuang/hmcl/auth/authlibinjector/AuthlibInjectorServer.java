@@ -29,6 +29,7 @@ import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -85,15 +86,15 @@ public class AuthlibInjectorServer implements Observable {
     }
 
     private static String addHttpsIfMissing(String url) throws IOException {
-        URI uri = URI.create(url);
-
-        if (uri.getScheme() == null) {
-            return "https://" + url;
-        } else if (!NetworkUtils.isHttpUri(uri)) {
-            throw new IOException("Yggdrasil server should be an HTTP or HTTPS URI, but got: " + url);
-        } else {
+        if (Pattern.compile("^(?<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://").matcher(url).find())
             return url;
-        }
+
+        if (url.startsWith("//"))
+            return "https:" + url;
+        else if (url.startsWith("/"))
+            return "https:/" + url;
+        else
+            return "https://" + url;
     }
 
     private static boolean urlEqualsIgnoreSlash(String a, String b) {
