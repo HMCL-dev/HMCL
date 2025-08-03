@@ -131,6 +131,10 @@ public final class NetworkUtils {
         return (HttpURLConnection) createConnection(url);
     }
 
+    private static void encodeCodePoint(StringBuilder builder, int codePoint) {
+        builder.append(encodeURL(Character.toString(codePoint)));
+    }
+
     /**
      * @param location the url to be URL encoded
      * @return encoded URL
@@ -164,7 +168,7 @@ public final class NetworkUtils {
                     char ch2 = location.charAt(i + 1);
                     if (Character.isLowSurrogate(ch2)) {
                         int codePoint = Character.toCodePoint(ch, ch2);
-                        builder.append(encodeURL(Character.toString(codePoint)));
+                        encodeCodePoint(builder, codePoint);
                         i++;
                         continue;
                     }
@@ -184,7 +188,7 @@ public final class NetworkUtils {
                 left = false;
                 builder.append('?');
             } else if (ch >= 0x80) {
-                builder.append(encodeURL(Character.toString(ch)));
+                encodeCodePoint(builder, ch);
             } else {
                 builder.append(ch);
             }
