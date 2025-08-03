@@ -494,8 +494,8 @@ public final class JavaManager {
         if (info == null) {
             try {
                 info = JavaInfoUtils.fromExecutable(executable, false);
-            } catch (IOException e2) {
-                LOG.warning("Failed to lookup Java executable at " + executable, e2);
+            } catch (IOException e) {
+                LOG.warning("Failed to lookup Java executable at " + executable, e);
             }
         }
 
