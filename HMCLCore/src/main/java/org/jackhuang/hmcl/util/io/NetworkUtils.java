@@ -138,29 +138,74 @@ public final class NetworkUtils {
      * "https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
      */
     public static String encodeLocation(String location) {
-        StringBuilder sb = new StringBuilder();
+        int i = 0;
         boolean left = true;
+        while (i < location.length()) {
+            char ch = location.charAt(i);
+            if (ch == ' ' || ch >= 0x80)
+                break;
+            else if (ch == '?')
+                left = false;
+            i++;
+        }
+
+        if (i == location.length()) {
+            // No need to encode
+            return location;
+        }
+
+        var builder = new StringBuilder(location.length() + 10);
+        builder.append(location, 0, i);
+
+        for (; i < location.length(); i++) {
+            char ch = location.charAt(i);
+            if (Character.isHighSurrogate(ch)) {
+                if (i < location.length() - 1) {
+                    char ch2 = location.charAt(i + 1);
+                    if (Character.isLowSurrogate(ch2)) {
+                        int codePoint = Character.toCodePoint(ch, ch2);
+                        builder.append(Character.toString(codePoint));
+                        i++;
+                        continue;
+                    }
+                }
+            }
+
+            if (ch == ' ') {
+                if (left)
+                    builder.append("%20");
+                else
+                    builder.append('+');
+            } else if (ch == '?') {
+                left = false;
+            } else if (ch >= 0x80) {
+                builder.append(encodeURL(Character.toString(ch)));
+            } else {
+                builder.append(ch);
+            }
+        }
+
         for (char ch : location.toCharArray()) {
             switch (ch) {
                 case ' ':
                     if (left)
-                        sb.append("%20");
+                        builder.append("%20");
                     else
-                        sb.append('+');
+                        builder.append('+');
                     break;
                 case '?':
                     left = false;
                     // fallthrough
                 default:
                     if (ch >= 0x80)
-                        sb.append(encodeURL(Character.toString(ch)));
+                        builder.append(encodeURL(Character.toString(ch)));
                     else
-                        sb.append(ch);
+                        builder.append(ch);
                     break;
             }
         }
 
-        return sb.toString();
+        return builder.toString();
     }
 
     /**
@@ -339,15 +384,7 @@ public final class NetworkUtils {
 
     /// @throws IllegalArgumentException if the string is not a valid URI
     public static @NotNull URI toURI(@NotNull String uri) {
-        try {
-            return new URI(uri);
-        } catch (URISyntaxException e) {
-            try {
-                return new URI(uri.replaceAll(" ", "%20"));
-            } catch (URISyntaxException ignored) {
-                throw new IllegalArgumentException("Invalid URI: " + uri, e);
-            }
-        }
+        return URI.create(encodeLocation(uri));
     }
 
     public static @NotNull URI toURI(@NotNull URL url) {
