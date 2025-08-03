@@ -23,7 +23,6 @@ import org.tukaani.xz.XZInputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarOutputStream;
@@ -33,7 +32,7 @@ final class HMCLDownloadTask extends FileDownloadTask {
     private final RemoteVersion.Type archiveFormat;
 
     public HMCLDownloadTask(RemoteVersion version, Path target) {
-        super(URI.create(version.getUrl()), target, version.getIntegrityCheck());
+        super(version.getUrl(), target, version.getIntegrityCheck());
         archiveFormat = version.getType();
     }
 

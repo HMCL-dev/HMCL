@@ -87,23 +87,6 @@ public class FileDownloadTask extends FetchTask<Void> {
      * @param uri  the URI of remote file.
      * @param path the location that download to.
      */
-    public FileDownloadTask(URI uri, Path path) {
-        this(uri, path, null);
-    }
-
-    /**
-     * @param uri            the URI of remote file.
-     * @param path           the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     */
-    public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck) {
-        this(List.of(uri), path, integrityCheck);
-    }
-
-    /**
-     * @param uri  the URI of remote file.
-     * @param path the location that download to.
-     */
     public FileDownloadTask(String uri, Path path) {
         this(List.of(NetworkUtils.toURI(uri)), path, null);
     }
@@ -115,6 +98,23 @@ public class FileDownloadTask extends FetchTask<Void> {
      */
     public FileDownloadTask(String uri, Path path, IntegrityCheck integrityCheck) {
         this(List.of(NetworkUtils.toURI(uri)), path, integrityCheck);
+    }
+
+    /**
+     * @param uri  the URI of remote file.
+     * @param path the location that download to.
+     */
+    public FileDownloadTask(URI uri, Path path) {
+        this(uri, path, null);
+    }
+
+    /**
+     * @param uri            the URI of remote file.
+     * @param path           the location that download to.
+     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
+     */
+    public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck) {
+        this(List.of(uri), path, integrityCheck);
     }
 
     /**
