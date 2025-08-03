@@ -61,7 +61,7 @@ public class AuthlibInjectorServer implements Observable {
             HttpURLConnection conn = NetworkUtils.createHttpConnection(url);
             String ali = conn.getHeaderField("x-authlib-injector-api-location");
             if (ali != null) {
-                URI absoluteAli = conn.getURL().toURI().resolve(ali);
+                URI absoluteAli = conn.getURL().toURI().resolve(NetworkUtils.toURI(ali));
                 if (!urlEqualsIgnoreSlash(url, absoluteAli.toString())) {
                     conn.disconnect();
                     url = absoluteAli.toString();

@@ -296,7 +296,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         if (file instanceof McbbsModpackManifest.AddonFile) {
             McbbsModpackManifest.AddonFile addonFile = (McbbsModpackManifest.AddonFile) file;
             return new FileDownloadTask(
-                    remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(addonFile.getPath()),
+                    remoteManifest.getFileApi() + "/overrides/" + addonFile.getPath(),
                     modManager.getSimpleModPath(addonFile.getPath()),
                     addonFile.getHash() != null ? new FileDownloadTask.IntegrityCheck("SHA-1", addonFile.getHash()) : null);
         } else if (file instanceof McbbsModpackManifest.CurseFile) {

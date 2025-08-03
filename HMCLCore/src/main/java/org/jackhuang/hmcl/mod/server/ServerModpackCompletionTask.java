@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -151,7 +150,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             if (download) {
                 total++;
                 dependencies.add(new FileDownloadTask(
-                        remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath()),
+                        remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
                         .withCounter("hmcl.modpack.download"));

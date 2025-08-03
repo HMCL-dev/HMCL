@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -331,7 +330,7 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
         public String getUrl() {
             return url == null
                     ? "https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file"
-                    : NetworkUtils.encodeLocation(url);
+                    : url;
         }
 
         public CurseFile withFileName(String fileName) {
