@@ -54,7 +54,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -180,7 +179,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         Controllers.taskDialog(
                 Task.composeAsync(() -> {
-                    var task = new FileDownloadTask(URI.create(file.getFile().getUrl()), dest.toPath(), file.getFile().getIntegrityCheck());
+                    var task = new FileDownloadTask(file.getFile().getUrl(), dest.toPath(), file.getFile().getIntegrityCheck());
                     task.setName(file.getName());
                     return task;
                 }),

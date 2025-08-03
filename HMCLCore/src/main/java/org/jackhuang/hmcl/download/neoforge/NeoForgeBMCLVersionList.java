@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -66,7 +65,7 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
 
     @Override
     public Task<?> refreshAsync(String gameVersion) {
-        return new GetTask(URI.create(apiRoot + "/neoforge/list/" + gameVersion)).thenGetJsonAsync(listTypeOf(NeoForgeVersion.class))
+        return new GetTask(apiRoot + "/neoforge/list/" + gameVersion).thenGetJsonAsync(listTypeOf(NeoForgeVersion.class))
                 .thenAcceptAsync(neoForgeVersions -> {
                     lock.writeLock().lock();
 

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -185,8 +184,8 @@ public class CacheRepository {
 
         URI uri;
         try {
-            uri = NetworkUtils.dropQuery(conn.getURL().toURI());
-        } catch (URISyntaxException e) {
+            uri = NetworkUtils.dropQuery(NetworkUtils.toURI(conn.getURL()));
+        } catch (IllegalArgumentException e) {
             return;
         }
         ETagItem eTagItem;
@@ -229,16 +228,16 @@ public class CacheRepository {
         if (StringUtils.isBlank(eTag)) return null;
         URI uri;
         try {
-            uri = NetworkUtils.dropQuery(connection.getURL().toURI());
-        } catch (URISyntaxException e) {
+            uri = NetworkUtils.dropQuery(NetworkUtils.toURI(connection.getURL()));
+        } catch (IllegalArgumentException e) {
             throw new IOException(e);
         }
         String lastModified = connection.getHeaderField("Last-Modified");
         CacheResult cacheResult = cacheSupplier.get();
-        ETagItem eTagItem = new ETagItem(uri, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
+        ETagItem eTagItem = new ETagItem(uri.toString(), eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
         lock.writeLock().lock();
         try {
-            index.compute(eTagItem.url, updateEntity(eTagItem, true));
+            index.compute(uri, updateEntity(eTagItem, true));
             saveETagIndex();
         } finally {
             lock.writeLock().unlock();
@@ -282,7 +281,7 @@ public class CacheRepository {
         for (Collection<ETagItem> eTagItems : indexes) {
             if (eTagItems != null) {
                 for (ETagItem eTag : eTagItems) {
-                    eTags.compute(eTag.url, updateEntity(eTag, false));
+                    eTags.compute(NetworkUtils.toURI(eTag.url), updateEntity(eTag, false));
                 }
             }
         }
@@ -331,7 +330,7 @@ public class CacheRepository {
     }
 
     private static final class ETagItem {
-        private final URI url;
+        private final String url;
         private final String eTag;
         private final String hash;
         @SerializedName("local")
@@ -346,7 +345,7 @@ public class CacheRepository {
             this(null, null, null, 0, null);
         }
 
-        public ETagItem(URI url, String eTag, String hash, long localLastModified, String remoteLastModified) {
+        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified) {
             this.url = url;
             this.eTag = eTag;
             this.hash = hash;

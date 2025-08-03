@@ -27,13 +27,13 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -166,7 +166,7 @@ public class Skin {
                 String realCslApi = type == Type.LITTLE_SKIN
                         ? "https://littleskin.cn/csl"
                         : StringUtils.removeSuffix(Lang.requireNonNullElse(cslApi, ""), "/");
-                return Task.composeAsync(() -> new GetTask(URI.create(String.format("%s/%s.json", realCslApi, username))))
+                return Task.composeAsync(() -> new GetTask(String.format("%s/%s.json", realCslApi, username)))
                         .thenComposeAsync(json -> {
                             SkinJson result = JsonUtils.GSON.fromJson(json, SkinJson.class);
 
@@ -176,8 +176,8 @@ public class Skin {
 
                             return Task.allOf(
                                     Task.supplyAsync(result::getModel),
-                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getHash())), 3),
-                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(URI.create(String.format("%s/textures/%s", realCslApi, result.getCapeHash())), 3)
+                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(String.format("%s/textures/%s", realCslApi, result.getHash())),
+                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(String.format("%s/textures/%s", realCslApi, result.getCapeHash()))
                             );
                         }).thenApplyAsync(result -> {
                             if (result == null) {
@@ -229,8 +229,8 @@ public class Skin {
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
 
-        public FetchBytesTask(URI uri, int retry) {
-            super(List.of(uri), retry);
+        public FetchBytesTask(String uri) {
+            super(List.of(NetworkUtils.toURI(uri)));
         }
 
         @Override
