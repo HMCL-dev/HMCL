@@ -487,12 +487,15 @@ public final class JavaManager {
             try {
                 info = JavaInfo.fromReleaseFile(releaseFile);
             } catch (IOException e) {
-                try {
-                    info = JavaInfoUtils.fromExecutable(executable, false);
-                } catch (IOException e2) {
-                    e2.addSuppressed(e);
-                    LOG.warning("Failed to lookup Java executable at " + executable, e2);
-                }
+                LOG.warning("Failed to read release file " + releaseFile, e);
+            }
+        }
+
+        if (info == null) {
+            try {
+                info = JavaInfoUtils.fromExecutable(executable, false);
+            } catch (IOException e2) {
+                LOG.warning("Failed to lookup Java executable at " + executable, e2);
             }
         }
 
