@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.io;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Base64;
@@ -31,7 +30,7 @@ public final class DataUri {
         return new IllegalArgumentException("Invalid data URI: " + uri);
     }
 
-    public static byte[] readBytes(URI uri) throws IOException {
+    public static byte[] readBytes(URI uri) {
         DataUri dataUri = new DataUri(uri);
         if (dataUri.base64) {
             return Base64.getDecoder().decode(dataUri.body);
@@ -40,7 +39,7 @@ public final class DataUri {
         }
     }
 
-    public static String readString(URI uri) throws IOException {
+    public static String readString(URI uri) {
         DataUri dataUri = new DataUri(uri);
         if (dataUri.base64) {
             return new String(Base64.getDecoder().decode(dataUri.body), dataUri.charset);
@@ -54,7 +53,7 @@ public final class DataUri {
     private final boolean base64;
     private final @NotNull String body;
 
-    DataUri(URI uri) throws IOException {
+    DataUri(URI uri) {
         if (!uri.getScheme().equals(SCHEME)) {
             throw new IllegalArgumentException("URI scheme must be " + SCHEME);
         }
@@ -64,7 +63,7 @@ public final class DataUri {
             throw invalidUri(uri);
 
         int comma = schemeSpecificPart.indexOf(',');
-        if (comma <= 0)
+        if (comma < 0)
             throw invalidUri(uri);
 
         String mediaType = schemeSpecificPart.substring(0, comma);
