@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -242,27 +241,26 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
         nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> {
-                    if (versionSetting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-                        String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
-                        if (versionId == null) {
-                            return String.format("%s/%s/%s",
-                                    profile.getRepository().getBaseDirectory().toPath().resolve("versions").toAbsolutePath().normalize(),
-                                    i18n("settings.advanced.natives_directory.default.version_id"),
-                                    nativesDirName
-                            );
-                        } else {
-                            return profile.getRepository().getVersionRoot(versionId).toPath()
-                                    .toAbsolutePath().normalize()
-                                    .resolve(nativesDirName)
-                                    .toString();
-                        }
-                    } else if (versionSetting.getNativesDirType() == NativesDirectoryType.CUSTOM) {
-                        return versionSetting.getNativesDir();
-                    } else {
-                        return null;
-                    }
-                },
-                versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
+            if (versionSetting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
+                if (versionId == null) {
+                    return String.format("%s/%s/%s",
+                            profile.getRepository().getBaseDirectory().toPath().resolve("versions").toAbsolutePath().normalize(),
+                            i18n("settings.advanced.natives_directory.default.version_id"),
+                            nativesDirName
+                    );
+                } else {
+                    return profile.getRepository().getVersionRoot(versionId).toPath()
+                            .toAbsolutePath().normalize()
+                            .resolve(nativesDirName)
+                            .toString();
+                }
+            } else if (versionSetting.getNativesDirType() == NativesDirectoryType.CUSTOM) {
+                return versionSetting.getNativesDir();
+            } else {
+                return null;
+            }
+        }, versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
     }
 
     void unbindProperties() {
