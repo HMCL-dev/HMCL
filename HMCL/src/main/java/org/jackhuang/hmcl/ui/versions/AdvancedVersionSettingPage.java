@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Paths;
@@ -240,7 +241,27 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
 
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
-        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get((versionId == null ? profile.getRepository().getBaseDirectory() : profile.getRepository().getRunDirectory(versionId)).getAbsolutePath() + "/natives").normalize().toString(),
+        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> {
+                    if (versionSetting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
+                        String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
+                        if (versionId == null) {
+                            return String.format("%s/%s/%s",
+                                    profile.getRepository().getBaseDirectory().toPath().resolve("versions").toAbsolutePath().normalize(),
+                                    i18n("settings.advanced.natives_directory.default.version_id"),
+                                    nativesDirName
+                            );
+                        } else {
+                            return profile.getRepository().getVersionRoot(versionId).toPath()
+                                    .toAbsolutePath().normalize()
+                                    .resolve(nativesDirName)
+                                    .toString();
+                        }
+                    } else if (versionSetting.getNativesDirType() == NativesDirectoryType.CUSTOM) {
+                        return versionSetting.getNativesDir();
+                    } else {
+                        return null;
+                    }
+                },
                 versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
     }
 
