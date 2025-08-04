@@ -44,8 +44,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelFormat;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -59,13 +57,6 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
-import org.jackhuang.hmcl.ui.image.apng.Png;
-import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
-import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888BitmapSequence;
-import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
-import org.jackhuang.hmcl.ui.image.apng.error.PngException;
-import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
-import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -940,7 +931,7 @@ public final class FXUtils {
             String ext = FileUtils.getExtension(path);
             if ("webp".equalsIgnoreCase(ext))
                 return loadWebPImage(input);
-            else if ("png".equalsIgnoreCase(ext))
+            else if ("png".equalsIgnoreCase(ext) || "apng".equalsIgnoreCase(ext))
                 return ImageUtils.loadApng(input);
             else {
                 Image image = new Image(input);
@@ -966,14 +957,15 @@ public final class FXUtils {
         }
 
         URLConnection connection = NetworkUtils.createConnection(uri);
-        if (connection instanceof HttpURLConnection) {
+        if (connection instanceof HttpURLConnection)
             connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
-        }
 
         try (InputStream input = connection.getInputStream()) {
-            String path = uri.getPath();
-            if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
+            String contentType = Objects.requireNonNull(connection.getContentType(), "");
+            if (contentType.contains("webp"))
                 return loadWebPImage(input);
+            else if (contentType.contains("png"))
+                return ImageUtils.loadApng(input);
             else {
                 Image image = new Image(input);
                 if (image.isError())

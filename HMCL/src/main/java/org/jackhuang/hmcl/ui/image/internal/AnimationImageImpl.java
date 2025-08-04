@@ -1,19 +1,38 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui.image.internal;
 
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.WritableValue;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.image.AnimationImage;
 
 import java.lang.ref.WeakReference;
-import java.util.List;
 
-public final class AnimationImageImpl extends WritableImage {
+/**
+ * @author Glavo
+ */
+public final class AnimationImageImpl extends WritableImage implements AnimationImage {
 
     private Animation animation;
     private final int[][] frames;
@@ -59,7 +78,6 @@ public final class AnimationImageImpl extends WritableImage {
 
         private Integer value;
 
-
         private Animation(AnimationImageImpl image) {
             this.imageRef = new WeakReference<>(image);
             timeline.setCycleCount(image.cycleCount);
@@ -76,7 +94,6 @@ public final class AnimationImageImpl extends WritableImage {
 
             timeline.getKeyFrames().add(new KeyFrame(Duration.millis(duration)));
         }
-
 
         @Override
         public Integer getValue() {

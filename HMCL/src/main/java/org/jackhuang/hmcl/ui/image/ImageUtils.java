@@ -32,13 +32,10 @@ import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 
 /**
  * @author Glavo
