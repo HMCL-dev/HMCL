@@ -20,11 +20,11 @@ package org.jackhuang.hmcl.download.optifine;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -43,8 +43,8 @@ public final class OptiFine302VersionList extends VersionList<OptiFineRemoteVers
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(versionListURL).getJsonAsync(TypeToken.get(OptiFine302VersionList.VersionList.class)).thenAcceptAsync(root -> {
+    public Task<?> refreshAsync() {
+        return new GetTask(versionListURL).thenGetJsonAsync(TypeToken.get(OptiFine302VersionList.VersionList.class)).thenAcceptAsync(root -> {
             lock.writeLock().lock();
 
             try {
