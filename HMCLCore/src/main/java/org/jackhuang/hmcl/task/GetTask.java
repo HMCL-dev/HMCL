@@ -29,8 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 /**
  * @author huangyuhui
  */
@@ -74,7 +72,7 @@ public final class GetTask extends FetchTask<String> {
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(UTF_8);
+                String result = baos.toString(NetworkUtils.getCharsetFromContentType(connection.getContentType()));
                 setResult(result);
 
                 if (checkETag) {
