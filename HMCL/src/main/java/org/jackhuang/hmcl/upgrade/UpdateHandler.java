@@ -224,18 +224,6 @@ public final class UpdateHandler {
         return builder.toString();
     }
 
-    private static Optional<Path> tryRename(Path path, String newVersion) {
-        String filename = path.getFileName().toString();
-        Matcher matcher = Pattern.compile("^(?<prefix>[hH][mM][cC][lL][.-])(?<version>\\d+(?:\\.\\d+)*)(?<suffix>\\.[^.]+)$").matcher(filename);
-        if (matcher.find()) {
-            String newFilename = matcher.group("prefix") + newVersion + matcher.group("suffix");
-            if (!newFilename.equals(filename)) {
-                return Optional.of(path.resolveSibling(newFilename));
-            }
-        }
-        return Optional.empty();
-    }
-
     private static Path getCurrentLocation() throws IOException {
         Path path = JarUtils.thisJarPath();
         if (path == null) {
