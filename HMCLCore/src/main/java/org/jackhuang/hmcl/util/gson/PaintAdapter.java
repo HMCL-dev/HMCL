@@ -21,10 +21,7 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.LinearGradient;
-import javafx.scene.paint.Paint;
-import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.*;
 
 import java.io.IOException;
 
@@ -44,7 +41,8 @@ public final class PaintAdapter extends TypeAdapter<Paint> {
             int blue = (int) Math.round(color.getBlue() * 255.);
             int opacity = (int) Math.round(color.getOpacity() * 255.);
             out.value(String.format("#%02x%02x%02x%02x", red, green, blue, opacity));
-        } else if (value instanceof LinearGradient || value instanceof RadialGradient) {
+        } else if (value instanceof LinearGradient
+                || value instanceof RadialGradient) {
             out.value(value.toString());
         } else {
             throw new JsonParseException("Unsupported Paint type: " + value.getClass().getName());
@@ -58,14 +56,6 @@ public final class PaintAdapter extends TypeAdapter<Paint> {
             return null;
         }
         String value = in.nextString();
-        if (value.startsWith("#")) {
-            return Color.web(value);
-        } else if (value.startsWith("linear-gradient")) {
-            return LinearGradient.valueOf(value);
-        } else if (value.startsWith("radial-gradient")) {
-            return RadialGradient.valueOf(value);
-        } else {
-            throw new JsonParseException("Unsupported paint format: " + value);
-        }
+        return Paint.valueOf(value);
     }
 }
