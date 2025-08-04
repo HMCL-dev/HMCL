@@ -26,12 +26,14 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -76,7 +78,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
     private final PopupMenu menu = new PopupMenu();
-    private final JFXPopup popup = new JFXPopup(menu);
+
+    private final StackPane popupWrapper = new StackPane(menu);
+    private final JFXPopup popup = new JFXPopup(popupWrapper);
 
     private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
@@ -120,18 +124,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
             titleBar.getStyleClass().add("title");
             titleBar.setLeft(new Label(title));
 
-            Node hideNode = SVG.CLOSE.createIcon(Theme.blackFill(), 20);
-            hideNode.setCursor(Cursor.HAND);
-            titleBar.setRight(hideNode);
-            FXUtils.onClicked(hideNode, () -> {
-                if (announcementPane != null) {
-                    if (Metadata.isDev()) {
-                        config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
-                    }
-
-                    announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
+            JFXButton btnHide = new JFXButton();
+            btnHide.setOnAction(e -> {
+                announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
+                if (Metadata.isDev()) {
+                    config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
                 }
             });
+            btnHide.getStyleClass().add("announcement-close-button");
+            btnHide.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 20));
+            titleBar.setRight(btnHide);
 
             TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
             body.setLineSpacing(4);
@@ -254,6 +256,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(graphic);
 
+            EventHandler<MouseEvent> secondaryClickHandle = event -> {
+                if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
+                    menuButton.fire();
+                    event.consume();
+                }
+            };
+            launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+            menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
 
@@ -265,7 +276,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-            FXUtils.onClicked(node, () -> profile.setSelectedVersion(version.getId()));
+            FXUtils.onClicked(node, () -> {
+                profile.setSelectedVersion(version.getId());
+                popup.hide();
+            });
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
@@ -309,7 +323,27 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void onMenu() {
-        popup.show(menuButton, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -menuButton.getHeight());
+        Node contentNode;
+        if (menu.getContent().isEmpty()) {
+            Label placeholder = new Label(i18n("version.empty"));
+            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: gray; -fx-font-style: italic;");
+            contentNode = placeholder;
+        } else {
+            contentNode = menu;
+        }
+
+        popupWrapper.getChildren().setAll(contentNode);
+
+        if (popup.isShowing()) {
+            popup.hide();
+        }
+        popup.show(
+                menuButton,
+                JFXPopup.PopupVPosition.BOTTOM,
+                JFXPopup.PopupHPosition.RIGHT,
+                0,
+                -menuButton.getHeight()
+        );
     }
 
     private void onUpgrade() {

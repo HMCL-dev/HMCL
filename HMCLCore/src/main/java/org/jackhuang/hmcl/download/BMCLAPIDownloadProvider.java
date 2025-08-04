@@ -71,14 +71,14 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("http://files.minecraftforge.net/maven", apiRoot + "/maven"),
                 pair("https://files.minecraftforge.net/maven", apiRoot + "/maven"),
                 pair("https://maven.minecraftforge.net", apiRoot + "/maven"),
-                pair("https://maven.neoforged.net/releases/net/neoforged/forge", apiRoot + "/maven/net/neoforged/forge"),
-                pair("https://maven.neoforged.net/releases/net/neoforged/neoforge", apiRoot + "/maven/net/neoforged/neoforge"),
+                pair("https://maven.neoforged.net/releases/", apiRoot + "/maven/"),
                 pair("http://dl.liteloader.com/versions/versions.json", apiRoot + "/maven/com/mumfrey/liteloader/versions.json"),
                 pair("http://dl.liteloader.com/versions", apiRoot + "/maven"),
                 pair("https://meta.fabricmc.net", apiRoot + "/fabric-meta"),
                 pair("https://maven.fabricmc.net", apiRoot + "/maven"),
                 pair("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector"),
-                pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
+                pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+                pair("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto")
         );
     }
 

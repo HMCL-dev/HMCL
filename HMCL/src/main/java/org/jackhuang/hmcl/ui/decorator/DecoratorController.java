@@ -40,6 +40,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -57,14 +58,10 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -135,6 +132,7 @@ public class DecoratorController {
         config().backgroundImageTypeProperty().addListener(weakListener);
         config().backgroundImageProperty().addListener(weakListener);
         config().backgroundImageUrlProperty().addListener(weakListener);
+        config().backgroundPaintProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -203,13 +201,17 @@ public class DecoratorController {
             case CUSTOM:
                 String backgroundImage = config().getBackgroundImage();
                 if (backgroundImage != null)
-                    image = tryLoadImage(Paths.get(backgroundImage));
+                    try {
+                        image = tryLoadImage(Paths.get(backgroundImage));
+                    } catch (Exception e) {
+                        LOG.warning("Couldn't load background image", e);
+                    }
                 break;
             case NETWORK:
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(new URL(backgroundImageUrl));
+                        image = FXUtils.loadImage(backgroundImageUrl);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -220,6 +222,8 @@ public class DecoratorController {
                 break;
             case TRANSLUCENT:
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
+            case PAINT:
+                return new Background(new BackgroundFill(Objects.requireNonNullElse(config().getBackgroundPaint(), Color.WHITE), CornerRadii.EMPTY, Insets.EMPTY));
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
@@ -231,12 +235,22 @@ public class DecoratorController {
      * Load background image from bg/, background.png, background.jpg, background.gif
      */
     private Image loadDefaultBackgroundImage() {
-        Image image = randomImageIn(Paths.get("bg"));
+        Image image = randomImageIn(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background"));
         if (image != null)
             return image;
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            image = tryLoadImage(Paths.get("background." + extension));
+            image = tryLoadImage(Metadata.HMCL_CURRENT_DIRECTORY.resolve("background." + extension));
+            if (image != null)
+                return image;
+        }
+
+        image = randomImageIn(Metadata.CURRENT_DIRECTORY.resolve("bg"));
+        if (image != null)
+            return image;
+
+        for (String extension : FXUtils.IMAGE_EXTENSIONS) {
+            image = tryLoadImage(Metadata.CURRENT_DIRECTORY.resolve("background." + extension));
             if (image != null)
                 return image;
         }
@@ -296,8 +310,9 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
+            // FIXME: Get WorldPage working first, and revisit this later
+            page.closePage();
             if (page.isPageCloseable()) {
-                page.closePage();
                 return;
             }
         }
@@ -397,21 +412,22 @@ public class DecoratorController {
         node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
         node.addEventHandler(DialogCloseEvent.CLOSE, handler);
 
-        if (node instanceof DialogAware) {
-            DialogAware dialogAware = (DialogAware) node;
-            if (dialog.isVisible()) {
-                dialogAware.onDialogShown();
-            } else {
-                dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                        if (newValue) {
-                            dialogAware.onDialogShown();
-                            observable.removeListener(this);
-                        }
+        if (dialog.isVisible()) {
+            dialog.requestFocus();
+            if (node instanceof DialogAware)
+                ((DialogAware) node).onDialogShown();
+        } else {
+            dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                    if (newValue) {
+                        dialog.requestFocus();
+                        if (node instanceof DialogAware)
+                            ((DialogAware) node).onDialogShown();
+                        observable.removeListener(this);
                     }
-                });
-            }
+                }
+            });
         }
     }
 

@@ -24,12 +24,11 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author huangyuhui
  */
 public final class OSRestriction {
 
-    private final OperatingSystem name;
+    private final String name;
     private final String version;
     private final String arch;
 
@@ -37,35 +36,52 @@ public final class OSRestriction {
         this(OperatingSystem.UNKNOWN);
     }
 
-    public OSRestriction(OperatingSystem name) {
-        this(name, null);
+    public OSRestriction(OperatingSystem os) {
+        this(os, null);
     }
 
-    public OSRestriction(OperatingSystem name, String version) {
-        this(name, version, null);
+    public OSRestriction(OperatingSystem os, String version) {
+        this(os, version, null);
     }
 
-    public OSRestriction(OperatingSystem name, String version, String arch) {
+    public OSRestriction(OperatingSystem os, String version, String arch) {
+        this.name = os.getMojangName();
+        this.version = version;
+        this.arch = arch;
+    }
+
+    public OSRestriction(String name, String version, String arch) {
         this.name = name;
         this.version = version;
         this.arch = arch;
     }
 
-    public OperatingSystem getName() {
-        return name;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public String getArch() {
-        return arch;
-    }
-
     public boolean allow() {
-        if (name != OperatingSystem.UNKNOWN && name != OperatingSystem.CURRENT_OS
-                && !(name == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
+        // Some modpacks directly use { name: "win-x86" }
+        if (name != null) {
+            String[] parts = name.split("-", 3);
+            if (parts.length == 2) {
+                OperatingSystem os = OperatingSystem.parseOSName(parts[0]);
+                Architecture arch = Architecture.parseArchName(parts[1]);
+
+                if (os != OperatingSystem.UNKNOWN && arch != Architecture.UNKNOWN) {
+                    if (os != OperatingSystem.CURRENT_OS && !(os == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD())) {
+                        return false;
+                    }
+
+                    if (arch != Architecture.SYSTEM_ARCH) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        OperatingSystem os = OperatingSystem.parseOSName(name);
+        if (os != OperatingSystem.UNKNOWN
+                && os != OperatingSystem.CURRENT_OS
+                && !(os == OperatingSystem.LINUX && OperatingSystem.CURRENT_OS.isLinuxOrBSD()))
             return false;
 
         if (version != null)
@@ -77,5 +93,4 @@ public final class OSRestriction {
 
         return true;
     }
-
 }

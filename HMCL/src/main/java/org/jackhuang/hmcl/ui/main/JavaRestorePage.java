@@ -162,7 +162,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
                 revealButton.getStyleClass().add("toggle-icon4");
                 revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
                 revealButton.setOnAction(e -> skinnable.onReveal());
-                FXUtils.installFastTooltip(revealButton, i18n("java.reveal"));
+                FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 if (skinnable.realPath == null) {
                     revealButton.setDisable(true);

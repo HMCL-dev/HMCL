@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.ToNumberPolicy;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -28,6 +29,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
+import javafx.scene.paint.Paint;
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
@@ -36,6 +38,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
+import org.jackhuang.hmcl.util.gson.PaintAdapter;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
@@ -59,7 +62,9 @@ public final class Config implements Observable {
             .registerTypeAdapterFactory(new JavaFxPropertyTypeAdapterFactory(true, true))
             .registerTypeAdapter(EnumBackgroundImage.class, new EnumOrdinalDeserializer<>(EnumBackgroundImage.class)) // backward compatibility for backgroundType
             .registerTypeAdapter(Proxy.Type.class, new EnumOrdinalDeserializer<>(Proxy.Type.class)) // backward compatibility for hasProxy
+            .registerTypeAdapter(Paint.class, new PaintAdapter())
             .setPrettyPrinting()
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
     @Nullable
@@ -84,6 +89,9 @@ public final class Config implements Observable {
 
     @SerializedName("bgurl")
     private StringProperty backgroundImageUrl = new SimpleStringProperty();
+
+    @SerializedName("bgpaint")
+    private ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
 
     @SerializedName("commonDirType")
     private ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
@@ -170,7 +178,7 @@ public final class Config implements Observable {
     private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
 
     @SerializedName("authlibInjectorServers")
-    private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[] { server });
+    private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[]{server});
 
     @SerializedName("addedLittleSkin")
     private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
@@ -270,6 +278,18 @@ public final class Config implements Observable {
 
     public void setBackgroundImageUrl(String backgroundImageUrl) {
         this.backgroundImageUrl.set(backgroundImageUrl);
+    }
+
+    public Paint getBackgroundPaint() {
+        return backgroundPaint.get();
+    }
+
+    public ObjectProperty<Paint> backgroundPaintProperty() {
+        return backgroundPaint;
+    }
+
+    public void setBackgroundPaint(Paint backgroundPaint) {
+        this.backgroundPaint.set(backgroundPaint);
     }
 
     public EnumCommonDirectory getCommonDirType() {

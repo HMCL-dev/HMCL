@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -40,18 +41,72 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
-import java.net.URI;
+import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Locale;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
-public class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
+public final class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
+    static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
+
+    private static boolean isExemptedRegion() {
+        String zoneId = ZoneId.systemDefault().getId();
+        if (Arrays.asList(
+                "Asia/Shanghai",
+                // Although Asia/Beijing is not a legal name, Deepin uses it
+                "Asia/Beijing",
+                "Asia/Chongqing",
+                "Asia/Chungking",
+                "Asia/Harbin"
+        ).contains(zoneId))
+            return true;
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+            Kernel32 kernel32 = Kernel32.INSTANCE;
+
+            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
+                return true;
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && "GMT+08:00".equals(zoneId))
+            // Some Linux distributions may use invalid time zone ids (e.g., Asia/Beijing)
+            // Java may not be able to resolve this name and use GMT+08:00 instead.
+            return true;
+
+        return false;
+    }
+
+    static {
+        String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
+
+        if ("false".equals(property)
+                || "auto".equals(property) && isExemptedRegion()
+                || globalConfig().isEnableOfflineAccount())
+            RESTRICTED.set(false);
+        else
+            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> o, Boolean oldValue, Boolean newValue) {
+                    if (newValue) {
+                        globalConfig().enableOfflineAccountProperty().removeListener(this);
+                        RESTRICTED.set(false);
+                    }
+                }
+            });
+    }
+
     private final ObservableList<AccountListItem> items;
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("account.manage")));
     private final ListProperty<Account> accounts = new SimpleListProperty<>(this, "accounts", FXCollections.observableArrayList());
@@ -88,6 +143,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
     private static class AccountListPageSkin extends DecoratorAnimatedPageSkin<AccountListPage> {
 
         private final ObservableList<AdvancedListItem> authServerItems;
+        private ChangeListener<Boolean> holder;
 
         public AccountListPageSkin(AccountListPage skinnable) {
             super(skinnable);
@@ -96,16 +152,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                 VBox boxMethods = new VBox();
                 {
                     boxMethods.getStyleClass().add("advanced-list-box-content");
-                    boxMethods.getChildren().add(new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT)));
                     FXUtils.setLimitWidth(boxMethods, 200);
-
-                    AdvancedListItem offlineItem = new AdvancedListItem();
-                    offlineItem.getStyleClass().add("navigation-drawer-item");
-                    offlineItem.setActionButtonVisible(false);
-                    offlineItem.setTitle(i18n("account.methods.offline"));
-                    offlineItem.setLeftGraphic(wrap(SVG.PERSON));
-                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
-                    boxMethods.getChildren().add(offlineItem);
 
                     AdvancedListItem microsoftItem = new AdvancedListItem();
                     microsoftItem.getStyleClass().add("navigation-drawer-item");
@@ -113,7 +160,13 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                     microsoftItem.setTitle(i18n("account.methods.microsoft"));
                     microsoftItem.setLeftGraphic(wrap(SVG.MICROSOFT));
                     microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
-                    boxMethods.getChildren().add(microsoftItem);
+
+                    AdvancedListItem offlineItem = new AdvancedListItem();
+                    offlineItem.getStyleClass().add("navigation-drawer-item");
+                    offlineItem.setActionButtonVisible(false);
+                    offlineItem.setTitle(i18n("account.methods.offline"));
+                    offlineItem.setLeftGraphic(wrap(SVG.PERSON));
+                    offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
 
                     VBox boxAuthServers = new VBox();
                     authServerItems = MappedObservableList.create(skinnable.authServersProperty(), server -> {
@@ -137,7 +190,7 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         item.titleProperty().bind(title);
                         String host = "";
                         try {
-                            host = URI.create(server.getUrl()).getHost();
+                            host = NetworkUtils.toURI(server.getUrl()).getHost();
                         } catch (IllegalArgumentException e) {
                             LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
                         }
@@ -149,7 +202,29 @@ public class AccountListPage extends DecoratorAnimatedPage implements DecoratorP
                         return item;
                     });
                     Bindings.bindContent(boxAuthServers.getChildren(), authServerItems);
-                    boxMethods.getChildren().add(boxAuthServers);
+
+                    ClassTitle title = new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT));
+                    if (RESTRICTED.get()) {
+                        VBox wrapper = new VBox(offlineItem, boxAuthServers);
+                        wrapper.setPadding(Insets.EMPTY);
+                        FXUtils.installFastTooltip(wrapper, i18n("account.login.restricted"));
+
+                        offlineItem.setDisable(true);
+                        boxAuthServers.setDisable(true);
+
+                        boxMethods.getChildren().setAll(title, microsoftItem, wrapper);
+
+                        holder = FXUtils.onWeakChange(RESTRICTED, value -> {
+                            if (!value) {
+                                holder = null;
+                                offlineItem.setDisable(false);
+                                boxAuthServers.setDisable(false);
+                                boxMethods.getChildren().setAll(title, microsoftItem, offlineItem, boxAuthServers);
+                            }
+                        });
+                    } else {
+                        boxMethods.getChildren().setAll(title, microsoftItem, offlineItem, boxAuthServers);
+                    }
                 }
 
                 AdvancedListItem addAuthServerItem = new AdvancedListItem();

@@ -2,22 +2,32 @@ plugins {
     `java-library`
 }
 
-dependencies {
-    api("org.glavo:simple-png-javafx:0.3.0")
-    api("com.google.code.gson:gson:2.12.1")
-    api("com.moandjiezana.toml:toml4j:0.7.2")
-    api("org.tukaani:xz:1.10")
-    api("org.hildan.fxgson:fx-gson:5.0.0")
-    api("org.jenkins-ci:constant-pool-scanner:1.2")
-    api("com.github.steveice10:opennbt:1.5")
-    api("org.nanohttpd:nanohttpd:2.3.1")
-    api("org.apache.commons:commons-compress:1.25.0")
-    api("org.jsoup:jsoup:1.18.3")
-    compileOnlyApi("org.jetbrains:annotations:26.0.1")
+tasks.withType<JavaCompile> {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
+}
 
-    if (JavaVersion.current().isJava8) {
-        org.gradle.internal.jvm.Jvm.current().toolsJar?.let {
-            compileOnly(files(it))
-        }
-    }
+tasks.compileJava {
+    options.compilerArgs.add("--add-exports=jdk.attach/sun.tools.attach=ALL-UNNAMED")
+}
+
+dependencies {
+    api(libs.kala.compress.zip)
+    api(libs.kala.compress.tar)
+    api(libs.simple.png.javafx)
+    api(libs.gson)
+    api(libs.toml)
+    api(libs.xz)
+    api(libs.fx.gson)
+    api(libs.constant.pool.scanner)
+    api(libs.opennbt)
+    api(libs.nanohttpd)
+    api(libs.jsoup)
+    api(libs.chardet)
+    api(libs.jna)
+    api(libs.pci.ids)
+
+    compileOnlyApi(libs.jetbrains.annotations)
+
+    testImplementation(libs.jna.platform)
 }

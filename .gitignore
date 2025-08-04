@@ -18,6 +18,7 @@ minecraft-exported-crash-info*
 /build/
 /HMCL/build/
 /HMCLCore/build/
+/HMCLBoot/build/
 /HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
 /buildSrc/build/
@@ -42,7 +43,6 @@ minecraft-exported-crash-info*
 .nb-gradle
 
 *.exe
-!/HMCL/src/main/resources/assets/HMCLauncher.exe
 
 # macos
 .DS_Store
@@ -53,3 +53,4 @@ minecraft-exported-crash-info*
 # test
 /hmcl.json
 /.hmcl.json
+/.hmcl/

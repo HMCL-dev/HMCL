@@ -23,14 +23,17 @@ import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.Unzipper;
-import org.jackhuang.hmcl.util.io.Zipper;
+import org.jackhuang.hmcl.util.io.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,7 +43,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class World {
+public final class World {
 
     private final Path file;
     private String fileName;
@@ -48,6 +51,9 @@ public class World {
     private String gameVersion;
     private long lastPlayed;
     private Image icon;
+    private Long seed;
+    private boolean largeBiomes;
+    private boolean isLocked;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -63,7 +69,8 @@ public class World {
     private void loadFromDirectory() throws IOException {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");
-        getWorldName(levelDat);
+        loadWorldInfo(levelDat);
+        isLocked = isLocked(getSessionLockFile());
 
         Path iconFile = file.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -93,6 +100,10 @@ public class World {
         return file.resolve("level.dat");
     }
 
+    public Path getSessionLockFile() {
+        return file.resolve("session.lock");
+    }
+
     public long getLastPlayed() {
         return lastPlayed;
     }
@@ -101,8 +112,20 @@ public class World {
         return gameVersion;
     }
 
+    public @Nullable Long getSeed() {
+        return seed;
+    }
+
+    public boolean isLargeBiomes() {
+        return largeBiomes;
+    }
+
     public Image getIcon() {
         return icon;
+    }
+
+    public boolean isLocked() {
+        return isLocked;
     }
 
     private void loadFromZipImpl(Path root) throws IOException {
@@ -110,7 +133,7 @@ public class World {
         if (!Files.exists(levelDat))
             throw new IOException("Not a valid world zip file since level.dat cannot be found.");
 
-        getWorldName(levelDat);
+        loadWorldInfo(levelDat);
 
         Path iconFile = root.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -125,6 +148,7 @@ public class World {
     }
 
     private void loadFromZip() throws IOException {
+        isLocked = false;
         try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
             Path cur = fs.getPath("/level.dat");
             if (Files.isRegularFile(cur)) {
@@ -142,7 +166,7 @@ public class World {
         }
     }
 
-    private void getWorldName(Path levelDat) throws IOException {
+    private void loadWorldInfo(Path levelDat) throws IOException {
         CompoundTag nbt = parseLevelDat(levelDat);
 
         CompoundTag data = nbt.get("Data");
@@ -165,6 +189,27 @@ public class World {
 
             if (version.get("Name") instanceof StringTag)
                 gameVersion = version.<StringTag>get("Name").getValue();
+        }
+
+        Tag worldGenSettings = data.get("WorldGenSettings");
+        if (worldGenSettings instanceof CompoundTag) {
+            Tag seedTag = ((CompoundTag) worldGenSettings).get("seed");
+            if (seedTag instanceof LongTag) {
+                seed = ((LongTag) seedTag).getValue();
+            }
+        }
+        if (seed == null) {
+            Tag seedTag = data.get("RandomSeed");
+            if (seedTag instanceof LongTag) {
+                seed = ((LongTag) seedTag).getValue();
+            }
+        }
+
+        // FIXME: Only work for 1.15 and below
+        if (data.get("generatorName") instanceof StringTag) {
+            largeBiomes = "largeBiomes".equals(data.<StringTag>get("generatorName").getValue());
+        } else {
+            largeBiomes = false;
         }
     }
 
@@ -237,6 +282,26 @@ public class World {
         return parseLevelDat(getLevelDatFile());
     }
 
+    public FileChannel lock() throws WorldLockedException {
+        Path lockFile = getSessionLockFile();
+        FileChannel channel = null;
+        try {
+            channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
+            channel.force(true);
+            FileLock fileLock = channel.tryLock();
+            if (fileLock != null) {
+                return channel;
+            } else {
+                IOUtils.closeQuietly(channel);
+                throw new WorldLockedException("The world " + getFile() + " has been locked");
+            }
+        } catch (IOException e) {
+            IOUtils.closeQuietly(channel);
+            throw new WorldLockedException(e);
+        }
+    }
+
     public void writeLevelDat(CompoundTag nbt) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
@@ -258,12 +323,25 @@ public class World {
         }
     }
 
+    private static boolean isLocked(Path sessionLockFile) {
+        try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
+            return fileChannel.tryLock() == null;
+        } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
+            return true;
+        } catch (NoSuchFileException noSuchFileException) {
+            return false;
+        } catch (IOException e) {
+            LOG.warning("Failed to open the lock file " + sessionLockFile, e);
+            return false;
+        }
+    }
+
     public static Stream<World> getWorlds(Path savesDir) {
         try {
             if (Files.exists(savesDir)) {
                 return Files.list(savesDir).flatMap(world -> {
                     try {
-                        return Stream.of(new World(world));
+                        return Stream.of(new World(world.toAbsolutePath()));
                     } catch (IOException e) {
                         LOG.warning("Failed to read world " + world, e);
                         return Stream.empty();

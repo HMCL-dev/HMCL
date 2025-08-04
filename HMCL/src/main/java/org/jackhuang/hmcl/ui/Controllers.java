@@ -70,6 +70,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
+    public static final String JAVA_VERSION_TIP = "javaVersion";
+
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
     public static final Screen SCREEN = Screen.getPrimary();
@@ -173,6 +175,18 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
+        if (System.getProperty("prism.lcdtext") == null) {
+            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+            if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                LOG.info("Enable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "true");
+            } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
+                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                LOG.info("Disable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "false");
+            }
+        }
+
         Controllers.stage = stage;
 
         stageSizeChangeListener = o -> {
@@ -265,7 +279,7 @@ public final class Controllers {
         stage.setMinHeight(MIN_HEIGHT);
         decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
         decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
-        scene.getStylesheets().setAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
+        StyleSheets.init(scene);
 
         FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
@@ -293,8 +307,8 @@ public final class Controllers {
         if (!Architecture.SYSTEM_ARCH.isX86() && globalConfig().getPlatformPromptVersion() < 1) {
             Runnable continueAction = () -> globalConfig().setPlatformPromptVersion(1);
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                Controllers.dialog(i18n("fatal.unsupported_platform.osx_arm64"), null, MessageType.INFO, continueAction);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                Controllers.dialog(i18n("fatal.unsupported_platform.macos_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 Controllers.dialog(i18n("fatal.unsupported_platform.windows_arm64"), null, MessageType.INFO, continueAction);
             } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX &&
@@ -306,7 +320,6 @@ public final class Controllers {
                 Controllers.dialog(i18n("fatal.unsupported_platform"), null, MessageType.WARNING, continueAction);
             }
         }
-
 
         if (globalConfig().getAgreementVersion() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
@@ -391,10 +404,7 @@ public final class Controllers {
 
     public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
-        pane.setTitle(title);
-        pane.setExecutor(executor);
-        dialog(pane);
+        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
         return pane;
     }

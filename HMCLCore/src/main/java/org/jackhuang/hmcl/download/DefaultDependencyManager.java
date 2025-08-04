@@ -148,7 +148,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
 
         VersionList<?> versionList = getVersionList(libraryId);
-        return Task.fromCompletableFuture(versionList.loadAsync(gameVersion))
+        return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installLibraryAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))))
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));

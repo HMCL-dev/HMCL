@@ -290,7 +290,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             StringBuilder message = new StringBuilder(localModFile.getFileName());
             if (isNotBlank(localModFile.getGameVersion()))
-                message.append(", ").append(i18n("game.version")).append(": ").append(localModFile.getGameVersion());
+                message.append(", ").append(i18n("mods.game.version")).append(": ").append(localModFile.getGameVersion());
             if (isNotBlank(localModFile.getAuthors()))
                 message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
             this.message = message.toString();
@@ -446,7 +446,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
-                                            null
+                                            (profile, version, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
                                     ));
                                 });
                                 button.setDisable(false);

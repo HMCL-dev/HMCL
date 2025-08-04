@@ -58,5 +58,10 @@
     "title" : "SimplePNG",
     "subtitle" : "Copyright © 2023 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink" : "https://github.com/Glavo/SimplePNG"
+  },
+  {
+    "title" : "Java Native Access",
+    "subtitle" : "Licensed under the LGPL 2.1 License or the Apache 2.0 License.",
+    "externalLink" : "https://github.com/java-native-access/jna"
   }
 ]

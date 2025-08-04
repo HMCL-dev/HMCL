@@ -34,9 +34,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -50,7 +47,7 @@ public final class AboutPage extends StackPane {
             launcher.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
-            launcher.setExternalLink("https://hmcl.huangyuhui.net");
+            launcher.setExternalLink(Metadata.PUBLISH_URL);
 
             IconedTwoLineListItem author = new IconedTwoLineListItem();
             author.setImage(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
@@ -70,7 +67,7 @@ public final class AboutPage extends StackPane {
             IconedTwoLineListItem copyright = new IconedTwoLineListItem();
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
-            copyright.setExternalLink("https://hmcl.huangyuhui.net/about/");
+            copyright.setExternalLink(Metadata.ABOUT_URL);
 
             IconedTwoLineListItem claim = new IconedTwoLineListItem();
             claim.setTitle(i18n("about.claim"));
@@ -117,8 +114,8 @@ public final class AboutPage extends StackPane {
             return componentList;
         }
 
-        try (Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
-            JsonArray array = JsonUtils.GSON.fromJson(reader, JsonArray.class);
+        try {
+            JsonArray array = JsonUtils.fromJsonFully(input, JsonArray.class);
 
             for (JsonElement element : array) {
                 JsonObject obj = element.getAsJsonObject();

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
@@ -32,6 +33,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
@@ -127,6 +129,10 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnRefresh = new JFXButton();
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
+        if (skinnable.getAccount() instanceof MicrosoftAccount && Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+            btnRefresh.setDisable(true);
+            FXUtils.installFastTooltip(spinnerRefresh, i18n("account.methods.microsoft.snapshot"));
+        }
         btnRefresh.setOnAction(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()
@@ -159,8 +165,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         btnUpload.getStyleClass().add("toggle-icon4");
         btnUpload.setGraphic(SVG.CHECKROOM.createIcon(Theme.blackFill(), -1));
         FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
-        spinnerUpload.managedProperty().bind(spinnerUpload.visibleProperty());
-        spinnerUpload.visibleProperty().bind(skinnable.canUploadSkin());
+        btnUpload.disableProperty().bind(Bindings.not(skinnable.canUploadSkin()));
         spinnerUpload.setContent(btnUpload);
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
