@@ -240,7 +240,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
 
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
-        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get((versionId == null? profile.getRepository().getBaseDirectory() : profile.getRepository().getRunDirectory(versionId)).getAbsolutePath() + "/natives").normalize().toString(),
+        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get((versionId == null ? profile.getRepository().getBaseDirectory() : profile.getRepository().getRunDirectory(versionId)).getAbsolutePath() + "/natives").normalize().toString(),
                 versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
     }
 
