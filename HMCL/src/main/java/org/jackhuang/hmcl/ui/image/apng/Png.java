@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.ui.image.apng;
 
-import org.glavo.imagefx.apng.argb8888.*;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.*;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.map.PngMap;

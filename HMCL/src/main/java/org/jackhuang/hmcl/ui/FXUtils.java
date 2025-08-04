@@ -58,6 +58,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.ui.image.apng.Png;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888BitmapSequence;
@@ -934,12 +935,13 @@ public final class FXUtils {
         }
     }
 
-
-
     public static Image loadImage(Path path) throws Exception {
         try (InputStream input = Files.newInputStream(path)) {
-            if ("webp".equalsIgnoreCase(FileUtils.getExtension(path)))
+            String ext = FileUtils.getExtension(path);
+            if ("webp".equalsIgnoreCase(ext))
                 return loadWebPImage(input);
+            else if ("png".equalsIgnoreCase(ext))
+                return ImageUtils.loadApng(input);
             else {
                 Image image = new Image(input);
                 if (image.isError())

@@ -1,6 +1,5 @@
 package org.jackhuang.hmcl.ui.image.apng.util;
 
-import org.glavo.imagefx.apng.chunks.*;
 import org.jackhuang.hmcl.ui.image.apng.chunks.*;
 import org.jackhuang.hmcl.ui.image.apng.map.PngChunkMap;
 

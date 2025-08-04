@@ -1,7 +1,6 @@
 package org.jackhuang.hmcl.ui.image.apng.util;
 
 import org.jackhuang.hmcl.ui.image.apng.PngChunkCode;
-import org.glavo.imagefx.apng.chunks.*;
 import org.jackhuang.hmcl.ui.image.apng.chunks.*;
 import org.jackhuang.hmcl.ui.image.apng.reader.PngChunkProcessor;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;

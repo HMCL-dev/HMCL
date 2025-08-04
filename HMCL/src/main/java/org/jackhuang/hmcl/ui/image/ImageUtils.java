@@ -39,6 +39,7 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+
 /**
  * @author Glavo
  */
@@ -158,7 +159,7 @@ public final class ImageUtils {
         return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
     }
 
-    private static Image loadApng(InputStream input) throws IOException {
+    public static Image loadApng(InputStream input) throws IOException {
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
             if (sequence.isAnimated()) {
