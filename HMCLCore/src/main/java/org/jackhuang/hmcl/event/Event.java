@@ -97,7 +97,7 @@ public class Event {
     private Result result = Result.DEFAULT;
 
     /**
-     * Retutns the value set as the result of this event
+     * Returns the value set as the result of this event
      */
     public Result getResult() {
         return result;
