@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -52,7 +53,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
     private final JFXComboBox<Renderer> cboRenderer;
 
-    public AdvancedVersionSettingPage(Profile profile, String versionId, VersionSetting versionSetting) {
+    public AdvancedVersionSettingPage(Profile profile, @Nullable String versionId, VersionSetting versionSetting) {
         this.profile = profile;
         this.versionId = versionId;
         this.versionSetting = versionSetting;
@@ -239,7 +240,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
 
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
-        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath() + "/natives").normalize().toString(),
+        nativesDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get((versionId == null? profile.getRepository().getBaseDirectory() : profile.getRepository().getRunDirectory(versionId)).getAbsolutePath() + "/natives").normalize().toString(),
                 versionSetting.nativesDirProperty(), versionSetting.nativesDirTypeProperty()));
     }
 
