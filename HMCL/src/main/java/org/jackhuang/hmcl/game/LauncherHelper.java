@@ -267,7 +267,7 @@ public final class LauncherHelper {
                                     if (ex.getCause() instanceof ResponseCodeException) {
                                         ResponseCodeException rce = (ResponseCodeException) ex.getCause();
                                         int responseCode = rce.getResponseCode();
-                                        URI uri = rce.getUri();
+                                        String uri = rce.getUri();
                                         if (responseCode == 404)
                                             message += i18n("download.code.404", uri);
                                         else
@@ -298,7 +298,7 @@ public final class LauncherHelper {
                                 } else if (ex instanceof ResponseCodeException) {
                                     ResponseCodeException rce = (ResponseCodeException) ex;
                                     int responseCode = rce.getResponseCode();
-                                    URI uri = rce.getUri();
+                                    String uri = rce.getUri();
                                     if (responseCode == 404)
                                         message = i18n("download.code.404", uri);
                                     else

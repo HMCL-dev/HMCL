@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.*;
@@ -26,6 +27,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -38,7 +40,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
-    private static final int TIME_OUT = 8000;
+    public static final int TIME_OUT = 8000;
 
     private NetworkUtils() {
     }
@@ -68,6 +70,10 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
+    public static List<URI> withQuery(List<URI> list, Map<String, String> params) {
+        return list.stream().map(uri -> URI.create(withQuery(uri.toString(), params))).collect(Collectors.toList());
+    }
+
     public static List<Pair<String, String>> parseQuery(URI uri) {
         return parseQuery(uri.getRawQuery());
     }
@@ -93,17 +99,40 @@ public final class NetworkUtils {
         return result;
     }
 
+    public static URI dropQuery(URI u) {
+        if (u.getRawQuery() == null && u.getRawFragment() == null) {
+            return u;
+        }
+
+        try {
+            return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), null, null);
+        } catch (URISyntaxException e) {
+            throw new AssertionError("Unreachable", e);
+        }
+    }
+
     public static URLConnection createConnection(URI uri) throws IOException {
         URLConnection connection = uri.toURL().openConnection();
-        connection.setUseCaches(false);
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
-        connection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+        if (connection instanceof HttpURLConnection) {
+            var httpConnection = (HttpURLConnection) connection;
+            httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+            httpConnection.setInstanceFollowRedirects(false);
+        }
         return connection;
+    }
+
+    public static HttpURLConnection createHttpConnection(String url) throws IOException {
+        return (HttpURLConnection) createConnection(toURI(url));
     }
 
     public static HttpURLConnection createHttpConnection(URI url) throws IOException {
         return (HttpURLConnection) createConnection(url);
+    }
+
+    private static void encodeCodePoint(StringBuilder builder, int codePoint) {
+        builder.append(encodeURL(Character.toString(codePoint)));
     }
 
     /**
@@ -113,33 +142,59 @@ public final class NetworkUtils {
      * "https://github.com/curl/curl/blob/3f7b1bb89f92c13e69ee51b710ac54f775aab320/lib/transfer.c#L1427-L1461">Curl</a>
      */
     public static String encodeLocation(String location) {
-        StringBuilder sb = new StringBuilder();
+        int i = 0;
         boolean left = true;
-        for (char ch : location.toCharArray()) {
-            switch (ch) {
-                case ' ':
-                    if (left)
-                        sb.append("%20");
-                    else
-                        sb.append('+');
-                    break;
-                case '?':
-                    left = false;
-                    // fallthrough
-                default:
-                    if (ch >= 0x80)
-                        sb.append(encodeURL(Character.toString(ch)));
-                    else
-                        sb.append(ch);
-                    break;
+        while (i < location.length()) {
+            char ch = location.charAt(i);
+            if (ch == ' ' || ch >= 0x80)
+                break;
+            else if (ch == '?')
+                left = false;
+            i++;
+        }
+
+        if (i == location.length()) {
+            // No need to encode
+            return location;
+        }
+
+        var builder = new StringBuilder(location.length() + 10);
+        builder.append(location, 0, i);
+
+        for (; i < location.length(); i++) {
+            char ch = location.charAt(i);
+            if (Character.isSurrogate(ch)) {
+                if (Character.isHighSurrogate(ch) && i < location.length() - 1) {
+                    char ch2 = location.charAt(i + 1);
+                    if (Character.isLowSurrogate(ch2)) {
+                        int codePoint = Character.toCodePoint(ch, ch2);
+                        encodeCodePoint(builder, codePoint);
+                        i++;
+                        continue;
+                    }
+                }
+
+                // Invalid surrogate pair, encode as '?'
+                builder.append("%3F");
+                continue;
+            }
+
+            if (ch == ' ') {
+                if (left)
+                    builder.append("%20");
+                else
+                    builder.append('+');
+            } else if (ch == '?') {
+                left = false;
+                builder.append('?');
+            } else if (ch >= 0x80) {
+                encodeCodePoint(builder, ch);
+            } else {
+                builder.append(ch);
             }
         }
 
-        return sb.toString();
-    }
-
-    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
-        return resolveConnection(conn, null);
+        return builder.toString();
     }
 
     /**
@@ -151,10 +206,11 @@ public final class NetworkUtils {
      * @throws IOException if an I/O error occurs.
      * @see <a href="https://github.com/curl/curl/issues/473">Issue with libcurl</a>
      */
-    public static HttpURLConnection resolveConnection(HttpURLConnection conn, List<String> redirects) throws IOException {
+    public static HttpURLConnection resolveConnection(HttpURLConnection conn) throws IOException {
+        final boolean useCache = conn.getUseCaches();
         int redirect = 0;
         while (true) {
-            conn.setUseCaches(false);
+            conn.setUseCaches(useCache);
             conn.setConnectTimeout(TIME_OUT);
             conn.setReadTimeout(TIME_OUT);
             conn.setInstanceFollowRedirects(false);
@@ -165,9 +221,6 @@ public final class NetworkUtils {
                 String newURL = conn.getHeaderField("Location");
                 conn.disconnect();
 
-                if (redirects != null) {
-                    redirects.add(newURL);
-                }
                 if (redirect > 20) {
                     throw new IOException("Too much redirects");
                 }
@@ -184,6 +237,10 @@ public final class NetworkUtils {
             }
         }
         return conn;
+    }
+
+    public static String doGet(String uri) throws IOException {
+        return doGet(toURI(uri));
     }
 
     public static String doGet(URI uri) throws IOException {
@@ -305,14 +362,6 @@ public final class NetworkUtils {
         }
     }
 
-    public static URI toURI(URL url) {
-        try {
-            return url.toURI();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
     // ==== Shortcut methods for encoding/decoding URLs in UTF-8 ====
     public static String encodeURL(String toEncode) {
         return URLEncoder.encode(toEncode, UTF_8);
@@ -320,6 +369,20 @@ public final class NetworkUtils {
 
     public static String decodeURL(String toDecode) {
         return URLDecoder.decode(toDecode, UTF_8);
+    }
+
+    /// @throws IllegalArgumentException if the string is not a valid URI
+    public static @NotNull URI toURI(@NotNull String uri) {
+        try {
+            return new URI(encodeLocation(uri));
+        } catch (URISyntaxException e) {
+            // Possibly an Internationalized Domain Name (IDN)
+            return URI.create(uri);
+        }
+    }
+
+    public static @NotNull URI toURI(@NotNull URL url) {
+        return toURI(url.toExternalForm());
     }
     // ====
 

@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -294,7 +293,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                                 fileName += ModManager.DISABLED_EXTENSION;
 
                             var task = new FileDownloadTask(
-                                    URI.create(remote.getFile().getUrl()),
+                                    remote.getFile().getUrl(),
                                     modManager.getModsDirectory().resolve(fileName));
 
                             task.setName(remote.getName());

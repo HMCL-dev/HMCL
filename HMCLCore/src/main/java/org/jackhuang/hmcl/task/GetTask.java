@@ -17,11 +17,14 @@
  */
 package org.jackhuang.hmcl.task;
 
+import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -29,36 +32,22 @@ import java.util.List;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- *
  * @author huangyuhui
  */
 public final class GetTask extends FetchTask<String> {
 
-    private static final int DEFAULT_RETRY = 3;
-
-    private final Charset charset;
+    public GetTask(String uri) {
+        this(NetworkUtils.toURI(uri));
+    }
 
     public GetTask(URI url) {
-        this(url, UTF_8);
-    }
-
-    public GetTask(URI url, Charset charset) {
-        this(url, charset, DEFAULT_RETRY);
-    }
-
-    public GetTask(URI url, Charset charset, int retry) {
-        this(List.of(url), charset, retry);
+        this(List.of(url));
+        setName(url.toString());
     }
 
     public GetTask(List<URI> url) {
-        this(url, UTF_8, DEFAULT_RETRY);
-    }
-
-    public GetTask(List<URI> urls, Charset charset, int retry) {
-        super(urls, retry);
-        this.charset = charset;
-
-        setName(urls.get(0).toString());
+        super(url);
+        setName(url.get(0).toString());
     }
 
     @Override
@@ -72,7 +61,7 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag) {
+    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) {
         return new Context() {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -85,7 +74,7 @@ public final class GetTask extends FetchTask<String> {
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(charset);
+                String result = baos.toString(UTF_8);
                 setResult(result);
 
                 if (checkETag) {
@@ -95,4 +84,11 @@ public final class GetTask extends FetchTask<String> {
         };
     }
 
+    public <T> Task<T> thenGetJsonAsync(Class<T> type) {
+        return thenGetJsonAsync(TypeToken.get(type));
+    }
+
+    public <T> Task<T> thenGetJsonAsync(TypeToken<T> type) {
+        return thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
+    }
 }

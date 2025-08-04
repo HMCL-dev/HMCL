@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -99,6 +100,6 @@ public final class MultiMCComponents {
             }
         }
 
-        return URI.create(String.format("https://meta.multimc.org/v1/%s/%s.json", componentID, version));
+        return NetworkUtils.toURI(String.format("https://meta.multimc.org/v1/%s/%s.json", componentID, version));
     }
 }

@@ -28,11 +28,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -84,7 +82,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     @Override
     public void preExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        dependent = new GetTask(URI.create(manifest.getManifest().getFileApi() + "/server-manifest.json"));
+        dependent = new GetTask(manifest.getManifest().getFileApi() + "/server-manifest.json");
     }
 
     @Override
@@ -152,7 +150,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             if (download) {
                 total++;
                 dependencies.add(new FileDownloadTask(
-                        URI.create(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath())),
+                        remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
                         .withCounter("hmcl.modpack.download"));

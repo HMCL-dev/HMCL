@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.util.Lang;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
-import java.net.URI;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -196,7 +195,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 lblServerName.setText(serverBeingAdded.getName());
                 lblServerUrl.setText(serverBeingAdded.getUrl());
 
-                lblServerWarning.setVisible("http".equals(URI.create(serverBeingAdded.getUrl()).getScheme()));
+                //noinspection HttpUrlsUsage
+                lblServerWarning.setVisible(serverBeingAdded.getUrl().startsWith("http://"));
 
                 this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT);
             } else {

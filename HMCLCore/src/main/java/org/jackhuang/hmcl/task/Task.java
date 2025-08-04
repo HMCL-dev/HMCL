@@ -917,7 +917,8 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<List<Object>> allOf(Task<?>... tasks) {
+    @SafeVarargs
+    public static <T> Task<List<T>> allOf(Task<? extends T>... tasks) {
         return allOf(Arrays.asList(tasks));
     }
 
@@ -932,8 +933,8 @@ public abstract class Task<T> {
      * @param tasks the Tasks
      * @return a new Task that is completed when all of the given Tasks complete
      */
-    public static Task<List<Object>> allOf(Collection<Task<?>> tasks) {
-        return new Task<List<Object>>() {
+    public static <T> Task<List<T>> allOf(Collection<? extends Task<? extends T>> tasks) {
+        return new Task<>() {
             {
                 setSignificance(TaskSignificance.MINOR);
             }
@@ -944,7 +945,7 @@ public abstract class Task<T> {
             }
 
             @Override
-            public Collection<Task<?>> getDependents() {
+            public Collection<? extends Task<?>> getDependents() {
                 return tasks;
             }
         };
