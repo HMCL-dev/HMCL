@@ -44,6 +44,8 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -56,6 +58,13 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.ui.image.apng.Png;
+import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
+import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888BitmapSequence;
+import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
+import org.jackhuang.hmcl.ui.image.apng.error.PngException;
+import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
+import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -924,6 +933,8 @@ public final class FXUtils {
             reader.dispose();
         }
     }
+
+
 
     public static Image loadImage(Path path) throws Exception {
         try (InputStream input = Files.newInputStream(path)) {
