@@ -90,6 +90,9 @@ public final class Config implements Observable {
     @SerializedName("bgurl")
     private StringProperty backgroundImageUrl = new SimpleStringProperty();
 
+    @SerializedName("bgImageOpacity")
+    private IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
+
     @SerializedName("bgpaint")
     private ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
 
@@ -290,6 +293,18 @@ public final class Config implements Observable {
 
     public void setBackgroundPaint(Paint backgroundPaint) {
         this.backgroundPaint.set(backgroundPaint);
+    }
+
+    public int getBackgroundImageOpacity() {
+        return backgroundImageOpacity.get();
+    }
+
+    public void setBackgroundImageOpacity(int backgroundImageOpacity) {
+        this.backgroundImageOpacity.set(backgroundImageOpacity);
+    }
+
+    public IntegerProperty backgroundImageOpacityProperty() {
+        return backgroundImageOpacity;
     }
 
     public EnumCommonDirectory getCommonDirType() {
