@@ -234,7 +234,7 @@ public class DecoratorController {
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
             case TRANSLUCENT:
-                return new Background(new BackgroundFill(new Color(1, 1, 1, Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.), CornerRadii.EMPTY, Insets.EMPTY));
+                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
                 Paint paint = config().getBackgroundPaint();
                 double opacity = Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.;
