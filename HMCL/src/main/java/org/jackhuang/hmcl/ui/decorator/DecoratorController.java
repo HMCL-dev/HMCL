@@ -230,7 +230,6 @@ public class DecoratorController {
                 break;
             case TRANSLUCENT:
                 return new Background(new BackgroundFill(new Color(1, 1, 1, Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.), CornerRadii.EMPTY, Insets.EMPTY));
-                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
                 return new Background(new BackgroundFill(Objects.requireNonNullElse(config().getBackgroundPaint(), Color.WHITE), CornerRadii.EMPTY, Insets.EMPTY));
         }
