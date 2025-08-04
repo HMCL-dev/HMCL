@@ -40,6 +40,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
@@ -47,6 +48,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
@@ -66,7 +68,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -192,13 +193,17 @@ public class DecoratorController {
     private final InvalidationListener changeBackgroundListener;
 
     private void updateBackground() {
-        LOG.info("updateBackground");
         final int currentCount = ++this.changeBackgroundCount;
-        CompletableFuture.supplyAsync(this::getBackground, Schedulers.io())
-                .thenAcceptAsync(background -> {
-                    if (this.changeBackgroundCount == currentCount)
-                        decorator.setContentBackground(background);
-                }, Schedulers.javafx());
+        Task.supplyAsync(Schedulers.io(), this::getBackground)
+                .setName("Update background")
+                .whenComplete(Schedulers.javafx(), (background, exception) -> {
+                    if (exception == null) {
+                        if (this.changeBackgroundCount == currentCount)
+                            decorator.setContentBackground(background);
+                    } else {
+                        LOG.warning("Failed to update background", exception);
+                    }
+                }).start();
     }
 
     private Background getBackground() {
@@ -231,7 +236,19 @@ public class DecoratorController {
             case TRANSLUCENT:
                 return new Background(new BackgroundFill(new Color(1, 1, 1, Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
-                return new Background(new BackgroundFill(Objects.requireNonNullElse(config().getBackgroundPaint(), Color.WHITE), CornerRadii.EMPTY, Insets.EMPTY));
+                Paint paint = config().getBackgroundPaint();
+                double opacity = Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.;
+                if (paint instanceof Color || paint == null) {
+                    Color color = (Color) paint;
+                    if (color == null)
+                        color = Color.WHITE; // Default to white if no color is set
+                    if (opacity < 1.)
+                        color = new Color(color.getRed(), color.getGreen(), color.getBlue(), opacity);
+                    return new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY));
+                } else {
+                    // TODO: Support opacity for non-color paints
+                    return new Background(new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY));
+                }
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();
