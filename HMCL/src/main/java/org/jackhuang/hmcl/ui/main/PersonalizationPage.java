@@ -26,6 +26,8 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.When;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -125,7 +127,6 @@ public class PersonalizationPage extends StackPane {
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
                     new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
-                    new MultiFileItem.Option<>(i18n("launcher.background.translucent"), EnumBackgroundImage.TRANSLUCENT),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
@@ -148,13 +149,29 @@ public class PersonalizationPage extends StackPane {
 
                 Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
 
-                JFXSlider slider = new JFXSlider(0, 100, config().getBackgroundImageOpacity());
+                JFXSlider slider = new JFXSlider(0, 100,
+                        config().getBackgroundImageType() != EnumBackgroundImage.TRANSLUCENT
+                                ? config().getBackgroundImageOpacity() : 50);
                 slider.setShowTickMarks(true);
                 slider.setMajorTickUnit(10);
                 slider.setMinorTickCount(1);
                 slider.setBlockIncrement(5);
                 slider.setSnapToTicks(true);
                 HBox.setHgrow(slider, Priority.ALWAYS);
+
+                if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
+                    slider.setDisable(true);
+                    config().backgroundImageTypeProperty().addListener(new ChangeListener<>() {
+                        @Override
+                        public void changed(ObservableValue<? extends EnumBackgroundImage> observable, EnumBackgroundImage oldValue, EnumBackgroundImage newValue) {
+                            if (newValue != EnumBackgroundImage.TRANSLUCENT) {
+                                config().backgroundImageTypeProperty().removeListener(this);
+                                slider.setDisable(false);
+                                slider.setValue(100);
+                            }
+                        }
+                    });
+                }
 
                 Label textOpacity = new Label();
 
@@ -164,19 +181,6 @@ public class PersonalizationPage extends StackPane {
 
                 slider.valueProperty().addListener((observable, oldValue, newValue) ->
                         config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
-
-                config().backgroundImageTypeProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue != EnumBackgroundImage.TRANSLUCENT && oldValue != EnumBackgroundImage.TRANSLUCENT)
-                        return;
-
-                    final int opacity = snapOpacity(slider.getValue());
-                    if (newValue == EnumBackgroundImage.TRANSLUCENT) {
-                        if (opacity == 100)
-                            slider.setValue(50);
-                    } else {
-                        slider.setValue(100);
-                    }
-                });
 
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
