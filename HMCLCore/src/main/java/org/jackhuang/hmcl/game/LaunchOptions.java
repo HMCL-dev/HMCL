@@ -173,7 +173,7 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
-     * Is inital game window fullscreen.
+     * Is initial game window fullscreen.
      */
     public boolean isFullscreen() {
         return fullscreen;
