@@ -23,4 +23,5 @@ public enum EnumBackgroundImage {
     CLASSIC,
     NETWORK,
     TRANSLUCENT,
+    PAINT
 }

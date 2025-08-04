@@ -21,18 +21,39 @@ import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
+import static org.jackhuang.hmcl.util.io.NetworkUtils.getCharsetFromContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Glavo
  */
 public class NetworkUtilsTest {
+
+    @Test
+    public void testEncodeLocation() {
+        assertEquals("https://github.com", encodeLocation("https://github.com"));
+        assertEquals("https://github.com/HMCL-dev/HMCL/commits?author=Glavo", encodeLocation("https://github.com/HMCL-dev/HMCL/commits?author=Glavo"));
+        assertEquals("https://www.example.com/file%20with%20space", encodeLocation("https://www.example.com/file with space"));
+        assertEquals("https://www.example.com/file%20with%20space", encodeLocation("https://www.example.com/file%20with%20space"));
+        assertEquals("https://www.example.com/%E6%B5%8B%E8%AF%95", encodeLocation("https://www.example.com/测试"));
+        assertEquals("https://www.example.com/%F0%9F%98%87", encodeLocation("https://www.example.com/\uD83D\uDE07"));
+        assertEquals("https://www.example.com/test?a=10+20", encodeLocation("https://www.example.com/test?a=10 20"));
+        assertEquals("https://www.example.com/%E6%B5%8B%E8%AF%95?a=10+20", encodeLocation("https://www.example.com/测试?a=10 20"));
+
+        // Invalid surrogate pair
+        assertEquals("https://www.example.com/%3F", encodeLocation("https://www.example.com/\uD83D"));
+        assertEquals("https://www.example.com/%3F", encodeLocation("https://www.example.com/\uDE07"));
+        assertEquals("https://www.example.com/%3Ftest", encodeLocation("https://www.example.com/\uD83Dtest"));
+        assertEquals("https://www.example.com/%3Ftest", encodeLocation("https://www.example.com/\uDE07test"));
+    }
+
     @Test
     public void testGetEncodingFromUrl() {
-        assertEquals(UTF_8, NetworkUtils.getCharsetFromContentType(null));
-        assertEquals(UTF_8, NetworkUtils.getCharsetFromContentType(""));
-        assertEquals(UTF_8, NetworkUtils.getCharsetFromContentType("text/html"));
-        assertEquals(UTF_8, NetworkUtils.getCharsetFromContentType("text/html; charset=utf-8"));
-        assertEquals(US_ASCII, NetworkUtils.getCharsetFromContentType("text/html; charset=ascii"));
+        assertEquals(UTF_8, getCharsetFromContentType(null));
+        assertEquals(UTF_8, getCharsetFromContentType(""));
+        assertEquals(UTF_8, getCharsetFromContentType("text/html"));
+        assertEquals(UTF_8, getCharsetFromContentType("text/html; charset=utf-8"));
+        assertEquals(US_ASCII, getCharsetFromContentType("text/html; charset=ascii"));
     }
 }

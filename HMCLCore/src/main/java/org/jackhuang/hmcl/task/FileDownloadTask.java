@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
-import static org.jackhuang.hmcl.util.DigestUtils.getDigest;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -70,22 +71,34 @@ public class FileDownloadTask extends FetchTask<Void> {
             return checksum;
         }
 
-        public MessageDigest createDigest() {
-            return getDigest(algorithm);
-        }
-
-        public void performCheck(MessageDigest digest) throws ChecksumMismatchException {
-            String actualChecksum = Hex.encodeHex(digest.digest());
-            if (!checksum.equalsIgnoreCase(actualChecksum)) {
-                throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
-            }
+        @Override
+        public String toString() {
+            return String.format("IntegrityCheck[algorithm='%s', checksum='%s']", algorithm, checksum);
         }
     }
 
     private final Path file;
     private final IntegrityCheck integrityCheck;
+    private boolean caching;
     private Path candidate;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
+
+    /**
+     * @param uri  the URI of remote file.
+     * @param path the location that download to.
+     */
+    public FileDownloadTask(String uri, Path path) {
+        this(List.of(NetworkUtils.toURI(uri)), path, null);
+    }
+
+    /**
+     * @param uri            the URI of remote file.
+     * @param path           the location that download to.
+     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
+     */
+    public FileDownloadTask(String uri, Path path, IntegrityCheck integrityCheck) {
+        this(List.of(NetworkUtils.toURI(uri)), path, integrityCheck);
+    }
 
     /**
      * @param uri  the URI of remote file.
@@ -102,16 +115,6 @@ public class FileDownloadTask extends FetchTask<Void> {
      */
     public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck) {
         this(List.of(uri), path, integrityCheck);
-    }
-
-    /**
-     * @param uri            the URI of remote file.
-     * @param path           the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry          the times for retrying if downloading fails.
-     */
-    public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck, int retry) {
-        this(List.of(uri), path, integrityCheck, retry);
     }
 
     /**
@@ -132,19 +135,7 @@ public class FileDownloadTask extends FetchTask<Void> {
      * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
      */
     public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck) {
-        this(uris, path, integrityCheck, 3);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uris           uris of remote file, will be attempted in order.
-     * @param path           the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     * @param retry          the times for retrying if downloading fails.
-     */
-    public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck, int retry) {
-        super(uris, retry);
+        super(uris);
         this.file = path;
         this.integrityCheck = integrityCheck;
 
@@ -153,6 +144,10 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     public Path getPath() {
         return file;
+    }
+
+    public void setCaching(boolean caching) {
+        this.caching = caching;
     }
 
     public FileDownloadTask setCandidate(Path candidate) {
@@ -195,11 +190,25 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag) throws IOException {
+    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
-        MessageDigest digest = integrityCheck == null ? null : integrityCheck.createDigest();
-        OutputStream fileOutput = Files.newOutputStream(temp);
 
+        String algorithm;
+        String checksum;
+        if (integrityCheck != null) {
+            algorithm = integrityCheck.getAlgorithm();
+            checksum = integrityCheck.getChecksum();
+        } else if (bmclapiHash != null) {
+            algorithm = "SHA-1";
+            checksum = bmclapiHash;
+        } else {
+            algorithm = null;
+            checksum = null;
+        }
+
+        MessageDigest digest = algorithm != null ? DigestUtils.getDigest(algorithm) : null;
+
+        OutputStream fileOutput = Files.newOutputStream(temp);
         return new Context() {
             @Override
             public void write(byte[] buffer, int offset, int len) throws IOException {
@@ -240,13 +249,16 @@ public class FileDownloadTask extends FetchTask<Void> {
                 }
 
                 // Integrity check
-                if (integrityCheck != null) {
-                    integrityCheck.performCheck(digest);
+                if (checksum != null) {
+                    String actualChecksum = Hex.encodeHex(digest.digest());
+                    if (!checksum.equalsIgnoreCase(actualChecksum)) {
+                        throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
+                    }
                 }
 
-                if (caching && integrityCheck != null) {
+                if (caching && algorithm != null) {
                     try {
-                        repository.cacheFile(file, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+                        repository.cacheFile(file, algorithm, checksum);
                     } catch (IOException e) {
                         LOG.warning("Failed to cache file", e);
                     }

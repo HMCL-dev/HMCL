@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
 import java.util.*;
@@ -46,6 +47,6 @@ public final class MultiMCComponents {
     }
 
     public static URI getMetaURL(String componentID, String version) {
-        return URI.create(String.format("https://meta.multimc.org/v1/%s/%s.json", componentID, version));
+        return NetworkUtils.toURI(String.format("https://meta.multimc.org/v1/%s/%s.json", componentID, version));
     }
 }

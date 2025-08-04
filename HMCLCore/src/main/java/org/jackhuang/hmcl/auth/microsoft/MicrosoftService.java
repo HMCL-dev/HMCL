@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -165,7 +164,7 @@ public class MicrosoftService {
                 .accept("application/json").createConnection();
 
         if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(URI.create("https://api.minecraftservices.com/entitlements/mcstore"), request.getResponseCode());
+            throw new ResponseCodeException("https://api.minecraftservices.com/entitlements/mcstore", request.getResponseCode());
         }
 
         // Get Minecraft Account UUID
@@ -248,7 +247,7 @@ public class MicrosoftService {
         if (responseCode == HTTP_NOT_FOUND) {
             throw new NoMinecraftJavaEditionProfileException();
         } else if (responseCode != 200) {
-            throw new ResponseCodeException(URI.create("https://api.minecraftservices.com/minecraft/profile"), responseCode);
+            throw new ResponseCodeException("https://api.minecraftservices.com/minecraft/profile", responseCode);
         }
 
         String result = NetworkUtils.readFullyAsString(conn);
@@ -258,12 +257,12 @@ public class MicrosoftService {
     public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
-        return Optional.ofNullable(GSON.fromJson(request(URI.create("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
+        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid), null), CompleteGameProfile.class));
     }
 
     public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         try {
-            HttpURLConnection con = NetworkUtils.createHttpConnection(URI.create("https://api.minecraftservices.com/minecraft/profile/skins"));
+            HttpURLConnection con = NetworkUtils.createHttpConnection("https://api.minecraftservices.com/minecraft/profile/skins");
             con.setRequestMethod("POST");
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
             con.setDoOutput(true);
@@ -288,12 +287,12 @@ public class MicrosoftService {
         }
     }
 
-    private static String request(URI url, Object payload) throws AuthenticationException {
+    private static String request(String url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
                 return NetworkUtils.doGet(url);
             else
-                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+                return NetworkUtils.doPost(NetworkUtils.toURI(url), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }

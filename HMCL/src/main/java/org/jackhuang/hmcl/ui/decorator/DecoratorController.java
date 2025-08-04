@@ -62,14 +62,10 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -133,6 +129,7 @@ public class DecoratorController {
         config().backgroundImageTypeProperty().addListener(weakListener);
         config().backgroundImageProperty().addListener(weakListener);
         config().backgroundImageUrlProperty().addListener(weakListener);
+        config().backgroundPaintProperty().addListener(weakListener);
         config().backgroundImageOpacityProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
@@ -222,7 +219,7 @@ public class DecoratorController {
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(URI.create(backgroundImageUrl));
+                        image = FXUtils.loadImage(backgroundImageUrl);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -233,6 +230,9 @@ public class DecoratorController {
                 break;
             case TRANSLUCENT:
                 return new Background(new BackgroundFill(new Color(1, 1, 1, Lang.clamp(0, config().getBackgroundImageOpacity(), 100) / 100.), CornerRadii.EMPTY, Insets.EMPTY));
+                return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
+            case PAINT:
+                return new Background(new BackgroundFill(Objects.requireNonNullElse(config().getBackgroundPaint(), Color.WHITE), CornerRadii.EMPTY, Insets.EMPTY));
         }
         if (image == null) {
             image = loadDefaultBackgroundImage();

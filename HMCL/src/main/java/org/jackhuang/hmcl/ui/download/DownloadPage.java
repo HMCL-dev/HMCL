@@ -55,7 +55,6 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
@@ -156,7 +155,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
             Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(URI.create(file.getFile().getUrl()), dest);
+                var task = new FileDownloadTask(file.getFile().getUrl(), dest);
                 task.setName(file.getName());
                 return task;
             }).whenComplete(Schedulers.javafx(), exception -> {

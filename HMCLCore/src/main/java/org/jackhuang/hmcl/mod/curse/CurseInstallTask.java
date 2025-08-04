@@ -25,11 +25,11 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,7 +60,6 @@ public final class CurseInstallTask extends Task<Void> {
      * @param zipFile           the CurseForge modpack file.
      * @param manifest          The manifest content of given CurseForge modpack.
      * @param name              the new version name
-     * @see CurseManifest#readCurseForgeModpackManifest
      */
     public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, CurseManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
@@ -99,7 +98,7 @@ public final class CurseInstallTask extends Task<Void> {
         ModpackConfiguration<CurseManifest> config = null;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(CurseManifest.class));
+                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(CurseManifest.class));
 
                 if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
@@ -137,7 +136,8 @@ public final class CurseInstallTask extends Task<Void> {
             }
         }
 
-        File root = repository.getVersionRoot(name);
-        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
+        Path root = repository.getVersionRoot(name).toPath();
+        Files.createDirectories(root);
+        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
     }
 }
