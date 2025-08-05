@@ -85,19 +85,55 @@ public final class ImageUtils {
     public static final ImageLoader APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
+
+            final int width = sequence.header.width;
+            final int height = sequence.header.height;
+
+            boolean doScale;
+            if (requestedWidth > 0 && requestedHeight > 0
+                    && (requestedWidth != width || requestedHeight != height)) {
+                doScale = true;
+
+                if (preserveRatio) {
+                    double scaleX = (double) requestedWidth / width;
+                    double scaleY = (double) requestedHeight / height;
+                    double scale = Math.min(scaleX, scaleY);
+
+                    requestedWidth = (int) (width * scale);
+                    requestedHeight = (int) (height * scale);
+                }
+            } else {
+                doScale = false;
+            }
+
             if (sequence.isAnimated()) {
                 try {
-                    return toImage(sequence);
+                    return toImage(sequence, doScale, requestedWidth, requestedHeight);
                 } catch (Throwable e) {
                     LOG.warning("Failed to load animated image", e);
                 }
             }
 
             Argb8888Bitmap defaultImage = sequence.defaultImage;
+            int targetWidth;
+            int targetHeight;
+            int[] pixels;
+            if (doScale) {
+                targetWidth = requestedWidth;
+                targetHeight = requestedHeight;
+                pixels = scale(defaultImage.array,
+                        defaultImage.width, defaultImage.height,
+                        targetWidth, targetHeight);
+            } else {
+                targetWidth = defaultImage.width;
+                targetHeight = defaultImage.height;
+                pixels = defaultImage.array;
+            }
+
             WritableImage image = new WritableImage(defaultImage.width, defaultImage.height);
-            image.getPixelWriter().setPixels(0, 0, defaultImage.width, defaultImage.height,
-                    PixelFormat.getIntArgbInstance(), defaultImage.array,
-                    0, defaultImage.width);
+            image.getPixelWriter().setPixels(0, 0, targetWidth, targetHeight,
+                    PixelFormat.getIntArgbInstance(), pixels,
+                    0, targetWidth);
             return image;
         } catch (PngException e) {
             throw new IOException(e);
@@ -121,8 +157,6 @@ public final class ImageUtils {
     public static final Set<String> FORCE_STD_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/bmp", "image/gif"
     );
-
-    private static final Pattern CONTENT_TYPE_PATTERN = Pattern.compile("^\\s(?<type>image/[\\w-])");
 
     // ------
 
@@ -211,11 +245,10 @@ public final class ImageUtils {
     }
 
     public static Image loadImage(Path path,
-                                  double requestedWidth, double requestedHeight,
+                                  int requestedWidth, int requestedHeight,
                                   boolean preserveRatio, boolean smooth) throws Exception {
         try (var input = new BufferedInputStream(Files.newInputStream(path))) {
             String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
-
             ImageLoader loader = EXT_TO_LOADER.get(ext);
             if (loader == null && !FORCE_STD_EXTS.contains(ext)) {
                 input.mark(HEADER_BUFFER_SIZE);
@@ -225,10 +258,11 @@ public final class ImageUtils {
             }
             if (loader == null)
                 loader = DEFAULT;
-
             return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
         }
     }
+
+    private static final Pattern CONTENT_TYPE_PATTERN = Pattern.compile("^\\s(?<type>image/[\\w-])");
 
     public static Image loadImage(String url) throws Exception {
         URI uri = NetworkUtils.toURI(url);
@@ -260,7 +294,32 @@ public final class ImageUtils {
 
     // APNG
 
-    private static Image toImage(Argb8888BitmapSequence sequence) throws PngException {
+    private static int[] scale(int[] pixels,
+                               int sourceWidth, int sourceHeight,
+                               int targetWidth, int targetHeight) {
+        assert pixels.length == targetWidth * targetHeight;
+
+        double xScale = ((double) sourceWidth) / targetWidth;
+        double yScale = ((double) sourceHeight) / targetWidth;
+
+        int[] result = new int[targetWidth * targetHeight];
+
+        for (int yOffset = 0; yOffset < targetHeight; yOffset++) {
+            for (int xOffset = 0; xOffset < targetWidth; xOffset++) {
+                int sourceX = (int) (xOffset * xScale);
+                int sourceY = (int) (yOffset * yScale);
+                int color = pixels[sourceY * sourceWidth + sourceX];
+
+                result[yOffset * targetWidth + xOffset] = color;
+            }
+        }
+
+        return result;
+    }
+
+    private static Image toImage(Argb8888BitmapSequence sequence,
+                                 boolean doScale,
+                                 int targetWidth, int targetHeight) throws PngException {
         final int width = sequence.header.width;
         final int height = sequence.header.height;
 
@@ -294,7 +353,7 @@ public final class ImageUtils {
                             control.width);
                 }
             } else if (control.blendOp == 1) {
-                // fixme: APNG_BLEND_OP_OVER - Alpha blending
+                // APNG_BLEND_OP_OVER - Alpha blending
                 for (int row = 0; row < control.height; row++) {
                     for (int col = 0; col < control.width; col++) {
                         int srcIndex = row * control.width + col;
@@ -332,7 +391,12 @@ public final class ImageUtils {
                 throw new PngIntegrityException("Unsupported blendOp " + control.blendOp + " at frame " + frameIndex);
             }
 
-            framePixels[frameIndex] = currentFrameBuffer;
+            if (doScale)
+                framePixels[frameIndex] = scale(currentFrameBuffer,
+                        width, height,
+                        targetWidth, targetHeight);
+            else
+                framePixels[frameIndex] = currentFrameBuffer;
 
             if (control.delayNumerator == 0) {
                 durations[frameIndex] = 10;

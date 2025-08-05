@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -60,6 +59,7 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -73,23 +73,15 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -950,47 +942,12 @@ public final class FXUtils {
         }
     }
 
-    public static Task<Image> getRemoteImageTask(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+    public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
-                .thenApplyAsync(file -> {
-
-
-                    try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
-                        var header = new byte[12];
-                        var buffer = ByteBuffer.wrap(header);
-
-                        //noinspection StatementWithEmptyBody
-                        while (channel.read(buffer) > 0) {
-                        }
-
-                        channel.position(0L);
-                        if (!buffer.hasRemaining()) {
-                            // WebP File
-                            if (header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F' &&
-                                    header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P') {
-
-                                WebPImageReaderSpi spi = new WebPImageReaderSpi();
-                                ImageReader reader = spi.createReaderInstance(null);
-                                BufferedImage bufferedImage;
-                                try (ImageInputStream imageInput = ImageIO.createImageInputStream(Channels.newInputStream(channel))) {
-                                    reader.setInput(imageInput, true, true);
-                                    bufferedImage = reader.read(0, reader.getDefaultReadParam());
-                                } finally {
-                                    reader.dispose();
-                                }
-                                return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
-                            }
-                        }
-
-                        Image image = new Image(Channels.newInputStream(channel), requestedWidth, requestedHeight, preserveRatio, smooth);
-                        if (image.isError())
-                            throw image.getException();
-                        return image;
-                    }
-                });
+                .thenApplyAsync(file -> ImageUtils.loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth));
     }
 
-    public static ObservableValue<Image> newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+    public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         var image = new SimpleObjectProperty<Image>();
         getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
