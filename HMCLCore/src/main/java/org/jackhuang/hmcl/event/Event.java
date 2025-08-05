@@ -84,7 +84,7 @@ public class Event {
     }
 
     /**
-     * true if this Event this cancelable.
+     * true if this Event is cancelable.
      */
     public boolean isCancelable() {
         return false;
