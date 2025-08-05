@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.image;
 
+import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.Timeline;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
@@ -29,7 +30,11 @@ import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
+import org.jackhuang.hmcl.util.SwingFXUtils;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -100,10 +105,10 @@ public final class ImageUtils {
                             int dstB = dstPixel & 0xFF;
 
                             int invSrcAlpha = 255 - srcAlpha;
-                            int outAlpha = srcAlpha + (dstAlpha * invSrcAlpha) / 255;
-                            int outR = (srcR * srcAlpha + dstR * invSrcAlpha) / 255;
-                            int outG = (srcG * srcAlpha + dstG * invSrcAlpha) / 255;
-                            int outB = (srcB * srcAlpha + dstB * invSrcAlpha) / 255;
+                            int outAlpha = Math.min(srcAlpha + (dstAlpha * invSrcAlpha) / 255, 255);
+                            int outR = Math.min((srcR * srcAlpha + dstR * invSrcAlpha) / 255, 255);
+                            int outG = Math.min((srcG * srcAlpha + dstG * invSrcAlpha) / 255, 255);
+                            int outB = Math.min((srcB * srcAlpha + dstB * invSrcAlpha) / 255, 255);
 
                             currentFrameBuffer[dstIndex] = (outAlpha << 24) | (outR << 16) | (outG << 8) | outB;
                         }
@@ -155,7 +160,7 @@ public final class ImageUtils {
         return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
     }
 
-    public static Image loadApng(InputStream input) throws IOException {
+    public static Image loadApngImage(InputStream input) throws IOException {
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
             if (sequence.isAnimated()) {
@@ -174,6 +179,18 @@ public final class ImageUtils {
             return image;
         } catch (PngException e) {
             throw new IOException(e);
+        }
+    }
+
+    public static Image loadWebPImage(InputStream input) throws IOException {
+        WebPImageReaderSpi spi = new WebPImageReaderSpi();
+        ImageReader reader = spi.createReaderInstance(null);
+
+        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
+            reader.setInput(imageInput, true, true);
+            return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()), null);
+        } finally {
+            reader.dispose();
         }
     }
 

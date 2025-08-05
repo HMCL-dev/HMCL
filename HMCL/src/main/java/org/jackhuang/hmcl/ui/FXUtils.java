@@ -914,25 +914,13 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    private static Image loadWebPImage(InputStream input) throws IOException {
-        WebPImageReaderSpi spi = new WebPImageReaderSpi();
-        ImageReader reader = spi.createReaderInstance(null);
-
-        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
-            reader.setInput(imageInput, true, true);
-            return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()), null);
-        } finally {
-            reader.dispose();
-        }
-    }
-
     public static Image loadImage(Path path) throws Exception {
         try (InputStream input = Files.newInputStream(path)) {
             String ext = FileUtils.getExtension(path);
             if ("webp".equalsIgnoreCase(ext))
-                return loadWebPImage(input);
+                return ImageUtils.loadWebPImage(input);
             else if ("png".equalsIgnoreCase(ext) || "apng".equalsIgnoreCase(ext))
-                return ImageUtils.loadApng(input);
+                return ImageUtils.loadApngImage(input);
             else {
                 Image image = new Image(input);
                 if (image.isError())
@@ -947,7 +935,7 @@ public final class FXUtils {
         if (DataUri.isDataUri(uri)) {
             DataUri dataUri = new DataUri(uri);
             if ("image/webp".equalsIgnoreCase(dataUri.getMediaType())) {
-                return loadWebPImage(new ByteArrayInputStream(dataUri.readBytes()));
+                return ImageUtils.loadWebPImage(new ByteArrayInputStream(dataUri.readBytes()));
             } else {
                 Image image = new Image(new ByteArrayInputStream(dataUri.readBytes()));
                 if (image.isError())
@@ -963,9 +951,9 @@ public final class FXUtils {
         try (InputStream input = connection.getInputStream()) {
             String contentType = Objects.requireNonNull(connection.getContentType(), "");
             if (contentType.contains("webp"))
-                return loadWebPImage(input);
+                return ImageUtils.loadWebPImage(input);
             else if (contentType.contains("png"))
-                return ImageUtils.loadApng(input);
+                return ImageUtils.loadApngImage(input);
             else {
                 Image image = new Image(input);
                 if (image.isError())
