@@ -362,7 +362,10 @@ public final class ImageUtils {
                     System.arraycopy(currentFrameBuffer, 0, buffer, 0, currentFrameBuffer.length);
                     break;
                 case 1: // APNG_DISPOSE_OP_BACKGROUND
-                    Arrays.fill(buffer, 0);
+                    for (int row = 0; row < control.height; row++) {
+                        int fromIndex = (control.yOffset + row) * width + control.xOffset;
+                        Arrays.fill(buffer, fromIndex, fromIndex + control.width, 0);
+                    }
                     break;
                 case 2: // APNG_DISPOSE_OP_PREVIOUS
                     // Do nothing, keep the previous frame.
