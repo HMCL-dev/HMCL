@@ -59,9 +59,11 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -81,6 +83,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
@@ -902,6 +905,56 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
+    public static Image loadImage(Path path) throws Exception {
+        return loadImage(path, 0, 0, false, false);
+    }
+
+    public static Image loadImage(Path path,
+                                  int requestedWidth, int requestedHeight,
+                                  boolean preserveRatio, boolean smooth) throws Exception {
+        try (var input = new BufferedInputStream(Files.newInputStream(path))) {
+            String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
+            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
+            if (loader == null && !ImageUtils.FORCE_STD_EXTS.contains(ext)) {
+                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+                input.reset();
+                loader = ImageUtils.guessLoader(headerBuffer);
+            }
+            if (loader == null)
+                loader = ImageUtils.DEFAULT;
+            return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+        }
+    }
+
+    public static Image loadImage(String url) throws Exception {
+        URI uri = NetworkUtils.toURI(url);
+
+        URLConnection connection = NetworkUtils.createConnection(uri);
+        if (connection instanceof HttpURLConnection)
+            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+
+        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
+            String contentType = Objects.requireNonNull(connection.getContentType(), "");
+            Matcher matcher = ImageUtils.CONTENT_TYPE_PATTERN.matcher(contentType);
+            if (matcher.find())
+                contentType = matcher.group("type");
+
+            ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
+            if (loader == null && !ImageUtils.FORCE_STD_CONTENT_TYPES.contains(contentType)) {
+                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+                input.reset();
+                loader = ImageUtils.guessLoader(headerBuffer);
+            }
+
+            if (loader == null)
+                loader = ImageUtils.DEFAULT;
+
+            return loader.load(input, 0, 0, false, false);
+        }
+    }
+
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
@@ -944,7 +997,7 @@ public final class FXUtils {
 
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
-                .thenApplyAsync(file -> ImageUtils.loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth));
+                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth));
     }
 
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {

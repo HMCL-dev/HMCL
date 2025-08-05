@@ -31,24 +31,15 @@ import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jackhuang.hmcl.util.SwingFXUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URLConnection;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -150,7 +141,7 @@ public final class ImageUtils {
             "image/apng", APNG
     );
 
-    private static final Set<String> FORCE_STD_EXTS = Set.of(
+    public static final Set<String> FORCE_STD_EXTS = Set.of(
             "jpg", "jpeg", "bmp", "gif"
     );
 
@@ -160,12 +151,12 @@ public final class ImageUtils {
 
     // ------
 
-    static final int HEADER_BUFFER_SIZE = 1024;
+    public static final int HEADER_BUFFER_SIZE = 1024;
 
     private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
     private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
 
-    static boolean isWebP(byte[] headerBuffer) {
+    public static boolean isWebP(byte[] headerBuffer) {
         return headerBuffer.length > 12
                 && Arrays.equals(headerBuffer, 0, 4, RIFF_HEADER, 0, 4)
                 && Arrays.equals(headerBuffer, 8, 12, WEBP_HEADER, 0, 4);
@@ -199,7 +190,7 @@ public final class ImageUtils {
         }
     }
 
-    static boolean isApng(byte[] headerBuffer) {
+    public static boolean isApng(byte[] headerBuffer) {
         if (headerBuffer.length <= 20)
             return false;
 
@@ -233,7 +224,7 @@ public final class ImageUtils {
         return false;
     }
 
-    private static @Nullable ImageLoader guessLoader(byte[] headerBuffer) {
+    public static @Nullable ImageLoader guessLoader(byte[] headerBuffer) {
         if (isWebP(headerBuffer))
             return WEBP;
         if (isApng(headerBuffer))
@@ -241,57 +232,7 @@ public final class ImageUtils {
         return null;
     }
 
-    public static Image loadImage(Path path) throws Exception {
-        return loadImage(path, 0, 0, false, false);
-    }
-
-    public static Image loadImage(Path path,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
-        try (var input = new BufferedInputStream(Files.newInputStream(path))) {
-            String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
-            ImageLoader loader = EXT_TO_LOADER.get(ext);
-            if (loader == null && !FORCE_STD_EXTS.contains(ext)) {
-                input.mark(HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(HEADER_BUFFER_SIZE);
-                input.reset();
-                loader = guessLoader(headerBuffer);
-            }
-            if (loader == null)
-                loader = DEFAULT;
-            return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
-        }
-    }
-
-    private static final Pattern CONTENT_TYPE_PATTERN = Pattern.compile("^\\s(?<type>image/[\\w-])");
-
-    public static Image loadImage(String url) throws Exception {
-        URI uri = NetworkUtils.toURI(url);
-
-        URLConnection connection = NetworkUtils.createConnection(uri);
-        if (connection instanceof HttpURLConnection)
-            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
-
-        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
-            String contentType = Objects.requireNonNull(connection.getContentType(), "");
-            Matcher matcher = CONTENT_TYPE_PATTERN.matcher(contentType);
-            if (matcher.find())
-                contentType = matcher.group("type");
-
-            ImageLoader loader = CONTENT_TYPE_TO_LOADER.get(contentType);
-            if (loader == null && !FORCE_STD_CONTENT_TYPES.contains(contentType)) {
-                input.mark(HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(HEADER_BUFFER_SIZE);
-                input.reset();
-                loader = guessLoader(headerBuffer);
-            }
-
-            if (loader == null)
-                loader = DEFAULT;
-
-            return loader.load(input, 0, 0, false, false);
-        }
-    }
+    public static final Pattern CONTENT_TYPE_PATTERN = Pattern.compile("^\\s(?<type>image/[\\w-])");
 
     // APNG
 
