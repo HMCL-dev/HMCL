@@ -108,6 +108,7 @@ public final class MessageDialogPane extends HBox {
                 content.getChildren().setAll(textFlow);
             else {
                 ScrollPane scrollPane = new ScrollPane(textFlow);
+                FXUtils.smoothScrolling(scrollPane);
                 scrollPane.setPrefHeight(350);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);
                 scrollPane.setFitToWidth(true);
