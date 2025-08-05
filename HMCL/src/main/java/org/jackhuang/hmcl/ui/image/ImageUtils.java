@@ -246,13 +246,13 @@ public final class ImageUtils {
 
         int[] result = new int[targetWidth * targetHeight];
 
-        for (int yOffset = 0; yOffset < targetHeight; yOffset++) {
-            for (int xOffset = 0; xOffset < targetWidth; xOffset++) {
-                int sourceX = (int) (xOffset * xScale);
-                int sourceY = (int) (yOffset * yScale);
+        for (int row = 0; row < targetHeight; row++) {
+            for (int col = 0; col < targetWidth; col++) {
+                int sourceX = (int) (col * xScale);
+                int sourceY = (int) (row * yScale);
                 int color = pixels[sourceY * sourceWidth + sourceX];
 
-                result[yOffset * targetWidth + xOffset] = color;
+                result[row * targetWidth + col] = color;
             }
         }
 
@@ -273,8 +273,13 @@ public final class ImageUtils {
         int[] buffer = new int[Math.multiplyExact(width, height)];
         for (int frameIndex = 0; frameIndex < frames.size(); frameIndex++) {
             var frame = frames.get(frameIndex);
-
             PngFrameControl control = frame.control;
+
+            if (frameIndex == 0 && (
+                    control.xOffset != 0 || control.yOffset != 0
+                            || control.width != width || control.height != height)) {
+                throw new PngIntegrityException("Invalid first frame: " + control);
+            }
 
             if (control.xOffset < 0 || control.yOffset < 0
                     || width < 0 || height < 0
@@ -377,7 +382,10 @@ public final class ImageUtils {
             cycleCount = Timeline.INDEFINITE;
         }
 
-        return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
+        if (doScale)
+            return new AnimationImageImpl(targetWidth, targetHeight, framePixels, durations, cycleCount);
+        else
+            return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
     }
 
     private ImageUtils() {
