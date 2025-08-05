@@ -160,12 +160,11 @@ public final class ImageUtils {
 
     // ------
 
-    private static final int HEADER_BUFFER_SIZE = 1024;
-
+    static final int HEADER_BUFFER_SIZE = 1024;
 
     private static final byte[] WEBP_HEADER = {'R', 'I', 'F', 'F', 'W', 'E', 'B', 'P',};
 
-    private static boolean isWebP(byte[] headerBuffer) {
+    static boolean isWebP(byte[] headerBuffer) {
         return headerBuffer.length > 12
                 && Arrays.equals(headerBuffer, 0, WEBP_HEADER.length, WEBP_HEADER, 0, WEBP_HEADER.length);
     }
