@@ -39,7 +39,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
     private static GameListItem currentSkinnable;
-    private static Lazy<JFXPopup> popup = new Lazy<>(() -> {
+    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
@@ -135,15 +135,32 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
     /**
      * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
+     * Supports multi-monitor setups by detecting the current screen where the component is located.
      *
      * @param root the root node to calculate position relative to
      * @return the optimal vertical position for the popup menu
      */
     private static JFXPopup.PopupVPosition determineOptimalPopupPosition(BorderPane root) {
-        double screenHeight = javafx.stage.Screen.getPrimary().getVisualBounds().getHeight();
-        double itemScreenY = root.localToScreen(root.getBoundsInLocal()).getMinY();
-        double availableSpaceAbove = itemScreenY;
-        double availableSpaceBelow = screenHeight - itemScreenY - root.getHeight();
+        // Get the screen bounds in screen coordinates
+        javafx.geometry.Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+
+        // Convert Bounds to Rectangle2D for getScreensForRectangle method
+        javafx.geometry.Rectangle2D boundsRect = new javafx.geometry.Rectangle2D(
+            screenBounds.getMinX(), screenBounds.getMinY(),
+            screenBounds.getWidth(), screenBounds.getHeight()
+        );
+
+        // Find the screen that contains this component (supports multi-monitor)
+        javafx.stage.Screen currentScreen = javafx.stage.Screen.getScreensForRectangle(boundsRect).get(0);
+        javafx.geometry.Rectangle2D visualBounds = currentScreen.getVisualBounds();
+
+        double screenHeight = visualBounds.getHeight();
+        double screenMinY = visualBounds.getMinY();
+        double itemScreenY = screenBounds.getMinY();
+
+        // Calculate available space relative to the current screen
+        double availableSpaceAbove = itemScreenY - screenMinY;
+        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getHeight();
         double menuHeight = popup.get().getPopupContent().getHeight();
 
         return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
