@@ -333,8 +333,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     if (StringUtils.isNotBlank(logoPath)) {
                         Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
+                            try {
+                                Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
                                 if (!image.isError() && image.getWidth() == image.getHeight())
                                     return image;
                             } catch (Throwable e) {
@@ -367,11 +367,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     for (String path : defaultPaths) {
                         Path iconPath = fs.getPath(path);
                         if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
-                            }
+                            Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
+                            if (!image.isError() && image.getWidth() == image.getHeight())
+                                return image;
                         }
                     }
                 } catch (Exception e) {
