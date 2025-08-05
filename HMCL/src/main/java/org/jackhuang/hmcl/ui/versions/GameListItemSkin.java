@@ -26,6 +26,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.stage.Screen;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -151,7 +152,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         );
 
         // Find the screen that contains this component (supports multi-monitor)
-        javafx.stage.Screen currentScreen = javafx.stage.Screen.getScreensForRectangle(boundsRect).get(0);
+        Screen currentScreen = Screen.getScreensForRectangle(boundsRect).get(0);
         javafx.geometry.Rectangle2D visualBounds = currentScreen.getVisualBounds();
 
         double screenHeight = visualBounds.getHeight();
