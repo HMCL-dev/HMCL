@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
@@ -302,7 +303,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             Optional<File> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
                 try {
-                    return FXUtils.loadImage(iconFile.get().toPath());
+                    return ImageUtils.loadImage(iconFile.get().toPath());
                 } catch (Exception e) {
                     LOG.warning("Failed to load version icon of " + id, e);
                 }

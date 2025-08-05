@@ -56,15 +56,12 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.io.DataUri;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -91,7 +88,6 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
@@ -914,55 +910,6 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    public static Image loadImage(Path path) throws Exception {
-        try (InputStream input = Files.newInputStream(path)) {
-            String ext = FileUtils.getExtension(path);
-            if ("webp".equalsIgnoreCase(ext))
-                return ImageUtils.loadWebPImage(input);
-            else if ("png".equalsIgnoreCase(ext) || "apng".equalsIgnoreCase(ext))
-                return ImageUtils.loadApngImage(input);
-            else {
-                Image image = new Image(input);
-                if (image.isError())
-                    throw image.getException();
-                return image;
-            }
-        }
-    }
-
-    public static Image loadImage(String url) throws Exception {
-        URI uri = NetworkUtils.toURI(url);
-        if (DataUri.isDataUri(uri)) {
-            DataUri dataUri = new DataUri(uri);
-            if ("image/webp".equalsIgnoreCase(dataUri.getMediaType())) {
-                return ImageUtils.loadWebPImage(new ByteArrayInputStream(dataUri.readBytes()));
-            } else {
-                Image image = new Image(new ByteArrayInputStream(dataUri.readBytes()));
-                if (image.isError())
-                    throw image.getException();
-                return image;
-            }
-        }
-
-        URLConnection connection = NetworkUtils.createConnection(uri);
-        if (connection instanceof HttpURLConnection)
-            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
-
-        try (InputStream input = connection.getInputStream()) {
-            String contentType = Objects.requireNonNull(connection.getContentType(), "");
-            if (contentType.contains("webp"))
-                return ImageUtils.loadWebPImage(input);
-            else if (contentType.contains("png"))
-                return ImageUtils.loadApngImage(input);
-            else {
-                Image image = new Image(input);
-                if (image.isError())
-                    throw image.getException();
-                return image;
-            }
-        }
-    }
-
     /**
      * Suppress IllegalArgumentException since the url is supposed to be correct definitely.
      *
@@ -1006,6 +953,8 @@ public final class FXUtils {
     public static Task<Image> getRemoteImageTask(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
                 .thenApplyAsync(file -> {
+
+
                     try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
                         var header = new byte[12];
                         var buffer = ByteBuffer.wrap(header);

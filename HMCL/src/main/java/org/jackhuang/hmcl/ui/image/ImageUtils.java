@@ -31,14 +31,25 @@ import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jackhuang.hmcl.util.SwingFXUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URLConnection;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -46,6 +57,209 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class ImageUtils {
+
+    // ImageLoaders
+
+    public static final ImageLoader DEFAULT = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        Image image = new Image(input,
+                requestedWidth, requestedHeight,
+                preserveRatio, smooth);
+        if (image.isError())
+            throw image.getException();
+        return image;
+    };
+
+    public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        WebPImageReaderSpi spi = new WebPImageReaderSpi();
+        ImageReader reader = spi.createReaderInstance(null);
+        BufferedImage bufferedImage;
+        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
+            reader.setInput(imageInput, true, true);
+            bufferedImage = reader.read(0, reader.getDefaultReadParam());
+        } finally {
+            reader.dispose();
+        }
+        return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
+    };
+
+    public static final ImageLoader APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        try {
+            var sequence = Png.readArgb8888BitmapSequence(input);
+            if (sequence.isAnimated()) {
+                try {
+                    return toImage(sequence);
+                } catch (Throwable e) {
+                    LOG.warning("Failed to load animated image", e);
+                }
+            }
+
+            Argb8888Bitmap defaultImage = sequence.defaultImage;
+            WritableImage image = new WritableImage(defaultImage.width, defaultImage.height);
+            image.getPixelWriter().setPixels(0, 0, defaultImage.width, defaultImage.height,
+                    PixelFormat.getIntArgbInstance(), defaultImage.array,
+                    0, defaultImage.width);
+            return image;
+        } catch (PngException e) {
+            throw new IOException(e);
+        }
+    };
+
+    public static final Map<String, ImageLoader> EXT_TO_LOADER = Map.of(
+            "webp", WEBP,
+            "apng", APNG
+    );
+
+    private static final Set<String> FORCE_STD_EXTS = Set.of(
+            "jpg", "jpeg", "bmp", "gif"
+    );
+
+    public static final Map<String, ImageLoader> CONTENT_TYPE_TO_LOADER = Map.of(
+            "image/webp", WEBP,
+            "image/apng", APNG
+    );
+
+    public static final Set<String> FORCE_STD_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/bmp", "image/gif"
+    );
+
+    private static final Pattern CONTENT_TYPE_PATTERN = Pattern.compile("^\\s(?<type>image/[\\w-])");
+
+    // ------
+
+    private static final int HEADER_BUFFER_SIZE = 1024;
+
+
+    private static final byte[] WEBP_HEADER = {'R', 'I', 'F', 'F', 'W', 'E', 'B', 'P',};
+
+    private static boolean isWebP(byte[] headerBuffer) {
+        return headerBuffer.length > 12
+                && Arrays.equals(headerBuffer, 0, WEBP_HEADER.length, WEBP_HEADER, 0, WEBP_HEADER.length);
+    }
+
+    private static final byte[] PNG_HEADER = {
+            (byte) 0x89, (byte) 0x50, (byte) 0x4e, (byte) 0x47,
+            (byte) 0x0d, (byte) 0x0a, (byte) 0x1a, (byte) 0x0a,
+    };
+
+    private static final class PngChunkHeader {
+        private static final int IDAT_HEADER = 0x49444154;
+        private static final int acTL_HEADER = 0x6163544c;
+
+        private final int length;
+        private final int chunkType;
+
+        private PngChunkHeader(int length, int chunkType) {
+            this.length = length;
+            this.chunkType = chunkType;
+        }
+
+        private static @Nullable PngChunkHeader readHeader(ByteBuffer headerBuffer) {
+            if (headerBuffer.remaining() < 8)
+                return null;
+
+            int length = headerBuffer.getInt();
+            int chunkType = headerBuffer.getInt();
+
+            return new PngChunkHeader(length, chunkType);
+        }
+    }
+
+    static boolean isApng(byte[] headerBuffer) {
+        if (headerBuffer.length <= 20)
+            return false;
+
+        if (!Arrays.equals(
+                headerBuffer, 0, 8,
+                PNG_HEADER, 0, 8))
+            return false;
+
+
+        ByteBuffer buffer = ByteBuffer.wrap(headerBuffer, 8, headerBuffer.length - 8);
+
+        PngChunkHeader header;
+        while ((header = PngChunkHeader.readHeader(buffer)) != null) {
+            // https://wiki.mozilla.org/APNG_Specification#Structure
+            // To be recognized as an APNG, an `acTL` chunk must appear in the stream before any `IDAT` chunks.
+            // The `acTL` structure is described below.
+            if (header.chunkType == PngChunkHeader.IDAT_HEADER)
+                break;
+
+            if (header.chunkType == PngChunkHeader.acTL_HEADER)
+                return true;
+
+            int numBytes = header.length + 4 + 4;
+
+            if (buffer.remaining() > numBytes)
+                buffer.position(buffer.position() + numBytes);
+            else
+                break;
+        }
+
+        return false;
+    }
+
+    private static @Nullable ImageLoader guessLoader(byte[] headerBuffer) {
+        if (isWebP(headerBuffer))
+            return WEBP;
+        if (isApng(headerBuffer))
+            return APNG;
+        return null;
+    }
+
+    public static Image loadImage(Path path) throws Exception {
+        return loadImage(path, 0, 0, false, false);
+    }
+
+    public static Image loadImage(Path path,
+                                  double requestedWidth, double requestedHeight,
+                                  boolean preserveRatio, boolean smooth) throws Exception {
+        try (var input = new BufferedInputStream(Files.newInputStream(path))) {
+            String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
+
+            ImageLoader loader = EXT_TO_LOADER.get(ext);
+            if (loader == null && !FORCE_STD_EXTS.contains(ext)) {
+                input.mark(HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = input.readNBytes(HEADER_BUFFER_SIZE);
+                input.reset();
+                loader = guessLoader(headerBuffer);
+            }
+            if (loader == null)
+                loader = DEFAULT;
+
+            return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+        }
+    }
+
+    public static Image loadImage(String url) throws Exception {
+        URI uri = NetworkUtils.toURI(url);
+
+        URLConnection connection = NetworkUtils.createConnection(uri);
+        if (connection instanceof HttpURLConnection)
+            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+
+        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
+            String contentType = Objects.requireNonNull(connection.getContentType(), "");
+            Matcher matcher = CONTENT_TYPE_PATTERN.matcher(contentType);
+            if (matcher.find())
+                contentType = matcher.group("type");
+
+            ImageLoader loader = CONTENT_TYPE_TO_LOADER.get(contentType);
+            if (loader == null && !FORCE_STD_CONTENT_TYPES.contains(contentType)) {
+                input.mark(HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = input.readNBytes(HEADER_BUFFER_SIZE);
+                input.reset();
+                loader = guessLoader(headerBuffer);
+            }
+
+            if (loader == null)
+                loader = DEFAULT;
+
+            return loader.load(input, 0, 0, false, false);
+        }
+    }
+
+    // APNG
+
     private static Image toImage(Argb8888BitmapSequence sequence) throws PngException {
         final int width = sequence.header.width;
         final int height = sequence.header.height;
@@ -158,40 +372,6 @@ public final class ImageUtils {
         }
 
         return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
-    }
-
-    public static Image loadApngImage(InputStream input) throws IOException {
-        try {
-            var sequence = Png.readArgb8888BitmapSequence(input);
-            if (sequence.isAnimated()) {
-                try {
-                    return toImage(sequence);
-                } catch (Throwable e) {
-                    LOG.warning("Failed to load animated image", e);
-                }
-            }
-
-            Argb8888Bitmap defaultImage = sequence.defaultImage;
-            WritableImage image = new WritableImage(defaultImage.width, defaultImage.height);
-            image.getPixelWriter().setPixels(0, 0, defaultImage.width, defaultImage.height,
-                    PixelFormat.getIntArgbInstance(), defaultImage.array,
-                    0, defaultImage.width);
-            return image;
-        } catch (PngException e) {
-            throw new IOException(e);
-        }
-    }
-
-    public static Image loadWebPImage(InputStream input) throws IOException {
-        WebPImageReaderSpi spi = new WebPImageReaderSpi();
-        ImageReader reader = spi.createReaderInstance(null);
-
-        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
-            reader.setInput(imageInput, true, true);
-            return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()), null);
-        } finally {
-            reader.dispose();
-        }
     }
 
     private ImageUtils() {

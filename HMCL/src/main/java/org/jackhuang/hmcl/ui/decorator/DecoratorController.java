@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
+import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -224,7 +225,7 @@ public class DecoratorController {
                 String backgroundImageUrl = config().getBackgroundImageUrl();
                 if (backgroundImageUrl != null) {
                     try {
-                        image = FXUtils.loadImage(backgroundImageUrl);
+                        image = ImageUtils.loadImage(backgroundImageUrl);
                     } catch (Exception e) {
                         LOG.warning("Couldn't load background image", e);
                     }
@@ -349,7 +350,7 @@ public class DecoratorController {
             return null;
 
         try {
-            return FXUtils.loadImage(path);
+            return ImageUtils.loadImage(path);
         } catch (Exception e) {
             LOG.warning("Couldn't load background image", e);
             return null;
