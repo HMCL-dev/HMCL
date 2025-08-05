@@ -99,7 +99,9 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             JFXButton btnManage = new JFXButton();
             btnManage.setOnAction(e -> {
                 currentSkinnable = skinnable;
-                popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+
+                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root);
+                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
@@ -124,8 +126,28 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 currentSkinnable = skinnable;
-                popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+
+                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root);
+                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
             }
         });
+    }
+
+    /**
+     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
+     *
+     * @param root the root node to calculate position relative to
+     * @return the optimal vertical position for the popup menu
+     */
+    private static JFXPopup.PopupVPosition determineOptimalPopupPosition(BorderPane root) {
+        double screenHeight = javafx.stage.Screen.getPrimary().getVisualBounds().getHeight();
+        double itemScreenY = root.localToScreen(root.getBoundsInLocal()).getMinY();
+        double availableSpaceAbove = itemScreenY;
+        double availableSpaceBelow = screenHeight - itemScreenY - root.getHeight();
+        double menuHeight = popup.get().getPopupContent().getHeight();
+
+        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
+            ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding upward
+            : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding downward
     }
 }
