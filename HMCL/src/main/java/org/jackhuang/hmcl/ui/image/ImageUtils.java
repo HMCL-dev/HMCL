@@ -145,13 +145,13 @@ public final class ImageUtils {
             "apng", APNG
     );
 
-    private static final Set<String> FORCE_STD_EXTS = Set.of(
-            "jpg", "jpeg", "bmp", "gif"
-    );
-
     public static final Map<String, ImageLoader> CONTENT_TYPE_TO_LOADER = Map.of(
             "image/webp", WEBP,
             "image/apng", APNG
+    );
+
+    private static final Set<String> FORCE_STD_EXTS = Set.of(
+            "jpg", "jpeg", "bmp", "gif"
     );
 
     public static final Set<String> FORCE_STD_CONTENT_TYPES = Set.of(
