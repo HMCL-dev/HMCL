@@ -162,11 +162,13 @@ public final class ImageUtils {
 
     static final int HEADER_BUFFER_SIZE = 1024;
 
-    private static final byte[] WEBP_HEADER = {'R', 'I', 'F', 'F', 'W', 'E', 'B', 'P',};
+    private static final byte[] RIFF_HEADER = {'R', 'I', 'F', 'F'};
+    private static final byte[] WEBP_HEADER = {'W', 'E', 'B', 'P'};
 
     static boolean isWebP(byte[] headerBuffer) {
         return headerBuffer.length > 12
-                && Arrays.equals(headerBuffer, 0, WEBP_HEADER.length, WEBP_HEADER, 0, WEBP_HEADER.length);
+                && Arrays.equals(headerBuffer, 0, 4, RIFF_HEADER, 0, 4)
+                && Arrays.equals(headerBuffer, 8, 12, WEBP_HEADER, 0, 4);
     }
 
     private static final byte[] PNG_HEADER = {
@@ -220,7 +222,7 @@ public final class ImageUtils {
             if (header.chunkType == PngChunkHeader.acTL_HEADER)
                 return true;
 
-            int numBytes = header.length + 4 + 4;
+            final int numBytes = header.length + 4;
 
             if (buffer.remaining() > numBytes)
                 buffer.position(buffer.position() + numBytes);

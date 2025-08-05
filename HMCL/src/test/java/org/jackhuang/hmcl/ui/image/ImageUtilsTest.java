@@ -47,4 +47,14 @@ public final class ImageUtilsTest {
         assertFalse(ImageUtils.isApng(readHeaderBuffer("16x16-animation-lossy.webp")));
     }
 
+    @Test
+    public void testIsWebP() {
+        assertFalse(ImageUtils.isWebP(readHeaderBuffer("16x16.apng")));
+        assertFalse(ImageUtils.isWebP(readHeaderBuffer("16x16.png")));
+        assertTrue(ImageUtils.isWebP(readHeaderBuffer("16x16-lossless.webp")));
+        assertTrue(ImageUtils.isWebP(readHeaderBuffer("16x16-lossy.webp")));
+        assertTrue(ImageUtils.isWebP(readHeaderBuffer("16x16-animation-lossy.webp")));
+        assertTrue(ImageUtils.isWebP(readHeaderBuffer("16x16-animation-lossy.webp")));
+    }
+
 }
