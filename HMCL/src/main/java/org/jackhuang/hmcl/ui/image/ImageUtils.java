@@ -239,10 +239,10 @@ public final class ImageUtils {
     private static int[] scale(int[] pixels,
                                int sourceWidth, int sourceHeight,
                                int targetWidth, int targetHeight) {
-        assert pixels.length == targetWidth * targetHeight;
+        assert pixels.length == sourceWidth * sourceHeight;
 
         double xScale = ((double) sourceWidth) / targetWidth;
-        double yScale = ((double) sourceHeight) / targetWidth;
+        double yScale = ((double) sourceHeight) / targetHeight;
 
         int[] result = new int[targetWidth * targetHeight];
 
