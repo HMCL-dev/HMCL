@@ -99,7 +99,6 @@ public final class ImageUtils {
                             int dstG = (dstPixel >>> 8) & 0xFF;
                             int dstB = dstPixel & 0xFF;
 
-
                             int invSrcAlpha = 255 - srcAlpha;
                             int outAlpha = srcAlpha + (dstAlpha * invSrcAlpha) / 255;
                             int outR = (srcR * srcAlpha + dstR * invSrcAlpha) / 255;
