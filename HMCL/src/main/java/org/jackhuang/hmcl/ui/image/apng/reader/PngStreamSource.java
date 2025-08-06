@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.reader;
 
 import org.jackhuang.hmcl.ui.image.apng.util.InputStreamSlice;
@@ -43,7 +46,7 @@ public class PngStreamSource implements PngSource {
 
     @Override
     public short readUnsignedShort() throws IOException {
-        return (short)dis.readUnsignedShort();
+        return (short) dis.readUnsignedShort();
     }
 
     @Override

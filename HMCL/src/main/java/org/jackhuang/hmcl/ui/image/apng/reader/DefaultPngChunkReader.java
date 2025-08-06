@@ -1,6 +1,7 @@
-package org.jackhuang.hmcl.ui.image.apng.reader;
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
 
-//import com.google.common.io.ByteStreams;
+package org.jackhuang.hmcl.ui.image.apng.reader;
 
 import org.jackhuang.hmcl.ui.image.apng.PngAnimationType;
 import org.jackhuang.hmcl.ui.image.apng.PngChunkCode;

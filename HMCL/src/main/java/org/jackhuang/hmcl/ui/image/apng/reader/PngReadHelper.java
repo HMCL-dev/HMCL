@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.reader;
 
 import org.jackhuang.hmcl.ui.image.apng.PngColourType;
@@ -21,16 +24,17 @@ public class PngReadHelper {
      * </p><p>
      * Note that no temporary buffer is allocated.
      * </p>
+     *
      * @param is Stream to read the 8-byte PNG signature from
      * @throws IOException in the case of any IO exception, including EOF.
      */
     public static boolean readSignature(InputStream is) throws IOException {
-        for (int i=0; i < PngConstants.LENGTH_SIGNATURE; i++) {
+        for (int i = 0; i < PngConstants.LENGTH_SIGNATURE; i++) {
             int b = is.read();
-            if (b<0) {
+            if (b < 0) {
                 throw new EOFException();
             }
-            if ((byte)b != PngConstants.BYTES_SIGNATURE[i]) {
+            if ((byte) b != PngConstants.BYTES_SIGNATURE[i]) {
                 return false;
             }
         }
@@ -41,8 +45,8 @@ public class PngReadHelper {
      * Reads a given InputStream using the PngReader to process all chunks until the file is
      * finished, then returning the result from the PngReader.
      *
-     * @param is stream to read
-     * @param reader reads and delegates processing of all chunks
+     * @param is        stream to read
+     * @param reader    reads and delegates processing of all chunks
      * @param <ResultT> result of the processing
      * @return result of the processing of the InputStream.
      * @throws PngException
@@ -81,11 +85,11 @@ public class PngReadHelper {
 
     /**
      * Number of bytes per row is key to processing scanlines.
-     *
+     * <p>
      * TODO: should this by on the header?
      */
     public static int calculateBytesPerRow(int pixelsPerRow, byte bitDepth, PngColourType colourType, byte interlaceMethod) {
-        if (interlaceMethod!=0) {
+        if (interlaceMethod != 0) {
             throw new IllegalStateException("Interlaced images not yet supported");
 
         } else {
@@ -98,7 +102,7 @@ public class PngReadHelper {
             //   unsigned int bpp = (row_info->pixel_depth + 7) >> 3; // libpng
 
             // If there are less than 8 bits per pixel, then ensure the last byte of the row is padded.
-            int bytesPerRow = bitsPerRow/8 + ((0==(bitsPerRow % 8)) ? 0 : (8-bitsPerRow % 8));
+            int bytesPerRow = bitsPerRow / 8 + ((0 == (bitsPerRow % 8)) ? 0 : (8 - bitsPerRow % 8));
             return 1 + bytesPerRow; // need 1 byte for filter code
         }
     }

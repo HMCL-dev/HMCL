@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.util;
 
 /**

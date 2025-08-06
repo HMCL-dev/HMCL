@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.argb8888;
 
 import org.jackhuang.hmcl.ui.image.apng.PngScanlineBuffer;
@@ -11,7 +14,7 @@ import org.jackhuang.hmcl.ui.image.apng.error.PngException;
  * control the output. This allows the Argb8888Processor to transform pixels into
  * ARGB8888 format while allowing for radically different final output objects,
  * e.g. a single bitmap, a sequence of bitamps, an Android View or Drawable, etc.
- *
+ * <p>
  * TODO: not sure if this will stay in this form. Needs refinement.
  */
 public interface Argb8888Director<ResultT> {

@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.argb8888;
 
 import org.jackhuang.hmcl.ui.image.apng.PngChunkCode;
@@ -82,7 +85,7 @@ public class Argb8888Processor<ResultT> implements PngChunkProcessor<ResultT> { 
             case PNG_GREYSCALE_WITH_ALPHA:
             case PNG_TRUECOLOUR_WITH_ALPHA:
             default:
-                throw new PngIntegrityException("Illegal to have tRNS chunk with image type "+header.colourType.name);
+                throw new PngIntegrityException("Illegal to have tRNS chunk with image type " + header.colourType.name);
         }
     }
 
@@ -94,7 +97,6 @@ public class Argb8888Processor<ResultT> implements PngChunkProcessor<ResultT> { 
 //        scanlineProcessor = Argb8888ScanlineProcessor.from(header, scanlineReader, currentFrame);
 //        return PngAnimationType.NOT_ANIMATED;
 //    }
-
     @Override
     public void processDefaultImageData(InputStream inputStream, PngChunkCode code, int position, int length) throws IOException, PngException {
         if (!builder.wantDefaultImage()) {
@@ -131,7 +133,8 @@ public class Argb8888Processor<ResultT> implements PngChunkProcessor<ResultT> { 
         if (null == scanlineProcessor) {
             // If here, the data in this frame image has not started
             scanlineProcessor = builder.receiveFrameControl(frameControl);
-            if (null == scanlineProcessor) throw new IllegalStateException("Builder must create scanline processor for frame");
+            if (null == scanlineProcessor)
+                throw new IllegalStateException("Builder must create scanline processor for frame");
         } else {
             throw new IllegalStateException("received animation frame control but image data was in progress");
         }

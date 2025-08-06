@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.util;
 
 import java.io.IOException;
@@ -58,7 +61,7 @@ public class InputStreamSlice extends InputStream {
         while (remaining > 0) {
             long skipped = src.skip(remaining); // attempt to skip that much
             if (skipped <= 0) {
-                throw new IOException("Failed to skip a total of "+n+" bytes in stream; "+remaining+" bytes remained but "+skipped+" returned from skip.");
+                throw new IOException("Failed to skip a total of " + n + " bytes in stream; " + remaining + " bytes remained but " + skipped + " returned from skip.");
             }
             remaining -= skipped;
         }

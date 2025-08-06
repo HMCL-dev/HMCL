@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng;
 
 /**
@@ -12,13 +15,13 @@ public class PngFilter {
 //            final int x = bytes[i];
 //            final int a = bytes[pixelStart + ai];
         int ai = pixelStart;
-        for (int i=pixelStart+filterUnit; i<pixelEnd; i++) {
+        for (int i = pixelStart + filterUnit; i < pixelEnd; i++) {
 
             final int x = bytes[i];
             final int a = bytes[ai];
 
             //bytes[rowPosition] = (byte)((bytes[rowPosition] + left) & 0xff); // TODO & 0xff
-            bytes[i] = (byte)((x + a) & 0xff);
+            bytes[i] = (byte) ((x + a) & 0xff);
 
             ai++;
         }
@@ -30,19 +33,19 @@ public class PngFilter {
 //            bytes[rowPosition] = (byte)((bytes[rowPosition] + previousRow[i]) & 0xff);
 //        }
         int bi = 0;
-        for (int i=pixelStart; i<pixelEnd; i++) {
+        for (int i = pixelStart; i < pixelEnd; i++) {
             final int x = bytes[i];
             final int b = previousRow[bi];
-            bytes[i] = (byte)((x+b)&0xff);
+            bytes[i] = (byte) ((x + b) & 0xff);
             bi++;
         }
 
     }
 
     public static void undoAverageFilter(byte[] bytes, int pixelStart, int pixelEnd, int filterUnit, byte[] previousRow) {
-        int ai = pixelStart-filterUnit;
+        int ai = pixelStart - filterUnit;
         int bi = 0;
-        for (int i=pixelStart; i<pixelEnd; i++) {
+        for (int i = pixelStart; i < pixelEnd; i++) {
             final int x = bytes[i];
             final int a = (ai < pixelStart) ? 0 : (0xff & bytes[ai]);
             final int b = (0xff & previousRow[bi]);
@@ -55,8 +58,8 @@ public class PngFilter {
 
             //bytes[i] = (byte)((x+((a+b)>>1))&0xff);
             //int z = x+(a+b)/2;
-            int z = x+((a+b) / 2);
-            bytes[i] = (byte)(0xff & z);
+            int z = x + ((a + b) / 2);
+            bytes[i] = (byte) (0xff & z);
             ai++;
             bi++;
         }
@@ -89,12 +92,12 @@ public class PngFilter {
         //int left = 0;
 
 
-        int ai = pixelStart-filterUnit;
+        int ai = pixelStart - filterUnit;
         int bi = 0;
         int ci = -filterUnit;
         //for (int i=0; i<bytesPerLine-1; i++) {
         //for (int i=filterUnit; i<bytesPerLine-1; i++) {
-        for (int i=pixelStart; i<pixelEnd; i++) {
+        for (int i = pixelStart; i < pixelEnd; i++) {
 
             final int a, b, c, x;
             x = bytes[i];
@@ -113,7 +116,7 @@ public class PngFilter {
                     : (pb <= pc) ? b
                     : c;
 
-            bytes[i] = (byte)((x + predicted) & 0xff);
+            bytes[i] = (byte) ((x + predicted) & 0xff);
             ai++;
             bi++;
             ci++;

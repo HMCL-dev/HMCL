@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.reader;
 
 import java.io.DataInputStream;
@@ -6,6 +9,7 @@ import java.io.InputStream;
 
 /**
  * The API for reading any PNG source.
+ *
  * @see PngAtOnceSource
  * <p>
  * WARNING: this may be removed in favour of direct use of InputStream objects.

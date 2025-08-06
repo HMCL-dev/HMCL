@@ -1,8 +1,11 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng;
 
 /**
  * One four-letter (32-byte) code identifying the type of a PNG chunk.
- *
+ * <p>
  * Common chunk codes are defined as constants that can be used in a switch statement.
  * Users can add their own chunk codes separately.
  */
@@ -37,6 +40,7 @@ public class PngChunkCode {
      *     |+--- Private bit is 0      (upper case letter; bit 5 is 0)
      *     +---- Ancillary bit is 1    (lower case letter; bit 5 is 1)
      * </pre>
+     *
      * @return true if this chunk is considered critical according to the PNG spec.
      */
     public boolean isCritical() {
@@ -90,7 +94,7 @@ public class PngChunkCode {
     }
 
     public static PngChunkCode from(int code) {
-        switch(code) {
+        switch (code) {
             case PngConstants.IHDR_VALUE:
                 return IHDR;
             case PngConstants.gAMA_VALUE:
@@ -109,10 +113,10 @@ public class PngChunkCode {
                 return fdAT;
             default:
                 byte[] s = new byte[4];
-                s[0] = (byte)((code & 0xff000000) >> 24);
-                s[1] = (byte)((code & 0x00ff0000) >> 16);
-                s[2] = (byte)((code & 0x0000ff00) >> 8);
-                s[3] = (byte)((code & 0x000000ff));
+                s[0] = (byte) ((code & 0xff000000) >> 24);
+                s[1] = (byte) ((code & 0x00ff0000) >> 16);
+                s[2] = (byte) ((code & 0x0000ff00) >> 8);
+                s[3] = (byte) ((code & 0x000000ff));
                 return new PngChunkCode(code, new String(s));
         }
     }

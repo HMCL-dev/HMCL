@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.argb8888;
 
 /**
@@ -28,14 +31,14 @@ public final class Argb8888Bitmap {
      * and wanting to minimise memory allocation, while still wanting a "new" bitmap
      * to work on.
      *
-     * @param width in pixels of "new" bitmap (actual pixel array is the exact array
-     *              from the original bitmap).
+     * @param width  in pixels of "new" bitmap (actual pixel array is the exact array
+     *               from the original bitmap).
      * @param height in pixels of "new" bitmap (actual pixel array is the exact array
-     *              from the original bitmap).
+     *               from the original bitmap).
      * @return new bitmap object sharing the same data array.
      */
     public Argb8888Bitmap makeView(int width, int height) {//}, int x, int y) {
-        if ((width * height) > (this.width*this.height)) {
+        if ((width * height) > (this.width * this.height)) {
             throw new IllegalArgumentException(String.format(
                     "Requested width and height (%d x %d) exceeds maximum pixels allowed by host bitmap (%d x %d",
                     width, height, this.width, this.height));

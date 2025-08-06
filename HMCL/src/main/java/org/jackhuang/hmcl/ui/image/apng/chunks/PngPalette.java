@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.chunks;
 
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
@@ -10,10 +13,10 @@ import java.util.Arrays;
  * A PngPalette object represents an ordered array of RGB (888) colour tuples
  * derived from a PLTE chunk.
  * <p>
- *     WARNING: this class may not remain in the API.
- *     When implementing the Argb8888 decoders it seems clear that every output
- *     format will benefit from a specific palette implementation, so this attempt
- *     at a generic palette may be removed.
+ * WARNING: this class may not remain in the API.
+ * When implementing the Argb8888 decoders it seems clear that every output
+ * format will benefit from a specific palette implementation, so this attempt
+ * at a generic palette may be removed.
  *
  * @see Argb8888Palette
  */
@@ -38,18 +41,18 @@ public class PngPalette {
         }
 
         return new PngPalette(
-                Arrays.copyOfRange(source, first, first+length),
+                Arrays.copyOfRange(source, first, first + length),
                 rgba8888From(source, first, length)
         );
     }
 
     private static int[] rgba8888From(byte[] source, int first, int length) {
-        int last = first+length;
+        int last = first + length;
         int numColours = length / 3;
         int[] rgba8888 = new int[numColours];
-        int j=0;
+        int j = 0;
         for (int i = first; i < last; i += LENGTH_RGB_BYTES) {
-            rgba8888[j] = source[i] << 24 | source[i+1] << 16 | source[i+2] << 8 | BYTE_INITIAL_ALPHA;
+            rgba8888[j] = source[i] << 24 | source[i + 1] << 16 | source[i + 2] << 8 | BYTE_INITIAL_ALPHA;
             j++;
         }
         return rgba8888;

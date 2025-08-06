@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.util;
 
 import org.jackhuang.hmcl.ui.image.apng.chunks.*;
@@ -12,7 +15,7 @@ import java.util.List;
  * The original idea was that all implementations can use this as a "container"
  * for representing the data, but I think it is too generic to be useful.
  * <p>
- *     WARNING: not sure if this API will remain.
+ * WARNING: not sure if this API will remain.
  * </p>
  */
 public class PngContainer {

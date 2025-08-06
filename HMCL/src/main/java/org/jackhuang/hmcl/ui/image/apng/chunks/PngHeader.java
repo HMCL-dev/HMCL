@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.chunks;
 
 import org.jackhuang.hmcl.ui.image.apng.PngColourType;
@@ -59,7 +62,8 @@ public class PngHeader {
      *   has bitDepth=4 and bitsPerPixel=8 because the gray and the alpha channel
      *   each have 4 bits.</li>
      * </ul>
-     * @see bitsPerPixel
+     *
+     * @see #bitsPerPixel
      */
     public final byte bitDepth;
 
@@ -93,14 +97,14 @@ public class PngHeader {
      * The number of bits that comprise a single pixel in this bitmap (or every
      * frame if animated). This is distinct from bitDepth.
      *
-     * @see bitDepth
+     * @see #bitDepth
      */
     public final int bitsPerPixel;
     public final int bytesPerRow;
     public final int filterOffset;
 
     public PngHeader(int width, int height, byte bitDepth, PngColourType colourType) {
-        this(width, height, bitDepth, colourType, (byte)0, (byte)0, (byte)0);
+        this(width, height, bitDepth, colourType, (byte) 0, (byte) 0, (byte) 0);
     }
 
     public PngHeader(int width, int height, byte bitDepth, PngColourType colourType, byte compressionMethod, byte filterMethod, byte interlaceMethod) {
@@ -140,11 +144,11 @@ public class PngHeader {
     }
 
     public boolean isInterlaced() {
-        return interlaceMethod==1;
+        return interlaceMethod == 1;
     }
 
     public boolean isZipCompression() {
-        return compressionMethod==0;
+        return compressionMethod == 0;
     }
 
     public boolean isGreyscale() {
@@ -153,18 +157,18 @@ public class PngHeader {
 
     /**
      * @return true if the image type indicates there is an alpha value for every pixel.
-     *   Note that this take into account any transparency or background chunk.
+     * Note that this take into account any transparency or background chunk.
      */
     public boolean hasAlphaChannel() {
         return colourType == PngColourType.PNG_GREYSCALE_WITH_ALPHA | colourType == PngColourType.PNG_TRUECOLOUR_WITH_ALPHA;
     }
 
     public static PngHeader makeTruecolour(int width, int height) {
-        return new PngHeader(width, height, (byte)8, PngColourType.PNG_TRUECOLOUR);
+        return new PngHeader(width, height, (byte) 8, PngColourType.PNG_TRUECOLOUR);
     }
 
     public static PngHeader makeTruecolourAlpha(int width, int height) {
-        return new PngHeader(width, height, (byte)8, PngColourType.PNG_TRUECOLOUR_WITH_ALPHA);
+        return new PngHeader(width, height, (byte) 8, PngColourType.PNG_TRUECOLOUR_WITH_ALPHA);
     }
 
     public PngHeader adjustFor(PngFrameControl frame) {
@@ -178,7 +182,11 @@ public class PngHeader {
     public static void checkHeaderParameters(int width, int height, byte bitDepth, PngColourType colourType, byte compressionMethod, byte filterMethod, byte interlaceMethod) throws PngException {
 
         switch (bitDepth) {
-            case 1: case 2: case 4: case 8: case 16:
+            case 1:
+            case 2:
+            case 4:
+            case 8:
+            case 16:
                 break; // all fine
             default:
                 throw new PngIntegrityException("Invalid bit depth " + bitDepth);
@@ -187,14 +195,14 @@ public class PngHeader {
         // thanks to pypng
         if (colourType.isIndexed() && bitDepth > 8) {
             throw new PngIntegrityException(String.format(
-                    "Indexed images (colour type %d) cannot have bitdepth > 8 (bit depth %d)."+
-                    " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 .", colourType.code, bitDepth));
+                    "Indexed images (colour type %d) cannot have bitdepth > 8 (bit depth %d)." +
+                            " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 .", colourType.code, bitDepth));
         }
 
         if (bitDepth < 8 && !colourType.supportsSubByteDepth()) {
             throw new PngIntegrityException(String.format(
                     "Illegal combination of bit depth (%d) and colour type (%d)." +
-                    " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 .", colourType.code, bitDepth));
+                            " See http://www.w3.org/TR/2003/REC-PNG-20031110/#table111 .", colourType.code, bitDepth));
         }
 
         if (interlaceMethod != 0) {

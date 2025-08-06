@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.reader;
 
 import org.jackhuang.hmcl.ui.image.apng.PngChunkCode;
@@ -44,9 +47,9 @@ public interface PngChunkProcessor<ResultT> {
      * their own way to handle the data. And it is not provided as in InputStream because
      * the length of the data is well defined based on the PNG colour type.
      *
-     * @param bytes array to read data from.
+     * @param bytes    array to read data from.
      * @param position offset into the array to begin reading data from.
-     * @param length number of bytes to read from the array.
+     * @param length   number of bytes to read from the array.
      * @throws PngException
      */
     void processTransparency(byte[] bytes, int position, int length) throws PngException;
@@ -59,11 +62,12 @@ public interface PngChunkProcessor<ResultT> {
      * For example, rendering to an ARGB palette may load the RGB data and organise as
      * an array of 32-bit integer ARGB values.
      * </p>
-     * @param bytes representing the loaded palette data. Each colour is represented by three
-     *              bytes, 1 each for red, green and blue.
+     *
+     * @param bytes    representing the loaded palette data. Each colour is represented by three
+     *                 bytes, 1 each for red, green and blue.
      * @param position that the colour values begin in bytes
-     * @param length number of bytes that the palette bytes continue. Guaranteed to be a
-     *               multiple of 3.
+     * @param length   number of bytes that the palette bytes continue. Guaranteed to be a
+     *                 multiple of 3.
      * @throws PngException
      */
     void processPalette(byte[] bytes, int position, int length) throws PngException;
@@ -86,10 +90,10 @@ public interface PngChunkProcessor<ResultT> {
      * containing source and will terminate at the end of the IDAT chunk.
      *
      * @param inputStream data source containing all bytes in the image data chunk.
-     * @param code of the chunk which should always be IDAT in this case.
-     *             Compare to this.processFrameImageData.
-     * @param position absolute position within the file. hmmm may be removed
-     * @param length length of bytes of the hunk. hmmm may be removed
+     * @param code        of the chunk which should always be IDAT in this case.
+     *                    Compare to this.processFrameImageData.
+     * @param position    absolute position within the file. hmmm may be removed
+     * @param length      length of bytes of the hunk. hmmm may be removed
      * @throws IOException
      * @throws PngException
      */
@@ -107,10 +111,10 @@ public interface PngChunkProcessor<ResultT> {
      * is determed by the placement of the first fcTL chunk in the file. See the APNG specification.
      *
      * @param inputStream data source containing all bytes in the frame image data chunk.
-     * @param code either IDAT or fdAT. Designed to allow an implementation to detect whether the
-     *             frame is from the "main image" or a subsequent image. May not be necessary.
-     * @param position absolute position within the file. hmmm may be removed
-     * @param length length of bytes of the hunk. hmmm may be removed
+     * @param code        either IDAT or fdAT. Designed to allow an implementation to detect whether the
+     *                    frame is from the "main image" or a subsequent image. May not be necessary.
+     * @param position    absolute position within the file. hmmm may be removed
+     * @param length      length of bytes of the hunk. hmmm may be removed
      * @throws IOException
      * @throws PngException
      */

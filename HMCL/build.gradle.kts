@@ -95,10 +95,6 @@ tasks.withType<JavaCompile> {
     targetCompatibility = "11"
 }
 
-tasks.checkstyleMain {
-    exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
-}
-
 tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }

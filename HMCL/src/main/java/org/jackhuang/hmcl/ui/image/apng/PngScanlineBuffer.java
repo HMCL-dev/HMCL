@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng;
 
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
@@ -108,7 +111,7 @@ public class PngScanlineBuffer {
                 // Or could do: len -= bytesPerLine until len < bytesPerLine
                 while (canRead(bytesPerLine)) {
                     undoFilterScanline(bytesPerLine);
-                    processor.processScanline(bytes, readPosition+1);//(), getReadPosition());
+                    processor.processScanline(bytes, readPosition + 1);//(), getReadPosition());
                     skip(bytesPerLine);
                 }
                 shift();
@@ -140,7 +143,7 @@ public class PngScanlineBuffer {
         }
 
         // when un-filtering scanlines, the previous row is a copy of the *un-filtered* row (not the original).
-        System.arraycopy(bytes, readPosition+1, previousLine, 0, bytesPerLine-1); // keep a copy of the unmodified row
+        System.arraycopy(bytes, readPosition + 1, previousLine, 0, bytesPerLine - 1); // keep a copy of the unmodified row
     }
 
     public static PngScanlineBuffer from(PngHeader header) {

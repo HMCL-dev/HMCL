@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng;
 
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
@@ -36,11 +39,11 @@ public enum PngColourType {
     }
 
     public boolean supportsSubByteDepth() {
-        return code==0 || code==3;
+        return code == 0 || code == 3;
     }
 
     public static PngColourType fromByte(byte b) throws PngException {
-        switch(b) {
+        switch (b) {
             case 0:
                 return PNG_GREYSCALE;
             case 2:

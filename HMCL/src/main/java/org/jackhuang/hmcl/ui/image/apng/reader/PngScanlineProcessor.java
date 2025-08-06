@@ -1,3 +1,6 @@
+// Copy from https://github.com/aellerton/japng
+// Licensed under the Apache License, Version 2.0.
+
 package org.jackhuang.hmcl.ui.image.apng.reader;
 
 import java.io.FilterInputStream;
@@ -38,7 +41,7 @@ public interface PngScanlineProcessor {
      * then de-filtered. The PngScanlineProcessor then must interpret each byte according to the
      * specific image format and render it to the destination as appropriate.
      *
-     * @param bytes decompressed, de-filtered bytes, ready for processing.
+     * @param bytes    decompressed, de-filtered bytes, ready for processing.
      * @param position the position that scanline pixels begin in the array. Note that it is
      *                 the responsibility of the PngScanlineProcessor to know exactly how many
      *                 bytes are in the row. This is because a single processor might process
@@ -58,6 +61,7 @@ public interface PngScanlineProcessor {
      * chunks. This is because the PNG specification states that a valid PNG file can have more
      * than one consecutive IDAT (and by extension, fdAT) chunks and the data therein must be
      * treated as if concatenated.
+     *
      * @return true when the data for the current bitmap is complete.
      */
     boolean isFinished();
