@@ -25,6 +25,9 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Base64;
 
+/**
+ * @author Glavo
+ */
 public final class DataUri {
     public static final String SCHEME = "data";
 

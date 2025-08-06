@@ -23,6 +23,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+/**
+ * @author Glavo
+ */
 public final class DataURLConnection extends URLConnection {
     private final DataUri dataUri;
     private byte[] data;

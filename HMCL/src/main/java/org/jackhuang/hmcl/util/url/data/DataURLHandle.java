@@ -20,9 +20,10 @@ package org.jackhuang.hmcl.util.url.data;
 import java.io.IOException;
 import java.net.*;
 
+/**
+ * @author Glavo
+ */
 public final class DataURLHandle extends URLStreamHandler {
-
-
     @Override
     protected URLConnection openConnection(URL u) throws IOException {
         try {
