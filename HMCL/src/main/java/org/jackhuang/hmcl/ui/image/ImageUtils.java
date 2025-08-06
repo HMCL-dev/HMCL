@@ -74,6 +74,9 @@ public final class ImageUtils {
     };
 
     public static final ImageLoader APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        if (!"true".equals(System.getProperty("hmcl.experimental.apng", "true")))
+            return DEFAULT.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+
         try {
             var sequence = Png.readArgb8888BitmapSequence(input);
 
