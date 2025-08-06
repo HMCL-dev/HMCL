@@ -57,7 +57,7 @@ public final class DataURLConnection extends URLConnection {
     }
 
     @Override
-    public int getContentLength() {
+    public long getContentLengthLong() {
         return data != null ? data.length : -1;
     }
 }
