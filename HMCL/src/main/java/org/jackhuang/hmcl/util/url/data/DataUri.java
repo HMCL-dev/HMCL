@@ -15,8 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.io;
+package org.jackhuang.hmcl.util.url.data;
 
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -24,6 +25,9 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Base64;
 
+/**
+ * @author Glavo
+ */
 public final class DataUri {
     public static final String SCHEME = "data";
 
@@ -57,7 +61,6 @@ public final class DataUri {
         boolean base64 = mediaType.endsWith(";base64");
         if (base64)
             mediaType = mediaType.substring(0, mediaType.length() - ";base64".length());
-
 
         this.mediaType = mediaType.trim();
         this.charset = NetworkUtils.getCharsetFromContentType(mediaType);
