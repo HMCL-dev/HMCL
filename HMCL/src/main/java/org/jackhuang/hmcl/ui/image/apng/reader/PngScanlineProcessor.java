@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui.image.apng.reader;
 
 import java.io.FilterInputStream;
 import java.io.InputStream;
-import java.util.zip.InflaterInputStream;
 
 /**
  * A PngScanlineProcessor receives decompressed, de-filtered scanlines, one by one, in order

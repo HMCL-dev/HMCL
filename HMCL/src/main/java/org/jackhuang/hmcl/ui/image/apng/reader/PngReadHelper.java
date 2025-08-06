@@ -107,4 +107,6 @@ public class PngReadHelper {
         }
     }
 
+    private PngReadHelper() {
+    }
 }

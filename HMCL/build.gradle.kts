@@ -95,6 +95,11 @@ tasks.withType<JavaCompile> {
     targetCompatibility = "11"
 }
 
+tasks.checkstyleMain {
+    // Third-party code is not checked
+    exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
+}
+
 tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
@@ -116,7 +121,7 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     listOf(
-        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*","freebsd-*", "linux-*", "darwin-*",
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*", "darwin-*",
         "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
     ).forEach { exclude("com/sun/jna/$it/**") }
 

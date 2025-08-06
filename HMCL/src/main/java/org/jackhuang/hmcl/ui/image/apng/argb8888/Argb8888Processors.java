@@ -419,7 +419,6 @@ public class Argb8888Processors {
         }
     }
 
-
     /**
      * Transforms true-colour with alpha (RGBA) 16-bit source pixels to ARGB8888 pixels.
      * <p>
@@ -456,5 +455,8 @@ public class Argb8888Processors {
         public Argb8888ScanlineProcessor clone(int bytesPerRow, Argb8888Bitmap bitmap) {
             return new Truecolour16(bytesPerRow, bitmap);
         }
+    }
+
+    private Argb8888Processors() {
     }
 }

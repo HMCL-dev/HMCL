@@ -27,7 +27,7 @@ public class PngAtOnceSource implements PngSource {
     private final ByteArrayInputStream bis;
     private final DataInputStream dis;
 
-    public PngAtOnceSource(byte[] bytes) {//}, String sourceDescription) {
+    public PngAtOnceSource(byte[] bytes) { //}, String sourceDescription) {
         this.bytes = bytes;
         //this.sourceDescription = sourceDescription;
         this.bis = new ByteArrayInputStream(this.bytes); // never closed because nothing to do for ByteArrayInputStream

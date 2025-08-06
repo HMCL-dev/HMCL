@@ -30,7 +30,7 @@ public interface PngChunkReader<ResultT> extends PngReader<ResultT> {
      * <p>
      * Colour type 0:
      * <p>
-     * Grey sample value	2 bytes
+     * Grey sample value 2 bytes
      * <p>
      * Colour type 2:
      * <p>
