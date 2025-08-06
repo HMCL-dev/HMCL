@@ -15,8 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.io;
+package org.jackhuang.hmcl.util.url;
 
+import org.jackhuang.hmcl.util.url.data.DataUri;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
