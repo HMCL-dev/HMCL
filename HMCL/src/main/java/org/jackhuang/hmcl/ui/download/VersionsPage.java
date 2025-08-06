@@ -409,7 +409,6 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             }
 
             if (remoteVersion instanceof GameRemoteVersion) {
-                System.out.println(remoteVersion.getGameVersion().toLowerCase());
                 switch (remoteVersion.getVersionType()) {
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
