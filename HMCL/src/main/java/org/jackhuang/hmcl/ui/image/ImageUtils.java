@@ -322,16 +322,28 @@ public final class ImageUtils {
                             int srcG = (srcPixel >>> 8) & 0xFF;
                             int srcB = srcPixel & 0xFF;
 
-                            int dstAlpha = (dstPixel >> 24) & 0xFF;
+                            int dstAlpha = (dstPixel >>> 24) & 0xFF;
                             int dstR = (dstPixel >>> 16) & 0xFF;
                             int dstG = (dstPixel >>> 8) & 0xFF;
                             int dstB = dstPixel & 0xFF;
 
                             int invSrcAlpha = 255 - srcAlpha;
-                            int outAlpha = Math.min(srcAlpha + (dstAlpha * invSrcAlpha) / 255, 255);
-                            int outR = Math.min((srcR * srcAlpha + dstR * invSrcAlpha) / 255, 255);
-                            int outG = Math.min((srcG * srcAlpha + dstG * invSrcAlpha) / 255, 255);
-                            int outB = Math.min((srcB * srcAlpha + dstB * invSrcAlpha) / 255, 255);
+
+                            int outAlpha = srcAlpha + (dstAlpha * invSrcAlpha + 127) / 255;
+                            int outR, outG, outB;
+
+                            if (outAlpha == 0) {
+                                outR = outG = outB = 0;
+                            } else {
+                                outR = (srcR * srcAlpha + dstR * dstAlpha * invSrcAlpha / 255 + outAlpha / 2) / outAlpha;
+                                outG = (srcG * srcAlpha + dstG * dstAlpha * invSrcAlpha / 255 + outAlpha / 2) / outAlpha;
+                                outB = (srcB * srcAlpha + dstB * dstAlpha * invSrcAlpha / 255 + outAlpha / 2) / outAlpha;
+                            }
+
+                            outAlpha = Math.min(outAlpha, 255);
+                            outR = Math.min(outR, 255);
+                            outG = Math.min(outG, 255);
+                            outB = Math.min(outB, 255);
 
                             currentFrameBuffer[dstIndex] = (outAlpha << 24) | (outR << 16) | (outG << 8) | outB;
                         }
