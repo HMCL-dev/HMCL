@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
@@ -35,6 +37,8 @@ import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lazy;
+
+import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -143,17 +147,18 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
      */
     private static JFXPopup.PopupVPosition determineOptimalPopupPosition(BorderPane root) {
         // Get the screen bounds in screen coordinates
-        javafx.geometry.Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+        Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
 
         // Convert Bounds to Rectangle2D for getScreensForRectangle method
-        javafx.geometry.Rectangle2D boundsRect = new javafx.geometry.Rectangle2D(
+        Rectangle2D boundsRect = new Rectangle2D(
             screenBounds.getMinX(), screenBounds.getMinY(),
             screenBounds.getWidth(), screenBounds.getHeight()
         );
 
         // Find the screen that contains this component (supports multi-monitor)
-        Screen currentScreen = Screen.getScreensForRectangle(boundsRect).get(0);
-        javafx.geometry.Rectangle2D visualBounds = currentScreen.getVisualBounds();
+        List<Screen> screens = Screen.getScreensForRectangle(boundsRect);
+        Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
+        Rectangle2D visualBounds = currentScreen.getVisualBounds();
 
         double screenHeight = visualBounds.getHeight();
         double screenMinY = visualBounds.getMinY();
@@ -165,7 +170,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         double menuHeight = popup.get().getPopupContent().getHeight();
 
         return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
-            ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding upward
-            : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding downward
+            ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
+            : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 }
