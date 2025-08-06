@@ -265,12 +265,13 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
             // Do we need to search in the background thread?
             for (ModInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getModInfo().getFileName())
-                        || predicate.test(item.getModInfo().getName())
-                        || predicate.test(item.getModInfo().getVersion())
-                        || predicate.test(item.getModInfo().getGameVersion())
-                        || predicate.test(item.getModInfo().getId())
-                        || predicate.test(Objects.toString(item.getModInfo().getModLoaderType()))
+                LocalModFile modInfo = item.getModInfo();
+                if (predicate.test(modInfo.getFileName())
+                        || predicate.test(modInfo.getName())
+                        || predicate.test(modInfo.getVersion())
+                        || predicate.test(modInfo.getGameVersion())
+                        || predicate.test(modInfo.getId())
+                        || predicate.test(Objects.toString(modInfo.getModLoaderType()))
                         || predicate.test((item.getMod() != null ? item.getMod().getDisplayName() : null))) {
                     listView.getItems().add(item);
                 }
