@@ -106,7 +106,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 currentSkinnable = skinnable;
 
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root);
-                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
@@ -133,7 +133,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 currentSkinnable = skinnable;
 
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root);
-                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
     }
