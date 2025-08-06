@@ -144,7 +144,7 @@ public final class ImageUtils {
             "image/apng", APNG
     );
 
-    public static final Set<String> EFAULT_EXTS = Set.of(
+    public static final Set<String> DEFAULT_EXTS = Set.of(
             "jpg", "jpeg", "bmp", "gif"
     );
 
