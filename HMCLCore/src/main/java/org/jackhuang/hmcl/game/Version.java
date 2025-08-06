@@ -36,6 +36,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @Immutable
 public class Version implements Comparable<Version>, Validation {
 
+    /**
+     * Patches with higher priority can override info from other patches, such as mainClass.
+     */
+    public static final int PRIORITY_MC = 0, PRIORITY_LOADER = 30000;
+
     private final String id;
     private final String version;
     private final Integer priority;
@@ -302,7 +307,8 @@ public class Version implements Comparable<Version>, Validation {
 
         if (inheritsFrom == null) {
             if (isRoot()) {
-                thisVersion = new Version(id).setPatches(patches);
+                // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
+                thisVersion = patches != null ? new Version(id).setPatches(patches) : this;
             } else {
                 thisVersion = this;
             }
@@ -368,7 +374,7 @@ public class Version implements Comparable<Version>, Validation {
         return thisVersion.setId(id).setJar(resolve(provider).getJar());
     }
 
-    private Version markAsResolved() {
+    public Version markAsResolved() {
         return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 
@@ -377,6 +383,10 @@ public class Version implements Comparable<Version>, Validation {
     }
 
     private Version setHidden(Boolean hidden) {
+        return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
+    public Version setRoot(Boolean root) {
         return new Version(true, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 
@@ -396,6 +406,10 @@ public class Version implements Comparable<Version>, Validation {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 
+    public Version setJavaVersion(GameJavaVersion javaVersion) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
     public Version setArguments(Arguments arguments) {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
@@ -412,7 +426,15 @@ public class Version implements Comparable<Version>, Validation {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 
+    public Version setAssetIndex(AssetIndexInfo assetIndex) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
     public Version setLibraries(List<Library> libraries) {
+        return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
+    }
+
+    public Version setDownload(JsonMap<DownloadType, DownloadInfo> downloads) {
         return new Version(resolved, id, version, priority, minecraftArguments, arguments, mainClass, inheritsFrom, jar, assetIndex, assets, complianceLevel, javaVersion, libraries, compatibilityRules, downloads, logging, type, time, releaseTime, minimumLauncherVersion, hidden, root, patches);
     }
 

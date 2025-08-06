@@ -55,11 +55,11 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         repository = new Repository(type, curseForge, modrinth);
 
         supportChinese.set(true);
-        downloadSources.get().setAll("mods.curseforge", "mods.modrinth");
-        if (curseForge != null) {
-            downloadSource.set("mods.curseforge");
-        } else if (modrinth != null) {
+        downloadSources.get().setAll("mods.modrinth", "mods.curseforge");
+        if (modrinth != null) {
             downloadSource.set("mods.modrinth");
+        } else if (curseForge != null) {
+            downloadSource.set("mods.curseforge");
         } else {
             throw new AssertionError("Should not be here.");
         }
@@ -110,7 +110,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         try {
             return I18n.getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
-            LOG.warning("Cannot find key " + key + " in resource bundle", e);
+            LOG.warning("Cannot find key " + key + " in resource bundle");
             return category;
         }
     }

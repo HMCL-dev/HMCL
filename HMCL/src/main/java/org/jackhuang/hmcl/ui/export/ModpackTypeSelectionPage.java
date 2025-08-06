@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -43,22 +44,28 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
 
     public ModpackTypeSelectionPage(WizardController controller) {
         this.controller = controller;
+        this.setPadding(new Insets(10));
 
         Label title = new Label(i18n("modpack.export.as"));
-        title.setPadding(new Insets(8));
+        VBox.setMargin(title, new Insets(8, 0, 8, 12));
 
         this.getStyleClass().add("jfx-list-view");
-        this.setMaxSize(300, 150);
+        this.setMaxSize(400, 150);
+        this.setSpacing(8);
+
         this.getChildren().setAll(
                 title,
                 createButton(MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
                 createButton(MODPACK_TYPE_MULTIMC, MultiMCModpackExportTask.OPTION),
-                createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION)
+                createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION),
+                createButton(MODPACK_TYPE_MODRINTH, ModrinthModpackExportTask.OPTION)
         );
     }
 
     private JFXButton createButton(String type, ModpackExportInfo.Options option) {
         JFXButton button = new JFXButton();
+
+        button.getStyleClass().add("card");
         button.setOnAction(e -> {
             controller.getSettings().put(MODPACK_TYPE, type);
             controller.getSettings().put(MODPACK_INFO_OPTION, option);
@@ -72,7 +79,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         graphic.setLeft(new TwoLineListItem(i18n("modpack.type." + type), i18n("modpack.type." + type + ".export")));
 
         SVGPath arrow = new SVGPath();
-        arrow.setContent(SVG.ARROW_RIGHT.getPath());
+        arrow.setContent(SVG.ARROW_FORWARD.getPath());
         BorderPane.setAlignment(arrow, Pos.CENTER);
         graphic.setRight(arrow);
 
@@ -95,4 +102,5 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
     public static final String MODPACK_TYPE_MCBBS = "mcbbs";
     public static final String MODPACK_TYPE_MULTIMC = "multimc";
     public static final String MODPACK_TYPE_SERVER = "server";
+    public static final String MODPACK_TYPE_MODRINTH = "modrinth";
 }

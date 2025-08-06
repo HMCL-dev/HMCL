@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,10 +61,10 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
                 repository.removeVersionFromDisk(name);
         });
 
-        ModpackConfiguration<McbbsModpackManifest> config = null;
+        ModpackConfiguration<McbbsModpackManifest> config;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (!MODPACK_TYPE.equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");

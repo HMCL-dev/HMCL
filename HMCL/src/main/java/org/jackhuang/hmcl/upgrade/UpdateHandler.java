@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 
+import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
@@ -29,9 +30,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.ui.SwingUtils;
+import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -113,9 +113,8 @@ public final class UpdateHandler {
 
             Task<?> task = new HMCLDownloadTask(version, downloaded);
 
-            TaskExecutor executor = task.executor(false);
+            TaskExecutor executor = task.executor();
             Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
-            executor.start();
             thread(() -> {
                 boolean success = executor.test();
 
@@ -126,7 +125,7 @@ public final class UpdateHandler {
                         }
 
                         requestUpdate(downloaded, getCurrentLocation());
-                        Main.exit(0);
+                        EntryPoint.exit(0);
                     } catch (IOException e) {
                         LOG.warning("Failed to update to " + version, e);
                         Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
@@ -253,7 +252,7 @@ public final class UpdateHandler {
     private static boolean isFirstLaunchAfterUpgrade() {
         Path currentPath = JarUtils.thisJarPath();
         if (currentPath != null) {
-            Path updated = Metadata.HMCL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
+            Path updated = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
             if (currentPath.equals(updated.toAbsolutePath())) {
                 return true;
             }
@@ -262,10 +261,10 @@ public final class UpdateHandler {
     }
 
     private static void breakForceUpdateFeature() {
-        Path hmclVersionJson = Metadata.HMCL_DIRECTORY.resolve("hmclver.json");
+        Path hmclVersionJson = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("hmclver.json");
         if (Files.isRegularFile(hmclVersionJson)) {
             try {
-                Map<?, ?> content = new Gson().fromJson(FileUtils.readText(hmclVersionJson), Map.class);
+                Map<?, ?> content = new Gson().fromJson(Files.readString(hmclVersionJson), Map.class);
                 Object ver = content.get("ver");
                 if (ver instanceof String && ((String) ver).startsWith("3.")) {
                     Files.delete(hmclVersionJson);

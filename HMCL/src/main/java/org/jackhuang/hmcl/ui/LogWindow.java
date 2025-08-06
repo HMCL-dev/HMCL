@@ -38,9 +38,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
-import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.Log;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
@@ -92,7 +91,7 @@ public final class LogWindow extends Stage {
         this.logs = logs;
         this.impl = new LogWindowImpl();
         setScene(new Scene(impl, 800, 480));
-        getScene().getStylesheets().addAll(Theme.getTheme().getStylesheets(config().getLauncherFontFamily()));
+        StyleSheets.init(getScene());
         setTitle(i18n("logwindow.title"));
         FXUtils.setIcon(this);
 
@@ -186,7 +185,7 @@ public final class LogWindow extends Stage {
         }
 
         private void onTerminateGame() {
-            LauncherHelper.stopManagedProcesses();
+            LogWindow.this.gameProcess.stop();
         }
 
         private void onClear() {
@@ -224,7 +223,7 @@ public final class LogWindow extends Stage {
 
                 try {
                     if (gameProcess.isRunning()) {
-                        GameDumpGenerator.writeDumpTo(gameProcess.getPID(), dumpFile);
+                        GameDumpGenerator.writeDumpTo(gameProcess.getProcess().pid(), dumpFile);
                         FXUtils.showFileInExplorer(dumpFile);
                     }
                 } catch (Throwable e) {
@@ -307,8 +306,8 @@ public final class LogWindow extends Stage {
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
 
-                listView.setStyle("-fx-font-family: " + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
-                        + "; -fx-font-size: " + config().getFontSize() + "px;");
+                listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                        + "\"; -fx-font-size: " + config().getFontSize() + "px;");
                 Holder<Object> lastCell = new Holder<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {

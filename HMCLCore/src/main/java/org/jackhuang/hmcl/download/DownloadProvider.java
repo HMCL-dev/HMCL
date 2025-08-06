@@ -19,8 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.net.URL;
-import java.util.Collections;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,8 +34,8 @@ public interface DownloadProvider {
 
     String getAssetBaseURL();
 
-    default List<URL> getAssetObjectCandidates(String assetObjectLocation) {
-        return Collections.singletonList(NetworkUtils.toURL(getAssetBaseURL() + assetObjectLocation));
+    default List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(NetworkUtils.toURI(getAssetBaseURL() + assetObjectLocation));
     }
 
     /**
@@ -59,11 +58,11 @@ public interface DownloadProvider {
      * @param baseURL original URL provided by Mojang and Forge.
      * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
      */
-    default List<URL> injectURLWithCandidates(String baseURL) {
-        return Collections.singletonList(NetworkUtils.toURL(injectURL(baseURL)));
+    default List<URI> injectURLWithCandidates(String baseURL) {
+        return List.of(NetworkUtils.toURI(injectURL(baseURL)));
     }
 
-    default List<URL> injectURLsWithCandidates(List<String> urls) {
+    default List<URI> injectURLsWithCandidates(List<String> urls) {
         return urls.stream().flatMap(url -> injectURLWithCandidates(url).stream()).collect(Collectors.toList());
     }
 

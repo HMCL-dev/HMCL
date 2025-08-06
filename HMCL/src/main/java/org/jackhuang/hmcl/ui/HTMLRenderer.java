@@ -22,6 +22,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
@@ -151,30 +152,27 @@ public final class HTMLRenderer {
         children.add(textNode);
     }
 
+    private void appendAutoLineBreak(String text) {
+        AutoLineBreak textNode = new AutoLineBreak(text);
+        applyStyle(textNode);
+        children.add(textNode);
+    }
+
     private void appendImage(Node node) {
         String src = node.absUrl("src");
-        URI imageUri = null;
-        try {
-            if (!src.isEmpty())
-                imageUri = URI.create(src);
-        } catch (Exception ignored) {
-        }
-
         String alt = node.attr("alt");
 
-        if (imageUri != null) {
-            URI uri = URI.create(src);
-
+        if (StringUtils.isNotBlank(src)) {
             String widthAttr = node.attr("width");
             String heightAttr = node.attr("height");
 
-            double width = 0;
-            double height = 0;
+            int width = 0;
+            int height = 0;
 
             if (!widthAttr.isEmpty() && !heightAttr.isEmpty()) {
                 try {
-                    width = Double.parseDouble(widthAttr);
-                    height = Double.parseDouble(heightAttr);
+                    width = (int) Double.parseDouble(widthAttr);
+                    height = (int) Double.parseDouble(heightAttr);
                 } catch (NumberFormatException ignored) {
                 }
 
@@ -184,10 +182,12 @@ public final class HTMLRenderer {
                 }
             }
 
-            Image image = FXUtils.newRemoteImage(uri.toString(), width, height, true, true, false);
-            if (image.isError()) {
-                LOG.warning("Failed to load image: " + uri, image.getException());
-            } else {
+            try {
+                Image image = FXUtils.getRemoteImageTask(src, width, height, true, true)
+                        .run();
+                if (image == null)
+                    throw new AssertionError("Image loading task returned null");
+
                 ImageView imageView = new ImageView(image);
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
@@ -198,6 +198,8 @@ public final class HTMLRenderer {
                 }
                 children.add(imageView);
                 return;
+            } catch (Throwable e) {
+                LOG.warning("Failed to load image: " + src, e);
             }
         }
 
@@ -230,7 +232,7 @@ public final class HTMLRenderer {
             case "h6":
             case "tr":
                 if (!children.isEmpty())
-                    appendText("\n\n");
+                    appendAutoLineBreak("\n\n");
                 break;
         }
 
@@ -252,8 +254,49 @@ public final class HTMLRenderer {
             case "h4":
             case "h5":
             case "h6":
-                appendText("\n");
+                appendAutoLineBreak("\n");
                 break;
+        }
+    }
+
+    private static boolean isSpacing(String text) {
+        if (text == null)
+            return true;
+
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch != ' ' && ch != '\t')
+                return false;
+        }
+        return true;
+    }
+
+    public void mergeLineBreaks() {
+        for (int i = 0; i < this.children.size(); i++) {
+            javafx.scene.Node child = this.children.get(i);
+            if (child instanceof AutoLineBreak) {
+                int lastAutoLineBreak = -1;
+
+                for (int j = i + 1; j < this.children.size(); j++) {
+                    javafx.scene.Node otherChild = this.children.get(j);
+
+                    if (otherChild instanceof AutoLineBreak) {
+                        lastAutoLineBreak = j;
+                    } else if (otherChild instanceof Text && isSpacing(((Text) otherChild).getText())) {
+                        // do nothing
+                    } else {
+                        break;
+                    }
+                }
+
+                if (lastAutoLineBreak > 0) {
+                    this.children.subList(i + 1, lastAutoLineBreak + 1).clear();
+
+                    if (((Text) child).getText().length() == 1) {
+                        ((Text) child).setText("\n\n");
+                    }
+                }
+            }
         }
     }
 
@@ -262,5 +305,11 @@ public final class HTMLRenderer {
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
         return textFlow;
+    }
+
+    private static final class AutoLineBreak extends Text {
+        public AutoLineBreak(String text) {
+            super(text);
+        }
     }
 }

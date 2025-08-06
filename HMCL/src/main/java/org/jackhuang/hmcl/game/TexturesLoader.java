@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -87,7 +86,7 @@ public final class TexturesLoader {
     }
 
     private static final ThreadPoolExecutor POOL = threadPool("TexturesDownload", true, 2, 10, TimeUnit.SECONDS);
-    private static final Path TEXTURES_DIR = Metadata.HMCL_DIRECTORY.resolve("skins");
+    private static final Path TEXTURES_DIR = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("skins");
 
     private static Path getTexturePath(Texture texture) {
         String url = texture.getUrl();
@@ -110,7 +109,7 @@ public final class TexturesLoader {
         if (!Files.isRegularFile(file)) {
             // download it
             try {
-                new FileDownloadTask(new URL(texture.getUrl()), file.toFile()).run();
+                new FileDownloadTask(texture.getUrl(), file).run();
                 LOG.info("Texture downloaded: " + texture.getUrl());
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {

@@ -41,6 +41,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         RipplerContainer container = new RipplerContainer(root);
 
         HBox left = new HBox();
+        left.setAlignment(Pos.CENTER_LEFT);
         left.setMouseTransparent(true);
 
         TwoLineListItem item = new TwoLineListItem();
