@@ -915,7 +915,7 @@ public final class FXUtils {
         try (var input = new BufferedInputStream(Files.newInputStream(path))) {
             String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
             ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
-            if (loader == null && !ImageUtils.FORCE_STD_EXTS.contains(ext)) {
+            if (loader == null && !ImageUtils.EFAULT_EXTS.contains(ext)) {
                 input.mark(ImageUtils.HEADER_BUFFER_SIZE);
                 byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
                 input.reset();
@@ -941,7 +941,7 @@ public final class FXUtils {
                 contentType = matcher.group("type");
 
             ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
-            if (loader == null && !ImageUtils.FORCE_STD_CONTENT_TYPES.contains(contentType)) {
+            if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
                 input.mark(ImageUtils.HEADER_BUFFER_SIZE);
                 byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
                 input.reset();

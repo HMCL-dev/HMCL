@@ -144,11 +144,11 @@ public final class ImageUtils {
             "image/apng", APNG
     );
 
-    public static final Set<String> FORCE_STD_EXTS = Set.of(
+    public static final Set<String> EFAULT_EXTS = Set.of(
             "jpg", "jpeg", "bmp", "gif"
     );
 
-    public static final Set<String> FORCE_STD_CONTENT_TYPES = Set.of(
+    public static final Set<String> DEFAULT_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/bmp", "image/gif"
     );
 
