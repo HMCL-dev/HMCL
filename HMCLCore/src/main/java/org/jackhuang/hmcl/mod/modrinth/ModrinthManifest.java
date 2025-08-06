@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -98,10 +97,10 @@ public class ModrinthManifest implements ModpackManifest, Validation {
         private final String path;
         private final Map<String, String> hashes;
         private final Map<String, String> env;
-        private final List<URI> downloads;
+        private final List<String> downloads;
         private final int fileSize;
 
-        public File(String path, Map<String, String> hashes, Map<String, String> env, List<URI> downloads, int fileSize) {
+        public File(String path, Map<String, String> hashes, Map<String, String> env, List<String> downloads, int fileSize) {
             this.path = path;
             this.hashes = hashes;
             this.env = env;
@@ -121,7 +120,7 @@ public class ModrinthManifest implements ModpackManifest, Validation {
             return env;
         }
 
-        public List<URI> getDownloads() {
+        public List<String> getDownloads() {
             return downloads;
         }
 
