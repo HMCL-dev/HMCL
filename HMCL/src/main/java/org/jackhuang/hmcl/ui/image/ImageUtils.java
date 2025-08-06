@@ -121,7 +121,7 @@ public final class ImageUtils {
                 pixels = defaultImage.array;
             }
 
-            WritableImage image = new WritableImage(defaultImage.width, defaultImage.height);
+            WritableImage image = new WritableImage(targetWidth, targetHeight);
             image.getPixelWriter().setPixels(0, 0, targetWidth, targetHeight,
                     PixelFormat.getIntArgbInstance(), pixels,
                     0, targetWidth);
@@ -319,7 +319,7 @@ public final class ImageUtils {
                             int srcG = (srcPixel >>> 8) & 0xFF;
                             int srcB = srcPixel & 0xFF;
 
-                            int dstAlpha = (dstPixel >>> 24) & 0xFF;
+                            int dstAlpha = (dstPixel >> 24) & 0xFF;
                             int dstR = (dstPixel >>> 16) & 0xFF;
                             int dstG = (dstPixel >>> 8) & 0xFF;
                             int dstB = dstPixel & 0xFF;
