@@ -62,6 +62,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -248,29 +249,29 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         } else {
             listView.getItems().clear();
 
-            Predicate<String> predicate;
+            Predicate<@Nullable String> predicate;
             if (queryString.startsWith("regex:")) {
                 try {
                     Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                    predicate = s -> pattern.matcher(s).find();
+                    predicate = s -> s != null && pattern.matcher(s).find();
                 } catch (Throwable e) {
                     LOG.warning("Illegal regular expression", e);
                     return;
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
             for (ModInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getModInfo().getFileName() +
-                        item.getModInfo().getName() +
-                        item.getModInfo().getVersion() +
-                        item.getModInfo().getGameVersion() +
-                        item.getModInfo().getId() +
-                        item.getModInfo().getModLoaderType() +
-                        (item.getMod() != null ? item.getMod().getDisplayName() : ""))) {
+                if (predicate.test(item.getModInfo().getFileName())
+                        || predicate.test(item.getModInfo().getName())
+                        || predicate.test(item.getModInfo().getVersion())
+                        || predicate.test(item.getModInfo().getGameVersion())
+                        || predicate.test(item.getModInfo().getId())
+                        || predicate.test(Objects.toString(item.getModInfo().getModLoaderType()))
+                        || predicate.test((item.getMod() != null ? item.getMod().getDisplayName() : null))) {
                     listView.getItems().add(item);
                 }
             }
