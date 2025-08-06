@@ -166,13 +166,13 @@ public final class HTMLRenderer {
             String widthAttr = node.attr("width");
             String heightAttr = node.attr("height");
 
-            double width = 0;
-            double height = 0;
+            int width = 0;
+            int height = 0;
 
             if (!widthAttr.isEmpty() && !heightAttr.isEmpty()) {
                 try {
-                    width = Double.parseDouble(widthAttr);
-                    height = Double.parseDouble(heightAttr);
+                    width = (int) Double.parseDouble(widthAttr);
+                    height = (int) Double.parseDouble(heightAttr);
                 } catch (NumberFormatException ignored) {
                 }
 
