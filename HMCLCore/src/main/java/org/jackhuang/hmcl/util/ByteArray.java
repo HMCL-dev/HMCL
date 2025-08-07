@@ -87,51 +87,51 @@ public final class ByteArray {
 
     // Set
 
-    public void setByte(byte[] array, int offset, byte value) {
+    public static void setByte(byte[] array, int offset, byte value) {
         array[offset] = value;
     }
 
-    public void setUnsignedByte(byte[] array, int offset, int value) {
+    public static void setUnsignedByte(byte[] array, int offset, int value) {
         array[offset] = (byte) (value & 0xff);
     }
 
-    public void setShortLE(byte[] array, int offset, short value) {
+    public static void setShortLE(byte[] array, int offset, short value) {
         SHORT_LE.set(array, offset, value);
     }
 
-    public void setUnsignedShortLE(byte[] array, int offset, int value) {
+    public static void setUnsignedShortLE(byte[] array, int offset, int value) {
         setShortLE(array, offset, (short) (value & 0xffff));
     }
 
-    public void setShortBE(byte[] array, int offset, short value) {
+    public static void setShortBE(byte[] array, int offset, short value) {
         SHORT_BE.set(array, offset, value);
     }
 
-    public void setUnsignedShortBE(byte[] array, int offset, int value) {
+    public static void setUnsignedShortBE(byte[] array, int offset, int value) {
         setShortBE(array, offset, (short) (value & 0xffff));
     }
 
-    public void setIntLE(byte[] array, int offset, int value) {
+    public static void setIntLE(byte[] array, int offset, int value) {
         INT_LE.set(array, offset, value);
     }
 
-    public void setUnsignedIntLE(byte[] array, int offset, long value) {
+    public static void setUnsignedIntLE(byte[] array, int offset, long value) {
         setIntLE(array, offset, (int) (value & 0xffff_ffffL));
     }
 
-    public void setIntBE(byte[] array, int offset, int value) {
+    public static void setIntBE(byte[] array, int offset, int value) {
         INT_BE.set(array, offset, value);
     }
 
-    public void setUnsignedIntBE(byte[] array, int offset, long value) {
+    public static void setUnsignedIntBE(byte[] array, int offset, long value) {
         setIntBE(array, offset, (int) (value & 0xffff_ffffL));
     }
 
-    public void setLongLE(byte[] array, int offset, long value) {
+    public static void setLongLE(byte[] array, int offset, long value) {
         LONG_LE.set(array, offset, value);
     }
 
-    public void setLongBE(byte[] array, int offset, long value) {
+    public static void setLongBE(byte[] array, int offset, long value) {
         LONG_BE.set(array, offset, value);
     }
 

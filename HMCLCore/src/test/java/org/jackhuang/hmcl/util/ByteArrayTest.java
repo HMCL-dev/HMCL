@@ -19,10 +19,11 @@ package org.jackhuang.hmcl.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.util.function.Consumer;
+
 import static org.jackhuang.hmcl.util.ByteArray.*;
-import static org.jackhuang.hmcl.util.ByteArray.getShortBE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Glavo
@@ -120,4 +121,161 @@ public final class ByteArrayTest {
         assertThrows(IndexOutOfBoundsException.class, () -> getLongBE(TEST_ARRAY, -1));
     }
 
+    private static byte[] byteArray(String string) {
+        try {
+            return Hex.decodeHex(string);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static byte[] changedArray(Consumer<byte[]> consumer) {
+        var array = TEST_ARRAY.clone();
+        consumer.accept(array);
+        return array;
+    }
+
+    @Test
+    public void testSetByte() {
+        assertArrayEquals(byteArray("ff3456789abcdef000"),
+                changedArray(array -> setByte(array, 0, (byte) 0xff)));
+        assertArrayEquals(byteArray("123456789affdef000"),
+                changedArray(array -> setByte(array, 5, (byte) 0xff)));
+        assertArrayEquals(byteArray("123456789abcdef0ff"),
+                changedArray(array -> setByte(array, 8, (byte) 0xff)));
+
+        assertArrayEquals(byteArray("ff3456789abcdef000"),
+                changedArray(array -> setUnsignedByte(array, 0, 0xff)));
+        assertArrayEquals(byteArray("123456789affdef000"),
+                changedArray(array -> setUnsignedByte(array, 5, 0xff)));
+        assertArrayEquals(byteArray("123456789abcdef0ff"),
+                changedArray(array -> setUnsignedByte(array, 8, 0xff)));
+
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setByte(array, -1, (byte) 0xff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setByte(array, 9, (byte) 0xff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedByte(array, -1, 0xff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedByte(array, 9, 0xff)));
+    }
+
+    @Test
+    public void testSetShort() {
+        assertArrayEquals(byteArray("ffee56789abcdef000"),
+                changedArray(array -> setShortLE(array, 0, (short) 0xeeff)));
+        assertArrayEquals(byteArray("123456789affeef000"),
+                changedArray(array -> setShortLE(array, 5, (short) 0xeeff)));
+        assertArrayEquals(byteArray("123456789abcdeffee"),
+                changedArray(array -> setShortLE(array, 7, (short) 0xeeff)));
+
+        assertArrayEquals(byteArray("ffee56789abcdef000"),
+                changedArray(array -> setUnsignedShortLE(array, 0, 0xeeff)));
+        assertArrayEquals(byteArray("123456789affeef000"),
+                changedArray(array -> setUnsignedShortLE(array, 5, 0xeeff)));
+        assertArrayEquals(byteArray("123456789abcdeffee"),
+                changedArray(array -> setUnsignedShortLE(array, 7, 0xeeff)));
+
+        assertArrayEquals(byteArray("eeff56789abcdef000"),
+                changedArray(array -> setShortBE(array, 0, (short) 0xeeff)));
+        assertArrayEquals(byteArray("123456789aeefff000"),
+                changedArray(array -> setShortBE(array, 5, (short) 0xeeff)));
+        assertArrayEquals(byteArray("123456789abcdeeeff"),
+                changedArray(array -> setShortBE(array, 7, (short) 0xeeff)));
+
+        assertArrayEquals(byteArray("eeff56789abcdef000"),
+                changedArray(array -> setUnsignedShortBE(array, 0, 0xeeff)));
+        assertArrayEquals(byteArray("123456789aeefff000"),
+                changedArray(array -> setUnsignedShortBE(array, 5, 0xeeff)));
+        assertArrayEquals(byteArray("123456789abcdeeeff"),
+                changedArray(array -> setUnsignedShortBE(array, 7, 0xeeff)));
+
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setShortLE(array, -1, (short) 0xeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setShortLE(array, 8, (short) 0xeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedShortLE(array, -1, 0xeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedShortLE(array, 8, 0xeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setShortBE(array, -1, (short) 0xeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setShortBE(array, 8, (short) 0xeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedShortBE(array, -1, 0xeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedShortBE(array, 8, 0xeeff)));
+    }
+
+    @Test
+    public void testSetInt() {
+        assertArrayEquals(byteArray("ffeeddcc9abcdef000"),
+                changedArray(array -> setIntLE(array, 0, 0xccddeeff)));
+        assertArrayEquals(byteArray("12345678ffeeddcc00"),
+                changedArray(array -> setIntLE(array, 4, 0xccddeeff)));
+        assertArrayEquals(byteArray("123456789affeeddcc"),
+                changedArray(array -> setIntLE(array, 5, 0xccddeeff)));
+
+        assertArrayEquals(byteArray("ffeeddcc9abcdef000"),
+                changedArray(array -> setUnsignedIntLE(array, 0, 0xccddeeffL)));
+        assertArrayEquals(byteArray("12345678ffeeddcc00"),
+                changedArray(array -> setUnsignedIntLE(array, 4, 0xccddeeffL)));
+        assertArrayEquals(byteArray("123456789affeeddcc"),
+                changedArray(array -> setUnsignedIntLE(array, 5, 0xccddeeffL)));
+
+        assertArrayEquals(byteArray("ccddeeff9abcdef000"),
+                changedArray(array -> setIntBE(array, 0, 0xccddeeff)));
+        assertArrayEquals(byteArray("12345678ccddeeff00"),
+                changedArray(array -> setIntBE(array, 4, 0xccddeeff)));
+        assertArrayEquals(byteArray("123456789accddeeff"),
+                changedArray(array -> setIntBE(array, 5, 0xccddeeff)));
+
+        assertArrayEquals(byteArray("ccddeeff9abcdef000"),
+                changedArray(array -> setUnsignedIntBE(array, 0, 0xccddeeffL)));
+        assertArrayEquals(byteArray("12345678ccddeeff00"),
+                changedArray(array -> setUnsignedIntBE(array, 4, 0xccddeeffL)));
+        assertArrayEquals(byteArray("123456789accddeeff"),
+                changedArray(array -> setUnsignedIntBE(array, 5, 0xccddeeffL)));
+
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setIntLE(array, -1, 0xccddeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setIntLE(array, 8, 0xccddeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedIntLE(array, -1, 0xccddeeffL)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedIntLE(array, 8, 0xccddeeffL)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setIntBE(array, -1, 0xccddeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setIntBE(array, 8, 0xccddeeff)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedIntBE(array, -1, 0xccddeeffL)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setUnsignedIntBE(array, 8, 0xccddeeffL)));
+    }
+
+    @Test
+    public void testSetLong() {
+        assertArrayEquals(byteArray("ffeeddccbbaa998800"),
+                changedArray(array -> setLongLE(array, 0, 0x8899aabbccddeeffL)));
+        assertArrayEquals(byteArray("12ffeeddccbbaa9988"),
+                changedArray(array -> setLongLE(array, 1, 0x8899aabbccddeeffL)));
+
+        assertArrayEquals(byteArray("8899aabbccddeeff00"),
+                changedArray(array -> setLongBE(array, 0, 0x8899aabbccddeeffL)));
+        assertArrayEquals(byteArray("128899aabbccddeeff"),
+                changedArray(array -> setLongBE(array, 1, 0x8899aabbccddeeffL)));
+
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setLongLE(array, -1, 0x8899aabbccddeeffL)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setLongLE(array, 2, 0x8899aabbccddeeffL)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setLongBE(array, -1, 0x8899aabbccddeeffL)));
+        assertThrows(IndexOutOfBoundsException.class,
+                () -> changedArray(array -> setLongBE(array, 2, 0x8899aabbccddeeffL)));
+    }
 }
