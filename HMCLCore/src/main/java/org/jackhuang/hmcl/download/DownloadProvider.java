@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +35,7 @@ public interface DownloadProvider {
     String getAssetBaseURL();
 
     default List<URI> getAssetObjectCandidates(String assetObjectLocation) {
-        return List.of(URI.create(getAssetBaseURL() + assetObjectLocation));
+        return List.of(NetworkUtils.toURI(getAssetBaseURL() + assetObjectLocation));
     }
 
     /**
@@ -57,7 +59,7 @@ public interface DownloadProvider {
      * @return the URL that is equivalent to [baseURL], but belongs to your own service provider.
      */
     default List<URI> injectURLWithCandidates(String baseURL) {
-        return List.of(URI.create(injectURL(baseURL)));
+        return List.of(NetworkUtils.toURI(injectURL(baseURL)));
     }
 
     default List<URI> injectURLsWithCandidates(List<String> urls) {

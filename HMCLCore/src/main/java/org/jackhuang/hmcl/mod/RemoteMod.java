@@ -28,9 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
-
-public class RemoteMod {
+public final class RemoteMod {
 
     public static final RemoteMod BROKEN = new RemoteMod("", "", "RemoteMod.BROKEN", "", Collections.emptyList(), "", "", new RemoteMod.IMod() {
         @Override
@@ -313,7 +311,7 @@ public class RemoteMod {
         }
 
         public String getUrl() {
-            return encodeLocation(url);
+            return url;
         }
 
         public String getFilename() {

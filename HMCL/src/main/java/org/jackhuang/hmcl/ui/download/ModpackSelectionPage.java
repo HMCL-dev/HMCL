@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -124,10 +123,9 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     private void onChooseRemoteFile() {
-        Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (urlString, resolve, reject) -> {
+        Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (url, resolve, reject) -> {
             try {
-                URI url = URI.create(urlString);
-                if (urlString.endsWith("server-manifest.json")) {
+                if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
                     Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
@@ -148,7 +146,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     resolve.run();
 
                     Controllers.taskDialog(
-                            new FileDownloadTask(url, modpack, null)
+                            new FileDownloadTask(url, modpack)
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {
                                             resolve.run();

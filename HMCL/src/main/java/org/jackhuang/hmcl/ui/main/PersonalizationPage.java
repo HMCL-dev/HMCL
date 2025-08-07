@@ -19,21 +19,22 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXSlider;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.When;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
@@ -55,6 +56,20 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class PersonalizationPage extends StackPane {
+
+    private static int snapOpacity(double val) {
+        if (val <= 0) {
+            return 0;
+        } else if (Double.isNaN(val) || val >= 100.) {
+            return 100;
+        }
+
+        int prevTick = (int) (val / 5);
+        int prevTickValue = prevTick * 5;
+        int nextTickValue = (prevTick + 1) * 5;
+
+        return (val - prevTickValue) > (nextTickValue - val) ? nextTickValue : prevTickValue;
+    }
 
     public PersonalizationPage() {
         VBox content = new VBox(10);
@@ -112,14 +127,15 @@ public class PersonalizationPage extends StackPane {
                     new MultiFileItem.Option<>(i18n("launcher.background.default"), EnumBackgroundImage.DEFAULT)
                             .setTooltip(i18n("launcher.background.default.tooltip")),
                     new MultiFileItem.Option<>(i18n("launcher.background.classic"), EnumBackgroundImage.CLASSIC),
-                    new MultiFileItem.Option<>(i18n("launcher.background.translucent"), EnumBackgroundImage.TRANSLUCENT),
                     new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumBackgroundImage.CUSTOM)
                             .setChooserTitle(i18n("launcher.background.choose"))
                             .addExtensionFilter(FXUtils.getImageExtensionFilter())
                             .bindBidirectional(config().backgroundImageProperty()),
                     new MultiFileItem.StringOption<>(i18n("launcher.background.network"), EnumBackgroundImage.NETWORK)
                             .setValidators(new URLValidator(true))
-                            .bindBidirectional(config().backgroundImageUrlProperty())
+                            .bindBidirectional(config().backgroundImageUrlProperty()),
+                    new MultiFileItem.PaintOption<>(i18n("launcher.background.paint"), EnumBackgroundImage.PAINT)
+                            .bindBidirectional(config().backgroundPaintProperty())
             ));
             backgroundItem.selectedDataProperty().bindBidirectional(config().backgroundImageTypeProperty());
             backgroundSublist.subtitleProperty().bind(
@@ -127,7 +143,49 @@ public class PersonalizationPage extends StackPane {
                             .then(i18n("launcher.background.default"))
                             .otherwise(config().backgroundImageProperty()));
 
-            componentList.getContent().add(backgroundItem);
+            HBox opacityItem = new HBox(8);
+            {
+                opacityItem.setAlignment(Pos.CENTER);
+
+                Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
+
+                JFXSlider slider = new JFXSlider(0, 100,
+                        config().getBackgroundImageType() != EnumBackgroundImage.TRANSLUCENT
+                                ? config().getBackgroundImageOpacity() : 50);
+                slider.setShowTickMarks(true);
+                slider.setMajorTickUnit(10);
+                slider.setMinorTickCount(1);
+                slider.setBlockIncrement(5);
+                slider.setSnapToTicks(true);
+                HBox.setHgrow(slider, Priority.ALWAYS);
+
+                if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
+                    slider.setDisable(true);
+                    config().backgroundImageTypeProperty().addListener(new ChangeListener<>() {
+                        @Override
+                        public void changed(ObservableValue<? extends EnumBackgroundImage> observable, EnumBackgroundImage oldValue, EnumBackgroundImage newValue) {
+                            if (newValue != EnumBackgroundImage.TRANSLUCENT) {
+                                config().backgroundImageTypeProperty().removeListener(this);
+                                slider.setDisable(false);
+                                slider.setValue(100);
+                            }
+                        }
+                    });
+                }
+
+                Label textOpacity = new Label();
+
+                StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
+                textOpacity.textProperty().bind(valueBinding);
+                slider.setValueFactory(s -> valueBinding);
+
+                slider.valueProperty().addListener((observable, oldValue, newValue) ->
+                        config().setBackgroundImageOpacity(snapOpacity(newValue.doubleValue())));
+
+                opacityItem.getChildren().setAll(label, slider, textOpacity);
+            }
+
+            componentList.getContent().setAll(backgroundItem, opacityItem);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
         }
 

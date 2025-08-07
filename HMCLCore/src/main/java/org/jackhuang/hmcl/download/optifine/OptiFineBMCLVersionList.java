@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -73,7 +72,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
 
     @Override
     public Task<?> refreshAsync() {
-        return new GetTask(URI.create(apiRoot + "/optifine/versionlist")).thenGetJsonAsync(listTypeOf(OptiFineVersion.class)).thenAcceptAsync(root -> {
+        return new GetTask(apiRoot + "/optifine/versionlist").thenGetJsonAsync(listTypeOf(OptiFineVersion.class)).thenAcceptAsync(root -> {
             lock.writeLock().lock();
 
             try {

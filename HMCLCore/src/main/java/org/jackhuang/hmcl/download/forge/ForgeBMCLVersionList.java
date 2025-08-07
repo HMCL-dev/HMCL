@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -86,7 +85,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     public Task<?> refreshAsync(String gameVersion) {
         String lookupVersion = toLookupVersion(gameVersion);
 
-        return new GetTask(URI.create(apiRoot + "/forge/minecraft/" + lookupVersion)).thenGetJsonAsync(listTypeOf(ForgeVersion.class))
+        return new GetTask(apiRoot + "/forge/minecraft/" + lookupVersion).thenGetJsonAsync(listTypeOf(ForgeVersion.class))
                 .thenAcceptAsync(forgeVersions -> {
                     lock.writeLock().lock();
                     try {
