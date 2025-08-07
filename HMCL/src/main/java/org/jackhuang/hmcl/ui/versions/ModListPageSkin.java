@@ -65,8 +65,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.io.InputStream;
 import java.util.*;
 import java.util.function.Predicate;
