@@ -409,25 +409,23 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             }
 
             if (remoteVersion instanceof GameRemoteVersion) {
+                String wikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
                 switch (remoteVersion.getVersionType()) {
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
                         content.setImage(VersionIconType.GRASS.getIcon());
-                        String releaseWikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
-                        content.setExternalLink(i18n("wiki.version.game", releaseWikiSuffix));
+                        content.setExternalLink(i18n("wiki.version.game", wikiSuffix));
                         break;
                     case PENDING:
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
-                        String snapshotWikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
-                        content.setExternalLink(i18n("wiki.version.game", snapshotWikiSuffix));
+                        content.setExternalLink(i18n("wiki.version.game", wikiSuffix));
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));
                         content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
-                        String oldWikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
-                        content.setExternalLink(i18n("wiki.version.game", oldWikiSuffix));
+                        content.setExternalLink(i18n("wiki.version.game", wikiSuffix));
                         break;
                 }
             } else {
@@ -457,23 +455,25 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         }
 
         private String getWikiUrlSuffix(String gameVersion) {
-            String id = gameVersion.toLowerCase();
+            String id = gameVersion.toLowerCase(Locale.ROOT);
 
-            Map<String, String> exactVersionMappings = Map.of(
-                    "in-20100206-2103", i18n("wiki.version.game.prefix", "Indev_20100206"),
-                    "inf-20100630-1", i18n("wiki.version.game.prefix", "Infdev_20100630"),
-                    "inf-20100630-2", i18n("wiki.version.game.prefix", "Alpha_v1.0.0"),
-                    "1.19_deep_dark_experimental_snapshot-1", "1.19-exp1",
-                    "in-20100130", i18n("wiki.version.game.prefix", "Indev_0.31_20100130"),
-                    "b1.6-tb3", i18n("wiki.version.game.prefix", "Beta_1.6_Test_Build_3")
-            );
-
-            if (id.equals("0.30-1") || id.equals("0.30-2") || id.equals("c0.30_01c")) {
-                return i18n("wiki.version.game.prefix", "Classic_0.30");
-            }
-
-            if (exactVersionMappings.containsKey(id)) {
-                return exactVersionMappings.get(id);
+            switch (id) {
+                case "0.30-1":
+                case "0.30-2":
+                case "c0.30_01c":
+                    return i18n("wiki.version.game.prefix", "Classic_0.30");
+                case "in-20100206-2103":
+                    return i18n("wiki.version.game.prefix", "Indev_20100206");
+                case "inf-20100630-1":
+                    return i18n("wiki.version.game.prefix", "Infdev_20100630");
+                case "inf-20100630-2":
+                    return i18n("wiki.version.game.prefix", "Alpha_v1.0.0");
+                case "1.19_deep_dark_experimental_snapshot-1":
+                    return "1.19-exp1";
+                case "in-20100130":
+                    return i18n("wiki.version.game.prefix", "Indev_0.31_20100130");
+                case "b1.6-tb3":
+                    return i18n("wiki.version.game.prefix", "Beta_1.6_Test_Build_3");
             }
 
             if (id.startsWith("1.0.0-rc2")) return "RC2";
