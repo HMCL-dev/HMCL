@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -62,10 +61,10 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
                 repository.removeVersionFromDisk(name);
         });
 
-        ModpackConfiguration<McbbsModpackManifest> config = null;
+        ModpackConfiguration<McbbsModpackManifest> config;
         try {
             if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(Files.readString(json.toPath()), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (!MODPACK_TYPE.equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");

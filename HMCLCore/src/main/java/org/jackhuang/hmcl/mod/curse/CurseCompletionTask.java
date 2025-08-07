@@ -27,12 +27,10 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -88,7 +86,7 @@ public final class CurseCompletionTask extends Task<Void> {
             try {
                 File manifestFile = new File(repository.getVersionRoot(version), "manifest.json");
                 if (manifestFile.exists())
-                    this.manifest = JsonUtils.GSON.fromJson(Files.readString(manifestFile.toPath()), CurseManifest.class);
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile.toPath(), CurseManifest.class);
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
@@ -137,7 +135,7 @@ public final class CurseCompletionTask extends Task<Void> {
                             }
                         })
                         .collect(Collectors.toList()));
-        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(newManifest));
+        JsonUtils.writeToJsonFile(root.toPath().resolve("manifest.json"), newManifest);
 
         File versionRoot = repository.getVersionRoot(modManager.getVersion());
         File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
@@ -152,7 +150,7 @@ public final class CurseCompletionTask extends Task<Void> {
                             return Stream.empty();
                         }
 
-                        FileDownloadTask task = new FileDownloadTask(f.getUrl(), path);
+                        var task = new FileDownloadTask(f.getUrl(), path.toPath());
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
                         return Stream.of(task.withCounter("hmcl.modpack.download"));

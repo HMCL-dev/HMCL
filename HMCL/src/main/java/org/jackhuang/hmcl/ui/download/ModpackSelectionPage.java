@@ -29,9 +29,7 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -43,7 +41,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -126,10 +123,9 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     private void onChooseRemoteFile() {
-        Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (urlString, resolve, reject) -> {
+        Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (url, resolve, reject) -> {
             try {
-                URL url = new URL(urlString);
-                if (urlString.endsWith("server-manifest.json")) {
+                if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
                     Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
@@ -150,7 +146,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     resolve.run();
 
                     Controllers.taskDialog(
-                            new FileDownloadTask(url, modpack.toFile(), null)
+                            new FileDownloadTask(url, modpack)
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {
                                             resolve.run();

@@ -132,7 +132,7 @@ public class Datapack {
                 try {
                     PackMcMeta pack = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
                     Platform.runLater(() -> info.add(new Pack(path, FileUtils.getNameWithoutExtension(path), pack.getPackInfo().getDescription(), this)));
-                } catch (IOException | JsonParseException e) {
+                } catch (Exception e) {
                     LOG.warning("Failed to read datapack " + path, e);
                 }
             } else {
@@ -144,7 +144,7 @@ public class Datapack {
     public void loadFromDir() {
         try {
             loadFromDir(path);
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.warning("Failed to read datapacks " + path, e);
         }
     }

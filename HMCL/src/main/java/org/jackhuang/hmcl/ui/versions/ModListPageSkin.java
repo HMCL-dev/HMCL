@@ -62,8 +62,8 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -249,23 +249,30 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         } else {
             listView.getItems().clear();
 
-            Predicate<String> predicate;
+            Predicate<@Nullable String> predicate;
             if (queryString.startsWith("regex:")) {
                 try {
                     Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                    predicate = s -> pattern.matcher(s).find();
+                    predicate = s -> s != null && pattern.matcher(s).find();
                 } catch (Throwable e) {
                     LOG.warning("Illegal regular expression", e);
                     return;
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
             for (ModInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getModInfo().getFileName())) {
+                LocalModFile modInfo = item.getModInfo();
+                if (predicate.test(modInfo.getFileName())
+                        || predicate.test(modInfo.getName())
+                        || predicate.test(modInfo.getVersion())
+                        || predicate.test(modInfo.getGameVersion())
+                        || predicate.test(modInfo.getId())
+                        || predicate.test(Objects.toString(modInfo.getModLoaderType()))
+                        || predicate.test((item.getMod() != null ? item.getMod().getDisplayName() : null))) {
                     listView.getItems().add(item);
                 }
             }
@@ -333,8 +340,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     if (StringUtils.isNotBlank(logoPath)) {
                         Path iconPath = fs.getPath(logoPath);
                         if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
+                            try {
+                                Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
                                 if (!image.isError() && image.getWidth() == image.getHeight())
                                     return image;
                             } catch (Throwable e) {
@@ -367,11 +374,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     for (String path : defaultPaths) {
                         Path iconPath = fs.getPath(path);
                         if (Files.exists(iconPath)) {
-                            try (InputStream stream = Files.newInputStream(iconPath)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
-                            }
+                            Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
+                            if (!image.isError() && image.getWidth() == image.getHeight())
+                                return image;
                         }
                     }
                 } catch (Exception e) {
