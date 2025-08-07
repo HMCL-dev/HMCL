@@ -138,16 +138,21 @@ public final class TerracottaManager {
         ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(0);
         TerracottaState.Preparing preparing = new TerracottaState.Preparing(progress.getReadOnlyProperty());
 
-        Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(progress).thenRunAsync(() -> {
-            TerracottaState.Launching launching = new TerracottaState.Launching();
-            if (compareAndSet(preparing, launching)) {
-                launch(launching);
-            }
-        }).whenComplete(exception -> {
-            compareAndSet(preparing, TerracottaState.Fatal.INSTANCE);
-        }).start();
+        try {
+            Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(progress).thenRunAsync(() -> {
+                TerracottaState.Launching launching = new TerracottaState.Launching();
+                if (compareAndSet(preparing, launching)) {
+                    launch(launching);
+                }
+            }).whenComplete(exception -> {
+                compareAndSet(preparing, TerracottaState.Fatal.INSTANCE);
+            }).start();
 
-        return setState(preparing);
+            return setState(preparing);
+        } catch (Exception e) {
+            setState(TerracottaState.Fatal.INSTANCE);
+            return null;
+        }
     }
 
     private static void launch(TerracottaState.Launching state) {
