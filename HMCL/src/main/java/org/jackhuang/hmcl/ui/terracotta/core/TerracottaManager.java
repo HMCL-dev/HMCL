@@ -2,6 +2,7 @@ package org.jackhuang.hmcl.ui.terracotta.core;
 
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -42,7 +43,7 @@ public final class TerracottaManager {
     }
 
     private static final ReadOnlyObjectWrapper<TerracottaState> STATE = new ReadOnlyObjectWrapper<>(STATE_V.getPlain());
-    private static final InvocationDispatcher<TerracottaState> STATE_D = InvocationDispatcher.runOn(javafx.application.Platform::runLater, STATE::set);
+    private static final InvocationDispatcher<TerracottaState> STATE_D = InvocationDispatcher.runOn(Platform::runLater, STATE::set);
 
 
     public static ReadOnlyObjectProperty<TerracottaState> stateProperty() {
@@ -185,7 +186,7 @@ public final class TerracottaManager {
             }).start();
         } catch (Exception e) {
             LOG.warning("Cannot launch Terracotta.", e);
-            setState(TerracottaState.Fatal.INSTANCE);
+            Platform.runLater(() -> setState(TerracottaState.Fatal.INSTANCE));
         }
     }
 
