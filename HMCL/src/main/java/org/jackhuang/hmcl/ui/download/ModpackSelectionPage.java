@@ -29,15 +29,20 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -137,6 +142,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                             controller.onNext();
                         } else {
                             reject.accept(e.getMessage());
+                            Logger.LOG.error("Failed to download modpack server manifest: ", e);
+                            Controllers.dialog(StringUtils.getStackTrace(e), i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                         }
                     }).executor(true), i18n("message.downloading"), TaskCancellationAction.NORMAL);
                 } else {
@@ -154,6 +161,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                                             controller.onNext();
                                         } else {
                                             reject.accept(e.getMessage());
+                                            Logger.LOG.error("Failed to download modpack: ", e);
+                                            Controllers.dialog(StringUtils.getStackTrace(e), i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                                         }
                                     }).executor(true),
                             i18n("message.downloading"),
@@ -162,6 +171,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                 }
             } catch (IOException e) {
                 reject.accept(e.getMessage());
+                Logger.LOG.error("Failed to download modpack: ", e);
+                Controllers.dialog(StringUtils.getStackTrace(e), i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             }
         });
     }
