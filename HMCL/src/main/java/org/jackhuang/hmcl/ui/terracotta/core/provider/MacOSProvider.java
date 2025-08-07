@@ -37,7 +37,7 @@ public final class MacOSProvider implements ITerracottaProvider {
     }
 
     private static final Path PATH = BINARY != null ? Metadata.DEPENDENCIES_DIRECTORY.resolve(String.format(
-            "terracota/%s/%s", TerracottaMetadata.VERSION, Path.of(BINARY.get(0).getPath()).getFileName()
+            "terracota/%s/%s", TerracottaMetadata.VERSION, TerracottaMetadata.getFileName(BINARY.get(0))
     )).toAbsolutePath() : null;
 
     @Override

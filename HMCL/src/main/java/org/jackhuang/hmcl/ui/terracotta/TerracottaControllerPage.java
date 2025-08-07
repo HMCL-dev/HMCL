@@ -267,6 +267,7 @@ public class TerracottaControllerPage extends StackPane {
                 status.textProperty().bind(statusProperty);
                 JFXProgressBar progress = new JFXProgressBar();
                 progress.progressProperty().bind(progressProperty);
+                progress.setMaxWidth(Double.MAX_VALUE);
 
                 statusPane.getChildren().setAll(status, progress);
             }

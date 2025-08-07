@@ -39,4 +39,9 @@ public final class TerracottaMetadata {
             return null;
         }
     }
+
+    public static String getFileName(URI uri) {
+        String p = uri.getPath();
+        return p.substring(p.lastIndexOf('/') + 1);
+    }
 }

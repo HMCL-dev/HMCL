@@ -26,7 +26,7 @@ public final class GeneralProvider implements ITerracottaProvider {
     ).get(Platform.SYSTEM_PLATFORM);
 
     private static final Path PATH = TARGET != null ? Metadata.DEPENDENCIES_DIRECTORY.resolve(String.format(
-            "terracota/%s/%s", TerracottaMetadata.VERSION, Path.of(TARGET.get(0).getPath()).getFileName()
+            "terracota/%s/%s", TerracottaMetadata.VERSION, TerracottaMetadata.getFileName(TARGET.get(0))
     )).toAbsolutePath() : null;
 
     @Override
