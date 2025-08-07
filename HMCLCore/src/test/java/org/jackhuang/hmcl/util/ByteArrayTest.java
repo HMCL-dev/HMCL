@@ -78,4 +78,46 @@ public final class ByteArrayTest {
         assertThrows(IndexOutOfBoundsException.class, () -> getUnsignedShortBE(TEST_ARRAY, 8));
     }
 
+    @Test
+    public void testGetInt() {
+        assertEquals(0x78563412, getIntLE(TEST_ARRAY, 0));
+        assertEquals(0x9a785634, getIntLE(TEST_ARRAY, 1));
+        assertEquals(0x00f0debc, getIntLE(TEST_ARRAY, 5));
+
+        assertEquals(0x78563412L, getUnsignedIntLE(TEST_ARRAY, 0));
+        assertEquals(0x9a785634L, getUnsignedIntLE(TEST_ARRAY, 1));
+        assertEquals(0x00f0debcL, getUnsignedIntLE(TEST_ARRAY, 5));
+
+        assertEquals(0x12345678, getIntBE(TEST_ARRAY, 0));
+        assertEquals(0x3456789a, getIntBE(TEST_ARRAY, 1));
+        assertEquals(0xbcdef000, getIntBE(TEST_ARRAY, 5));
+
+        assertEquals(0x12345678L, getUnsignedIntBE(TEST_ARRAY, 0));
+        assertEquals(0x3456789aL, getUnsignedIntBE(TEST_ARRAY, 1));
+        assertEquals(0xbcdef000L, getUnsignedIntBE(TEST_ARRAY, 5));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> getIntLE(TEST_ARRAY, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> getIntLE(TEST_ARRAY, 6));
+        assertThrows(IndexOutOfBoundsException.class, () -> getUnsignedIntLE(TEST_ARRAY, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> getUnsignedIntLE(TEST_ARRAY, 6));
+        assertThrows(IndexOutOfBoundsException.class, () -> getIntBE(TEST_ARRAY, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> getIntBE(TEST_ARRAY, 6));
+        assertThrows(IndexOutOfBoundsException.class, () -> getUnsignedIntBE(TEST_ARRAY, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> getUnsignedIntBE(TEST_ARRAY, 6));
+    }
+
+    @Test
+    public void testGetLong() {
+        assertEquals(0xf0debc9a78563412L, getLongLE(TEST_ARRAY, 0));
+        assertEquals(0x00f0debc9a785634L, getLongLE(TEST_ARRAY, 1));
+
+        assertEquals(0x123456789abcdef0L, getLongBE(TEST_ARRAY, 0));
+        assertEquals(0x3456789abcdef000L, getLongBE(TEST_ARRAY, 1));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> getLongLE(TEST_ARRAY, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> getLongLE(TEST_ARRAY, 2));
+        assertThrows(IndexOutOfBoundsException.class, () -> getLongBE(TEST_ARRAY, 2));
+        assertThrows(IndexOutOfBoundsException.class, () -> getLongBE(TEST_ARRAY, -1));
+    }
+
 }
