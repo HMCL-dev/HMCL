@@ -184,6 +184,7 @@ public class TerracottaControllerPage extends StackPane {
                     TextFlow desc = FXUtils.segmentToTextFlow(i18n("terracotta.status.hosting.code_desc"), Controllers::onHyperlinkAction);
                     FXUtils.copyText(cs);
                     Label label = new Label(cs);
+                    label.setCursor(Cursor.TEXT);
 
                     VBox.setMargin(label, new Insets(10, 0, 10, 0));
                     label.setScaleX(1.8);
