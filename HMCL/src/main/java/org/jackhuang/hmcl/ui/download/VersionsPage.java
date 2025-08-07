@@ -18,21 +18,17 @@
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.*;
-import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -53,10 +49,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.HintPane;
-import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -65,288 +58,58 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.wrap;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class VersionsPage extends BorderPane implements WizardPage, Refreshable {
+public final class VersionsPage extends Control implements WizardPage, Refreshable {
     private final String gameVersion;
     private final String libraryId;
     private final String title;
     private final Navigation navigation;
-
-    private final JFXListView<RemoteVersion> list;
-    private final JFXSpinner spinner;
-    private final StackPane failedPane;
-    private final StackPane emptyPane;
-    private final TransitionPane root;
-    private final ToggleGroup versionTypeGroup;
-    private final JFXRadioButton radioRelease;
-    private final JFXRadioButton radioSnapshot;
-    private final JFXRadioButton radioAprilFools;
-    private final JFXRadioButton radioOld;
-    private final ComponentList centrePane;
-    private final StackPane center;
-
     private final VersionList<?> versionList;
+    private final Runnable callback;
     private Task<?> executor;
 
-    private final HBox searchBar;
-    private final StringProperty queryString = new SimpleStringProperty();
+    private final ObservableList<RemoteVersion> versions = FXCollections.observableArrayList();
+    private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
     public VersionsPage(Navigation navigation, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
         this.title = title;
         this.gameVersion = gameVersion;
         this.libraryId = libraryId;
         this.navigation = navigation;
-
-        HintPane hintPane = new HintPane();
-        hintPane.setText(i18n("sponsor.bmclapi"));
-        hintPane.getStyleClass().add("sponsor-pane");
-        FXUtils.onClicked(hintPane, this::onSponsor);
-        BorderPane.setMargin(hintPane, new Insets(10, 10, 0, 10));
-        this.setTop(hintPane);
-
-        root = new TransitionPane();
-        BorderPane toolbarPane = new BorderPane();
-        JFXButton btnRefresh;
-        {
-            spinner = new JFXSpinner();
-
-            center = new StackPane();
-            center.setStyle("-fx-padding: 10;");
-            {
-                centrePane = new ComponentList();
-                centrePane.getStyleClass().add("no-padding");
-                {
-                    HBox checkPane = new HBox();
-                    checkPane.setSpacing(10);
-                    {
-                        versionTypeGroup = new ToggleGroup();
-
-                        var margin = new Insets(10, 0, 10, 0);
-
-                        radioRelease = new JFXRadioButton(i18n("version.game.releases"));
-                        radioRelease.setSelected(true);
-                        HBox.setMargin(radioRelease, margin);
-
-                        radioSnapshot = new JFXRadioButton(i18n("version.game.snapshots"));
-                        HBox.setMargin(radioSnapshot, margin);
-
-                        radioAprilFools = new JFXRadioButton(i18n("version.game.april_fools"));
-                        HBox.setMargin(radioAprilFools, margin);
-
-                        radioOld = new JFXRadioButton(i18n("version.game.old"));
-                        HBox.setMargin(radioOld, margin);
-
-                        versionTypeGroup.getToggles().setAll(radioRelease, radioSnapshot, radioAprilFools, radioOld);
-                        checkPane.getChildren().setAll(radioRelease, radioSnapshot, radioAprilFools, radioOld);
-                    }
-
-                    list = new JFXListView<>();
-                    list.getStyleClass().add("jfx-list-view-float");
-                    VBox.setVgrow(list, Priority.ALWAYS);
-
-                    TransitionPane rightToolbarPane = new TransitionPane();
-                    {
-                        HBox refreshPane = new HBox();
-                        refreshPane.setAlignment(Pos.CENTER_RIGHT);
-
-                        btnRefresh = new JFXButton(i18n("button.refresh"));
-                        btnRefresh.getStyleClass().add("jfx-tool-bar-button");
-                        btnRefresh.setOnAction(e -> onRefresh());
-
-                        JFXButton btnSearch = new JFXButton(i18n("search"));
-                        btnSearch.getStyleClass().add("jfx-tool-bar-button");
-                        btnSearch.setGraphic(wrap(SVG.SEARCH.createIcon(Theme.blackFill(), -1)));
-
-                        searchBar = new HBox();
-                        {
-                            searchBar.setAlignment(Pos.CENTER);
-                            searchBar.setPadding(new Insets(0, 5, 0, 0));
-
-                            JFXTextField searchField = new JFXTextField();
-                            searchField.setPromptText(i18n("search"));
-                            HBox.setHgrow(searchField, Priority.ALWAYS);
-
-                            JFXButton closeSearchBar = new JFXButton();
-                            closeSearchBar.getStyleClass().add("jfx-tool-bar-button");
-                            closeSearchBar.setGraphic(wrap(SVG.CLOSE.createIcon(Theme.blackFill(), -1)));
-                            closeSearchBar.setOnAction(e -> {
-                                searchField.clear();
-                                rightToolbarPane.setContent(refreshPane, ContainerAnimations.FADE);
-                            });
-                            onEscPressed(searchField, closeSearchBar::fire);
-                            PauseTransition pause = new PauseTransition(Duration.millis(100));
-                            pause.setOnFinished(e -> queryString.set(searchField.getText()));
-                            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-                                pause.setRate(1);
-                                pause.playFromStart();
-                            });
-
-                            searchBar.getChildren().setAll(searchField, closeSearchBar);
-
-                            btnSearch.setOnAction(e -> {
-                                rightToolbarPane.setContent(searchBar, ContainerAnimations.FADE);
-                                searchField.requestFocus();
-                            });
-                        }
-
-                        refreshPane.getChildren().setAll(new HBox(btnSearch, btnRefresh));
-                        rightToolbarPane.setContent(refreshPane, ContainerAnimations.NONE);
-                    }
-
-                    // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
-                    ignoreEvent(list, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-                    toolbarPane.setLeft(checkPane);
-                    toolbarPane.setRight(rightToolbarPane);
-
-                    centrePane.getContent().setAll(toolbarPane, list);
-                }
-
-                center.getChildren().setAll(centrePane);
-            }
-
-            failedPane = new StackPane();
-            failedPane.getStyleClass().add("notice-pane");
-            {
-                Label label = new Label(i18n("download.failed.refresh"));
-                FXUtils.onClicked(label, this::onRefresh);
-
-                failedPane.getChildren().setAll(label);
-            }
-
-            emptyPane = new StackPane();
-            emptyPane.getStyleClass().add("notice-pane");
-            {
-                Label label = new Label(i18n("download.failed.empty"));
-                FXUtils.onClicked(label, this::onBack);
-
-                emptyPane.getChildren().setAll(label);
-            }
-        }
-        this.setCenter(root);
-
-        versionList = downloadProvider.getVersionListById(libraryId);
-        boolean hasType = versionList.hasType();
-        for (Toggle toggle : versionTypeGroup.getToggles()) {
-            ((JFXRadioButton) toggle).setManaged(hasType);
-            ((JFXRadioButton) toggle).setVisible(hasType);
-        }
-
-        if (hasType) {
-            centrePane.getContent().setAll(toolbarPane, list);
-        } else {
-            centrePane.getContent().setAll(list);
-        }
-        ComponentList.setVgrow(list, Priority.ALWAYS);
-
-        InvalidationListener listener = o -> {
-            List<RemoteVersion> versions = loadVersions();
-            String query = queryString.get();
-            if (!StringUtils.isBlank(query)) {
-                Predicate<RemoteVersion> predicate;
-                if (query.startsWith("regex:")) {
-                    try {
-                        Pattern pattern = Pattern.compile(query.substring("regex:".length()));
-                        predicate = it -> pattern.matcher(it.getSelfVersion()).find();
-                    } catch (Throwable e) {
-                        LOG.warning("Illegal regular expression", e);
-                        return;
-                    }
-                } else {
-                    String lowerQueryString = query.toLowerCase(Locale.ROOT);
-                    predicate = it -> it.getSelfVersion().toLowerCase(Locale.ROOT).contains(lowerQueryString);
-                }
-
-                versions = versions.stream().filter(predicate).collect(Collectors.toList());
-            }
-
-            list.getItems().setAll(versions);
-        };
-        queryString.addListener(listener);
-        versionTypeGroup.selectedToggleProperty().addListener(listener);
-
-        btnRefresh.setGraphic(wrap(SVG.REFRESH.createIcon(Theme.blackFill(), -1)));
-
-        Holder<RemoteVersionListCell> lastCell = new Holder<>();
-        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, libraryId));
-
-        FXUtils.onClicked(list, () -> {
-            if (list.getSelectionModel().getSelectedIndex() < 0)
-                return;
-            navigation.getSettings().put(libraryId, list.getSelectionModel().getSelectedItem());
-            callback.run();
-        });
+        this.versionList = downloadProvider.getVersionListById(libraryId);
+        this.callback = callback;
 
         refresh();
     }
 
-    private List<RemoteVersion> loadVersions() {
-        return versionList.getVersions(gameVersion).stream()
-                .filter(it -> {
-                    switch (it.getVersionType()) {
-                        case RELEASE:
-                            return radioRelease.isSelected();
-                        case PENDING:
-                            return radioSnapshot.isSelected();
-                        case SNAPSHOT:
-                            if (GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial()) {
-                                return radioAprilFools.isSelected();
-                            } else {
-                                return radioSnapshot.isSelected();
-                            }
-                        case OLD:
-                            return radioOld.isSelected();
-                        default:
-                            return true;
-                    }
-                })
-                .sorted().collect(Collectors.toList());
+    @Override
+    protected Skin<?> createDefaultSkin() {
+        return new VersionsPageSkin(this);
     }
 
     @Override
     public void refresh() {
-        VersionList<?> currentVersionList = versionList;
-        root.setContent(spinner, ContainerAnimations.FADE);
-        executor = currentVersionList.refreshAsync(gameVersion).whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
-            if (exception == null) {
-                List<RemoteVersion> items = loadVersions();
-
-                Platform.runLater(() -> {
-                    if (versionList != currentVersionList) return;
-                    if (currentVersionList.getVersions(gameVersion).isEmpty()) {
-                        root.setContent(emptyPane, ContainerAnimations.FADE);
+        status.set(Status.LOADING);
+        executor = versionList.refreshAsync(gameVersion)
+                .thenSupplyAsync(() -> versionList.getVersions(gameVersion).stream().sorted().collect(Collectors.toList()))
+                .whenComplete(Schedulers.javafx(), (items, exception) -> {
+                    if (exception == null) {
+                        versions.setAll(items);
+                        status.set(Status.SUCCESS);
                     } else {
-                        if (items.isEmpty()) {
-                            radioRelease.setSelected(true);
-                        } else {
-                            list.getItems().setAll(items);
-                        }
-                        root.setContent(center, ContainerAnimations.FADE);
+                        LOG.warning("Failed to fetch versions list", exception);
+                        status.set(Status.FAILED);
                     }
                 });
-            } else {
-                LOG.warning("Failed to fetch versions list", exception);
-                Platform.runLater(() -> {
-                    if (versionList != currentVersionList) return;
-                    root.setContent(failedPane, ContainerAnimations.FADE);
-                });
-            }
-
-            // https://github.com/HMCL-dev/HMCL/issues/938
-            System.gc();
-        });
         executor.start();
     }
 
@@ -375,10 +138,23 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
         FXUtils.openLink("https://bmclapidoc.bangbang93.com");
     }
 
+    private enum Status {
+        LOADING,
+        FAILED,
+        SUCCESS,
+    }
+
+    private enum VersionType {
+        RELEASE,
+        SNAPSHOTS,
+        APRIL_FOOLS,
+        OLD
+    }
+
     private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
-        final IconedTwoLineListItem content = new IconedTwoLineListItem();
-        final RipplerContainer ripplerContainer = new RipplerContainer(content);
-        final StackPane pane = new StackPane();
+        private final IconedTwoLineListItem content = new IconedTwoLineListItem();
+        private final RipplerContainer ripplerContainer = new RipplerContainer(content);
+        private final StackPane pane = new StackPane();
 
         private final Holder<RemoteVersionListCell> lastCell;
 
@@ -459,6 +235,184 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     content.getTags().setAll(remoteVersion.getGameVersion());
                 content.setExternalLink(null);
             }
+        }
+    }
+
+    private static final class VersionsPageSkin extends SkinBase<VersionsPage> {
+        private final JFXListView<RemoteVersion> list;
+
+        private final TransitionPane transitionPane;
+        private final JFXSpinner spinner;
+
+        private final JFXTextField nameField;
+        private final JFXComboBox<VersionType> categoryField = new JFXComboBox<VersionType>();
+
+        VersionsPageSkin(VersionsPage control) {
+            super(control);
+
+            BorderPane root = new BorderPane();
+
+            GridPane searchPane = new GridPane();
+            if (control.versionList.hasType())
+                root.setTop(searchPane);
+            searchPane.getStyleClass().addAll("card");
+            BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
+
+            ColumnConstraints nameColumn = new ColumnConstraints();
+            nameColumn.setMinWidth(USE_PREF_SIZE);
+            ColumnConstraints column1 = new ColumnConstraints();
+            column1.setHgrow(Priority.ALWAYS);
+            ColumnConstraints column2 = new ColumnConstraints();
+            column2.setHgrow(Priority.ALWAYS);
+            searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2);
+
+            searchPane.setHgap(16);
+            searchPane.setVgap(10);
+
+            {
+                int rowIndex = 0;
+
+                {
+                    nameField = new JFXTextField();
+
+                    categoryField.getItems().addAll(VersionType.values());
+                    categoryField.setConverter(stringConverter(type -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT))));
+                    categoryField.getSelectionModel().select(0);
+
+                    searchPane.addRow(rowIndex++,
+                            new Label(i18n("version")), nameField,
+                            new Label(i18n("version.game.type")), categoryField);
+                }
+
+                {
+                    HBox actionsBox = new HBox(8);
+                    GridPane.setColumnSpan(actionsBox, 4);
+                    actionsBox.setAlignment(Pos.CENTER_RIGHT);
+
+                    JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
+                    refreshButton.setOnAction(event -> control.onRefresh());
+
+                    JFXButton searchButton = FXUtils.newRaisedButton(i18n("search"));
+                    searchButton.setOnAction(event -> updateList());
+
+                    actionsBox.getChildren().setAll(refreshButton, searchButton);
+
+                    searchPane.addRow(rowIndex++, actionsBox);
+                }
+            }
+
+            {
+                SpinnerPane spinnerPane = new SpinnerPane();
+                root.setCenter(spinnerPane);
+
+                transitionPane = new TransitionPane();
+                spinner = new JFXSpinner();
+
+                StackPane centerWrapper = new StackPane();
+                centerWrapper.setStyle("-fx-padding: 10;");
+                {
+                    ComponentList centrePane = new ComponentList();
+                    centrePane.getStyleClass().add("no-padding");
+                    {
+                        list = new JFXListView<>();
+                        list.getStyleClass().add("jfx-list-view-float");
+                        VBox.setVgrow(list, Priority.ALWAYS);
+
+                        control.versions.addListener((InvalidationListener) o -> updateList());
+
+                        Holder<RemoteVersionListCell> lastCell = new Holder<>();
+                        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, control.libraryId));
+
+                        FXUtils.onClicked(list, () -> {
+                            if (list.getSelectionModel().getSelectedIndex() < 0)
+                                return;
+                            control.navigation.getSettings().put(control.libraryId, list.getSelectionModel().getSelectedItem());
+                            control.callback.run();
+                        });
+
+                        ComponentList.setVgrow(list, Priority.ALWAYS);
+
+                        // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
+                        ignoreEvent(list, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
+                        centrePane.getContent().setAll(list);
+                    }
+
+                    centerWrapper.getChildren().setAll(centrePane);
+                }
+
+                StackPane failedPane = new StackPane();
+                failedPane.getStyleClass().add("notice-pane");
+                {
+                    Label label = new Label(i18n("download.failed.refresh"));
+                    FXUtils.onClicked(label, control::onRefresh);
+
+                    failedPane.getChildren().setAll(label);
+                }
+
+                StackPane emptyPane = new StackPane();
+                emptyPane.getStyleClass().add("notice-pane");
+                {
+                    Label label = new Label(i18n("download.failed.empty"));
+                    FXUtils.onClicked(label, control::onBack);
+
+                    emptyPane.getChildren().setAll(label);
+                }
+
+                FXUtils.onChangeAndOperate(control.status, status -> {
+                    if (status == Status.LOADING)
+                        transitionPane.setContent(spinner, ContainerAnimations.FADE);
+                    else if (status == Status.SUCCESS)
+                        transitionPane.setContent(centerWrapper, ContainerAnimations.FADE);
+                    else // if (status == Status.FAILED)
+                        transitionPane.setContent(failedPane, ContainerAnimations.FADE);
+                });
+
+                root.setCenter(transitionPane);
+            }
+
+            this.getChildren().setAll(root);
+        }
+
+        private void updateList() {
+            Stream<RemoteVersion> versions = getSkinnable().versions.stream();
+
+            VersionType versionType = categoryField.getSelectionModel().getSelectedItem();
+            if (versionType != null)
+                versions = versions.filter(it -> {
+                    switch (it.getVersionType()) {
+                        case RELEASE:
+                            return versionType == VersionType.RELEASE;
+                        case PENDING:
+                            return versionType == VersionType.SNAPSHOTS;
+                        case SNAPSHOT:
+                            return versionType == (GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial()
+                                    ? VersionType.APRIL_FOOLS
+                                    : VersionType.SNAPSHOTS);
+                        case OLD:
+                            return versionType == VersionType.OLD;
+                        default:
+                            return true;
+                    }
+                });
+
+            String nameQuery = nameField.getText();
+            if (!StringUtils.isBlank(nameQuery)) {
+                if (nameQuery.startsWith("regex:")) {
+                    try {
+                        Pattern pattern = Pattern.compile(nameQuery.substring("regex:".length()));
+                        versions = versions.filter(it -> pattern.matcher(it.getSelfVersion()).find());
+                    } catch (Throwable e) {
+                        LOG.warning("Illegal regular expression: " + nameQuery, e);
+                    }
+                } else {
+                    String lowerQueryString = nameQuery.toLowerCase(Locale.ROOT);
+                    versions = versions.filter(it -> it.getSelfVersion().toLowerCase(Locale.ROOT).contains(lowerQueryString));
+                }
+            }
+
+            //noinspection DataFlowIssue
+            list.getItems().setAll(versions.collect(Collectors.toList()));
         }
     }
 }
