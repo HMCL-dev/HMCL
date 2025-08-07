@@ -54,8 +54,11 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.terracotta.TerracottaControllerPage;
+import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -105,6 +108,7 @@ public final class Controllers {
         return accountListPage;
     });
     private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
     }
@@ -147,6 +151,9 @@ public final class Controllers {
         return downloadPage.get();
     }
 
+    public static Node getTerracottaPage() {
+        return terracottaPage.get();
+    }
     // FXThread
     public static DecoratorController getDecorator() {
         return decorator;
@@ -423,6 +430,12 @@ public final class Controllers {
                 case "hmcl://settings/feedback":
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
+                    break;
+                case "hmcl://game/launch":
+                    Versions.launch(Profiles.getSelectedProfile());
+                    break;
+                case "hmcl://terracotta/copy_code":
+                    TerracottaControllerPage.copyCode();
                     break;
             }
         } else {
