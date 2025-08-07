@@ -453,7 +453,7 @@ public class Argb8888Processors {
 
         @Override
         public Argb8888ScanlineProcessor clone(int bytesPerRow, Argb8888Bitmap bitmap) {
-            return new Truecolour16(bytesPerRow, bitmap);
+            return new Truecolour16Alpha(bytesPerRow, bitmap);
         }
     }
 
