@@ -65,7 +65,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -339,10 +338,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     if (StringUtils.isNotBlank(logoPath)) {
                         ZipArchiveEntry iconEntry = tree.getEntry(logoPath);
                         if (iconEntry != null) {
-                            try (InputStream stream = tree.getInputStream(iconEntry)) {
-                                Image image = new Image(stream, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
+                            try {
+                                return FXUtils.loadImage(tree.getReader(), iconEntry, 40, 40, true, true);
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load image " + logoPath, e);
                             }
@@ -373,8 +370,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     for (String path : defaultPaths) {
                         ZipArchiveEntry iconEntry = tree.getEntry(path);
                         if (iconEntry != null) {
-                            try (InputStream stream = tree.getInputStream(iconEntry)) {
-                                Image image = new Image(stream, 40, 40, true, true);
+                            try {
+                                Image image = FXUtils.loadImage(tree.getReader(), iconEntry, 40, 40, true, true);
                                 if (!image.isError() && image.getWidth() == image.getHeight())
                                     return image;
                             } catch (Throwable e) {
