@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -105,7 +106,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     break download;
                 }
 
-                List<String> redirects = null;
+                List<URI> redirects = null;
                 String bmclapiHash = null;
                 try {
                     beforeDownload(uri);
@@ -142,22 +143,20 @@ public abstract class FetchTask<T> extends Task<T> {
                                     throw new IOException("Too much redirects");
                                 }
 
-                                URL prevUrl = httpConnection.getURL();
                                 String location = httpConnection.getHeaderField("Location");
 
                                 httpConnection.disconnect();
-                                if (location == null || location.isBlank()) {
+                                if (StringUtils.isBlank(location))
                                     throw new IOException("Redirected to an empty location");
-                                }
 
-                                URL target = new URL(prevUrl, NetworkUtils.encodeLocation(location));
-                                redirects.add(target.toString());
+                                URI target = NetworkUtils.toURI(location).resolve(NetworkUtils.toURI(location));
+                                redirects.add(target);
 
-                                HttpURLConnection redirected = (HttpURLConnection) target.openConnection();
+                                if (!NetworkUtils.isHttpUri(target))
+                                    throw new IOException("Redirected to not http URI: " + target);
+
+                                HttpURLConnection redirected = NetworkUtils.createHttpConnection(target);
                                 redirected.setUseCaches(checkETag);
-                                redirected.setConnectTimeout(NetworkUtils.TIME_OUT);
-                                redirected.setReadTimeout(NetworkUtils.TIME_OUT);
-                                redirected.setInstanceFollowRedirects(false);
                                 requestProperties
                                         .forEach((key, value) -> value.forEach(element ->
                                                 redirected.addRequestProperty(key, element)));
