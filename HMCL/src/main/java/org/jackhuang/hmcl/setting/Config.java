@@ -186,6 +186,9 @@ public final class Config implements Observable {
     @SerializedName("addedLittleSkin")
     private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
 
+    @SerializedName("acceptPreviewUpdate")
+    private BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
+
     @SerializedName("promptedVersion")
     private StringProperty promptedVersion = new SimpleStringProperty();
 
@@ -689,6 +692,18 @@ public final class Config implements Observable {
 
     public void setTitleTransparent(boolean titleTransparent) {
         this.titleTransparent.set(titleTransparent);
+    }
+
+    public boolean isAcceptPreviewUpdate() {
+        return acceptPreviewUpdate.get();
+    }
+
+    public BooleanProperty acceptPreviewUpdateProperty() {
+        return acceptPreviewUpdate;
+    }
+
+    public void setAcceptPreviewUpdate(boolean acceptPreviewUpdate) {
+        this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
     public String getPromptedVersion() {
