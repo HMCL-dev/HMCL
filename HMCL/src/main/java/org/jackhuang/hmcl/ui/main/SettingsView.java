@@ -149,7 +149,7 @@ public abstract class SettingsView extends StackPane {
 
                 {
                     previewPane = new OptionToggleButton();
-                    previewPane.setTitle("提前预览 HMCL 版本"); // TODO: i18n
+                    previewPane.setTitle(i18n("update.preview"));
                     previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
 
                     settingsPane.getContent().add(previewPane);
