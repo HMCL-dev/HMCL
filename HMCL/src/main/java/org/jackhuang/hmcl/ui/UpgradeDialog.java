@@ -48,12 +48,22 @@ public final class UpgradeDialog extends JFXDialogLayout {
         setBody(new ProgressIndicator());
 
         String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
-        String id = remoteVersion.isPreview() ? "nowchange" : "nowpreview";
+        boolean isPreview = remoteVersion.isPreview();
         Task.supplyAsync(Schedulers.io(), () -> {
             Document document = Jsoup.parse(new URL(url), 30 * 1000);
-            Node node = document.selectFirst("#" + id);
+            String id = null;
+            Node node = null;
+            if (isPreview) {
+                id = "nowpreview";
+                node = document.selectFirst("#" + id);
+            }
+            if (node == null) {
+                id = "nowchange";
+                node = document.selectFirst("#" + id);
+            }
+
             if (node == null || !"h1".equals(node.nodeName()))
-                throw new IOException("Cannot find #" + id + " in document");
+                throw new IOException("Cannot find current changelog in document");
 
             HTMLRenderer renderer = new HTMLRenderer(uri -> {
                 LOG.info("Open link: " + uri);
