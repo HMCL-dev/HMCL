@@ -134,7 +134,7 @@ public class TerracottaControllerPage extends StackPane {
                 flow.setLineSpacing(4);
 
                 LineButton host = new LineButton();
-                host.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                host.setLeftIcon(SVG.HOST);
                 host.setTitle(i18n("terracotta.status.waiting.host.title"));
                 host.setSubtitle(i18n("terracotta.status.waiting.host.desc"));
                 host.setRightIcon(SVG.ARROW_FORWARD);
@@ -162,7 +162,7 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 LineButton guest = new LineButton();
-                guest.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                guest.setLeftIcon(SVG.ADD_CIRCLE);
                 guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
                 guest.setRightIcon(SVG.ARROW_FORWARD);
