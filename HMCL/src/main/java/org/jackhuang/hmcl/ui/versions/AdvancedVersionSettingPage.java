@@ -46,6 +46,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final OptionToggleButton noGameCheckPane;
     private final OptionToggleButton noJVMCheckPane;
     private final OptionToggleButton noNativesPatchPane;
+    private final OptionToggleButton noAutoChooseGPUPane;
     private final OptionToggleButton useNativeGLFWPane;
     private final OptionToggleButton useNativeOpenALPane;
     private final ComponentSublist nativesDirSublist;
@@ -192,6 +193,9 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             noNativesPatchPane = new OptionToggleButton();
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
+            noAutoChooseGPUPane = new OptionToggleButton();
+            noAutoChooseGPUPane.setTitle("不自动选择 GPU"); // TODO: i18n
+
             useNativeGLFWPane = new OptionToggleButton();
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
 
@@ -200,7 +204,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             workaroundPane.getContent().setAll(
                     nativesDirSublist, rendererPane, noJVMArgsPane, noGameCheckPane,
-                    noJVMCheckPane, noNativesPatchPane
+                    noJVMCheckPane, noNativesPatchPane, noAutoChooseGPUPane
             );
 
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
@@ -236,6 +240,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
         noNativesPatchPane.selectedProperty().bindBidirectional(versionSetting.notPatchNativesProperty());
+        noAutoChooseGPUPane.selectedProperty().bindBidirectional(versionSetting.notAutoChooseGPUProperty());
         useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
 
@@ -277,6 +282,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());
         noNativesPatchPane.selectedProperty().unbindBidirectional(versionSetting.notPatchNativesProperty());
+        noAutoChooseGPUPane.selectedProperty().unbindBidirectional(versionSetting.notAutoChooseGPUProperty());
         useNativeGLFWPane.selectedProperty().unbindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().unbindBidirectional(versionSetting.useNativeOpenALProperty());
 
