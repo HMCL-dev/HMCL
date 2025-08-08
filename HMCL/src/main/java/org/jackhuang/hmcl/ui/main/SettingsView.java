@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
@@ -56,6 +57,7 @@ public abstract class SettingsView extends StackPane {
     protected final JFXRadioButton chkUpdateStable;
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
+    protected final OptionToggleButton previewPane;
     protected final ScrollPane scroll;
 
     public SettingsView() {
@@ -143,6 +145,14 @@ public abstract class SettingsView extends StackPane {
                         updatePane.getContent().add(content);
                     }
                     settingsPane.getContent().add(updatePane);
+                }
+
+                {
+                    previewPane = new OptionToggleButton();
+                    previewPane.setTitle("提前预览 HMCL 版本"); // TODO: i18n
+                    previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+
+                    settingsPane.getContent().add(previewPane);
                 }
 
                 {

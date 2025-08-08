@@ -110,8 +110,8 @@ public final class SettingsPage extends SettingsView {
         InvalidationListener checkUpdateListener = e -> {
             UpdateChecker.requestCheckUpdate(updateChannel.get(), config().isAcceptPreviewUpdate());
         };
-
         updateChannel.addListener(checkUpdateListener);
+        previewPane.selectedProperty().addListener(checkUpdateListener);
         // ====
     }
 
