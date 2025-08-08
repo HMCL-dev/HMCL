@@ -196,6 +196,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     try (var context = getContext(conn, checkETag, bmclapiHash);
                          var counter = new CounterInputStream(conn.getInputStream());
                          var input = encoding.wrap(counter)) {
+                        long lastDownloaded = 0L;
                         byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                         while (true) {
                             if (isCancelled()) break;
@@ -210,12 +211,13 @@ public abstract class FetchTask<T> extends Task<T> {
                                 updateProgress(counter.downloaded, contentLength);
                             }
 
-                            updateDownloadSpeed(counter.lastRead);
+                            updateDownloadSpeed(counter.downloaded - lastDownloaded);
+                            lastDownloaded = counter.downloaded;
                         }
 
                         if (isCancelled()) break download;
 
-                        updateDownloadSpeed(counter.lastRead);
+                        updateDownloadSpeed(counter.downloaded - lastDownloaded);
 
                         if (contentLength >= 0 && counter.downloaded != contentLength)
                             throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
@@ -261,7 +263,6 @@ public abstract class FetchTask<T> extends Task<T> {
 
     private static final class CounterInputStream extends FilterInputStream {
         long downloaded;
-        long lastRead;
 
         CounterInputStream(InputStream in) {
             super(in);
@@ -270,22 +271,16 @@ public abstract class FetchTask<T> extends Task<T> {
         @Override
         public int read() throws IOException {
             int b = in.read();
-            if (b >= 0) {
+            if (b >= 0)
                 downloaded++;
-                lastRead = 1;
-            } else {
-                lastRead = 0;
-            }
             return b;
         }
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
             int n = in.read(b, off, len);
-            if (n >= 0) {
+            if (n >= 0)
                 downloaded += n;
-                lastRead = n;
-            }
             return n;
         }
     }
