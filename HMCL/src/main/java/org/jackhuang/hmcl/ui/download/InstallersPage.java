@@ -77,11 +77,24 @@ public class InstallersPage extends AbstractInstallersPage {
     public void cleanup(Map<String, Object> settings) {
     }
 
+    private static boolean checkName(String name) {
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (!(c >= '0' && c <= '9')
+                    && !(c >= 'a' && c <= 'z')
+                    && !(c >= 'A' && c <= 'Z')
+                    && c != '-' && c != '_'
+            )
+                return false;
+        }
+
+        return true;
+    }
+
     protected void onInstall() {
         String name = txtName.getText();
 
-        // Check for non-ASCII characters.
-        if (!StringUtils.isASCII(name)) {
+        if (!checkName(name)) {
             Controllers.dialog(new MessageDialogPane.Builder(
                     i18n("install.name.invalid"),
                     i18n("message.warning"),
