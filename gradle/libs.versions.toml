@@ -21,7 +21,7 @@ java-info = "1.0"
 junit = "5.13.4"
 
 # plugins
-shadow = "8.3.6"
+shadow = "9.0.0"
 
 [libraries]
 hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclauncher" }
