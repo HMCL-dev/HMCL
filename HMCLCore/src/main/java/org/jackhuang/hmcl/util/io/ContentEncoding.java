@@ -28,7 +28,7 @@ import java.util.zip.GZIPInputStream;
  * @author Glavo
  */
 public enum ContentEncoding {
-    NONE {
+    IDENTITY {
         @Override
         public InputStream wrap(InputStream inputStream) {
             return inputStream;
@@ -43,8 +43,8 @@ public enum ContentEncoding {
 
     public static @NotNull ContentEncoding fromConnection(URLConnection connection) throws IOException {
         String encoding = connection.getContentEncoding();
-        if (encoding == null || encoding.isEmpty()) {
-            return NONE;
+        if (encoding == null || encoding.isEmpty() || "identity".equals(encoding)) {
+            return IDENTITY;
         } else if ("gzip".equalsIgnoreCase(encoding)) {
             return GZIP;
         } else {
