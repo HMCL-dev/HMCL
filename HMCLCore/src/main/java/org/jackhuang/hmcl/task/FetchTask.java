@@ -148,7 +148,8 @@ public abstract class FetchTask<T> extends Task<T> {
                                 if (StringUtils.isBlank(location))
                                     throw new IOException("Redirected to an empty location");
 
-                                URI target = NetworkUtils.toURI(location).resolve(NetworkUtils.toURI(location));
+                                URI target = NetworkUtils.toURI(httpConnection.getURL())
+                                        .resolve(NetworkUtils.toURI(location));
                                 redirects.add(target);
 
                                 if (!NetworkUtils.isHttpUri(target))
@@ -157,8 +158,9 @@ public abstract class FetchTask<T> extends Task<T> {
                                 HttpURLConnection redirected = NetworkUtils.createHttpConnection(target);
                                 redirected.setUseCaches(checkETag);
                                 requestProperties
-                                        .forEach((key, value) -> value.forEach(element ->
-                                                redirected.addRequestProperty(key, element)));
+                                        .forEach((key, values) ->
+                                                values.forEach(element ->
+                                                        redirected.addRequestProperty(key, element)));
                                 httpConnection = redirected;
                             } else {
                                 break;
