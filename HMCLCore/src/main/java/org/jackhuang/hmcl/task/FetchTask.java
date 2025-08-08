@@ -282,11 +282,9 @@ public abstract class FetchTask<T> extends Task<T> {
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
             int n = in.read(b, off, len);
-            if (n > 0) {
+            if (n >= 0) {
                 downloaded += n;
                 lastRead = n;
-            } else {
-                lastRead = 0;
             }
             return n;
         }
