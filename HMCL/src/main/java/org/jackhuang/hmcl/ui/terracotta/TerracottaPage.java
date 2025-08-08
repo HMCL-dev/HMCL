@@ -59,7 +59,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         chatItem.setOnAction(e -> FXUtils.openLink(Metadata.GROUPS_URL));
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.STYLE)
+                .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE)
                 .startCategory(i18n("help").toUpperCase(Locale.ROOT))
                 .add(chatItem);
         FXUtils.setLimitWidth(sideBar, 200);

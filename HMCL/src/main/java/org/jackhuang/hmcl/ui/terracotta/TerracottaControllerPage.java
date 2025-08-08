@@ -32,11 +32,14 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -46,12 +49,15 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.terracotta.core.TerracottaManager;
 import org.jackhuang.hmcl.ui.terracotta.core.TerracottaState;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.AggregatedObservableList;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -92,15 +98,19 @@ public class TerracottaControllerPage extends StackPane {
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.network_warning"), Controllers::onHyperlinkAction);
                 body.setLineSpacing(4);
 
-                ForwardButton start = new ForwardButton();
-                start.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                LineButton start = new LineButton();
+                start.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
                 start.setTitle(i18n("terracotta.status.uninitialized.title"));
                 start.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
+                start.setRightIcon(SVG.ARROW_FORWARD);
                 start.setOnMouseClicked(ev -> {
-                    TerracottaState.Preparing s = TerracottaManager.initialize();
-                    if (s != null) {
-                        UI_STATE.set(s);
-                    }
+                    Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
+                        TerracottaState.Preparing s = TerracottaManager.initialize();
+                        if (s != null) {
+                            UI_STATE.set(s);
+                        }
+                    }, () -> {
+                    });
                 });
 
                 nodesProperty.setAll(body, start);
@@ -120,21 +130,42 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.waiting"));
                 progressProperty.set(1);
 
-                ForwardButton host = new ForwardButton();
-                host.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                flow.setLineSpacing(4);
+
+                LineButton host = new LineButton();
+                host.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
                 host.setTitle(i18n("terracotta.status.waiting.host.title"));
                 host.setSubtitle(i18n("terracotta.status.waiting.host.desc"));
+                host.setRightIcon(SVG.ARROW_FORWARD);
                 host.setOnMouseClicked(ev -> {
-                    TerracottaState.Scanning s = TerracottaManager.setScanning();
-                    if (s != null) {
-                        UI_STATE.set(s);
+                    if (LauncherHelper.countMangedProcesses() >= 1) {
+                        TerracottaState.Scanning s = TerracottaManager.setScanning();
+                        if (s != null) {
+                            UI_STATE.set(s);
+                        }
+                    } else {
+                        Controllers.dialog(new MessageDialogPane.Builder(
+                                i18n("terracotta.status.waiting.host.launch.desc"),
+                                i18n("terracotta.status.waiting.host.launch.title"),
+                                MessageDialogPane.MessageType.QUESTION
+                        ).addAction(i18n("version.launch"), () -> {
+                            Versions.launch(Profiles.getSelectedProfile(), LauncherHelper::setKeep);
+                        }).addCancel(i18n("terracotta.status.waiting.host.launch.skip"), () -> {
+                            TerracottaState.Scanning s = TerracottaManager.setScanning();
+                            if (s != null) {
+                                UI_STATE.set(s);
+                            }
+                        }).addCancel(() -> {
+                        }).build());
                     }
                 });
 
-                ForwardButton guest = new ForwardButton();
-                guest.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                LineButton guest = new LineButton();
+                guest.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
                 guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
+                guest.setRightIcon(SVG.ARROW_FORWARD);
                 guest.setOnMouseClicked(ev -> {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, resolve, reject) -> {
                         Task<TerracottaState.Guesting> task = TerracottaManager.setGuesting(code);
@@ -153,7 +184,7 @@ public class TerracottaControllerPage extends StackPane {
                     });
                 });
 
-                nodesProperty.setAll(host, guest);
+                nodesProperty.setAll(flow, host, guest);
             } else if (state instanceof TerracottaState.Scanning) {
                 statusProperty.set(i18n("terracotta.status.scanning"));
                 progressProperty.set(-1);
@@ -161,7 +192,8 @@ public class TerracottaControllerPage extends StackPane {
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.status.scanning.desc"), Controllers::onHyperlinkAction);
                 body.setLineSpacing(4);
 
-                BackwardButton room = new BackwardButton();
+                LineButton room = new LineButton();
+                room.setLeftIcon(SVG.ARROW_BACK);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.scanning.back"));
                 room.setOnMouseClicked(ev -> {
@@ -194,7 +226,8 @@ public class TerracottaControllerPage extends StackPane {
                 }
                 code.setOnMouseClicked(ev -> FXUtils.copyText(cs));
 
-                BackwardButton room = new BackwardButton();
+                LineButton room = new LineButton();
+                room.setLeftIcon(SVG.ARROW_BACK);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.hosting.back"));
                 room.setOnMouseClicked(ev -> {
@@ -206,7 +239,8 @@ public class TerracottaControllerPage extends StackPane {
 
                 nodesProperty.setAll(code, room);
             } else if (state instanceof TerracottaState.Guesting) {
-                BackwardButton room = new BackwardButton();
+                LineButton room = new LineButton();
+                room.setLeftIcon(SVG.ARROW_BACK);
                 if (!((TerracottaState.Guesting) state).isOk()) {
                     statusProperty.set(i18n("terracotta.status.guesting.joining"));
                     progressProperty.set(-1);
@@ -238,7 +272,8 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
                 nodesProperty.setAll();
 
-                BackwardButton back = new BackwardButton();
+                LineButton back = new LineButton();
+                back.setLeftIcon(SVG.ARROW_BACK);
                 back.setTitle(i18n("terracotta.back"));
                 back.setSubtitle(i18n("terracotta.status.exception.back"));
                 back.setOnMouseClicked(ev -> {
@@ -289,50 +324,54 @@ public class TerracottaControllerPage extends StackPane {
         }
     }
 
-    private static final class ForwardButton extends HBox {
+    private static final class LineButton extends HBox {
+        private final WeakListenerHolder holder = new WeakListenerHolder();
 
-        private final IconedTwoLineListItem left = new IconedTwoLineListItem();
+        private final TwoLineListItem middle = new TwoLineListItem();
+        private final ObjectProperty<Node> left = new SimpleObjectProperty<>();
+        private final ObjectProperty<Node> right = new SimpleObjectProperty<>();
 
-        public ForwardButton() {
-            setAlignment(Pos.CENTER_LEFT);
-            setCursor(Cursor.HAND);
-
-            VBox middle = new VBox();
-            HBox.setHgrow(middle, Priority.ALWAYS);
-
-            getChildren().setAll(left, middle, SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), 28));
-        }
-
-        public void setTitle(String title) {
-            left.setTitle(title);
-        }
-
-        public void setSubtitle(String subtitle) {
-            left.setSubtitle(subtitle);
-        }
-
-        public void setImage(Image image) {
-            left.setImage(image);
-        }
-    }
-
-    private static final class BackwardButton extends HBox {
-        private final TwoLineListItem right = new TwoLineListItem();
-
-        public BackwardButton() {
+        public LineButton() {
             setAlignment(Pos.CENTER_LEFT);
             setCursor(Cursor.HAND);
             setSpacing(16);
 
-            getChildren().setAll(SVG.ARROW_BACK.createIcon(Theme.blackFill(), 28), right);
+            holder.add(FXUtils.observeWeak(() -> {
+                List<Node> nodes = new ArrayList<>(4);
+                Node left = this.left.get(), right = this.right.get();
+                if (left != null) {
+                    nodes.add(left);
+                }
+                nodes.add(middle);
+                VBox spacing = new VBox();
+                HBox.setHgrow(spacing, Priority.ALWAYS);
+                nodes.add(spacing);
+                if (right != null) {
+                    nodes.add(right);
+                }
+
+                getChildren().setAll(nodes);
+            }, middle.titleProperty(), middle.subtitleProperty(), left, right));
         }
 
         public void setTitle(String title) {
-            right.setTitle(title);
+            this.middle.setTitle(title);
         }
 
         public void setSubtitle(String subtitle) {
-            right.setSubtitle(subtitle);
+            this.middle.setSubtitle(subtitle);
+        }
+
+        public void setLeftImage(Image left) {
+            this.left.set(new ImageView(left));
+        }
+
+        public void setLeftIcon(SVG left) {
+            this.left.set(left.createIcon(Theme.blackFill(), 28));
+        }
+
+        public void setRightIcon(SVG right) {
+            this.right.set(right.createIcon(Theme.blackFill(), 28));
         }
     }
 }

@@ -40,6 +40,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
@@ -151,9 +152,11 @@ public final class Controllers {
         return downloadPage.get();
     }
 
+    // FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
     }
+
     // FXThread
     public static DecoratorController getDecorator() {
         return decorator;
@@ -385,6 +388,30 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
+    public static void confirmActionDanger(String text, String title, Runnable resolve, Runnable cancel) {
+        JFXButton btnYes = new JFXButton(i18n("button.ok"));
+        btnYes.getStyleClass().add("dialog-error");
+        btnYes.setOnAction(e -> resolve.run());
+        btnYes.setDisable(true);
+
+        int countdown = 10;
+        KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
+        for (int i = 0; i < countdown; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
+        }
+        keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
+                new KeyValue(btnYes.textProperty(), i18n("button.ok")),
+                new KeyValue(btnYes.disableProperty(), false));
+
+        Timeline timeline = new Timeline(keyFrames);
+        confirmAction(text, title, MessageType.WARNING, btnYes, () -> {
+            timeline.stop();
+            cancel.run();
+        });
+        timeline.play();
+    }
+
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -432,7 +459,7 @@ public final class Controllers {
                     Controllers.navigate(Controllers.getSettingsPage());
                     break;
                 case "hmcl://game/launch":
-                    Versions.launch(Profiles.getSelectedProfile());
+                    Versions.launch(Profiles.getSelectedProfile(), LauncherHelper::setKeep);
                     break;
                 case "hmcl://terracotta/copy_code":
                     TerracottaControllerPage.copyCode();

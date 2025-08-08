@@ -27,6 +27,9 @@ import java.util.concurrent.locks.LockSupport;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class TerracottaManager {
+    private TerracottaManager() {
+    }
+
     private static final AtomicReference<TerracottaState> STATE_V = new AtomicReference<>();
 
     static {
@@ -44,7 +47,6 @@ public final class TerracottaManager {
 
     private static final ReadOnlyObjectWrapper<TerracottaState> STATE = new ReadOnlyObjectWrapper<>(STATE_V.getPlain());
     private static final InvocationDispatcher<TerracottaState> STATE_D = InvocationDispatcher.runOn(Platform::runLater, STATE::set);
-
 
     public static ReadOnlyObjectProperty<TerracottaState> stateProperty() {
         return STATE.getReadOnlyProperty();

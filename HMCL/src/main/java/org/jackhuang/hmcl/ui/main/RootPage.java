@@ -177,7 +177,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sideba
             AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftGraphic(wrap(SVG.STYLE));
+            terracottaItem.setLeftGraphic(wrap(SVG.HOST));
             terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> Controllers.navigate(Controllers.getTerracottaPage()));
