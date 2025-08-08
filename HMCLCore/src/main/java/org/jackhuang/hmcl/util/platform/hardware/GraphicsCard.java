@@ -71,6 +71,10 @@ public final class GraphicsCard {
         return name;
     }
 
+    public @Nullable Type getType() {
+        return type;
+    }
+
     public @Nullable HardwareVendor getVendor() {
         return vendor;
     }
