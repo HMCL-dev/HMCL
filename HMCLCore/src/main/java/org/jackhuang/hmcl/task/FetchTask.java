@@ -191,7 +191,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         }
                     }
 
-                    long contentLength = conn.getContentLength();
+                    long contentLength = conn.getContentLengthLong();
                     var encoding = ContentEncoding.fromConnection(conn);
                     try (var context = getContext(conn, checkETag, bmclapiHash);
                          var counter = new CounterInputStream(conn.getInputStream());
