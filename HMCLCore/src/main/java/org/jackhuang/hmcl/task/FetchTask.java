@@ -22,15 +22,13 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.io.ContentEncoding;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -40,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -117,6 +115,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     if (conn instanceof HttpURLConnection) {
                         var httpConnection = (HttpURLConnection) conn;
+                        httpConnection.setRequestProperty("Accept-Encoding", "gzip");
 
                         if (checkETag) repository.injectConnection(httpConnection);
                         Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
@@ -193,35 +192,33 @@ public abstract class FetchTask<T> extends Task<T> {
                     }
 
                     long contentLength = conn.getContentLength();
-                    try (Context context = getContext(conn, checkETag, bmclapiHash);
-                         InputStream stream = conn.getInputStream()) {
-                        int lastDownloaded = 0, downloaded = 0;
+                    var encoding = ContentEncoding.fromConnection(conn);
+                    try (var context = getContext(conn, checkETag, bmclapiHash);
+                         var counter = new CounterInputStream(conn.getInputStream());
+                         var input = encoding.wrap(counter)) {
                         byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
                         while (true) {
                             if (isCancelled()) break;
 
-                            int len = stream.read(buffer);
+                            int len = input.read(buffer);
                             if (len == -1) break;
 
                             context.write(buffer, 0, len);
 
-                            downloaded += len;
-
                             if (contentLength >= 0) {
                                 // Update progress information per second
-                                updateProgress(downloaded, contentLength);
+                                updateProgress(counter.downloaded, contentLength);
                             }
 
-                            updateDownloadSpeed(downloaded - lastDownloaded);
-                            lastDownloaded = downloaded;
+                            updateDownloadSpeed(counter.lastRead);
                         }
 
                         if (isCancelled()) break download;
 
-                        updateDownloadSpeed(downloaded - lastDownloaded);
+                        updateDownloadSpeed(counter.lastRead);
 
-                        if (contentLength >= 0 && downloaded != contentLength)
-                            throw new IOException("Unexpected file size: " + downloaded + ", expected: " + contentLength);
+                        if (contentLength >= 0 && counter.downloaded != contentLength)
+                            throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
 
                         context.withResult(true);
                     }
@@ -246,7 +243,7 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
-    private static final AtomicInteger downloadSpeed = new AtomicInteger(0);
+    private static final AtomicLong downloadSpeed = new AtomicLong(0L);
     public static final EventBus speedEvent = new EventBus();
 
     static {
@@ -258,14 +255,47 @@ public abstract class FetchTask<T> extends Task<T> {
         }, 0, 1000);
     }
 
-    private static void updateDownloadSpeed(int speed) {
+    private static void updateDownloadSpeed(long speed) {
         downloadSpeed.addAndGet(speed);
     }
 
-    public static class SpeedEvent extends Event {
-        private final int speed;
+    private static class CounterInputStream extends FilterInputStream {
+        long downloaded;
+        long lastRead;
 
-        public SpeedEvent(Object source, int speed) {
+        CounterInputStream(InputStream in) {
+            super(in);
+        }
+
+        @Override
+        public int read() throws IOException {
+            int b = in.read();
+            if (b >= 0) {
+                downloaded++;
+                lastRead = 1;
+            } else {
+                lastRead = 0;
+            }
+            return b;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int n = in.read(b, off, len);
+            if (n > 0) {
+                downloaded += n;
+                lastRead = n;
+            } else {
+                lastRead = 0;
+            }
+            return n;
+        }
+    }
+
+    public static class SpeedEvent extends Event {
+        private final long speed;
+
+        public SpeedEvent(Object source, long speed) {
             super(source);
 
             this.speed = speed;
@@ -276,7 +306,7 @@ public abstract class FetchTask<T> extends Task<T> {
          *
          * @return download speed
          */
-        public int getSpeed() {
+        public long getSpeed() {
             return speed;
         }
 
