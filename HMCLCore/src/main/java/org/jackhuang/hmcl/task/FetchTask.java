@@ -259,7 +259,7 @@ public abstract class FetchTask<T> extends Task<T> {
         downloadSpeed.addAndGet(speed);
     }
 
-    private static class CounterInputStream extends FilterInputStream {
+    private static final class CounterInputStream extends FilterInputStream {
         long downloaded;
         long lastRead;
 
