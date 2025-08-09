@@ -29,4 +29,12 @@ public class BgraPreFrame extends BgraPreCanvas {
         this.xOffset = xOffset;
         this.yOffset = yOffset;
     }
+
+    public BgraPreFrame(int width, int height, int xOffset, int yOffset, long duration) {
+        this(new byte[4 * width * height], width, height, xOffset, yOffset, duration);
+    }
+
+    public BgraPreFrame(BgraPreCanvas canvas, int width, int height, int xOffset, int yOffset, long duration) {
+        this(canvas.getPixels(xOffset, yOffset, width, height), width, height, xOffset, yOffset, duration);
+    }
 }

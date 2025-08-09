@@ -32,7 +32,7 @@ import java.lang.ref.WeakReference;
 /**
  * @author Glavo
  */
-public final class AnimationImageImpl extends WritableImage implements AnimationImage {
+public final class AnimationImageImpl extends AnimationImage {
 
     private Animation animation;
     private final int[][] frames;

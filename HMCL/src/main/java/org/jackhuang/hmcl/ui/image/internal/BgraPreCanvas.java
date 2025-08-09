@@ -22,6 +22,24 @@ import org.jackhuang.hmcl.util.ByteArray;
 import java.util.Objects;
 
 public class BgraPreCanvas {
+    protected static int argbToPre(int argb) {
+        int a = argb >> 24 & 0xff;
+        int r = argb >> 16 & 0xFF;
+        int g = argb >> 8 & 0xFF;
+        int b = argb & 0xFF;
+
+        if (a == 0) {
+            r = g = b = 0;
+        } else if (a < 255) {
+            r = (r * a + 127) / 0xff;
+            g = (g * a + 127) / 0xff;
+            b = (b * a + 127) / 0xff;
+        }
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+
     protected final byte[] pixels;
     protected final int width;
     protected final int height;
@@ -64,40 +82,90 @@ public class BgraPreCanvas {
         return pixels;
     }
 
-    public void setArgb(int row, int col, int argb) {
-        if (row < 0 || row >= width || col < 0 || col >= height) {
-            throw new IndexOutOfBoundsException("row or col out of bounds");
-        }
+    public void setArgb(int x, int y, int argb) {
+        Objects.checkIndex(x, width);
+        Objects.checkIndex(y, height);
 
-        int targetIndex = (row * width + col) * 4;
-
-        int a = argb >> 24 & 0xff;
-        int r = argb >> 16 & 0xFF;
-        int g = argb >> 8 & 0xFF;
-        int b = argb & 0xFF;
-
-        if (a == 0) {
-            r = g = b = 0;
-        } else if (a < 255) {
-            r = (r * a + 127) / 0xff;
-            g = (g * a + 127) / 0xff;
-            b = (b * a + 127) / 0xff;
-        }
-
-        //noinspection PointlessArithmeticExpression
-        pixels[targetIndex + 0] = (byte) b;
-        pixels[targetIndex + 1] = (byte) g;
-        pixels[targetIndex + 2] = (byte) r;
-        pixels[targetIndex + 3] = (byte) a;
+        int targetIndex = (y * width + x) * 4;
+        ByteArray.setIntLE(pixels, targetIndex, argbToPre(argb));
     }
 
-    public void setArgbPre(int row, int col, int argbPre) {
-        if (row < 0 || row >= width || col < 0 || col >= height) {
-            throw new IndexOutOfBoundsException("row or col out of bounds");
-        }
+    public void setArgbPre(int x, int y, int argbPre) {
+        Objects.checkIndex(x, width);
+        Objects.checkIndex(y, height);
 
-        int targetIndex = (row * width + col) * 4;
+        int targetIndex = (y * width + x) * 4;
         ByteArray.setIntLE(pixels, targetIndex, argbPre);
+    }
+
+    public void setArgb(int x, int y, int w, int h,
+                        int[] buffer, int offset, int scanlineStride) {
+        Objects.checkFromIndexSize(x, w, width);
+        Objects.checkFromIndexSize(y, h, width);
+
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                int sourceIndex = offset + (row * scanlineStride + col);
+                int targetIndex = 4 * ((row + y) * width + x + col);
+                ByteArray.setIntLE(pixels, targetIndex, argbToPre(buffer[sourceIndex]));
+            }
+        }
+    }
+
+    public void blendingWithArgb(int x, int y, int w, int h,
+                                 int[] buffer, int offset, int scanlineStride) {
+        Objects.checkFromIndexSize(x, w, width);
+        Objects.checkFromIndexSize(y, h, width);
+
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                int sourceIndex = offset + (row * scanlineStride + col);
+
+                int resultArgbPre;
+                int srcArgb = buffer[sourceIndex];
+
+                int srcA = (srcArgb >> 24) & 0xff;
+                if (srcA == 0) {
+                    continue;
+                }
+
+                int targetIndex = 4 * ((row + y) * width + x + col);
+                if (srcA == 255) {
+                    resultArgbPre = argbToPre(srcArgb);
+                } else {
+                    int srcArgbPre = argbToPre(srcArgb);
+
+                    int srcRPre = (srcArgbPre >> 16) & 0xff;
+                    int srcGPre = (srcArgbPre >> 8) & 0xff;
+                    int srcBPre = (srcArgbPre) & 0xff;
+
+                    int dstArgbPre = ByteArray.getIntLE(pixels, targetIndex);
+
+                    int dstA = (dstArgbPre >> 24) & 0xff;
+                    int dstRPre = (dstArgbPre >> 16) & 0xff;
+                    int dstGPre = (dstArgbPre >> 8) & 0xff;
+                    int dstBPre = (dstArgbPre) & 0xff;
+
+                    int invSrcA = 255 - srcA;
+
+                    int outAlpha = srcA + (dstA * invSrcA + 127) / 255;
+
+                    if (outAlpha == 0) {
+                        resultArgbPre = 0;
+                    } else {
+                        int outR, outG, outB;
+
+                        outR = srcRPre + (dstRPre * invSrcA + 127) / 255;
+                        outG = srcGPre + (dstGPre * invSrcA + 127) / 255;
+                        outB = srcBPre + (dstBPre * invSrcA + 127) / 255;
+
+                        resultArgbPre = (outAlpha << 24) | (outR << 16) | (outG << 8) | outB;
+                    }
+                }
+
+                ByteArray.setIntLE(pixels, targetIndex, resultArgbPre);
+            }
+        }
     }
 
     @Override

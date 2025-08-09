@@ -17,8 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.image;
 
+import javafx.scene.image.WritableImage;
+
 /**
  * @author Glavo
  */
-public interface AnimationImage {
+public abstract class AnimationImage extends WritableImage {
+    public AnimationImage(int width, int height) {
+        super(width, height);
+    }
 }

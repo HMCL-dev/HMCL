@@ -17,11 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.image.apng.argb8888;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.ui.image.apng.PngScanlineBuffer;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngAnimationControl;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngHeader;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
+import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
+import org.jackhuang.hmcl.ui.image.internal.BgraPreCanvas;
 import org.jackhuang.hmcl.ui.image.internal.BgraPreFrame;
 
 import java.util.ArrayList;
@@ -30,10 +33,10 @@ import java.util.List;
 /**
  * @author Glavo
  */
-public final class BgraPreBitmapDirector extends BasicArgb8888Director<Argb8888BitmapSequence> {
+public final class BgraPreBitmapDirector extends BasicArgb8888Director<Image> {
     private PngHeader header;
     private Argb8888Bitmap defaultImage;
-    private byte[] canvas;
+    private BgraPreCanvas canvas;
 
     private PngFrameControl currentFrame = null;
     private PngAnimationControl animationControl;
@@ -47,7 +50,7 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Argb8888B
         this.header = header;
         this.defaultImage = new Argb8888Bitmap(header.width, header.height);
         this.scanlineProcessor = Argb8888Processors.from(header, buffer, defaultImage);
-        this.canvas = new byte[header.width * header.height * 4];
+        this.canvas = new BgraPreCanvas(header.width, header.height);
     }
 
     @Override
@@ -89,23 +92,41 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Argb8888B
 
     @Override
     public void receiveFrameImage(Argb8888Bitmap bitmap) {
-        if (null == currentFrame) {
+        if (currentFrame == null)
             throw new IllegalStateException("Received a frame image with no frame control in place");
-        }
-        if (null == animationFrames) {
+        if (animationFrames == null)
             throw new IllegalStateException("Received a frame image without animation control (or frame list?) in place");
+
+        final long duration;
+        if (currentFrame.delayNumerator == 0) {
+            duration = 10;
+        } else {
+            int durationsMills = 1000 * currentFrame.delayNumerator;
+            if (currentFrame.delayDenominator == 0)
+                durationsMills /= 100;
+            else
+                durationsMills /= currentFrame.delayDenominator;
+            duration = durationsMills;
         }
 
+        final var frame = new BgraPreFrame(
+                canvas,
+                currentFrame.width, currentFrame.height, currentFrame.xOffset, currentFrame.yOffset,
+                duration
+        );
 
+        if (currentFrame.blendOp == 0) {
 
-        // TODO
-        // animationFrames.add(new Argb8888BitmapSequence.Frame(currentFrame, bitmap));
+        } else if (currentFrame.blendOp == 1) { // APNG_BLEND_OP_OVER - Alpha blending
+
+        }
+
         currentFrame = null;
     }
 
     @Override
-    public Argb8888BitmapSequence getResult() {
-        return bitmapSequence;
+    public Image getResult() {
+        return null; // TODO
     }
 }
 
