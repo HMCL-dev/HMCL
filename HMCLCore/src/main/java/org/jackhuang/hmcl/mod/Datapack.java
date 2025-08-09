@@ -23,6 +23,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -172,10 +173,10 @@ public class Datapack {
                             LOG.warning("Failed to read datapack " + subDir, e);
                         }
                     } else if (Files.isRegularFile(subDir)) {
-                        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(subDir)) {
-                            Path mcmeta = fs.getPath("pack.mcmeta");
+                        try (var tree = CompressingUtils.openZipFileTree(subDir)) {
+                            ZipArchiveEntry mcmeta = tree.getEntry("pack.mcmeta");
 
-                            if (!Files.exists(mcmeta))
+                            if (mcmeta == null)
                                 continue;
 
                             String name = FileUtils.getName(subDir);
@@ -186,7 +187,7 @@ public class Datapack {
                                 continue;
                             name = StringUtils.substringBeforeLast(name, ".zip");
 
-                            PackMcMeta pack = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
+                            PackMcMeta pack = JsonUtils.fromNonNullJson(tree.readTextEntry(mcmeta), PackMcMeta.class);
                             info.add(new Pack(subDir, name, pack.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
                             LOG.warning("Failed to read datapack " + subDir, e);

@@ -11,7 +11,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -84,11 +83,11 @@ public final class NeoForgeInstallTask extends Task<Version> {
 
     public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
-        if (!gameVersion.isPresent()) throw new IOException();
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
+        if (gameVersion.isEmpty()) throw new IOException();
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
+            String installProfileText = tree.readTextEntry("install_profile.json");
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
-            if (LibraryAnalyzer.LibraryType.FORGE.getPatchId().equals(installProfile.get("profile")) && (Files.exists(fs.getPath("META-INF/NEOFORGE.RSA")) || installProfileText.contains("neoforge"))) {
+            if (LibraryAnalyzer.LibraryType.FORGE.getPatchId().equals(installProfile.get("profile")) && (tree.getEntry("META-INF/NEOFORGE.RSA") != null || installProfileText.contains("neoforge"))) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.get().equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion.get());

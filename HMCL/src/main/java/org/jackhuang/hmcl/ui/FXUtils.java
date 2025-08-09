@@ -55,6 +55,8 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -68,6 +70,7 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -905,29 +908,44 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    public static Image loadImage(Path path) throws Exception {
+    private static @NotNull Image loadImage(String ext, BufferedInputStream input,
+                                            int requestedWidth, int requestedHeight,
+                                            boolean preserveRatio, boolean smooth) throws Exception {
+        ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
+        if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
+            input.mark(ImageUtils.HEADER_BUFFER_SIZE);
+            byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+            input.reset();
+            loader = ImageUtils.guessLoader(headerBuffer);
+        }
+        if (loader == null)
+            loader = ImageUtils.DEFAULT;
+        return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+    }
+
+    public static @NotNull Image loadImage(Path path) throws Exception {
         return loadImage(path, 0, 0, false, false);
     }
 
-    public static Image loadImage(Path path,
-                                  int requestedWidth, int requestedHeight,
-                                  boolean preserveRatio, boolean smooth) throws Exception {
+    public static @NotNull Image loadImage(Path path,
+                                           int requestedWidth, int requestedHeight,
+                                           boolean preserveRatio, boolean smooth) throws Exception {
         try (var input = new BufferedInputStream(Files.newInputStream(path))) {
             String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
-            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
-            if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                input.reset();
-                loader = ImageUtils.guessLoader(headerBuffer);
-            }
-            if (loader == null)
-                loader = ImageUtils.DEFAULT;
-            return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+            return loadImage(ext, input, requestedWidth, requestedHeight, preserveRatio, smooth);
         }
     }
 
-    public static Image loadImage(String url) throws Exception {
+    public static @NotNull Image loadImage(ZipArchiveReader reader, ZipArchiveEntry entry,
+                                           int requestedWidth, int requestedHeight,
+                                           boolean preserveRatio, boolean smooth) throws Exception {
+        try (var input = new BufferedInputStream(reader.getInputStream(entry))) {
+            String ext = FileUtils.getExtension(entry).toLowerCase(Locale.ROOT);
+            return loadImage(ext, input, requestedWidth, requestedHeight, preserveRatio, smooth);
+        }
+    }
+
+    public static @NotNull Image loadImage(String url) throws Exception {
         URI uri = NetworkUtils.toURI(url);
 
         URLConnection connection = NetworkUtils.createConnection(uri);

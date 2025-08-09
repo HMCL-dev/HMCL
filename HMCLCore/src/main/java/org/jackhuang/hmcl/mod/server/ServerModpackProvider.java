@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.server;
 
 import com.google.gson.JsonParseException;
-import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -26,7 +25,7 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,8 +54,8 @@ public final class ServerModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
-        String json = CompressingUtils.readTextZipEntry(zip, "server-manifest.json");
+    public Modpack readManifest(ZipFileTree tree, Path file, Charset encoding) throws IOException, JsonParseException {
+        String json = tree.readTextEntry("server-manifest.json");
         ServerModpackManifest manifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
         return manifest.toModpack(encoding);
     }

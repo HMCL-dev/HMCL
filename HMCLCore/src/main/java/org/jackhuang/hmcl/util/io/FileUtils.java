@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import kala.compress.archivers.ArchiveEntry;
 import org.glavo.chardet.DetectedCharset;
 import org.glavo.chardet.UniversalDetector;
 import org.jackhuang.hmcl.util.Lang;
@@ -87,6 +88,10 @@ public final class FileUtils {
         return StringUtils.substringBeforeLast(getName(file), '.');
     }
 
+    public static String getExtension(ArchiveEntry entry) {
+        return StringUtils.substringAfterLast(getName(entry), '.');
+    }
+
     public static String getExtension(File file) {
         return StringUtils.substringAfterLast(file.getName(), '.');
     }
@@ -100,6 +105,11 @@ public final class FileUtils {
      */
     public static String normalizePath(String path) {
         return StringUtils.addPrefix(StringUtils.removeSuffix(path, "/", "\\"), "/");
+    }
+
+    public static String getName(ArchiveEntry entry) {
+        if (entry == null || entry.getName() == null) return "";
+        return StringUtils.substringBeforeLast(normalizePath(entry.getName()), "/");
     }
 
     public static String getName(Path path) {

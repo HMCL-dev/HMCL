@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.mod.multimc;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
@@ -26,6 +25,7 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.mod.ModpackUpdateTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,12 +54,13 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
     }
 
-    private static String getRootEntryName(ZipArchiveReader file) throws IOException {
+    private static String getRootEntryName(ZipFileTree tree) throws IOException {
         final String instanceFileName = "instance.cfg";
 
-        if (file.getEntry(instanceFileName) != null) return "";
+        if (tree.getEntry(instanceFileName) != null) return "";
 
-        for (ZipArchiveEntry entry : file.getEntries()) {
+
+        for (ZipArchiveEntry entry : tree.getReader().getEntries()) {
             String entryName = entry.getName();
 
             int idx = entryName.indexOf('/');
@@ -73,16 +74,16 @@ public final class MultiMCModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader modpackFile, Path modpackPath, Charset encoding) throws IOException {
-        String rootEntryName = getRootEntryName(modpackFile);
-        MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, rootEntryName);
+    public Modpack readManifest(ZipFileTree tree, Path file, Charset encoding) throws IOException {
+        String rootEntryName = getRootEntryName(tree);
+        MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(tree, rootEntryName);
 
-        String name = rootEntryName.isEmpty() ? FileUtils.getNameWithoutExtension(modpackPath) : rootEntryName.substring(0, rootEntryName.length() - 1);
-        ZipArchiveEntry instanceEntry = modpackFile.getEntry(rootEntryName + "instance.cfg");
+        String name = rootEntryName.isEmpty() ? FileUtils.getNameWithoutExtension(file) : rootEntryName.substring(0, rootEntryName.length() - 1);
+        ZipArchiveEntry instanceEntry = tree.getEntry(rootEntryName + "instance.cfg");
 
         if (instanceEntry == null)
-            throw new IOException("`instance.cfg` not found, " + modpackFile + " is not a valid MultiMC modpack.");
-        try (InputStream instanceStream = modpackFile.getInputStream(instanceEntry)) {
+            throw new IOException("`instance.cfg` not found, " + file + " is not a valid MultiMC modpack.");
+        try (InputStream instanceStream = tree.getInputStream(instanceEntry)) {
             MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, instanceStream, manifest);
             return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg) {
                 @Override

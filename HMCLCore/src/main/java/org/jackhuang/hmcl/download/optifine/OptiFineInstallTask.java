@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
@@ -35,7 +36,6 @@ import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.Utf8Constant;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -140,9 +140,9 @@ public final class OptiFineInstallTask extends Task<Version> {
 
         // Install launch wrapper modified by OptiFine
         boolean hasLaunchWrapper = false;
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dest)) {
+        try (var tree = CompressingUtils.openZipFileTree(dest)) {
             Path optiFineLibraryPath = gameRepository.getLibraryFile(version, optiFineLibrary).toPath();
-            if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
+            if (tree.getEntry("optifine/Patcher.class") != null) {
                 String[] command = {
                         JavaRuntime.getDefault().getBinary().toString(),
                         "-cp",
@@ -163,36 +163,36 @@ public final class OptiFineInstallTask extends Task<Version> {
                 Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
             }
 
-            Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
-            if (Files.exists(launchWrapper2)) {
+            ZipArchiveEntry launchWrapper2 = tree.getEntry("launchwrapper-2.0.jar");
+            if (launchWrapper2 != null) {
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper", "2.0"));
-                File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
-                FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
-                FileUtils.copyFile(launchWrapper2, launchWrapperFile.toPath());
+                Path launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper).toPath();
+                Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
+                tree.extractTo(launchWrapper2, launchWrapperFile);
                 hasLaunchWrapper = true;
                 libraries.add(launchWrapper);
             }
 
-            Path launchWrapperVersionText = fs.getPath("launchwrapper-of.txt");
-            if (Files.exists(launchWrapperVersionText)) {
-                String launchWrapperVersion = Files.readString(launchWrapperVersionText).trim();
-                Path launchWrapperJar = fs.getPath("launchwrapper-of-" + launchWrapperVersion + ".jar");
+            var launchWrapperVersionText = tree.getEntry("launchwrapper-of.txt");
+            if (launchWrapperVersionText != null) {
+                String launchWrapperVersion = tree.readTextEntry(launchWrapperVersionText).trim();
+                ZipArchiveEntry launchWrapperJar = tree.getEntry("launchwrapper-of-" + launchWrapperVersion + ".jar");
 
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper-of", launchWrapperVersion));
 
-                if (Files.exists(launchWrapperJar)) {
-                    File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
-                    FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
-                    FileUtils.copyFile(launchWrapperJar, launchWrapperFile.toPath());
+                if (launchWrapperJar != null) {
+                    Path launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper).toPath();
+                    Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
+                    tree.extractTo(launchWrapperJar, launchWrapperFile);
 
                     hasLaunchWrapper = true;
                     libraries.add(launchWrapper);
                 }
             }
 
-            Path buildofText = fs.getPath("buildof.txt");
-            if (Files.exists(buildofText)) {
-                String buildof = Files.readString(buildofText).trim();
+            ZipArchiveEntry buildofText = tree.getEntry("buildof.txt");
+            if (buildofText != null) {
+                String buildof = tree.readTextEntry(buildofText).trim();
                 VersionNumber buildofVer = VersionNumber.asVersion(buildof);
 
                 if (LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN.equals(originalMainClass)) {
@@ -232,13 +232,13 @@ public final class OptiFineInstallTask extends Task<Version> {
      */
     public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
-        if (!gameVersion.isPresent()) throw new IOException();
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            Path configClass = fs.getPath("Config.class");
-            if (!Files.exists(configClass)) configClass = fs.getPath("net/optifine/Config.class");
-            if (!Files.exists(configClass)) configClass = fs.getPath("notch/net/optifine/Config.class");
-            if (!Files.exists(configClass)) throw new IOException("Unrecognized installer");
-            ConstantPool pool = ConstantPoolScanner.parse(Files.readAllBytes(configClass), ConstantType.UTF8);
+        if (gameVersion.isEmpty()) throw new IOException();
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
+            ZipArchiveEntry configClass = tree.getEntry("Config.class");
+            if (configClass == null) configClass = tree.getEntry("net/optifine/Config.class");
+            if (configClass == null) configClass = tree.getEntry("notch/net/optifine/Config.class");
+            if (configClass == null) throw new IOException("Unrecognized installer");
+            ConstantPool pool = ConstantPoolScanner.parse(tree.readBinaryEntry(configClass), ConstantType.UTF8);
             List<String> constants = new ArrayList<>();
             pool.list(Utf8Constant.class).forEach(utf8 -> constants.add(utf8.get()));
             String mcVersion = getOrDefault(constants, constants.indexOf("MC_VERSION") + 1, null);

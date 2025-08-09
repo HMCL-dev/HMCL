@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -48,10 +49,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
@@ -276,24 +274,27 @@ public class ForgeNewInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
+            profile = JsonUtils.fromNonNullJsonFully(tree.getInputStream("install_profile.json"), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            forgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
+            forgeVersion = JsonUtils.fromNonNullJsonFully(tree.getInputStream(profile.getJson()), Version.class);
+
 
             for (Library library : profile.getLibraries()) {
-                Path file = fs.getPath("maven").resolve(library.getPath());
-                if (Files.exists(file)) {
-                    Path dest = gameRepository.getLibraryFile(version, library).toPath();
-                    FileUtils.copyFile(file, dest);
+                ZipArchiveEntry file = tree.getEntry("maven/" + library.getPath());
+                if (file != null && !file.isDirectory()) {
+                    Path dest = gameRepository.getLibraryFile(version, library).toPath().toAbsolutePath();
+                    Files.createDirectories(dest.getParent());
+                    tree.extractTo(file, dest);
                 }
             }
 
             if (profile.getPath().isPresent()) {
-                Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
-                if (Files.exists(mainJar)) {
-                    Path dest = gameRepository.getArtifactFile(version, profile.getPath().get());
-                    FileUtils.copyFile(mainJar, dest);
+                ZipArchiveEntry mainJar = tree.getEntry("maven/" + profile.getPath().get().getPath());
+                if (mainJar != null && !mainJar.isDirectory()) {
+                    Path dest = gameRepository.getArtifactFile(version, profile.getPath().get()).toAbsolutePath();
+                    Files.createDirectories(dest.getParent());
+                    tree.extractTo(mainJar, dest);
                 }
             }
         } catch (ZipException ex) {
@@ -373,7 +374,7 @@ public class ForgeNewInstallTask extends Task<Version> {
 
         Map<String, String> vars = new HashMap<>();
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
             for (Map.Entry<String, String> entry : profile.getData().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
@@ -382,7 +383,7 @@ public class ForgeNewInstallTask extends Task<Version> {
                         Collections.emptyMap(),
                         str -> {
                             Path dest = Files.createTempFile(tempDir, null, null);
-                            FileUtils.copyFile(fs.getPath(str), dest);
+                            tree.extractTo(str, dest);
                             return dest.toString();
                         }));
             }

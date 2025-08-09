@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.neoforge;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -44,7 +45,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -272,24 +272,24 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
+            profile = JsonUtils.fromNonNullJson(tree.readTextEntry("install_profile.json"), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(tree.readTextEntry(profile.getJson()), Version.class);
 
             for (Library library : profile.getLibraries()) {
-                Path file = fs.getPath("maven").resolve(library.getPath());
-                if (Files.exists(file)) {
+                ZipArchiveEntry entry = tree.getEntry("maven/" + library.getPath());
+                if (entry != null && !entry.isDirectory()) {
                     Path dest = gameRepository.getLibraryFile(version, library).toPath();
-                    FileUtils.copyFile(file, dest);
+                    tree.extractTo(entry, dest);
                 }
             }
 
             if (profile.getPath().isPresent()) {
-                Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
-                if (Files.exists(mainJar)) {
+                ZipArchiveEntry mainJar = tree.getEntry("maven/" + profile.getPath().get().getPath());
+                if (mainJar != null && !mainJar.isDirectory()) {
                     Path dest = gameRepository.getArtifactFile(version, profile.getPath().get());
-                    FileUtils.copyFile(mainJar, dest);
+                    tree.extractTo(mainJar, dest);
                 }
             }
         } catch (ZipException ex) {
@@ -369,7 +369,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
         Map<String, String> vars = new HashMap<>();
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+        try (var tree = CompressingUtils.openZipFileTree(installer)) {
             for (Map.Entry<String, String> entry : profile.getData().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
@@ -378,7 +378,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                         Collections.emptyMap(),
                         str -> {
                             Path dest = Files.createTempFile(tempDir, null, null);
-                            FileUtils.copyFile(fs.getPath(str), dest);
+                            tree.extractTo(str, dest);
                             return dest.toString();
                         }));
             }

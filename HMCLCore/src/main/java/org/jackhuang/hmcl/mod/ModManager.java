@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.IOException;
@@ -274,37 +275,33 @@ public final class ModManager {
         return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
     }
 
-    public static boolean isFileMod(Path modFile) {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            if (Files.exists(fs.getPath("mcmod.info")) || Files.exists(fs.getPath("META-INF/mods.toml"))) {
-                // Forge mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("fabric.mod.json"))) {
-                // Fabric mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("quilt.mod.json"))) {
-                // Quilt mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("litemod.json"))) {
-                // Liteloader mod
-                return true;
-            }
-
-            if (Files.exists(fs.getPath("pack.mcmeta"))) {
-                // resource pack, data pack
-                return true;
-            }
-
-            return false;
-        } catch (IOException e) {
-            return false;
+    public static boolean isFileMod(ZipFileTree tree) {
+        if (tree.getEntry("mcmod.info") != null || tree.getEntry("META-INF/mods.toml") != null) {
+            // Forge mod
+            return true;
         }
+
+        if (tree.getEntry("fabric.mod.json") != null) {
+            // Fabric mod
+            return true;
+        }
+
+        if (tree.getEntry("quilt.mod.json") != null) {
+            // Quilt mod
+            return true;
+        }
+
+        if (tree.getEntry("litemod.json") != null) {
+            // Liteloader mod
+            return true;
+        }
+
+        if (tree.getEntry("pack.mcmeta") != null) {
+            // resource pack, data pack
+            return true;
+        }
+
+        return false;
     }
 
     /**

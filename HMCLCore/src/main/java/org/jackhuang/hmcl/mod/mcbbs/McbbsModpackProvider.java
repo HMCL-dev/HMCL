@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.mod.mcbbs;
 
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,14 +70,14 @@ public final class McbbsModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
-        ZipArchiveEntry mcbbsPackMeta = zip.getEntry("mcbbs.packmeta");
+    public Modpack readManifest(ZipFileTree tree, Path file, Charset encoding) throws IOException, JsonParseException {
+        ZipArchiveEntry mcbbsPackMeta = tree.getEntry("mcbbs.packmeta");
         if (mcbbsPackMeta != null) {
-            return fromManifestFile(zip.getInputStream(mcbbsPackMeta), encoding);
+            return fromManifestFile(tree.getInputStream(mcbbsPackMeta), encoding);
         }
-        ZipArchiveEntry manifestJson = zip.getEntry("manifest.json");
+        ZipArchiveEntry manifestJson = tree.getEntry("manifest.json");
         if (manifestJson != null) {
-            return fromManifestFile(zip.getInputStream(manifestJson), encoding);
+            return fromManifestFile(tree.getInputStream(manifestJson), encoding);
         }
         throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
     }

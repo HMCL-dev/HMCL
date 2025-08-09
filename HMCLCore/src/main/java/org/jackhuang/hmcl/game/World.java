@@ -23,7 +23,10 @@ import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.scene.image.Image;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -35,8 +38,6 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -68,8 +69,9 @@ public final class World {
 
     private void loadFromDirectory() throws IOException {
         fileName = FileUtils.getName(file);
-        Path levelDat = file.resolve("level.dat");
-        loadWorldInfo(levelDat);
+        try (InputStream input = Files.newInputStream(file.resolve("level.dat"))) {
+            loadWorldInfo(input);
+        }
         isLocked = isLocked(getSessionLockFile());
 
         Path iconFile = file.resolve("icon.png");
@@ -128,16 +130,18 @@ public final class World {
         return isLocked;
     }
 
-    private void loadFromZipImpl(Path root) throws IOException {
-        Path levelDat = root.resolve("level.dat");
-        if (!Files.exists(levelDat))
+    private void loadFromZipImpl(ZipFileTree tree, ArchiveFileTree.Dir<ZipArchiveEntry> dir) throws IOException {
+        ZipArchiveEntry levelDat = dir.getFiles().get("level.dat");
+        if (levelDat == null || levelDat.isDirectory())
             throw new IOException("Not a valid world zip file since level.dat cannot be found.");
 
-        loadWorldInfo(levelDat);
+        try (InputStream input = tree.getInputStream(levelDat)) {
+            loadWorldInfo(input);
+        }
 
-        Path iconFile = root.resolve("icon.png");
-        if (Files.isRegularFile(iconFile)) {
-            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+        ZipArchiveEntry iconFile = dir.getFiles().get("icon.png");
+        if (iconFile != null) {
+            try (InputStream inputStream = tree.getInputStream(iconFile)) {
                 icon = new Image(inputStream, 64, 64, true, false);
                 if (icon.isError())
                     throw icon.getException();
@@ -149,24 +153,23 @@ public final class World {
 
     private void loadFromZip() throws IOException {
         isLocked = false;
-        try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
-            Path cur = fs.getPath("/level.dat");
-            if (Files.isRegularFile(cur)) {
+        try (var tree = CompressingUtils.openZipFileTree(file)) {
+            var cur = tree.getEntry("level.dat");
+            if (cur != null && !cur.isDirectory()) {
                 fileName = FileUtils.getName(file);
-                loadFromZipImpl(fs.getPath("/"));
+                loadFromZipImpl(tree, tree.getRoot());
                 return;
             }
 
-            try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
-                Path root = stream.filter(Files::isDirectory).findAny()
-                        .orElseThrow(() -> new IOException("Not a valid world zip file"));
-                fileName = FileUtils.getName(root);
-                loadFromZipImpl(root);
+            if (tree.getRoot().getSubDirs().size() == 1) {
+                var root = tree.getRoot().getSubDirs().values().iterator().next();
+                fileName = root.getName();
+                loadFromZipImpl(tree, root);
             }
         }
     }
 
-    private void loadWorldInfo(Path levelDat) throws IOException {
+    private void loadWorldInfo(InputStream levelDat) throws IOException {
         CompoundTag nbt = parseLevelDat(levelDat);
 
         CompoundTag data = nbt.get("Data");
@@ -240,23 +243,20 @@ public final class World {
         }
 
         if (Files.isRegularFile(file)) {
-            try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
-                Path cur = fs.getPath("/level.dat");
-                if (Files.isRegularFile(cur)) {
+            try (ZipFileTree tree = CompressingUtils.openZipFileTree(file)) {
+                ZipArchiveEntry cur = tree.getEntry("level.dat");
+                if (cur != null && !cur.isDirectory()) {
                     fileName = FileUtils.getName(file);
 
                     new Unzipper(file, worldDir).unzip();
                 } else {
-                    try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
-                        List<Path> subDirs = stream.collect(Collectors.toList());
-                        if (subDirs.size() != 1) {
-                            throw new IOException("World zip malformed");
-                        }
-                        String subDirectoryName = FileUtils.getName(subDirs.get(0));
-                        new Unzipper(file, worldDir)
-                                .setSubDirectory("/" + subDirectoryName + "/")
-                                .unzip();
-                    }
+                    if (tree.getRoot().getSubDirs().size() != 1)
+                        throw new IOException("World zip malformed");
+
+                    String subDirectoryName = tree.getRoot().getSubDirs().keySet().iterator().next();
+                    new Unzipper(file, worldDir)
+                            .setSubDirectory("/" + subDirectoryName + "/")
+                            .unzip();
                 }
 
             }
@@ -279,7 +279,9 @@ public final class World {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-        return parseLevelDat(getLevelDatFile());
+        try (InputStream input = Files.newInputStream(getLevelDatFile())) {
+            return parseLevelDat(input);
+        }
     }
 
     public FileChannel lock() throws WorldLockedException {
@@ -313,8 +315,8 @@ public final class World {
         });
     }
 
-    private static CompoundTag parseLevelDat(Path path) throws IOException {
-        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
+    private static CompoundTag parseLevelDat(InputStream input) throws IOException {
+        try (InputStream is = new GZIPInputStream(input)) {
             Tag nbt = NBTIO.readTag(is);
             if (nbt instanceof CompoundTag)
                 return (CompoundTag) nbt;
