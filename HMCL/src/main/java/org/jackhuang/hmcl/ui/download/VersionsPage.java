@@ -461,29 +461,29 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                 case "0.30-1":
                 case "0.30-2":
                 case "c0.30_01c":
-                    return i18n("wiki.version.game.prefix", "Classic_0.30");
+                    return i18n("wiki.version.game.search", "Classic_0.30");
                 case "in-20100206-2103":
-                    return i18n("wiki.version.game.prefix", "Indev_20100206");
+                    return i18n("wiki.version.game.search", "Indev_20100206");
                 case "inf-20100630-1":
-                    return i18n("wiki.version.game.prefix", "Infdev_20100630");
+                    return i18n("wiki.version.game.search", "Infdev_20100630");
                 case "inf-20100630-2":
-                    return i18n("wiki.version.game.prefix", "Alpha_v1.0.0");
+                    return i18n("wiki.version.game.search", "Alpha_v1.0.0");
                 case "1.19_deep_dark_experimental_snapshot-1":
                     return "1.19-exp1";
                 case "in-20100130":
-                    return i18n("wiki.version.game.prefix", "Indev_0.31_20100130");
+                    return i18n("wiki.version.game.search", "Indev_0.31_20100130");
                 case "b1.6-tb3":
-                    return i18n("wiki.version.game.prefix", "Beta_1.6_Test_Build_3");
+                    return i18n("wiki.version.game.search", "Beta_1.6_Test_Build_3");
             }
 
             if (id.startsWith("1.0.0-rc2")) return "RC2";
-            if (id.startsWith("2.0")) return i18n("wiki.version.game.prefix", "2.0");
+            if (id.startsWith("2.0")) return i18n("wiki.version.game.search", "2.0");
             if (id.startsWith("b1.8-pre1")) return "Beta_1.8-pre1";
-            if (id.startsWith("b1.1-")) return i18n("wiki.version.game.prefix", "Beta_1.1");
+            if (id.startsWith("b1.1-")) return i18n("wiki.version.game.search", "Beta_1.1");
             if (id.startsWith("a1.1.0")) return "Alpha_v1.1.0";
             if (id.startsWith("a1.0.14")) return "Alpha_v1.0.14";
             if (id.startsWith("a1.0.13_01")) return "Alpha_v1.0.13_01";
-            if (id.startsWith("in-20100214")) return i18n("wiki.version.game.prefix", "Indev_20100214");
+            if (id.startsWith("in-20100214")) return i18n("wiki.version.game.search", "Indev_20100214");
 
             if (id.contains("experimental-snapshot")) {
                 return id.replace("-experimental-snapshot", "-exp");
