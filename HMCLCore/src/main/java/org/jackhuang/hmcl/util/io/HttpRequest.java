@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.function.ExceptionalBiConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
