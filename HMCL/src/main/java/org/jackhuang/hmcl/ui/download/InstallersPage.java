@@ -82,7 +82,7 @@ public class InstallersPage extends AbstractInstallersPage {
             if (!(c >= '0' && c <= '9')
                     && !(c >= 'a' && c <= 'z')
                     && !(c >= 'A' && c <= 'Z')
-                    && c != '-' && c != '_'
+                    && c != '-' && c != '_' && c != '.'
             )
                 return false;
         }
