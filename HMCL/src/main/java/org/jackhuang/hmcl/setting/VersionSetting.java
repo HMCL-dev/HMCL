@@ -428,6 +428,21 @@ public final class VersionSetting implements Cloneable, Observable {
         notPatchNativesProperty.set(notPatchNatives);
     }
 
+    private final BooleanProperty notAutoChooseGPUProperty = new SimpleBooleanProperty(this, "notAutoChooseGPU", false);
+
+    public BooleanProperty notAutoChooseGPUProperty() {
+        return notAutoChooseGPUProperty;
+
+    }
+
+    public boolean isNotAutoChooseGPU() {
+        return notAutoChooseGPUProperty.get();
+    }
+
+    public void setNotAutoChooseGPU(boolean notAutoChooseGPU) {
+        notAutoChooseGPUProperty.set(notAutoChooseGPU);
+    }
+
     private final BooleanProperty showLogsProperty = new SimpleBooleanProperty(this, "showLogs", false);
 
     public BooleanProperty showLogsProperty() {
