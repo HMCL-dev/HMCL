@@ -112,7 +112,8 @@ tasks.jar {
 val jarPath = tasks.jar.get().archiveFile.get().asFile
 
 tasks.shadowJar {
-    archiveClassifier.set(null as String?)
+    archiveClassifier = ""
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     exclude("**/package-info.class")
     exclude("META-INF/maven/**")
