@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.image.apng.argb8888;
 
+import javafx.animation.Timeline;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.ui.image.apng.PngScanlineBuffer;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngAnimationControl;
@@ -43,6 +44,22 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Image> {
     private PngAnimationControl animationControl;
     private List<BgraPreFrame> animationFrames;
 
+    private boolean doScale;
+    private int targetWidth;
+    private int targetHeight;
+
+    private final int requestedWidth;
+    private final int requestedHeight;
+    private final boolean preserveRatio;
+    private final boolean smooth;
+
+    public BgraPreBitmapDirector(int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        this.requestedWidth = requestedWidth;
+        this.requestedHeight = requestedHeight;
+        this.preserveRatio = preserveRatio;
+        this.smooth = smooth;
+    }
+
     @Override
     public void receiveHeader(PngHeader header, PngScanlineBuffer buffer) throws PngException {
         if (this.header != null)
@@ -52,6 +69,27 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Image> {
         this.defaultImage = new Argb8888Bitmap(header.width, header.height);
         this.scanlineProcessor = Argb8888Processors.from(header, buffer, defaultImage);
         this.canvas = new BgraPreCanvas(header.width, header.height);
+
+        if (requestedWidth > 0 && requestedHeight > 0
+                && (requestedWidth != header.width || requestedHeight != header.height)) {
+            doScale = true;
+
+            if (preserveRatio) {
+                double scaleX = (double) requestedWidth / header.width;
+                double scaleY = (double) requestedHeight / header.height;
+                double scale = Math.min(scaleX, scaleY);
+
+                targetWidth = (int) (header.width * scale);
+                targetHeight = (int) (header.height * scale);
+            } else {
+                targetWidth = requestedWidth;
+                targetHeight = requestedHeight;
+            }
+        } else {
+            doScale = false;
+            targetWidth = header.width;
+            targetHeight = header.height;
+        }
     }
 
     @Override
@@ -145,7 +183,19 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Image> {
 
     @Override
     public Image getResult() {
-        return null; // TODO
+        if (doScale) {
+            throw new UnsupportedOperationException("TODO"); // TODO
+        }
+
+        int cycleCount;
+        if (animationControl != null) {
+            cycleCount = animationControl.numPlays;
+            if (cycleCount == 0)
+                cycleCount = Timeline.INDEFINITE;
+        } else
+            cycleCount = Timeline.INDEFINITE;
+
+        return new BgraPreAnimationImage(targetWidth, targetHeight, cycleCount, List.copyOf(animationFrames));
     }
 }
 
