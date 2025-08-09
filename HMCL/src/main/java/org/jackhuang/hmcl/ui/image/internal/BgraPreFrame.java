@@ -17,23 +17,16 @@
  */
 package org.jackhuang.hmcl.ui.image.internal;
 
-public final class BgraPreFrame {
-    final byte[] pixels;
+public class BgraPreFrame extends BgraPreCanvas {
     final int xOffset;
     final int yOffset;
-    final int width;
-    final int height;
     final long duration;
 
-    public BgraPreFrame(byte[] pixels, int xOffset, int yOffset, int width, int height, long duration) {
-        this.duration = duration;
-        if (pixels.length != width * height * 4)
-            throw new IllegalArgumentException("Invalid pixel array length");
+    public BgraPreFrame(byte[] pixels, int width, int height, int xOffset, int yOffset, long duration) {
+        super(pixels, width, height);
 
-        this.pixels = pixels;
+        this.duration = duration;
         this.xOffset = xOffset;
         this.yOffset = yOffset;
-        this.width = width;
-        this.height = height;
     }
 }

@@ -19,10 +19,12 @@ package org.jackhuang.hmcl.ui.image.internal;
 
 import org.jackhuang.hmcl.util.ByteArray;
 
+import java.util.Objects;
+
 public class BgraPreCanvas {
-    private final byte[] pixels;
-    private final int width;
-    private final int height;
+    protected final byte[] pixels;
+    protected final int width;
+    protected final int height;
 
     public BgraPreCanvas(byte[] pixels, int width, int height) {
         if (pixels.length != 4 * width * height)
@@ -45,6 +47,21 @@ public class BgraPreCanvas {
 
     public int getHeight() {
         return height;
+    }
+
+    public byte[] getPixels(int x, int y, int w, int h) {
+        Objects.checkFromIndexSize(x, w, width);
+        Objects.checkFromIndexSize(y, h, height);
+
+        final int bytesForRow = 4 * w;
+
+        byte[] pixels = new byte[4 * w * h];
+        for (int row = 0; row < h; row++) {
+            int sourceOffset = 4 * ((y + row) * width + x);
+            int targetOffset = 4 * (row * w);
+            System.arraycopy(this.pixels, sourceOffset, pixels, targetOffset, bytesForRow);
+        }
+        return pixels;
     }
 
     public void setArgb(int row, int col, int argb) {
