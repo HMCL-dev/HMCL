@@ -900,7 +900,15 @@ public final class LauncherHelper {
 
     }
 
-    public static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+    private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+
+    public static int countMangedProcesses() {
+        PROCESSES.removeIf(it -> {
+            ManagedProcess process = it.get();
+            return process == null || !process.isRunning();
+        });
+        return PROCESSES.size();
+    }
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
