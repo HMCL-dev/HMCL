@@ -50,7 +50,7 @@ public final class BgraPreAnimationImage extends AnimationImage {
         BgraPreFrame frame = frames.get(frameIndex);
         getPixelWriter().setPixels(frame.xOffset, frame.yOffset, frame.width, frame.width,
                 PixelFormat.getByteBgraPreInstance(),
-                frame.pixels, 0, 4 * frame.width
+                frame.pixels, 0, frame.width
         );
     }
 }
