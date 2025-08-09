@@ -46,6 +46,14 @@ public interface RemoteModRepository {
         TOTAL_DOWNLOADS
     }
 
+    enum LoaderType {
+        ALL,
+        FORGE,
+        NEOFORGE,
+        FABRIC,
+        QUILT
+    }
+
     enum SortOrder {
         ASC,
         DESC
@@ -83,8 +91,7 @@ public interface RemoteModRepository {
         }
     }
 
-    SearchResult search(String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
-            throws IOException;
+    SearchResult search(String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder, LoaderType loaderType) throws IOException;
 
     Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;
 
