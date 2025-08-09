@@ -393,7 +393,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     right.setLeft(cboWindowsSize);
                     cboWindowsSize.setEditable(true);
                     cboWindowsSize.setStyle("-fx-padding: 4 4 4 16");
-
                     cboWindowsSize.setPromptText("854x480");
                     cboWindowsSize.getItems().addAll(
                             "854x480",
@@ -552,8 +551,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         // unbind data fields
         if (lastVersionSetting != null) {
-//            FXUtils.unbind(txtWidth, lastVersionSetting.widthProperty());
-//            FXUtils.unbind(txtHeight, lastVersionSetting.heightProperty());
+            FXUtils.unbindWindowsSize(cboWindowsSize, lastVersionSetting.widthProperty(), lastVersionSetting.heightProperty());
             maxMemory.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
@@ -586,8 +584,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaVersionOption.valueProperty().unbind();
 
         // bind new data fields
-        // FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
-        // FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
+        FXUtils.bindWindowsSize(cboWindowsSize, versionSetting.widthProperty(), versionSetting.heightProperty());
         maxMemory.bindBidirectional(versionSetting.maxMemoryProperty());
 
         javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
