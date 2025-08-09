@@ -13,6 +13,7 @@ hs_err_pid*
 /externalgames
 NVIDIA
 minecraft-exported-crash-info*
+hmcl-exported-logs-*
 
 # gradle build
 /build/
