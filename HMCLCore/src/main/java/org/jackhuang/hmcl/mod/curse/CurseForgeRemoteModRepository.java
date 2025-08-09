@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -100,12 +101,12 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int categoryId = 0;
         if (category != null && category.getSelf() instanceof CurseAddon.Category) {
             categoryId = ((CurseAddon.Category) category.getSelf()).getId();
         }
-        Response<List<CurseAddon>> response = HttpRequest.GET(PREFIX + "/v1/mods/search",
+        Response<List<CurseAddon>> response = HttpRequest.GET(downloadProvider.injectURL(PREFIX + "/v1/mods/search"),
                         pair("gameId", "432"),
                         pair("classId", Integer.toString(section)),
                         pair("categoryId", Integer.toString(categoryId)),
