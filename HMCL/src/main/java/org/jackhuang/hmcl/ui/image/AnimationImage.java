@@ -17,13 +17,84 @@
  */
 package org.jackhuang.hmcl.ui.image;
 
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.beans.value.WritableValue;
 import javafx.scene.image.WritableImage;
+import javafx.util.Duration;
+
+import java.lang.ref.WeakReference;
 
 /**
  * @author Glavo
  */
 public abstract class AnimationImage extends WritableImage {
-    public AnimationImage(int width, int height) {
+    private Animation animation;
+    protected final int cycleCount;
+    protected final int width;
+    protected final int height;
+
+    public AnimationImage(int width, int height, int cycleCount) {
         super(width, height);
+        this.cycleCount = cycleCount;
+        this.width = width;
+        this.height = height;
+    }
+
+    public void play() {
+        if (animation == null) {
+            animation = new Animation(this);
+            animation.timeline.play();
+        }
+    }
+
+    public abstract int getFramesCount();
+
+    public abstract long getDuration(int index);
+
+    protected abstract void updateImage(int frameIndex);
+
+    private static final class Animation implements WritableValue<Integer> {
+        private final Timeline timeline = new Timeline();
+        private final WeakReference<AnimationImage> imageRef;
+
+        private Integer value;
+
+        private Animation(AnimationImage image) {
+            this.imageRef = new WeakReference<>(image);
+            timeline.setCycleCount(image.cycleCount);
+
+            long duration = 0;
+
+            int frames = image.getFramesCount();
+            for (int i = 0; i < frames; ++i) {
+                timeline.getKeyFrames().add(
+                        new KeyFrame(Duration.millis(duration),
+                                new KeyValue(this, i, Interpolator.DISCRETE)));
+
+                duration = duration + image.getDuration(i);
+            }
+
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(duration)));
+        }
+
+        @Override
+        public Integer getValue() {
+            return value;
+        }
+
+        @Override
+        public void setValue(Integer value) {
+            this.value = value;
+
+            AnimationImage image = imageRef.get();
+            if (image == null) {
+                timeline.stop();
+                return;
+            }
+            image.updateImage(value);
+        }
     }
 }

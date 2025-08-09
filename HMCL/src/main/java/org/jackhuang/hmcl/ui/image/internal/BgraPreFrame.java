@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.image.internal;
 
-public class BgraPreFrame extends BgraPreCanvas {
+import org.jackhuang.hmcl.ui.image.AnimationFrame;
+
+public class BgraPreFrame extends BgraPreCanvas implements AnimationFrame {
     final int xOffset;
     final int yOffset;
     final long duration;
@@ -36,5 +38,10 @@ public class BgraPreFrame extends BgraPreCanvas {
 
     public BgraPreFrame(BgraPreCanvas canvas, int width, int height, int xOffset, int yOffset, long duration) {
         this(canvas.getPixels(xOffset, yOffset, width, height), width, height, xOffset, yOffset, duration);
+    }
+
+    @Override
+    public long getDuration() {
+        return duration;
     }
 }

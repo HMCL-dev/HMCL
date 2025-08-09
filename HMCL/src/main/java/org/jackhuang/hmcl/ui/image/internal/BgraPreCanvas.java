@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.image.internal;
 
 import org.jackhuang.hmcl.util.ByteArray;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public class BgraPreCanvas {
@@ -80,6 +81,31 @@ public class BgraPreCanvas {
             System.arraycopy(this.pixels, sourceOffset, pixels, targetOffset, bytesForRow);
         }
         return pixels;
+    }
+
+    public void clear(int x, int y, int w, int h) {
+        Objects.checkFromIndexSize(x, w, width);
+        Objects.checkFromIndexSize(y, h, width);
+
+        final int bytesForRow = 4 * w;
+
+        for (int row = 0; row < h; row++) {
+            int targetIndex = 4 * ((y + row) * width + x);
+            Arrays.fill(pixels, targetIndex, targetIndex + bytesForRow, (byte) 0);
+        }
+    }
+
+    public void setBgraPre(int x, int y, BgraPreCanvas canvas) {
+        Objects.checkFromIndexSize(x, canvas.width, width);
+        Objects.checkFromIndexSize(y, canvas.height, width);
+
+        for (int row = 0; row < canvas.height; row++) {
+            for (int col = 0; col < canvas.width; col++) {
+                int sourceIndex = 4 * (row * canvas.width + col);
+                int targetIndex = 4 * ((row + y) * width + x + col);
+                ByteArray.setIntLE(pixels, targetIndex, ByteArray.getIntLE(canvas.pixels, sourceIndex));
+            }
+        }
     }
 
     public void setArgb(int x, int y, int argb) {
