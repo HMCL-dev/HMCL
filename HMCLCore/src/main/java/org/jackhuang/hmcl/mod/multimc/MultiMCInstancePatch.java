@@ -40,8 +40,10 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +56,8 @@ import java.util.stream.Collectors;
  */
 @Immutable
 public final class MultiMCInstancePatch {
+    public static final Library BOOTSTRAP_LIBRARY = new Library(new Artifact("org.jackhuang.hmcl", "mmc-boostrap", "1.0"));
+
     private final int formatVersion;
 
     @SerializedName("uid")
@@ -388,6 +392,17 @@ public final class MultiMCInstancePatch {
                     }
                 }
             }
+        }
+
+        {
+            libraries.add(0, BOOTSTRAP_LIBRARY);
+            jvmArguments.add(new StringArgument("-Dhmcl.mmc.bootstrap.main=" + Base64.getUrlEncoder().encodeToString(
+                    mainClass.getBytes(StandardCharsets.UTF_8)
+            )));
+            jvmArguments.add(new StringArgument("-Dhmcl.mmc.bootstrap.installer=" + Base64.getUrlEncoder().encodeToString(
+                    MultiMCComponents.getInstallerProfile().getBytes(StandardCharsets.UTF_8)
+            )));
+            mainClass = "org.jackhuang.hmcl.HMCLMultiMCBootstrap";
         }
 
         Version version = new Version(versionID)
