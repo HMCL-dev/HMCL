@@ -22,13 +22,13 @@ import javafx.animation.Timeline;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
-import org.jackhuang.hmcl.ui.image.apng.Png;
-import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888Bitmap;
-import org.jackhuang.hmcl.ui.image.apng.argb8888.Argb8888BitmapSequence;
+import org.jackhuang.hmcl.ui.image.apng.argb8888.*;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngAnimationControl;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
+import org.jackhuang.hmcl.ui.image.apng.reader.DefaultPngChunkReader;
+import org.jackhuang.hmcl.ui.image.apng.reader.PngReadHelper;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +41,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -78,57 +76,10 @@ public final class ImageUtils {
             return DEFAULT.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
 
         try {
-            var sequence = Png.readArgb8888BitmapSequence(input);
-
-            final int width = sequence.header.width;
-            final int height = sequence.header.height;
-
-            boolean doScale;
-            if (requestedWidth > 0 && requestedHeight > 0
-                    && (requestedWidth != width || requestedHeight != height)) {
-                doScale = true;
-
-                if (preserveRatio) {
-                    double scaleX = (double) requestedWidth / width;
-                    double scaleY = (double) requestedHeight / height;
-                    double scale = Math.min(scaleX, scaleY);
-
-                    requestedWidth = (int) (width * scale);
-                    requestedHeight = (int) (height * scale);
-                }
-            } else {
-                doScale = false;
-            }
-
-            if (sequence.isAnimated()) {
-                try {
-                    return toImage(sequence, doScale, requestedWidth, requestedHeight);
-                } catch (Throwable e) {
-                    LOG.warning("Failed to load animated image", e);
-                }
-            }
-
-            Argb8888Bitmap defaultImage = sequence.defaultImage;
-            int targetWidth;
-            int targetHeight;
-            int[] pixels;
-            if (doScale) {
-                targetWidth = requestedWidth;
-                targetHeight = requestedHeight;
-                pixels = scale(defaultImage.array,
-                        defaultImage.width, defaultImage.height,
-                        targetWidth, targetHeight);
-            } else {
-                targetWidth = defaultImage.width;
-                targetHeight = defaultImage.height;
-                pixels = defaultImage.array;
-            }
-
-            WritableImage image = new WritableImage(targetWidth, targetHeight);
-            image.getPixelWriter().setPixels(0, 0, targetWidth, targetHeight,
-                    PixelFormat.getIntArgbInstance(), pixels,
-                    0, targetWidth);
-            return image;
+            return PngReadHelper.read(input, new DefaultPngChunkReader<>(
+                    new Argb8888Processor<>(
+                            new BgraPreBitmapDirector(
+                                    requestedWidth, requestedHeight, preserveRatio, smooth))));
         } catch (PngException e) {
             throw new IOException(e);
         }

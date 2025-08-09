@@ -114,7 +114,7 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Image> {
 
     @Override
     public void receiveAnimationControl(PngAnimationControl control) {
-        this.animationControl = animationControl;
+        this.animationControl = control;
         this.animationFrames = new ArrayList<>(animationControl.numFrames);
     }
 
