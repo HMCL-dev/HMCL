@@ -871,9 +871,11 @@ public final class FXUtils {
                         int width = widthProperty.get();
                         int height = heightProperty.get();
 
-                        if (observable instanceof Property<?>
-                                && ((Property<?>) observable).getBean() == comboBox) {
+                        if (observable instanceof ReadOnlyProperty<?>
+                                && ((ReadOnlyProperty<?>) observable).getBean() == comboBox) {
                             String value = comboBox.valueProperty().get();
+                            if (value == null)
+                                value = "";
                             int idx = value.indexOf('x');
                             if (idx < 0)
                                 idx = value.indexOf('*');
@@ -951,6 +953,7 @@ public final class FXUtils {
     }
 
     public static void bindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
+        comboBox.setValue(widthProperty.get() + "x" + heightProperty.get());
         var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
         comboBox.focusedProperty().addListener(binding);
         comboBox.sceneProperty().addListener(binding);
