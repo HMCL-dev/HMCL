@@ -18,18 +18,11 @@
 package org.jackhuang.hmcl.ui.image;
 
 import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
-import javafx.animation.Timeline;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelFormat;
-import javafx.scene.image.WritableImage;
 import org.jackhuang.hmcl.ui.image.apng.argb8888.*;
-import org.jackhuang.hmcl.ui.image.apng.chunks.PngAnimationControl;
-import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
 import org.jackhuang.hmcl.ui.image.apng.error.PngException;
-import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.apng.reader.DefaultPngChunkReader;
 import org.jackhuang.hmcl.ui.image.apng.reader.PngReadHelper;
-import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jackhuang.hmcl.util.SwingFXUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,150 +204,6 @@ public final class ImageUtils {
         }
 
         return result;
-    }
-
-    private static Image toImage(Argb8888BitmapSequence sequence,
-                                 boolean doScale,
-                                 int targetWidth, int targetHeight) throws PngException {
-        final int width = sequence.header.width;
-        final int height = sequence.header.height;
-
-        List<Argb8888BitmapSequence.Frame> frames = sequence.getAnimationFrames();
-
-        var framePixels = new int[frames.size()][];
-        var durations = new int[framePixels.length];
-
-        int[] buffer = new int[Math.multiplyExact(width, height)];
-        for (int frameIndex = 0; frameIndex < frames.size(); frameIndex++) {
-            var frame = frames.get(frameIndex);
-            PngFrameControl control = frame.control;
-
-            if (frameIndex == 0 && (
-                    control.xOffset != 0 || control.yOffset != 0
-                            || control.width != width || control.height != height)) {
-                throw new PngIntegrityException("Invalid first frame: " + control);
-            }
-
-            if (control.xOffset < 0 || control.yOffset < 0
-                    || width < 0 || height < 0
-                    || control.xOffset + control.width > width
-                    || control.yOffset + control.height > height
-                    || control.delayNumerator < 0 || control.delayDenominator < 0
-            ) {
-                throw new PngIntegrityException("Invalid frame control: " + control);
-            }
-
-            int[] currentFrameBuffer = buffer.clone();
-            if (control.blendOp == 0) {
-                for (int row = 0; row < control.height; row++) {
-                    System.arraycopy(frame.bitmap.array,
-                            row * control.width,
-                            currentFrameBuffer,
-                            (control.yOffset + row) * width + control.xOffset,
-                            control.width);
-                }
-            } else if (control.blendOp == 1) {
-                // APNG_BLEND_OP_OVER - Alpha blending
-                for (int row = 0; row < control.height; row++) {
-                    for (int col = 0; col < control.width; col++) {
-                        int srcIndex = row * control.width + col;
-                        int dstIndex = (control.yOffset + row) * width + control.xOffset + col;
-
-                        int srcPixel = frame.bitmap.array[srcIndex];
-                        int dstPixel = currentFrameBuffer[dstIndex];
-
-                        int srcAlpha = (srcPixel >>> 24) & 0xFF;
-                        if (srcAlpha == 0) {
-                            continue;
-                        } else if (srcAlpha == 255) {
-                            currentFrameBuffer[dstIndex] = srcPixel;
-                        } else {
-                            int srcR = (srcPixel >>> 16) & 0xFF;
-                            int srcG = (srcPixel >>> 8) & 0xFF;
-                            int srcB = srcPixel & 0xFF;
-
-                            int dstAlpha = (dstPixel >>> 24) & 0xFF;
-                            int dstR = (dstPixel >>> 16) & 0xFF;
-                            int dstG = (dstPixel >>> 8) & 0xFF;
-                            int dstB = dstPixel & 0xFF;
-
-                            int invSrcAlpha = 255 - srcAlpha;
-
-                            int outAlpha = srcAlpha + (dstAlpha * invSrcAlpha + 127) / 255;
-                            int outR, outG, outB;
-
-                            if (outAlpha == 0) {
-                                outR = outG = outB = 0;
-                            } else {
-                                outR = (srcR * srcAlpha + dstR * dstAlpha * invSrcAlpha / 255 + outAlpha / 2) / outAlpha;
-                                outG = (srcG * srcAlpha + dstG * dstAlpha * invSrcAlpha / 255 + outAlpha / 2) / outAlpha;
-                                outB = (srcB * srcAlpha + dstB * dstAlpha * invSrcAlpha / 255 + outAlpha / 2) / outAlpha;
-                            }
-
-                            outAlpha = Math.min(outAlpha, 255);
-                            outR = Math.min(outR, 255);
-                            outG = Math.min(outG, 255);
-                            outB = Math.min(outB, 255);
-
-                            currentFrameBuffer[dstIndex] = (outAlpha << 24) | (outR << 16) | (outG << 8) | outB;
-                        }
-                    }
-                }
-            } else {
-                throw new PngIntegrityException("Unsupported blendOp " + control.blendOp + " at frame " + frameIndex);
-            }
-
-            if (doScale)
-                framePixels[frameIndex] = scale(currentFrameBuffer,
-                        width, height,
-                        targetWidth, targetHeight);
-            else
-                framePixels[frameIndex] = currentFrameBuffer;
-
-            if (control.delayNumerator == 0) {
-                durations[frameIndex] = 10;
-            } else {
-                int durationsMills = 1000 * control.delayNumerator;
-                if (control.delayDenominator == 0)
-                    durationsMills /= 100;
-                else
-                    durationsMills /= control.delayDenominator;
-
-                durations[frameIndex] = durationsMills;
-            }
-
-            switch (control.disposeOp) {
-                case 0:  // APNG_DISPOST_OP_NONE
-                    System.arraycopy(currentFrameBuffer, 0, buffer, 0, currentFrameBuffer.length);
-                    break;
-                case 1: // APNG_DISPOSE_OP_BACKGROUND
-                    for (int row = 0; row < control.height; row++) {
-                        int fromIndex = (control.yOffset + row) * width + control.xOffset;
-                        Arrays.fill(buffer, fromIndex, fromIndex + control.width, 0);
-                    }
-                    break;
-                case 2: // APNG_DISPOSE_OP_PREVIOUS
-                    // Do nothing, keep the previous frame.
-                    break;
-                default:
-                    throw new PngIntegrityException("Unsupported disposeOp " + control.disposeOp + " at frame " + frameIndex);
-            }
-        }
-
-        PngAnimationControl animationControl = sequence.getAnimationControl();
-        int cycleCount;
-        if (animationControl != null) {
-            cycleCount = animationControl.numPlays;
-            if (cycleCount == 0)
-                cycleCount = Timeline.INDEFINITE;
-        } else {
-            cycleCount = Timeline.INDEFINITE;
-        }
-
-        if (doScale)
-            return new AnimationImageImpl(targetWidth, targetHeight, framePixels, durations, cycleCount);
-        else
-            return new AnimationImageImpl(width, height, framePixels, durations, cycleCount);
     }
 
     private ImageUtils() {

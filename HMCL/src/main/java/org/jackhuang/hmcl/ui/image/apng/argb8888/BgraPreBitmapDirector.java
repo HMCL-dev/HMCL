@@ -178,6 +178,7 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Image> {
                 throw new PngIntegrityException("Unsupported disposeOp " + currentFrame.disposeOp);
         }
 
+        animationFrames.add(frame);
         currentFrame = null;
     }
 
