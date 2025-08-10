@@ -344,10 +344,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 {
                     nameField = new JFXTextField();
+                    nameField.textProperty().addListener(o -> updateList());
 
                     categoryField.getItems().addAll(VersionType.values());
                     categoryField.setConverter(stringConverter(type -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT))));
                     categoryField.getSelectionModel().select(0);
+                    categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
 
                     searchPane.addRow(rowIndex++,
                             new Label(i18n("version.name")), nameField,
@@ -362,10 +364,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
                     refreshButton.setOnAction(event -> control.onRefresh());
 
-                    JFXButton searchButton = FXUtils.newRaisedButton(i18n("search"));
-                    searchButton.setOnAction(event -> updateList());
-
-                    actionsBox.getChildren().setAll(refreshButton, searchButton);
+                    actionsBox.getChildren().setAll(refreshButton);
 
                     searchPane.addRow(rowIndex++, actionsBox);
                 }
