@@ -350,7 +350,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     categoryField.getSelectionModel().select(0);
 
                     searchPane.addRow(rowIndex++,
-                            new Label(i18n("version")), nameField,
+                            new Label(i18n("version.name")), nameField,
                             new Label(i18n("version.game.type")), categoryField);
                 }
 
