@@ -334,7 +334,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             column1.setHgrow(Priority.ALWAYS);
             ColumnConstraints column2 = new ColumnConstraints();
             column2.setHgrow(Priority.ALWAYS);
-            searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2);
+            ColumnConstraints column3 = new ColumnConstraints();
+            column2.setHgrow(Priority.ALWAYS);
+            searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2, column3);
 
             searchPane.setHgap(16);
             searchPane.setVgap(10);
@@ -351,23 +353,28 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     categoryField.getSelectionModel().select(0);
                     categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
 
-                    searchPane.addRow(rowIndex++,
-                            new Label(i18n("version.name")), nameField,
-                            new Label(i18n("version.game.type")), categoryField);
-                }
-
-                {
-                    HBox actionsBox = new HBox(8);
-                    GridPane.setColumnSpan(actionsBox, 4);
-                    actionsBox.setAlignment(Pos.CENTER_RIGHT);
-
                     JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
                     refreshButton.setOnAction(event -> control.onRefresh());
 
-                    actionsBox.getChildren().setAll(refreshButton);
-
-                    searchPane.addRow(rowIndex++, actionsBox);
+                    searchPane.addRow(rowIndex++,
+                            new Label(i18n("version.name")), nameField,
+                            new Label(i18n("version.game.type")), categoryField,
+                            refreshButton
+                    );
                 }
+
+//                {
+//                    HBox actionsBox = new HBox(8);
+//                    GridPane.setColumnSpan(actionsBox, 4);
+//                    actionsBox.setAlignment(Pos.CENTER_RIGHT);
+//
+//                    JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
+//                    refreshButton.setOnAction(event -> control.onRefresh());
+//
+//                    actionsBox.getChildren().setAll(refreshButton);
+//
+//                    searchPane.addRow(rowIndex++, actionsBox);
+//                }
             }
 
             {
