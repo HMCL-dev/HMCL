@@ -409,22 +409,23 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             }
 
             if (remoteVersion instanceof GameRemoteVersion) {
+                String wikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
                 switch (remoteVersion.getVersionType()) {
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
                         content.setImage(VersionIconType.GRASS.getIcon());
-                        content.setExternalLink(i18n("wiki.version.game.release", remoteVersion.getGameVersion()));
+                        content.setExternalLink(i18n("wiki.version.game", wikiSuffix));
                         break;
                     case PENDING:
                     case SNAPSHOT:
                         content.getTags().setAll(i18n("version.game.snapshot"));
                         content.setImage(VersionIconType.COMMAND.getIcon());
-                        content.setExternalLink(i18n("wiki.version.game.snapshot", remoteVersion.getGameVersion()));
+                        content.setExternalLink(i18n("wiki.version.game", wikiSuffix));
                         break;
                     default:
                         content.getTags().setAll(i18n("version.game.old"));
                         content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
-                        content.setExternalLink(null);
+                        content.setExternalLink(i18n("wiki.version.game", wikiSuffix));
                         break;
                 }
             } else {
@@ -451,6 +452,51 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     content.getTags().setAll(remoteVersion.getGameVersion());
                 content.setExternalLink(null);
             }
+        }
+
+        private String getWikiUrlSuffix(String gameVersion) {
+            String id = gameVersion.toLowerCase(Locale.ROOT);
+
+            switch (id) {
+                case "0.30-1":
+                case "0.30-2":
+                case "c0.30_01c":
+                    return i18n("wiki.version.game.search", "Classic_0.30");
+                case "in-20100206-2103":
+                    return i18n("wiki.version.game.search", "Indev_20100206");
+                case "inf-20100630-1":
+                    return i18n("wiki.version.game.search", "Infdev_20100630");
+                case "inf-20100630-2":
+                    return i18n("wiki.version.game.search", "Alpha_v1.0.0");
+                case "1.19_deep_dark_experimental_snapshot-1":
+                    return "1.19-exp1";
+                case "in-20100130":
+                    return i18n("wiki.version.game.search", "Indev_0.31_20100130");
+                case "b1.6-tb3":
+                    return i18n("wiki.version.game.search", "Beta_1.6_Test_Build_3");
+            }
+
+            if (id.startsWith("1.0.0-rc2")) return "RC2";
+            if (id.startsWith("2.0")) return i18n("wiki.version.game.search", "2.0");
+            if (id.startsWith("b1.8-pre1")) return "Beta_1.8-pre1";
+            if (id.startsWith("b1.1-")) return i18n("wiki.version.game.search", "Beta_1.1");
+            if (id.startsWith("a1.1.0")) return "Alpha_v1.1.0";
+            if (id.startsWith("a1.0.14")) return "Alpha_v1.0.14";
+            if (id.startsWith("a1.0.13_01")) return "Alpha_v1.0.13_01";
+            if (id.startsWith("in-20100214")) return i18n("wiki.version.game.search", "Indev_20100214");
+
+            if (id.contains("experimental-snapshot")) {
+                return id.replace("-experimental-snapshot", "-exp");
+            }
+
+            if (id.startsWith("inf-")) return id.replace("inf-", "Infdev_");
+            if (id.startsWith("in-")) return id.replace("in-", "Indev_");
+            if (id.startsWith("rd-")) return "pre-Classic_" + id;
+            if (id.startsWith("b")) return id.replace("b", "Beta_");
+            if (id.startsWith("a")) return id.replace("a", "Alpha_v");
+            if (id.startsWith("c")) return id.replace("c", "Classic_").replace("st", "SURVIVAL_TEST");
+
+            return id;
         }
     }
 }
