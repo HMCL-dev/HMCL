@@ -354,7 +354,7 @@ public class CacheRepository {
         }
 
         public int compareTo(ETagItem other) {
-            if (!url.equals(other.url))
+            if (!url.equals(other.url) && !NetworkUtils.toURI(url).equals(NetworkUtils.toURI(other.url)))
                 throw new IllegalArgumentException();
 
             ZonedDateTime thisTime = Lang.ignoringException(() -> ZonedDateTime.parse(remoteLastModified, DateTimeFormatter.RFC_1123_DATE_TIME), null);
