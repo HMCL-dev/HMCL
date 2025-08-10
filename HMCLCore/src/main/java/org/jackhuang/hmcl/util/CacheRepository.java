@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
