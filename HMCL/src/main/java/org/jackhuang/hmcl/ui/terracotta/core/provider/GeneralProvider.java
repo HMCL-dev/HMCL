@@ -1,49 +1,40 @@
 package org.jackhuang.hmcl.ui.terracotta.core.provider;
 
 import javafx.beans.property.DoubleProperty;
-import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.terracotta.core.TerracottaDaemon;
 import org.jackhuang.hmcl.ui.terracotta.core.TerracottaMetadata;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.net.URI;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public final class GeneralProvider implements ITerracottaProvider {
-    public static final List<URI> TARGET = Map.of(
+    public static final TerracottaDaemon TARGET = Map.of(
             Platform.WINDOWS_X86_64, TerracottaMetadata.WINDOWS_X86_64,
             Platform.WINDOWS_ARM64, TerracottaMetadata.WINDOWS_ARM64,
             Platform.LINUX_X86_64, TerracottaMetadata.LINUX_X86_64,
             Platform.LINUX_ARM64, TerracottaMetadata.LINUX_ARM64
     ).get(Platform.SYSTEM_PLATFORM);
 
-    private static final Path PATH = TARGET != null ? Metadata.DEPENDENCIES_DIRECTORY.resolve(String.format(
-            "terracota/%s/%s", TerracottaMetadata.VERSION, TerracottaMetadata.getFileName(TARGET.get(0))
-    )).toAbsolutePath() : null;
-
     @Override
-    public boolean exist() {
-        return Files.exists(PATH);
+    public boolean exists() throws IOException {
+        return TARGET.exists();
     }
 
     @Override
     public Task<?> install(DoubleProperty progress) {
-        Path tmp = PATH.resolveSibling(PATH.getFileName() + ".tmp");
-
-        Task<?> task = new FileDownloadTask(TARGET, tmp);
+        Task<?> task = TARGET.create();
         progress.bind(task.progressProperty());
-        task = task.thenRunAsync(() -> Files.move(tmp, PATH, StandardCopyOption.REPLACE_EXISTING));
 
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-            task = task.thenRunAsync(() -> Files.setPosixFilePermissions(PATH, Set.of(
+            task = task.thenRunAsync(() -> Files.setPosixFilePermissions(TARGET.getPath(), Set.of(
                     PosixFilePermission.OWNER_READ,
                     PosixFilePermission.OWNER_WRITE,
                     PosixFilePermission.OWNER_EXECUTE,
@@ -58,6 +49,6 @@ public final class GeneralProvider implements ITerracottaProvider {
 
     @Override
     public List<String> launch(Path path) {
-        return List.of(PATH.toString(), "--hmcl", path.toString());
+        return List.of(TARGET.getPath().toString(), "--hmcl", path.toString());
     }
 }

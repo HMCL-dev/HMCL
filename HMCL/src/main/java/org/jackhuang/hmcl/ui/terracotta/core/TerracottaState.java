@@ -6,6 +6,13 @@ public abstract class TerracottaState {
     protected TerracottaState() {
     }
 
+    public static final class Bootstrap extends TerracottaState {
+        static final Bootstrap INSTANCE = new Bootstrap();
+
+        private Bootstrap() {
+        }
+    }
+
     public static final class Uninitialized extends TerracottaState {
         static final Uninitialized INSTANCE = new Uninitialized();
 

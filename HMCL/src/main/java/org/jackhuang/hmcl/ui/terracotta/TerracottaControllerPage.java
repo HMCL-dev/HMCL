@@ -91,7 +91,11 @@ public class TerracottaControllerPage extends StackPane {
         holder.add(FXUtils.onWeakChangeAndOperate(UI_STATE, state -> {
             progressProperty.unbind();
 
-            if (state instanceof TerracottaState.Uninitialized) {
+            if (state instanceof TerracottaState.Bootstrap) {
+                statusProperty.set(i18n("terracotta.status.bootstrap"));
+                progressProperty.set(-1);
+                nodesProperty.setAll();
+            } else if (state instanceof TerracottaState.Uninitialized) {
                 statusProperty.set(i18n("terracotta.status.uninitialized"));
                 progressProperty.set(0);
 

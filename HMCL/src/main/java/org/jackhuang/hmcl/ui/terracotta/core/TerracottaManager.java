@@ -30,23 +30,28 @@ public final class TerracottaManager {
     private TerracottaManager() {
     }
 
-    private static final AtomicReference<TerracottaState> STATE_V = new AtomicReference<>();
-
-    static {
-        if (TerracottaMetadata.PROVIDER == null) {
-            STATE_V.setPlain(TerracottaState.Fatal.INSTANCE);
-        } else if (TerracottaMetadata.PROVIDER.exist()) {
-            TerracottaState.Launching launching = new TerracottaState.Launching();
-            STATE_V.setPlain(launching);
-
-            launch(launching);
-        } else {
-            STATE_V.setPlain(TerracottaState.Uninitialized.INSTANCE);
-        }
-    }
-
+    private static final AtomicReference<TerracottaState> STATE_V = new AtomicReference<>(TerracottaState.Bootstrap.INSTANCE);
     private static final ReadOnlyObjectWrapper<TerracottaState> STATE = new ReadOnlyObjectWrapper<>(STATE_V.getPlain());
     private static final InvocationDispatcher<TerracottaState> STATE_D = InvocationDispatcher.runOn(Platform::runLater, STATE::set);
+
+    static {
+        Task.runAsync(() -> {
+            if (TerracottaMetadata.PROVIDER == null) {
+                setState(TerracottaState.Fatal.INSTANCE);
+                LOG.warning("Terracotta hasn't support your OS: " + org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM);
+            } else if (TerracottaMetadata.PROVIDER.exists()) {
+                TerracottaState.Launching launching = new TerracottaState.Launching();
+                setState(launching);
+                launch(launching);
+            } else {
+                setState(TerracottaState.Uninitialized.INSTANCE);
+            }
+        }).whenComplete(exception -> {
+            if (exception != null) {
+                compareAndSet(TerracottaState.Bootstrap.INSTANCE, TerracottaState.Fatal.INSTANCE);
+            }
+        }).start();
+    }
 
     public static ReadOnlyObjectProperty<TerracottaState> stateProperty() {
         return STATE.getReadOnlyProperty();
