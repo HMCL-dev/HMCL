@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -47,6 +48,13 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
+
+    private static <R extends HttpRequest> R withApiKey(R request) {
+        if (request.getUrl().startsWith(PREFIX) && !apiKey.isEmpty()) {
+            request.header("X-API-KEY", apiKey);
+        }
+        return request;
+    }
 
     public static boolean isAvailable() {
         return !apiKey.isEmpty();
@@ -106,24 +114,23 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         if (category != null && category.getSelf() instanceof CurseAddon.Category) {
             categoryId = ((CurseAddon.Category) category.getSelf()).getId();
         }
-        Response<List<CurseAddon>> response = HttpRequest.GET(downloadProvider.injectURL(PREFIX + "/v1/mods/search"),
-                        pair("gameId", "432"),
-                        pair("classId", Integer.toString(section)),
-                        pair("categoryId", Integer.toString(categoryId)),
-                        pair("gameVersion", gameVersion),
-                        pair("searchFilter", searchFilter),
-                        pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
-                        pair("sortOrder", toSortOrder(sortOrder)),
-                        pair("index", Integer.toString(pageOffset * pageSize)),
-                        pair("pageSize", Integer.toString(pageSize)))
-                .header("X-API-KEY", apiKey)
+        Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", mapOf(
+                pair("gameId", "432"),
+                pair("classId", Integer.toString(section)),
+                pair("categoryId", Integer.toString(categoryId)),
+                pair("gameVersion", gameVersion),
+                pair("searchFilter", searchFilter),
+                pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
+                pair("sortOrder", toSortOrder(sortOrder)),
+                pair("index", Integer.toString(pageOffset * pageSize)),
+                pair("pageSize", Integer.toString(pageSize)))))))
                 .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
         if (searchFilter.isEmpty()) {
             return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
         }
 
         // https://github.com/HMCL-dev/HMCL/issues/1549
-        String lowerCaseSearchFilter = searchFilter.toLowerCase();
+        String lowerCaseSearchFilter = searchFilter.toLowerCase(Locale.ROOT);
         Map<String, Integer> searchFilterWords = new HashMap<>();
         for (String s : StringUtils.tokenize(lowerCaseSearchFilter)) {
             searchFilterWords.put(s, searchFilterWords.getOrDefault(s, 0) + 1);
@@ -163,9 +170,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
 
-        Response<FingerprintMatchesResult> response = HttpRequest.POST(PREFIX + "/v1/fingerprints/432")
+        Response<FingerprintMatchesResult> response = withApiKey(HttpRequest.POST(PREFIX + "/v1/fingerprints/432"))
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
-                .header("X-API-KEY", apiKey)
                 .getJson(Response.typeOf(FingerprintMatchesResult.class));
 
         if (response.getData().getExactMatches() == null || response.getData().getExactMatches().isEmpty()) {
@@ -177,32 +183,28 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public RemoteMod getModById(String id) throws IOException {
-        Response<CurseAddon> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id)
-                .header("X-API-KEY", apiKey)
+        Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                 .getJson(Response.typeOf(CurseAddon.class));
         return response.data.toMod();
     }
 
     @Override
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
-        Response<CurseAddon.LatestFile> response = HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId))
-                .header("X-API-KEY", apiKey)
+        Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId)))
                 .getJson(Response.typeOf(CurseAddon.LatestFile.class));
         return response.getData().toVersion().getFile();
     }
 
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-        Response<List<CurseAddon.LatestFile>> response = HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
-                        pair("pageSize", "10000"))
-                .header("X-API-KEY", apiKey)
+        Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
+                pair("pageSize", "10000")))
                 .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
         return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
     }
 
     public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
-        Response<List<CurseAddon.Category>> categories = HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432"))
-                .header("X-API-KEY", apiKey)
+        Response<List<CurseAddon.Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
                 .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
         return reorganizeCategories(categories.getData(), section);
     }
