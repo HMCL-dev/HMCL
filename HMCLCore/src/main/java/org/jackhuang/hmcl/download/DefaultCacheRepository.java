@@ -71,7 +71,7 @@ public class DefaultCacheRepository extends CacheRepository {
             } else {
                 index = new Index();
             }
-        } catch (IOException | JsonParseException e) {
+        } catch (Exception e) {
             LOG.warning("Unable to read index file", e);
             index = new Index();
         } finally {
