@@ -51,8 +51,8 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.ui.terracotta.core.TerracottaManager;
-import org.jackhuang.hmcl.ui.terracotta.core.TerracottaState;
+import org.jackhuang.hmcl.terracotta.TerracottaManager;
+import org.jackhuang.hmcl.terracotta.TerracottaState;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.AggregatedObservableList;
 

@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.ui.terracotta.core;
+package org.jackhuang.hmcl.terracotta;
 
 import javafx.beans.property.ReadOnlyDoubleProperty;
 

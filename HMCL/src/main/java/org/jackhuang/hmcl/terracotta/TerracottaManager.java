@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.ui.terracotta.core;
+package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;

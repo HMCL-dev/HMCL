@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.ui.terracotta.core;
+package org.jackhuang.hmcl.terracotta;
 
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.FileDownloadTask;

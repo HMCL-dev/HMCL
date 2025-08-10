@@ -1,9 +1,10 @@
-package org.jackhuang.hmcl.ui.terracotta.core;
+package org.jackhuang.hmcl.terracotta;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.ui.terracotta.core.provider.GeneralProvider;
-import org.jackhuang.hmcl.ui.terracotta.core.provider.ITerracottaProvider;
-import org.jackhuang.hmcl.ui.terracotta.core.provider.MacOSProvider;
+import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
+import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
+import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.net.URI;
 import java.util.List;
@@ -13,34 +14,35 @@ public final class TerracottaMetadata {
     }
 
     public static final TerracottaDaemon WINDOWS_X86_64 = create(
-            "windows-x86_64.exe", "b1badefb1e503d4e9b886edab1bf3fb6b1ff75763b29a06fe7cc2f2343610d02"
+            "windows-x86_64.exe", "sha256:ac2ea92629b6ff524df94a610d9c2835f289d28bd55fdd78def461261ddf71e1"
     );
     public static final TerracottaDaemon WINDOWS_ARM64 = create(
-            "windows-arm64.exe", "05f376bcf3a8317a36fd51b6335ad8e6821af03af78a90cc1b0ff91771e095f3"
+            "windows-arm64.exe", "sha256:e96d450e15523b8f248f2935630f39ef88afcc731449cd2ce5a4114cb6476120"
     );
 
     public static final TerracottaDaemon LINUX_X86_64 = create(
-            "linux-x86_64", "ca197ab3780834a58e51d17fa57157f82486bc6b22bf57242eca169c6e408ede"
+            "linux-x86_64", "sha256:2bdad0df5e16e3cccdb7c6d43ac342b7175d51c157b6c7637e2092c1e93f4ba9"
     );
     public static final TerracottaDaemon LINUX_ARM64 = create(
-            "linux-arm64", "85949ef696668f0a6c08944c998342bc1bbad62f112d6c2663acc2a0cc3e1b3c"
+            "linux-arm64", "sha256:1c74ac50392431fd1cc56407d86aa16f29e842ce0c7ecaf599c7b5059c3ccee2"
     );
 
     public static final TerracottaDaemon MACOS_INSTALLER_X86_64 = create(
-            "macos-x86_64.pkg", "e46c71f0c446f9ba0bd67f7216b64bad811417a00e54d4841eb1c71e7f70f189"
+            "macos-x86_64.pkg", "sha256:814b054fcea6604cb119a25f7704905d40e522874724cf77abf266de64472f5d"
     );
     public static final TerracottaDaemon MACOS_INSTALLER_ARM64 = create(
-            "macos-arm64.pkg", "223ab9964c05867bd76fd66b0bc9dde18f3c2958356c9c15be8205dcb7bdee00"
+            "macos-arm64.pkg", "sha256:07a80444aeace22c3b1f4c914907bd34b758a3b861d8252f503cc8d49135e71f"
     );
     public static final TerracottaDaemon MACOS_BIN_X86_64 = create(
-            "macos-x86_64", "49b4813538e1c6c495d69760a289bd8d4bd3a7ef51cc4a7db7a6a33f45846440");
+            "macos-x86_64", "sha256:4ca91c55ecb2e3090fd23ec7e3920dd150c4916b1d1792b9504ff868a81d0fb5");
     public static final TerracottaDaemon MACOS_BIN_ARM64 = create(
-            "macos-arm64", "9e4da85595301fec392a4efa7aff44f05c3c81666d99a0c9df5d1c368617dfff"
+            "macos-arm64", "sha256:36257716f6c7c2f86097fe59f2ac009fa68ad6dcfdd65a56fda62025836a12c1"
     );
 
-    public static final String VERSION = "0.3.8-rc.1";
+    public static final String VERSION = "0.3.8-rc.2";
 
     private static TerracottaDaemon create(String classifier, String hash) {
+        hash = StringUtils.removePrefix(hash, "sha256:");
         String link = String.format("https://github.com/burningtnt/Terracotta/releases/download/V%1$s/terracotta-%1$s-%2$s", VERSION, classifier);
 
         return new TerracottaDaemon(

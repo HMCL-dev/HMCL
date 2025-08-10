@@ -1,9 +1,9 @@
-package org.jackhuang.hmcl.ui.terracotta.core.provider;
+package org.jackhuang.hmcl.terracotta.provider;
 
 import javafx.beans.property.DoubleProperty;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.terracotta.core.TerracottaDaemon;
-import org.jackhuang.hmcl.ui.terracotta.core.TerracottaMetadata;
+import org.jackhuang.hmcl.terracotta.TerracottaDaemon;
+import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 

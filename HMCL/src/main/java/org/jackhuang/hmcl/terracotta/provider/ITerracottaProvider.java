@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.ui.terracotta.core.provider;
+package org.jackhuang.hmcl.terracotta.provider;
 
 import javafx.beans.property.DoubleProperty;
 import org.jackhuang.hmcl.task.Task;
