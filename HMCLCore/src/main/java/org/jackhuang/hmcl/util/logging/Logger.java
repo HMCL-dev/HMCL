@@ -279,7 +279,7 @@ public final class Logger {
             log(Level.WARNING, CLASS_NAME + ".findRecentLogFiles", "Failed to list log files in " + logDir, e);
             return List.of();
         }
-        logFiles.sort(null);
+        logFiles.sort(Comparator.naturalOrder());
 
         final int resultLength = Math.min(n, logFiles.size());
         final int offset = logFiles.size() - resultLength;
