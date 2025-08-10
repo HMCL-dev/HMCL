@@ -75,7 +75,7 @@ public class CacheRepository {
                 index = new LinkedHashMap<>();
                 indexFileLastModified = null;
             }
-        } catch (IOException | JsonParseException e) {
+        } catch (Exception e) {
             LOG.warning("Unable to read index file", e);
             index = new LinkedHashMap<>();
             indexFileLastModified = null;
