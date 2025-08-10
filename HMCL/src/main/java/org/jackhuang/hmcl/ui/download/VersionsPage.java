@@ -456,7 +456,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
 
         private String getWikiUrlSuffix(String gameVersion) {
             String id = gameVersion.toLowerCase(Locale.ROOT);
-            
+
             switch (id) {
                 case "0.30-1":
                 case "0.30-2":
