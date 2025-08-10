@@ -126,8 +126,6 @@ public final class SettingsPage extends SettingsView {
 
     @Override
     protected void onExportLogs() {
-        // We cannot determine which file is JUL using.
-        // So we write all the logs to a new file.
         thread(() -> {
             String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
