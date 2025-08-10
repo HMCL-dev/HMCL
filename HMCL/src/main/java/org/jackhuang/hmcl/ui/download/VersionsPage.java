@@ -474,6 +474,30 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
                     return i18n("wiki.version.game.search", "Indev_0.31_20100130");
                 case "b1.6-tb3":
                     return i18n("wiki.version.game.search", "Beta_1.6_Test_Build_3");
+                case "1.14_combat-212796":
+                    return i18n("wiki.version.game.search", "1.14.3_-_Combat_Test");
+                case "1.14_combat-0":
+                    return i18n("wiki.version.game.search", "Combat_Test_2");
+                case "1.14_combat-3":
+                    return i18n("wiki.version.game.search", "Combat_Test_3");
+                case "1_15_combat-1":
+                    return i18n("wiki.version.game.search", "Combat_Test_4");
+                case "1_15_combat-6":
+                    return i18n("wiki.version.game.search", "Combat_Test_5");
+                case "1_16_combat-0":
+                    return i18n("wiki.version.game.search", "Combat_Test_6");
+                case "1_16_combat-1":
+                    return i18n("wiki.version.game.search", "Combat_Test_7");
+                case "1_16_combat-2":
+                    return i18n("wiki.version.game.search", "Combat_Test_7b");
+                case "1_16_combat-3":
+                    return i18n("wiki.version.game.search", "Combat_Test_7c");
+                case "1_16_combat-4":
+                    return i18n("wiki.version.game.search", "Combat_Test_8");
+                case "1_16_combat-5":
+                    return i18n("wiki.version.game.search", "Combat_Test_8b");
+                case "1_16_combat-6":
+                    return i18n("wiki.version.game.search", "Combat_Test_8c");
             }
 
             if (id.startsWith("1.0.0-rc2")) return "RC2";
@@ -486,7 +510,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             if (id.startsWith("in-20100214")) return i18n("wiki.version.game.search", "Indev_20100214");
 
             if (id.contains("experimental-snapshot")) {
-                return id.replace("-experimental-snapshot", "-exp");
+                return id.replace("_experimental-snapshot-", "-exp");
             }
 
             if (id.startsWith("inf-")) return id.replace("inf-", "Infdev_");
@@ -496,7 +520,7 @@ public final class VersionsPage extends BorderPane implements WizardPage, Refres
             if (id.startsWith("a")) return id.replace("a", "Alpha_v");
             if (id.startsWith("c")) return id.replace("c", "Classic_").replace("st", "SURVIVAL_TEST");
 
-            return id;
+            return i18n("wiki.version.game.search", id);
         }
     }
 }
