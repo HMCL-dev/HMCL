@@ -24,7 +24,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -336,6 +335,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             column2.setHgrow(Priority.ALWAYS);
             ColumnConstraints column3 = new ColumnConstraints();
             column2.setHgrow(Priority.ALWAYS);
+            column2.setMaxWidth(150);
             searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2, column3);
 
             searchPane.setHgap(16);
@@ -346,6 +346,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 {
                     nameField = new JFXTextField();
+                    nameField.setPromptText(i18n("version.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 
                     categoryField.getItems().addAll(VersionType.values());
@@ -357,7 +358,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     refreshButton.setOnAction(event -> control.onRefresh());
 
                     searchPane.addRow(rowIndex++,
-                            new Label(i18n("version.name")), nameField,
+                            new Label(i18n("version.search")), nameField,
                             new Label(i18n("version.game.type")), categoryField,
                             refreshButton
                     );
