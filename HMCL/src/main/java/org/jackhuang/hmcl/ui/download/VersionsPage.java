@@ -331,10 +331,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             ColumnConstraints column1 = new ColumnConstraints();
             column1.setHgrow(Priority.ALWAYS);
             ColumnConstraints column2 = new ColumnConstraints();
-            column2.setHgrow(Priority.ALWAYS);
             column2.setMaxWidth(150);
             ColumnConstraints column3 = new ColumnConstraints();
-            column3.setHgrow(Priority.ALWAYS);
             searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2, column3);
 
             searchPane.setHgap(16);
