@@ -42,10 +42,18 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -56,21 +64,28 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.download.VersionsPage;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MainPage extends StackPane implements DecoratorPage {
     private static final String ANNOUNCEMENT = "announcement";
@@ -329,6 +344,38 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void launchNoGame() {
+        DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
+        VersionList<?> versionList = downloadProvider.getVersionListById("game");
+
+        Holder<String> gameVersionHolder = new Holder<>();
+        Task<?> task = versionList.refreshAsync("")
+                .thenSupplyAsync(() -> versionList.getVersions("").stream()
+                        .filter(it -> it.getVersionType() == RELEASE)
+                        .sorted()
+                        .findFirst()
+                        .orElseThrow(() -> new IOException("No versions found")))
+                .thenComposeAsync(version -> {
+                    Profile profile = Profiles.getSelectedProfile();
+                    DefaultDependencyManager dependency = profile.getDependency();
+                    String gameVersion = gameVersionHolder.value = version.getGameVersion();
+
+                    return dependency.gameBuilder()
+                            .name(gameVersion)
+                            .gameVersion(gameVersion)
+                            .buildAsync();
+                })
+                .whenComplete(any -> profile.getRepository().refreshVersions())
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        profile.setSelectedVersion(gameVersionHolder.value);
+                        launch();
+                    } else {
+                        LOG.warning("Failed to install game", exception);
+                        // TODO
+                    }
+                });
+        Controllers.taskDialog(task, "正在安装游戏", null); // TODO
+
         // TODO
     }
 
