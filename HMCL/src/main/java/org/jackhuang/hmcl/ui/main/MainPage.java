@@ -44,9 +44,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
@@ -64,7 +62,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.download.VersionsPage;
 import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
@@ -73,12 +70,10 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
@@ -240,7 +235,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
                 FXUtils.onChangeAndOperate(currentGameProperty(), currentGame -> {
                     if (currentGame == null) {
-                        launchLabel.setText(i18n("version.empty.download"));
+                        launchLabel.setText(i18n("version.launch.empty"));
                         currentLabel.setText(null);
                         graphic.getChildren().setAll(launchLabel);
                         launchButton.setOnAction(e -> launchNoGame());
