@@ -168,7 +168,7 @@ public class DefaultLauncher extends Launcher {
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
-                res.addDefault("-Duser.home=", options.getGameDir().getParent());
+                res.addDefault("-Duser.home=", options.getGameDir().getAbsoluteFile().getParent());
 
             Proxy.Type proxyType = options.getProxyType();
             if (proxyType == null) {
