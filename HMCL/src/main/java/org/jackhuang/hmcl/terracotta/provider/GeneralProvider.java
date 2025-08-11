@@ -2,7 +2,7 @@ package org.jackhuang.hmcl.terracotta.provider;
 
 import javafx.beans.property.DoubleProperty;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.terracotta.TerracottaDaemon;
+import org.jackhuang.hmcl.terracotta.TerracottaConfig;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class GeneralProvider implements ITerracottaProvider {
-    public static final TerracottaDaemon TARGET = Map.of(
+    public static final TerracottaConfig TARGET = Map.of(
             Platform.WINDOWS_X86_64, TerracottaMetadata.WINDOWS_X86_64,
             Platform.WINDOWS_ARM64, TerracottaMetadata.WINDOWS_ARM64,
             Platform.LINUX_X86_64, TerracottaMetadata.LINUX_X86_64,
@@ -24,8 +24,8 @@ public final class GeneralProvider implements ITerracottaProvider {
     ).get(Platform.SYSTEM_PLATFORM);
 
     @Override
-    public boolean exists() throws IOException {
-        return TARGET.exists();
+    public Status status() throws IOException {
+        return TARGET.status();
     }
 
     @Override

@@ -39,12 +39,22 @@ public final class TerracottaManager {
             if (TerracottaMetadata.PROVIDER == null) {
                 setState(TerracottaState.Fatal.INSTANCE);
                 LOG.warning("Terracotta hasn't support your OS: " + org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM);
-            } else if (TerracottaMetadata.PROVIDER.exists()) {
-                TerracottaState.Launching launching = new TerracottaState.Launching();
-                setState(launching);
-                launch(launching);
             } else {
-                setState(TerracottaState.Uninitialized.INSTANCE);
+                switch (TerracottaMetadata.PROVIDER.status()) {
+                    case NOT_EXIST: {
+                        setState(new TerracottaState.Uninitialized(false));
+                        break;
+                    }
+                    case LEGACY_VERSION: {
+                        setState(new TerracottaState.Uninitialized(true));
+                        break;
+                    }
+                    case READY: {
+                        TerracottaState.Launching launching = new TerracottaState.Launching();
+                        setState(launching);
+                        launch(launching);
+                    }
+                }
             }
         }).whenComplete(exception -> {
             if (exception != null) {
@@ -171,6 +181,7 @@ public final class TerracottaManager {
             process.pumpErrorStream(SystemUtils::onLogLine);
 
             Task.supplyAsync(() -> {
+                long exitTime = -1;
                 while (true) {
                     if (Files.exists(path)) {
                         JsonObject object = JsonUtils.fromNonNullJson(Files.readString(path), JsonObject.class);
@@ -178,7 +189,11 @@ public final class TerracottaManager {
                     }
 
                     if (!process.isRunning()) {
-                        throw new IllegalStateException("Process has exited.");
+                        if (exitTime == -1) {
+                            exitTime = System.currentTimeMillis();
+                        } else if (System.currentTimeMillis() - exitTime >= 10000) {
+                            throw new IllegalStateException("Process has exited for 10s.");
+                        }
                     }
                 }
             }).whenComplete(Schedulers.javafx(), (port, exception) -> {

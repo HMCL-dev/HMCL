@@ -96,7 +96,9 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(-1);
                 nodesProperty.setAll();
             } else if (state instanceof TerracottaState.Uninitialized) {
-                statusProperty.set(i18n("terracotta.status.uninitialized"));
+                String fork = ((TerracottaState.Uninitialized) state).hasLegacy() ? "update" : "not_exist";
+
+                statusProperty.set(i18n("terracotta.status.uninitialized." + fork));
                 progressProperty.set(0);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.network_warning"), Controllers::onHyperlinkAction);
@@ -104,17 +106,24 @@ public class TerracottaControllerPage extends StackPane {
 
                 LineButton start = new LineButton();
                 start.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-                start.setTitle(i18n("terracotta.status.uninitialized.title"));
+                start.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
                 start.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 start.setRightIcon(SVG.ARROW_FORWARD);
                 start.setOnMouseClicked(ev -> {
-                    Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
+                    if (((TerracottaState.Uninitialized) state).hasLegacy()) {
                         TerracottaState.Preparing s = TerracottaManager.initialize();
                         if (s != null) {
                             UI_STATE.set(s);
                         }
-                    }, () -> {
-                    });
+                    } else {
+                        Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
+                            TerracottaState.Preparing s = TerracottaManager.initialize();
+                            if (s != null) {
+                                UI_STATE.set(s);
+                            }
+                        }, () -> {
+                        });
+                    }
                 });
 
                 nodesProperty.setAll(body, start);

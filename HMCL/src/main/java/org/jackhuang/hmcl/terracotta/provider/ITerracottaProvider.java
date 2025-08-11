@@ -8,7 +8,13 @@ import java.nio.file.Path;
 import java.util.List;
 
 public interface ITerracottaProvider {
-    boolean exists() throws IOException;
+    enum Status {
+        NOT_EXIST,
+        LEGACY_VERSION,
+        READY
+    }
+
+    Status status() throws IOException;
 
     Task<?> install(DoubleProperty progress) throws IOException;
 

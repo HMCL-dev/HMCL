@@ -2,7 +2,7 @@ package org.jackhuang.hmcl.terracotta.provider;
 
 import javafx.beans.property.DoubleProperty;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.terracotta.TerracottaDaemon;
+import org.jackhuang.hmcl.terracotta.TerracottaConfig;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
@@ -18,7 +18,7 @@ import java.util.Set;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MacOSProvider implements ITerracottaProvider {
-    public static final TerracottaDaemon INSTALLER, BINARY;
+    public static final TerracottaConfig INSTALLER, BINARY;
 
     static {
         if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
@@ -34,10 +34,14 @@ public final class MacOSProvider implements ITerracottaProvider {
     }
 
     @Override
-    public boolean exists() throws IOException {
+    public Status status() throws IOException {
         assert BINARY != null;
 
-        return Files.exists(Path.of("/Applications/terracotta.app")) && BINARY.exists();
+        if (!Files.exists(Path.of("/Applications/terracotta.app"))) {
+            return Status.NOT_EXIST;
+        }
+
+        return BINARY.status();
     }
 
     @Override

@@ -1,0 +1,19 @@
+{
+  "legacy": ["0.3.8-rc.1"],
+  "version": "0.3.8-rc.2",
+  "classifiers": {
+    "windows-x86_64.exe": "sha256:ac2ea92629b6ff524df94a610d9c2835f289d28bd55fdd78def461261ddf71e1",
+    "windows-arm64.exe": "sha256:e96d450e15523b8f248f2935630f39ef88afcc731449cd2ce5a4114cb6476120",
+    "linux-x86_64": "sha256:2bdad0df5e16e3cccdb7c6d43ac342b7175d51c157b6c7637e2092c1e93f4ba9",
+    "linux-arm64": "sha256:1c74ac50392431fd1cc56407d86aa16f29e842ce0c7ecaf599c7b5059c3ccee2",
+    "macos-x86_64.pkg": "sha256:814b054fcea6604cb119a25f7704905d40e522874724cf77abf266de64472f5d",
+    "macos-arm64.pkg": "sha256:07a80444aeace22c3b1f4c914907bd34b758a3b861d8252f503cc8d49135e71f",
+    "macos-x86_64": "sha256:4ca91c55ecb2e3090fd23ec7e3920dd150c4916b1d1792b9504ff868a81d0fb5",
+    "macos-arm64": "sha256:36257716f6c7c2f86097fe59f2ac009fa68ad6dcfdd65a56fda62025836a12c1"
+  },
+  "downloads": [
+    "https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
+    "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
+    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}"
+  ]
+}

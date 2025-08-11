@@ -14,9 +14,14 @@ public abstract class TerracottaState {
     }
 
     public static final class Uninitialized extends TerracottaState {
-        static final Uninitialized INSTANCE = new Uninitialized();
+        private final boolean hasLegacy;
 
-        private Uninitialized() {
+        Uninitialized(boolean hasLegacy) {
+            this.hasLegacy = hasLegacy;
+        }
+
+        public boolean hasLegacy() {
+            return hasLegacy;
         }
     }
 
