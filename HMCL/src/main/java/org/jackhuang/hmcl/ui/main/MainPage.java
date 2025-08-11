@@ -219,18 +219,22 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 graphic.setAlignment(Pos.CENTER);
                 graphic.setTranslateX(-7);
                 graphic.setMaxWidth(200);
-                Label launchLabel = new Label(i18n("version.launch"));
+                Label launchLabel = new Label();
                 launchLabel.setStyle("-fx-font-size: 16px;");
                 Label currentLabel = new Label();
                 currentLabel.setStyle("-fx-font-size: 12px;");
-                currentLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    if (getCurrentGame() == null) {
-                        return i18n("version.empty");
+
+                FXUtils.onChangeAndOperate(currentGameProperty(), currentGame -> {
+                    if (currentGame == null) {
+                        launchLabel.setText(i18n("version.empty.download"));
+                        currentLabel.setText(null);
+                        graphic.getChildren().setAll(launchLabel);
                     } else {
-                        return getCurrentGame();
+                        launchLabel.setText(i18n("version.launch"));
+                        currentLabel.setText(currentGame);
+                        graphic.getChildren().setAll(launchLabel, currentLabel);
                     }
-                }, currentGameProperty()));
-                graphic.getChildren().setAll(launchLabel, currentLabel);
+                });
 
                 launchButton.setGraphic(graphic);
             }
