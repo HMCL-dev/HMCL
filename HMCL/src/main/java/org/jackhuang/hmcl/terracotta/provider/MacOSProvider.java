@@ -79,7 +79,7 @@ public final class MacOSProvider implements ITerracottaProvider {
             ));
         });
 
-        return Task.allOf(installerTask, binaryTask);
+        return Task.allOf(installerTask, binaryTask).thenRunAsync(TerracottaMetadata::deleteLegacy);
     }
 
     @Override

@@ -6,16 +6,24 @@ import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class TerracottaMetadata {
     private TerracottaMetadata() {
@@ -75,6 +83,8 @@ public final class TerracottaMetadata {
         }
     }
 
+    private static final List<Path> LEGACY_PATH;
+
     static {
         Config config;
         try (InputStream is = TerracottaMetadata.class.getResourceAsStream("/assets/terracotta.json")) {
@@ -91,6 +101,41 @@ public final class TerracottaMetadata {
         MACOS_INSTALLER_ARM64 = config.create("macos-arm64.pkg");
         MACOS_BIN_X86_64 = config.create("macos-x86_64");
         MACOS_BIN_ARM64 = config.create("macos-arm64");
+
+        int LEGACY_BUT_NOT_OUT_OF_DATE_COUNT = 3;
+        if (config.legacy.size() < LEGACY_BUT_NOT_OUT_OF_DATE_COUNT) {
+            LEGACY_PATH = List.of();
+        } else {
+            int count = config.legacy.size() - LEGACY_BUT_NOT_OUT_OF_DATE_COUNT;
+
+            List<Path> legacyPath = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                legacyPath.add(Metadata.DEPENDENCIES_DIRECTORY.resolve(String.format("terracota/%s", config.legacy.get(i))).toAbsolutePath());
+            }
+            LEGACY_PATH = legacyPath;
+        }
+    }
+
+    public static void deleteLegacy() {
+        for (Path path : LEGACY_PATH) {
+            try {
+                Files.walkFileTree(path, new SimpleFileVisitor<>() {
+                    @Override
+                    public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                        Files.delete(file);
+                        return super.visitFile(file, attrs);
+                    }
+
+                    @Override
+                    public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, @Nullable IOException exc) throws IOException {
+                        Files.delete(dir);
+                        return super.postVisitDirectory(dir, exc);
+                    }
+                });
+            } catch (IOException e) {
+                LOG.warning("Cannot delete legacy");
+            }
+        }
     }
 
     public static final ITerracottaProvider PROVIDER = locateProvider();

@@ -44,7 +44,8 @@ public final class GeneralProvider implements ITerracottaProvider {
                     PosixFilePermission.OTHERS_EXECUTE
             )));
         }
-        return task;
+
+        return task.thenRunAsync(TerracottaMetadata::deleteLegacy);
     }
 
     @Override

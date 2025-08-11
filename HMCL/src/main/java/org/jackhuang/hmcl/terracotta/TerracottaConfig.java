@@ -51,4 +51,8 @@ public final class TerracottaConfig {
         }
         return ITerracottaProvider.Status.NOT_EXIST;
     }
+
+    public void deleteLegacy() throws IOException {
+
+    }
 }
