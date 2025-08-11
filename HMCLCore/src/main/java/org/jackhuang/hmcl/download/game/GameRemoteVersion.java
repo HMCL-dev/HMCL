@@ -54,15 +54,16 @@ public final class GameRemoteVersion extends RemoteVersion {
 
     @Override
     public int compareTo(RemoteVersion o) {
-        if (!(o instanceof GameRemoteVersion))
+        if (!(o instanceof GameRemoteVersion)) {
             return 0;
+        }
 
         int dateCompare = o.getReleaseDate().compareTo(getReleaseDate());
         if (dateCompare != 0) {
             return dateCompare;
         }
 
-        return GameVersionNumber.compare(getSelfVersion(), o.getSelfVersion());
+        return GameVersionNumber.compare(o.getSelfVersion(), getSelfVersion());
     }
 
     private static Type getReleaseType(ReleaseType type) {
