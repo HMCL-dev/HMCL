@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.concurrent.CancellationException;
 
@@ -40,6 +41,19 @@ public final class EntryPoint {
     }
 
     public static void main(String[] args) {
+        BootWrapperClassLoader cl = new BootWrapperClassLoader(ClassLoader.getSystemClassLoader());
+        cl.safeInitialize();
+        try {
+            Class<?> clazz = cl.findClass(EntryPoint.class.getName());
+            Method mainMethod = clazz.getMethod("wrappedMain", String[].class);
+            mainMethod.invoke(null, (Object) args);
+        } catch (ReflectiveOperationException e) {
+            // TODO: maybe better solution?
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void wrappedMain(String[] args) {
         System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
