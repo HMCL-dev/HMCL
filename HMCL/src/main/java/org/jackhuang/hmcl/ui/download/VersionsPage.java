@@ -313,7 +313,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final JFXSpinner spinner;
 
         private final JFXTextField nameField;
-        private final JFXComboBox<VersionType> categoryField = new JFXComboBox<VersionType>();
+        private final JFXComboBox<VersionType> categoryField = new JFXComboBox<>();
 
         VersionsPageSkin(VersionsPage control) {
             super(control);
