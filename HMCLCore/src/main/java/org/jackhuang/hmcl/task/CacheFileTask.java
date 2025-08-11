@@ -38,11 +38,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class CacheFileTask extends FetchTask<Path> {
 
     public CacheFileTask(@NotNull String uri) {
-        super(List.of(NetworkUtils.toURI(uri)));
+        this(NetworkUtils.toURI(uri));
     }
 
     public CacheFileTask(@NotNull URI uri) {
         super(List.of(uri));
+        setName(uri.toString());
     }
 
     @Override

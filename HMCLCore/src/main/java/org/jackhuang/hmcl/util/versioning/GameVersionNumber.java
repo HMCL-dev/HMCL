@@ -98,6 +98,10 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         this.value = value;
     }
 
+    public boolean isSpecial() {
+        return this instanceof Special;
+    }
+
     enum Type {
         PRE_CLASSIC, CLASSIC, INFDEV, ALPHA, BETA, NEW
     }

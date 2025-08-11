@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
@@ -75,7 +74,7 @@ public class CacheRepository {
                 index = new LinkedHashMap<>();
                 indexFileLastModified = null;
             }
-        } catch (IOException | JsonParseException e) {
+        } catch (Exception e) {
             LOG.warning("Unable to read index file", e);
             index = new LinkedHashMap<>();
             indexFileLastModified = null;
@@ -354,7 +353,7 @@ public class CacheRepository {
         }
 
         public int compareTo(ETagItem other) {
-            if (!url.equals(other.url))
+            if (!url.equals(other.url) && !NetworkUtils.toURI(url).equals(NetworkUtils.toURI(other.url)))
                 throw new IllegalArgumentException();
 
             ZonedDateTime thisTime = Lang.ignoringException(() -> ZonedDateTime.parse(remoteLastModified, DateTimeFormatter.RFC_1123_DATE_TIME), null);
