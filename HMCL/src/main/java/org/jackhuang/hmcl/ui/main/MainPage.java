@@ -211,7 +211,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchButton.setPrefWidth(230);
             launchButton.setPrefHeight(55);
             //launchButton.setButtonType(JFXButton.ButtonType.RAISED);
-            launchButton.setOnAction(e -> launch());
             launchButton.setDefaultButton(true);
             launchButton.setClip(new Rectangle(-100, -100, 310, 200));
             {
@@ -229,10 +228,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         launchLabel.setText(i18n("version.empty.download"));
                         currentLabel.setText(null);
                         graphic.getChildren().setAll(launchLabel);
+                        launchButton.setOnAction(e -> launchNoGame());
                     } else {
                         launchLabel.setText(i18n("version.launch"));
                         currentLabel.setText(currentGame);
                         graphic.getChildren().setAll(launchLabel, currentLabel);
+                        launchButton.setOnAction(e -> launch());
                     }
                 });
 
@@ -325,6 +326,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void launch() {
         Profile profile = Profiles.getSelectedProfile();
         Versions.launch(profile, profile.getSelectedVersion(), null);
+    }
+
+    private void launchNoGame() {
+        // TODO
     }
 
     private void onMenu() {
