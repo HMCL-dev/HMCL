@@ -245,7 +245,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             currentLabel.setText(null);
                             graphic.getChildren().setAll(launchLabel);
                             launchButton.setOnAction(e -> MainPage.this.launchNoGame());
-
                             if (tooltip == null)
                                 tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
                             FXUtils.installFastTooltip(launchButton, tooltip);
@@ -382,9 +381,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         // TODO
                     }
                 });
-        Controllers.taskDialog(task, "正在安装游戏", null); // TODO
-
-        // TODO
+        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), null);
     }
 
     private void onMenu() {
