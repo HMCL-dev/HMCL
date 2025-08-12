@@ -31,6 +31,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -74,6 +75,7 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
@@ -233,17 +235,28 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 Label currentLabel = new Label();
                 currentLabel.setStyle("-fx-font-size: 12px;");
 
-                FXUtils.onChangeAndOperate(currentGameProperty(), currentGame -> {
-                    if (currentGame == null) {
-                        launchLabel.setText(i18n("version.launch.empty"));
-                        currentLabel.setText(null);
-                        graphic.getChildren().setAll(launchLabel);
-                        launchButton.setOnAction(e -> launchNoGame());
-                    } else {
-                        launchLabel.setText(i18n("version.launch"));
-                        currentLabel.setText(currentGame);
-                        graphic.getChildren().setAll(launchLabel, currentLabel);
-                        launchButton.setOnAction(e -> launch());
+                FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
+                    private Tooltip tooltip;
+
+                    @Override
+                    public void accept(String currentGame) {
+                        if (currentGame == null) {
+                            launchLabel.setText(i18n("version.launch.empty"));
+                            currentLabel.setText(null);
+                            graphic.getChildren().setAll(launchLabel);
+                            launchButton.setOnAction(e -> MainPage.this.launchNoGame());
+
+                            if (tooltip == null)
+                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                            FXUtils.installFastTooltip(launchButton, tooltip);
+                        } else {
+                            launchLabel.setText(i18n("version.launch"));
+                            currentLabel.setText(currentGame);
+                            graphic.getChildren().setAll(launchLabel, currentLabel);
+                            launchButton.setOnAction(e -> MainPage.this.launch());
+                            if (tooltip != null)
+                                Tooltip.uninstall(launchButton, tooltip);
+                        }
                     }
                 });
 
