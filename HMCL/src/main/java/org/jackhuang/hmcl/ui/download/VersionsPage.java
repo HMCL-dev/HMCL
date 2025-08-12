@@ -200,8 +200,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         break;
                     case PENDING:
                     case SNAPSHOT:
-                        content.getTags().setAll(i18n("version.game.snapshot"));
-                        content.setImage(VersionIconType.COMMAND.getIcon());
+                        if (GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isSpecial()) {
+                            content.getTags().setAll(i18n("version.game.april_fools"));
+                            content.setImage(VersionIconType.APRIL_FOOLS.getIcon());
+                        } else {
+                            content.getTags().setAll(i18n("version.game.snapshot"));
+                            content.setImage(VersionIconType.COMMAND.getIcon());
+                        }
                         content.setExternalLink(i18n("wiki.version.game", wikiSuffix));
                         break;
                     default:
