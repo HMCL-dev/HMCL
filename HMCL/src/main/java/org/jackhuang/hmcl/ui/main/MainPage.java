@@ -69,12 +69,15 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -376,12 +379,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     if (exception == null) {
                         profile.setSelectedVersion(gameVersionHolder.value);
                         launch();
+                    } else if (exception instanceof CancellationException) {
+                        Controllers.showToast(i18n("message.cancelled"));
                     } else {
                         LOG.warning("Failed to install game", exception);
-                        // TODO
+                        Controllers.dialog(StringUtils.getStackTrace(exception),
+                                i18n("install.failed"),
+                                MessageDialogPane.MessageType.WARNING);
                     }
                 });
-        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), null);
+        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
     }
 
     private void onMenu() {
