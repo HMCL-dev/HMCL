@@ -57,8 +57,8 @@ public final class MacOSProvider implements ITerracottaProvider {
                     "osascript",
                     "-e",
                     String.format(
-                            "do shell script \"%s\" with prompt \"%s\" with administrator privileges",
-                            String.format("installer -pkg %s -target /Applications", INSTALLER.getPath()),
+                            "do shell script \"installer -pkg %s -target /Applications\" with prompt \"%s\" with administrator privileges",
+                            INSTALLER.getPath(),
                             i18n("terracotta.sudo_installing")
                     )
             ));

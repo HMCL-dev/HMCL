@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
@@ -237,7 +238,7 @@ public final class TerracottaManager {
     public static Task<TerracottaState.Guesting> setGuesting(String room) {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific) {
-            return new GetTask(URI.create(String.format("http://127.0.0.1:%d/state/guesting?room=%s", ((TerracottaState.PortSpecific) state).port, room)))
+            return new GetTask(NetworkUtils.toURI(String.format("http://127.0.0.1:%d/state/guesting?room=%s", ((TerracottaState.PortSpecific) state).port, room)))
                     .setSignificance(Task.TaskSignificance.MINOR)
                     .thenSupplyAsync(() -> new TerracottaState.Guesting(-1, -1, null, false))
                     .setSignificance(Task.TaskSignificance.MINOR);
