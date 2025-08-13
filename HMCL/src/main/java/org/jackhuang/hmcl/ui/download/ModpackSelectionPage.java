@@ -42,7 +42,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,7 +142,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                             controller.onNext();
                         } else {
                             reject.accept(e.getMessage());
-                            Logger.LOG.error("Failed to download modpack server manifest: ", e);
+                            LOG.error("Failed to download modpack server manifest: ", e);
                             Controllers.dialog(StringUtils.getStackTrace(e), i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                         }
                     }).executor(true), i18n("message.downloading"), TaskCancellationAction.NORMAL);
@@ -161,7 +161,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                                             controller.onNext();
                                         } else {
                                             reject.accept(e.getMessage());
-                                            Logger.LOG.error("Failed to download modpack: ", e);
+                                            Logger.LOG.warning("Failed to download modpack: ", e);
                                             Controllers.dialog(StringUtils.getStackTrace(e), i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                                         }
                                     }).executor(true),
@@ -171,7 +171,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                 }
             } catch (IOException e) {
                 reject.accept(e.getMessage());
-                Logger.LOG.error("Failed to download modpack: ", e);
+                LOG.warning("Failed to download modpack: ", e);
                 Controllers.dialog(StringUtils.getStackTrace(e), i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             }
         });
