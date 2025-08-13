@@ -29,6 +29,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -155,6 +156,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         BorderPane titleBar = new BorderPane();
         titleContainer.getChildren().add(titleBar);
+        titleBar.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                primaryStage.setMaximized(!primaryStage.isMaximized());
+                event.consume();
+            }
+        });
 
         Rectangle buttonsContainerPlaceHolder = new Rectangle();
         {
