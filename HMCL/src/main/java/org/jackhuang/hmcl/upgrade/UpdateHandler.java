@@ -204,7 +204,7 @@ public final class UpdateHandler {
     static @Nullable String tryRename(@NotNull String fileName, @NotNull UpdateChannel newChannel, @NotNull String newVersion) {
         @RegExp final var prefixPattern = "[hH][mM][cC][lL]-";
         @RegExp final var channelPattern = "(?:dev|stable)-";
-        @RegExp final var versionPattern = "\\d+(?:\\.\\d+)*(?:\\.(?:SNAPSHOT|(?:dev|unofficial)-[0-9a-f]{7}))?";
+        @RegExp final var versionPattern = "\\d+(?:\\.\\d+)*(?:\\.(?:SNAPSHOT|[a-zA-Z0-9]+-[0-9a-f]{7}))?";
         @RegExp final var suffixPattern = "\\.(?:jar|exe|sh)";
 
         Matcher matcher = Pattern.compile(String.format(

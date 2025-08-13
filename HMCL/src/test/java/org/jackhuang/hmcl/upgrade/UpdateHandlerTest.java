@@ -41,6 +41,8 @@ public final class UpdateHandlerTest {
         assertRename("HMCL-999.999.999", "HMCL-3.6.15.287", UpdateChannel.STABLE, "999.999.999");
         assertRename("HMCL-999.999.999", "HMCL-3.6.15", UpdateChannel.STABLE, "999.999.999");
         assertRename("HMCL-999.999.999", "HMCL-3.6.dev-3873459", UpdateChannel.STABLE, "999.999.999");
+        assertRename("HMCL-999.999.999", "HMCL-3.6.dev-3873459", UpdateChannel.STABLE, "999.999.999");
+        assertRename("HMCL-999.999.999", "HMCL-3.6.unofficial-3873459", UpdateChannel.STABLE, "999.999.999");
         assertRename("HMCL-999.999.999", "HMCL-3.6.SNAPSHOT", UpdateChannel.STABLE, "999.999.999");
         assertRename("hmcl-stable-999.999.999", "hmcl-dev-3.6.15.287", UpdateChannel.STABLE, "999.999.999");
     }
