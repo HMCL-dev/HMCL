@@ -161,7 +161,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                                             controller.onNext();
                                         } else {
                                             reject.accept(e.getMessage());
-                                            Logger.LOG.warning("Failed to download modpack: ", e);
+                                            LOG.warning("Failed to download modpack: ", e);
                                             Controllers.dialog(StringUtils.getStackTrace(e), i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                                         }
                                     }).executor(true),
