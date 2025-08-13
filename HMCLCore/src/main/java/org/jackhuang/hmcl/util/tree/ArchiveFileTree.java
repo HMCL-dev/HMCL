@@ -92,7 +92,7 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
             fileName = path[path.length - 1];
             E entry = dir.getFiles().get(fileName);
             if (entry != null)
-                return null;
+                return entry;
         }
 
         Dir<E> subDir = dir.getSubDirs().get(fileName);

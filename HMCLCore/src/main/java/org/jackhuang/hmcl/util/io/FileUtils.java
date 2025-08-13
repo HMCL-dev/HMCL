@@ -109,7 +109,7 @@ public final class FileUtils {
 
     public static String getName(ArchiveEntry entry) {
         if (entry == null || entry.getName() == null) return "";
-        return StringUtils.substringBeforeLast(normalizePath(entry.getName()), "/");
+        return StringUtils.substringAfterLast(normalizePath(entry.getName()), "/");
     }
 
     public static String getName(Path path) {
