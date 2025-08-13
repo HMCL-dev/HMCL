@@ -38,7 +38,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
-import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -186,7 +185,7 @@ public final class LogWindow extends Stage {
         }
 
         private void onTerminateGame() {
-            LauncherHelper.stopManagedProcesses();
+            LogWindow.this.gameProcess.stop();
         }
 
         private void onClear() {
@@ -224,7 +223,7 @@ public final class LogWindow extends Stage {
 
                 try {
                     if (gameProcess.isRunning()) {
-                        GameDumpGenerator.writeDumpTo(gameProcess.getPID(), dumpFile);
+                        GameDumpGenerator.writeDumpTo(gameProcess.getProcess().pid(), dumpFile);
                         FXUtils.showFileInExplorer(dumpFile);
                     }
                 } catch (Throwable e) {

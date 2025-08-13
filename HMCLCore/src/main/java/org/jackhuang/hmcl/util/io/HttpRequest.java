@@ -57,6 +57,10 @@ public abstract class HttpRequest {
         this.method = method;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     public HttpRequest accept(String contentType) {
         return header("Accept", contentType);
     }
@@ -113,18 +117,13 @@ public abstract class HttpRequest {
         return getStringAsync().thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
     }
 
-    public HttpRequest filter(ExceptionalBiConsumer<URL, Integer, IOException> responseCodeTester) {
-        this.responseCodeTester = responseCodeTester;
-        return this;
-    }
-
     public HttpRequest ignoreHttpErrorCode(int code) {
         toleratedHttpCodes.add(code);
         return this;
     }
 
     public HttpURLConnection createConnection() throws IOException {
-        HttpURLConnection con = createHttpConnection(new URL(url));
+        HttpURLConnection con = createHttpConnection(url);
         con.setRequestMethod(method);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             con.setRequestProperty(entry.getKey(), entry.getValue());
@@ -133,7 +132,7 @@ public abstract class HttpRequest {
     }
 
     public static class HttpGetRequest extends HttpRequest {
-        public HttpGetRequest(String url) {
+        protected HttpGetRequest(String url) {
             super(url, "GET");
         }
 
@@ -149,7 +148,7 @@ public abstract class HttpRequest {
     public static final class HttpPostRequest extends HttpRequest {
         private byte[] bytes;
 
-        public HttpPostRequest(String url) {
+        private HttpPostRequest(String url) {
             super(url, "POST");
         }
 
@@ -189,21 +188,17 @@ public abstract class HttpRequest {
 
                 URL url = new URL(this.url);
 
-                if (responseCodeTester != null) {
-                    responseCodeTester.accept(url, con.getResponseCode());
-                } else {
-                    if (con.getResponseCode() / 100 != 2) {
-                        if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
-                            try {
-                                throw new ResponseCodeException(url, con.getResponseCode(), NetworkUtils.readData(con));
-                            } catch (IOException e) {
-                                throw new ResponseCodeException(url, con.getResponseCode(), e);
-                            }
+                if (con.getResponseCode() / 100 != 2) {
+                    if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
+                        try {
+                            throw new ResponseCodeException(url.toString(), con.getResponseCode(), NetworkUtils.readFullyAsString(con));
+                        } catch (IOException e) {
+                            throw new ResponseCodeException(url.toString(), con.getResponseCode(), e);
                         }
                     }
                 }
 
-                return NetworkUtils.readData(con);
+                return NetworkUtils.readFullyAsString(con);
             }, retryTimes);
         }
     }

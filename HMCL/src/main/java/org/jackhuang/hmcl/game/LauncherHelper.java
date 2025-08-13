@@ -53,12 +53,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.lang.ref.WeakReference;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
@@ -125,6 +126,9 @@ public final class LauncherHelper {
     }
 
     private void launch0() {
+        // https://github.com/HMCL-dev/HMCL/pull/4121
+        PROCESSES.removeIf(it -> it.get() == null);
+
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
@@ -209,7 +213,7 @@ public final class LauncherHelper {
                     }
                 }).thenAcceptAsync(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
-                        PROCESSES.add(process);
+                        PROCESSES.add(new WeakReference<>(process));
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
@@ -263,27 +267,27 @@ public final class LauncherHelper {
                                     if (ex.getCause() instanceof ResponseCodeException) {
                                         ResponseCodeException rce = (ResponseCodeException) ex.getCause();
                                         int responseCode = rce.getResponseCode();
-                                        URL url = rce.getUrl();
+                                        String uri = rce.getUri();
                                         if (responseCode == 404)
-                                            message += i18n("download.code.404", url);
+                                            message += i18n("download.code.404", uri);
                                         else
-                                            message += i18n("download.failed", url, responseCode);
+                                            message += i18n("download.failed", uri, responseCode);
                                     } else {
                                         message += StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof DownloadException) {
-                                    URL url = ((DownloadException) ex).getUrl();
+                                    URI uri = ((DownloadException) ex).getUri();
                                     if (ex.getCause() instanceof SocketTimeoutException) {
-                                        message = i18n("install.failed.downloading.timeout", url);
+                                        message = i18n("install.failed.downloading.timeout", uri);
                                     } else if (ex.getCause() instanceof ResponseCodeException) {
                                         ResponseCodeException responseCodeException = (ResponseCodeException) ex.getCause();
                                         if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                                            message = i18n("download.code." + responseCodeException.getResponseCode(), url);
+                                            message = i18n("download.code." + responseCodeException.getResponseCode(), uri);
                                         } else {
-                                            message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                            message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                         }
                                     } else {
-                                        message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                        message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");
@@ -294,11 +298,11 @@ public final class LauncherHelper {
                                 } else if (ex instanceof ResponseCodeException) {
                                     ResponseCodeException rce = (ResponseCodeException) ex;
                                     int responseCode = rce.getResponseCode();
-                                    URL url = rce.getUrl();
+                                    String uri = rce.getUri();
                                     if (responseCode == 404)
-                                        message = i18n("download.code.404", url);
+                                        message = i18n("download.code.404", uri);
                                     else
-                                        message = i18n("download.failed", url, responseCode);
+                                        message = i18n("download.failed", uri, responseCode);
                                 } else if (ex instanceof CommandTooLongException) {
                                     message = i18n("launch.failed.command_too_long");
                                 } else if (ex instanceof ExecutionPolicyLimitException) {
@@ -896,10 +900,10 @@ public final class LauncherHelper {
 
     }
 
-    public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+    public static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
+            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ManagedProcess::stop);
     }
 }

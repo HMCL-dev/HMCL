@@ -33,6 +33,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Theme;
@@ -128,6 +129,10 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnRefresh = new JFXButton();
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
+        if (skinnable.getAccount() instanceof MicrosoftAccount && Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+            btnRefresh.setDisable(true);
+            FXUtils.installFastTooltip(spinnerRefresh, i18n("account.methods.microsoft.snapshot"));
+        }
         btnRefresh.setOnAction(e -> {
             spinnerRefresh.showSpinner();
             skinnable.refreshAsync()

@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -196,7 +195,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 lblServerName.setText(serverBeingAdded.getName());
                 lblServerUrl.setText(serverBeingAdded.getUrl());
 
-                lblServerWarning.setVisible("http".equals(NetworkUtils.toURL(serverBeingAdded.getUrl()).getProtocol()));
+                //noinspection HttpUrlsUsage
+                lblServerWarning.setVisible(serverBeingAdded.getUrl().startsWith("http://"));
 
                 this.setContent(confirmServerPane, ContainerAnimations.SWIPE_LEFT);
             } else {

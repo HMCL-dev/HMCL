@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.download.liteloader;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,7 +31,6 @@ import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author huangyuhui
@@ -50,8 +51,9 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
     public static final String LITELOADER_LIST = "https://dl.liteloader.com/versions/versions.json";
 
     @Override
-    public CompletableFuture<?> refreshAsync(String gameVersion) {
-        return HttpRequest.GET(downloadProvider.injectURL(LITELOADER_LIST)).getJsonAsync(LiteLoaderVersionsRoot.class)
+    public Task<?> refreshAsync(String gameVersion) {
+        return new GetTask(downloadProvider.injectURL(LITELOADER_LIST))
+                .thenGetJsonAsync(LiteLoaderVersionsRoot.class)
                 .thenAcceptAsync(root -> {
                     LiteLoaderGameVersions versions = root.getVersions().get(gameVersion);
                     if (versions == null) {
@@ -85,7 +87,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
+    public Task<?> refreshAsync() {
         throw new UnsupportedOperationException();
     }
 

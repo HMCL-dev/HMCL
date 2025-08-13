@@ -140,7 +140,7 @@ public final class ModpackHelper {
             throw new FileNotFoundException(file.getPath());
         else
             try {
-                return JsonUtils.GSON.fromJson(FileUtils.readText(file), ModpackConfiguration.class);
+                return JsonUtils.fromJsonFile(file.toPath(), ModpackConfiguration.class);
             } catch (JsonParseException e) {
                 throw new IOException("Malformed modpack configuration");
             }
