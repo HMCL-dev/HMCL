@@ -59,7 +59,7 @@ public final class AuthlibInjectorExtractor implements AuthlibInjectorArtifactPr
                 FileUtils.saveSafely(artifactLocation, inputStream::transferTo);
             }
             return getArtifactInfoImmediately().orElseThrow(() ->
-                    new IOException("No local authlib-injector found"));
+                    new IOException("Failed to extract authlib-injector artifact"));
         }
     }
 
