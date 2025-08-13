@@ -136,15 +136,17 @@ public class ServerModpackCompletionTask extends Task<Void> {
         // for files in new modpack
         for (ModpackConfiguration.FileInformation file : remoteManifest.getFiles()) {
             Path actualPath = rootPath.resolve(file.getPath()).toAbsolutePath().normalize();
+            String fileName = actualPath.getFileName().toString();
 
             if (!actualPath.startsWith(rootPath)) {
                 throw new IOException("Unsecure path: " + file.getPath());
             }
 
             boolean download;
-            if (!files.containsKey(file.getPath())
-                    || modsDirectory.equals(actualPath.getParent()) && Files.notExists(
-                            actualPath.resolveSibling(actualPath.getFileName().toString() + ModManager.DISABLED_EXTENSION))) {
+            if (!files.containsKey(file.getPath()) ||
+                    modsDirectory.equals(actualPath.getParent())
+                            && Files.notExists(actualPath.resolveSibling(fileName + ModManager.DISABLED_EXTENSION))
+                            && Files.notExists(actualPath.resolveSibling(fileName + ModManager.OLD_EXTENSION))) {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {
