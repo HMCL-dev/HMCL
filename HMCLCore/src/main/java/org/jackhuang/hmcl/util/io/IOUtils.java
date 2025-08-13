@@ -76,6 +76,21 @@ public final class IOUtils {
         return new String(readFully(stream), charset);
     }
 
+    public static void skipNBytes(InputStream input, long n) throws IOException {
+        while (n > 0) {
+            long ns = input.skip(n);
+            if (ns > 0 && ns <= n)
+                n -= ns;
+            else if (ns == 0) {
+                if (input.read() == -1)
+                    throw new EOFException();
+                n--;
+            } else {
+                throw new IOException("Unexpected skip bytes. Expected: " + n + ", Actual: " + ns);
+            }
+        }
+    }
+
     public static void copyTo(InputStream src, OutputStream dest, byte[] buf) throws IOException {
         while (true) {
             int len = src.read(buf);

@@ -56,6 +56,7 @@ public final class JavaManager {
     }
 
     public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("java"));
+    public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_CURRENT_DIRECTORY.resolve("java"));
 
     public static String getMojangJavaPlatform(Platform platform) {
         if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
@@ -487,12 +488,15 @@ public final class JavaManager {
             try {
                 info = JavaInfo.fromReleaseFile(releaseFile);
             } catch (IOException e) {
-                try {
-                    info = JavaInfoUtils.fromExecutable(executable, false);
-                } catch (IOException e2) {
-                    e2.addSuppressed(e);
-                    LOG.warning("Failed to lookup Java executable at " + executable, e2);
-                }
+                LOG.warning("Failed to read release file " + releaseFile, e);
+            }
+        }
+
+        if (info == null) {
+            try {
+                info = JavaInfoUtils.fromExecutable(executable, false);
+            } catch (IOException e) {
+                LOG.warning("Failed to lookup Java executable at " + executable, e);
             }
         }
 
@@ -566,6 +570,10 @@ public final class JavaManager {
 
     private static void searchAllJavaInRepository(Map<Path, JavaRuntime> javaRuntimes, Platform platform) {
         for (JavaRuntime java : REPOSITORY.getAllJava(platform)) {
+            javaRuntimes.put(java.getBinary(), java);
+        }
+
+        for (JavaRuntime java : LOCAL_REPOSITORY.getAllJava(platform)) {
             javaRuntimes.put(java.getBinary(), java);
         }
     }

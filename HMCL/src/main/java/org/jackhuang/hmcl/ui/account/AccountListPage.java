@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
@@ -48,7 +49,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
-import java.net.URI;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Locale;
@@ -190,7 +190,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         item.titleProperty().bind(title);
                         String host = "";
                         try {
-                            host = URI.create(server.getUrl()).getHost();
+                            host = NetworkUtils.toURI(server.getUrl()).getHost();
                         } catch (IllegalArgumentException e) {
                             LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
                         }

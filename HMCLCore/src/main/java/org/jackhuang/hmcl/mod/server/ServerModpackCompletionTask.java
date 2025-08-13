@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -28,11 +29,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -84,7 +83,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     @Override
     public void preExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        dependent = new GetTask(URI.create(manifest.getManifest().getFileApi() + "/server-manifest.json"));
+        dependent = new GetTask(manifest.getManifest().getFileApi() + "/server-manifest.json");
     }
 
     @Override
@@ -122,7 +121,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             dependencies.add(builder.buildAsync());
         }
 
-        Path rootPath = repository.getVersionRoot(version).toPath();
+        Path rootPath = repository.getVersionRoot(version).toPath().toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = manifest.getManifest().getFiles().stream()
                 .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
                         Function.identity()));
@@ -130,12 +129,24 @@ public class ServerModpackCompletionTask extends Task<Void> {
         Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
                 .collect(Collectors.toSet());
 
+        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path modsDirectory = runDirectory.resolve("mods");
+
         int total = 0;
         // for files in new modpack
         for (ModpackConfiguration.FileInformation file : remoteManifest.getFiles()) {
-            Path actualPath = rootPath.resolve(file.getPath());
+            Path actualPath = rootPath.resolve(file.getPath()).toAbsolutePath().normalize();
+            String fileName = actualPath.getFileName().toString();
+
+            if (!actualPath.startsWith(rootPath)) {
+                throw new IOException("Unsecure path: " + file.getPath());
+            }
+
             boolean download;
-            if (!files.containsKey(file.getPath())) {
+            if (!files.containsKey(file.getPath()) ||
+                    modsDirectory.equals(actualPath.getParent())
+                            && Files.notExists(actualPath.resolveSibling(fileName + ModManager.DISABLED_EXTENSION))
+                            && Files.notExists(actualPath.resolveSibling(fileName + ModManager.OLD_EXTENSION))) {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {
@@ -152,7 +163,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             if (download) {
                 total++;
                 dependencies.add(new FileDownloadTask(
-                        URI.create(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath())),
+                        remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
                         .withCounter("hmcl.modpack.download"));

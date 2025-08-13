@@ -21,10 +21,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.util.Objects;
 
 /**
@@ -84,15 +82,13 @@ public final class CurseManifestFile implements Validation {
     }
 
     @Nullable
-    public URI getUrl() {
+    public String getUrl() {
         if (url == null) {
-            if (fileName != null) {
-                return URI.create(NetworkUtils.encodeLocation(String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)));
-            } else {
-                return null;
-            }
+            return fileName != null
+                    ? String.format("https://edge.forgecdn.net/files/%d/%d/%s", fileID / 1000, fileID % 1000, fileName)
+                    : null;
         } else {
-            return URI.create(NetworkUtils.encodeLocation(url));
+            return url;
         }
     }
 

@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -54,7 +53,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
 
     @Override
     public Task<?> refreshAsync() {
-        return new GetTask(URI.create(downloadProvider.getVersionListURL())).thenGetJsonAsync(GameRemoteVersions.class)
+        return new GetTask(downloadProvider.getVersionListURL()).thenGetJsonAsync(GameRemoteVersions.class)
                 .thenAcceptAsync(root -> {
                     GameRemoteVersions unlistedVersions = null;
 

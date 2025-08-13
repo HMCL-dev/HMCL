@@ -40,12 +40,12 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
@@ -75,9 +75,9 @@ public final class Versions {
         Path modpack;
         URI downloadURL;
         try {
+            downloadURL = NetworkUtils.toURI(file.getFile().getUrl());
             modpack = Files.createTempFile("modpack", ".zip");
-            downloadURL = new URI(file.getFile().getUrl());
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
@@ -203,14 +203,6 @@ public final class Versions {
             if (file != null)
                 new LauncherHelper(profile, account, id).makeLaunchScript(file);
         });
-    }
-
-    public static void launch(Profile profile) {
-        launch(profile, profile.getSelectedVersion());
-    }
-
-    public static void launch(Profile profile, String id) {
-        launch(profile, id, null);
     }
 
     public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {

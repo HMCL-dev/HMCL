@@ -28,7 +28,6 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -53,7 +52,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
 
     @Override
     public Task<?> refreshAsync(String gameVersion) {
-        return new GetTask(URI.create(downloadProvider.injectURL(LITELOADER_LIST)))
+        return new GetTask(downloadProvider.injectURL(LITELOADER_LIST))
                 .thenGetJsonAsync(LiteLoaderVersionsRoot.class)
                 .thenAcceptAsync(root -> {
                     LiteLoaderGameVersions versions = root.getVersions().get(gameVersion);

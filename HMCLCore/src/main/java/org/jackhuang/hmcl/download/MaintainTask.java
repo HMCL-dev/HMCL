@@ -177,7 +177,7 @@ public class MaintainTask extends Task<Version> {
         String[] ignores = ignoreList.split(",");
         List<String> newIgnoreList = new ArrayList<>();
 
-        // To resolve the the problem that name of primary jar may conflict with the module naming convention,
+        // To resolve the problem that name of primary jar may conflict with the module naming convention,
         // we need to manually ignore ${primary_jar}.
         newIgnoreList.add("${primary_jar}");
 

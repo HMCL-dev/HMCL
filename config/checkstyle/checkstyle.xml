@@ -75,7 +75,7 @@
         <module name="FallThrough"/> <!-- switch fallthrough with statement not allowed http://checkstyle.sourceforge.net/config_coding.html#FallThrough -->
         <module name="IllegalInstantiation"/> <!-- Must not use const of certain types (Activity, Fragment): http://checkstyle.sourceforge.net/config_coding.html#IllegalInstantiation -->
 
-        <!-- Size Limitiations -->
+        <!-- Size Limitations -->
         <module name="ParameterNumber"><!-- max params for method http://checkstyle.sourceforge.net/config_sizes.html#ParameterNumber -->
             <property name="max" value="10"/>
             <property name="ignoreOverriddenMethods" value="true"/>

@@ -5,7 +5,6 @@ import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,8 +38,8 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     @Override
     public Task<?> refreshAsync() {
         return Task.allOf(
-                new GetTask(URI.create(downloadProvider.injectURL(OLD_URL))).thenGetJsonAsync(OfficialAPIResult.class),
-                new GetTask(URI.create(downloadProvider.injectURL(META_URL))).thenGetJsonAsync(OfficialAPIResult.class)
+                new GetTask(downloadProvider.injectURL(OLD_URL)).thenGetJsonAsync(OfficialAPIResult.class),
+                new GetTask(downloadProvider.injectURL(META_URL)).thenGetJsonAsync(OfficialAPIResult.class)
         ).thenAcceptAsync(results -> {
             lock.writeLock().lock();
 

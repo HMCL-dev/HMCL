@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,6 +55,10 @@ public abstract class HttpRequest {
     private HttpRequest(String url, String method) {
         this.url = url;
         this.method = method;
+    }
+
+    public String getUrl() {
+        return url;
     }
 
     public HttpRequest accept(String contentType) {
@@ -120,7 +123,7 @@ public abstract class HttpRequest {
     }
 
     public HttpURLConnection createConnection() throws IOException {
-        HttpURLConnection con = createHttpConnection(URI.create(url));
+        HttpURLConnection con = createHttpConnection(url);
         con.setRequestMethod(method);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             con.setRequestProperty(entry.getKey(), entry.getValue());
@@ -188,9 +191,9 @@ public abstract class HttpRequest {
                 if (con.getResponseCode() / 100 != 2) {
                     if (!ignoreHttpCode && !toleratedHttpCodes.contains(con.getResponseCode())) {
                         try {
-                            throw new ResponseCodeException(NetworkUtils.toURI(url), con.getResponseCode(), NetworkUtils.readFullyAsString(con));
+                            throw new ResponseCodeException(url.toString(), con.getResponseCode(), NetworkUtils.readFullyAsString(con));
                         } catch (IOException e) {
-                            throw new ResponseCodeException(NetworkUtils.toURI(url), con.getResponseCode(), e);
+                            throw new ResponseCodeException(url.toString(), con.getResponseCode(), e);
                         }
                     }
                 }
