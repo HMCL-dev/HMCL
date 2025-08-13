@@ -37,6 +37,8 @@ val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
 
 version = "$versionRoot.$buildNumber"
 
+val embedResources by configurations.registering
+
 dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
@@ -47,6 +49,8 @@ dependencies {
     if (launcherExe == null) {
         implementation(libs.hmclauncher)
     }
+
+    embedResources(libs.authlib.injector)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -132,6 +136,10 @@ tasks.shadowJar {
         exclude(project(":HMCLBoot"))
     }
 
+    into("assets/") {
+        from(embedResources)
+    }
+
     manifest {
         attributes(
             "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
@@ -141,6 +149,7 @@ tasks.shadowJar {
             "Microsoft-Auth-Id" to microsoftAuthId,
             "Microsoft-Auth-Secret" to microsoftAuthSecret,
             "CurseForge-Api-Key" to curseForgeApiKey,
+            "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
             "Build-Channel" to versionType,
             "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(
