@@ -74,7 +74,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final Navigation navigation;
     private final VersionList<?> versionList;
     private final Runnable callback;
-    private Task<?> task;
 
     private final ObservableList<RemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
@@ -98,7 +97,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     @Override
     public void refresh() {
         status.set(Status.LOADING);
-        task = versionList.refreshAsync(gameVersion)
+        Task<?> task = versionList.refreshAsync(gameVersion)
                 .thenSupplyAsync(() -> versionList.getVersions(gameVersion).stream().sorted().collect(Collectors.toList()))
                 .whenComplete(Schedulers.javafx(), (items, exception) -> {
                     if (exception == null) {
@@ -120,8 +119,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     @Override
     public void cleanup(Map<String, Object> settings) {
         settings.remove(libraryId);
-        if (task != null)
-            task.executor().cancel();
     }
 
     private void onRefresh() {
