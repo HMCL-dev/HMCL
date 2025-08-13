@@ -216,7 +216,8 @@ public final class Controllers {
 
             if (targetProperty != null
                     && Controllers.stage != null
-                    && !Controllers.stage.isIconified()) {
+                    && !Controllers.stage.isIconified()
+                    && !Controllers.stage.isFullScreen()) {
                 targetProperty.set(sourceProperty.get());
             }
         };
