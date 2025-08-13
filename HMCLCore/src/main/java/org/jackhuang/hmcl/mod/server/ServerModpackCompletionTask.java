@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +44,6 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final ModManager modManager;
     private final String version;
     private ModpackConfiguration<ServerModpackManifest> manifest;
     private GetTask dependent;
@@ -59,7 +57,6 @@ public class ServerModpackCompletionTask extends Task<Void> {
     public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version, ModpackConfiguration<ServerModpackManifest> manifest) {
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
-        this.modManager = repository.getModManager(version);
         this.version = version;
 
         if (manifest == null) {
@@ -145,8 +142,9 @@ public class ServerModpackCompletionTask extends Task<Void> {
             }
 
             boolean download;
-            boolean isModFile = modsDirectory.equals(actualPath.getParent());
-            if (!files.containsKey(file.getPath()) || isModFile && !modManager.hasSimpleMod(FileUtils.getName(actualPath))) {
+            if (!files.containsKey(file.getPath())
+                    || modsDirectory.equals(actualPath.getParent()) && Files.notExists(
+                            actualPath.resolveSibling(actualPath.getFileName().toString() + ModManager.DISABLED_EXTENSION))) {
                 // If old modpack does not have this entry, download it
                 download = true;
             } else if (!Files.exists(actualPath)) {
