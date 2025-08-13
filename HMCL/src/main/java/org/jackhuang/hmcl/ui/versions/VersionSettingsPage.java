@@ -32,9 +32,6 @@ import javafx.scene.control.Toggle;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.ProcessPriority;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
@@ -315,7 +312,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label("MiB"));
+                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
                 }
 
                 StackPane progressBarPane = new StackPane();

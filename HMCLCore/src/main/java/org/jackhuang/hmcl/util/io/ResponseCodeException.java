@@ -18,37 +18,49 @@
 package org.jackhuang.hmcl.util.io;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 public final class ResponseCodeException extends IOException {
 
-    private final URL url;
+    private final String uri;
     private final int responseCode;
     private final String data;
 
-    public ResponseCodeException(URL url, int responseCode) {
-        super("Unable to request url " + url + ", response code: " + responseCode);
-        this.url = url;
+    public ResponseCodeException(URI uri, int responseCode) {
+        this(uri.toString(), responseCode);
+    }
+
+    public ResponseCodeException(URI uri, int responseCode, Throwable cause) {
+        this(uri.toString(), responseCode, cause);
+    }
+
+    public ResponseCodeException(URI uri, int responseCode, String data) {
+        this(uri.toString(), responseCode, data);
+    }
+
+    public ResponseCodeException(String uri, int responseCode) {
+        super("Unable to request url " + uri + ", response code: " + responseCode);
+        this.uri = uri;
         this.responseCode = responseCode;
         this.data = null;
     }
 
-    public ResponseCodeException(URL url, int responseCode, Throwable cause) {
-        super("Unable to request url " + url + ", response code: " + responseCode, cause);
-        this.url = url;
+    public ResponseCodeException(String uri, int responseCode, Throwable cause) {
+        super("Unable to request url " + uri + ", response code: " + responseCode, cause);
+        this.uri = uri;
         this.responseCode = responseCode;
         this.data = null;
     }
 
-    public ResponseCodeException(URL url, int responseCode, String data) {
-        super("Unable to request url " + url + ", response code: " + responseCode + ", data: " + data);
-        this.url = url;
+    public ResponseCodeException(String uri, int responseCode, String data) {
+        super("Unable to request url " + uri + ", response code: " + responseCode + ", data: " + data);
+        this.uri = uri;
         this.responseCode = responseCode;
         this.data = data;
     }
 
-    public URL getUrl() {
-        return url;
+    public String getUri() {
+        return uri;
     }
 
     public int getResponseCode() {

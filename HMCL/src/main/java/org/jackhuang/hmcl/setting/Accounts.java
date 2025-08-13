@@ -35,9 +35,8 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -69,18 +68,6 @@ public final class Accounts {
     }
 
     private static final AuthlibInjectorArtifactProvider AUTHLIB_INJECTOR_DOWNLOADER = createAuthlibInjectorArtifactProvider();
-
-    private static void triggerAuthlibInjectorUpdateCheck() {
-        if (AUTHLIB_INJECTOR_DOWNLOADER instanceof AuthlibInjectorDownloader) {
-            Schedulers.io().execute(() -> {
-                try {
-                    ((AuthlibInjectorDownloader) AUTHLIB_INJECTOR_DOWNLOADER).checkUpdate();
-                } catch (IOException e) {
-                    LOG.warning("Failed to check update for authlib-injector", e);
-                }
-            });
-        }
-    }
 
     public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
 
@@ -184,21 +171,8 @@ public final class Accounts {
             }
         }
 
-        InvocationDispatcher<String> dispatcher = InvocationDispatcher.runOn(Lang::thread, json -> {
-            LOG.info("Saving global accounts");
-            synchronized (globalAccountsFile) {
-                try {
-                    synchronized (globalAccountsFile) {
-                        FileUtils.saveSafely(globalAccountsFile, json);
-                    }
-                } catch (IOException e) {
-                    LOG.error("Failed to save global accounts", e);
-                }
-            }
-        });
-
         globalAccountStorages.addListener(onInvalidating(() ->
-                dispatcher.accept(Config.CONFIG_GSON.toJson(globalAccountStorages))));
+                FileSaver.save(globalAccountsFile, Config.CONFIG_GSON.toJson(globalAccountStorages))));
     }
 
     private static Account parseAccount(Map<Object, Object> storage) {
@@ -352,8 +326,6 @@ public final class Accounts {
             });
         }
 
-        triggerAuthlibInjectorUpdateCheck();
-
         for (AuthlibInjectorServer server : config().getAuthlibInjectorServers()) {
             if (selected instanceof AuthlibInjectorAccount && ((AuthlibInjectorAccount) selected).getServer() == server)
                 continue;
@@ -361,7 +333,7 @@ public final class Accounts {
                 try {
                     server.fetchMetadataResponse();
                 } catch (IOException e) {
-                    LOG.warning("Failed to fetch authlib-injector server metdata: " + server, e);
+                    LOG.warning("Failed to fetch authlib-injector server metadata: " + server, e);
                 }
             });
         }
@@ -386,24 +358,18 @@ public final class Accounts {
     // ==== authlib-injector ====
     private static AuthlibInjectorArtifactProvider createAuthlibInjectorArtifactProvider() {
         String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
-        if (authlibinjectorLocation == null) {
-            return new AuthlibInjectorDownloader(
-                    Metadata.DEPENDENCIES_DIRECTORY.resolve("universal").resolve("authlib-injector.jar"),
-                    DownloadProviders::getDownloadProvider) {
-                @Override
-                public Optional<AuthlibInjectorArtifactInfo> getArtifactInfoImmediately() {
-                    Optional<AuthlibInjectorArtifactInfo> local = super.getArtifactInfoImmediately();
-                    if (local.isPresent()) {
-                        return local;
-                    }
-                    // search authlib-injector.jar in current directory, it's used as a fallback
-                    return parseArtifact(Metadata.CURRENT_DIRECTORY.resolve("authlib-injector.jar"));
-                }
-            };
-        } else {
+        if (authlibinjectorLocation != null) {
             LOG.info("Using specified authlib-injector: " + authlibinjectorLocation);
             return new SimpleAuthlibInjectorArtifactProvider(Paths.get(authlibinjectorLocation));
         }
+
+        String authlibInjectorVersion = JarUtils.getManifestAttribute("Authlib-Injector-Version", null);
+        if (authlibInjectorVersion == null)
+            throw new AssertionError("Missing Authlib-Injector-Version");
+
+        String authlibInjectorFileName = "authlib-injector-" + authlibInjectorVersion + ".jar";
+        return new AuthlibInjectorExtractor(Accounts.class.getResource("/assets/" + authlibInjectorFileName),
+                Metadata.DEPENDENCIES_DIRECTORY.resolve("universal").resolve(authlibInjectorFileName));
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
@@ -489,6 +455,8 @@ public final class Accounts {
                 return i18n("account.methods.microsoft.error.country_unavailable");
             } else if (errorCode == MicrosoftService.XboxAuthorizationException.MISSING_XBOX_ACCOUNT) {
                 return i18n("account.methods.microsoft.error.missing_xbox_account");
+            } else if (errorCode == MicrosoftService.XboxAuthorizationException.BANNED) {
+                return i18n("account.methods.microsoft.error.banned");
             } else {
                 return i18n("account.methods.microsoft.error.unknown", errorCode);
             }

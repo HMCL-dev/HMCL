@@ -19,14 +19,14 @@ package org.jackhuang.hmcl.download.optifine;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
@@ -71,8 +71,8 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
-        return HttpRequest.GET(apiRoot + "/optifine/versionlist").getJsonAsync(listTypeOf(OptiFineVersion.class)).thenAcceptAsync(root -> {
+    public Task<?> refreshAsync() {
+        return new GetTask(apiRoot + "/optifine/versionlist").thenGetJsonAsync(listTypeOf(OptiFineVersion.class)).thenAcceptAsync(root -> {
             lock.writeLock().lock();
 
             try {

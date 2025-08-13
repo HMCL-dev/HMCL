@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.upgrade;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.Pack200Utils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.ByteArrayInputStream;
@@ -28,12 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.jar.JarOutputStream;
 
-class HMCLDownloadTask extends FileDownloadTask {
+final class HMCLDownloadTask extends FileDownloadTask {
 
-    private RemoteVersion.Type archiveFormat;
+    private final RemoteVersion.Type archiveFormat;
 
     public HMCLDownloadTask(RemoteVersion version, Path target) {
-        super(NetworkUtils.toURL(version.getUrl()), target.toFile(), version.getIntegrityCheck());
+        super(version.getUrl(), target, version.getIntegrityCheck());
         archiveFormat = version.getType();
     }
 
@@ -42,8 +41,7 @@ class HMCLDownloadTask extends FileDownloadTask {
         super.execute();
 
         try {
-            Path target = getFile().toPath();
-
+            Path target = getPath();
             switch (archiveFormat) {
                 case JAR:
                     break;
@@ -51,7 +49,7 @@ class HMCLDownloadTask extends FileDownloadTask {
                 case PACK_XZ:
                     byte[] raw = Files.readAllBytes(target);
                     try (InputStream in = new XZInputStream(new ByteArrayInputStream(raw));
-                            JarOutputStream out = new JarOutputStream(Files.newOutputStream(target))) {
+                         JarOutputStream out = new JarOutputStream(Files.newOutputStream(target))) {
                         Pack200Utils.unpack(in, out);
                     }
                     break;
@@ -60,7 +58,11 @@ class HMCLDownloadTask extends FileDownloadTask {
                     throw new IllegalArgumentException("Unknown format: " + archiveFormat);
             }
         } catch (Throwable e) {
-            getFile().delete();
+            try {
+                Files.deleteIfExists(getPath());
+            } catch (Throwable e2) {
+                e.addSuppressed(e2);
+            }
             throw e;
         }
     }

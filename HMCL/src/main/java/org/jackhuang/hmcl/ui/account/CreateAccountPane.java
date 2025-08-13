@@ -267,7 +267,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     }).executor(true);
         };
 
-        if (factory instanceof OfflineAccountFactory && username != null && !USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
+        if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {
             JFXButton btnYes = new JFXButton(i18n("button.ok"));
             btnYes.getStyleClass().add("dialog-error");
             btnYes.setOnAction(e -> doCreate.run());
@@ -348,7 +348,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
                 JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
                 createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink);
+                JFXHyperlink bannedQueryLink = new JFXHyperlink(i18n("account.methods.ban_query"));
+                bannedQueryLink.setExternalLink("https://enforcement.xbox.com/enforcement/showenforcementhistory");
+                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink, bannedQueryLink);
                 GridPane.setColumnSpan(box, 2);
 
                 if (!IntegrityChecker.isOfficial()) {

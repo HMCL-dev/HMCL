@@ -29,12 +29,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -68,7 +65,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             try {
                 File manifestFile = repository.getModpackConfiguration(version);
                 if (manifestFile.exists()) {
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModpackConfiguration.typeOf(ServerModpackManifest.class));
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile.toPath(), ModpackConfiguration.typeOf(ServerModpackManifest.class));
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read Server modpack manifest.json", e);
@@ -88,7 +85,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     @Override
     public void preExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        dependent = new GetTask(new URL(manifest.getManifest().getFileApi() + "/server-manifest.json"));
+        dependent = new GetTask(manifest.getManifest().getFileApi() + "/server-manifest.json");
     }
 
     @Override
@@ -165,8 +162,8 @@ public class ServerModpackCompletionTask extends Task<Void> {
             if (download) {
                 total++;
                 dependencies.add(new FileDownloadTask(
-                        new URL(remoteManifest.getFileApi() + "/overrides/" + NetworkUtils.encodeLocation(file.getPath())),
-                        actualPath.toFile(),
+                        remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
+                        actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
                         .withCounter("hmcl.modpack.download"));
             }
@@ -191,7 +188,8 @@ public class ServerModpackCompletionTask extends Task<Void> {
     @Override
     public void postExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        File manifestFile = repository.getModpackConfiguration(version);
-        FileUtils.writeText(manifestFile, JsonUtils.GSON.toJson(new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles())));
+        Path manifestFile = repository.getModpackConfiguration(version).toPath();
+        Files.createDirectories(manifestFile.getParent());
+        JsonUtils.writeToJsonFile(manifestFile, new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles()));
     }
 }

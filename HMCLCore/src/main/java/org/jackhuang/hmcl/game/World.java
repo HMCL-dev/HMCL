@@ -24,6 +24,7 @@ import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +32,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
@@ -41,7 +43,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class World {
+public final class World {
 
     private final Path file;
     private String fileName;
@@ -49,6 +51,8 @@ public class World {
     private String gameVersion;
     private long lastPlayed;
     private Image icon;
+    private Long seed;
+    private boolean largeBiomes;
     private boolean isLocked;
 
     public World(Path file) throws IOException {
@@ -65,7 +69,7 @@ public class World {
     private void loadFromDirectory() throws IOException {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");
-        getWorldName(levelDat);
+        loadWorldInfo(levelDat);
         isLocked = isLocked(getSessionLockFile());
 
         Path iconFile = file.resolve("icon.png");
@@ -108,6 +112,14 @@ public class World {
         return gameVersion;
     }
 
+    public @Nullable Long getSeed() {
+        return seed;
+    }
+
+    public boolean isLargeBiomes() {
+        return largeBiomes;
+    }
+
     public Image getIcon() {
         return icon;
     }
@@ -121,7 +133,7 @@ public class World {
         if (!Files.exists(levelDat))
             throw new IOException("Not a valid world zip file since level.dat cannot be found.");
 
-        getWorldName(levelDat);
+        loadWorldInfo(levelDat);
 
         Path iconFile = root.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -154,7 +166,7 @@ public class World {
         }
     }
 
-    private void getWorldName(Path levelDat) throws IOException {
+    private void loadWorldInfo(Path levelDat) throws IOException {
         CompoundTag nbt = parseLevelDat(levelDat);
 
         CompoundTag data = nbt.get("Data");
@@ -177,6 +189,27 @@ public class World {
 
             if (version.get("Name") instanceof StringTag)
                 gameVersion = version.<StringTag>get("Name").getValue();
+        }
+
+        Tag worldGenSettings = data.get("WorldGenSettings");
+        if (worldGenSettings instanceof CompoundTag) {
+            Tag seedTag = ((CompoundTag) worldGenSettings).get("seed");
+            if (seedTag instanceof LongTag) {
+                seed = ((LongTag) seedTag).getValue();
+            }
+        }
+        if (seed == null) {
+            Tag seedTag = data.get("RandomSeed");
+            if (seedTag instanceof LongTag) {
+                seed = ((LongTag) seedTag).getValue();
+            }
+        }
+
+        // FIXME: Only work for 1.15 and below
+        if (data.get("generatorName") instanceof StringTag) {
+            largeBiomes = "largeBiomes".equals(data.<StringTag>get("generatorName").getValue());
+        } else {
+            largeBiomes = false;
         }
     }
 
@@ -293,7 +326,7 @@ public class World {
     private static boolean isLocked(Path sessionLockFile) {
         try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
             return fileChannel.tryLock() == null;
-        } catch (AccessDeniedException accessDeniedException) {
+        } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
             return true;
         } catch (NoSuchFileException noSuchFileException) {
             return false;
