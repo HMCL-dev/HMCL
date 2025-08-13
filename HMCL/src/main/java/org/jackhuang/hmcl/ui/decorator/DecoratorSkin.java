@@ -18,8 +18,11 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -51,6 +54,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private final Stage primaryStage;
     private final TransitionPane navBarPane;
 
+    private final InvalidationListener onWindowsStatusChange;
+
     private double mouseInitX, mouseInitY, stageInitX, stageInitY, stageInitWidth, stageInitHeight;
 
     /**
@@ -81,9 +86,25 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         skinnable.getSnackbar().registerSnackbarContainer(parent);
 
-        root.addEventFilter(MouseEvent.MOUSE_RELEASED, this::onMouseReleased);
-        root.addEventFilter(MouseEvent.MOUSE_DRAGGED, this::onMouseDragged);
-        root.addEventFilter(MouseEvent.MOUSE_MOVED, this::onMouseMoved);
+        EventHandler<MouseEvent> onMouseReleased = this::onMouseReleased;
+        EventHandler<MouseEvent> onMouseDragged = this::onMouseDragged;
+        EventHandler<MouseEvent> onMouseMoved = this::onMouseMoved;
+        onWindowsStatusChange = observable -> {
+            if (primaryStage.isIconified() || primaryStage.isFullScreen() || primaryStage.isMaximized()) {
+                root.removeEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
+                root.removeEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
+                root.removeEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
+            } else {
+                root.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
+                root.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
+                root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
+            }
+        };
+        WeakInvalidationListener weakOnWindowsStatusChange = new WeakInvalidationListener(onWindowsStatusChange);
+        primaryStage.iconifiedProperty().addListener(weakOnWindowsStatusChange);
+        primaryStage.maximizedProperty().addListener(weakOnWindowsStatusChange);
+        primaryStage.fullScreenProperty().addListener(weakOnWindowsStatusChange);
+        onWindowsStatusChange.invalidated(null);
 
         shadowContainer.getChildren().setAll(parent);
         root.getChildren().setAll(shadowContainer);
