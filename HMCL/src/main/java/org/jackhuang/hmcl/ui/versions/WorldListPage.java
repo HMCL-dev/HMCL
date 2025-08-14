@@ -99,7 +99,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                                     WorldListItem item = new WorldListItem(world, backupsDir);
                                     item.setOnDelete(() -> this.itemsProperty().removeIf(i -> i.getWorld().equals(world)));
                                     return item;
-                            }).collect(Collectors.toList()));
+                                }).collect(Collectors.toList()));
                     } else {
                         LOG.warning("Failed to load world list page", exception);
                     }
