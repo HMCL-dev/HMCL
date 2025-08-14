@@ -85,7 +85,7 @@ public class BgraPreCanvas {
 
     public void clear(int x, int y, int w, int h) {
         Objects.checkFromIndexSize(x, w, width);
-        Objects.checkFromIndexSize(y, h, width);
+        Objects.checkFromIndexSize(y, h, height);
 
         final int bytesForRow = 4 * w;
 
