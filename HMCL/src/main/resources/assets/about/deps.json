@@ -63,5 +63,10 @@
     "title" : "Java Native Access",
     "subtitle" : "Licensed under the LGPL 2.1 License or the Apache 2.0 License.",
     "externalLink" : "https://github.com/java-native-access/jna"
+  },
+  {
+    "title" : "Java Animated PNG",
+    "subtitle" : "Copyright (C) 2015 Andrew Ellerton.\nLicensed under the Apache 2.0 License.",
+    "externalLink" : "https://github.com/aellerton/japng"
   }
 ]

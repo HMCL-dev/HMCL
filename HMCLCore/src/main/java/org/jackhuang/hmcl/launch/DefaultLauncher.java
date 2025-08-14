@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
@@ -169,7 +168,7 @@ public class DefaultLauncher extends Launcher {
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
-                res.addDefault("-Duser.home=", options.getGameDir().getParent());
+                res.addDefault("-Duser.home=", options.getGameDir().getAbsoluteFile().getParent());
 
             Proxy.Type proxyType = options.getProxyType();
             if (proxyType == null) {
@@ -420,7 +419,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
-            IOUtils.copyTo(input, output);
+            input.transferTo(output);
         }
     }
 

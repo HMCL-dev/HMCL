@@ -41,7 +41,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 如果你想提交一個 Pull Request，必須遵守如下要求：
 
 * IDE：IntelliJ IDEA
-* 編譯器：Java 11+
+* 編譯器：Java 17+
 * **不要**修改 `gradle` 相關文件
 
 ### 編譯
@@ -69,3 +69,4 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 | `-Dhmcl.native.encoding=<encoding>`          | 覆蓋原生編碼                                                         |
 | `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆蓋 Microsoft OAuth App ID                                          |
 | `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆蓋 Microsoft OAuth App 金鑰                                        |
+| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆蓋 CurseForge API 金鑰                                        |

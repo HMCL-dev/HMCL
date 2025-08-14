@@ -24,9 +24,6 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
-
         options.encoding = "UTF-8"
     }
 
@@ -35,7 +32,8 @@ subprojects {
     }
 
     dependencies {
-        "testImplementation"("org.junit.jupiter:junit-jupiter:5.10.2")
+        "testImplementation"(rootProject.libs.junit.jupiter)
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 
     tasks.withType<Test> {
@@ -52,6 +50,10 @@ subprojects {
         repositories {
             mavenLocal()
         }
+    }
+
+    tasks.register("checkstyle") {
+        dependsOn(tasks["checkstyleMain"], tasks["checkstyleTest"])
     }
 }
 

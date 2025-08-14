@@ -37,15 +37,20 @@ val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
 
 version = "$versionRoot.$buildNumber"
 
+val embedResources by configurations.registering
+
 dependencies {
     implementation(project(":HMCLCore"))
+    implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
 
     if (launcherExe == null) {
-        implementation("org.glavo.hmcl:HMCLauncher:3.6.0.3")
+        implementation(libs.hmclauncher)
     }
+
+    embedResources(libs.authlib.injector)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -89,16 +94,18 @@ fun attachSignature(jar: File) {
     }
 }
 
-val java11 = sourceSets.create("java11") {
-    java {
-        srcDir("src/main/java11")
-    }
-}
-
-tasks.getByName<JavaCompile>(java11.compileJavaTaskName) {
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
+tasks.withType<JavaCompile> {
     sourceCompatibility = "11"
     targetCompatibility = "11"
+}
+
+tasks.checkstyleMain {
+    // Third-party code is not checked
+    exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
+}
+
+tasks.compileJava {
+    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
 tasks.jar {
@@ -118,7 +125,7 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     listOf(
-        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*","freebsd-*", "linux-*", "darwin-*",
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*", "darwin-*",
         "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
     ).forEach { exclude("com/sun/jna/$it/**") }
 
@@ -126,6 +133,11 @@ tasks.shadowJar {
         exclude(dependency("com.google.code.gson:.*:.*"))
         exclude(dependency("net.java.dev.jna:jna:.*"))
         exclude(dependency("libs:JFoenix:.*"))
+        exclude(project(":HMCLBoot"))
+    }
+
+    into("assets/") {
+        from(embedResources)
     }
 
     manifest {
@@ -137,6 +149,7 @@ tasks.shadowJar {
             "Microsoft-Auth-Id" to microsoftAuthId,
             "Microsoft-Auth-Secret" to microsoftAuthSecret,
             "CurseForge-Api-Key" to curseForgeApiKey,
+            "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
             "Build-Channel" to versionType,
             "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(
@@ -172,13 +185,6 @@ tasks.shadowJar {
         attachSignature(jarPath)
         createChecksum(jarPath)
     }
-}
-
-tasks.processResources {
-    into("META-INF/versions/11") {
-        from(sourceSets["java11"].output)
-    }
-    dependsOn(tasks["java11Classes"])
 }
 
 val makeExecutables by tasks.registering {
