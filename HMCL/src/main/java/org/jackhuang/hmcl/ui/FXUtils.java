@@ -890,10 +890,10 @@ public final class FXUtils {
                             String heightStr = value.substring(idx + 1).trim();
 
                             int newWidth;
-                            int newWeight;
+                            int newHeight;
                             try {
                                 newWidth = Integer.parseInt(widthStr);
-                                newWeight = Integer.parseInt(heightStr);
+                                newHeight = Integer.parseInt(heightStr);
                             } catch (NumberFormatException e) {
                                 LOG.warning("Bad window size: " + value);
                                 comboBox.setValue(width + "x" + height);
@@ -901,7 +901,7 @@ public final class FXUtils {
                             }
 
                             widthProperty.set(newWidth);
-                            heightProperty.set(newWeight);
+                            heightProperty.set(newHeight);
                         } else {
                             comboBox.setValue(width + "x" + height);
                         }
