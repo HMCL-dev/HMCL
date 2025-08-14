@@ -141,7 +141,7 @@ public class BgraPreCanvas {
     public void blendingWithArgb(int x, int y, int w, int h,
                                  int[] buffer, int offset, int scanlineStride) {
         Objects.checkFromIndexSize(x, w, width);
-        Objects.checkFromIndexSize(y, h, width);
+        Objects.checkFromIndexSize(y, h, height);
 
         for (int row = 0; row < h; row++) {
             for (int col = 0; col < w; col++) {
