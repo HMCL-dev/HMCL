@@ -135,6 +135,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
         popupMenu.getContent().addAll(
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), item::export, popup),
+                new IconedMenuItem(SVG.DELETE, i18n("world.delete"), item::delete, popup),
                 new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), item::reveal, popup));
 
         popup.show(root, JFXPopup.PopupVPosition.TOP, hPosition, initOffsetX, initOffsetY);

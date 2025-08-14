@@ -95,7 +95,11 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     setLoading(false);
                     if (exception == null) {
                         itemsProperty().setAll(result.stream().filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
+                                .map(world -> {
+                                    WorldListItem item = new WorldListItem(world, backupsDir);
+                                    item.setOnDelete(() -> this.itemsProperty().removeIf(i -> i.getWorld().equals(world)));
+                                    return item;
+                            }).collect(Collectors.toList()));
                     } else {
                         LOG.warning("Failed to load world list page", exception);
                     }
