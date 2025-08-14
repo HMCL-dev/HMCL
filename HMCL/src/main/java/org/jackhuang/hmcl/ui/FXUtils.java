@@ -25,10 +25,7 @@ import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.WeakListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.*;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
@@ -832,10 +829,144 @@ public final class FXUtils {
         property.addListener(binding);
     }
 
-    public static void unbindColorPicker(ColorPicker colorPicker, Property<Paint> property) {
-        PaintBidirectionalBinding binding = new PaintBidirectionalBinding(colorPicker, property);
-        colorPicker.valueProperty().removeListener(binding);
-        property.removeListener(binding);
+    private static final class WindowsSizeBidirectionalBinding implements InvalidationListener, WeakListener {
+        private final WeakReference<JFXComboBox<String>> comboBoxRef;
+        private final WeakReference<IntegerProperty> widthPropertyRef;
+        private final WeakReference<IntegerProperty> heightPropertyRef;
+
+        private final int hashCode;
+
+        private boolean updating = false;
+
+        private WindowsSizeBidirectionalBinding(JFXComboBox<String> comboBox,
+                                                IntegerProperty widthProperty,
+                                                IntegerProperty heightProperty) {
+            this.comboBoxRef = new WeakReference<>(comboBox);
+            this.widthPropertyRef = new WeakReference<>(widthProperty);
+            this.heightPropertyRef = new WeakReference<>(heightProperty);
+            this.hashCode = System.identityHashCode(comboBox)
+                    ^ System.identityHashCode(widthProperty)
+                    ^ System.identityHashCode(heightProperty);
+        }
+
+        @Override
+        public void invalidated(Observable observable) {
+            if (!updating) {
+                var comboBox = this.comboBoxRef.get();
+                var widthProperty = this.widthPropertyRef.get();
+                var heightProperty = this.heightPropertyRef.get();
+
+                if (comboBox == null || widthProperty == null || heightProperty == null) {
+                    if (comboBox != null) {
+                        comboBox.focusedProperty().removeListener(this);
+                        comboBox.sceneProperty().removeListener(this);
+                    }
+                    if (widthProperty != null)
+                        widthProperty.removeListener(this);
+                    if (heightProperty != null)
+                        heightProperty.removeListener(this);
+                } else {
+                    updating = true;
+                    try {
+                        int width = widthProperty.get();
+                        int height = heightProperty.get();
+
+                        if (observable instanceof ReadOnlyProperty<?>
+                                && ((ReadOnlyProperty<?>) observable).getBean() == comboBox) {
+                            String value = comboBox.valueProperty().get();
+                            if (value == null)
+                                value = "";
+                            int idx = value.indexOf('x');
+                            if (idx < 0)
+                                idx = value.indexOf('*');
+
+                            if (idx < 0) {
+                                LOG.warning("Bad window size: " + value);
+                                comboBox.setValue(width + "x" + height);
+                                return;
+                            }
+
+                            String widthStr = value.substring(0, idx).trim();
+                            String heightStr = value.substring(idx + 1).trim();
+
+                            int newWidth;
+                            int newHeight;
+                            try {
+                                newWidth = Integer.parseInt(widthStr);
+                                newHeight = Integer.parseInt(heightStr);
+                            } catch (NumberFormatException e) {
+                                LOG.warning("Bad window size: " + value);
+                                comboBox.setValue(width + "x" + height);
+                                return;
+                            }
+
+                            widthProperty.set(newWidth);
+                            heightProperty.set(newHeight);
+                        } else {
+                            comboBox.setValue(width + "x" + height);
+                        }
+                    } finally {
+                        updating = false;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return this.comboBoxRef.get() == null
+                    || this.widthPropertyRef.get() == null
+                    || this.heightPropertyRef.get() == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!(obj instanceof WindowsSizeBidirectionalBinding))
+                return false;
+
+            var that = (WindowsSizeBidirectionalBinding) obj;
+
+            var comboBox = this.comboBoxRef.get();
+            var widthProperty = this.widthPropertyRef.get();
+            var heightProperty = this.heightPropertyRef.get();
+
+            var thatComboBox = that.comboBoxRef.get();
+            var thatWidthProperty = that.widthPropertyRef.get();
+            var thatHeightProperty = that.heightPropertyRef.get();
+
+            if (comboBox == null || widthProperty == null || heightProperty == null
+                    || thatComboBox == null || thatWidthProperty == null || thatHeightProperty == null) {
+                return false;
+            }
+
+            return comboBox == thatComboBox
+                    && widthProperty == thatWidthProperty
+                    && heightProperty == thatHeightProperty;
+        }
+    }
+
+    public static void bindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
+        comboBox.setValue(widthProperty.get() + "x" + heightProperty.get());
+        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
+        comboBox.focusedProperty().addListener(binding);
+        comboBox.sceneProperty().addListener(binding);
+        widthProperty.addListener(binding);
+        heightProperty.addListener(binding);
+    }
+
+    public static void unbindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
+        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
+        comboBox.focusedProperty().removeListener(binding);
+        comboBox.sceneProperty().removeListener(binding);
+        widthProperty.removeListener(binding);
+        heightProperty.removeListener(binding);
     }
 
     public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
