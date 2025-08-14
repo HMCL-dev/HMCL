@@ -97,7 +97,7 @@ public class BgraPreCanvas {
 
     public void setBgraPre(int x, int y, BgraPreCanvas canvas) {
         Objects.checkFromIndexSize(x, canvas.width, width);
-        Objects.checkFromIndexSize(y, canvas.height, width);
+        Objects.checkFromIndexSize(y, canvas.height, height);
 
         for (int row = 0; row < canvas.height; row++) {
             for (int col = 0; col < canvas.width; col++) {
