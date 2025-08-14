@@ -489,8 +489,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                             return versionType == RemoteVersion.Type.SNAPSHOT
                                     || versionType == RemoteVersion.Type.PENDING;
                         case APRIL_FOOLS:
-                            return versionType == RemoteVersion.Type.
-                                    SNAPSHOT && GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial();
+                            return versionType == RemoteVersion.Type.SNAPSHOT
+                                    && GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial();
                         case OLD:
                             return versionType == RemoteVersion.Type.OLD;
                         case ALL:
