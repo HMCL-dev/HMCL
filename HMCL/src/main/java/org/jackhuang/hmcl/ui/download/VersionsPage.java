@@ -139,7 +139,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         SUCCESS,
     }
 
-    private enum VersionType {
+    private enum VersionTypeFilter {
+        ALL,
         RELEASE,
         SNAPSHOTS,
         APRIL_FOOLS,
@@ -315,7 +316,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final JFXSpinner spinner;
 
         private final JFXTextField nameField;
-        private final JFXComboBox<VersionType> categoryField = new JFXComboBox<>();
+        private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
 
         VersionsPageSkin(VersionsPage control) {
             super(control);
@@ -323,8 +324,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             BorderPane root = new BorderPane();
 
             GridPane searchPane = new GridPane();
-            if (control.versionList.hasType())
-                root.setTop(searchPane);
+            root.setTop(searchPane);
             searchPane.getStyleClass().addAll("card");
             BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
 
@@ -335,7 +335,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             ColumnConstraints column2 = new ColumnConstraints();
             column2.setMaxWidth(150);
             ColumnConstraints column3 = new ColumnConstraints();
-            searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2, column3);
+
+            if (control.versionList.hasType())
+                searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2, column3);
+            else
+                searchPane.getColumnConstraints().setAll(nameColumn, column1, column3);
 
             searchPane.setHgap(16);
             searchPane.setVgap(10);
@@ -348,21 +352,42 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     nameField.setPromptText(i18n("version.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 
-                    categoryField.getItems().addAll(VersionType.values());
+                    if ("game".equals(control.libraryId)) {
+                        categoryField.getItems().setAll(
+                                VersionTypeFilter.ALL,
+                                VersionTypeFilter.RELEASE,
+                                VersionTypeFilter.SNAPSHOTS,
+                                VersionTypeFilter.APRIL_FOOLS,
+                                VersionTypeFilter.OLD
+                        );
+                        categoryField.getSelectionModel().select(VersionTypeFilter.RELEASE);
+                    } else {
+                        categoryField.getItems().setAll(
+                                VersionTypeFilter.ALL,
+                                VersionTypeFilter.RELEASE,
+                                VersionTypeFilter.SNAPSHOTS
+                        );
+                        categoryField.getSelectionModel().select(VersionTypeFilter.ALL);
+                    }
                     categoryField.setConverter(stringConverter(type -> i18n("version.game." + type.name().toLowerCase(Locale.ROOT))));
-                    categoryField.getSelectionModel().select(0);
                     categoryField.getSelectionModel().selectedItemProperty().addListener(o -> updateList());
 
                     JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
                     refreshButton.setOnAction(event -> control.onRefresh());
 
-                    searchPane.addRow(rowIndex++,
-                            new Label(i18n("version.search")), nameField,
-                            new Label(i18n("version.game.type")), categoryField,
-                            refreshButton
-                    );
+                    if (control.versionList.hasType()) {
+                        searchPane.addRow(rowIndex++,
+                                new Label(i18n("version.search")), nameField,
+                                new Label(i18n("version.game.type")), categoryField,
+                                refreshButton
+                        );
+                    } else {
+                        searchPane.addRow(rowIndex++,
+                                new Label(i18n("version.search")), nameField,
+                                refreshButton
+                        );
+                    }
                 }
-
 //                {
 //                    HBox actionsBox = new HBox(8);
 //                    GridPane.setColumnSpan(actionsBox, 4);
@@ -453,20 +478,22 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private void updateList() {
             Stream<RemoteVersion> versions = getSkinnable().versions.stream();
 
-            VersionType versionType = categoryField.getSelectionModel().getSelectedItem();
-            if (versionType != null)
+            VersionTypeFilter filter = categoryField.getSelectionModel().getSelectedItem();
+            if (filter != null)
                 versions = versions.filter(it -> {
-                    switch (it.getVersionType()) {
+                    RemoteVersion.Type versionType = it.getVersionType();
+                    switch (filter) {
                         case RELEASE:
-                            return versionType == VersionType.RELEASE;
-                        case PENDING:
-                            return versionType == VersionType.SNAPSHOTS;
-                        case SNAPSHOT:
-                            return versionType == (GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial()
-                                    ? VersionType.APRIL_FOOLS
-                                    : VersionType.SNAPSHOTS);
+                            return versionType == RemoteVersion.Type.RELEASE;
+                        case SNAPSHOTS:
+                            return versionType == RemoteVersion.Type.SNAPSHOT
+                                    || versionType == RemoteVersion.Type.PENDING;
+                        case APRIL_FOOLS:
+                            return versionType == RemoteVersion.Type.SNAPSHOT
+                                    && GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial();
                         case OLD:
-                            return versionType == VersionType.OLD;
+                            return versionType == RemoteVersion.Type.OLD;
+                        case ALL:
                         default:
                             return true;
                     }
@@ -489,6 +516,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             //noinspection DataFlowIssue
             list.getItems().setAll(versions.collect(Collectors.toList()));
+            list.scrollTo(0);
         }
     }
 }
