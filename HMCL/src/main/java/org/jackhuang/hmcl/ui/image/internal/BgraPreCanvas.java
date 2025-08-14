@@ -47,7 +47,7 @@ public class BgraPreCanvas {
 
     public BgraPreCanvas(byte[] pixels, int width, int height) {
         if (pixels.length != 4 * width * height)
-            throw new IllegalArgumentException("Pixel array length missmatch");
+            throw new IllegalArgumentException("Pixel array length mismatch");
 
         this.pixels = pixels;
         this.width = width;
