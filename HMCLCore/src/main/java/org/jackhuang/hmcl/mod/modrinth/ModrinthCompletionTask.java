@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.mod.modrinth;
 
-import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
@@ -29,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -81,12 +81,13 @@ public class ModrinthCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                File manifestFile = new File(repository.getVersionRoot(version), "modrinth.index.json");
-                if (manifestFile.exists())
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModrinthManifest.class);
-                File filesFile = new File(repository.getVersionRoot(version), "files.json");
-                if (filesFile.exists()) {
-                    Set<String> files = JsonUtils.GSON.fromJson(FileUtils.readText(filesFile), new TypeToken<HashSet<String>>() {});
+                Path versionRoot = repository.getVersionRoot(version).toPath();
+                Path manifestFile = versionRoot.resolve("modrinth.index.json");
+                if (Files.exists(manifestFile))
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
+                Path filesFile = versionRoot.resolve("files.json");
+                if (Files.exists(filesFile)) {
+                    Set<String> files = new HashSet<>(JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
                     this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
                 }
             } catch (Exception e) {
