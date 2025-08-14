@@ -155,10 +155,10 @@ public final class BgraPreBitmapDirector extends BasicArgb8888Director<Image> {
         );
 
         if (currentFrame.blendOp == 0) {
-            frame.setArgb(currentFrame.xOffset, currentFrame.yOffset, currentFrame.width, currentFrame.height,
+            frame.setArgb(0, 0, currentFrame.width, currentFrame.height,
                     bitmap.array, 0, currentFrame.width);
         } else if (currentFrame.blendOp == 1) { // APNG_BLEND_OP_OVER - Alpha blending
-            frame.blendingWithArgb(currentFrame.xOffset, currentFrame.yOffset, currentFrame.width, currentFrame.height,
+            frame.blendingWithArgb(0, 0, currentFrame.width, currentFrame.height,
                     bitmap.array, 0, currentFrame.width);
         } else {
             throw new PngIntegrityException("Unsupported blendOp " + currentFrame.blendOp);
