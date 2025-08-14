@@ -146,7 +146,10 @@ public final class NetworkUtils {
         boolean left = true;
         while (i < location.length()) {
             char ch = location.charAt(i);
-            if (ch == ' ' || ch >= 0x80)
+            if (ch == ' '
+                    || ch == '[' || ch == ']'
+                    || ch == '{' || ch == '}'
+                    || ch >= 0x80)
                 break;
             else if (ch == '?')
                 left = false;
@@ -163,22 +166,6 @@ public final class NetworkUtils {
 
         for (; i < location.length(); i++) {
             char ch = location.charAt(i);
-            if (Character.isSurrogate(ch)) {
-                if (Character.isHighSurrogate(ch) && i < location.length() - 1) {
-                    char ch2 = location.charAt(i + 1);
-                    if (Character.isLowSurrogate(ch2)) {
-                        int codePoint = Character.toCodePoint(ch, ch2);
-                        encodeCodePoint(builder, codePoint);
-                        i++;
-                        continue;
-                    }
-                }
-
-                // Invalid surrogate pair, encode as '?'
-                builder.append("%3F");
-                continue;
-            }
-
             if (ch == ' ') {
                 if (left)
                     builder.append("%20");
@@ -187,7 +174,23 @@ public final class NetworkUtils {
             } else if (ch == '?') {
                 left = false;
                 builder.append('?');
-            } else if (ch >= 0x80) {
+            } else if (ch >= 0x80 || (left && (ch == '[' || ch == ']' || ch == '{' || ch == '}'))) {
+                if (Character.isSurrogate(ch)) {
+                    if (Character.isHighSurrogate(ch) && i < location.length() - 1) {
+                        char ch2 = location.charAt(i + 1);
+                        if (Character.isLowSurrogate(ch2)) {
+                            int codePoint = Character.toCodePoint(ch, ch2);
+                            encodeCodePoint(builder, codePoint);
+                            i++;
+                            continue;
+                        }
+                    }
+
+                    // Invalid surrogate pair, encode as '?'
+                    builder.append("%3F");
+                    continue;
+                }
+
                 encodeCodePoint(builder, ch);
             } else {
                 builder.append(ch);

@@ -31,6 +31,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -42,10 +43,16 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -61,16 +68,24 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
+import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MainPage extends StackPane implements DecoratorPage {
     private static final String ANNOUNCEMENT = "announcement";
@@ -211,7 +226,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchButton.setPrefWidth(230);
             launchButton.setPrefHeight(55);
             //launchButton.setButtonType(JFXButton.ButtonType.RAISED);
-            launchButton.setOnAction(e -> launch());
             launchButton.setDefaultButton(true);
             launchButton.setClip(new Rectangle(-100, -100, 310, 200));
             {
@@ -219,18 +233,34 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 graphic.setAlignment(Pos.CENTER);
                 graphic.setTranslateX(-7);
                 graphic.setMaxWidth(200);
-                Label launchLabel = new Label(i18n("version.launch"));
+                Label launchLabel = new Label();
                 launchLabel.setStyle("-fx-font-size: 16px;");
                 Label currentLabel = new Label();
                 currentLabel.setStyle("-fx-font-size: 12px;");
-                currentLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    if (getCurrentGame() == null) {
-                        return i18n("version.empty");
-                    } else {
-                        return getCurrentGame();
+
+                FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
+                    private Tooltip tooltip;
+
+                    @Override
+                    public void accept(String currentGame) {
+                        if (currentGame == null) {
+                            launchLabel.setText(i18n("version.launch.empty"));
+                            currentLabel.setText(null);
+                            graphic.getChildren().setAll(launchLabel);
+                            launchButton.setOnAction(e -> MainPage.this.launchNoGame());
+                            if (tooltip == null)
+                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                            FXUtils.installFastTooltip(launchButton, tooltip);
+                        } else {
+                            launchLabel.setText(i18n("version.launch"));
+                            currentLabel.setText(currentGame);
+                            graphic.getChildren().setAll(launchLabel, currentLabel);
+                            launchButton.setOnAction(e -> MainPage.this.launch());
+                            if (tooltip != null)
+                                Tooltip.uninstall(launchButton, tooltip);
+                        }
                     }
-                }, currentGameProperty()));
-                graphic.getChildren().setAll(launchLabel, currentLabel);
+                });
 
                 launchButton.setGraphic(graphic);
             }
@@ -319,7 +349,46 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void launch() {
-        Versions.launch(Profiles.getSelectedProfile());
+        Profile profile = Profiles.getSelectedProfile();
+        Versions.launch(profile, profile.getSelectedVersion(), null);
+    }
+
+    private void launchNoGame() {
+        DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
+        VersionList<?> versionList = downloadProvider.getVersionListById("game");
+
+        Holder<String> gameVersionHolder = new Holder<>();
+        Task<?> task = versionList.refreshAsync("")
+                .thenSupplyAsync(() -> versionList.getVersions("").stream()
+                        .filter(it -> it.getVersionType() == RELEASE)
+                        .sorted()
+                        .findFirst()
+                        .orElseThrow(() -> new IOException("No versions found")))
+                .thenComposeAsync(version -> {
+                    Profile profile = Profiles.getSelectedProfile();
+                    DefaultDependencyManager dependency = profile.getDependency();
+                    String gameVersion = gameVersionHolder.value = version.getGameVersion();
+
+                    return dependency.gameBuilder()
+                            .name(gameVersion)
+                            .gameVersion(gameVersion)
+                            .buildAsync();
+                })
+                .whenComplete(any -> profile.getRepository().refreshVersions())
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        profile.setSelectedVersion(gameVersionHolder.value);
+                        launch();
+                    } else if (exception instanceof CancellationException) {
+                        Controllers.showToast(i18n("message.cancelled"));
+                    } else {
+                        LOG.warning("Failed to install game", exception);
+                        Controllers.dialog(StringUtils.getStackTrace(exception),
+                                i18n("install.failed"),
+                                MessageDialogPane.MessageType.WARNING);
+                    }
+                });
+        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
     }
 
     private void onMenu() {
