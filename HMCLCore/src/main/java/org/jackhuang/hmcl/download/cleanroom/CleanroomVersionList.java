@@ -46,7 +46,7 @@ public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersi
 
             try {
                 versions.clear();
-                for (ReleaseResult version : results.getFirst()) {
+                for (ReleaseResult version : results.get(0)) {
                     versions.put("1.12.2", new CleanroomRemoteVersion(
                             "1.12.2", version.name, Instant.parse(version.created_at),
                             Collections.singletonList(
@@ -67,5 +67,5 @@ public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersi
         String created_at;
     }
 
-    private static final String INSTALLER_URL = "https://seep.eu.org/github.com/CleanroomMC/Cleanroom/releases/download/%s/cleanroom-%s-installer.jar";
+    private static final String INSTALLER_URL = "https://github.com/CleanroomMC/Cleanroom/releases/download/%s/cleanroom-%s-installer.jar";
 }
