@@ -226,7 +226,9 @@ public final class Controllers {
 
             if (targetProperty != null
                     && Controllers.stage != null
-                    && !Controllers.stage.isIconified()) {
+                    && !Controllers.stage.isIconified()
+                    && !Controllers.stage.isFullScreen()
+                    && !Controllers.stage.isMaximized()) {
                 targetProperty.set(sourceProperty.get());
             }
         };
@@ -459,7 +461,8 @@ public final class Controllers {
                     Controllers.navigate(Controllers.getSettingsPage());
                     break;
                 case "hmcl://game/launch":
-                    Versions.launch(Profiles.getSelectedProfile(), LauncherHelper::setKeep);
+                    Profile profile = Profiles.getSelectedProfile();
+                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
                     break;
                 case "hmcl://terracotta/copy_code":
                     TerracottaControllerPage.copyCode();

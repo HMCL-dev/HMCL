@@ -205,18 +205,6 @@ public final class Versions {
         });
     }
 
-    public static void launch(Profile profile) {
-        launch(profile, profile.getSelectedVersion());
-    }
-
-    public static void launch(Profile profile, Consumer<LauncherHelper> injecter) {
-        launch(profile, profile.getSelectedVersion(), injecter);
-    }
-
-    public static void launch(Profile profile, String id) {
-        launch(profile, id, null);
-    }
-
     public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
         if (!checkVersionForLaunching(profile, id))
             return;

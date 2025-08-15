@@ -29,6 +29,7 @@ public enum VersionIconType {
     COMMAND("/assets/img/command.png"),
     OPTIFINE("/assets/img/optifine.png"),
     CRAFT_TABLE("/assets/img/craft_table.png"),
+    APRIL_FOOLS("/assets/img/april_fools.png"),
     FABRIC("/assets/img/fabric.png"),
     FORGE("/assets/img/forge.png"),
     NEO_FORGE("/assets/img/neoforge.png"),
