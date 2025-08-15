@@ -127,6 +127,7 @@ val addOpens = listOf(
 
 val manifestFile = layout.buildDirectory.file("MANIFEST.MF")
 val manifestProperties: List<Pair<String, String>> = listOf(
+    "Manifest-Version" to "1.0",
     "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
     "Main-Class" to "org.jackhuang.hmcl.Main",
     "Multi-Release" to "true",
@@ -148,7 +149,6 @@ val createManifestFile by tasks.registering {
 
     doLast {
         val manifest = Manifest()
-        manifest.mainAttributes.putValue("Manifest-Version", "1.0")
         manifestProperties.forEach { (k, v) -> manifest.mainAttributes.putValue(k, v) }
         val targetFile = manifestFile.get().asFile
         targetFile.parentFile.mkdir()
