@@ -109,6 +109,22 @@ tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
+val addOpens = listOf(
+    "java.base/java.lang",
+    "java.base/java.lang.reflect",
+    "java.base/jdk.internal.loader",
+    "javafx.base/com.sun.javafx.binding",
+    "javafx.base/com.sun.javafx.event",
+    "javafx.base/com.sun.javafx.runtime",
+    "javafx.graphics/javafx.css",
+    "javafx.graphics/com.sun.javafx.stage",
+    "javafx.graphics/com.sun.prism",
+    "javafx.controls/com.sun.javafx.scene.control",
+    "javafx.controls/com.sun.javafx.scene.control.behavior",
+    "javafx.controls/javafx.scene.control.skin",
+    "jdk.attach/sun.tools.attach",
+)
+
 val manifestFile = layout.buildDirectory.file("MANIFEST.MF")
 val manifestProperties: List<Pair<String, String>> = listOf(
     "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
@@ -120,21 +136,7 @@ val manifestProperties: List<Pair<String, String>> = listOf(
     "CurseForge-Api-Key" to curseForgeApiKey,
     "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
     "Build-Channel" to versionType,
-    "Add-Opens" to listOf(
-        "java.base/java.lang",
-        "java.base/java.lang.reflect",
-        "java.base/jdk.internal.loader",
-        "javafx.base/com.sun.javafx.binding",
-        "javafx.base/com.sun.javafx.event",
-        "javafx.base/com.sun.javafx.runtime",
-        "javafx.graphics/javafx.css",
-        "javafx.graphics/com.sun.javafx.stage",
-        "javafx.graphics/com.sun.prism",
-        "javafx.controls/com.sun.javafx.scene.control",
-        "javafx.controls/com.sun.javafx.scene.control.behavior",
-        "javafx.controls/javafx.scene.control.skin",
-        "jdk.attach/sun.tools.attach",
-    ).joinToString(" "),
+    "Add-Opens" to addOpens.joinToString(" "),
     "Enable-Native-Access" to "ALL-UNNAMED"
 ).plus(System.getenv("GITHUB_SHA")?.let {
     listOf("GitHub-SHA" to it)
@@ -286,6 +288,15 @@ fun parseToolOptions(options: String?): MutableList<String> {
     }
 
     return result
+}
+
+// For IntelliJ IDEA
+tasks.withType<JavaExec> {
+    if (name != "run") {
+        dependsOn(createManifestFile)
+        jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
+        systemProperty("hmcl.manifest", manifestFile.get().asFile.absolutePath)
+    }
 }
 
 tasks.register<JavaExec>("run") {

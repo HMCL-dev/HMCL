@@ -39,9 +39,9 @@ public final class JarUtils {
 
     static {
         CodeSource cs = JarUtils.class.getProtectionDomain().getCodeSource();
+        Manifest mn = null;
         if (cs == null) {
             THIS_JAR = null;
-            manifest = new Manifest();
         } else {
             Path path;
             try {
@@ -51,18 +51,29 @@ public final class JarUtils {
             }
             if (path == null || !Files.isRegularFile(path)) {
                 THIS_JAR = null;
-                manifest = new Manifest();
             } else {
                 THIS_JAR = path;
-                Manifest mn;
                 try (JarFile file = new JarFile(path.toFile())) {
                     mn = file.getManifest();
-                } catch (IOException e) {
-                    mn = new Manifest();
+                } catch (IOException ignored) {
                 }
-                manifest = mn;
             }
         }
+
+        if (mn == null) {
+            String hmclManifest = System.getProperty("hmcl.manifest");
+            if (hmclManifest != null) {
+                try (var input = Files.newInputStream(Path.of(hmclManifest))) {
+                    mn = new Manifest(input);
+                } catch (Throwable ignored) {
+                }
+            }
+
+            if (mn == null)
+                mn = new Manifest();
+        }
+
+        manifest = mn;
     }
 
     @Nullable
