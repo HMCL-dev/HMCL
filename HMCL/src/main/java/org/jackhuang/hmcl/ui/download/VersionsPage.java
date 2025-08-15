@@ -31,6 +31,7 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
@@ -221,6 +222,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = VersionIconType.OPTIFINE;
                 else if (remoteVersion instanceof ForgeRemoteVersion)
                     iconType = VersionIconType.FORGE;
+                else if (remoteVersion instanceof CleanroomRemoteVersion)
+                    iconType = VersionIconType.CLEANROOM;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
                     iconType = VersionIconType.NEO_FORGE;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)

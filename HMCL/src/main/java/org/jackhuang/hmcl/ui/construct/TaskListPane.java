@@ -120,6 +120,7 @@ public final class TaskListPane extends StackPane {
                 if (!task.getSignificance().shouldShow() || task.getName() == null)
                     return;
 
+                //TODO: Cleanroom
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
