@@ -6,8 +6,8 @@ import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.zip.ZipFile
 import java.util.jar.Manifest
+import java.util.zip.ZipFile
 
 plugins {
     alias(libs.plugins.shadow)
@@ -110,7 +110,6 @@ tasks.compileJava {
 }
 
 val manifestFile = layout.buildDirectory.file("MANIFEST.MF")
-
 val manifestProperties: List<Pair<String, String>> = listOf(
     "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
     "Main-Class" to "org.jackhuang.hmcl.Main",
