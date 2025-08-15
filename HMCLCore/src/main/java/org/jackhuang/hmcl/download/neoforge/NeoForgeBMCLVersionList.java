@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.download.RemoteVersion.Type;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -42,7 +43,7 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
 
     @Override
     public boolean hasType() {
-        return false;
+        return true;
     }
 
     @Override
@@ -75,13 +76,18 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
                             versions.put(gameVersion, new NeoForgeRemoteVersion(
                                     neoForgeVersion.mcVersion,
                                     NeoForgeRemoteVersion.normalize(neoForgeVersion.version),
-                                    Collections.singletonList(apiRoot + "/neoforge/version/" + neoForgeVersion.version + "/download/installer.jar")
+                                    Collections.singletonList(apiRoot + "/neoforge/version/" + neoForgeVersion.version + "/download/installer.jar"),
+                                    getType(neoForgeVersion.version)
                             ));
                         }
                     } finally {
                         lock.writeLock().unlock();
                     }
                 });
+    }
+
+    private static Type getType(String version) {
+        return version.contains("beta") ? Type.SNAPSHOT : Type.RELEASE;
     }
 
     @Immutable

@@ -9,8 +9,8 @@ import org.jackhuang.hmcl.task.Task;
 import java.util.List;
 
 public class NeoForgeRemoteVersion extends RemoteVersion {
-    public NeoForgeRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId(), gameVersion, selfVersion, null, urls);
+    public NeoForgeRemoteVersion(String gameVersion, String selfVersion, List<String> urls, Type type) {
+        super(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId(), gameVersion, selfVersion, null, type, urls);
     }
 
     @Override
