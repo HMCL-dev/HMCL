@@ -38,7 +38,12 @@ public final class JarUtils {
     private static final Manifest manifest;
 
     static {
-        CodeSource cs = JarUtils.class.getProtectionDomain().getCodeSource();
+        CodeSource cs = null;
+        try {
+            cs = Class.forName("org.jackhuang.hmcl.EntryPoint").getProtectionDomain().getCodeSource();
+        } catch (ClassNotFoundException ignored) {
+        }
+
         Manifest mn = null;
         if (cs == null) {
             THIS_JAR = null;
@@ -62,6 +67,7 @@ public final class JarUtils {
 
         if (mn == null) {
             String hmclManifest = System.getProperty("hmcl.manifest");
+            System.out.println(">>>>>>> " + hmclManifest);
             if (hmclManifest != null) {
                 try (var input = Files.newInputStream(Path.of(hmclManifest))) {
                     mn = new Manifest(input);
