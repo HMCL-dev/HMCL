@@ -7,6 +7,7 @@ import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
+import java.util.jar.Manifest
 
 plugins {
     alias(libs.plugins.shadow)
@@ -108,6 +109,54 @@ tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
+val manifestFile = layout.buildDirectory.file("MANIFEST.MF")
+
+val manifestProperties: List<Pair<String, String>> = listOf(
+    "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
+    "Main-Class" to "org.jackhuang.hmcl.Main",
+    "Multi-Release" to "true",
+    "Implementation-Version" to project.version.toString(),
+    "Microsoft-Auth-Id" to microsoftAuthId,
+    "Microsoft-Auth-Secret" to microsoftAuthSecret,
+    "CurseForge-Api-Key" to curseForgeApiKey,
+    "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
+    "Build-Channel" to versionType,
+    "Add-Opens" to listOf(
+        "java.base/java.lang",
+        "java.base/java.lang.reflect",
+        "java.base/jdk.internal.loader",
+        "javafx.base/com.sun.javafx.binding",
+        "javafx.base/com.sun.javafx.event",
+        "javafx.base/com.sun.javafx.runtime",
+        "javafx.graphics/javafx.css",
+        "javafx.graphics/com.sun.javafx.stage",
+        "javafx.graphics/com.sun.prism",
+        "javafx.controls/com.sun.javafx.scene.control",
+        "javafx.controls/com.sun.javafx.scene.control.behavior",
+        "javafx.controls/javafx.scene.control.skin",
+        "jdk.attach/sun.tools.attach",
+    ).joinToString(" "),
+    "Enable-Native-Access" to "ALL-UNNAMED"
+).plus(System.getenv("GITHUB_SHA")?.let {
+    listOf("GitHub-SHA" to it)
+} ?: listOf())
+
+val createManifestFile by tasks.registering {
+    outputs.file(manifestFile)
+    manifestProperties.forEach { (k, v) -> inputs.property(k, v) }
+
+    doLast {
+        val manifest = Manifest()
+        manifest.mainAttributes.putValue("Manifest-Version", "1.0")
+        manifestProperties.forEach { (k, v) -> manifest.mainAttributes.putValue(k, v) }
+        val targetFile = manifestFile.get().asFile
+        targetFile.parentFile.mkdir()
+        targetFile.outputStream().use {
+            manifest.write(it)
+        }
+    }
+}
+
 tasks.jar {
     enabled = false
     dependsOn(tasks["shadowJar"])
@@ -116,6 +165,8 @@ tasks.jar {
 val jarPath = tasks.jar.get().archiveFile.get().asFile
 
 tasks.shadowJar {
+    dependsOn(createManifestFile)
+
     archiveClassifier.set(null as String?)
 
     exclude("**/package-info.class")
@@ -136,44 +187,7 @@ tasks.shadowJar {
         exclude(project(":HMCLBoot"))
     }
 
-    into("assets/") {
-        from(embedResources)
-    }
-
-    manifest {
-        attributes(
-            "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
-            "Main-Class" to "org.jackhuang.hmcl.Main",
-            "Multi-Release" to "true",
-            "Implementation-Version" to project.version,
-            "Microsoft-Auth-Id" to microsoftAuthId,
-            "Microsoft-Auth-Secret" to microsoftAuthSecret,
-            "CurseForge-Api-Key" to curseForgeApiKey,
-            "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
-            "Build-Channel" to versionType,
-            "Class-Path" to "pack200.jar",
-            "Add-Opens" to listOf(
-                "java.base/java.lang",
-                "java.base/java.lang.reflect",
-                "java.base/jdk.internal.loader",
-                "javafx.base/com.sun.javafx.binding",
-                "javafx.base/com.sun.javafx.event",
-                "javafx.base/com.sun.javafx.runtime",
-                "javafx.graphics/javafx.css",
-                "javafx.graphics/com.sun.javafx.stage",
-                "javafx.graphics/com.sun.prism",
-                "javafx.controls/com.sun.javafx.scene.control",
-                "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin",
-                "jdk.attach/sun.tools.attach",
-            ).joinToString(" "),
-            "Enable-Native-Access" to "ALL-UNNAMED"
-        )
-
-        System.getenv("GITHUB_SHA")?.also {
-            attributes("GitHub-SHA" to it)
-        }
-    }
+    manifest.from(manifestFile)
 
     if (launcherExe != null) {
         into("assets") {
@@ -184,6 +198,12 @@ tasks.shadowJar {
     doLast {
         attachSignature(jarPath)
         createChecksum(jarPath)
+    }
+}
+
+tasks.processResources {
+    into("assets/") {
+        from(embedResources)
     }
 }
 
