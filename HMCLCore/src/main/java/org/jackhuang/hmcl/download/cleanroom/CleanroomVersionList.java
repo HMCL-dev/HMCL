@@ -40,7 +40,7 @@ public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersi
     @Override
     public Task<?> refreshAsync() {
         return Task.allOf(
-                new GetTask(downloadProvider.injectURL(LOADER_META_URL)).thenGetJsonAsync(ReleaseResult[].class)
+                new GetTask(downloadProvider.injectURL(LOADER_LIST_URL)).thenGetJsonAsync(ReleaseResult[].class)
         ).thenAcceptAsync(results -> {
             lock.writeLock().lock();
 
@@ -60,12 +60,12 @@ public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersi
         });
     }
 
-    private static final String LOADER_META_URL = "https://api.github.com/repos/CleanroomMC/Cleanroom/releases";
+    private static final String LOADER_LIST_URL = "https://api.github.com/repos/CleanroomMC/Cleanroom/releases";
+    private static final String INSTALLER_URL = "https://github.com/CleanroomMC/Cleanroom/releases/download/%s/cleanroom-%s-installer.jar";
 
     private static class ReleaseResult {
         String name;
         String created_at;
     }
 
-    private static final String INSTALLER_URL = "https://github.com/CleanroomMC/Cleanroom/releases/download/%s/cleanroom-%s-installer.jar";
 }
