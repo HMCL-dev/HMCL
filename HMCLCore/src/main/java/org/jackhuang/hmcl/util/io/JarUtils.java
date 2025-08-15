@@ -67,7 +67,6 @@ public final class JarUtils {
 
         if (mn == null) {
             String hmclManifest = System.getProperty("hmcl.manifest");
-            System.out.println(">>>>>>> " + hmclManifest);
             if (hmclManifest != null) {
                 try (var input = Files.newInputStream(Path.of(hmclManifest))) {
                     mn = new Manifest(input);
