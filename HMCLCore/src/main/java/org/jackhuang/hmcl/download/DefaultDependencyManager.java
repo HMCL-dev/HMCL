@@ -190,8 +190,6 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     } catch (IOException ignore) {
                     }
 
-                    //TODO:Cleanroom
-
                     try {
                         return OptiFineInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {
