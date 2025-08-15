@@ -20,9 +20,6 @@ package org.jackhuang.hmcl.download.cleanroom;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 

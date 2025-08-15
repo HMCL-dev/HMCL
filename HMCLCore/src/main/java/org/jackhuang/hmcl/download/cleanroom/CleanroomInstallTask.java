@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
-import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -32,11 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 
-/**
- * @author huangyuhui
- */
 public final class CleanroomInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
