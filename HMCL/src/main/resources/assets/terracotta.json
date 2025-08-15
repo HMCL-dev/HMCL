@@ -2,18 +2,21 @@
   "legacy": [
     "0.3.8-rc.1",
     "0.3.8-rc.2",
-    "0.3.8-rc.3"
+    "0.3.8-rc.3",
+    "0.3.8-rc.4"
   ],
-  "version": "0.3.8-rc.4",
+  "version": "0.3.8-rc.5",
   "classifiers": {
-    "windows-x86_64.exe": "sha256:6df4fa242914c6cf8a7c8643f1388110783220e59c776f8a0143c4f34622a6ec",
-    "windows-arm64.exe": "sha256:c2a5918ff176111ed43ba44cec68663c96adf399b310b3eeebc2288af5a4affb",
-    "macos-x86_64": "sha256:565fc476e811dc93dbe573657e9e671942a27f91e8e47b0cf1770b43c80175bd",
-    "macos-x86_64.pkg": "sha256:5d5b904251009f487c3fa666138437c810e11dbc62bbb76697d7e8bd4ea644d1",
-    "macos-arm64": "sha256:92d281e6df1be6c8b655f7fb565ef54893d17cbd089c0887ec55a6f03d2d624b",
-    "macos-arm64.pkg": "sha256:9f8ceb9a3bbd3824f00f94de9a5692bbf594a68e611a62ea60413072673c68c9",
-    "linux-x86_64": "sha256:2e4ae087020db2b9a895eb77e1eeaf06578701287a1264e85ad46b6d16364772",
-    "linux-arm64": "sha256:30541cb4d441d65e96ae828b6a2153931705c8be21ec04c978590be7ff17116d"
+    "windows-x86_64.exe": "sha256:fda4e56824fca62ab78000abb686a0cb6c50f022ba88045c63157901ccac4263",
+    "windows-arm64.exe": "sha256:f513dd8a6249c86ff4c4b879cbb094ae4eb10c37d8bdc475cc36967618b539ae",
+    "macos-x86_64": "sha256:032bbfc4c27e6b250d2156d5943bf40b51fa4e66acfb978ed3f92ab3232a29a7",
+    "macos-x86_64.pkg": "sha256:80088017611fefdb113b58f4fead050cb8098e4e57386565e65a47df8051a9ab",
+    "macos-arm64": "sha256:73423a9dbb849d9b41fb608ddc8e677fac222849c17059fb930dffdb9fac345d",
+    "macos-arm64.pkg": "sha256:498f74efc19d2f151c1cea47c42792d4e48dbcb2b82764b4a9e33739b3862915",
+    "linux-x86_64": "sha256:3afa2703e3bef495ec187f028847fc4ddc3bc2c8912dbc520054072dfc40ca04",
+    "linux-x86_64.AppImage": "sha256:34b9c35d61bd8841cab2321415586f686c8189eacc275225942ad36b98de9f0c",
+    "linux-arm64": "sha256:a7b152da931c883d7e08e499160ca3844180bf4b5fd4ca6b0193f613821ec7af",
+    "linux-arm64.AppImage": "sha256:0099473c4cebffcff5dee610932bca561505206d17d21f8eacb861960dadefe7"
   },
   "downloads": [
     "https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
