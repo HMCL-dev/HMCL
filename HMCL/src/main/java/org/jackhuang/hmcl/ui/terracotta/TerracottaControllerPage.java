@@ -39,6 +39,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -163,7 +164,8 @@ public class TerracottaControllerPage extends StackPane {
                                 i18n("terracotta.status.waiting.host.launch.title"),
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
-                            Versions.launch(Profiles.getSelectedProfile(), LauncherHelper::setKeep);
+                            Profile profile = Profiles.getSelectedProfile();
+                            Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
                         }).addCancel(i18n("terracotta.status.waiting.host.launch.skip"), () -> {
                             TerracottaState.Scanning s = TerracottaManager.setScanning();
                             if (s != null) {
