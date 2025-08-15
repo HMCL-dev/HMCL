@@ -151,7 +151,6 @@ tasks.shadowJar {
             "CurseForge-Api-Key" to curseForgeApiKey,
             "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
             "Build-Channel" to versionType,
-            "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(
                 "java.base/java.lang",
                 "java.base/java.lang.reflect",
