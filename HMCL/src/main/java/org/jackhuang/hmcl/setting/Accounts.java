@@ -363,9 +363,10 @@ public final class Accounts {
             return new SimpleAuthlibInjectorArtifactProvider(Paths.get(authlibinjectorLocation));
         }
 
-        String authlibInjectorVersion = JarUtils.getManifestAttribute("Authlib-Injector-Version", null);
-        if (authlibInjectorVersion == null)
-            throw new AssertionError("Missing Authlib-Injector-Version");
+        String authlibInjectorVersion = JarUtils.getManifestAttribute("Authlib-Injector-Version", System.getProperty("hmcl.authlibinjector.version"));
+        if (authlibInjectorVersion == null) {
+            throw new AssertionError("Missing Authlib-Injector-Version. If this is a developing environment, please configure hmcl.authlibinjector.version manually.");
+        }
 
         String authlibInjectorFileName = "authlib-injector-" + authlibInjectorVersion + ".jar";
         return new AuthlibInjectorExtractor(Accounts.class.getResource("/assets/" + authlibInjectorFileName),
