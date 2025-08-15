@@ -246,7 +246,7 @@ public class DefaultLauncher extends Launcher {
 
         Set<String> classpath = repository.getClasspath(version);
 
-        if (version.hasPatch(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId())) {
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId())) {
             classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
@@ -553,6 +553,9 @@ public class DefaultLauncher extends Launcher {
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+            env.put("INST_CLEANROOM", "1");
         }
         if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
             env.put("INST_NEOFORGE", "1");
