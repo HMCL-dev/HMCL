@@ -147,7 +147,6 @@ tasks.shadowJar {
             "Microsoft-Auth-Secret" to microsoftAuthSecret,
             "CurseForge-Api-Key" to curseForgeApiKey,
             "Build-Channel" to versionType,
-            "Class-Path" to "pack200.jar",
             "Add-Opens" to listOf(
                 "java.base/java.lang",
                 "java.base/java.lang.reflect",
