@@ -6,7 +6,6 @@ import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.Properties
 import java.util.zip.ZipFile
 
 plugins {
@@ -126,12 +125,12 @@ val createPropertiesFile by tasks.registering {
     hmclProperties.forEach { (k, v) -> inputs.property(k, v) }
 
     doLast {
-        val properties = Properties()
-        hmclProperties.forEach { (k, v) -> properties.setProperty(k, v) }
         val targetFile = hmclPropertiesFile.get().asFile
         targetFile.parentFile.mkdir()
-        targetFile.writer().use {
-            properties.store(it, null)
+        targetFile.bufferedWriter().use {
+            for ((k, v) in hmclProperties) {
+                it.write("$k=$v\n")
+            }
         }
     }
 }
