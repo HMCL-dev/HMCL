@@ -235,8 +235,10 @@ public final class VersionNumber implements Comparable<VersionNumber> {
 
         public int compareTo(Item item) {
             if (item == null) {
-                // 1-string > 1
-                return 1;
+                // 1-string < 1
+                // Note (by Glavo): We modified this behavior to be the opposite of the original behavior.
+                // The reason is that we want 0.29.1-beta.1 < 0.29.1
+                return -1;
             }
             switch (item.getType()) {
                 case LONG_ITEM:
