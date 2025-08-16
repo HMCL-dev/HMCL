@@ -93,6 +93,8 @@ public class VersionNumberTest {
         assertLessThan("1.0-zzz", "1.0");
         assertLessThan("1.0-beta.1", "1.0");
         assertLessThan("1.0-alpha.1", "1.0-beta.1");
+        assertLessThan("3.6.15", "3.6.15.289");
+        assertLessThan("3.6.15.289", "3.6.16");
     }
 
     @Test
