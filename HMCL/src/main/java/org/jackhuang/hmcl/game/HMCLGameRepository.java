@@ -314,6 +314,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                     return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
                     return VersionIconType.FORGE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                    return VersionIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
                     return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))

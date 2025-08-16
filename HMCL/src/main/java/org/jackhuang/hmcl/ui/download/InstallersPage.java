@@ -130,6 +130,9 @@ public class InstallersPage extends AbstractInstallersPage {
                     case NEO_FORGE:
                         loaderName = i18n("install.installer.neoforge");
                         break;
+                    case CLEANROOM:
+                        loaderName = i18n("install.installer.cleanroom");
+                        break;
                     case FABRIC:
                         loaderName = i18n("install.installer.fabric");
                         break;

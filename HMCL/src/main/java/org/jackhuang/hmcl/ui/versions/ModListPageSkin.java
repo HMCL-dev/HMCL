@@ -424,6 +424,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                         case FORGE:
                                             loaderName = i18n("install.installer.forge");
                                             break;
+                                        case CLEANROOM:
+                                            loaderName = i18n("install.installer.cleanroom");
+                                            break;
                                         case NEO_FORGED:
                                             loaderName = i18n("install.installer.neoforge");
                                             break;
@@ -549,6 +552,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             switch (dataItem.getModInfo().getModLoaderType()) {
                 case FORGE:
                     content.getTags().add(i18n("install.installer.forge"));
+                    break;
+                case CLEANROOM:
+                    content.getTags().add(i18n("install.installer.cleanroom"));
                     break;
                 case NEO_FORGED:
                     content.getTags().add(i18n("install.installer.neoforge"));

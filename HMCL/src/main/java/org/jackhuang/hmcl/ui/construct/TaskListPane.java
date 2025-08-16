@@ -28,6 +28,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
@@ -124,6 +125,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
+                } else if (task instanceof CleanroomInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
