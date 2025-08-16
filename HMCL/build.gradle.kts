@@ -109,7 +109,7 @@ tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
-val manifestProperties: List<Pair<String, String>> = listOf(
+val hmclProperties: List<Pair<String, String>> = listOf(
     "Implementation-Version" to project.version.toString(),
     "Microsoft-Auth-Id" to microsoftAuthId,
     "Microsoft-Auth-Secret" to microsoftAuthSecret,
@@ -123,11 +123,11 @@ val manifestProperties: List<Pair<String, String>> = listOf(
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
 val createPropertiesFile by tasks.registering {
     outputs.file(hmclPropertiesFile)
-    manifestProperties.forEach { (k, v) -> inputs.property(k, v) }
+    hmclProperties.forEach { (k, v) -> inputs.property(k, v) }
 
     doLast {
         val properties = Properties()
-        manifestProperties.forEach { (k, v) -> properties.setProperty(k, v) }
+        hmclProperties.forEach { (k, v) -> properties.setProperty(k, v) }
         val targetFile = hmclPropertiesFile.get().asFile
         targetFile.parentFile.mkdir()
         targetFile.writer().use {

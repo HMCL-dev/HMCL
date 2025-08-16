@@ -29,7 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.Properties;
-import java.util.jar.Manifest;
 
 public final class JarUtils {
     private JarUtils() {
@@ -47,7 +46,6 @@ public final class JarUtils {
         } catch (ClassNotFoundException ignored) {
         }
 
-        Manifest mn = null;
         if (cs == null) {
             THIS_JAR = null;
         } else {
