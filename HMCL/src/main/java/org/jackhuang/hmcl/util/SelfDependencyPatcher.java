@@ -261,7 +261,7 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        String[] addOpens = JarUtils.getManifestAttribute("Add-Opens", "").split(" ");
+        String[] addOpens = JarUtils.getAttribute("Add-Opens", "").split(" ");
 
         JavaFXPatcher.patch(modules, jars, addOpens);
     }

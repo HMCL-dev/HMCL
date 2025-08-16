@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
-    private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
+    private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
