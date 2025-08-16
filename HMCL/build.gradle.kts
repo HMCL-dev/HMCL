@@ -108,16 +108,17 @@ tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
-val hmclProperties: List<Pair<String, String>> = listOf(
-    "Implementation-Version" to project.version.toString(),
-    "Microsoft-Auth-Id" to microsoftAuthId,
-    "Microsoft-Auth-Secret" to microsoftAuthSecret,
-    "CurseForge-Api-Key" to curseForgeApiKey,
-    "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
-    "Build-Channel" to versionType,
-).plus(System.getenv("GITHUB_SHA")?.let {
-    listOf("GitHub-SHA" to it)
-} ?: listOf())
+val hmclProperties = buildList {
+    add("hmcl.version" to project.version.toString())
+    System.getenv("GITHUB_SHA")?.let {
+        add("hmcl.version.hash" to it)
+    }
+    add("hmcl.version.type" to versionType)
+    add("hmcl.microsoft.auth.id" to microsoftAuthId)
+    add("hmcl.microsoft.auth.secret" to microsoftAuthSecret)
+    add("hmcl.curseforge.apikey" to curseForgeApiKey)
+    add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
+}
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
 val createPropertiesFile by tasks.registering {
@@ -183,6 +184,7 @@ tasks.shadowJar {
 
     manifest.attributes(
         "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
+        "Implementation-Version" to project.version.toString(),
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",
         "Add-Opens" to addOpens.joinToString(" "),

@@ -74,7 +74,7 @@ public final class JarUtils {
         return THIS_JAR;
     }
 
-    public static String getManifestAttribute(String name, String defaultValue) {
+    public static String getAttribute(String name, String defaultValue) {
         return properties.getProperty(name, defaultValue);
     }
 }
