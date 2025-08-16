@@ -21,19 +21,19 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -46,6 +46,7 @@ public class ModrinthCompletionTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
+    private Set<? extends ModpackFile> selectedFiles;
     private ModrinthManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
 
@@ -60,7 +61,7 @@ public class ModrinthCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      */
     public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+        this(dependencyManager, version, null, null);
     }
 
     /**
@@ -70,18 +71,25 @@ public class ModrinthCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      * @param manifest          the CurseForgeModpack manifest.
      */
-    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest) {
+    public ModrinthCompletionTask(DefaultDependencyManager dependencyManager, String version, ModrinthManifest manifest, Set<? extends ModpackFile> selectedFiles) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
+        this.selectedFiles = selectedFiles;
 
         if (manifest == null)
             try {
-                Path manifestFile = repository.getVersionRoot(version).toPath().resolve("modrinth.index.json");
+                Path versionRoot = repository.getVersionRoot(version).toPath();
+                Path manifestFile = versionRoot.resolve("modrinth.index.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
+                Path filesFile = versionRoot.resolve("files.json");
+                if (Files.exists(filesFile)) {
+                    Set<String> files = new HashSet<>(JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
+                    this.selectedFiles = this.manifest.getFiles().stream().filter(f -> files.contains(f.getPath())).collect(Collectors.toSet());
+                }
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
@@ -107,10 +115,14 @@ public class ModrinthCompletionTask extends Task<Void> {
         Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
         Path modsDirectory = runDirectory.resolve("mods");
 
+        FileUtils.writeText(new File(repository.getVersionRoot(version), "files.json"), JsonUtils.GSON.toJson(selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList())));
+
         for (ModrinthManifest.File file : manifest.getFiles()) {
             if (file.getEnv() != null && file.getEnv().getOrDefault("client", "required").equals("unsupported"))
                 continue;
             if (file.getDownloads().isEmpty())
+                continue;
+            if (selectedFiles != null && !selectedFiles.contains(file))
                 continue;
 
             Path filePath = runDirectory.resolve(file.getPath()).toAbsolutePath().normalize();
