@@ -6,7 +6,7 @@ import java.security.KeyFactory
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.jar.Manifest
+import java.util.Properties
 import java.util.zip.ZipFile
 
 plugins {
@@ -109,6 +109,33 @@ tasks.compileJava {
     options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
+val manifestProperties: List<Pair<String, String>> = listOf(
+    "Implementation-Version" to project.version.toString(),
+    "Microsoft-Auth-Id" to microsoftAuthId,
+    "Microsoft-Auth-Secret" to microsoftAuthSecret,
+    "CurseForge-Api-Key" to curseForgeApiKey,
+    "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
+    "Build-Channel" to versionType,
+).plus(System.getenv("GITHUB_SHA")?.let {
+    listOf("GitHub-SHA" to it)
+} ?: listOf())
+
+val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
+val createPropertiesFile by tasks.registering {
+    outputs.file(hmclPropertiesFile)
+    manifestProperties.forEach { (k, v) -> inputs.property(k, v) }
+
+    doLast {
+        val properties = Properties()
+        manifestProperties.forEach { (k, v) -> properties.setProperty(k, v) }
+        val targetFile = hmclPropertiesFile.get().asFile
+        targetFile.parentFile.mkdir()
+        targetFile.writer().use {
+            properties.store(it, null)
+        }
+    }
+}
+
 val addOpens = listOf(
     "java.base/java.lang",
     "java.base/java.lang.reflect",
@@ -125,39 +152,6 @@ val addOpens = listOf(
     "jdk.attach/sun.tools.attach",
 )
 
-val manifestFile = layout.buildDirectory.file("MANIFEST.MF")
-val manifestProperties: List<Pair<String, String>> = listOf(
-    "Manifest-Version" to "1.0",
-    "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
-    "Main-Class" to "org.jackhuang.hmcl.Main",
-    "Multi-Release" to "true",
-    "Implementation-Version" to project.version.toString(),
-    "Microsoft-Auth-Id" to microsoftAuthId,
-    "Microsoft-Auth-Secret" to microsoftAuthSecret,
-    "CurseForge-Api-Key" to curseForgeApiKey,
-    "Authlib-Injector-Version" to libs.authlib.injector.get().version!!,
-    "Build-Channel" to versionType,
-    "Add-Opens" to addOpens.joinToString(" "),
-    "Enable-Native-Access" to "ALL-UNNAMED"
-).plus(System.getenv("GITHUB_SHA")?.let {
-    listOf("GitHub-SHA" to it)
-} ?: listOf())
-
-val createManifestFile by tasks.registering {
-    outputs.file(manifestFile)
-    manifestProperties.forEach { (k, v) -> inputs.property(k, v) }
-
-    doLast {
-        val manifest = Manifest()
-        manifestProperties.forEach { (k, v) -> manifest.mainAttributes.putValue(k, v) }
-        val targetFile = manifestFile.get().asFile
-        targetFile.parentFile.mkdir()
-        targetFile.outputStream().use {
-            manifest.write(it)
-        }
-    }
-}
-
 tasks.jar {
     enabled = false
     dependsOn(tasks["shadowJar"])
@@ -166,7 +160,7 @@ tasks.jar {
 val jarPath = tasks.jar.get().archiveFile.get().asFile
 
 tasks.shadowJar {
-    dependsOn(createManifestFile)
+    dependsOn(createPropertiesFile)
 
     archiveClassifier.set(null as String?)
 
@@ -188,7 +182,13 @@ tasks.shadowJar {
         exclude(project(":HMCLBoot"))
     }
 
-    manifest.from(manifestFile)
+    manifest.attributes(
+        "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
+        "Main-Class" to "org.jackhuang.hmcl.Main",
+        "Multi-Release" to "true",
+        "Add-Opens" to addOpens.joinToString(" "),
+        "Enable-Native-Access" to "ALL-UNNAMED"
+    )
 
     if (launcherExe != null) {
         into("assets") {
@@ -203,7 +203,10 @@ tasks.shadowJar {
 }
 
 tasks.processResources {
+    dependsOn(createPropertiesFile)
+
     into("assets/") {
+        from(hmclPropertiesFile)
         from(embedResources)
     }
 }
@@ -293,9 +296,7 @@ fun parseToolOptions(options: String?): MutableList<String> {
 // For IntelliJ IDEA
 tasks.withType<JavaExec> {
     if (name != "run") {
-        dependsOn(createManifestFile)
         jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
-        systemProperty("hmcl.manifest", manifestFile.get().asFile.absolutePath)
     }
 }
 

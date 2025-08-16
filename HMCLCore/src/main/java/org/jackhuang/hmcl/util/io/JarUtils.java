@@ -20,13 +20,15 @@ package org.jackhuang.hmcl.util.io;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.CodeSource;
-import java.util.jar.JarFile;
+import java.util.Properties;
 import java.util.jar.Manifest;
 
 public final class JarUtils {
@@ -34,13 +36,14 @@ public final class JarUtils {
     }
 
     private static final Path THIS_JAR;
-
-    private static final Manifest manifest;
+    private static final Properties properties = new Properties();
 
     static {
+        Class<?> entryPointClass = null;
         CodeSource cs = null;
         try {
-            cs = Class.forName("org.jackhuang.hmcl.EntryPoint").getProtectionDomain().getCodeSource();
+            entryPointClass = Class.forName("org.jackhuang.hmcl.EntryPoint");
+            cs = entryPointClass.getProtectionDomain().getCodeSource();
         } catch (ClassNotFoundException ignored) {
         }
 
@@ -50,35 +53,22 @@ public final class JarUtils {
         } else {
             Path path;
             try {
-                path = Paths.get(cs.getLocation().toURI()).toAbsolutePath();
+                path = Path.of(cs.getLocation().toURI()).toAbsolutePath();
             } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
                 path = null;
             }
-            if (path == null || !Files.isRegularFile(path)) {
-                THIS_JAR = null;
-            } else {
-                THIS_JAR = path;
-                try (JarFile file = new JarFile(path.toFile())) {
-                    mn = file.getManifest();
+            THIS_JAR = path != null && Files.isRegularFile(path) ? path : null;
+        }
+
+        if (entryPointClass != null) {
+            InputStream input = entryPointClass.getResourceAsStream("/assets/hmcl.properties");
+            if (input != null) {
+                try (var reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                    properties.load(reader);
                 } catch (IOException ignored) {
                 }
             }
         }
-
-        if (mn == null) {
-            String hmclManifest = System.getProperty("hmcl.manifest");
-            if (hmclManifest != null) {
-                try (var input = Files.newInputStream(Path.of(hmclManifest))) {
-                    mn = new Manifest(input);
-                } catch (Throwable ignored) {
-                }
-            }
-
-            if (mn == null)
-                mn = new Manifest();
-        }
-
-        manifest = mn;
     }
 
     @Nullable
@@ -87,7 +77,6 @@ public final class JarUtils {
     }
 
     public static String getManifestAttribute(String name, String defaultValue) {
-        String value = manifest.getMainAttributes().getValue(name);
-        return value != null ? value : defaultValue;
+        return properties.getProperty(name, defaultValue);
     }
 }
