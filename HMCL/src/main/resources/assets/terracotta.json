@@ -21,6 +21,7 @@
   "downloads": [
     "https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
     "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
-    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}"
+    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
+    "https://cp.zkitefly.eu.org/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}"
   ]
 }
