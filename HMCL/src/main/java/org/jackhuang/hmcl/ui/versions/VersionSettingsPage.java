@@ -54,6 +54,8 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -394,14 +396,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     cboWindowsSize.setEditable(true);
                     cboWindowsSize.setStyle("-fx-padding: 4 4 4 16");
                     cboWindowsSize.setPromptText("854x480");
-                    cboWindowsSize.getItems().addAll(
-                            "854x480",
-                            "1280x720",
-                            "1600x900",
-                            "1920x1080",
-                            "2560x1440",
-                            "3840x2160"
-                    );
+                    cboWindowsSize.getItems().setAll(getSupportedResolutions());
 
                     chkFullscreen = new JFXCheckBox();
                     right.setRight(chkFullscreen);
@@ -782,6 +777,25 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         iconPickerItem.setImage(profile.getRepository().getVersionIconImage(versionId));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
+    }
+
+    private static List<String> getSupportedResolutions() {
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        int screenWidth = gd.getDisplayMode().getWidth();
+        int screenHeight = gd.getDisplayMode().getHeight();
+
+        List<String> resolutions = new ArrayList<>(List.of("854x480", "1280x720", "1600x900"));
+
+        if (screenWidth >= 1920 && screenHeight >= 1080) {
+            resolutions.add("1920x1080");
+        }
+        if (screenWidth >= 2560 && screenHeight >= 1440) {
+            resolutions.add("2560x1440");
+        }
+        if (screenWidth >= 3840 && screenHeight >= 2160) {
+            resolutions.add("3840x2160");
+        }
+        return resolutions;
     }
 
     @Override
