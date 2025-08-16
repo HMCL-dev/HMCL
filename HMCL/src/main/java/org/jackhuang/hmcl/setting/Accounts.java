@@ -363,9 +363,13 @@ public final class Accounts {
             return new SimpleAuthlibInjectorArtifactProvider(Paths.get(authlibinjectorLocation));
         }
 
-        String authlibInjectorVersion = JarUtils.getManifestAttribute("Authlib-Injector-Version", null);
-        if (authlibInjectorVersion == null)
-            throw new AssertionError("Missing Authlib-Injector-Version");
+        String authlibInjectorVersion = JarUtils.getManifestAttribute("Authlib-Injector-Version", System.getProperty("hmcl.authlibinjector.version"));
+        if (authlibInjectorVersion == null) {
+            throw new AssertionError("Missing Authlib-Injector-Version. If this is a developing environment, please follow the steps here:" +
+                    "1. Open gradle/libs.versions.toml," +
+                    "2. Copy the value of authlib-injector (e.g. 1.2.5)," +
+                    "3. Set the system property of 'hmcl.authlibinjector.version' (e.g. -Dhmcl.authlibinjector.version=1.2.5)");
+        }
 
         String authlibInjectorFileName = "authlib-injector-" + authlibInjectorVersion + ".jar";
         return new AuthlibInjectorExtractor(Accounts.class.getResource("/assets/" + authlibInjectorFileName),

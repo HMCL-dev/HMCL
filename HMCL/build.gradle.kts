@@ -115,6 +115,12 @@ tasks.jar {
 
 val jarPath = tasks.jar.get().archiveFile.get().asFile
 
+tasks.processResources {
+    into("assets/") {
+        from(embedResources)
+    }
+}
+
 tasks.shadowJar {
     archiveClassifier.set(null as String?)
 
@@ -134,10 +140,6 @@ tasks.shadowJar {
         exclude(dependency("net.java.dev.jna:jna:.*"))
         exclude(dependency("libs:JFoenix:.*"))
         exclude(project(":HMCLBoot"))
-    }
-
-    into("assets/") {
-        from(embedResources)
     }
 
     manifest {
