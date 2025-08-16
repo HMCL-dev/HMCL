@@ -1,7 +1,6 @@
 package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion.Type;
 import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
@@ -52,8 +51,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                             "1.20.1", NeoForgeRemoteVersion.normalize(version),
                             Collections.singletonList(
                                     "https://maven.neoforged.net/releases/net/neoforged/forge/" + version + "/forge-" + version + "-installer.jar"
-                            ),
-                            getType(version)
+                            )
                     ));
                 }
 
@@ -77,18 +75,13 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                             mcVersion, NeoForgeRemoteVersion.normalize(version),
                             Collections.singletonList(
                                     "https://maven.neoforged.net/releases/net/neoforged/neoforge/" + version + "/neoforge-" + version + "-installer.jar"
-                            ),
-                            getType(version)
+                            )
                     ));
                 }
             } finally {
                 lock.writeLock().unlock();
             }
         });
-    }
-
-    private static Type getType(String version) {
-        return version.contains("beta") ? Type.SNAPSHOT : Type.RELEASE;
     }
 
     private static final class OfficialAPIResult {
