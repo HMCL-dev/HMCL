@@ -226,7 +226,8 @@ public final class VersionNumber implements Comparable<VersionNumber> {
             this.pre = lower.startsWith("alpha")
                     || lower.startsWith("beta")
                     || lower.startsWith("pre")
-                    || lower.startsWith("rc");
+                    || lower.startsWith("rc")
+                    || lower.startsWith("experimental");
         }
 
         public int getType() {
