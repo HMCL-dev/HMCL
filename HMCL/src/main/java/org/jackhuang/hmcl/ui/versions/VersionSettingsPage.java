@@ -26,6 +26,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
@@ -779,24 +780,24 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private static List<String> getSupportedResolutions() {
-        Screen screen = Screen.getPrimary();
+        int maxScreenWidth = 0;
+        int maxScreenHeight = 0;
 
-        double logicalWidth = screen.getBounds().getWidth();
-        double logicalHeight = screen.getBounds().getHeight();
-        int screenWidth = (int) (logicalWidth * screen.getOutputScaleX());
-        int screenHeight = (int) (logicalHeight * screen.getOutputScaleY());
+        for (Screen screen : Screen.getScreens()) {
+            Rectangle2D bounds = screen.getBounds();
+            int screenWidth = (int) (bounds.getWidth() * screen.getOutputScaleX());
+            int screenHeight = (int) (bounds.getHeight() * screen.getOutputScaleY());
+
+            maxScreenWidth = Math.max(maxScreenWidth, screenWidth);
+            maxScreenHeight = Math.max(maxScreenHeight, screenHeight);
+        }
 
         List<String> resolutions = new ArrayList<>(List.of("854x480", "1280x720", "1600x900"));
 
-        if (screenWidth >= 1920 && screenHeight >= 1080) {
-            resolutions.add("1920x1080");
-        }
-        if (screenWidth >= 2560 && screenHeight >= 1440) {
-            resolutions.add("2560x1440");
-        }
-        if (screenWidth >= 3840 && screenHeight >= 2160) {
-            resolutions.add("3840x2160");
-        }
+        if (maxScreenWidth >= 1920 && maxScreenHeight >= 1080) resolutions.add("1920x1080");
+        if (maxScreenWidth >= 2560 && maxScreenHeight >= 1440) resolutions.add("2560x1440");
+        if (maxScreenWidth >= 3840 && maxScreenHeight >= 2160) resolutions.add("3840x2160");
+
         return resolutions;
     }
 
