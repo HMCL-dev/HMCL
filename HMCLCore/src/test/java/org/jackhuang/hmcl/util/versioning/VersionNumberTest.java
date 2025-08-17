@@ -90,7 +90,7 @@ public class VersionNumberTest {
         assertLessThan("1.99999999999999999999", "1.199999999999999999999");
         assertLessThan("1.99999999999999999999", "2");
         assertLessThan("1.99999999999999999999", "2.0");
-        assertLessThan("1.0-zzz", "1.0");
+        assertLessThan("1.0", "1.0-zzz");
         assertLessThan("1.0-beta.1", "1.0");
         assertLessThan("1.0-alpha.1", "1.0-beta.1");
         assertLessThan("3.6.15", "3.6.15.289");
@@ -103,32 +103,33 @@ public class VersionNumberTest {
         final List<String> input = List.of(
                 "0",
                 "0.10.0",
-                "1.6.4-Forge9.11.1.1345",
                 "1.6.4",
+                "1.6.4-Forge9.11.1.1345",
+                "1.7.10",
                 "1.7.10Agrarian_Skies_2",
                 "1.7.10-F1614-L",
                 "1.7.10-FL1614_04",
                 "1.7.10-Forge10.13.4.1614-1.7.10",
+                "1.7.10-Forge1614",
                 "1.7.10Forge1614_FTBInfinity-2.6.0",
                 "1.7.10Forge1614_FTBInfinity-3.0.1",
-                "1.7.10-Forge1614",
                 "1.7.10-Forge1614.1",
                 "1.7.10forge1614_ATlauncher",
-                "1.7.10forge1614_FTBInfinity_server",
                 "1.7.10forge1614_FTBInfinity",
+                "1.7.10forge1614_FTBInfinity_server",
                 "1.7.10forge1614test",
-                "1.7.10",
-                "1.7.10-1614-test",
                 "1.7.10-1614",
-                "1.8-forge1577",
+                "1.7.10-1614-test",
                 "1.8",
-                "1.8.9-forge1902",
+                "1.8-forge1577",
                 "1.8.9",
+                "1.8.9-forge1902",
                 "1.9",
                 "1.10-alpha.2",
                 "1.10-beta.1",
                 "1.10-beta.2",
                 "1.10",
+                "1.10.2",
                 "1.10.2-AOE",
                 "1.10.2-AOE-1.1.5",
                 "1.10.2-All the Mods",
@@ -141,9 +142,8 @@ public class VersionNumberTest {
                 "1.10.2-forge2511_bxztest",
                 "1.10.2-forge2511-simple_life_2",
                 "1.10.2-forge2511中文",
-                "1.10.2",
-                "1.12.2_Modern_Skyblock-3.4.2",
                 "1.12.2",
+                "1.12.2_Modern_Skyblock-3.4.2",
                 "1.13.1",
                 "1.99999999999999999999",
                 "2",
@@ -153,6 +153,7 @@ public class VersionNumberTest {
 
         List<String> output = new ArrayList<>(input);
         output.sort(comparator);
+        output.forEach(System.out::println);
         assertIterableEquals(input, output);
 
         Collections.shuffle(output, new Random(0));
