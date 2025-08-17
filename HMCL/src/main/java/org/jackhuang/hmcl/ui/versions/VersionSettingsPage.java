@@ -32,6 +32,7 @@ import javafx.scene.control.Toggle;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
@@ -54,8 +55,6 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -780,9 +779,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     }
 
     private static List<String> getSupportedResolutions() {
-        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        int screenWidth = gd.getDisplayMode().getWidth();
-        int screenHeight = gd.getDisplayMode().getHeight();
+        Screen screen = Screen.getPrimary();
+
+        double logicalWidth = screen.getBounds().getWidth();
+        double logicalHeight = screen.getBounds().getHeight();
+        int screenWidth = (int) (logicalWidth * screen.getOutputScaleX());
+        int screenHeight = (int) (logicalHeight * screen.getOutputScaleY());
 
         List<String> resolutions = new ArrayList<>(List.of("854x480", "1280x720", "1600x900"));
 
