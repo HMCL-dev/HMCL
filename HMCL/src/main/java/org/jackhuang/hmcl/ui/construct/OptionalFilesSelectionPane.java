@@ -29,15 +29,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthManifest;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.Holder;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
