@@ -193,6 +193,7 @@ public final class LocalModpackPage extends ModpackPage {
         } else {
             controller.getSettings().put(MODPACK_NAME, name);
             controller.getSettings().put(MODPACK_CHARSET, charset);
+            controller.getSettings().put(MODPACK_SELECTED_FILES, optionalFiles.getSelected());
             controller.onFinish();
         }
     }

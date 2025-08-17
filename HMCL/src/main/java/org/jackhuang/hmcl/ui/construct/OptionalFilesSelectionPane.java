@@ -21,22 +21,28 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
+
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthManifest;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.Holder;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -46,13 +52,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * Support CurseForge modpack yet
  */
 public class OptionalFilesSelectionPane extends BorderPane {
-    Set<ModpackFile> selected = new HashSet<>();
+    private Set<ModpackFile> selected = new HashSet<>();
+    private Runnable retry;
 
     private final VBox title = new VBox();
     private final Label retryOptionalFiles = new Label(i18n("modpack.retry_optional_files"));
     private final Label pendingOptionalFiles = new Label(i18n("modpack.pending_optional_files"));
     private final Label noOptionalFiles = new Label(i18n("modpack.no_optional_files"));
-    private Runnable retry;
 
     private final JFXListView<ModpackFile> list = new JFXListView<>();
 
@@ -70,17 +76,12 @@ public class OptionalFilesSelectionPane extends BorderPane {
     }
 
     public void setOptionalFileList(List<? extends ModpackFile> files) {
-        list.getItems().clear();
-        list.setCellFactory(it -> new OptionalFileEntry(list, new Holder<>()));
-        int i = 0;
-        for (ModpackFile file : files) {
-            selected.add(file);
-            if (file.isOptional()) {
-                list.getItems().add(file);
-                i++;
-            }
-        }
-        if (i != 0) {
+        Holder<Object> holder = new Holder<>();
+        list.setCellFactory(it -> new OptionalFileEntry(list, holder));
+        List<ModpackFile> optionalFiles = files.stream().filter(ModpackFile::isOptional).collect(Collectors.toList());
+        list.getItems().setAll(optionalFiles);
+        selected = new HashSet<>(files);
+        if (!optionalFiles.isEmpty()) {
             this.setCenter(list);
         } else {
             this.setCenter(noOptionalFiles);
@@ -102,10 +103,21 @@ public class OptionalFilesSelectionPane extends BorderPane {
     }
 
     private class OptionalFileEntry extends MDListCell<ModpackFile> {
-        JFXCheckBox checkBox = new JFXCheckBox();
-        TwoLineListItem content = new TwoLineListItem();
-        JFXButton infoButton = new JFXButton();
-        HBox container = new HBox(8);
+        private JFXCheckBox checkBox = new JFXCheckBox();
+        private TwoLineListItem content = new TwoLineListItem();
+        private JFXButton infoButton = new JFXButton();
+        private HBox container = new HBox(8);
+        private Label text1 = new Label();
+        private ModpackFile currentFile = null;
+        private ChangeListener<Boolean> selectedListener = (observable, oldValue, newValue) -> {
+            if (currentFile != null) {
+                if (newValue) {
+                    selected.add(currentFile);
+                } else {
+                    selected.remove(currentFile);
+                }
+            }
+        };
 
         public OptionalFileEntry(JFXListView<ModpackFile> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
@@ -114,42 +126,41 @@ public class OptionalFilesSelectionPane extends BorderPane {
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
             setSelectable();
+            container.getChildren().setAll(checkBox, content);
 
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
+            container.getChildren().add(infoButton);
             getContainer().getChildren().setAll(container);
         }
 
         @Override
         protected void updateControl(ModpackFile item, boolean empty) {
-            container.getChildren().setAll(checkBox, content);
-            if (empty) {
-                setGraphic(null);
+            if (empty) return;
+            checkBox.selectedProperty().removeListener(selectedListener);
+            currentFile = item;
+            String name = item.getFileName();
+            text1.setText(name);
+            if (name != null) {
+                content.setTitle(name);
             } else {
-                String name = item.getFileName();
-                if (name != null) {
-                    content.setTitle(name);
-                } else {
-                    content.setTitle(i18n("modpack.unknown_optional_file"));
-                }
-                Optional<RemoteMod> mod = item.getMod();
-                RemoteMod mod1 = mod == null ? null : mod.orElse(null);
-                if (mod1 != null) {
-                    content.setSubtitle(mod1.getTitle());
-                    infoButton.setOnMouseClicked(e -> Controllers.dialog(new ModInfo(mod1)));
-                    container.getChildren().add(infoButton);
-                } else {
-                    content.setSubtitle("");
-                }
-                checkBox.setSelected(true);
-                checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue) {
-                        selected.add(item);
-                    } else {
-                        selected.remove(item);
-                    }
-                });
+                content.setTitle(i18n("modpack.unknown_optional_file"));
             }
+            Optional<RemoteMod> mod = item.getMod();
+            RemoteMod mod1 = mod == null ? null : mod.orElse(null);
+            if (mod1 != null) {
+                content.setSubtitle(mod1.getTitle());
+                infoButton.setOnMouseClicked(e -> Controllers.dialog(new ModInfo(mod1)));
+                infoButton.setManaged(true);
+                infoButton.setVisible(true);
+            } else {
+                content.setSubtitle("");
+                infoButton.setOnMouseClicked(null);
+                infoButton.setManaged(false);
+                infoButton.setVisible(false);
+            }
+            checkBox.setSelected(selected.contains(item));
+            checkBox.selectedProperty().addListener(selectedListener);
         }
     }
 
