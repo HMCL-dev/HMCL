@@ -103,7 +103,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
     }
 
     enum Type {
-        PRE_CLASSIC, CLASSIC, INFDEV, ALPHA, BETA, NEW
+        PRE_CLASSIC, CLASSIC, INDEV, INFDEV, ALPHA, BETA, NEW
     }
 
     abstract Type getType();
@@ -141,11 +141,15 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     prefixLength = "rd-".length();
                     break;
                 case 'i':
-                    if (!value.startsWith("inf-")) {
+                    if (value.startsWith("inf-")) {
+                        type = Type.INFDEV;
+                        prefixLength = "inf-".length();
+                    } else if (value.startsWith("in-")) {
+                        type = Type.INDEV;
+                        prefixLength = "in-".length();
+                    } else {
                         throw new IllegalArgumentException(value);
                     }
-                    type = Type.INFDEV;
-                    prefixLength = "inf-".length();
                     break;
                 case 'a':
                     type = Type.ALPHA;
