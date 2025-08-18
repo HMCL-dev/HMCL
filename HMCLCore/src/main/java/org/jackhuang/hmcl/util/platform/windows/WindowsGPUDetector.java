@@ -93,6 +93,8 @@ final class WindowsGPUDetector {
             return null;
         } else if (object instanceof String[]) {
             return String.join(" ", (String[]) object);
+        } else if (object instanceof byte[]) {
+            return new String((byte[])object);
         } else {
             return object.toString();
         }
