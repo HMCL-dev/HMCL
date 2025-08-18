@@ -63,13 +63,9 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -90,7 +86,7 @@ public final class TaskListPane extends StackPane {
     }
 
     public void setExecutor(TaskExecutor executor) {
-        List<String> stages = Lang.removingDuplicates(executor.getStages());
+        LinkedHashSet<String> stages = new LinkedHashSet<>(executor.getStages());
         this.executor = executor;
         executor.addTaskListener(new TaskListener() {
             @Override
@@ -108,6 +104,18 @@ public final class TaskListPane extends StackPane {
 
             @Override
             public void onReady(Task<?> task) {
+                if (task instanceof Task.StagesHintTask) {
+                    Platform.runLater(() -> {
+                        for (String stage : ((Task<?>.StagesHintTask) task).getStages()) {
+                            if (stages.add(stage)) {
+                                StageNode node = new StageNode(stage);
+                                stageNodes.add(node);
+                                listBox.add(node);
+                            }
+                        }
+                    });
+                }
+
                 if (task.getStage() != null) {
                     Platform.runLater(() -> {
                         stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::begin);
