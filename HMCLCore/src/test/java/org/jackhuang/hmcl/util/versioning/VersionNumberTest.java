@@ -153,7 +153,6 @@ public class VersionNumberTest {
 
         List<String> output = new ArrayList<>(input);
         output.sort(comparator);
-        output.forEach(System.out::println);
         assertIterableEquals(input, output);
 
         Collections.shuffle(output, new Random(0));
