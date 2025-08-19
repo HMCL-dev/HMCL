@@ -283,11 +283,10 @@ public final class TaskListPane extends StackPane {
             pane.setCenter(title);
 
             DoubleBinding barWidth = Bindings.createDoubleBinding(() -> {
-                        Insets padding = pane.getPadding();
-                        Insets insets = pane.getInsets();
-                        return pane.getWidth() - padding.getLeft() - padding.getRight() - insets.getLeft() - insets.getRight();
-                    },
-                    paddingProperty(), widthProperty());
+                Insets padding = pane.getPadding();
+                Insets insets = pane.getInsets();
+                return pane.getWidth() - padding.getLeft() - padding.getRight() - insets.getLeft() - insets.getRight();
+            }, pane.paddingProperty(), pane.widthProperty());
             bar.minWidthProperty().bind(barWidth);
             bar.prefWidthProperty().bind(barWidth);
             bar.maxWidthProperty().bind(barWidth);
@@ -421,6 +420,7 @@ public final class TaskListPane extends StackPane {
                 stageValue = null;
             }
 
+            // CHECKSTYLE:OFF
             // @formatter:off
             switch (stageKey) {
                 case "hmcl.modpack":            message = i18n("install.modpack"); break;
@@ -437,6 +437,7 @@ public final class TaskListPane extends StackPane {
                 default:                        message = i18n(stageKey); break;
             }
             // @formatter:on
+            // CHECKSTYLE:ON
 
             title.set(message);
         }
