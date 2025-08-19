@@ -67,7 +67,9 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
