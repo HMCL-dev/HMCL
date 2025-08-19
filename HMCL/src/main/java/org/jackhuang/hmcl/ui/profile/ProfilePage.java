@@ -41,12 +41,14 @@ import org.jackhuang.hmcl.ui.construct.FileItem;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -112,6 +114,24 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     gameDir.setName(i18n("profile.instance_directory"));
                     gameDir.setTitle(i18n("profile.instance_directory.choose"));
                     gameDir.pathProperty().bindBidirectional(location);
+
+                    locationProperty().addListener((observable, oldValue, newValue) -> {
+                        LOG.debug("OnChange locationProperty");
+
+                        var folder = new File(newValue);
+                        var oldFolder = new File(oldValue);
+                        File parentFolder = folder.getParentFile();
+                        File parentOldFolder = oldFolder.getParentFile();
+                        // txtProfileName
+                        if(parentFolder != null) {
+                            if(txtProfileName.getText().isEmpty()){
+                                txtProfileName.setText(parentFolder.getName());
+                            }
+                            else if(!parentFolder.getName().equals(parentOldFolder.getName())){
+                                txtProfileName.setText(parentFolder.getName());
+                            }
+                        }
+                    });
 
                     toggleUseRelativePath = new OptionToggleButton();
                     toggleUseRelativePath.setTitle(i18n("profile.use_relative_path"));
