@@ -63,20 +63,24 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
+    private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 0);
+    private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 26);
+
     private TaskExecutor executor;
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
-    private final List<StageNode> stageNodes = new ArrayList<>();
+    private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
 
     public TaskListPane() {
@@ -85,8 +89,23 @@ public final class TaskListPane extends StackPane {
         getChildren().setAll(listBox);
     }
 
+    @FXThread
+    private void addStages(@NotNull Collection<String> stages) {
+        for (String stage : stages) {
+            stageNodes.computeIfAbsent(stage, s -> {
+                StageNode node = new StageNode(stage);
+                listBox.add(node);
+                return node;
+            });
+        }
+    }
+
+    @FXThread
+    private void updateProgressNodePadding() {
+        progressNodePadding.set(stageNodes.isEmpty() ? DEFAULT_PROGRESS_NODE_PADDING : STAGED_PROGRESS_NODE_PADDING);
+    }
+
     public void setExecutor(TaskExecutor executor) {
-        LinkedHashSet<String> stages = new LinkedHashSet<>(executor.getStages());
         this.executor = executor;
         executor.addTaskListener(new TaskListener() {
             @Override
@@ -94,11 +113,8 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listBox.clear();
-                    stageNodes.addAll(stages.stream().map(StageNode::new).collect(Collectors.toList()));
-                    stageNodes.forEach(listBox::add);
-
-                    if (stages.isEmpty()) progressNodePadding.setValue(new Insets(0, 0, 8, 0));
-                    else progressNodePadding.setValue(new Insets(0, 0, 8, 26));
+                    addStages(executor.getStages());
+                    updateProgressNodePadding();
                 });
             }
 
@@ -106,19 +122,16 @@ public final class TaskListPane extends StackPane {
             public void onReady(Task<?> task) {
                 if (task instanceof Task.StagesHintTask) {
                     Platform.runLater(() -> {
-                        for (String stage : ((Task<?>.StagesHintTask) task).getStages()) {
-                            if (stages.add(stage)) {
-                                StageNode node = new StageNode(stage);
-                                stageNodes.add(node);
-                                listBox.add(node);
-                            }
-                        }
+                        addStages(((Task<?>.StagesHintTask) task).getStages());
+                        updateProgressNodePadding();
                     });
                 }
 
                 if (task.getStage() != null) {
                     Platform.runLater(() -> {
-                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::begin);
+                        StageNode node = stageNodes.get(task.getStage());
+                        if (node != null)
+                            node.begin();
                     });
                 }
             }
@@ -177,20 +190,20 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     ProgressListNode node = new ProgressListNode(task);
                     nodes.put(task, node);
-                    StageNode stageNode = stageNodes.stream().filter(x -> x.stage.equals(task.getInheritedStage())).findAny().orElse(null);
+                    StageNode stageNode = stageNodes.get(task.getInheritedStage());
                     listBox.add(listBox.indexOf(stageNode) + 1, node);
                 });
             }
 
             @Override
             public void onFinished(Task<?> task) {
-                if (task.getStage() != null) {
-                    Platform.runLater(() -> {
-                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::succeed);
-                    });
-                }
-
                 Platform.runLater(() -> {
+                    if (task.getStage() != null) {
+                        StageNode stageNode = stageNodes.get(task.getStage());
+                        if (stageNode != null)
+                            stageNode.succeed();
+                    }
+
                     ProgressListNode node = nodes.remove(task);
                     if (node == null)
                         return;
@@ -203,25 +216,23 @@ public final class TaskListPane extends StackPane {
             public void onFailed(Task<?> task, Throwable throwable) {
                 if (task.getStage() != null) {
                     Platform.runLater(() -> {
-                        stageNodes.stream().filter(x -> x.stage.equals(task.getStage())).findAny().ifPresent(StageNode::fail);
+                        StageNode stageNode = stageNodes.get(task.getStage());
+                        if (stageNode != null)
+                            stageNode.fail();
                     });
                 }
                 ProgressListNode node = nodes.remove(task);
-                if (node == null)
-                    return;
-                Platform.runLater(() -> {
-                    node.setThrowable(throwable);
-                });
+                if (node != null)
+                    Platform.runLater(() -> node.setThrowable(throwable));
             }
 
             @Override
             public void onPropertiesUpdate(Task<?> task) {
                 if (task instanceof Task.CountTask) {
                     runInFX(() -> {
-                        stageNodes.stream()
-                                .filter(x -> x.stage.equals(((Task<?>.CountTask) task).getCountStage()))
-                                .findAny()
-                                .ifPresent(StageNode::count);
+                        StageNode stageNode = stageNodes.get(((Task<?>.CountTask) task).getCountStage());
+                        if (stageNode != null)
+                            stageNode.count();
                     });
 
                     return;
@@ -230,12 +241,9 @@ public final class TaskListPane extends StackPane {
                 if (task.getStage() != null) {
                     int total = tryCast(task.getProperties().get("total"), Integer.class).orElse(0);
                     runInFX(() -> {
-                        stageNodes.stream()
-                                .filter(x -> x.stage.equals(task.getStage()))
-                                .findAny()
-                                .ifPresent(stageNode -> {
-                                    stageNode.setTotal(total);
-                                });
+                        StageNode stageNode = stageNodes.get(task.getStage());
+                        if (stageNode != null)
+                            stageNode.setTotal(total);
                     });
                 }
             }
