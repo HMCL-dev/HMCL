@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.ui.construct.FileItem;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
@@ -123,11 +122,11 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                         File parentFolder = folder.getParentFile();
                         File parentOldFolder = oldFolder.getParentFile();
                         // txtProfileName
-                        if(parentFolder != null) {
-                            if(txtProfileName.getText().isEmpty()){
+                        if (parentFolder != null) {
+                            if (txtProfileName.getText().isEmpty()) {
                                 txtProfileName.setText(parentFolder.getName());
                             }
-                            else if(!parentFolder.getName().equals(parentOldFolder.getName())){
+                            else if (!parentFolder.getName().equals(parentOldFolder.getName())) {
                                 txtProfileName.setText(parentFolder.getName());
                             }
                         }
