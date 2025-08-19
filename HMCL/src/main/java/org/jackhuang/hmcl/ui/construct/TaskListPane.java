@@ -17,15 +17,20 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXProgressBar;
 import javafx.application.Platform;
+import javafx.beans.WeakListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
@@ -64,9 +69,9 @@ import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.FXThread;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -80,15 +85,17 @@ public final class TaskListPane extends StackPane {
     private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 26);
 
     private TaskExecutor executor;
-    private final AdvancedListBox listBox = new AdvancedListBox();
+    private final JFXListView<Node> listView = new JFXListView<>();
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
 
-    public TaskListPane() {
-        listBox.setSpacing(0);
+    private Cell lastCell;
 
-        getChildren().setAll(listBox);
+    public TaskListPane() {
+        listView.setPadding(new Insets(12, 0, 0, 0));
+        listView.setCellFactory(l -> new Cell());
+        getChildren().setAll(listView);
     }
 
     @FXThread
@@ -96,7 +103,7 @@ public final class TaskListPane extends StackPane {
         for (String stage : stages) {
             stageNodes.computeIfAbsent(stage, s -> {
                 StageNode node = new StageNode(stage);
-                listBox.add(node);
+                listView.getItems().add(node);
                 return node;
             });
         }
@@ -114,7 +121,7 @@ public final class TaskListPane extends StackPane {
             public void onStart() {
                 Platform.runLater(() -> {
                     stageNodes.clear();
-                    listBox.clear();
+                    listView.getItems().clear();
                     addStages(executor.getStages());
                     updateProgressNodePadding();
                 });
@@ -193,7 +200,7 @@ public final class TaskListPane extends StackPane {
                     ProgressListNode node = new ProgressListNode(task);
                     nodes.put(task, node);
                     StageNode stageNode = stageNodes.get(task.getInheritedStage());
-                    listBox.add(listBox.indexOf(stageNode) + 1, node);
+                    listView.getItems().add(listView.getItems().indexOf(stageNode) + 1, node);
                 });
             }
 
@@ -207,10 +214,10 @@ public final class TaskListPane extends StackPane {
                     }
 
                     ProgressListNode node = nodes.remove(task);
-                    if (node == null)
-                        return;
-                    node.unbind();
-                    listBox.remove(node);
+                    if (node != null) {
+                        node.unbind();
+                        listView.getItems().remove(node);
+                    }
                 });
             }
 
@@ -252,57 +259,199 @@ public final class TaskListPane extends StackPane {
         });
     }
 
-    private static class StageNode extends BorderPane {
-        private final String stage;
+    private final class Cell extends ListCell<Node> {
+        private static final double STATUS_ICON_SIZE = 14;
+
+        private final BorderPane pane = new BorderPane();
+        private final StackPane left = new StackPane();
         private final Label title = new Label();
+        private final Label message = new Label();
+        private final JFXProgressBar bar = new JFXProgressBar();
+
+        private WeakReference<StageNode> prevStageNodeRef;
+        private ChangeListener<StageNode.Status> statusChangeListener;
+
+        private Cell() {
+            setPadding(Insets.EMPTY);
+
+            FXUtils.setLimitHeight(left, STATUS_ICON_SIZE);
+            FXUtils.setLimitWidth(left, STATUS_ICON_SIZE);
+
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+            BorderPane.setMargin(left, new Insets(0, 12, 0, 0));
+            BorderPane.setAlignment(title, Pos.CENTER_LEFT);
+            pane.setCenter(title);
+
+            DoubleBinding barWidth = Bindings.createDoubleBinding(() -> {
+                Insets padding = pane.getPadding();
+                Insets insets = pane.getInsets();
+                return pane.getWidth() - padding.getLeft() - padding.getRight() - insets.getLeft() - insets.getRight();
+            }, pane.paddingProperty(), pane.widthProperty());
+            bar.minWidthProperty().bind(barWidth);
+            bar.prefWidthProperty().bind(barWidth);
+            bar.maxWidthProperty().bind(barWidth);
+
+            setGraphic(pane);
+        }
+
+        private void updateLeftIcon(StageNode.Status status) {
+            left.getChildren().setAll(status.svg.createIcon(Theme.blackFill(), STATUS_ICON_SIZE));
+        }
+
+        @Override
+        protected void updateItem(Node item, boolean empty) {
+            super.updateItem(item, empty);
+
+            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
+            if (this == lastCell && !isVisible())
+                return;
+            lastCell = this;
+
+            pane.paddingProperty().unbind();
+            title.textProperty().unbind();
+            message.textProperty().unbind();
+            bar.progressProperty().unbind();
+
+            StageNode prevStageNode;
+            if (prevStageNodeRef != null && (prevStageNode = prevStageNodeRef.get()) != null)
+                prevStageNode.status.removeListener(statusChangeListener);
+
+            if (item instanceof ProgressListNode) {
+                var progressListNode = (ProgressListNode) item;
+                title.setText(progressListNode.title);
+                message.textProperty().bind(progressListNode.message);
+                bar.progressProperty().bind(progressListNode.progress);
+
+                pane.paddingProperty().bind(progressNodePadding);
+                pane.setLeft(null);
+                pane.setRight(message);
+                pane.setBottom(bar);
+            } else if (item instanceof StageNode) {
+                var stageNode = (StageNode) item;
+                title.textProperty().bind(stageNode.title);
+                message.setText("");
+                bar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+
+                pane.setPadding(Insets.EMPTY);
+                pane.setLeft(left);
+                pane.setRight(message);
+                pane.setBottom(null);
+
+                updateLeftIcon(stageNode.status.get());
+                if (statusChangeListener == null)
+                    statusChangeListener = new StatusChangeListener(this);
+                stageNode.status.addListener(statusChangeListener);
+                prevStageNodeRef = new WeakReference<>(stageNode);
+            } else { // item == null
+                title.setText("");
+                message.setText("");
+                bar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+                pane.setPadding(Insets.EMPTY);
+                pane.setLeft(null);
+                pane.setRight(null);
+                pane.setBottom(null);
+            }
+        }
+
+        private final class StatusChangeListener implements ChangeListener<StageNode.Status>, WeakListener {
+
+            private final WeakReference<Cell> cellRef;
+
+            private StatusChangeListener(Cell cell) {
+                this.cellRef = new WeakReference<>(cell);
+            }
+
+            @Override
+            public boolean wasGarbageCollected() {
+                return cellRef.get() == null;
+            }
+
+            @Override
+            public void changed(ObservableValue<? extends StageNode.Status> observable,
+                                StageNode.Status oldValue,
+                                StageNode.Status newValue) {
+                Cell cell = cellRef.get();
+                if (cell == null) {
+                    if (observable != null)
+                        observable.removeListener(this);
+                    return;
+                }
+                cell.updateLeftIcon(newValue);
+            }
+        }
+    }
+
+    private static abstract class Node {
+
+    }
+
+    private static final class StageNode extends Node {
+        private enum Status {
+            WAITING(SVG.MORE_HORIZ),
+            RUNNING(SVG.ARROW_FORWARD),
+            SUCCESS(SVG.CHECK),
+            FAILED(SVG.CLOSE);
+
+            private final SVG svg;
+
+            Status(SVG svg) {
+                this.svg = svg;
+            }
+        }
+
+        private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.WAITING);
+        private final StringProperty title = new SimpleStringProperty();
         private final String message;
         private int count = 0;
         private int total = 0;
-        private boolean started = false;
 
-        public StageNode(String stage) {
-            this.stage = stage;
+        private StageNode(String stage) {
+            String stageKey;
+            String stageValue;
 
-            String stageKey = StringUtils.substringBefore(stage, ':');
-            String stageValue = StringUtils.substringAfter(stage, ':');
+            int idx = stage.indexOf(':');
+            if (idx >= 0) {
+                stageKey = stage.substring(0, idx);
+                stageValue = stage.substring(idx + 1);
+            } else {
+                stageKey = stage;
+                stageValue = null;
+            }
 
+            // CHECKSTYLE:OFF
             // @formatter:off
             switch (stageKey) {
-                case "hmcl.modpack": message = i18n("install.modpack"); break;
-                case "hmcl.modpack.download": message = i18n("launch.state.modpack"); break;
-                case "hmcl.install.assets": message = i18n("assets.download"); break;
-                case "hmcl.install.game": message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
-                case "hmcl.install.forge": message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
-                case "hmcl.install.neoforge": message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
+                case "hmcl.modpack":            message = i18n("install.modpack"); break;
+                case "hmcl.modpack.download":   message = i18n("launch.state.modpack"); break;
+                case "hmcl.install.assets":     message = i18n("assets.download"); break;
+                case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
+                case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
+                case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
                 case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
-                case "hmcl.install.optifine": message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;
-                case "hmcl.install.fabric": message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
+                case "hmcl.install.optifine":   message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;
+                case "hmcl.install.fabric":     message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
                 case "hmcl.install.fabric-api": message = i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue); break;
-                case "hmcl.install.quilt": message = i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue); break;
-                default: message = i18n(stageKey); break;
+                case "hmcl.install.quilt":      message = i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue); break;
+                default:                        message = i18n(stageKey); break;
             }
             // @formatter:on
+            // CHECKSTYLE:ON
 
-            title.setText(message);
-            BorderPane.setAlignment(title, Pos.CENTER_LEFT);
-            BorderPane.setMargin(title, new Insets(0, 0, 0, 8));
-            setPadding(new Insets(0, 0, 8, 4));
-            setCenter(title);
-            setLeft(FXUtils.limitingSize(SVG.MORE_HORIZ.createIcon(Theme.blackFill(), 14), 14, 14));
+            title.set(message);
         }
 
-        public void begin() {
-            if (started) return;
-            started = true;
-            setLeft(FXUtils.limitingSize(SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), 14), 14, 14));
+        private void begin() {
+            if (status.get() == Status.WAITING) {
+                status.set(Status.RUNNING);
+            }
         }
 
         public void fail() {
-            setLeft(FXUtils.limitingSize(SVG.CLOSE.createIcon(Theme.blackFill(), 14), 14, 14));
+            status.set(Status.FAILED);
         }
 
         public void succeed() {
-            setLeft(FXUtils.limitingSize(SVG.CHECK.createIcon(Theme.blackFill(), 14), 14, 14));
+            status.set(Status.SUCCESS);
         }
 
         public void count() {
@@ -315,46 +464,33 @@ public final class TaskListPane extends StackPane {
         }
 
         public void updateCounter(int count, int total) {
-            if (total > 0)
-                title.setText(String.format("%s - %d/%d", message, count, total));
-            else
-                title.setText(message);
+            title.setValue(total > 0
+                    ? message + " - " + count + "/" + total
+                    : message
+            );
         }
     }
 
-    private class ProgressListNode extends BorderPane {
-        private final JFXProgressBar bar = new JFXProgressBar();
-        private final Label title = new Label();
-        private final Label state = new Label();
-        private final DoubleBinding binding = Bindings.createDoubleBinding(() ->
-                        getWidth() - getPadding().getLeft() - getPadding().getRight() - getInsets().getLeft() - getInsets().getRight(),
-                paddingProperty(), widthProperty());
+    private static final class ProgressListNode extends Node {
+        private final String title;
+        private final StringProperty message = new SimpleStringProperty("");
+        private final DoubleProperty progress = new SimpleDoubleProperty(0.0);
 
-        public ProgressListNode(Task<?> task) {
-            bar.progressProperty().bind(task.progressProperty());
-            title.setText(task.getName());
-            state.textProperty().bind(task.messageProperty());
-
-            setLeft(title);
-            setRight(state);
-            setBottom(bar);
-
-            bar.minWidthProperty().bind(binding);
-            bar.prefWidthProperty().bind(binding);
-            bar.maxWidthProperty().bind(binding);
-
-            paddingProperty().bind(progressNodePadding);
+        private ProgressListNode(Task<?> task) {
+            this.title = task.getName();
+            message.bind(task.messageProperty());
+            progress.bind(task.progressProperty());
         }
 
         public void unbind() {
-            bar.progressProperty().unbind();
-            state.textProperty().unbind();
+            message.unbind();
+            progress.unbind();
         }
 
         public void setThrowable(Throwable throwable) {
             unbind();
-            state.setText(throwable.getLocalizedMessage());
-            bar.setProgress(0);
+            message.set(throwable.getLocalizedMessage());
+            progress.set(0.);
         }
     }
 }
