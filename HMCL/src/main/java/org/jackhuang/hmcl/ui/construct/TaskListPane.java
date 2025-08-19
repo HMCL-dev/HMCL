@@ -303,11 +303,9 @@ public final class TaskListPane extends StackPane {
             super.updateItem(item, empty);
 
             // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (lastCell != null) {
-                if (this == lastCell && !isVisible())
-                    return;
-                lastCell = this;
-            }
+            if (this == lastCell && !isVisible())
+                return;
+            lastCell = this;
 
             pane.paddingProperty().unbind();
             title.textProperty().unbind();
