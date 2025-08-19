@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -95,14 +95,8 @@ final class WindowsGPUDetector {
         } else if (object instanceof String[]) {
             return String.join(" ", (String[]) object);
         } else if (object instanceof byte[]) {
-            String value = null;
-            try {
-                value = new String((byte[])object, "UTF-16LE");
-                value = value.replaceAll("\0", "");
-                return value;
-            } catch (UnsupportedEncodingException e) {
-                return object.toString();
-            }
+            return new String((byte[]) object, StandardCharsets.UTF_16LE)
+                    .replace("\0", "");
         } else {
             return object.toString();
         }
