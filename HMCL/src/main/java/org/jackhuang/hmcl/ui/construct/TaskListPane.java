@@ -89,12 +89,18 @@ public final class TaskListPane extends StackPane {
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
+    private final DoubleProperty cellWidth = new SimpleDoubleProperty();
 
     private Cell lastCell;
 
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
         listView.setCellFactory(l -> new Cell());
+        FXUtils.onChangeAndOperate(listView.widthProperty(), width -> {
+            double w = width.doubleValue();
+            cellWidth.set(w <= 12.0 ? w : w - 12.0);
+        });
+
         getChildren().setAll(listView);
     }
 
@@ -273,6 +279,8 @@ public final class TaskListPane extends StackPane {
 
         private Cell() {
             setPadding(Insets.EMPTY);
+
+            prefWidthProperty().bind(cellWidth);
 
             FXUtils.setLimitHeight(left, STATUS_ICON_SIZE);
             FXUtils.setLimitWidth(left, STATUS_ICON_SIZE);
