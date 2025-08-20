@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class DownloadProviderWrapper implements DownloadProvider {
 
-    private volatile DownloadProvider provider;
+    private DownloadProvider provider;
 
     public DownloadProviderWrapper(DownloadProvider provider) {
         this.provider = provider;
