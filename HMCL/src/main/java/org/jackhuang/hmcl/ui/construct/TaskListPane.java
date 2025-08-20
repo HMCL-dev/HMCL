@@ -98,10 +98,7 @@ public final class TaskListPane extends StackPane {
         listView.setCellFactory(l -> new Cell());
         FXUtils.onChangeAndOperate(listView.widthProperty(), width -> {
             double w = width.doubleValue();
-            if (w <= 12.)
-                cellWidth.set(w);
-            else
-                cellWidth.set(w - 12);
+            cellWidth.set(w <= 12.0 ? w : w - 12.0);
         });
 
         getChildren().setAll(listView);
