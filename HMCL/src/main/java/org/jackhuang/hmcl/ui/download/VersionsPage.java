@@ -189,8 +189,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
 
             if (remoteVersion instanceof GameRemoteVersion) {
+                RemoteVersion.Type versionType = remoteVersion.getVersionType();
                 String wikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
-                switch (remoteVersion.getVersionType()) {
+                switch (versionType) {
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
                         content.setImage(VersionIconType.GRASS.getIcon());
@@ -198,7 +199,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         break;
                     case PENDING:
                     case SNAPSHOT:
-                        if (GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isSpecial()) {
+                        if (versionType == RemoteVersion.Type.SNAPSHOT
+                                && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isSpecial()) {
                             content.getTags().setAll(i18n("version.game.april_fools"));
                             content.setImage(VersionIconType.APRIL_FOOLS.getIcon());
                         } else {

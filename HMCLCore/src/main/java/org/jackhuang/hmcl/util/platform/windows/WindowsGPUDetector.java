@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -93,6 +94,9 @@ final class WindowsGPUDetector {
             return null;
         } else if (object instanceof String[]) {
             return String.join(" ", (String[]) object);
+        } else if (object instanceof byte[]) {
+            return new String((byte[]) object, StandardCharsets.UTF_16LE)
+                    .replace("\0", "");
         } else {
             return object.toString();
         }
