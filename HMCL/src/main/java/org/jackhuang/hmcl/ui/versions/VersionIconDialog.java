@@ -60,6 +60,7 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.CHEST),
                 createIcon(VersionIconType.CHICKEN),
                 createIcon(VersionIconType.COMMAND),
+                createIcon(VersionIconType.APRIL_FOOLS),
                 createIcon(VersionIconType.OPTIFINE),
                 createIcon(VersionIconType.CRAFT_TABLE),
                 createIcon(VersionIconType.FABRIC),
@@ -90,7 +91,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createCustomIcon() {
-        Node shape = SVG.PLUS_CIRCLE_OUTLINE.createIcon(Theme.blackFill(), 32, 32);
+        Node shape = SVG.ADD_CIRCLE.createIcon(Theme.blackFill(), 32);
         shape.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);

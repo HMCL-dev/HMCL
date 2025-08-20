@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -8,7 +9,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    alias(libs.plugins.shadow)
 }
 
 val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
@@ -32,12 +33,24 @@ val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
+val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
+
 version = "$versionRoot.$buildNumber"
+
+val embedResources by configurations.registering
 
 dependencies {
     implementation(project(":HMCLCore"))
+    implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
-    implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
+    implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.java.info)
+
+    if (launcherExe == null) {
+        implementation(libs.hmclauncher)
+    }
+
+    embedResources(libs.authlib.injector)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -81,22 +94,63 @@ fun attachSignature(jar: File) {
     }
 }
 
-val java11 = sourceSets.create("java11") {
-    java {
-        srcDir("src/main/java11")
-    }
-}
-
-tasks.getByName<JavaCompile>(java11.compileJavaTaskName) {
-    if (JavaVersion.current() < JavaVersion.VERSION_11) {
-        javaCompiler.set(javaToolchains.compilerFor {
-            languageVersion.set(JavaLanguageVersion.of(11))
-        })
-    }
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
+tasks.withType<JavaCompile> {
     sourceCompatibility = "11"
     targetCompatibility = "11"
 }
+
+tasks.checkstyleMain {
+    // Third-party code is not checked
+    exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
+}
+
+tasks.compileJava {
+    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
+}
+
+val hmclProperties = buildList {
+    add("hmcl.version" to project.version.toString())
+    System.getenv("GITHUB_SHA")?.let {
+        add("hmcl.version.hash" to it)
+    }
+    add("hmcl.version.type" to versionType)
+    add("hmcl.microsoft.auth.id" to microsoftAuthId)
+    add("hmcl.microsoft.auth.secret" to microsoftAuthSecret)
+    add("hmcl.curseforge.apikey" to curseForgeApiKey)
+    add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
+}
+
+val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
+val createPropertiesFile by tasks.registering {
+    outputs.file(hmclPropertiesFile)
+    hmclProperties.forEach { (k, v) -> inputs.property(k, v) }
+
+    doLast {
+        val targetFile = hmclPropertiesFile.get().asFile
+        targetFile.parentFile.mkdir()
+        targetFile.bufferedWriter().use {
+            for ((k, v) in hmclProperties) {
+                it.write("$k=$v\n")
+            }
+        }
+    }
+}
+
+val addOpens = listOf(
+    "java.base/java.lang",
+    "java.base/java.lang.reflect",
+    "java.base/jdk.internal.loader",
+    "javafx.base/com.sun.javafx.binding",
+    "javafx.base/com.sun.javafx.event",
+    "javafx.base/com.sun.javafx.runtime",
+    "javafx.graphics/javafx.css",
+    "javafx.graphics/com.sun.javafx.stage",
+    "javafx.graphics/com.sun.prism",
+    "javafx.controls/com.sun.javafx.scene.control",
+    "javafx.controls/com.sun.javafx.scene.control.behavior",
+    "javafx.controls/javafx.scene.control.skin",
+    "jdk.attach/sun.tools.attach",
+)
 
 tasks.jar {
     enabled = false
@@ -105,7 +159,9 @@ tasks.jar {
 
 val jarPath = tasks.jar.get().archiveFile.get().asFile
 
-tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+tasks.shadowJar {
+    dependsOn(createPropertiesFile)
+
     archiveClassifier.set(null as String?)
 
     exclude("**/package-info.class")
@@ -114,41 +170,30 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     exclude("META-INF/services/javax.imageio.spi.ImageReaderSpi")
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
+    listOf(
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*", "darwin-*",
+        "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
+    ).forEach { exclude("com/sun/jna/$it/**") }
+
     minimize {
         exclude(dependency("com.google.code.gson:.*:.*"))
+        exclude(dependency("net.java.dev.jna:jna:.*"))
         exclude(dependency("libs:JFoenix:.*"))
+        exclude(project(":HMCLBoot"))
     }
 
-    manifest {
-        attributes(
-            "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
-            "Main-Class" to "org.jackhuang.hmcl.Main",
-            "Multi-Release" to "true",
-            "Implementation-Version" to project.version,
-            "Microsoft-Auth-Id" to microsoftAuthId,
-            "Microsoft-Auth-Secret" to microsoftAuthSecret,
-            "CurseForge-Api-Key" to curseForgeApiKey,
-            "Build-Channel" to versionType,
-            "Class-Path" to "pack200.jar",
-            "Add-Opens" to listOf(
-                "java.base/java.lang",
-                "java.base/java.lang.reflect",
-                "java.base/jdk.internal.loader",
-                "javafx.base/com.sun.javafx.binding",
-                "javafx.base/com.sun.javafx.event",
-                "javafx.base/com.sun.javafx.runtime",
-                "javafx.graphics/javafx.css",
-                "javafx.graphics/com.sun.javafx.stage",
-                "javafx.graphics/com.sun.prism",
-                "javafx.controls/com.sun.javafx.scene.control",
-                "javafx.controls/com.sun.javafx.scene.control.behavior",
-                "javafx.controls/javafx.scene.control.skin",
-                "jdk.attach/sun.tools.attach"
-            ).joinToString(" ")
-        )
+    manifest.attributes(
+        "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
+        "Implementation-Version" to project.version.toString(),
+        "Main-Class" to "org.jackhuang.hmcl.Main",
+        "Multi-Release" to "true",
+        "Add-Opens" to addOpens.joinToString(" "),
+        "Enable-Native-Access" to "ALL-UNNAMED"
+    )
 
-        System.getenv("GITHUB_SHA")?.also {
-            attributes("GitHub-SHA" to it)
+    if (launcherExe != null) {
+        into("assets") {
+            from(file(launcherExe))
         }
     }
 
@@ -158,29 +203,40 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     }
 }
 
-fun createExecutable(suffix: String, header: String) {
-    val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + suffix)
-
-    output.outputStream().use {
-        it.write(File(project.projectDir, header).readBytes())
-        it.write(jarPath.readBytes())
-    }
-
-    createChecksum(output)
-}
-
 tasks.processResources {
-    into("META-INF/versions/11") {
-        from(sourceSets["java11"].output)
+    dependsOn(createPropertiesFile)
+
+    into("assets/") {
+        from(hmclPropertiesFile)
+        from(embedResources)
     }
-    dependsOn(tasks["java11Classes"])
 }
 
-val makeExecutables = tasks.create("makeExecutables") {
+val makeExecutables by tasks.registering {
+    val extensions = listOf("exe", "sh")
+
     dependsOn(tasks.jar)
+
+    inputs.file(jarPath)
+    outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
+
     doLast {
-        createExecutable("exe", "src/main/resources/assets/HMCLauncher.exe")
-        createExecutable("sh", "src/main/resources/assets/HMCLauncher.sh")
+        val jarContent = jarPath.readBytes()
+
+        ZipFile(jarPath).use { zipFile ->
+            for (extension in extensions) {
+                val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + extension)
+                val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
+                    ?: throw GradleException("HMCLauncher.$extension not found")
+
+                output.outputStream().use { outputStream ->
+                    zipFile.getInputStream(entry).use { it.copyTo(outputStream) }
+                    outputStream.write(jarContent)
+                }
+
+                createChecksum(output)
+            }
+        }
     }
 }
 
@@ -188,9 +244,9 @@ tasks.build {
     dependsOn(makeExecutables)
 }
 
-fun parseToolOptions(options: String?): List<String> {
+fun parseToolOptions(options: String?): MutableList<String> {
     if (options == null)
-        return listOf()
+        return mutableListOf()
 
     val builder = StringBuilder()
     val result = mutableListOf<String>()
@@ -238,7 +294,17 @@ fun parseToolOptions(options: String?): List<String> {
     return result
 }
 
-tasks.create<JavaExec>("run") {
+// For IntelliJ IDEA
+tasks.withType<JavaExec> {
+    if (name != "run") {
+        jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
+        if (javaVersion >= JavaVersion.VERSION_24) {
+            jvmArgs("--enable-native-access=ALL-UNNAMED")
+        }
+    }
+}
+
+tasks.register<JavaExec>("run") {
     dependsOn(tasks.jar)
 
     group = "application"
@@ -247,9 +313,33 @@ tasks.create<JavaExec>("run") {
     workingDir = rootProject.rootDir
 
     val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
+        vmOptions += "-Dhmcl.offline.auth.restricted=false"
+
     jvmArgs(vmOptions)
 
-    doFirst {
-        logger.quiet("HMCL_JAVA_OPTS: $vmOptions")
+    val hmclJavaHome = System.getenv("HMCL_JAVA_HOME")
+    if (hmclJavaHome != null) {
+        this.executable(
+            file(hmclJavaHome).resolve("bin")
+                .resolve(if (System.getProperty("os.name").lowercase().startsWith("windows")) "java.exe" else "java")
+        )
     }
+
+    doFirst {
+        logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
+        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
+    }
+}
+
+// mcmod data
+
+tasks.register<ParseModDataTask>("parseModData") {
+    inputFile.set(layout.projectDirectory.file("mod.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/mod_data.txt"))
+}
+
+tasks.register<ParseModDataTask>("parseModPackData") {
+    inputFile.set(layout.projectDirectory.file("modpack.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
 }

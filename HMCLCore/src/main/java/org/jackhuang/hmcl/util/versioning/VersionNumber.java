@@ -18,17 +18,14 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import java.math.BigInteger;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Copied from org.apache.maven.artifact.versioning.ComparableVersion
  * Apache License 2.0
- *
+ * <p>
  * Maybe we can migrate to org.jenkins-ci:version-number:1.7?
+ *
  * @see <a href="http://maven.apache.org/pom.html#Version_Order_Specification">Specification</a>
  */
 public final class VersionNumber implements Comparable<VersionNumber> {
@@ -220,9 +217,17 @@ public final class VersionNumber implements Comparable<VersionNumber> {
      */
     private static final class StringItem implements Item {
         private final String value;
+        private final boolean pre;
 
         StringItem(String value) {
             this.value = value;
+
+            String lower = value.trim().toLowerCase(Locale.ROOT);
+            this.pre = lower.startsWith("alpha")
+                    || lower.startsWith("beta")
+                    || lower.startsWith("pre")
+                    || lower.startsWith("rc")
+                    || lower.startsWith("experimental");
         }
 
         public int getType() {
@@ -235,8 +240,8 @@ public final class VersionNumber implements Comparable<VersionNumber> {
 
         public int compareTo(Item item) {
             if (item == null) {
-                // 1-string > 1
-                return 1;
+                // 1-beta < 1 < 1-string
+                return pre ? -1 : 1;
             }
             switch (item.getType()) {
                 case LONG_ITEM:

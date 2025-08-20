@@ -164,7 +164,7 @@ public final class JavaDownloadDialog extends StackPane {
                             }), i18n("download.java"), TaskCancellationAction.NORMAL);
                 }, null);
             else
-                Controllers.taskDialog(downloadTask(javaVersion), i18n("download.java"), TaskCancellationAction.NORMAL);
+                Controllers.taskDialog(downloadTask(javaVersion), i18n("download.java.process"), TaskCancellationAction.NORMAL);
         }
     }
 
@@ -216,6 +216,7 @@ public final class JavaDownloadDialog extends StackPane {
             distributionBox.setItems(FXCollections.observableList(new ArrayList<>(distributions)));
 
             FXUtils.onChange(packageTypeBox.getSelectionModel().selectedItemProperty(), packageType -> {
+
                 ObservableList<DiscoJavaRemoteVersion> versions;
                 if (packageType == null
                         || currentJavaVersionList.get() == null
@@ -224,7 +225,25 @@ public final class JavaDownloadDialog extends StackPane {
                     return;
                 }
 
+                DiscoJavaRemoteVersion oldVersion = remoteVersionBox.getSelectionModel().getSelectedItem();
                 remoteVersionBox.setItems(versions);
+
+                if (oldVersion != null) {
+                    for (int i = 0; i < versions.size(); i++) {
+                        DiscoJavaRemoteVersion version = versions.get(i);
+                        if (Objects.equals(version.getDistributionVersion(), oldVersion.getDistributionVersion())) {
+                            remoteVersionBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                    for (int i = 0; i < versions.size(); i++) {
+                        DiscoJavaRemoteVersion version = versions.get(i);
+                        if (version.getJdkVersion() == oldVersion.getJdkVersion()) {
+                            remoteVersionBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                }
 
                 for (int i = 0; i < versions.size(); i++) {
                     DiscoJavaRemoteVersion version = versions.get(i);
@@ -344,7 +363,7 @@ public final class JavaDownloadDialog extends StackPane {
                         return getIntegrityCheck
                                 .thenComposeAsync(integrityCheck ->
                                         new FileDownloadTask(downloadProvider.injectURLWithCandidates(fileInfo.getDirectDownloadUri()),
-                                                targetFile, integrityCheck).setName(fileInfo.getFileName()))
+                                                targetFile.toPath(), integrityCheck).setName(fileInfo.getFileName()))
                                 .thenSupplyAsync(targetFile::toPath);
                     })
                     .whenComplete(Schedulers.javafx(), ((result, exception) -> {

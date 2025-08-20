@@ -3979,6 +3979,17 @@
         }
       }
     },
+    "com.github.oshi:oshi-core:6.6.5": {
+      "name": "com.github.oshi:oshi-core:6.8.0",
+      "downloads": {
+        "artifact": {
+          "path": "com/github/oshi/oshi-core/6.8.0/oshi-core-6.8.0.jar",
+          "url": "https://repo1.maven.org/maven2/com/github/oshi/oshi-core/6.8.0/oshi-core-6.8.0.jar",
+          "sha1": "004d12fac84286063e6842688610b8b2d43924a4",
+          "size": 1011309
+        }
+      }
+    },
     "net.java.jinput:jinput-platform:2.0.5:natives": null,
     "com.mojang:text2speech:1.10.3:natives": null,
     "com.mojang:text2speech:1.11.3:natives": null,
@@ -3987,26 +3998,37 @@
   },
   "windows-x86_64": {
     "mesa-loader": {
-      "name": "org.glavo:mesa-loader-windows:0.3.0:x64",
+      "name": "org.glavo:mesa-loader-windows:25.0.3:x64",
       "downloads": {
         "artifact": {
-          "path": "org/glavo/mesa-loader-windows/0.3.0/mesa-loader-windows-0.3.0-x64.jar",
-          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/0.3.0/mesa-loader-windows-0.3.0-x64.jar",
-          "sha1": "629fca32417d6ec489cef8b2cbd0827131ec6801",
-          "size": 27174940
+          "path": "org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x64.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x64.jar",
+          "sha1": "b2552fcc8c98e95b4559c39f2ff87cdb3aaaa513",
+          "size": 27971214
+        }
+      }
+    },
+    "software-renderer-loader": {
+      "name": "org.glavo:llvmpipe-loader:1.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "sha1": "ff255415e5c4b2a18970da0a8e552b557ca013ae",
+          "size": 12964773
         }
       }
     }
   },
   "windows-x86": {
     "mesa-loader": {
-      "name": "org.glavo:mesa-loader-windows:0.3.0:x86",
+      "name": "org.glavo:mesa-loader-windows:25.0.3:x86",
       "downloads": {
         "artifact": {
-          "path": "org/glavo/mesa-loader-windows/0.3.0/mesa-loader-windows-0.3.0-x86.jar",
-          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/0.3.0/mesa-loader-windows-0.3.0-x86.jar",
-          "sha1": "d25e0cdf5c5eb182acc9b93f700e0e6d8de36283",
-          "size": 22528549
+          "path": "org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x86.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-x86.jar",
+          "sha1": "6fd0fd7da88ca6636f735e1e0f6feb7f62f59715",
+          "size": 23311299
         }
       }
     }
@@ -4389,18 +4411,18 @@
     "com.mojang:text2speech:1.12.4:natives": null,
     "com.mojang:text2speech:1.13.9:natives-windows": null,
     "mesa-loader": {
-      "name": "org.glavo:mesa-loader-windows:0.3.0:arm64",
+      "name": "org.glavo:mesa-loader-windows:25.0.3:arm64",
       "downloads": {
         "artifact": {
-          "path": "org/glavo/mesa-loader-windows/0.3.0/mesa-loader-windows-0.3.0-arm64.jar",
-          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/0.3.0/mesa-loader-windows-0.3.0-arm64.jar",
-          "sha1": "1986490c6fbe950e64018c2fb62c8ecf77a247ed",
-          "size": 24082103
+          "path": "org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-arm64.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.0.3/mesa-loader-windows-25.0.3-arm64.jar",
+          "sha1": "40ca5de3351bf48b7b9efa5d2598d5b6b4d1ab8e",
+          "size": 24905270
         }
       }
     }
   },
-  "osx-arm64": {
+  "macos-arm64": {
     "org.lwjgl.lwjgl:lwjgl-platform:2.9.1-nightly-20130708-debug3:natives": {
       "name": "org.glavo.hmcl:lwjgl2-natives:2.9.3-rc1",
       "downloads": {

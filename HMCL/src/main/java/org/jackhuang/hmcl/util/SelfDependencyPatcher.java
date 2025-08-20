@@ -41,12 +41,11 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.Main;
-import org.jackhuang.hmcl.ui.SwingUtils;
+import org.jackhuang.hmcl.EntryPoint;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.Platform;
 
@@ -63,10 +62,10 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.jar.Manifest;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
-import static org.jackhuang.hmcl.Metadata.HMCL_DIRECTORY;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -102,14 +101,23 @@ public final class SelfDependencyPatcher {
 
     private static final class DependencyDescriptor {
         private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-        private static final Path DEPENDENCIES_DIR_PATH = HMCL_DIRECTORY.resolve("dependencies").resolve(Platform.getPlatform().toString()).resolve("openjfx");
+        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.getPlatform().toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
-                Map<String, List<DependencyDescriptor>> allDependencies =
-                        JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class)));
-                return allDependencies.get(Platform.getPlatform().toString());
+                Map<String, Map<String, List<DependencyDescriptor>>> allDependencies =
+                        JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class))));
+                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.getPlatform().toString());
+                if (platform == null)
+                    return null;
+
+                if (JavaRuntime.CURRENT_VERSION >= 22) {
+                    List<DependencyDescriptor> modernDependencies = platform.get("modern");
+                    if (modernDependencies != null)
+                        return modernDependencies;
+                }
+                return platform.get("classic");
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -172,12 +180,6 @@ public final class SelfDependencyPatcher {
             // We are probably on 8 and its on 11
             throw new IncompatibleVersionException();
         }
-        // So the problem with Java 8 is that some distributions DO NOT BUNDLE JAVAFX
-        // Why is this a problem? OpenJFX does not come in public bundles prior to Java 11
-        // So you're out of luck unless you change your JDK or update Java.
-        if (JavaRuntime.CURRENT_VERSION < 11) {
-            throw new IncompatibleVersionException();
-        }
 
         SelfDependencyPatcher patcher = new SelfDependencyPatcher();
 
@@ -237,7 +239,7 @@ public final class SelfDependencyPatcher {
             }
         } else {
             LOG.info("User choose not to download JavaFX");
-            Main.exit(0);
+            EntryPoint.exit(0);
         }
         throw new AssertionError();
     }
@@ -259,9 +261,15 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        String[] addOpens = JarUtils.getManifestAttribute("Add-Opens", "").split(" ");
+        String addOpens = null;
+        try (InputStream input = SelfDependencyPatcher.class.getResourceAsStream("/META-INF/MANIFEST.MF")) {
+            if (input != null)
+                addOpens = new Manifest(input).getMainAttributes().getValue("Add-Opens");
+        } catch (IOException e) {
+            LOG.warning("Failed to read MANIFEST.MF file", e);
+        }
 
-        JavaFXPatcher.patch(modules, jars, addOpens);
+        JavaFXPatcher.patch(modules, jars, addOpens != null ? addOpens.split(" ") : new String[0]);
     }
 
     /**

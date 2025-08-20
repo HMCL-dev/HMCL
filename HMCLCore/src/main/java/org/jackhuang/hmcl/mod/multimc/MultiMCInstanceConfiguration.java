@@ -63,7 +63,7 @@ public final class MultiMCInstanceConfiguration implements ModpackManifest {
     private final MultiMCManifest mmcPack;
 
     MultiMCInstanceConfiguration(String defaultName, InputStream contentStream, MultiMCManifest mmcPack) throws IOException {
-        // instance.cfg is in .ini format. As it's like the .properties format, we use Properties to parse thie file.
+        // instance.cfg is in .ini format. As it's like the .properties format, we use Properties to parse this file.
         // Maybe this will provide some problems (and it does, such as https://github.com/HMCL-dev/HMCL/issues/2991), but this workaround works, doesn't it?
         Properties p = new Properties();
         p.load(new InputStreamReader(contentStream, StandardCharsets.UTF_8));

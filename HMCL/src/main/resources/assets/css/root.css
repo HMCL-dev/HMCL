@@ -106,12 +106,24 @@
     -fx-background-color: -fx-base-darker-color;
 }
 
+.memory-used:disabled {
+    -fx-opacity: 0.4;
+}
+
 .memory-allocate {
     -fx-background-color: derive(-fx-base-color, 100%);
 }
 
+.memory-allocate:disabled {
+    -fx-opacity: 0.4;
+}
+
 .memory-total {
     -fx-background-color: -fx-base-rippler-color;
+}
+
+.memory-total:disabled {
+    -fx-opacity: 0.4;
 }
 
 .update-label {
@@ -1076,6 +1088,23 @@
 }
 
 .toggle-icon-tiny .jfx-rippler {
+    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-mask-type: CIRCLE;
+}
+
+.announcement-close-button {
+    -fx-announcement-close-button-size: 20px;
+    -fx-pref-width: -fx-announcement-close-button-size;
+    -fx-max-width: -fx-announcement-close-button-size;
+    -fx-min-width: -fx-announcement-close-button-size;
+    -fx-pref-height: -fx-announcement-close-button-size;
+    -fx-max-height: -fx-announcement-close-button-size;
+    -fx-min-height: -fx-announcement-close-button-size;
+    -fx-background-radius: 50px;
+    -fx-background-color: transparent;
+}
+
+.announcement-close-button .jfx-rippler {
     -jfx-rippler-fill: -fx-base-check-color;
     -jfx-mask-type: CIRCLE;
 }

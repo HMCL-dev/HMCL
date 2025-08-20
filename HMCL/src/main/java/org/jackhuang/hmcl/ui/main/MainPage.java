@@ -26,28 +26,39 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.VersionList;
 import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AnnouncementCard;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -57,16 +68,24 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
+import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MainPage extends StackPane implements DecoratorPage {
     private static final String ANNOUNCEMENT = "announcement";
@@ -74,7 +93,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
 
     private final PopupMenu menu = new PopupMenu();
-    private final JFXPopup popup = new JFXPopup(menu);
+
+    private final StackPane popupWrapper = new StackPane(menu);
+    private final JFXPopup popup = new JFXPopup(popupWrapper);
 
     private final StringProperty currentGame = new SimpleStringProperty(this, "currentGame");
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
@@ -102,23 +123,47 @@ public final class MainPage extends StackPane implements DecoratorPage {
         setPadding(new Insets(20));
 
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
-            AnnouncementCard announcementCard = null;
-
+            String title;
+            String content;
             if (Metadata.isNightly()) {
-                announcementCard = new AnnouncementCard(i18n("update.channel.nightly.title"), i18n("update.channel.nightly.hint"), null);
-            } else if (Metadata.isDev()) {
-                announcementCard = new AnnouncementCard(i18n("update.channel.dev.title"), i18n("update.channel.dev.hint"), this::hideAnnouncementPane);
+                title = i18n("update.channel.nightly.title");
+                content = i18n("update.channel.nightly.hint");
+            } else {
+                title = i18n("update.channel.dev.title");
+                content = i18n("update.channel.dev.hint");
             }
 
-            if (announcementCard != null) {
-                VBox announcementBox = new VBox(16);
-                announcementBox.getChildren().add(announcementCard);
+            VBox announcementCard = new VBox();
 
-                announcementPane = new TransitionPane();
-                announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
+            BorderPane titleBar = new BorderPane();
+            titleBar.getStyleClass().add("title");
+            titleBar.setLeft(new Label(title));
 
-                getChildren().add(announcementPane);
-            }
+            JFXButton btnHide = new JFXButton();
+            btnHide.setOnAction(e -> {
+                announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
+                if (Metadata.isDev()) {
+                    config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
+                }
+            });
+            btnHide.getStyleClass().add("announcement-close-button");
+            btnHide.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 20));
+            titleBar.setRight(btnHide);
+
+            TextFlow body = FXUtils.segmentToTextFlow(content, Controllers::onHyperlinkAction);
+            body.setLineSpacing(4);
+
+            announcementCard.getChildren().setAll(titleBar, body);
+            announcementCard.setSpacing(16);
+            announcementCard.getStyleClass().addAll("card", "announcement");
+
+            VBox announcementBox = new VBox(16);
+            announcementBox.getChildren().add(announcementCard);
+
+            announcementPane = new TransitionPane();
+            announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
+
+            getChildren().add(announcementPane);
         }
 
         updatePane = new StackPane();
@@ -138,7 +183,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
             {
                 Label lblIcon = new Label();
-                lblIcon.setGraphic(SVG.UPDATE.createIcon(Theme.whiteFill(), 20, 20));
+                lblIcon.setGraphic(SVG.UPDATE.createIcon(Theme.whiteFill(), 20));
 
                 TwoLineListItem prompt = new TwoLineListItem();
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
@@ -150,7 +195,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             }
 
             JFXButton closeUpdateButton = new JFXButton();
-            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(Theme.whiteFill(), 10, 10));
+            closeUpdateButton.setGraphic(SVG.CLOSE.createIcon(Theme.whiteFill(), 10));
             StackPane.setAlignment(closeUpdateButton, Pos.TOP_RIGHT);
             closeUpdateButton.getStyleClass().add("toggle-icon-tiny");
             StackPane.setMargin(closeUpdateButton, new Insets(5));
@@ -181,7 +226,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchButton.setPrefWidth(230);
             launchButton.setPrefHeight(55);
             //launchButton.setButtonType(JFXButton.ButtonType.RAISED);
-            launchButton.setOnAction(e -> launch());
             launchButton.setDefaultButton(true);
             launchButton.setClip(new Rectangle(-100, -100, 310, 200));
             {
@@ -189,18 +233,34 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 graphic.setAlignment(Pos.CENTER);
                 graphic.setTranslateX(-7);
                 graphic.setMaxWidth(200);
-                Label launchLabel = new Label(i18n("version.launch"));
+                Label launchLabel = new Label();
                 launchLabel.setStyle("-fx-font-size: 16px;");
                 Label currentLabel = new Label();
                 currentLabel.setStyle("-fx-font-size: 12px;");
-                currentLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    if (getCurrentGame() == null) {
-                        return i18n("version.empty");
-                    } else {
-                        return getCurrentGame();
+
+                FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
+                    private Tooltip tooltip;
+
+                    @Override
+                    public void accept(String currentGame) {
+                        if (currentGame == null) {
+                            launchLabel.setText(i18n("version.launch.empty"));
+                            currentLabel.setText(null);
+                            graphic.getChildren().setAll(launchLabel);
+                            launchButton.setOnAction(e -> MainPage.this.launchNoGame());
+                            if (tooltip == null)
+                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                            FXUtils.installFastTooltip(launchButton, tooltip);
+                        } else {
+                            launchLabel.setText(i18n("version.launch"));
+                            currentLabel.setText(currentGame);
+                            graphic.getChildren().setAll(launchLabel, currentLabel);
+                            launchButton.setOnAction(e -> MainPage.this.launch());
+                            if (tooltip != null)
+                                Tooltip.uninstall(launchButton, tooltip);
+                        }
                     }
-                }, currentGameProperty()));
-                graphic.getChildren().setAll(launchLabel, currentLabel);
+                });
 
                 launchButton.setGraphic(graphic);
             }
@@ -219,12 +279,21 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.setOnAction(e -> onMenu());
             menuButton.setClip(new Rectangle(211, -100, 100, 200));
             StackPane graphic = new StackPane();
-            Node svg = SVG.TRIANGLE.createIcon(Theme.foregroundFillBinding(), 10, 10);
+            Node svg = SVG.ARROW_DROP_UP.createIcon(Theme.foregroundFillBinding(), 30);
             StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             graphic.getChildren().setAll(svg);
-            graphic.setTranslateX(12);
+            graphic.setTranslateX(6);
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(graphic);
+
+            EventHandler<MouseEvent> secondaryClickHandle = event -> {
+                if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
+                    menuButton.fire();
+                    event.consume();
+                }
+            };
+            launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+            menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
         }
@@ -237,7 +306,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
-            FXUtils.onClicked(node, () -> profile.setSelectedVersion(version.getId()));
+            FXUtils.onClicked(node, () -> {
+                profile.setSelectedVersion(version.getId());
+                popup.hide();
+            });
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
@@ -277,11 +349,70 @@ public final class MainPage extends StackPane implements DecoratorPage {
     }
 
     private void launch() {
-        Versions.launch(Profiles.getSelectedProfile());
+        Profile profile = Profiles.getSelectedProfile();
+        Versions.launch(profile, profile.getSelectedVersion(), null);
+    }
+
+    private void launchNoGame() {
+        DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
+        VersionList<?> versionList = downloadProvider.getVersionListById("game");
+
+        Holder<String> gameVersionHolder = new Holder<>();
+        Task<?> task = versionList.refreshAsync("")
+                .thenSupplyAsync(() -> versionList.getVersions("").stream()
+                        .filter(it -> it.getVersionType() == RELEASE)
+                        .sorted()
+                        .findFirst()
+                        .orElseThrow(() -> new IOException("No versions found")))
+                .thenComposeAsync(version -> {
+                    Profile profile = Profiles.getSelectedProfile();
+                    DefaultDependencyManager dependency = profile.getDependency();
+                    String gameVersion = gameVersionHolder.value = version.getGameVersion();
+
+                    return dependency.gameBuilder()
+                            .name(gameVersion)
+                            .gameVersion(gameVersion)
+                            .buildAsync();
+                })
+                .whenComplete(any -> profile.getRepository().refreshVersions())
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        profile.setSelectedVersion(gameVersionHolder.value);
+                        launch();
+                    } else if (exception instanceof CancellationException) {
+                        Controllers.showToast(i18n("message.cancelled"));
+                    } else {
+                        LOG.warning("Failed to install game", exception);
+                        Controllers.dialog(StringUtils.getStackTrace(exception),
+                                i18n("install.failed"),
+                                MessageDialogPane.MessageType.WARNING);
+                    }
+                });
+        Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
     }
 
     private void onMenu() {
-        popup.show(menuButton, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.RIGHT, 0, -menuButton.getHeight());
+        Node contentNode;
+        if (menu.getContent().isEmpty()) {
+            Label placeholder = new Label(i18n("version.empty"));
+            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: gray; -fx-font-style: italic;");
+            contentNode = placeholder;
+        } else {
+            contentNode = menu;
+        }
+
+        popupWrapper.getChildren().setAll(contentNode);
+
+        if (popup.isShowing()) {
+            popup.hide();
+        }
+        popup.show(
+                menuButton,
+                JFXPopup.PopupVPosition.BOTTOM,
+                JFXPopup.PopupHPosition.RIGHT,
+                0,
+                -menuButton.getHeight()
+        );
     }
 
     private void onUpgrade() {
@@ -295,13 +426,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private void closeUpdateBubble() {
         showUpdate.unbind();
         showUpdate.set(false);
-    }
-
-    public void hideAnnouncementPane() {
-        if (announcementPane != null) {
-            config().getShownTips().put(ANNOUNCEMENT, Metadata.VERSION);
-            announcementPane.setContent(new StackPane(), ContainerAnimations.FADE);
-        }
     }
 
     @Override

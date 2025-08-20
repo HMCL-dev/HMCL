@@ -26,15 +26,14 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.ProcessPriority;
+import javafx.stage.Screen;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
@@ -45,11 +44,16 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.ServerAddress;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.nio.file.Paths;
@@ -57,14 +61,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.getTimer;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
 
-    private static final ObjectProperty<OperatingSystem.PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(OperatingSystem.PhysicalMemoryStatus.INVALID);
+    private static final ObjectProperty<PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(PhysicalMemoryStatus.INVALID);
     private static TimerTask memoryStatusUpdateTask;
+
     private static void initMemoryStatusUpdateTask() {
         FXUtils.checkFxUserThread();
         if (memoryStatusUpdateTask != null)
@@ -72,7 +79,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         memoryStatusUpdateTask = new TimerTask() {
             @Override
             public void run() {
-                Platform.runLater(() -> memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus()));
+                Platform.runLater(() -> memoryStatus.set(SystemInfo.getPhysicalMemoryStatus()));
             }
         };
         getTimer().scheduleAtFixedRate(memoryStatusUpdateTask, 0, 1000);
@@ -88,8 +95,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private String versionId;
 
     private final VBox rootPane;
-    private final JFXTextField txtWidth;
-    private final JFXTextField txtHeight;
+    private final JFXComboBox<String> cboWindowsSize;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
@@ -135,10 +141,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         rootPane.getStyleClass().add("card-list");
 
         if (globalSetting) {
-            HintPane skinHint = new HintPane(MessageDialogPane.MessageType.INFO);
-            skinHint.setText(i18n("settings.skin"));
-            rootPane.getChildren().add(skinHint);
-
             HintPane specificSettingsHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             Text text = new Text();
             text.textProperty().bind(BindingMapping.of(selectedVersion)
@@ -189,6 +191,31 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         {
             componentList = new ComponentList();
             componentList.setDepth(1);
+
+            if (!globalSetting) {
+                BorderPane copyGlobalPane = new BorderPane();
+                {
+                    Label label = new Label(i18n("settings.game.copy_global"));
+                    copyGlobalPane.setLeft(label);
+                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+
+                    JFXButton copyAll = new JFXButton(i18n("settings.game.copy_global.copy_all"));
+                    copyAll.disableProperty().bind(modpack);
+                    copyGlobalPane.setRight(copyAll);
+                    copyAll.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
+                        Set<String> ignored = new HashSet<>(Arrays.asList(
+                                "usesGlobal",
+                                "versionIcon"
+                        ));
+
+                        PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
+                    }, null));
+                    copyAll.getStyleClass().add("jfx-button-border");
+                    BorderPane.setAlignment(copyAll, Pos.CENTER_RIGHT);
+                }
+
+                componentList.getContent().add(copyGlobalPane);
+            }
 
             javaItem = new MultiFileItem<>();
             javaSublist = new ComponentSublist();
@@ -272,12 +299,12 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     AtomicBoolean changedByTextField = new AtomicBoolean(false);
                     FXUtils.onChangeAndOperate(maxMemory, maxMemory -> {
                         changedByTextField.set(true);
-                        slider.setValue(maxMemory.intValue() * 1.0 / OperatingSystem.TOTAL_MEMORY);
+                        slider.setValue(maxMemory.intValue() * 1.0 / MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
                         changedByTextField.set(false);
                     });
                     slider.valueProperty().addListener((value, oldVal, newVal) -> {
                         if (changedByTextField.get()) return;
-                        maxMemory.set((int) (value.getValue().doubleValue() * OperatingSystem.TOTAL_MEMORY));
+                        maxMemory.set((int) (value.getValue().doubleValue() * MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
                     });
 
                     JFXTextField txtMaxMemory = new JFXTextField();
@@ -286,7 +313,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     txtMaxMemory.textProperty().bindBidirectional(maxMemory, SafeStringConverter.fromInteger());
                     txtMaxMemory.setValidators(new NumberValidator(i18n("input.number"), false));
 
-                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label("MB"));
+                    lowerBoundPane.getChildren().setAll(label, slider, txtMaxMemory, new Label(i18n("settings.memory.unit.mib")));
                 }
 
                 StackPane progressBarPane = new StackPane();
@@ -320,9 +347,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     Label lblPhysicalMemory = new Label();
                     lblPhysicalMemory.getStyleClass().add("memory-label");
                     digitalPane.setLeft(lblPhysicalMemory);
-                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() -> {
-                        return i18n("settings.memory.used_per_total", memoryStatus.get().getUsedGB(), memoryStatus.get().getTotalGB());
-                    }, memoryStatus));
+                    lblPhysicalMemory.textProperty().bind(Bindings.createStringBinding(() ->
+                            i18n("settings.memory.used_per_total",
+                                    GIGABYTES.convertFromBytes(memoryStatus.get().getUsed()),
+                                    GIGABYTES.convertFromBytes(memoryStatus.get().getTotal())), memoryStatus));
 
                     Label lblAllocateMemory = new Label();
                     lblAllocateMemory.textProperty().bind(Bindings.createStringBinding(() -> {
@@ -330,9 +358,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         return i18n(memoryStatus.get().hasAvailable() && maxMemory > memoryStatus.get().getAvailable()
                                         ? (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto.exceeded" : "settings.memory.allocate.manual.exceeded")
                                         : (chkAutoAllocate.isSelected() ? "settings.memory.allocate.auto" : "settings.memory.allocate.manual"),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(maxMemory),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
-                                OperatingSystem.PhysicalMemoryStatus.toGigaBytes(memoryStatus.get().getAvailable()));
+                                GIGABYTES.convertFromBytes(maxMemory),
+                                GIGABYTES.convertFromBytes(HMCLGameRepository.getAllocatedMemory(maxMemory, memoryStatus.get().getAvailable(), chkAutoAllocate.isSelected())),
+                                GIGABYTES.convertFromBytes(memoryStatus.get().getAvailable()));
                     }, memoryStatus, maxMemory, chkAutoAllocate.selectedProperty()));
                     lblAllocateMemory.getStyleClass().add("memory-label");
                     digitalPane.setRight(lblAllocateMemory);
@@ -362,29 +390,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 BorderPane right = new BorderPane();
                 dimensionPane.setRight(right);
                 {
-                    HBox hbox = new HBox();
-                    right.setLeft(hbox);
-                    hbox.setPrefWidth(210);
-                    hbox.setSpacing(3);
-                    hbox.setAlignment(Pos.CENTER);
-                    BorderPane.setAlignment(hbox, Pos.CENTER);
-                    {
-                        txtWidth = new JFXTextField();
-                        txtWidth.setPromptText("800");
-                        txtWidth.setPrefWidth(100);
-                        FXUtils.setValidateWhileTextChanged(txtWidth, true);
-                        txtWidth.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
-
-                        Label x = new Label("x");
-
-                        txtHeight = new JFXTextField();
-                        txtHeight.setPromptText("480");
-                        txtHeight.setPrefWidth(100);
-                        FXUtils.setValidateWhileTextChanged(txtHeight, true);
-                        txtHeight.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
-
-                        hbox.getChildren().setAll(txtWidth, x, txtHeight);
-                    }
+                    cboWindowsSize = new JFXComboBox<>();
+                    cboWindowsSize.setPrefWidth(150);
+                    right.setLeft(cboWindowsSize);
+                    cboWindowsSize.setEditable(true);
+                    cboWindowsSize.setStyle("-fx-padding: 4 4 4 16");
+                    cboWindowsSize.setPromptText("854x480");
+                    cboWindowsSize.getItems().setAll(getSupportedResolutions());
 
                     chkFullscreen = new JFXCheckBox();
                     right.setRight(chkFullscreen);
@@ -392,6 +404,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     chkFullscreen.setAlignment(Pos.CENTER);
                     BorderPane.setAlignment(chkFullscreen, Pos.CENTER);
                     BorderPane.setMargin(chkFullscreen, new Insets(0, 0, 0, 7));
+
+                    cboWindowsSize.disableProperty().bind(chkFullscreen.selectedProperty());
                 }
             }
 
@@ -423,6 +437,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 txtServerIP = new JFXTextField();
                 txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
+                Validator.addTo(txtServerIP).accept(str -> {
+                    if (StringUtils.isBlank(str))
+                        return true;
+                    try {
+                        ServerAddress.parse(str);
+                        return true;
+                    } catch (Exception ignored) {
+                        return false;
+                    }
+                });
                 FXUtils.setLimitWidth(txtServerIP, 300);
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
@@ -446,7 +470,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 showAdvancedSettingPane.setRight(button);
             }
 
-            componentList.getContent().setAll(
+            componentList.getContent().addAll(
                     javaSublist,
                     gameDirSublist,
                     maxMemoryPane,
@@ -484,7 +508,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         cboProcessPriority.getItems().setAll(ProcessPriority.values());
         cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
 
-        memoryStatus.set(OperatingSystem.getPhysicalMemoryStatus());
+        memoryStatus.set(SystemInfo.getPhysicalMemoryStatus());
         componentList.disableProperty().bind(enableSpecificSettings.not());
 
         initMemoryStatusUpdateTask();
@@ -522,17 +546,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         // unbind data fields
         if (lastVersionSetting != null) {
-            FXUtils.unbind(txtWidth, lastVersionSetting.widthProperty());
-            FXUtils.unbind(txtHeight, lastVersionSetting.heightProperty());
+            FXUtils.unbindWindowsSize(cboWindowsSize, lastVersionSetting.widthProperty(), lastVersionSetting.heightProperty());
             maxMemory.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
             FXUtils.unbind(txtServerIP, lastVersionSetting.serverIpProperty());
-            FXUtils.unbindBoolean(chkAutoAllocate, lastVersionSetting.autoMemoryProperty());
-            FXUtils.unbindBoolean(chkFullscreen, lastVersionSetting.fullscreenProperty());
+            chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
+            chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
-            FXUtils.unbindEnum(cboLauncherVisibility);
-            FXUtils.unbindEnum(cboProcessPriority);
+            FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
+            FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
 
             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
             lastVersionSetting.javaVersionTypeProperty().removeListener(javaListener);
@@ -556,15 +579,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaVersionOption.valueProperty().unbind();
 
         // bind new data fields
-        FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
-        FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
+        FXUtils.bindWindowsSize(cboWindowsSize, versionSetting.widthProperty(), versionSetting.heightProperty());
         maxMemory.bindBidirectional(versionSetting.maxMemoryProperty());
 
         javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
         gameDirCustomOption.bindBidirectional(versionSetting.gameDirProperty());
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
-        FXUtils.bindBoolean(chkAutoAllocate, versionSetting.autoMemoryProperty());
-        FXUtils.bindBoolean(chkFullscreen, versionSetting.fullscreenProperty());
+        chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
+        chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
@@ -755,6 +777,28 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         iconPickerItem.setImage(profile.getRepository().getVersionIconImage(versionId));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
+    }
+
+    private static List<String> getSupportedResolutions() {
+        int maxScreenWidth = 0;
+        int maxScreenHeight = 0;
+
+        for (Screen screen : Screen.getScreens()) {
+            Rectangle2D bounds = screen.getBounds();
+            int screenWidth = (int) (bounds.getWidth() * screen.getOutputScaleX());
+            int screenHeight = (int) (bounds.getHeight() * screen.getOutputScaleY());
+
+            maxScreenWidth = Math.max(maxScreenWidth, screenWidth);
+            maxScreenHeight = Math.max(maxScreenHeight, screenHeight);
+        }
+
+        List<String> resolutions = new ArrayList<>(List.of("854x480", "1280x720", "1600x900"));
+
+        if (maxScreenWidth >= 1920 && maxScreenHeight >= 1080) resolutions.add("1920x1080");
+        if (maxScreenWidth >= 2560 && maxScreenHeight >= 1440) resolutions.add("2560x1440");
+        if (maxScreenWidth >= 3840 && maxScreenHeight >= 2160) resolutions.add("3840x2160");
+
+        return resolutions;
     }
 
     @Override

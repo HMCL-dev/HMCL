@@ -23,6 +23,7 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.control.ToggleGroup;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -40,10 +41,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
@@ -123,22 +126,46 @@ public final class SettingsPage extends SettingsView {
 
     @Override
     protected void onExportLogs() {
-        // We cannot determine which file is JUL using.
-        // So we write all the logs to a new file.
         thread(() -> {
-            Path logFile = Paths.get("hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
+            String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
+            List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
 
-            LOG.info("Exporting logs to " + logFile);
-            try (OutputStream output = Files.newOutputStream(logFile)) {
-                LOG.exportLogs(output);
+            Path outputFile;
+            try {
+                if (recentLogFiles.isEmpty()) {
+                    outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".log");
+
+                    LOG.info("Exporting latest logs to " + outputFile);
+                    try (OutputStream output = Files.newOutputStream(outputFile)) {
+                        LOG.exportLogs(output);
+                    }
+                } else {
+                    outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".zip");
+
+                    LOG.info("Exporting latest logs to " + outputFile);
+                    try (var os = Files.newOutputStream(outputFile);
+                         var zos = new ZipOutputStream(os)) {
+
+                        for (Path path : recentLogFiles) {
+                            String zipEntryName = path.getFileName().toString();
+                            zos.putNextEntry(new ZipEntry(zipEntryName));
+                            Files.copy(path, zos);
+                            zos.closeEntry();
+                        }
+
+                        zos.putNextEntry(new ZipEntry("latest.log"));
+                        LOG.exportLogs(zos);
+                        zos.closeEntry();
+                    }
+                }
             } catch (IOException e) {
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
                 LOG.warning("Failed to export logs", e);
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
                 return;
             }
 
-            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", logFile)));
-            FXUtils.showFileInExplorer(logFile);
+            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile)));
+            FXUtils.showFileInExplorer(outputFile);
         });
     }
 

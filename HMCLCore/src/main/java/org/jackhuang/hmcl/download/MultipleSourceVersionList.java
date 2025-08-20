@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.task.Task;
+
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -40,44 +41,40 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
     }
 
     @Override
-    public CompletableFuture<?> loadAsync() {
+    public Task<?> loadAsync() {
         throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
+    public Task<?> refreshAsync() {
         throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
     }
 
-    private CompletableFuture<?> refreshAsync(String gameVersion, int sourceIndex) {
+    private Task<?> refreshAsync(String gameVersion, int sourceIndex) {
         VersionList<?> versionList = backends[sourceIndex];
-        CompletableFuture<Void> future = versionList.refreshAsync(gameVersion)
-                .thenRunAsync(() -> {
+        return versionList.refreshAsync(gameVersion)
+                .thenComposeAsync(() -> {
                     lock.writeLock().lock();
-
                     try {
                         versions.putAll(gameVersion, versionList.getVersions(gameVersion));
+                    } catch (Exception e) {
+                        if (sourceIndex == backends.length - 1) {
+                            LOG.warning("Failed to fetch versions list from all sources", e);
+                            throw e;
+                        } else {
+                            LOG.warning("Failed to fetch versions list and try to fetch from other source", e);
+                            return refreshAsync(gameVersion, sourceIndex + 1);
+                        }
                     } finally {
                         lock.writeLock().unlock();
                     }
+
+                    return null;
                 });
-
-        if (sourceIndex == backends.length - 1) {
-            return future;
-        } else {
-            return future.<CompletableFuture<?>>handle((ignore, e) -> {
-                if (e == null) {
-                    return future;
-                }
-
-                LOG.warning("Failed to fetch versions list and try to fetch from other source", e);
-                return refreshAsync(gameVersion, sourceIndex + 1);
-            }).thenCompose(it -> it);
-        }
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync(String gameVersion) {
+    public Task<?> refreshAsync(String gameVersion) {
         versions.clear(gameVersion);
         return refreshAsync(gameVersion, 0);
     }

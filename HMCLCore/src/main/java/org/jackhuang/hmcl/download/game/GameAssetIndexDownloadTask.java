@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -86,7 +85,7 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
                 }
             } else {
                 try {
-                    JsonUtils.fromNonNullJson(FileUtils.readText(assetIndexFile), AssetIndex.class);
+                    JsonUtils.fromNonNullJson(Files.readString(assetIndexFile), AssetIndex.class);
                     return;
                 } catch (IOException | JsonParseException ignore) {
                 }
@@ -95,9 +94,9 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
 
         // We should not check the hash code of asset index file since this file is not consistent
         // And Mojang will modify this file anytime. So assetIndex.hash might be outdated.
-        FileDownloadTask task = new FileDownloadTask(
+        var task = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLWithCandidates(assetIndexInfo.getUrl()),
-                assetIndexFile.toFile(),
+                assetIndexFile,
                 verifyHashCode ? new FileDownloadTask.IntegrityCheck("SHA-1", assetIndexInfo.getSha1()) : null
         );
         task.setCacheRepository(dependencyManager.getCacheRepository());

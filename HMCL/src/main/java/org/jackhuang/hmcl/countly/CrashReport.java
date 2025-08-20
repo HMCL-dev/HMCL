@@ -43,8 +43,8 @@ public class CrashReport {
                 stackTrace + "\n\n" +
                 "-- System Details --\n" +
                 "  Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + "\n" +
-                "  System Architecture: " + Architecture.SYSTEM_ARCH_NAME + "\n" +
-                "  Java Architecture: " + Architecture.CURRENT_ARCH_NAME + "\n" +
+                "  System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName() + "\n" +
+                "  Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName() + "\n" +
                 "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +
                 "  Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor") + "\n" +
                 "  JVM Max Memory: " + Runtime.getRuntime().maxMemory() + "\n" +

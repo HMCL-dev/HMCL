@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -78,11 +77,11 @@ public class ForgeOldInstallTask extends Task<Version> {
 
             ZipEntry forgeEntry = zipFile.getEntry(installProfile.getInstall().getFilePath());
             try (InputStream is = zipFile.getInputStream(forgeEntry); OutputStream os = new FileOutputStream(forgeFile)) {
-                IOUtils.copyTo(is, os);
+                is.transferTo(os);
             }
 
             setResult(installProfile.getVersionInfo()
-                    .setPriority(30000)
+                    .setPriority(Version.PRIORITY_LOADER)
                     .setId(LibraryAnalyzer.LibraryType.FORGE.getPatchId())
                     .setVersion(selfVersion));
             dependencies.add(dependencyManager.checkLibraryCompletionAsync(installProfile.getVersionInfo(), true));
