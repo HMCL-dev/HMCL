@@ -60,7 +60,7 @@ public class OptionalFilesSelectionPane extends BorderPane {
     private final JFXListView<ModpackFile> list = new JFXListView<>();
 
     public OptionalFilesSelectionPane() {
-        retryOptionalFiles.setOnMouseClicked(e -> {
+        FXUtils.onClicked(retryOptionalFiles, () -> {
             title.getChildren().remove(retryOptionalFiles);
             retry.run();
         });
@@ -100,13 +100,13 @@ public class OptionalFilesSelectionPane extends BorderPane {
     }
 
     private class OptionalFileEntry extends MDListCell<ModpackFile> {
-        private JFXCheckBox checkBox = new JFXCheckBox();
-        private TwoLineListItem content = new TwoLineListItem();
-        private JFXButton infoButton = new JFXButton();
-        private HBox container = new HBox(8);
-        private Label text1 = new Label();
+        private final JFXCheckBox checkBox = new JFXCheckBox();
+        private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton infoButton = new JFXButton();
+        private final HBox container = new HBox(8);
+        private final Label text1 = new Label();
         private ModpackFile currentFile = null;
-        private ChangeListener<Boolean> selectedListener = (observable, oldValue, newValue) -> {
+        private final ChangeListener<Boolean> selectedListener = (observable, oldValue, newValue) -> {
             if (currentFile != null) {
                 if (newValue) {
                     selected.add(currentFile);
@@ -147,12 +147,12 @@ public class OptionalFilesSelectionPane extends BorderPane {
             RemoteMod mod1 = mod == null ? null : mod.orElse(null);
             if (mod1 != null) {
                 content.setSubtitle(mod1.getTitle());
-                infoButton.setOnMouseClicked(e -> Controllers.dialog(new ModInfo(mod1)));
+                infoButton.setOnAction(e -> Controllers.dialog(new ModInfo(mod1)));
                 infoButton.setManaged(true);
                 infoButton.setVisible(true);
             } else {
                 content.setSubtitle("");
-                infoButton.setOnMouseClicked(null);
+                infoButton.setOnAction(null);
                 infoButton.setManaged(false);
                 infoButton.setVisible(false);
             }
