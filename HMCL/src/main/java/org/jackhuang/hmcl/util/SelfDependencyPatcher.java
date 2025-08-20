@@ -261,18 +261,15 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        Manifest manifest;
+        String addOpens = null;
         try (InputStream input = SelfDependencyPatcher.class.getResourceAsStream("/META-INF/MANIFEST.MF")) {
-            if (input == null)
-                throw new IOException("Missing MANIFEST.MF");
-            manifest = new Manifest(input);
+            if (input != null)
+                addOpens = new Manifest(input).getMainAttributes().getValue("Add-Opens");
+        } catch (IOException e) {
+            LOG.warning("Failed to read MANIFEST.MF file", e);
         }
 
-        String addOpens = manifest.getMainAttributes().getValue("Add-Opens");
-        if (addOpens == null)
-            throw new IOException("Missing Add-Opens in MANIFEST.MF");
-
-        JavaFXPatcher.patch(modules, jars, addOpens.split(" "));
+        JavaFXPatcher.patch(modules, jars, addOpens != null ? addOpens.split(" ") : new String[0]);
     }
 
     /**
