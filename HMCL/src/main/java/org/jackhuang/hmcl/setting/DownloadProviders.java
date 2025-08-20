@@ -115,19 +115,6 @@ public final class DownloadProviders {
         });
     }
 
-    public static String getPrimaryDownloadProviderId() {
-        String downloadType = config().getDownloadType();
-        if (providersById.containsKey(downloadType))
-            return downloadType;
-        else
-            return DEFAULT_PROVIDER_ID;
-    }
-
-    public static DownloadProvider getDownloadProviderByPrimaryId(String primaryId) {
-        return Optional.ofNullable(providersById.get(primaryId))
-                .orElse(providersById.get(DEFAULT_PROVIDER_ID));
-    }
-
     /**
      * Get current primary preferred download provider
      */
