@@ -283,7 +283,7 @@ public final class TaskListPane extends StackPane {
         private Cell() {
             setPadding(Insets.EMPTY);
 
-            prefWidthProperty().bind(listView.widthProperty().subtract(12));
+            prefWidthProperty().bind(cellWidth);
 
             FXUtils.setLimitHeight(left, STATUS_ICON_SIZE);
             FXUtils.setLimitWidth(left, STATUS_ICON_SIZE);
