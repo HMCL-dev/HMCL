@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.mod.ModpackFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -31,8 +32,9 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -52,6 +54,7 @@ public final class CurseCompletionTask extends Task<Void> {
     private final ModManager modManager;
     private final String version;
     private CurseManifest manifest;
+    private Set<? extends ModpackFile> selectedFiles;
     private List<Task<?>> dependencies;
 
     private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
@@ -65,7 +68,7 @@ public final class CurseCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      */
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+        this(dependencyManager, version, null, null);
     }
 
     /**
@@ -75,18 +78,28 @@ public final class CurseCompletionTask extends Task<Void> {
      * @param version           the existent and physical version.
      * @param manifest          the CurseForgeModpack manifest.
      */
-    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest) {
+    public CurseCompletionTask(DefaultDependencyManager dependencyManager, String version, CurseManifest manifest, Set<? extends ModpackFile> selectedFiles) {
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
         this.manifest = manifest;
+        this.selectedFiles = selectedFiles;
 
         if (manifest == null)
             try {
-                File manifestFile = new File(repository.getVersionRoot(version), "manifest.json");
-                if (manifestFile.exists())
-                    this.manifest = JsonUtils.fromJsonFile(manifestFile.toPath(), CurseManifest.class);
+                Path versionRoot = repository.getVersionRoot(version).toPath();
+
+                Path manifestFile = versionRoot.resolve("manifest.json");
+                if (Files.exists(manifestFile))
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
+                Path filesFile = versionRoot.resolve("files.json");
+                if (Files.exists(filesFile)) {
+                    Set<String> files = new HashSet<>(JsonUtils.fromJsonFile(filesFile, JsonUtils.listTypeOf(String.class)));
+                    this.selectedFiles = this.manifest.getFiles().stream()
+                            .filter(f -> files.contains(f.getPath()))
+                            .collect(Collectors.toSet());
+                }
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
@@ -109,7 +122,7 @@ public final class CurseCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        File root = repository.getVersionRoot(version);
+        Path root = repository.getVersionRoot(version).toPath();
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
@@ -135,7 +148,9 @@ public final class CurseCompletionTask extends Task<Void> {
                             }
                         })
                         .collect(Collectors.toList()));
-        JsonUtils.writeToJsonFile(root.toPath().resolve("manifest.json"), newManifest);
+
+        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
+        JsonUtils.writeToJsonFile(root.resolve("files.json"), selectedFiles.stream().map(ModpackFile::getPath).collect(Collectors.toList()));
 
         File versionRoot = repository.getVersionRoot(modManager.getVersion());
         File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
@@ -143,6 +158,7 @@ public final class CurseCompletionTask extends Task<Void> {
         dependencies = newManifest.getFiles()
                 .stream().parallel()
                 .filter(f -> f.getFileName() != null)
+                .filter(f -> selectedFiles == null || selectedFiles.contains(f))
                 .flatMap(f -> {
                     try {
                         File path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
