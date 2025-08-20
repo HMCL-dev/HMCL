@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.Platform;
 
@@ -63,6 +62,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.jar.Manifest;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
@@ -261,9 +261,18 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        String[] addOpens = JarUtils.getAttribute("Add-Opens", "").split(" ");
+        Manifest manifest;
+        try (InputStream input = SelfDependencyPatcher.class.getResourceAsStream("/META-INF/MANIFEST.MF")) {
+            if (input == null)
+                throw new IOException("Missing MANIFEST.MF");
+            manifest = new Manifest(input);
+        }
 
-        JavaFXPatcher.patch(modules, jars, addOpens);
+        String addOpens = manifest.getMainAttributes().getValue("Add-Opens");
+        if (addOpens == null)
+            throw new IOException("Missing Add-Opens in MANIFEST.MF");
+
+        JavaFXPatcher.patch(modules, jars, addOpens.split(" "));
     }
 
     /**
