@@ -160,6 +160,8 @@ public final class TaskListPane extends StackPane {
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
+                    if ("hmcl.install.game".equals(task.getStage()))
+                        return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
