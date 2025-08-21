@@ -1012,9 +1012,8 @@ public abstract class Task<T> {
     private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
     private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> {
         String fileName = frame.getFileName();
-        int lineNumber = frame.getLineNumber();
         if (fileName != null)
-            return frame.getClassName() + '.' + frame.getMethodName() + '(' + fileName + ':' + lineNumber + ')';
+            return frame.getClassName() + '.' + frame.getMethodName() + '(' + fileName + ':' + frame.getLineNumber() + ')';
         else
             return frame.getClassName() + '.' + frame.getMethodName();
     };
