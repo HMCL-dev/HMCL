@@ -262,7 +262,7 @@ public final class TaskListPane extends StackPane {
                     runInFX(() -> {
                         StageNode stageNode = stageNodes.get(task.getStage());
                         if (stageNode != null)
-                            stageNode.setTotal(total);
+                            stageNode.addTotal(total);
                     });
                 }
             }
@@ -471,8 +471,8 @@ public final class TaskListPane extends StackPane {
             updateCounter(++count, total);
         }
 
-        public void setTotal(int total) {
-            this.total = total;
+        public void addTotal(int n) {
+            this.total += n;
             updateCounter(count, total);
         }
 
