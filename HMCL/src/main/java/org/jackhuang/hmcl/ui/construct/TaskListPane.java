@@ -97,6 +97,7 @@ public final class TaskListPane extends StackPane {
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
         listView.setCellFactory(l -> new Cell());
+        listView.setSelectionModel(null);
         FXUtils.onChangeAndOperate(listView.widthProperty(), width -> {
             double w = width.doubleValue();
             cellWidth.set(w <= 12.0 ? w : w - 12.0);
@@ -160,6 +161,8 @@ public final class TaskListPane extends StackPane {
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
+                    if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
+                        return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
@@ -433,6 +436,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.modpack":            message = i18n("install.modpack"); break;
                 case "hmcl.modpack.download":   message = i18n("launch.state.modpack"); break;
                 case "hmcl.install.assets":     message = i18n("assets.download"); break;
+                case "hmcl.install.libraries":  message = i18n("libraries.download"); break;
                 case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
                 case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
                 case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
