@@ -80,6 +80,7 @@ import java.util.Map;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class TaskListPane extends StackPane {
     private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 0);
@@ -160,6 +161,8 @@ public final class TaskListPane extends StackPane {
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
+                    if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
+                        return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
