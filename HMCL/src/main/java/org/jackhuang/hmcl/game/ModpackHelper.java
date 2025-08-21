@@ -210,14 +210,17 @@ public final class ModpackHelper {
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
+                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
+                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name));
+                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
+                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
         else
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
-                    .whenComplete(Schedulers.javafx(), success, failure);
+                    .whenComplete(Schedulers.javafx(), success, failure)
+                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
