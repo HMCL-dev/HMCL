@@ -160,8 +160,6 @@ public final class TaskListPane extends StackPane {
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
-                    if ("hmcl.install.game".equals(task.getStage()))
-                        return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
@@ -435,6 +433,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.modpack":            message = i18n("install.modpack"); break;
                 case "hmcl.modpack.download":   message = i18n("launch.state.modpack"); break;
                 case "hmcl.install.assets":     message = i18n("assets.download"); break;
+                case "hmcl.install.libraries":  message = i18n("libraries.download"); break;
                 case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
                 case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
                 case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
