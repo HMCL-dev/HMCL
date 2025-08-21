@@ -441,6 +441,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.fabric":     message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
                 case "hmcl.install.fabric-api": message = i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue); break;
                 case "hmcl.install.quilt":      message = i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue); break;
+                case "hmcl.install.quilt-api":  message = i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue); break;
                 default:                        message = i18n(stageKey); break;
             }
             // @formatter:on
