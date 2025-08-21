@@ -50,10 +50,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -211,16 +208,16 @@ public final class ModpackHelper {
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
-                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
-                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.javafx(), success, failure)
-                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
