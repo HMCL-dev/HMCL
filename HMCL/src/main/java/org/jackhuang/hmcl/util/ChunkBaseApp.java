@@ -30,9 +30,9 @@ public final class ChunkBaseApp {
     private static final GameVersionNumber MIN_GAME_VERSION = GameVersionNumber.asGameVersion("1.7");
 
     private static final String[] SEED_MAP_GAME_VERSIONS = {
-            "1.21.5", "1.21.4", "1.21.2", "1.21", "1.20", "1.19.3", "1.19",
-            "1.18", "1.17", "1.16", "1.15", "1.14", "1.13", "1.12", "1.11",
-            "1.10", "1.9", "1.8", "1.7"
+            "1.21.6", "1.21.5", "1.21.4", "1.21.2", "1.21", "1.20", "1.19.3",
+            "1.19", "1.18", "1.17", "1.16", "1.15", "1.14", "1.13", "1.12",
+            "1.11", "1.10", "1.9", "1.8", "1.7"
     };
 
     public static final String[] STRONGHOLD_FINDER_GAME_VERSIONS = {
