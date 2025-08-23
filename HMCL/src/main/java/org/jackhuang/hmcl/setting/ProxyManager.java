@@ -18,13 +18,15 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -32,7 +34,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ProxyManager {
 
     private static final ProxySelector NO_PROXY = new SimpleProxySelector(Proxy.NO_PROXY);
-    private static final ProxySelector SYSTEM_DEFAULT = Lang.requireNonNullElse(ProxySelector.getDefault(), NO_PROXY);
+    private static final ProxySelector SYSTEM_DEFAULT = Objects.requireNonNullElse(ProxySelector.getDefault(), NO_PROXY);
+
+    private static volatile @NotNull ProxySelector defaultProxySelector = SYSTEM_DEFAULT;
+    private static volatile @Nullable SimpleAuthenticator defaultAuthenticator = null;
 
     private static ProxySelector getProxySelector() {
         if (config().hasProxy()) {
@@ -53,7 +58,7 @@ public final class ProxyManager {
         }
     }
 
-    private static Authenticator getAuthenticator() {
+    private static SimpleAuthenticator getAuthenticator() {
         if (config().hasProxy() && config().hasProxyAuth()) {
             String username = config().getProxyUser();
             String password = config().getProxyPass();
@@ -67,15 +72,34 @@ public final class ProxyManager {
     }
 
     static void init() {
-        ProxySelector.setDefault(getProxySelector());
-        InvalidationListener updateProxySelector = observable -> ProxySelector.setDefault(getProxySelector());
+        ProxySelector.setDefault(new ProxySelector() {
+            @Override
+            public List<Proxy> select(URI uri) {
+                return defaultProxySelector.select(uri);
+            }
+
+            @Override
+            public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+                defaultProxySelector.connectFailed(uri, sa, ioe);
+            }
+        });
+        Authenticator.setDefault(new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                var defaultAuthenticator = ProxyManager.defaultAuthenticator;
+                return defaultAuthenticator != null ? defaultAuthenticator.getPasswordAuthentication() : null;
+            }
+        });
+
+        defaultProxySelector = getProxySelector();
+        InvalidationListener updateProxySelector = observable -> defaultProxySelector = getProxySelector();
         config().proxyTypeProperty().addListener(updateProxySelector);
         config().proxyHostProperty().addListener(updateProxySelector);
         config().proxyPortProperty().addListener(updateProxySelector);
         config().hasProxyProperty().addListener(updateProxySelector);
 
-        Authenticator.setDefault(getAuthenticator());
-        InvalidationListener updateAuthenticator = observable -> Authenticator.setDefault(getAuthenticator());
+        defaultAuthenticator = getAuthenticator();
+        InvalidationListener updateAuthenticator = observable -> defaultAuthenticator = getAuthenticator();
         config().hasProxyProperty().addListener(updateAuthenticator);
         config().hasProxyAuthProperty().addListener(updateAuthenticator);
         config().proxyUserProperty().addListener(updateAuthenticator);
@@ -124,7 +148,7 @@ public final class ProxyManager {
         }
 
         @Override
-        protected PasswordAuthentication getPasswordAuthentication() {
+        public PasswordAuthentication getPasswordAuthentication() {
             return getRequestorType() == RequestorType.PROXY ? new PasswordAuthentication(username, password) : null;
         }
     }

@@ -6,7 +6,6 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,7 +133,7 @@ public final class ForgeNewModMetadata {
         Path modToml = fs.getPath(tomlPath);
         if (Files.notExists(modToml))
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
-        Toml toml = new Toml().read(FileUtils.readText(modToml));
+        Toml toml = new Toml().read(Files.readString(modToml));
         ForgeNewModMetadata metadata = toml.to(ForgeNewModMetadata.class);
         if (metadata == null || metadata.getMods().isEmpty())
             throw new IOException("Mod " + modFile + " `mods.toml` is malformed..");

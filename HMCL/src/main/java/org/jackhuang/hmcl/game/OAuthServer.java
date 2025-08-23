@@ -158,13 +158,13 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         @Override
         public String getClientId() {
             return System.getProperty("hmcl.microsoft.auth.id",
-                    JarUtils.getManifestAttribute("Microsoft-Auth-Id", ""));
+                    JarUtils.getAttribute("hmcl.microsoft.auth.id", ""));
         }
 
         @Override
         public String getClientSecret() {
             return System.getProperty("hmcl.microsoft.auth.secret",
-                    JarUtils.getManifestAttribute("Microsoft-Auth-Secret", ""));
+                    JarUtils.getAttribute("hmcl.microsoft.auth.secret", ""));
         }
 
         @Override

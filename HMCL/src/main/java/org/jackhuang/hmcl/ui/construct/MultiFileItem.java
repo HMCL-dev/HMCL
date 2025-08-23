@@ -24,11 +24,13 @@ import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -294,6 +296,37 @@ public final class MultiFileItem<T> extends VBox {
             selector.disableProperty().bind(left.selectedProperty().not());
             BorderPane.setAlignment(selector, Pos.CENTER_RIGHT);
             pane.setRight(selector);
+            return pane;
+        }
+    }
+
+    public static final class PaintOption<T> extends Option<T> {
+        private final ColorPicker colorPicker = new ColorPicker();
+
+        public PaintOption(String title, T data) {
+            super(title, data);
+        }
+
+        public PaintOption<T> bindBidirectional(Property<Paint> property) {
+            FXUtils.bindPaint(colorPicker, property);
+            return this;
+        }
+
+        @Override
+        protected Node createItem(ToggleGroup group) {
+            BorderPane pane = new BorderPane();
+            pane.setPadding(new Insets(3));
+            FXUtils.setLimitHeight(pane, 30);
+
+            left.setText(title);
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+            left.setToggleGroup(group);
+            left.setUserData(data);
+            pane.setLeft(left);
+
+            colorPicker.disableProperty().bind(left.selectedProperty().not());
+            BorderPane.setAlignment(colorPicker, Pos.CENTER_RIGHT);
+            pane.setRight(colorPicker);
             return pane;
         }
     }

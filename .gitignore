@@ -13,11 +13,13 @@ hs_err_pid*
 /externalgames
 NVIDIA
 minecraft-exported-crash-info*
+hmcl-exported-logs-*
 
 # gradle build
 /build/
 /HMCL/build/
 /HMCLCore/build/
+/HMCLBoot/build/
 /HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
 /buildSrc/build/

@@ -38,22 +38,31 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * <p>A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
  * The transforming process contains 7 stage:
- * General Setup, Load Components, Resolve Json-Patch, Build Artifact,
- * Copy Embedded Files, Assemble Game, Download Game and Apply JAR mods.
+ * <ul>
+ *     <li>General Setup</li>
+ *     <li>Load Components</li>
+ *     <li>Resolve Json-Patch</li>
+ *     <li>Build Artifact</li>
+ *     <li>Copy Embedded Files</li>
+ *     <li>Assemble Game</li>
+ *     <li>Download Game</li>
+ *     <li>Apply JAR mods</li>
+ * </ul>
  * See codes below for detailed implementation.
  * </p>
  */
@@ -64,7 +73,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
     private final DefaultGameRepository repository;
-    private final List<Task<MultiMCInstancePatch>> patches = new ArrayList<>();
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
@@ -102,7 +110,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
             try {
                 if (json.exists()) {
-                    config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
+                    config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                     if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                         throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
@@ -125,29 +133,74 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         try (FileSystem fs = openModpack()) {
             Path root = getRootPath(fs);
 
+            List<Task<MultiMCInstancePatch>> patches = new ArrayList<>();
             for (MultiMCManifest.MultiMCManifestComponent component : Objects.requireNonNull(
                     Objects.requireNonNull(manifest.getMmcPack(), "mmc-pack.json").getComponents(), "components"
             )) {
                 String componentID = Objects.requireNonNull(component.getUid(), "Component ID");
                 Path patchPath = root.resolve(String.format("patches/%s.json", componentID));
 
-                Task<String> task;
                 if (Files.exists(patchPath)) {
                     if (!Files.isRegularFile(patchPath)) {
                         throw new IllegalArgumentException("Json-Patch isn't a file: " + componentID);
                     }
 
-                    // TODO: Task.completed has unclear compatibility issue.
-                    String text = FileUtils.readText(patchPath, StandardCharsets.UTF_8);
-                    task = Task.supplyAsync(() -> text);
+                    MultiMCInstancePatch patch = MultiMCInstancePatch.read(componentID, Files.readString(patchPath));
+                    patches.add(Task.supplyAsync(() -> patch)); // TODO: Task.completed has unclear compatibility issue.
                 } else {
-                    task = new GetTask(MultiMCComponents.getMetaURL(componentID, component.getVersion()));
+                    patches.add(
+                            new GetTask(MultiMCComponents.getMetaURL(componentID, component.getVersion()))
+                                    .thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s))
+                    );
+                }
+            }
+            dependents.add(new MMCInstancePatchesAssembleTask(patches));
+        }
+    }
+
+    private static final class MMCInstancePatchesAssembleTask extends Task<List<MultiMCInstancePatch>> {
+        private final List<Task<MultiMCInstancePatch>> patches;
+
+        public MMCInstancePatchesAssembleTask(List<Task<MultiMCInstancePatch>> patches) {
+            this.patches = patches;
+        }
+
+        @Override
+        public Collection<? extends Task<?>> getDependents() {
+            return patches;
+        }
+
+        @Override
+        public void execute() throws Exception {
+            Map<String, MultiMCInstancePatch> existed = new HashMap<>();
+            for (Task<MultiMCInstancePatch> patch : patches) {
+                MultiMCInstancePatch result = patch.getResult();
+
+                existed.put(result.getID(), result);
+            }
+
+            checking:
+            while (true) {
+                for (MultiMCInstancePatch patch : existed.values()) {
+                    for (MultiMCManifest.MultiMCManifestCachedRequires require : patch.getRequires()) {
+                        String componentID = require.getID();
+                        if (!existed.containsKey(componentID)) {
+                            Task<MultiMCInstancePatch> task = new GetTask(MultiMCComponents.getMetaURL(
+                                    componentID, Lang.requireNonNullElse(require.getEqualsVersion(), require.getSuggests())
+                            )).thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
+                            task.run();
+
+                            MultiMCInstancePatch result = Objects.requireNonNull(task.getResult());
+                            existed.put(result.getID(), result);
+                            continue checking;
+                        }
+                    }
                 }
 
-                Task<MultiMCInstancePatch> task2 = task.thenApplyAsync(s -> MultiMCInstancePatch.read(componentID, s));
-                patches.add(task2);
-                dependents.add(task2);
+                break;
             }
+
+            setResult(new ArrayList<>(existed.values()));
         }
     }
 
@@ -160,10 +213,15 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     @Override
     public void execute() throws Exception {
         // Stage #3: Build Json-Patch artifact.
-        MultiMCInstancePatch.ResolvedInstance artifact = MultiMCInstancePatch.resolveArtifact(patches.stream()
-                .map(value -> Objects.requireNonNull(value.getResult(), "MultiMCInstancePatch"))
-                .collect(Collectors.toList()), name
-        );
+        MultiMCInstancePatch.ResolvedInstance artifact = null;
+        for (int i = dependents.size() - 1; i >= 0; i--) {
+            Task<?> task = dependents.get(i);
+            if (task instanceof MMCInstancePatchesAssembleTask) {
+                artifact = MultiMCInstancePatch.resolveArtifact(((MMCInstancePatchesAssembleTask) task).getResult(), name);
+                break;
+            }
+        }
+        Objects.requireNonNull(artifact, "artifact");
 
         // Stage #4: Copy embedded files.
         try (FileSystem fs = openModpack()) {

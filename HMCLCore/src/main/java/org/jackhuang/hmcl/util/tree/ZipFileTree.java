@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,25 +28,30 @@ import java.io.InputStream;
  * @author Glavo
  */
 public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArchiveEntry> {
+    private final boolean closeReader;
+
     public ZipFileTree(ZipArchiveReader file) throws IOException {
+        this(file, true);
+    }
+
+    public ZipFileTree(ZipArchiveReader file, boolean closeReader) throws IOException {
         super(file);
+        this.closeReader = closeReader;
         try {
             for (ZipArchiveEntry zipArchiveEntry : file.getEntries()) {
                 addEntry(zipArchiveEntry);
             }
         } catch (Throwable e) {
-            try {
-                file.close();
-            } catch (Throwable e2) {
-                e.addSuppressed(e2);
-            }
+            if (closeReader)
+                IOUtils.closeQuietly(file, e);
             throw e;
         }
     }
 
     @Override
     public void close() throws IOException {
-        file.close();
+        if (closeReader)
+            file.close();
     }
 
     @Override

@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.*;
 import java.util.*;
 
@@ -116,11 +115,7 @@ public final class HMCLJavaRepository implements JavaRepository {
                         }
 
                         if (Files.isDirectory(javaDir)) {
-                            JavaManifest manifest;
-                            try (InputStream input = Files.newInputStream(file)) {
-                                manifest = JsonUtils.fromJsonFully(input, JavaManifest.class);
-                            }
-
+                            JavaManifest manifest = JsonUtils.fromJsonFile(file, JavaManifest.class);
                             list.add(JavaRuntime.of(executable, manifest.getInfo(), isManaged));
                         }
                     }
@@ -191,7 +186,7 @@ public final class HMCLJavaRepository implements JavaRepository {
             });
 
             JavaManifest manifest = new JavaManifest(info, update, files);
-            FileUtils.writeText(getManifestFile(platform, gameJavaVersion), JsonUtils.GSON.toJson(manifest));
+            JsonUtils.writeToJsonFile(getManifestFile(platform, gameJavaVersion), manifest);
             return JavaRuntime.of(executable, info, true);
         });
     }
@@ -203,7 +198,7 @@ public final class HMCLJavaRepository implements JavaRepository {
                 throw new IOException("Platform is mismatch: expected " + platform + " but got " + result.getInfo().getPlatform());
 
             Path executable = javaDir.resolve("bin").resolve(platform.getOperatingSystem().getJavaExecutable()).toRealPath();
-            FileUtils.writeText(getManifestFile(platform, name), JsonUtils.GSON.toJson(result));
+            JsonUtils.writeToJsonFile(getManifestFile(platform, name), result);
             return JavaRuntime.of(executable, result.getInfo(), true);
         });
     }
