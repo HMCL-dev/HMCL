@@ -22,7 +22,6 @@ import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -59,16 +58,10 @@ public class TaskExecutorDialogPane extends BorderPane {
             lblTitle = new Label();
             lblTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: BOLD;");
 
-            ScrollPane scrollPane = new ScrollPane();
-            scrollPane.setFitToHeight(true);
-            scrollPane.setFitToWidth(true);
-            VBox.setVgrow(scrollPane, Priority.ALWAYS);
-            {
-                taskListPane = new TaskListPane();
-                scrollPane.setContent(taskListPane);
-            }
+            taskListPane = new TaskListPane();
+            VBox.setVgrow(taskListPane, Priority.ALWAYS);
 
-            center.getChildren().setAll(lblTitle, scrollPane);
+            center.getChildren().setAll(lblTitle, taskListPane);
         }
 
         BorderPane bottom = new BorderPane();

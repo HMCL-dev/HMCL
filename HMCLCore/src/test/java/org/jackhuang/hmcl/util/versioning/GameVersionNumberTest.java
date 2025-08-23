@@ -102,6 +102,8 @@ public final class GameVersionNumberTest {
     @Test
     public void testParseOld() {
         assertOldVersion("rd-132211", GameVersionNumber.Type.PRE_CLASSIC, "132211");
+        assertOldVersion("in-20100223", GameVersionNumber.Type.INDEV, "20100223");
+        assertOldVersion("in-20100212-2", GameVersionNumber.Type.INDEV, "20100212-2");
         assertOldVersion("inf-20100618", GameVersionNumber.Type.INFDEV, "20100618");
         assertOldVersion("inf-20100330-1", GameVersionNumber.Type.INFDEV, "20100330-1");
         assertOldVersion("a1.0.6", GameVersionNumber.Type.ALPHA, "1.0.6");

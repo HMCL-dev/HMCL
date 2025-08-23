@@ -77,6 +77,10 @@ public final class ExportWizardProvider implements WizardProvider {
             File tempModpack;
             Task<?> exportTask;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public boolean doPreExecute() {
                 return true;
@@ -165,6 +169,10 @@ public final class ExportWizardProvider implements WizardProvider {
         return new Task<Void>() {
             Task<?> dependency = null;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public void execute() {
                 dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
@@ -180,6 +188,10 @@ public final class ExportWizardProvider implements WizardProvider {
     private Task<?> exportAsMultiMC(ModpackExportInfo exportInfo, File modpackFile) {
         return new Task<Void>() {
             Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public void execute() {
@@ -225,6 +237,10 @@ public final class ExportWizardProvider implements WizardProvider {
         return new Task<Void>() {
             Task<?> dependency;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public void execute() {
                 dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
@@ -240,6 +256,10 @@ public final class ExportWizardProvider implements WizardProvider {
     private Task<?> exportAsModrinth(ModpackExportInfo exportInfo, File modpackFile) {
         return new Task<Void>() {
             Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public void execute() {
