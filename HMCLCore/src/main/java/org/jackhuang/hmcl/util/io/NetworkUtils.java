@@ -186,8 +186,8 @@ public final class NetworkUtils {
                         }
                     }
 
-                    // Invalid surrogate pair, encode as '?'
-                    builder.append("%3F");
+                    // Invalid surrogate pair, encode as U+FFFD (replacement character)
+                    encodeCodePoint(builder, 0xfffd);
                     continue;
                 }
 
