@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.cleanroom.CleanroomVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
@@ -37,6 +38,7 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final FabricAPIVersionList fabricApi;
     private final ForgeVersionList forge;
     private final NeoForgeOfficialVersionList neoforge;
+    private final CleanroomVersionList cleanroom;
     private final LiteLoaderVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
@@ -51,6 +53,7 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.fabricApi = new FabricAPIVersionList(this);
         this.forge = new ForgeVersionList(this);
         this.neoforge = new NeoForgeOfficialVersionList(this);
+        this.cleanroom = new CleanroomVersionList(this);
         this.liteLoader = new LiteLoaderVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
@@ -78,6 +81,8 @@ public class MojangDownloadProvider implements DownloadProvider {
                 return fabricApi;
             case "forge":
                 return forge;
+            case "cleanroom":
+                return cleanroom;
             case "neoforge":
                 return neoforge;
             case "liteloader":
