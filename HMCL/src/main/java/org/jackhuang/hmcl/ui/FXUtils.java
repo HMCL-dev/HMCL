@@ -1329,7 +1329,7 @@ public final class FXUtils {
                             hyperlinkAction.accept(link);
                         });
                         text.setCursor(Cursor.HAND);
-                        text.setFill(Color.web("#0070E0"));
+                        text.getStyleClass().add("hyperLink");
                         text.setUnderline(true);
                         texts.add(text);
                     } else if ("b".equals(element.getTagName())) {

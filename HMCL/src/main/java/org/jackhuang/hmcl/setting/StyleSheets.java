@@ -42,6 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class StyleSheets {
     private static final int FONT_STYLE_SHEET_INDEX = 0;
     private static final int THEME_STYLE_SHEET_INDEX = 1;
+    private static final int COLORMODE_STYLE_SHEET_INDEX = 3;
 
     private static final ObservableList<String> stylesheets;
 
@@ -49,12 +50,23 @@ public final class StyleSheets {
         String[] array = new String[]{
                 getFontStyleSheet(),
                 getThemeStyleSheet(),
-                "/assets/css/root.css"
+                "assets/css/root.css",
+                getColorModeStyleSheet()
         };
         stylesheets = FXCollections.observableList(Arrays.asList(array));
 
         FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
         config().themeProperty().addListener(o -> stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet()));
+        config().colorModeProperty().addListener(o -> stylesheets.set(COLORMODE_STYLE_SHEET_INDEX, getColorModeStyleSheet()));
+    }
+
+    private static String getColorModeStyleSheet() {
+        EnumColorMode mode = config().getColorMode();
+        if (mode == null) {
+            return "assets/css/colormode/light.css";
+        } else {
+            return "assets/css/colormode/" + mode.name().toLowerCase(Locale.ROOT) + ".css";
+        }
     }
 
     private static String toStyleSheetUri(String styleSheet, String fallback) {

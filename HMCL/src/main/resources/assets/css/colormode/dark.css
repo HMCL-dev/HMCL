@@ -1,0 +1,188 @@
+.svg {
+    -fx-fill: #e0e0e0;
+}
+
+.content-background {
+    -fx-background-color: rgba(23, 27, 31, 0.85);
+}
+
+.gray-background {
+    -fx-background-color: rgba(33, 37, 41, 0.9);
+}
+
+.label {
+    -fx-text-fill: #ffffff;
+}
+
+.disabled Label {
+    -fx-text-fill: rgba(255, 255, 255, 0.4);
+}
+
+.title-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.92);
+}
+
+.subtitle-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.6);
+}
+
+.two-line-list-item > .first-line > .title {
+    -fx-text-fill: #ffffff;
+}
+
+.two-line-list-item > HBox > .subtitle {
+    -fx-text-fill: rgba(200, 200, 200, 0.7);
+}
+
+.options-list-item {
+    -fx-background-color: #212529;
+    -fx-border-color: #495057;
+}
+
+.options-list {
+}
+
+.card {
+    -fx-background-color: rgba(33, 37, 41, 0.8);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 12, 0.2, 0, 3);
+}
+
+.announcement Text {
+    -fx-fill: #f0f0f0;
+}
+
+.card.announcement .title .label {
+    -fx-text-fill: #e0e0e0;
+}
+
+.hyperLink {
+    -fx-fill: #64b5f6 !important;
+}
+
+.class-title Text {
+    -fx-fill: #ffffff;
+}
+
+.class-title Rectangle {
+    -fx-fill: #dedede;
+}
+
+/*
+  Colors are picked from bootstrap
+  https://getbootstrap.com/docs/5.3/components/alerts/
+ */
+
+.hint.info {
+    -fx-background-color: #031633;
+    -fx-border-color: #084298;
+}
+
+.hint.info Text, .hint.info .svg {
+    -fx-fill: #6ea8fe;
+}
+
+.hint.success {
+    -fx-background-color: #051b11;
+    -fx-border-color: #0f5132;
+}
+
+.hint.success Text, .hint.success .svg {
+    -fx-fill: #75b798;
+}
+
+.hint.error {
+    -fx-background-color: #2c0b0e;
+    -fx-border-color: #842029;
+}
+
+.hint.error Text, .hint.error .svg {
+    -fx-fill: #ea868f;
+}
+
+.hint.warning {
+    -fx-background-color: #332701;
+    -fx-border-color: #997404;
+}
+
+.hint.warning Text, .hint.warning .svg {
+    -fx-fill: #ffda6a;
+}
+
+.md-list-cell {
+    -fx-border-color: #495057;
+}
+
+.installer-item:list-item {
+    -fx-border-color: #495057;
+}
+
+.installer-item:card {
+    -fx-background-color: #212529;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 12, 0.2, 0, 3);
+}
+
+.card-non-transparent {
+    -fx-background-color: #212529;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
+}
+
+.jfx-text-field, .jfx-password-field, .jfx-text-area {
+    -fx-background-color: #343A40;
+    -fx-prompt-text-fill: #AEB2B6;
+    -fx-text-fill: #DDE1E5;
+}
+
+.jfx-text-area .viewport {
+    -fx-background-color: #343A40;
+}
+
+.jfx-combo-box {
+    -fx-background-color: #343A40;
+}
+
+.jfx-combo-box .list-cell {
+    -fx-text-fill: #DEE2E6;
+    -fx-background-color: #343A40;
+    -fx-border-color: #343A40;
+}
+
+.jfx-tool-bar-button .text {
+    -fx-fill: white;
+}
+
+.radio-button {
+    -fx-text-fill: white;
+}
+
+.jfx-check-box {
+    -fx-text-fill: white;
+}
+
+.combo-box .text {
+    -fx-fill: #DEE2E6 !important;
+}
+
+.combo-box .text-field {
+    -fx-text-fill: #DEE2E6 !important;
+}
+
+.two-line-list-item > .first-line > .tag {
+    -fx-text-fill: derive(-fx-base-color, 60%);
+    -fx-background-color: derive(-fx-base-rippler-color, -50%);
+}
+
+.jfx-dialog-layout {
+    -fx-background-color: #212529;
+}
+
+.jfx-popup-container {
+    -fx-background-color: #212529;
+}
+
+.dialog-cancel {
+    -fx-text-fill: white;
+}
+
+.task-executor-dialog-pane {
+    -fx-background-color: #212529;
+}

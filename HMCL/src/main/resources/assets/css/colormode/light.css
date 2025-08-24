@@ -1,0 +1,166 @@
+.svg {
+    -fx-fill: black;
+}
+
+.gray-background {
+    -fx-background-color: rgba(244, 244, 244, 0.5);
+}
+
+.content-background {
+    -fx-background-color: rgba(244, 244, 244, 0.5);
+}
+
+.label {
+}
+
+.disabled Label {
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
+}
+
+.title-label {
+    -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
+}
+
+.subtitle-label {
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
+}
+
+.two-line-list-item > .first-line > .title {
+    -fx-text-fill: #292929;
+}
+
+.two-line-list-item > HBox > .subtitle {
+    -fx-text-fill: rgba(0, 0, 0, 0.5);
+}
+
+.options-list-item {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+}
+
+.options-list {
+}
+
+.card {
+    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.hyperLink {
+    -fx-fill: #0070E0 !important;
+}
+
+.class-title Text {
+}
+
+.class-title Rectangle {
+}
+
+/*
+  Colors are picked from bootstrap
+  https://getbootstrap.com/docs/5.3/components/alerts/
+ */
+
+.hint.info {
+    -fx-background-color: #cfe2ff;
+    -fx-border-color: #9ec5fe;
+}
+
+.hint.info Text, .hint.info .svg {
+    -fx-fill: #052c65;
+}
+
+.hint.success {
+    -fx-background-color: #d1e7dd;
+    -fx-border-color: #a3cfbb;
+}
+
+.hint.success Text, .hint.success .svg {
+    -fx-fill: #0a3622;
+}
+
+.hint.error {
+    -fx-background-color: #f8d7da;
+    -fx-border-color: #f1aeb5;
+}
+
+.hint.error Text, .hint.error .svg {
+    -fx-fill: #58151c;
+}
+
+.hint.warning {
+    -fx-background-color: #fff3cd;
+    -fx-border-color: #ffe69c;
+}
+
+.hint.warning Text, .hint.warning .svg {
+    -fx-fill: #664d03;
+}
+
+.md-list-cell {
+    -fx-border-color: #e0e0e0;
+}
+
+.installer-item:list-item {
+    -fx-border-color: #e0e0e0;
+}
+
+.installer-item:card {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.card-non-transparent {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
+}
+
+.jfx-text-field, .jfx-password-field, .jfx-text-area {
+    -fx-background-color: #f1f3f4;
+    -fx-prompt-text-fill: #808080;
+}
+
+.jfx-text-area .viewport {
+    -fx-background-color: #ffffff;
+}
+
+.jfx-combo-box {
+    -fx-background-color: #f1f3f4;
+    -fx-text-fill: #DDE1E5;
+}
+
+.jfx-combo-box .list-cell {
+}
+
+.jfx-tool-bar-button .text {
+}
+
+.radio-button {
+}
+
+.jfx-check-box {
+}
+
+.combo-box .text {
+}
+
+.combo-box .text-field {
+}
+
+.two-line-list-item > .first-line > .tag {
+    -fx-text-fill: -fx-base-color;
+    -fx-background-color: -fx-base-rippler-color;
+}
+
+.jfx-dialog-layout {
+}
+
+.jfx-popup-container {
+    -fx-background-color: WHITE;
+}
+
+.dialog-cancel {
+}
+
+.task-executor-dialog-pane {
+}

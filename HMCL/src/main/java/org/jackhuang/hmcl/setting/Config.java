@@ -138,6 +138,9 @@ public final class Config implements Observable {
     @SerializedName("theme")
     private ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
 
+    @SerializedName("colorMode")
+    private ObjectProperty<EnumColorMode> colorMode = new SimpleObjectProperty<>();
+
     @SerializedName("localization")
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
 
@@ -473,6 +476,18 @@ public final class Config implements Observable {
 
     public ObjectProperty<Theme> themeProperty() {
         return theme;
+    }
+
+    public EnumColorMode getColorMode() {
+        return colorMode.get();
+    }
+
+    public void setColorMode(EnumColorMode colorMode) {
+        this.colorMode.set(colorMode);
+    }
+
+    public ObjectProperty<EnumColorMode> colorModeProperty() {
+        return colorMode;
     }
 
     public SupportedLocale getLocalization() {
