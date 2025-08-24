@@ -45,10 +45,10 @@ public class NetworkUtilsTest {
         assertEquals("https://www.example.com/%E6%B5%8B%E8%AF%95?a=10+20", encodeLocation("https://www.example.com/测试?a=10 20"));
 
         // Invalid surrogate pair
-        assertEquals("https://www.example.com/%3F", encodeLocation("https://www.example.com/\uD83D"));
-        assertEquals("https://www.example.com/%3F", encodeLocation("https://www.example.com/\uDE07"));
-        assertEquals("https://www.example.com/%3Ftest", encodeLocation("https://www.example.com/\uD83Dtest"));
-        assertEquals("https://www.example.com/%3Ftest", encodeLocation("https://www.example.com/\uDE07test"));
+        assertEquals("https://www.example.com/%EF%BF%BD", encodeLocation("https://www.example.com/\uD83D"));
+        assertEquals("https://www.example.com/%EF%BF%BD", encodeLocation("https://www.example.com/\uDE07"));
+        assertEquals("https://www.example.com/%EF%BF%BDtest", encodeLocation("https://www.example.com/\uD83Dtest"));
+        assertEquals("https://www.example.com/%EF%BF%BDtest", encodeLocation("https://www.example.com/\uDE07test"));
     }
 
     @Test
