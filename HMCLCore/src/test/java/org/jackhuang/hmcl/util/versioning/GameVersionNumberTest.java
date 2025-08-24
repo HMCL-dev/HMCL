@@ -119,6 +119,7 @@ public final class GameVersionNumberTest {
         assertFalse(isAprilFools("1.21.8-rc1"));
         assertFalse(isAprilFools("25w21a"));
         assertFalse(isAprilFools("13w12~"));
+        assertFalse(isAprilFools("15w14b"));
     }
 
     @Test
