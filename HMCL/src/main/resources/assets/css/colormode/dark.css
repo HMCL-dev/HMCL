@@ -186,3 +186,7 @@
 .task-executor-dialog-pane {
     -fx-background-color: #212529;
 }
+
+.jfx-dialog-layout .jfx-layout-body Text {
+    -fx-fill: white;
+}
