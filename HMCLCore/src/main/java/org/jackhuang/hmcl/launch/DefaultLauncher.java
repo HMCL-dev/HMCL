@@ -28,6 +28,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.*;
@@ -524,7 +526,24 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         Renderer renderer = options.getRenderer();
-        if (renderer != Renderer.DEFAULT) {
+        if (renderer == Renderer.DEFAULT) {
+            List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
+            if (graphicsCards != null && graphicsCards.size() == 2) {
+                GraphicsCard card0 = graphicsCards.get(0);
+                GraphicsCard card1 = graphicsCards.get(1);
+
+                if (card0.getType() != null && card1.getType() != null
+                        && card0.getType() != card1.getType()) {
+                    GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.Discrete ? card0 : card1;
+                    if (HardwareVendor.NVIDIA.equals(discreteGraphicsCard.getVendor())) {
+                        // https://askubuntu.com/a/1350825
+                        env.put("__NV_PRIME_RENDER_OFFLOAD", "1");
+                        env.put("__GLX_VENDOR_LIBRARY_NAME", "nvidia");
+                        env.put("__VK_LAYER_NV_optimus", "NVIDIA_only");
+                    }
+                }
+            }
+        } else {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (renderer != Renderer.LLVMPIPE)
                     env.put("GALLIUM_DRIVER", renderer.name().toLowerCase(Locale.ROOT));
