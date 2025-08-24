@@ -361,14 +361,27 @@ public final class WorldInfoPage extends SpinnerPane {
                 playerGameTypePane.setRight(gameTypeBox);
 
                 Tag tag = player.get("playerGameType");
+                Tag hardcoreTag = dataTag.get("hardcore");
+                boolean isHardcore = hardcoreTag instanceof ByteTag && ((ByteTag) hardcoreTag).getValue() == 1;
+
                 if (tag instanceof IntTag) {
                     IntTag intTag = (IntTag) tag;
-                    GameType gameType = GameType.of(intTag.getValue());
+                    GameType gameType = GameType.of(intTag.getValue(), isHardcore);
                     if (gameType != null) {
                         gameTypeBox.setValue(gameType);
                         gameTypeBox.valueProperty().addListener((o, oldValue, newValue) -> {
                             if (newValue != null) {
-                                intTag.setValue(newValue.ordinal());
+                                if (newValue == GameType.HARDCORE) {
+                                    intTag.setValue(0); // survival (hardcore worlds are survival+hardcore flag)
+                                    if (hardcoreTag instanceof ByteTag) {
+                                        ((ByteTag) hardcoreTag).setValue((byte) 1);
+                                    }
+                                } else {
+                                    intTag.setValue(newValue.ordinal());
+                                    if (hardcoreTag instanceof ByteTag) {
+                                        ((ByteTag) hardcoreTag).setValue((byte) 0);
+                                    }
+                                }
                                 saveLevelDat();
                             }
                         });
@@ -606,12 +619,13 @@ public final class WorldInfoPage extends SpinnerPane {
     }
 
     private enum GameType {
-        SURVIVAL, CREATIVE, ADVENTURE, SPECTATOR;
+        SURVIVAL, CREATIVE, ADVENTURE, SPECTATOR, HARDCORE;
 
         static final ObservableList<GameType> items = FXCollections.observableList(Arrays.asList(values()));
 
-        static GameType of(int d) {
-            return d >= 0 && d <= items.size() ? items.get(d) : null;
+        static GameType of(int d, boolean hardcore) {
+            if (hardcore && d == 0) return HARDCORE; // hardcore + survival
+            return d >= 0 && d < 4 ? items.get(d) : null;
         }
 
         @Override
