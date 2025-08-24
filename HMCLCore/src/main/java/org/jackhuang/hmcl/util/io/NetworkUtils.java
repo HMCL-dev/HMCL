@@ -186,8 +186,8 @@ public final class NetworkUtils {
                         }
                     }
 
-                    // Invalid surrogate pair, encode as U+FFF0
-                    encodeCodePoint(builder, 0xfff0);
+                    // Invalid surrogate pair, encode as U+FFFD (replacement character)
+                    encodeCodePoint(builder, 0xfffd);
                     continue;
                 }
 
