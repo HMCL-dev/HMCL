@@ -200,7 +200,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     case PENDING:
                     case SNAPSHOT:
                         if (versionType == RemoteVersion.Type.SNAPSHOT
-                                && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isSpecial()) {
+                                && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
                             content.getTags().setAll(i18n("version.game.april_fools"));
                             content.setImage(VersionIconType.APRIL_FOOLS.getIcon());
                         } else {
@@ -492,7 +492,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                                     || versionType == RemoteVersion.Type.PENDING;
                         case APRIL_FOOLS:
                             return versionType == RemoteVersion.Type.SNAPSHOT
-                                    && GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial();
+                                    && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
                         case OLD:
                             return versionType == RemoteVersion.Type.OLD;
                         case ALL:
