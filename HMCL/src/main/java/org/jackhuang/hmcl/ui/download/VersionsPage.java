@@ -29,6 +29,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -36,14 +37,20 @@ import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.download.game.GameServerDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
+import org.jackhuang.hmcl.game.DownloadInfo;
+import org.jackhuang.hmcl.game.DownloadType;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -54,9 +61,13 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -72,17 +83,23 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final String libraryId;
     private final String title;
     private final Navigation navigation;
+    private final DownloadProvider downloadProvider;
     private final VersionList<?> versionList;
     private final Runnable callback;
 
     private final ObservableList<RemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
-    public VersionsPage(Navigation navigation, String title, String gameVersion, DownloadProvider downloadProvider, String libraryId, Runnable callback) {
+    public VersionsPage(Navigation navigation,
+                        String title, String gameVersion,
+                        DownloadProvider downloadProvider,
+                        String libraryId,
+                        Runnable callback) {
         this.title = title;
         this.gameVersion = gameVersion;
         this.libraryId = libraryId;
         this.navigation = navigation;
+        this.downloadProvider = downloadProvider;
         this.versionList = downloadProvider.getVersionListById(libraryId);
         this.callback = callback;
 
@@ -129,10 +146,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         navigation.onPrev(true);
     }
 
-    private void onSponsor() {
-        FXUtils.openLink("https://bmclapidoc.bangbang93.com");
-    }
-
     private enum Status {
         LOADING,
         FAILED,
@@ -171,7 +184,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             actions.setAlignment(Pos.CENTER);
             {
                 if ("game".equals(control.libraryId)) {
-                    JFXButton downloadServerButton = newToggleButton4(SVG.LANDSCAPE);
+                    JFXButton downloadServerButton = newToggleButton4(SVG.HUB);
                     downloadServerButton.visibleProperty().bind(supportDownloadServer);
                     downloadServerButton.setOnAction(event -> onDownloadServer());
                     actions.getChildren().add(downloadServerButton);
@@ -210,9 +223,22 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             RemoteVersion item = getItem();
             if (!(item instanceof GameRemoteVersion))
                 return;
+
             GameRemoteVersion gameRemoteVersion = (GameRemoteVersion) item;
 
-            // TODO
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().setAll(
+                    new FileChooser.ExtensionFilter("JAR", "*.jar")
+            );
+            fileChooser.setInitialFileName(gameRemoteVersion.getGameVersion() + ".jar");
+            File file = fileChooser.showSaveDialog(getScene().getWindow());
+            if (file != null) {
+                Controllers.taskDialog(
+                        new GameServerDownloadTask(control.downloadProvider, file.toPath(), gameRemoteVersion),
+                        "TODO", // TODO: i18n
+                        TaskCancellationAction.NORMAL
+                );
+            }
         }
 
         @Override

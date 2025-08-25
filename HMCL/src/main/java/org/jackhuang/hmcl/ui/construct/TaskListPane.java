@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
+import org.jackhuang.hmcl.download.game.GameServerDownloadTask;
 import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
@@ -164,6 +165,8 @@ public final class TaskListPane extends StackPane {
                     if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
                         return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
+                } else if (task instanceof GameServerDownloadTask) {
+                    task.setName("下载服务端"); // TODO: i18n
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
