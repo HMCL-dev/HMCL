@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.*;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -157,6 +154,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final ImageView imageView = new ImageView();
         private final StackPane pane = new StackPane();
 
+        private final BooleanProperty supportDownloadServer = new SimpleBooleanProperty(false);
         private final StringProperty wikiLink = new SimpleStringProperty();
 
         private final Holder<RemoteVersionListCell> lastCell;
@@ -173,8 +171,14 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             actions.setAlignment(Pos.CENTER);
             {
                 if ("game".equals(control.libraryId)) {
+                    JFXButton downloadServerButton = newToggleButton4(SVG.LANDSCAPE);
+                    downloadServerButton.visibleProperty().bind(supportDownloadServer);
+                    downloadServerButton.setOnAction(event -> onDownloadServer());
+                    actions.getChildren().add(downloadServerButton);
+
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
                     wikiButton.setOnAction(event -> FXUtils.openLink(wikiLink.get()));
+                    wikiButton.visibleProperty().bind(wikiLink.isNotEmpty());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
                     actions.getChildren().add(wikiButton);
                 }
@@ -200,6 +204,15 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             control.navigation.getSettings().put(control.libraryId, item);
             control.callback.run();
+        }
+
+        private void onDownloadServer() {
+            RemoteVersion item = getItem();
+            if (!(item instanceof GameRemoteVersion))
+                return;
+            GameRemoteVersion gameRemoteVersion = (GameRemoteVersion) item;
+
+            // TODO
         }
 
         @Override
@@ -232,6 +245,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         twoLineListItem.getTags().setAll(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
                         wikiLink.set(i18n("wiki.version.game", wikiSuffix));
+                        supportDownloadServer.set(true);
                         break;
                     case PENDING:
                     case SNAPSHOT:
@@ -244,11 +258,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                             imageView.setImage(VersionIconType.COMMAND.getIcon());
                         }
                         wikiLink.set(i18n("wiki.version.game", wikiSuffix));
+                        supportDownloadServer.set(true);
                         break;
                     default:
                         twoLineListItem.getTags().setAll(i18n("version.game.old"));
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         wikiLink.set(i18n("wiki.version.game", wikiSuffix));
+                        supportDownloadServer.set(false);
                         break;
                 }
             } else {
@@ -273,6 +289,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
                 else
                     twoLineListItem.getTags().setAll(remoteVersion.getGameVersion());
+                supportDownloadServer.set(false);
                 wikiLink.set(null);
             }
         }
