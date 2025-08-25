@@ -61,12 +61,7 @@ public final class StyleSheets {
     }
 
     private static String getColorModeStyleSheet() {
-        EnumColorMode mode = config().getColorMode();
-        if (mode == null) {
-            return "assets/css/colormode/light.css";
-        } else {
-            return "assets/css/colormode/" + mode.name().toLowerCase(Locale.ROOT) + ".css";
-        }
+        return "assets/css/colormode/" + config().getColorMode().name().toLowerCase(Locale.ROOT) + ".css";
     }
 
     private static String toStyleSheetUri(String styleSheet, String fallback) {
