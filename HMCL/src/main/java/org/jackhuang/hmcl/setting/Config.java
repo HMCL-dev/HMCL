@@ -139,7 +139,7 @@ public final class Config implements Observable {
     private ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
 
     @SerializedName("colorMode")
-    private ObjectProperty<EnumColorMode> colorMode = new SimpleObjectProperty<>();
+    private ObjectProperty<EnumColorMode> colorMode = new SimpleObjectProperty<>(EnumColorMode.LIGHT);
 
     @SerializedName("localization")
     private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
