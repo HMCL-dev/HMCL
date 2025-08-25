@@ -27,9 +27,7 @@ import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -135,10 +133,10 @@ public abstract class SettingsView extends StackPane {
                         chkUpdateStable = new JFXRadioButton(i18n("update.channel.stable"));
                         chkUpdateDev = new JFXRadioButton(i18n("update.channel.dev"));
 
-                        TextFlow noteWrapper = new TextFlow(new Text(i18n("update.note")));
-                        VBox.setMargin(noteWrapper, new Insets(10, 0, 0, 0));
+                        Label note = new Label(i18n("update.note"));
+                        VBox.setMargin(note, new Insets(10, 0, 0, 0));
 
-                        content.getChildren().setAll(chkUpdateStable, chkUpdateDev, noteWrapper);
+                        content.getChildren().setAll(chkUpdateStable, chkUpdateDev, note);
 
                         updatePane.getContent().add(content);
                     }
