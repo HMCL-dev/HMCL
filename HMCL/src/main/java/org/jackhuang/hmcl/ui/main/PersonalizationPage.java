@@ -52,6 +52,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -114,7 +115,7 @@ public class PersonalizationPage extends StackPane {
             colorModePane.setRight(colorModeComboboxPane);
 
             JFXComboBox<EnumColorMode> colorModeComboBox = new JFXComboBox<>();
-            colorModeComboBox.setValue(config().getColorMode());
+            selectedItemPropertyFor(colorModeComboBox).bindBidirectional(config().colorModeProperty());
             colorModeComboBox.getItems().addAll(EnumColorMode.values());
             colorModeComboBox.setConverter(FXUtils.stringConverter(value -> i18n("settings.launcher.colormode." + value.name().toLowerCase(Locale.ROOT))));
             colorModeComboBox.setOnAction(e -> {
