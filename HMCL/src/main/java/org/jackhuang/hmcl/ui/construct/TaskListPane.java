@@ -166,7 +166,7 @@ public final class TaskListPane extends StackPane {
                         return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof GameServerDownloadTask) {
-                    task.setName("下载服务端"); // TODO: i18n
+                    task.setName(i18n("version.server.download"));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {

@@ -43,11 +43,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
-import org.jackhuang.hmcl.game.DownloadInfo;
-import org.jackhuang.hmcl.game.DownloadType;
-import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.VersionIconType;
-import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -62,12 +58,10 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -184,9 +178,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             actions.setAlignment(Pos.CENTER);
             {
                 if ("game".equals(control.libraryId)) {
-                    JFXButton downloadServerButton = newToggleButton4(SVG.HUB);
+                    JFXButton downloadServerButton = newToggleButton4(SVG.LAN);
                     downloadServerButton.visibleProperty().bind(supportDownloadServer);
                     downloadServerButton.setOnAction(event -> onDownloadServer());
+                    FXUtils.installFastTooltip(downloadServerButton, i18n("version.server.download"));
                     actions.getChildren().add(downloadServerButton);
 
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
@@ -235,7 +230,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             if (file != null) {
                 Controllers.taskDialog(
                         new GameServerDownloadTask(control.downloadProvider, file.toPath(), gameRemoteVersion),
-                        "TODO", // TODO: i18n
+                        i18n("version.server.download"),
                         TaskCancellationAction.NORMAL
                 );
             }
