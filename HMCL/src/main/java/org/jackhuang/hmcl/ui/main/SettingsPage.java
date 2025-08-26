@@ -179,7 +179,7 @@ public final class SettingsPage extends SettingsView {
                             zos.closeEntry();
                         }
 
-                        zos.putNextEntry(new ZipEntry("latest.log"));
+                        zos.putNextEntry(new ZipEntry("hmcl-latest.log"));
                         LOG.exportLogs(zos);
                         zos.closeEntry();
                     }
