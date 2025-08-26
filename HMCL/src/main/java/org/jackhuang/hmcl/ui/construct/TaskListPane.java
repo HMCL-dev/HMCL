@@ -282,7 +282,7 @@ public final class TaskListPane extends StackPane {
         private ChangeListener<StageNode.Status> statusChangeListener;
 
         private Cell() {
-            setPadding(Insets.EMPTY);
+            setPadding(new Insets(0, 0, 4, 0));
 
             prefWidthProperty().bind(cellWidth);
 
