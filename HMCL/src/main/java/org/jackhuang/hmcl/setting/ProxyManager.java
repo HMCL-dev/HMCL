@@ -19,12 +19,12 @@ package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,7 +33,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ProxyManager {
 
-    private static final ProxySelector NO_PROXY = new SimpleProxySelector(Proxy.NO_PROXY);
+    private static final SimpleProxySelector NO_PROXY = new SimpleProxySelector(Proxy.NO_PROXY);
     private static final ProxySelector SYSTEM_DEFAULT = Objects.requireNonNullElse(ProxySelector.getDefault(), NO_PROXY);
 
     private static volatile @NotNull ProxySelector defaultProxySelector = SYSTEM_DEFAULT;
@@ -110,18 +110,15 @@ public final class ProxyManager {
         private final List<Proxy> proxies;
 
         SimpleProxySelector(Proxy proxy) {
-            this(Collections.singletonList(proxy));
-        }
-
-        SimpleProxySelector(List<Proxy> proxies) {
-            this.proxies = proxies;
+            this.proxies = List.of(proxy);
         }
 
         @Override
         public List<Proxy> select(URI uri) {
             if (uri == null)
                 throw new IllegalArgumentException("URI can't be null.");
-
+            if (NetworkUtils.isLoopbackAddress(uri))
+                return NO_PROXY.proxies;
             return proxies;
         }
 
