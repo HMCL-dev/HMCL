@@ -306,11 +306,38 @@ public enum OperatingSystem {
         if (name.isEmpty())
             return false;
         // . and .. have special meaning on all platforms
-        if (name.equals("."))
+        if (name.equals(".") || name.equals(".."))
             return false;
-        // \0 and / are forbidden on all platforms
-        if (name.indexOf('/') != -1 || name.indexOf('\0') != -1)
-            return false;
+
+        for (int i = 0; i < name.length(); i++) {
+            char ch = name.charAt(i);
+            int codePoint;
+
+            if (Character.isSurrogate(ch)) {
+                if (!Character.isHighSurrogate(ch))
+                    return false;
+
+                if (i == name.length() - 1)
+                    return false;
+
+                char ch2 = name.charAt(++i + 1);
+                if (!Character.isLowSurrogate(ch2))
+                    return false;
+
+                codePoint = Character.toCodePoint(ch, ch2);
+            } else {
+                codePoint = ch;
+            }
+
+            if (!Character.isValidCodePoint(codePoint)
+                    || Character.isISOControl(codePoint)
+                    || codePoint == '/' || codePoint == '\0'
+                    // Unicode replacement character
+                    || codePoint == 0xfffd
+                    // Not Unicode character
+                    || codePoint == 0xfffe || codePoint == 0xffff)
+                return false;
+        }
 
         if (CURRENT_OS == WINDOWS) { // Windows only
             char lastChar = name.charAt(name.length() - 1);
