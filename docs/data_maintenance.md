@@ -14,4 +14,4 @@ HMCL 中包含一些数据文件，需要及时进行更新，更新后应 backp
 
 硬件信息相关：
 
-- [amdgpu.ids](../HMCLCore/src/main/resources/assets/platform/amdgpu.ids)
+- [amdgpu.ids](../HMCLCore/src/main/resources/assets/platform/amdgpu.ids): https://gitlab.freedesktop.org/mesa/libdrm/-/blob/main/data/amdgpu.ids
