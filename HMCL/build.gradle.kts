@@ -298,9 +298,9 @@ fun parseToolOptions(options: String?): MutableList<String> {
 tasks.withType<JavaExec> {
     if (name != "run") {
         jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
-//        if (javaVersion >= JavaVersion.VERSION_24) {
-//            jvmArgs("--enable-native-access=ALL-UNNAMED")
-//        }
+        if (javaVersion >= JavaVersion.VERSION_24) {
+            jvmArgs("--enable-native-access=ALL-UNNAMED")
+        }
     }
 }
 
