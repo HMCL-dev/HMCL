@@ -320,7 +320,7 @@ public enum OperatingSystem {
                 if (i == name.length() - 1)
                     return false;
 
-                char ch2 = name.charAt(++i + 1);
+                char ch2 = name.charAt(++i);
                 if (!Character.isLowSurrogate(ch2))
                     return false;
 
