@@ -135,7 +135,6 @@ public final class ProxyManager {
             return proxies;
         }
 
-
         @Override
         public String toString() {
             return "SimpleProxySelector" + proxies;
