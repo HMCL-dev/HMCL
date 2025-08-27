@@ -184,11 +184,11 @@ public final class SettingsPage extends SettingsView {
                         zos.putNextEntry(new ZipEntry("hmcl-latest.log"));
                         LOG.exportLogs(zos);
                         zos.closeEntry();
-                    }
-
-                    try {
-                        Files.delete(tempFile);
-                    } catch (IOException ignored) {
+                    } finally {
+                        try {
+                            Files.deleteIfExists(tempFile);
+                        } catch (IOException ignored) {
+                        }
                     }
                 }
             } catch (IOException e) {
