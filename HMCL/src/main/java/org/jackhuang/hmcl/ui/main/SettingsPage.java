@@ -150,8 +150,8 @@ public final class SettingsPage extends SettingsView {
 
                     LOG.info("Exporting latest logs to " + outputFile);
 
-                    Path channelFile = Files.createTempFile("hmcl-decompress-log-", ".txt");
-                    try (var channel = FileChannel.open(channelFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                    Path tempFile = Files.createTempFile("hmcl-decompress-log-", ".txt");
+                    try (var tempChannel = FileChannel.open(tempFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
                          var os = Files.newOutputStream(outputFile);
                          var zos = new ZipOutputStream(os)) {
 
@@ -160,17 +160,19 @@ public final class SettingsPage extends SettingsView {
                             decompress:
                             if ("gz".equalsIgnoreCase(extension) || "xz".equalsIgnoreCase(extension)) {
                                 try (InputStream fis = Files.newInputStream(path);
-                                     InputStream gz = "gz".equalsIgnoreCase(extension) ? new GZIPInputStream(fis) : new XZInputStream(fis)) {
-                                    gz.transferTo(Channels.newOutputStream(channel));
+                                     InputStream uncompressed = "gz".equalsIgnoreCase(extension)
+                                             ? new GZIPInputStream(fis)
+                                             : new XZInputStream(fis)) {
+                                    uncompressed.transferTo(Channels.newOutputStream(tempChannel));
                                 } catch (IOException e) {
                                     LOG.warning("Failed to decompress log: " + path, e);
                                     break decompress;
                                 }
 
                                 zos.putNextEntry(new ZipEntry(StringUtils.substringBeforeLast(FileUtils.getName(path), '.')));
-                                Channels.newInputStream(channel).transferTo(zos);
+                                Channels.newInputStream(tempChannel).transferTo(zos);
                                 zos.closeEntry();
-                                channel.truncate(0);
+                                tempChannel.truncate(0);
                                 continue;
                             }
 
@@ -185,7 +187,7 @@ public final class SettingsPage extends SettingsView {
                     }
 
                     try {
-                        Files.delete(channelFile);
+                        Files.delete(tempFile);
                     } catch (IOException ignored) {
                     }
                 }
