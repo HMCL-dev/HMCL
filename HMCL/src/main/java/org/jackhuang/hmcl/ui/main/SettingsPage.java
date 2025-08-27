@@ -23,6 +23,7 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.scene.control.ToggleGroup;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -34,22 +35,30 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.tukaani.xz.XZInputStream;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class SettingsPage extends SettingsView {
 
@@ -126,22 +135,73 @@ public final class SettingsPage extends SettingsView {
 
     @Override
     protected void onExportLogs() {
-        // We cannot determine which file is JUL using.
-        // So we write all the logs to a new file.
         thread(() -> {
-            Path logFile = Paths.get("hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
+            String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
+            List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
 
-            LOG.info("Exporting logs to " + logFile);
-            try (OutputStream output = Files.newOutputStream(logFile)) {
-                LOG.exportLogs(output);
+            Path outputFile;
+            try {
+                if (recentLogFiles.isEmpty()) {
+                    outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".log");
+
+                    LOG.info("Exporting latest logs to " + outputFile);
+                    try (OutputStream output = Files.newOutputStream(outputFile)) {
+                        LOG.exportLogs(output);
+                    }
+                } else {
+                    outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".zip");
+
+                    LOG.info("Exporting latest logs to " + outputFile);
+
+                    Path tempFile = Files.createTempFile("hmcl-decompress-log-", ".txt");
+                    try (var tempChannel = FileChannel.open(tempFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                         var os = Files.newOutputStream(outputFile);
+                         var zos = new ZipOutputStream(os)) {
+
+                        for (Path path : recentLogFiles) {
+                            String extension = FileUtils.getExtension(path);
+                            decompress:
+                            if ("gz".equalsIgnoreCase(extension) || "xz".equalsIgnoreCase(extension)) {
+                                try (InputStream fis = Files.newInputStream(path);
+                                     InputStream uncompressed = "gz".equalsIgnoreCase(extension)
+                                             ? new GZIPInputStream(fis)
+                                             : new XZInputStream(fis)) {
+                                    uncompressed.transferTo(Channels.newOutputStream(tempChannel));
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to decompress log: " + path, e);
+                                    break decompress;
+                                }
+
+                                zos.putNextEntry(new ZipEntry(StringUtils.substringBeforeLast(FileUtils.getName(path), '.')));
+                                Channels.newInputStream(tempChannel).transferTo(zos);
+                                zos.closeEntry();
+                                tempChannel.truncate(0);
+                                continue;
+                            }
+
+                            zos.putNextEntry(new ZipEntry(FileUtils.getName(path)));
+                            Files.copy(path, zos);
+                            zos.closeEntry();
+                        }
+
+                        zos.putNextEntry(new ZipEntry("hmcl-latest.log"));
+                        LOG.exportLogs(zos);
+                        zos.closeEntry();
+                    } finally {
+                        try {
+                            Files.deleteIfExists(tempFile);
+                        } catch (IOException ignored) {
+                        }
+                    }
+                }
             } catch (IOException e) {
-                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
                 LOG.warning("Failed to export logs", e);
+                Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e), null, MessageType.ERROR));
                 return;
             }
 
-            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", logFile)));
-            FXUtils.showFileInExplorer(logFile);
+            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile)));
+            FXUtils.showFileInExplorer(outputFile);
         });
     }
 

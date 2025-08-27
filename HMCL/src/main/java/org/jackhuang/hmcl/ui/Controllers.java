@@ -216,7 +216,11 @@ public final class Controllers {
 
             if (targetProperty != null
                     && Controllers.stage != null
-                    && !Controllers.stage.isIconified()) {
+                    && !Controllers.stage.isIconified()
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
+                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
+            ) {
                 targetProperty.set(sourceProperty.get());
             }
         };

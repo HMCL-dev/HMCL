@@ -26,12 +26,14 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.*;
@@ -93,8 +95,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private String versionId;
 
     private final VBox rootPane;
-    private final JFXTextField txtWidth;
-    private final JFXTextField txtHeight;
+    private final JFXComboBox<String> cboWindowsSize;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
@@ -389,29 +390,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 BorderPane right = new BorderPane();
                 dimensionPane.setRight(right);
                 {
-                    HBox hbox = new HBox();
-                    right.setLeft(hbox);
-                    hbox.setPrefWidth(210);
-                    hbox.setSpacing(3);
-                    hbox.setAlignment(Pos.CENTER);
-                    BorderPane.setAlignment(hbox, Pos.CENTER);
-                    {
-                        txtWidth = new JFXTextField();
-                        txtWidth.setPromptText("800");
-                        txtWidth.setPrefWidth(100);
-                        FXUtils.setValidateWhileTextChanged(txtWidth, true);
-                        txtWidth.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
-
-                        Label x = new Label("x");
-
-                        txtHeight = new JFXTextField();
-                        txtHeight.setPromptText("480");
-                        txtHeight.setPrefWidth(100);
-                        FXUtils.setValidateWhileTextChanged(txtHeight, true);
-                        txtHeight.getValidators().setAll(new NumberValidator(i18n("input.number"), false));
-
-                        hbox.getChildren().setAll(txtWidth, x, txtHeight);
-                    }
+                    cboWindowsSize = new JFXComboBox<>();
+                    cboWindowsSize.setPrefWidth(150);
+                    right.setLeft(cboWindowsSize);
+                    cboWindowsSize.setEditable(true);
+                    cboWindowsSize.setStyle("-fx-padding: 4 4 4 16");
+                    cboWindowsSize.setPromptText("854x480");
+                    cboWindowsSize.getItems().setAll(getSupportedResolutions());
 
                     chkFullscreen = new JFXCheckBox();
                     right.setRight(chkFullscreen);
@@ -419,6 +404,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     chkFullscreen.setAlignment(Pos.CENTER);
                     BorderPane.setAlignment(chkFullscreen, Pos.CENTER);
                     BorderPane.setMargin(chkFullscreen, new Insets(0, 0, 0, 7));
+
+                    cboWindowsSize.disableProperty().bind(chkFullscreen.selectedProperty());
                 }
             }
 
@@ -559,8 +546,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         // unbind data fields
         if (lastVersionSetting != null) {
-            FXUtils.unbind(txtWidth, lastVersionSetting.widthProperty());
-            FXUtils.unbind(txtHeight, lastVersionSetting.heightProperty());
+            FXUtils.unbindWindowsSize(cboWindowsSize, lastVersionSetting.widthProperty(), lastVersionSetting.heightProperty());
             maxMemory.unbindBidirectional(lastVersionSetting.maxMemoryProperty());
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
@@ -593,8 +579,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaVersionOption.valueProperty().unbind();
 
         // bind new data fields
-        FXUtils.bindInt(txtWidth, versionSetting.widthProperty());
-        FXUtils.bindInt(txtHeight, versionSetting.heightProperty());
+        FXUtils.bindWindowsSize(cboWindowsSize, versionSetting.widthProperty(), versionSetting.heightProperty());
         maxMemory.bindBidirectional(versionSetting.maxMemoryProperty());
 
         javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
@@ -792,6 +777,28 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         iconPickerItem.setImage(profile.getRepository().getVersionIconImage(versionId));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
+    }
+
+    private static List<String> getSupportedResolutions() {
+        int maxScreenWidth = 0;
+        int maxScreenHeight = 0;
+
+        for (Screen screen : Screen.getScreens()) {
+            Rectangle2D bounds = screen.getBounds();
+            int screenWidth = (int) (bounds.getWidth() * screen.getOutputScaleX());
+            int screenHeight = (int) (bounds.getHeight() * screen.getOutputScaleY());
+
+            maxScreenWidth = Math.max(maxScreenWidth, screenWidth);
+            maxScreenHeight = Math.max(maxScreenHeight, screenHeight);
+        }
+
+        List<String> resolutions = new ArrayList<>(List.of("854x480", "1280x720", "1600x900"));
+
+        if (maxScreenWidth >= 1920 && maxScreenHeight >= 1080) resolutions.add("1920x1080");
+        if (maxScreenWidth >= 2560 && maxScreenHeight >= 1440) resolutions.add("2560x1440");
+        if (maxScreenWidth >= 3840 && maxScreenHeight >= 2160) resolutions.add("3840x2160");
+
+        return resolutions;
     }
 
     @Override

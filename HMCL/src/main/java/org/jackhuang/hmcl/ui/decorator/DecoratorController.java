@@ -34,10 +34,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.DragEvent;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -61,6 +58,7 @@ import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -166,6 +164,17 @@ public class DecoratorController {
 
         // press ESC to go back
         onEscPressed(navigator, this::back);
+
+        // https://github.com/HMCL-dev/HMCL/issues/4290
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+            // press F11 to toggle full screen
+            navigator.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.F11) {
+                    stage.setFullScreen(!stage.isFullScreen());
+                    e.consume();
+                }
+            });
+        }
 
         try {
             // For JavaFX 12+
