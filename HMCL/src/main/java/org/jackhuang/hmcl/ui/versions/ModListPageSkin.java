@@ -62,8 +62,8 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -249,23 +249,30 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         } else {
             listView.getItems().clear();
 
-            Predicate<String> predicate;
+            Predicate<@Nullable String> predicate;
             if (queryString.startsWith("regex:")) {
                 try {
                     Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                    predicate = s -> pattern.matcher(s).find();
+                    predicate = s -> s != null && pattern.matcher(s).find();
                 } catch (Throwable e) {
                     LOG.warning("Illegal regular expression", e);
                     return;
                 }
             } else {
                 String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
             }
 
             // Do we need to search in the background thread?
             for (ModInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getModInfo().getFileName())) {
+                LocalModFile modInfo = item.getModInfo();
+                if (predicate.test(modInfo.getFileName())
+                        || predicate.test(modInfo.getName())
+                        || predicate.test(modInfo.getVersion())
+                        || predicate.test(modInfo.getGameVersion())
+                        || predicate.test(modInfo.getId())
+                        || predicate.test(Objects.toString(modInfo.getModLoaderType()))
+                        || predicate.test((item.getMod() != null ? item.getMod().getDisplayName() : null))) {
                     listView.getItems().add(item);
                 }
             }
@@ -275,28 +282,28 @@ class ModListPageSkin extends SkinBase<ModListPage> {
     private static Task<Image> loadModIcon(LocalModFile modFile, int size) {
         return Task.supplyAsync(() -> {
             List<String> iconPaths = new ArrayList<>();
-            
+
             if (StringUtils.isNotBlank(modFile.getLogoPath())) {
                 iconPaths.add(modFile.getLogoPath());
             }
 
             iconPaths.addAll(Arrays.asList(
                 "icon.png",
-                "logo.png", 
+                "logo.png",
                 "mod_logo.png",
                 "pack.png",
                 "logoFile.png",
                 "assets/icon.png",
-                "assets/logo.png", 
+                "assets/logo.png",
                 "assets/mod_icon.png",
-                "assets/mod_logo.png", 
+                "assets/mod_logo.png",
                 "META-INF/icon.png",
                 "META-INF/logo.png",
                 "META-INF/mod_icon.png",
                 "textures/icon.png",
                 "textures/logo.png",
                 "textures/mod_icon.png",
-                "resources/icon.png", 
+                "resources/icon.png",
                 "resources/logo.png",
                 "resources/mod_icon.png"
             ));
@@ -306,15 +313,15 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 iconPaths.addAll(Arrays.asList(
                     "assets/" + modId + "/icon.png",
                     "assets/" + modId + "/logo.png",
-                    "assets/" + modId.replace("-", "") + "/icon.png", 
+                    "assets/" + modId.replace("-", "") + "/icon.png",
                     "assets/" + modId.replace("-", "") + "/logo.png",
                     modId + ".png",
                     modId + "-logo.png",
                     modId + "-icon.png",
-                    modId + "_logo.png", 
+                    modId + "_logo.png",
                     modId + "_icon.png",
                     "textures/" + modId + "/icon.png",
-                    "textures/" + modId + "/logo.png", 
+                    "textures/" + modId + "/logo.png",
                     "resources/" + modId + "/icon.png",
                     "resources/" + modId + "/logo.png"
                 ));
@@ -325,10 +332,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     Path iconPath = fs.getPath(path);
                     if (Files.exists(iconPath)) {
                         try (InputStream stream = Files.newInputStream(iconPath)) {
-                            Image image = new Image(stream, size, size, true, true);
-                            if (!image.isError() && 
-                                image.getWidth() > 0 && 
-                                image.getHeight() > 0 && 
+                            Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
+                            if (!image.isError() &&
+                                image.getWidth() > 0 &&
+                                image.getHeight() > 0 &&
                                 Math.abs(image.getWidth() - image.getHeight()) < 1) {
                                 return image;
                             }
@@ -342,7 +349,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             String defaultIcon;
             switch (modFile.getModLoaderType()) {
                 case FORGE: defaultIcon = "/assets/img/forge.png"; break;
-                case NEO_FORGED: defaultIcon = "/assets/img/neoforge.png"; break; 
+                case NEO_FORGED: defaultIcon = "/assets/img/neoforge.png"; break;
                 case FABRIC: defaultIcon = "/assets/img/fabric.png"; break;
                 case QUILT: defaultIcon = "/assets/img/quilt.png"; break;
                 case LITE_LOADER: defaultIcon = "/assets/img/liteloader.png"; break;
@@ -411,7 +418,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
-            ImageView imageView = new ImageView(); 
+            ImageView imageView = new ImageView();
             loadModIcon(modInfo.getModInfo(), 40)
                 .whenComplete(Schedulers.javafx(), (image, exception) -> {
                     imageView.setImage(image);
@@ -432,7 +439,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 subtitleParts.add(modInfo.getModInfo().getGameVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                subtitleParts.add(modInfo.getModInfo().getVersion()); 
+                subtitleParts.add(modInfo.getModInfo().getVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 subtitleParts.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());

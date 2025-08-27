@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.ArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -48,7 +51,7 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
     }
 
     protected final F file;
-    protected final Dir<E> root = new Dir<>();
+    protected final Dir<E> root = new Dir<>("");
 
     public ArchiveFileTree(F file) {
         this.file = file;
@@ -62,7 +65,7 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
         return root;
     }
 
-    public void addEntry(E entry) throws IOException {
+    protected void addEntry(E entry) throws IOException {
         String[] path = entry.getName().split("/");
 
         Dir<E> dir = root;
@@ -78,7 +81,7 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
                 throw new IOException("A file and a directory have the same name: " + entry.getName());
             }
 
-            dir = dir.subDirs.computeIfAbsent(item, name -> new Dir<>());
+            dir = dir.subDirs.computeIfAbsent(item, Dir::new);
         }
 
         if (entry.isDirectory()) {
@@ -113,16 +116,33 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
     public abstract void close() throws IOException;
 
     public static final class Dir<E extends ArchiveEntry> {
-        E entry;
+        private final String name;
+        private E entry;
 
         final Map<String, Dir<E>> subDirs = new HashMap<>();
         final Map<String, E> files = new HashMap<>();
 
-        public Map<String, Dir<E>> getSubDirs() {
+        public Dir(String name) {
+            this.name = name;
+        }
+
+        public boolean isRoot() {
+            return name.isEmpty();
+        }
+
+        public @NotNull String getName() {
+            return name;
+        }
+
+        public @Nullable E getEntry() {
+            return entry;
+        }
+
+        public @NotNull @UnmodifiableView Map<String, Dir<E>> getSubDirs() {
             return subDirs;
         }
 
-        public Map<String, E> getFiles() {
+        public @NotNull @UnmodifiableView Map<String, E> getFiles() {
             return files;
         }
     }

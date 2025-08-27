@@ -98,8 +98,20 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         this.value = value;
     }
 
+    public boolean isAprilFools() {
+        if (this instanceof Special)
+            return true;
+
+        if (this instanceof Snapshot) {
+            Snapshot snapshot = (Snapshot) this;
+            return snapshot.intValue == Snapshot.toInt(15, 14, 'a');
+        }
+
+        return false;
+    }
+
     enum Type {
-        PRE_CLASSIC, CLASSIC, INFDEV, ALPHA, BETA, NEW
+        PRE_CLASSIC, CLASSIC, INDEV, INFDEV, ALPHA, BETA, NEW
     }
 
     abstract Type getType();
@@ -137,11 +149,15 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     prefixLength = "rd-".length();
                     break;
                 case 'i':
-                    if (!value.startsWith("inf-")) {
+                    if (value.startsWith("inf-")) {
+                        type = Type.INFDEV;
+                        prefixLength = "inf-".length();
+                    } else if (value.startsWith("in-")) {
+                        type = Type.INDEV;
+                        prefixLength = "in-".length();
+                    } else {
                         throw new IllegalArgumentException(value);
                     }
-                    type = Type.INFDEV;
-                    prefixLength = "inf-".length();
                     break;
                 case 'a':
                     type = Type.ALPHA;

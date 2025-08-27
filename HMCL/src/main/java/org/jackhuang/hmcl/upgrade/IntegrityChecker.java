@@ -55,7 +55,7 @@ public final class IntegrityChecker {
             if (in == null) {
                 throw new IOException("Public key not found");
             }
-            return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(IOUtils.readFullyAsByteArray(in)));
+            return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(IOUtils.readFully(in)));
         } catch (GeneralSecurityException e) {
             throw new IOException("Failed to load public key", e);
         }
@@ -76,7 +76,7 @@ public final class IntegrityChecker {
                     }
 
                     if (SIGNATURE_FILE.equals(filename)) {
-                        signature = IOUtils.readFullyAsByteArray(in);
+                        signature = IOUtils.readFully(in);
                     } else {
                         md.reset();
                         fileFingerprints.put(filename, DigestUtils.digest(md, in));

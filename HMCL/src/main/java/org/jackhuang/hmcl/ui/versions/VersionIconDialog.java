@@ -60,6 +60,7 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.CHEST),
                 createIcon(VersionIconType.CHICKEN),
                 createIcon(VersionIconType.COMMAND),
+                createIcon(VersionIconType.APRIL_FOOLS),
                 createIcon(VersionIconType.OPTIFINE),
                 createIcon(VersionIconType.CRAFT_TABLE),
                 createIcon(VersionIconType.FABRIC),
