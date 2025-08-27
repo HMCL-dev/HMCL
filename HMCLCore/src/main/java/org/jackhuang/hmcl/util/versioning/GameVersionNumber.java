@@ -98,8 +98,16 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         this.value = value;
     }
 
-    public boolean isSpecial() {
-        return this instanceof Special;
+    public boolean isAprilFools() {
+        if (this instanceof Special)
+            return true;
+
+        if (this instanceof Snapshot) {
+            Snapshot snapshot = (Snapshot) this;
+            return snapshot.intValue == Snapshot.toInt(15, 14, 'a');
+        }
+
+        return false;
     }
 
     enum Type {
