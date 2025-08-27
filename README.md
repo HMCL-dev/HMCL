@@ -8,7 +8,7 @@
 
 **English** | [简体中文](README_cn.md) | [繁體中文](README_tw.md)
 
-## Introduction
+## Introduction]
 
 HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
 

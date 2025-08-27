@@ -331,14 +331,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 for (String path : iconPaths) {
                     Path iconPath = fs.getPath(path);
                     if (Files.exists(iconPath)) {
-                        try (InputStream stream = Files.newInputStream(iconPath)) {
-                            Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
-                            if (!image.isError() &&
+                        Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
+                        if (!image.isError() &&
                                 image.getWidth() > 0 &&
                                 image.getHeight() > 0 &&
                                 Math.abs(image.getWidth() - image.getHeight()) < 1) {
-                                return image;
-                            }
+                            return image;
                         }
                     }
                 }
