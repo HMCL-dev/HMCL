@@ -34,7 +34,9 @@ import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -211,6 +213,22 @@ public final class UpdateHandler {
             throw new IOException("Failed to find current HMCL location");
         }
         return path;
+    }
+
+    // ==== Preview ===
+
+    public static boolean isRecommendedToAccessPreviewVersions() {
+        OperatingSystem os = OperatingSystem.CURRENT_OS;
+        if (os == OperatingSystem.WINDOWS)
+            return Architecture.SYSTEM_ARCH == Architecture.ARM64
+                    || SystemUtils.which("code.cmd") != null
+                    || SystemUtils.which("idea.cmd") != null;
+        else if (os == OperatingSystem.MACOS)
+            return SystemUtils.which("code") != null
+                    || SystemUtils.which("idea") != null
+                    || SystemUtils.which("xcodebuild") != null;
+        else
+            return true;
     }
 
     // ==== support for old versions ===
