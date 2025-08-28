@@ -279,7 +279,7 @@ public final class TaskListPane extends StackPane {
         private final JFXProgressBar bar = new JFXProgressBar();
 
         private WeakReference<StageNode> prevStageNodeRef;
-        private ChangeListener<StageNode.Status> statusChangeListener;
+        private StatusChangeListener statusChangeListener;
 
         private Cell() {
             setPadding(new Insets(0, 0, 4, 0));
@@ -364,32 +364,32 @@ public final class TaskListPane extends StackPane {
                 pane.setBottom(null);
             }
         }
+    }
 
-        private final class StatusChangeListener implements ChangeListener<StageNode.Status>, WeakListener {
+    private static final class StatusChangeListener implements ChangeListener<StageNode.Status>, WeakListener {
 
-            private final WeakReference<Cell> cellRef;
+        private final WeakReference<Cell> cellRef;
 
-            private StatusChangeListener(Cell cell) {
-                this.cellRef = new WeakReference<>(cell);
+        private StatusChangeListener(Cell cell) {
+            this.cellRef = new WeakReference<>(cell);
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return cellRef.get() == null;
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends StageNode.Status> observable,
+                            StageNode.Status oldValue,
+                            StageNode.Status newValue) {
+            Cell cell = cellRef.get();
+            if (cell == null) {
+                if (observable != null)
+                    observable.removeListener(this);
+                return;
             }
-
-            @Override
-            public boolean wasGarbageCollected() {
-                return cellRef.get() == null;
-            }
-
-            @Override
-            public void changed(ObservableValue<? extends StageNode.Status> observable,
-                                StageNode.Status oldValue,
-                                StageNode.Status newValue) {
-                Cell cell = cellRef.get();
-                if (cell == null) {
-                    if (observable != null)
-                        observable.removeListener(this);
-                    return;
-                }
-                cell.updateLeftIcon(newValue);
-            }
+            cell.updateLeftIcon(newValue);
         }
     }
 
