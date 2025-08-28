@@ -126,11 +126,14 @@ public final class Locales {
                     bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
                         @Override
                         public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-                            return List.of(
-                                    WENYAN.locale,
-                                    Locale.TRADITIONAL_CHINESE,
-                                    Locale.ROOT
-                            );
+                            if (locale.getLanguage().equals("lzh")) {
+                                return List.of(
+                                        locale,
+                                        Locale.forLanguageTag("zh"),
+                                        Locale.ROOT
+                                );
+                            }
+                            return super.getCandidateLocales(baseName, locale);
                         }
                     });
                 } else {
