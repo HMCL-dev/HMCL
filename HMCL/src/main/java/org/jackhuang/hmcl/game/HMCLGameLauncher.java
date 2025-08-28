@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -71,11 +72,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
         }
 
-        if (!I18n.isUseChinese()) {
-            return;
-        }
-
-        String lang;
         /*
             1.0-     ：没有语言选项，遇到这些版本时不设置
             1.1 ~ 5  ：zh_CN 时正常，zh_cn 时崩溃（最后两位字母必须大写，否则将会 NPE 崩溃）
@@ -84,20 +80,27 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             1.13+    ：zh_cn 时正常，zh_CN 时自动切换为英文
          */
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0) {
-            lang = null;
-        } else if (gameVersion.compareTo("1.11") < 0) {
+        if (gameVersion.compareTo("1.1") < 0)
+            return;
+
+        String lang;
+
+        if (I18n.isUseChinese()) {
             lang = "zh_CN";
+        } else if (Locale.getDefault().getLanguage().equals("lzh")) {
+            lang = "lzh";
         } else {
-            lang = "zh_cn";
+            return;
         }
 
-        if (lang != null) {
-            try {
-                FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
-            } catch (IOException e) {
-                LOG.warning("Unable to generate options.txt", e);
-            }
+        if (gameVersion.compareTo("1.11") >= 0) {
+            lang = lang.toLowerCase(Locale.ROOT);
+        }
+
+        try {
+            FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
+        } catch (IOException e) {
+            LOG.warning("Unable to generate options.txt", e);
         }
     }
 
