@@ -35,24 +35,30 @@ import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.tukaani.xz.XZInputStream;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class SettingsPage extends SettingsView {
 
@@ -143,19 +149,46 @@ public final class SettingsPage extends SettingsView {
                     outputFile = Metadata.CURRENT_DIRECTORY.resolve(nameBase + ".zip");
 
                     LOG.info("Exporting latest logs to " + outputFile);
-                    try (var os = Files.newOutputStream(outputFile);
+
+                    Path tempFile = Files.createTempFile("hmcl-decompress-log-", ".txt");
+                    try (var tempChannel = FileChannel.open(tempFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                         var os = Files.newOutputStream(outputFile);
                          var zos = new ZipOutputStream(os)) {
 
                         for (Path path : recentLogFiles) {
-                            String zipEntryName = path.getFileName().toString();
-                            zos.putNextEntry(new ZipEntry(zipEntryName));
+                            String extension = FileUtils.getExtension(path);
+                            decompress:
+                            if ("gz".equalsIgnoreCase(extension) || "xz".equalsIgnoreCase(extension)) {
+                                try (InputStream fis = Files.newInputStream(path);
+                                     InputStream uncompressed = "gz".equalsIgnoreCase(extension)
+                                             ? new GZIPInputStream(fis)
+                                             : new XZInputStream(fis)) {
+                                    uncompressed.transferTo(Channels.newOutputStream(tempChannel));
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to decompress log: " + path, e);
+                                    break decompress;
+                                }
+
+                                zos.putNextEntry(new ZipEntry(StringUtils.substringBeforeLast(FileUtils.getName(path), '.')));
+                                Channels.newInputStream(tempChannel).transferTo(zos);
+                                zos.closeEntry();
+                                tempChannel.truncate(0);
+                                continue;
+                            }
+
+                            zos.putNextEntry(new ZipEntry(FileUtils.getName(path)));
                             Files.copy(path, zos);
                             zos.closeEntry();
                         }
 
-                        zos.putNextEntry(new ZipEntry("latest.log"));
+                        zos.putNextEntry(new ZipEntry("hmcl-latest.log"));
                         LOG.exportLogs(zos);
                         zos.closeEntry();
+                    } finally {
+                        try {
+                            Files.deleteIfExists(tempFile);
+                        } catch (IOException ignored) {
+                        }
                     }
                 }
             } catch (IOException e) {

@@ -52,7 +52,7 @@ Simply execute the following command in the project root directory:
 ./gradlew clean build
 ```
 
-Make sure you have Java 11 or later installed.
+Make sure you have Java 17 or later installed.
 
 ## JVM Options (for debugging)
 
