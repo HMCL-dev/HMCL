@@ -129,8 +129,12 @@ public final class FontManager {
             return null;
 
         try {
+            Locale locale = Locale.getDefault();
+            if (locale.getLanguage().equals("lzh"))
+                locale = Locale.TRADITIONAL_CHINESE;
+
             String result = SystemUtils.run(fcMatch.toString(),
-                    ":lang=" + Locale.getDefault().toLanguageTag(),
+                    ":lang=" + locale.toLanguageTag(),
                     "--format", "%{family}\\n%{file}").trim();
 
             String[] results = result.split("\\n");
