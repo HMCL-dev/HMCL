@@ -21,13 +21,13 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -71,9 +71,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
         }
 
-        if (!I18n.isUseChinese()) {
+        Locale locale = Locale.getDefault();
+        if (locale.getLanguage().isEmpty() || locale.getLanguage().equals("en"))
             return;
-        }
 
         String lang;
         /*
@@ -87,9 +87,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (gameVersion.compareTo("1.1") < 0) {
             lang = null;
         } else if (gameVersion.compareTo("1.11") < 0) {
-            lang = "zh_CN";
+            lang = locale.toLanguageTag();
         } else {
-            lang = "zh_cn";
+            lang = locale.toLanguageTag().toLowerCase(Locale.ROOT);
         }
 
         if (lang != null) {
