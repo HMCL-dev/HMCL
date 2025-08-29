@@ -108,6 +108,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
         String language = locale.getLanguage();
         String region = locale.getCountry();
+        String script = locale.getScript();
 
         switch (language) {
             case "zh":
@@ -116,7 +117,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                         return gameVersion.compareTo("1.16") >= 0
                                 ? "zh_HK"
                                 : "zh_TW";
-                    if (region.equals("TW"))
+                    if (region.equals("TW") || script.equals("Hant"))
                         return "zh_TW";
                 }
                 return "zh_CN";
