@@ -172,7 +172,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
         };
 
-
         try {
             Files.walkFileTree(folder, visitor);
         } catch (IOException e) {
