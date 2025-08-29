@@ -24,9 +24,13 @@ import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Locale;
 import java.util.Map;
 
@@ -58,14 +62,14 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private void generateOptionsTxt() {
-        File optionsFile = new File(repository.getRunDirectory(version.getId()), "options.txt");
-        File configFolder = new File(repository.getRunDirectory(version.getId()), "config");
+        Path runDir = repository.getRunDirectory(version.getId()).toPath();
+        Path optionsFile = runDir.resolve("options.txt");
+        Path configFolder = runDir.resolve("config");
 
-        if (optionsFile.exists()) {
+        if (Files.exists(optionsFile))
             return;
-        }
 
-        if (configFolder.isDirectory()) {
+        if (Files.isDirectory(configFolder)) {
             if (findFiles(configFolder, "options.txt")) {
                 return;
             }
@@ -77,42 +81,70 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
         String lang;
         /*
-            1.0-     ：没有语言选项，遇到这些版本时不设置
-            1.1 ~ 5  ：zh_CN 时正常，zh_cn 时崩溃（最后两位字母必须大写，否则将会 NPE 崩溃）
-            1.6 ~ 10 ：zh_CN 时正常，zh_cn 时自动切换为英文
-            1.11 ~ 12：zh_cn 时正常，zh_CN 时虽然显示了中文但语言设置会错误地显示选择英文
-            1.13+    ：zh_cn 时正常，zh_CN 时自动切换为英文
-         */
+            1.0-     : No language option, do not set for these versions
+            1.1 ~ 5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
+            1.6 ~ 10 : zh_CN works fine, zh_cn will automatically switch to English
+            1.11 ~ 12: zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
+            1.13+    : zh_cn works fine, zh_CN will automatically switch to English
+        */
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0) {
+        if (gameVersion.compareTo("1.1") < 0)
             lang = null;
-        } else if (gameVersion.compareTo("1.11") < 0) {
+        else if (gameVersion.compareTo("1.11") < 0)
             lang = locale.toLanguageTag();
-        } else {
+        else
             lang = locale.toLanguageTag().toLowerCase(Locale.ROOT);
-        }
 
         if (lang != null) {
             try {
-                FileUtils.writeText(optionsFile, String.format("lang:%s\n", lang));
+                Files.createDirectories(optionsFile.getParent());
+                Files.writeString(optionsFile, String.format("lang:%s\n", lang));
             } catch (IOException e) {
                 LOG.warning("Unable to generate options.txt", e);
             }
         }
     }
 
-    private boolean findFiles(File folder, String fileName) {
-        File[] fs = folder.listFiles();
-        if (fs != null) {
-            for (File f : fs) {
-                if (f.isDirectory())
-                    if (f.listFiles((dir, name) -> name.equals(fileName)) != null)
-                        return true;
-                if (f.getName().equals(fileName))
-                    return true;
+    private boolean findFiles(Path folder, String fileName) {
+        var visitor = new SimpleFileVisitor<Path>() {
+            private int level = 0;
+            boolean find = false;
+
+            @Override
+            public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
+                if (level < 2) {
+                    level++;
+                    return FileVisitResult.CONTINUE;
+                } else
+                    return FileVisitResult.SKIP_SUBTREE;
             }
+
+            @Override
+            public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, @Nullable IOException exc) throws IOException {
+                level--;
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public @NotNull FileVisitResult visitFile(@NotNull Path file,
+                                                      @NotNull BasicFileAttributes attrs) {
+                if (fileName.equals(FileUtils.getName(file))) {
+                    find = true;
+                    return FileVisitResult.TERMINATE;
+                }
+
+                return FileVisitResult.CONTINUE;
+            }
+        };
+
+
+        try {
+            Files.walkFileTree(folder, visitor);
+        } catch (IOException e) {
+            LOG.warning("Failed to visit config folder", e);
         }
-        return false;
+
+        return visitor.find;
     }
 
     @Override
