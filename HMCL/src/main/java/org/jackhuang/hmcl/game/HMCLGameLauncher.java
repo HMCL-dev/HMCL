@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -31,8 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -79,33 +79,63 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (locale.getLanguage().isEmpty() || locale.getLanguage().equals("en"))
             return;
 
-        String lang;
         /*
-            1.0         : No language option, do not set for these versions
-            1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
-            1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
-            1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
-            1.13+       : zh_cn works fine, zh_CN will automatically switch to English
-        */
+         *  1.0         : No language option, do not set for these versions
+         *  1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
+         *  1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
+         *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
+         *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
+         */
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
         if (gameVersion.compareTo("1.1") < 0)
-            lang = null;
-        else if (gameVersion.compareTo("1.11") < 0)
-            lang = locale.toLanguageTag();
-        else
-            lang = locale.toLanguageTag().toLowerCase(Locale.ROOT);
+            return;
 
-        if (lang != null) {
-            try {
-                Files.createDirectories(optionsFile.getParent());
-                Files.writeString(optionsFile, String.format("lang:%s\n", lang));
-            } catch (IOException e) {
-                LOG.warning("Unable to generate options.txt", e);
-            }
+        String lang = normalizedLanguageTag(locale, gameVersion);
+        if (lang.isEmpty())
+            return;
+
+        if (gameVersion.compareTo("1.11") >= 0)
+            lang = lang.toLowerCase(Locale.ROOT);
+
+        try {
+            Files.createDirectories(optionsFile.getParent());
+            Files.writeString(optionsFile, String.format("lang:%s\n", lang));
+        } catch (IOException e) {
+            LOG.warning("Unable to generate options.txt", e);
         }
     }
 
-    private boolean findFiles(Path folder, String fileName) {
+    private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
+        String language = locale.getLanguage();
+        String region = locale.getCountry();
+
+        switch (language) {
+            case "zh":
+                if (!Locales.isSimplifiedChinese(locale)) {
+                    if (region.equals("HK") || region.equals("MO"))
+                        return gameVersion.compareTo("1.16") >= 0
+                                ? "zh_HK"
+                                : "zh_TW";
+                    if (region.equals("TW"))
+                        return "zh_TW";
+                }
+                return "zh_CN";
+            case "ru":
+                return "ru_RU";
+            case "uk":
+                return "uk_UA";
+            case "es":
+                return "es_ES";
+            case "ja":
+                return "ja_JP";
+            case "lzh":
+                return "lzh";
+            default:
+                return "";
+        }
+    }
+
+    private static boolean findFiles(Path folder, String fileName) {
         var visitor = new SimpleFileVisitor<Path>() {
             private int level = 0;
             boolean find = false;

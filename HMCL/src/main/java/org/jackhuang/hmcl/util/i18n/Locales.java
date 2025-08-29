@@ -103,6 +103,19 @@ public final class Locales {
         else throw new IllegalArgumentException("Unknown locale: " + locale);
     }
 
+    public static boolean isSimplifiedChinese(Locale locale) {
+        if (locale.getLanguage().equals("zh")) {
+            String script = locale.getScript();
+            String region = locale.getCountry();
+            if (script.isEmpty())
+                return region.equals("CN") || region.equals("SG") || region.equals("MY");
+            else
+                return script.equals("Hans");
+        } else {
+            return false;
+        }
+    }
+
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
     public static final class SupportedLocale {
         private final Locale locale;
@@ -126,23 +139,12 @@ public final class Locales {
                     bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
                         @Override
                         public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-                            if (locale.getLanguage().equals("zh")) {
-                                boolean simplified;
-
-                                String script = locale.getScript();
-                                String region = locale.getCountry();
-                                if (script.isEmpty())
-                                    simplified = region.equals("CN") || region.equals("SG");
-                                else
-                                    simplified = script.equals("Hans");
-
-                                if (simplified) {
-                                    return List.of(
-                                            Locale.SIMPLIFIED_CHINESE,
-                                            Locale.CHINESE,
-                                            Locale.ROOT
-                                    );
-                                }
+                            if (isSimplifiedChinese(locale)) {
+                                return List.of(
+                                        Locale.SIMPLIFIED_CHINESE,
+                                        Locale.CHINESE,
+                                        Locale.ROOT
+                                );
                             }
 
                             if (locale.getLanguage().equals("lzh")) {
