@@ -81,11 +81,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
         String lang;
         /*
-            1.0-     : No language option, do not set for these versions
-            1.1 ~ 5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
-            1.6 ~ 10 : zh_CN works fine, zh_cn will automatically switch to English
-            1.11 ~ 12: zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
-            1.13+    : zh_cn works fine, zh_CN will automatically switch to English
+            1.0         : No language option, do not set for these versions
+            1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
+            1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
+            1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
+            1.13+       : zh_cn works fine, zh_CN will automatically switch to English
         */
         GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
         if (gameVersion.compareTo("1.1") < 0)
