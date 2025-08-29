@@ -57,6 +57,7 @@ import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthCompletionTask;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthInstallTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
@@ -89,12 +90,19 @@ public final class TaskListPane extends StackPane {
     private final Map<Task<?>, ProgressListNode> nodes = new HashMap<>();
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
+    private final DoubleProperty cellWidth = new SimpleDoubleProperty();
 
     private Cell lastCell;
 
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
         listView.setCellFactory(l -> new Cell());
+        listView.setSelectionModel(null);
+        FXUtils.onChangeAndOperate(listView.widthProperty(), width -> {
+            double w = width.doubleValue();
+            cellWidth.set(w <= 12.0 ? w : w - 12.0);
+        });
+
         getChildren().setAll(listView);
     }
 
@@ -153,6 +161,8 @@ public final class TaskListPane extends StackPane {
                 if (task instanceof GameAssetDownloadTask) {
                     task.setName(i18n("assets.download_all"));
                 } else if (task instanceof GameInstallTask) {
+                    if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
+                        return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
@@ -186,7 +196,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installing") + ": " + i18n("modpack.type.server"));
                 } else if (task instanceof HMCLModpackInstallTask) {
                     task.setName(i18n("modpack.installing.given", i18n("modpack.type.hmcl")));
-                } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask) {
+                } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask || task instanceof ModrinthModpackExportTask) {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
                     task.setName(i18n("modpack.scan"));
@@ -252,7 +262,7 @@ public final class TaskListPane extends StackPane {
                     runInFX(() -> {
                         StageNode stageNode = stageNodes.get(task.getStage());
                         if (stageNode != null)
-                            stageNode.setTotal(total);
+                            stageNode.addTotal(total);
                     });
                 }
             }
@@ -269,10 +279,12 @@ public final class TaskListPane extends StackPane {
         private final JFXProgressBar bar = new JFXProgressBar();
 
         private WeakReference<StageNode> prevStageNodeRef;
-        private ChangeListener<StageNode.Status> statusChangeListener;
+        private StatusChangeListener statusChangeListener;
 
         private Cell() {
-            setPadding(Insets.EMPTY);
+            setPadding(new Insets(0, 0, 4, 0));
+
+            prefWidthProperty().bind(cellWidth);
 
             FXUtils.setLimitHeight(left, STATUS_ICON_SIZE);
             FXUtils.setLimitWidth(left, STATUS_ICON_SIZE);
@@ -352,32 +364,32 @@ public final class TaskListPane extends StackPane {
                 pane.setBottom(null);
             }
         }
+    }
 
-        private final class StatusChangeListener implements ChangeListener<StageNode.Status>, WeakListener {
+    private static final class StatusChangeListener implements ChangeListener<StageNode.Status>, WeakListener {
 
-            private final WeakReference<Cell> cellRef;
+        private final WeakReference<Cell> cellRef;
 
-            private StatusChangeListener(Cell cell) {
-                this.cellRef = new WeakReference<>(cell);
+        private StatusChangeListener(Cell cell) {
+            this.cellRef = new WeakReference<>(cell);
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return cellRef.get() == null;
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends StageNode.Status> observable,
+                            StageNode.Status oldValue,
+                            StageNode.Status newValue) {
+            Cell cell = cellRef.get();
+            if (cell == null) {
+                if (observable != null)
+                    observable.removeListener(this);
+                return;
             }
-
-            @Override
-            public boolean wasGarbageCollected() {
-                return cellRef.get() == null;
-            }
-
-            @Override
-            public void changed(ObservableValue<? extends StageNode.Status> observable,
-                                StageNode.Status oldValue,
-                                StageNode.Status newValue) {
-                Cell cell = cellRef.get();
-                if (cell == null) {
-                    if (observable != null)
-                        observable.removeListener(this);
-                    return;
-                }
-                cell.updateLeftIcon(newValue);
-            }
+            cell.updateLeftIcon(newValue);
         }
     }
 
@@ -424,6 +436,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.modpack":            message = i18n("install.modpack"); break;
                 case "hmcl.modpack.download":   message = i18n("launch.state.modpack"); break;
                 case "hmcl.install.assets":     message = i18n("assets.download"); break;
+                case "hmcl.install.libraries":  message = i18n("libraries.download"); break;
                 case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
                 case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
                 case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
@@ -432,6 +445,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.fabric":     message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
                 case "hmcl.install.fabric-api": message = i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue); break;
                 case "hmcl.install.quilt":      message = i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue); break;
+                case "hmcl.install.quilt-api":  message = i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue); break;
                 default:                        message = i18n(stageKey); break;
             }
             // @formatter:on
@@ -458,8 +472,8 @@ public final class TaskListPane extends StackPane {
             updateCounter(++count, total);
         }
 
-        public void setTotal(int total) {
-            this.total = total;
+        public void addTotal(int n) {
+            this.total += n;
             updateCounter(count, total);
         }
 

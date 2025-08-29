@@ -99,6 +99,29 @@ public final class GameVersionNumberTest {
         assertEquals(VersionNumber.asVersion(versionNumber), old.versionNumber);
     }
 
+    private static boolean isAprilFools(String version) {
+        return GameVersionNumber.asGameVersion(version).isAprilFools();
+    }
+
+    @Test
+    public void testIsAprilFools() {
+        assertTrue(isAprilFools("15w14a"));
+        assertTrue(isAprilFools("1.RV-Pre1"));
+        assertTrue(isAprilFools("3D Shareware v1.34"));
+        assertTrue(isAprilFools("2.0"));
+        assertTrue(isAprilFools("20w14infinite"));
+        assertTrue(isAprilFools("22w13oneBlockAtATime"));
+        assertTrue(isAprilFools("23w13a_or_b"));
+        assertTrue(isAprilFools("24w14potato"));
+        assertTrue(isAprilFools("25w14craftmine"));
+
+        assertFalse(isAprilFools("1.21.8"));
+        assertFalse(isAprilFools("1.21.8-rc1"));
+        assertFalse(isAprilFools("25w21a"));
+        assertFalse(isAprilFools("13w12~"));
+        assertFalse(isAprilFools("15w14b"));
+    }
+
     @Test
     public void testParseOld() {
         assertOldVersion("rd-132211", GameVersionNumber.Type.PRE_CLASSIC, "132211");

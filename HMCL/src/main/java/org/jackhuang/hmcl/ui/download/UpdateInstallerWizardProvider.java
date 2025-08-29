@@ -85,6 +85,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 ret = ret.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
                 stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
                 if ("game".equals(remoteVersion.getLibraryId())) {
+                    stages.add("hmcl.install.libraries");
                     stages.add("hmcl.install.assets");
                 }
             } else if (value instanceof RemoveVersionAction) {
