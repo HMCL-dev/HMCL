@@ -122,24 +122,40 @@ public final class Locales {
             if (resourceBundle == null) {
                 if (this != DEFAULT && this.locale == DEFAULT.locale) {
                     bundle = DEFAULT.getResourceBundle();
-                } else if (this == WENYAN) {
+                } else {
                     bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
                         @Override
                         public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+                            if (locale.getLanguage().equals("zh")) {
+                                boolean simplified;
+
+                                String script = locale.getScript();
+                                String region = locale.getCountry();
+                                if (script.isEmpty())
+                                    simplified = region.equals("CN") || region.equals("SG");
+                                else
+                                    simplified = script.equals("Hans");
+
+                                if (simplified) {
+                                    return List.of(
+                                            Locale.SIMPLIFIED_CHINESE,
+                                            Locale.CHINESE,
+                                            Locale.ROOT
+                                    );
+                                }
+                            }
+
                             if (locale.getLanguage().equals("lzh")) {
                                 return List.of(
                                         locale,
-                                        Locale.forLanguageTag("zh"),
+                                        Locale.CHINESE,
                                         Locale.ROOT
                                 );
                             }
                             return super.getCandidateLocales(baseName, locale);
                         }
                     });
-                } else {
-                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
                 }
-
                 resourceBundle = bundle;
             }
 
