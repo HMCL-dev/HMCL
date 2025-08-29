@@ -70,6 +70,8 @@ public final class SettingsPage extends SettingsView {
         // ==== Languages ====
         cboLanguage.getItems().setAll(Locales.LOCALES);
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+
+        noAutoGameOptionsPane.selectedProperty().bindBidirectional(config().noAutoGameOptionsProperty());
         // ====
 
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());

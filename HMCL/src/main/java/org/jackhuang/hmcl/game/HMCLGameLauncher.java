@@ -34,6 +34,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -62,6 +63,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private void generateOptionsTxt() {
+        if (config().isNoAutoGameOptions())
+            return;
+
         Path runDir = repository.getRunDirectory(version.getId()).toPath();
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
