@@ -131,10 +131,10 @@ public final class Locales {
 
                                 String script = locale.getScript();
                                 String region = locale.getCountry();
-                                if (!script.isEmpty())
-                                    simplified = script.equals("Hans");
-                                else
+                                if (script.isEmpty())
                                     simplified = region.equals("CN") || region.equals("SG");
+                                else
+                                    simplified = script.equals("Hans");
 
                                 if (simplified) {
                                     return List.of(
