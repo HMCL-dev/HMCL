@@ -22,7 +22,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -37,7 +36,12 @@ public final class Locales {
     private Locales() {
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale("def", Locale.getDefault());
+    public static final SupportedLocale DEFAULT = new SupportedLocale("def", Locale.getDefault()) {
+        @Override
+        public String getDisplayName(SupportedLocale inLocale) {
+            return inLocale.getResourceBundle().getString("lang.default");
+        }
+    };
 
     /**
      * English
@@ -62,17 +66,47 @@ public final class Locales {
     /**
      * Traditional Chinese
      */
-    public static final SupportedLocale ZH = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
+    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant")) {
+        @Override
+        public String getDisplayName(SupportedLocale inLocale) {
+            if (inLocale.locale.getLanguage().equals("en"))
+                return "Traditional Chinese";
+            else if (inLocale.locale.getLanguage().equals("zh"))
+                return "繁體中文";
+            else
+                return super.getDisplayName(inLocale);
+        }
+    };
 
     /**
      * Simplified Chinese
      */
-    public static final SupportedLocale ZH_CN = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans"));
+    public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans")) {
+        @Override
+        public String getDisplayName(SupportedLocale inLocale) {
+            if (inLocale.locale.getLanguage().equals("en"))
+                return "Traditional Chinese";
+            else if (inLocale.locale.getLanguage().equals("zh"))
+                return "简体中文";
+            else
+                return super.getDisplayName(inLocale);
+        }
+    };
 
     /**
      * Wenyan (Classical Chinese)
      */
     public static final SupportedLocale WENYAN = new SupportedLocale("lzh", Locale.forLanguageTag("lzh")) {
+
+        @Override
+        public String getDisplayName(SupportedLocale inLocale) {
+            if (inLocale.locale.getLanguage().equals("zh"))
+                return "文言";
+
+            String name = super.getDisplayName(inLocale);
+            return name.equals("lzh") ? "Literary Chinese" : name;
+        }
+
         @Override
         public String formatDateTime(TemporalAccessor time) {
             return WenyanUtils.formatDateTime(time);
@@ -87,7 +121,7 @@ public final class Locales {
         }
     };
 
-    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, ZH_CN, ZH, WENYAN);
+    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, ZH_HANS, ZH_HANT, WENYAN);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
@@ -118,6 +152,10 @@ public final class Locales {
 
         public Locale getLocale() {
             return locale;
+        }
+
+        public String getDisplayName(SupportedLocale inLocale) {
+            return locale.getDisplayName(inLocale.getLocale());
         }
 
         public ResourceBundle getResourceBundle() {
@@ -177,6 +215,15 @@ public final class Locales {
 
         public String getDisplaySelfVersion(RemoteVersion version) {
             return version.getSelfVersion();
+        }
+
+        private static boolean isChinese(Locale locale) {
+            return locale.getLanguage().equals("zh") || locale.getLanguage().equals("lzh");
+        }
+
+        public boolean isSameLanguage(SupportedLocale other) {
+            return this.getLocale().getLanguage().equals(other.getLocale().getLanguage())
+                    || isChinese(this.getLocale()) && isChinese(other.getLocale());
         }
 
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {

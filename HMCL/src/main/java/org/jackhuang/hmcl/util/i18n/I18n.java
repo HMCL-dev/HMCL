@@ -38,6 +38,10 @@ public final class I18n {
         resourceBundle = locale.getResourceBundle();
     }
 
+    public static SupportedLocale getLocale() {
+        return locale;
+    }
+
     public static boolean isUseChinese() {
         return locale.getLocale() == Locale.CHINA;
     }
