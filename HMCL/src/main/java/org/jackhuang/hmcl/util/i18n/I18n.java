@@ -43,15 +43,11 @@ public final class I18n {
     }
 
     public static boolean isUseChinese() {
-        return locale.getLocale() == Locale.CHINA;
+        return locale.getLocale().getLanguage().equals("zh");
     }
 
     public static ResourceBundle getResourceBundle() {
         return resourceBundle;
-    }
-
-    public static String getName(SupportedLocale locale) {
-        return locale == Locales.DEFAULT ? resourceBundle.getString("lang.default") : locale.getResourceBundle().getString("lang");
     }
 
     public static String i18n(String key, Object... formatArgs) {
