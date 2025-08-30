@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.util.Arrays;
@@ -179,6 +180,8 @@ public abstract class SettingsView extends StackPane {
 
                     cboLanguage = new JFXComboBox<>();
                     cboLanguage.setConverter(stringConverter(I18n::getName));
+
+                    LOG.debug(">>>>>>> " + Locales.EN.getResourceBundle().getString("lang"));
                     FXUtils.setLimitWidth(cboLanguage, 300);
                     languagePane.setRight(cboLanguage);
 
