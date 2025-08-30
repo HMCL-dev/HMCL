@@ -41,7 +41,7 @@ public final class Locales {
     /**
      * English
      */
-    public static final SupportedLocale EN = new SupportedLocale("en", Locale.ROOT);
+    public static final SupportedLocale EN = new SupportedLocale("en", Locale.ENGLISH);
 
     /**
      * Spanish
@@ -61,12 +61,12 @@ public final class Locales {
     /**
      * Traditional Chinese
      */
-    public static final SupportedLocale ZH = new SupportedLocale("zh", Locale.TRADITIONAL_CHINESE);
+    public static final SupportedLocale ZH = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
 
     /**
      * Simplified Chinese
      */
-    public static final SupportedLocale ZH_CN = new SupportedLocale("zh_CN", Locale.SIMPLIFIED_CHINESE);
+    public static final SupportedLocale ZH_CN = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans"));
 
     /**
      * Wenyan (Classical Chinese)
