@@ -22,6 +22,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.time.ZoneId;
@@ -79,7 +80,7 @@ public final class Locales {
         @Override
         public String getDisplayVersion(RemoteVersion version) {
             if (version instanceof GameRemoteVersion)
-                return WenyanUtils.getDisplayVersion((GameRemoteVersion) version);
+                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
             return super.getDisplayVersion(version);
         }
     };

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
@@ -40,6 +39,8 @@ public final class WenyanUtils {
             "五十", "五十一", "五十二", "五十三", "五十四", "五十五", "五十六", "五十七", "五十八", "五十九",
             "六十", "六十一", "六十二", "六十三", "六十四", "六十五", "六十六", "六十七", "六十八", "六十九",
     };
+
+    private static final char[] SNAPSHOT_SUFFIX = {'甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'};
 
     private static String digitToString(char digit) {
         return digit >= '0' && digit <= '9'
@@ -85,12 +86,11 @@ public final class WenyanUtils {
         return builder.toString();
     }
 
-    public static String getDisplayVersion(GameRemoteVersion version) {
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(version.getSelfVersion());
+    public static String translateGameVersion(GameVersionNumber gameVersion) {
         if (gameVersion instanceof GameVersionNumber.Release) {
             var release = (GameVersionNumber.Release) gameVersion;
 
-            StringBuilder builder = new StringBuilder(16);
+            StringBuilder builder = new StringBuilder();
             appendDigitByDigit(builder, String.valueOf(release.getMajor()));
             builder.append(DOT);
             appendDigitByDigit(builder, String.valueOf(release.getMinor()));
@@ -110,12 +110,44 @@ public final class WenyanUtils {
                 appendDigitByDigit(builder, String.valueOf(release.getEaVersion()));
             } else {
                 // Unsupported
-                return version.getSelfVersion();
+                return gameVersion.toString();
             }
 
             return builder.toString();
+        } else if (gameVersion instanceof GameVersionNumber.Snapshot) {
+            var snapshot = (GameVersionNumber.Snapshot) gameVersion;
+
+            StringBuilder builder = new StringBuilder();
+
+            appendDigitByDigit(builder, String.valueOf(snapshot.getYear()));
+            builder.append('週');
+            appendDigitByDigit(builder, String.valueOf(snapshot.getWeek()));
+
+            char suffix = snapshot.getSuffix();
+            if (suffix >= 'a' && (suffix - 'a') < SNAPSHOT_SUFFIX.length)
+                builder.append(SNAPSHOT_SUFFIX[suffix - 'a']);
+            else
+                builder.append(suffix);
+
+            return builder.toString();
+        } else if (gameVersion instanceof GameVersionNumber.Special) {
+
+            String version = gameVersion.toString();
+            switch (version) {
+                case "2.0":
+                    return "二點〇";
+                case "2.0_blue":
+                    return "二點〇藍";
+                case "2.0_red":
+                    return "二點〇赤";
+                case "2.0_purple":
+                    return "二點〇紫";
+                default:
+                    return version;
+            }
+
         } else {
-            return version.getSelfVersion();
+            return gameVersion.toString();
         }
     }
 
