@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -26,6 +29,8 @@ import java.time.temporal.TemporalAccessor;
  * @author Glavo
  */
 public final class WenyanUtils {
+    private static final String DOT = "點";
+
     private static final String[] NUMBERS = {
             "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九",
             "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九",
@@ -78,6 +83,40 @@ public final class WenyanUtils {
         builder.append('秒');
 
         return builder.toString();
+    }
+
+    public static String getDisplayVersion(GameRemoteVersion version) {
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(version.getSelfVersion());
+        if (gameVersion instanceof GameVersionNumber.Release) {
+            var release = (GameVersionNumber.Release) gameVersion;
+
+            StringBuilder builder = new StringBuilder(16);
+            appendDigitByDigit(builder, String.valueOf(release.getMajor()));
+            builder.append(DOT);
+            appendDigitByDigit(builder, String.valueOf(release.getMinor()));
+
+            if (release.getPatch() != 0) {
+                builder.append(DOT);
+                appendDigitByDigit(builder, String.valueOf(release.getPatch()));
+            }
+
+            if (release.getEaType() == GameVersionNumber.Release.TYPE_GA) {
+                // do nothing
+            } else if (release.getEaType() == GameVersionNumber.Release.TYPE_PRE) {
+                builder.append("之預");
+                appendDigitByDigit(builder, String.valueOf(release.getEaVersion()));
+            } else if (release.getEaType() == GameVersionNumber.Release.TYPE_RC) {
+                builder.append("之候");
+                appendDigitByDigit(builder, String.valueOf(release.getEaVersion()));
+            } else {
+                // Unsupported
+                return version.getSelfVersion();
+            }
+
+            return builder.toString();
+        } else {
+            return version.getSelfVersion();
+        }
     }
 
     private WenyanUtils() {

@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util.i18n;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 
 import java.io.IOException;
 import java.time.ZoneId;
@@ -72,6 +74,13 @@ public final class Locales {
         @Override
         public String formatDateTime(TemporalAccessor time) {
             return WenyanUtils.formatDateTime(time);
+        }
+
+        @Override
+        public String getDisplayVersion(RemoteVersion version) {
+            if (version instanceof GameRemoteVersion)
+                return WenyanUtils.getDisplayVersion((GameRemoteVersion) version);
+            return super.getDisplayVersion(version);
         }
     };
 
@@ -177,6 +186,10 @@ public final class Locales {
                 formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
                         .withZone(ZoneId.systemDefault());
             return formatter.format(time);
+        }
+
+        public String getDisplayVersion(RemoteVersion version) {
+            return version.getSelfVersion();
         }
 
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {

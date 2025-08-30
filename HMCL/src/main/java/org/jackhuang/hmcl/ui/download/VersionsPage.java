@@ -181,7 +181,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             setGraphic(pane);
 
-            content.setTitle(remoteVersion.getSelfVersion());
+            content.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 content.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
