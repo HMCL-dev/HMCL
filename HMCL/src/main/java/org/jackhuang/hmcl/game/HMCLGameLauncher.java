@@ -63,7 +63,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private void generateOptionsTxt() {
-        if (config().getDisableAutoGameOptions())
+        if (config().isDisableAutoGameOptions())
             return;
 
         Path runDir = repository.getRunDirectory(version.getId()).toPath();

@@ -638,7 +638,7 @@ public final class Config implements Observable {
         return disableAutoGameOptions;
     }
 
-    public boolean getDisableAutoGameOptions() {
+    public boolean isDisableAutoGameOptions() {
         return disableAutoGameOptions.get();
     }
 
