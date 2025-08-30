@@ -136,6 +136,19 @@ public final class Locales {
         return locale.getLanguage().equals("zh") || locale.getLanguage().equals("lzh");
     }
 
+    public static boolean isSimplifiedChinese(Locale locale) {
+        if (locale.getLanguage().equals("zh")) {
+            String script = locale.getScript();
+            if (script.isEmpty()) {
+                String region = locale.getCountry();
+                return region.equals("CN") || region.equals("SG") || region.equals("MY");
+            } else
+                return script.equals("Hans");
+        } else {
+            return false;
+        }
+    }
+
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
     public static class SupportedLocale {
         private final String name;
@@ -166,26 +179,15 @@ public final class Locales {
             ResourceBundle bundle = resourceBundle;
 
             if (resourceBundle == null) {
-                bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
+                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
                     @Override
                     public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-                        if (locale.getLanguage().equals("zh")) {
-                            boolean simplified;
-
-                            String script = locale.getScript();
-                            String region = locale.getCountry();
-                            if (script.isEmpty())
-                                simplified = region.equals("CN") || region.equals("SG");
-                            else
-                                simplified = script.equals("Hans");
-
-                            if (simplified) {
-                                return List.of(
-                                        Locale.SIMPLIFIED_CHINESE,
-                                        Locale.CHINESE,
-                                        Locale.ROOT
-                                );
-                            }
+                        if (isSimplifiedChinese(locale)) {
+                            return List.of(
+                                    Locale.SIMPLIFIED_CHINESE,
+                                    Locale.CHINESE,
+                                    Locale.ROOT
+                            );
                         }
 
                         if (locale.getLanguage().equals("lzh")) {
@@ -203,7 +205,6 @@ public final class Locales {
                         return super.getCandidateLocales(baseName, locale);
                     }
                 });
-                resourceBundle = bundle;
             }
 
             return bundle;
