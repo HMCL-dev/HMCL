@@ -66,6 +66,11 @@ public final class Locales {
     public static final SupportedLocale RU = new SupportedLocale("ru", Locale.forLanguageTag("ru"));
 
     /**
+     * Ukrainian
+     */
+    public static final SupportedLocale UK = new SupportedLocale("uk", Locale.forLanguageTag("uk"));
+
+    /**
      * Japanese
      */
     public static final SupportedLocale JA = new SupportedLocale("ja", Locale.JAPANESE);
@@ -110,7 +115,7 @@ public final class Locales {
         }
     };
 
-    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, ZH_HANS, ZH_HANT, WENYAN);
+    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
