@@ -442,7 +442,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
                 pair("${classpath_separator}", File.pathSeparator),
                 pair("${primary_jar}", repository.getVersionJar(version).getAbsolutePath()),
-                pair("${language}", Locale.getDefault().toString()),
+                pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
                 // libraries_directory stands for historical reasons here. We don't know the official launcher
