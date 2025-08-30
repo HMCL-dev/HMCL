@@ -71,7 +71,7 @@ public final class Locales {
         public String getDisplayName(SupportedLocale inLocale) {
             if (inLocale.locale.getLanguage().equals("en"))
                 return "Traditional Chinese";
-            else if (inLocale.locale.getLanguage().equals("zh"))
+            else if (isChinese(inLocale.locale))
                 return "繁體中文";
             else
                 return super.getDisplayName(inLocale);
@@ -86,7 +86,7 @@ public final class Locales {
         public String getDisplayName(SupportedLocale inLocale) {
             if (inLocale.locale.getLanguage().equals("en"))
                 return "Simplified Chinese";
-            else if (inLocale.locale.getLanguage().equals("zh"))
+            else if (isChinese(inLocale.locale))
                 return "简体中文";
             else
                 return super.getDisplayName(inLocale);
