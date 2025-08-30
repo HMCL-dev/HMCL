@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
+import java.util.Locale;
 
 /**
  * @author Glavo
@@ -144,9 +145,8 @@ public final class WenyanUtils {
 
             return builder.toString();
         } else if (gameVersion instanceof GameVersionNumber.Special) {
-
             String version = gameVersion.toString();
-            switch (version) {
+            switch (version.toLowerCase(Locale.ROOT)) {
                 case "2.0":
                     return "二點〇";
                 case "2.0_blue":
@@ -155,6 +155,22 @@ public final class WenyanUtils {
                     return "二點〇赤";
                 case "2.0_purple":
                     return "二點〇紫";
+                case "1.rv-pre1":
+                    return "一點真視之預一";
+                case "3d shareware v1.34":
+                    return "躍然享件一點三四";
+                case "20w14infinite":
+                case "20w14~":
+                case "20w14∞":
+                    return "二〇週一四宇";
+                case "22w13oneblockatatime":
+                    return "二二週一三典";
+                case "23w13a_or_b":
+                    return "二三週一三暨";
+                case "24w14potato":
+                    return "二四週一四芋";
+                case "25w14craftmine":
+                    return "二五週一四礦";
                 default:
                     return version;
             }
