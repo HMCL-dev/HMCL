@@ -81,7 +81,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         Locale locale = Locale.getDefault();
-        if (locale.getLanguage().isEmpty() || locale.getLanguage().equals("en"))
+        if (Locales.isEnglish(locale))
             return;
 
         /*
