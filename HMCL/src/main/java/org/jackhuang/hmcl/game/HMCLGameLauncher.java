@@ -22,17 +22,14 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.i18n.Locales;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -141,44 +138,13 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private static boolean findFiles(Path folder, String fileName) {
-        var visitor = new SimpleFileVisitor<Path>() {
-            private int level = 0;
-            boolean find = false;
-
-            @Override
-            public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
-                if (level < 2) {
-                    level++;
-                    return FileVisitResult.CONTINUE;
-                } else
-                    return FileVisitResult.SKIP_SUBTREE;
-            }
-
-            @Override
-            public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, @Nullable IOException exc) throws IOException {
-                level--;
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public @NotNull FileVisitResult visitFile(@NotNull Path file,
-                                                      @NotNull BasicFileAttributes attrs) {
-                if (fileName.equals(FileUtils.getName(file))) {
-                    find = true;
-                    return FileVisitResult.TERMINATE;
-                }
-
-                return FileVisitResult.CONTINUE;
-            }
-        };
-
-        try {
-            Files.walkFileTree(folder, visitor);
+        try (Stream<Path> stream = Files.walk(folder, 2, FileVisitOption.FOLLOW_LINKS)) {
+            return stream.anyMatch(file ->
+                    Files.isRegularFile(file) && fileName.equals(file.getFileName().toString()));
         } catch (IOException e) {
             LOG.warning("Failed to visit config folder", e);
+            return false;
         }
-
-        return visitor.find;
     }
 
     @Override
