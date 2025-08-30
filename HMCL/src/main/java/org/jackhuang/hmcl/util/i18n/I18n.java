@@ -75,7 +75,7 @@ public final class I18n {
         return locale.formatDateTime(time);
     }
 
-    public static String getDisplayVersion(RemoteVersion version) {
+    public static String getDisplaySelfVersion(RemoteVersion version) {
         return locale.getDisplaySelfVersion(version);
     }
 
