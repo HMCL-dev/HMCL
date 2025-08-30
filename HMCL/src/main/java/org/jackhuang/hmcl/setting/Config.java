@@ -186,8 +186,8 @@ public final class Config implements Observable {
     @SerializedName("addedLittleSkin")
     private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
 
-    @SerializedName("noAutoGameOptions")
-    private BooleanProperty noAutoGameOptions = new SimpleBooleanProperty(false);
+    @SerializedName("disableAutoGameOptions")
+    private BooleanProperty disableAutoGameOptions = new SimpleBooleanProperty(false);
 
     @SerializedName("promptedVersion")
     private StringProperty promptedVersion = new SimpleStringProperty();
@@ -634,16 +634,16 @@ public final class Config implements Observable {
         this.addedLittleSkin.set(addedLittleSkin);
     }
 
-    public BooleanProperty noAutoGameOptionsProperty() {
-        return noAutoGameOptions;
+    public BooleanProperty disableAutoGameOptionsProperty() {
+        return disableAutoGameOptions;
     }
 
-    public boolean isNoAutoGameOptions() {
-        return noAutoGameOptions.get();
+    public boolean getDisableAutoGameOptions() {
+        return disableAutoGameOptions.get();
     }
 
-    public void setNoAutoGameOptions(boolean noAutoGameOptions) {
-        this.noAutoGameOptions.set(noAutoGameOptions);
+    public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
+        this.disableAutoGameOptions.set(disableAutoGameOptions);
     }
 
     public int getConfigVersion() {
