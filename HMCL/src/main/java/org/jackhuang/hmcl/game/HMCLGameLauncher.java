@@ -71,8 +71,12 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             return;
 
         if (Files.isDirectory(configFolder)) {
-            if (findFiles(configFolder, "options.txt")) {
-                return;
+            try (Stream<Path> stream = Files.walk(configFolder, 2, FileVisitOption.FOLLOW_LINKS)) {
+                if (stream.anyMatch(file ->
+                        Files.isRegularFile(file) && "options.txt".equals(file.getFileName().toString())))
+                    return;
+            } catch (IOException e) {
+                LOG.warning("Failed to visit config folder", e);
             }
         }
 
@@ -134,16 +138,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 return "lzh";
             default:
                 return "";
-        }
-    }
-
-    private static boolean findFiles(Path folder, String fileName) {
-        try (Stream<Path> stream = Files.walk(folder, 2, FileVisitOption.FOLLOW_LINKS)) {
-            return stream.anyMatch(file ->
-                    Files.isRegularFile(file) && fileName.equals(file.getFileName().toString()));
-        } catch (IOException e) {
-            LOG.warning("Failed to visit config folder", e);
-            return false;
         }
     }
 
