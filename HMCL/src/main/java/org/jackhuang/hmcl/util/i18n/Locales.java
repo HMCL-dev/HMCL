@@ -191,7 +191,7 @@ public final class Locales {
                             );
                         }
 
-                        if (locale.equals(Locale.ENGLISH)) {
+                        if (locale.getLanguage().equals("en")) {
                             return List.of(Locale.ROOT);
                         }
 
