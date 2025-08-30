@@ -120,10 +120,10 @@ public final class WenyanUtils {
                 // do nothing
             } else if (release.getEaType() == GameVersionNumber.Release.TYPE_PRE) {
                 builder.append("之預");
-                appendDigitByDigit(builder, String.valueOf(release.getEaVersion()));
+                appendDigitByDigit(builder, release.getEaVersion().toString());
             } else if (release.getEaType() == GameVersionNumber.Release.TYPE_RC) {
                 builder.append("之候");
-                appendDigitByDigit(builder, String.valueOf(release.getEaVersion()));
+                appendDigitByDigit(builder, release.getEaVersion().toString());
             } else {
                 // Unsupported
                 return gameVersion.toString();
