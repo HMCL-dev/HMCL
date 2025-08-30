@@ -69,7 +69,7 @@ public final class Locales {
     public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant")) {
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
-            if (inLocale.locale.getLanguage().equals("en"))
+            if (isEnglish(inLocale.locale))
                 return "Traditional Chinese";
             else if (isChinese(inLocale.locale))
                 return "繁體中文";
@@ -84,7 +84,7 @@ public final class Locales {
     public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans")) {
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
-            if (inLocale.locale.getLanguage().equals("en"))
+            if (isEnglish(inLocale.locale))
                 return "Simplified Chinese";
             else if (isChinese(inLocale.locale))
                 return "简体中文";
@@ -134,6 +134,10 @@ public final class Locales {
         }
 
         return DEFAULT;
+    }
+
+    public static boolean isEnglish(Locale locale) {
+        return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
     }
 
     public static boolean isChinese(Locale locale) {
@@ -224,8 +228,6 @@ public final class Locales {
         public String getDisplaySelfVersion(RemoteVersion version) {
             return version.getSelfVersion();
         }
-
-
 
         public boolean isSameLanguage(SupportedLocale other) {
             return this.getLocale().getLanguage().equals(other.getLocale().getLanguage())
