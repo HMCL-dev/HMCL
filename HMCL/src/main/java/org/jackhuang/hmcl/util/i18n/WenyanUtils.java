@@ -59,11 +59,16 @@ public final class WenyanUtils {
         }
     }
 
-    private static void appendYear(StringBuilder builder, int year) {
+    private static int mod(int a, int b) {
+        int r = a % b;
+        return r < 0 ? r + b : r;
+    }
+
+    static void appendYear(StringBuilder builder, int year) {
         int yearOffset = year - 1984;
 
-        builder.append(TIAN_GAN[yearOffset % TIAN_GAN.length]);
-        builder.append(DI_ZHI[yearOffset % DI_ZHI.length]);
+        builder.append(TIAN_GAN[mod(yearOffset, TIAN_GAN.length)]);
+        builder.append(DI_ZHI[mod(yearOffset, DI_ZHI.length)]);
     }
 
     public static String formatDateTime(TemporalAccessor time) {
