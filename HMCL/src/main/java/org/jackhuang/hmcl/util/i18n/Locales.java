@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 public final class Locales {
     private Locales() {
     }
@@ -39,7 +41,12 @@ public final class Locales {
     public static final SupportedLocale DEFAULT = new SupportedLocale("def", Locale.getDefault()) {
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
-            return inLocale.getResourceBundle().getString("lang.default");
+            try {
+                return inLocale.getResourceBundle().getString("lang.default");
+            } catch (Throwable e) {
+                LOG.warning("Failed to get localized name for default locale", e);
+                return "Default";
+            }
         }
     };
 
