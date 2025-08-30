@@ -33,14 +33,15 @@ public final class WenyanUtils {
     private static final String[] NUMBERS = {
             "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九",
             "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九",
-            "二十", "二十一", "二十二", "二十三", "二十四", "二十五", "二十六", "二十七", "二十八", "二十九",
+            "廿", "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九",
             "三十", "三十一", "三十二", "三十三", "三十四", "三十五", "三十六", "三十七", "三十八", "三十九",
             "四十", "四十一", "四十二", "四十三", "四十四", "四十五", "四十六", "四十七", "四十八", "四十九",
             "五十", "五十一", "五十二", "五十三", "五十四", "五十五", "五十六", "五十七", "五十八", "五十九",
             "六十", "六十一", "六十二", "六十三", "六十四", "六十五", "六十六", "六十七", "六十八", "六十九",
     };
 
-    private static final char[] SNAPSHOT_SUFFIX = {'甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'};
+    private static final char[] TIAN_GAN = {'甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'};
+    private static final char[] DI_ZHI = {'子', '醜', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'};
 
     private static String digitToString(char digit) {
         return digit >= '0' && digit <= '9'
@@ -58,6 +59,13 @@ public final class WenyanUtils {
         }
     }
 
+    private static void appendYear(StringBuilder builder, int year) {
+        int yearOffset = year - 1984;
+
+        builder.append(TIAN_GAN[yearOffset % TIAN_GAN.length]);
+        builder.append(DI_ZHI[yearOffset % DI_ZHI.length]);
+    }
+
     public static String formatDateTime(TemporalAccessor time) {
         LocalDateTime localDateTime;
         if (time instanceof Instant)
@@ -66,8 +74,8 @@ public final class WenyanUtils {
             localDateTime = LocalDateTime.from(time);
 
         StringBuilder builder = new StringBuilder(16);
-        builder.append("西曆");
-        appendDigitByDigit(builder, String.valueOf(localDateTime.getYear()));
+
+        appendYear(builder, localDateTime.getYear());
         builder.append('年');
         builder.append(numberToString(localDateTime.getMonthValue()));
         builder.append('月');
@@ -76,11 +84,11 @@ public final class WenyanUtils {
 
         builder.append(' ');
 
-        appendDigitByDigit(builder, String.valueOf(localDateTime.getHour()));
+        builder.append(numberToString(localDateTime.getHour()));
         builder.append('时');
-        appendDigitByDigit(builder, String.valueOf(localDateTime.getMinute()));
+        builder.append(numberToString(localDateTime.getMinute()));
         builder.append('分');
-        appendDigitByDigit(builder, String.valueOf(localDateTime.getSecond()));
+        builder.append(numberToString(localDateTime.getSecond()));
         builder.append('秒');
 
         return builder.toString();
@@ -124,8 +132,8 @@ public final class WenyanUtils {
             appendDigitByDigit(builder, String.valueOf(snapshot.getWeek()));
 
             char suffix = snapshot.getSuffix();
-            if (suffix >= 'a' && (suffix - 'a') < SNAPSHOT_SUFFIX.length)
-                builder.append(SNAPSHOT_SUFFIX[suffix - 'a']);
+            if (suffix >= 'a' && (suffix - 'a') < TIAN_GAN.length)
+                builder.append(TIAN_GAN[suffix - 'a']);
             else
                 builder.append(suffix);
 
