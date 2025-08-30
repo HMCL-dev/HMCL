@@ -135,7 +135,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             case "ja":
                 return "ja_JP";
             case "lzh":
-                return "lzh";
+                return gameVersion.compareTo("1.16") >= 0
+                        ? "lzh"
+                        : "";
             default:
                 return "";
         }
