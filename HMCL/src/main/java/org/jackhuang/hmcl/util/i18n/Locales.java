@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.util.i18n;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import org.jackhuang.hmcl.java.JavaInfo;
-import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
 import java.util.List;
@@ -64,7 +62,12 @@ public final class Locales {
      */
     public static final SupportedLocale ZH_CN = new SupportedLocale(Locale.SIMPLIFIED_CHINESE);
 
-    public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ES, JA, RU, ZH_CN, ZH);
+    /**
+     * Wenyan (Classical Chinese)
+     */
+    public static final SupportedLocale WENYAN = new SupportedLocale(Locale.forLanguageTag("lzh"));
+
+    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, ZH_CN, ZH, WENYAN);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
@@ -81,6 +84,8 @@ public final class Locales {
                 return ZH;
             case "zh_cn":
                 return ZH_CN;
+            case "lzh":
+                return WENYAN;
             default:
                 return DEFAULT;
         }
@@ -93,6 +98,7 @@ public final class Locales {
         else if (locale == JA) return "ja";
         else if (locale == ZH) return "zh";
         else if (locale == ZH_CN) return "zh_CN";
+        else if (locale == WENYAN) return "lzh";
         else if (locale == DEFAULT) return "def";
         else throw new IllegalArgumentException("Unknown locale: " + locale);
     }
@@ -116,13 +122,40 @@ public final class Locales {
             if (resourceBundle == null) {
                 if (this != DEFAULT && this.locale == DEFAULT.locale) {
                     bundle = DEFAULT.getResourceBundle();
-                } else if (JavaInfo.CURRENT_ENVIRONMENT.getParsedVersion() < 9) {
-                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, UTF8Control.INSTANCE);
                 } else {
-                    // Java 9+ uses UTF-8 as the default encoding for resource bundles
-                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
-                }
+                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
+                        @Override
+                        public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+                            if (locale.getLanguage().equals("zh")) {
+                                boolean simplified;
 
+                                String script = locale.getScript();
+                                String region = locale.getCountry();
+                                if (script.isEmpty())
+                                    simplified = region.equals("CN") || region.equals("SG");
+                                else
+                                    simplified = script.equals("Hans");
+
+                                if (simplified) {
+                                    return List.of(
+                                            Locale.SIMPLIFIED_CHINESE,
+                                            Locale.CHINESE,
+                                            Locale.ROOT
+                                    );
+                                }
+                            }
+
+                            if (locale.getLanguage().equals("lzh")) {
+                                return List.of(
+                                        locale,
+                                        Locale.CHINESE,
+                                        Locale.ROOT
+                                );
+                            }
+                            return super.getCandidateLocales(baseName, locale);
+                        }
+                    });
+                }
                 resourceBundle = bundle;
             }
 

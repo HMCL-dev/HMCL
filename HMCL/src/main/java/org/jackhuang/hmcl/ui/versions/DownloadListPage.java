@@ -39,9 +39,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -88,6 +91,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private int searchID = 0;
     protected RemoteModRepository repository;
+    private final DownloadProvider downloadProvider;
 
     private Runnable retrySearch;
 
@@ -99,6 +103,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.repository = repository;
         this.callback = callback;
         this.versionSelection = versionSelection;
+        this.downloadProvider = DownloadProviders.getDownloadProvider();
     }
 
     public ObservableList<Node> getActions() {
@@ -169,7 +174,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         : "";
             }
         }).thenApplyAsync(
-                gameVersion -> repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
+                gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
         ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (searchID != currentSearchID) {
                 return;
@@ -189,7 +194,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedCategory(String category) {
-        return i18n("curse.category." + category);
+        return repository instanceof ModrinthRemoteModRepository
+                ? i18n("modrinth.category." + category)
+                : i18n("curse.category." + category);
     }
 
     private String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
@@ -200,7 +207,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     protected String getLocalizedOfficialPage() {
-        return i18n("mods.curseforge");
+        if (repository instanceof ModrinthRemoteModRepository) {
+            return i18n("mods.modrinth");
+        } else {
+            return i18n("mods.curseforge");
+        }
     }
 
     protected Profile.ProfileVersion getProfileVersion() {
@@ -222,6 +233,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
+        private final JFXListView<RemoteMod> listView = new JFXListView<>();
+
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
@@ -356,11 +369,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                     currentFilterID.set(filterID.get());
 
+                    int pageOffset = control.pageOffset.get();
                     getSkinnable().search(gameVersionField.getSelectionModel().getSelectedItem(),
                             Optional.ofNullable(categoryComboBox.getSelectionModel().getSelectedItem())
                                     .map(CategoryIndented::getCategory)
                                     .orElse(null),
-                            control.pageOffset.get(),
+                            pageOffset == -1 ? 0 : pageOffset,
                             nameField.getText(),
                             sortComboBox.getSelectionModel().getSelectedItem());
                 };
@@ -432,13 +446,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         int pageOffset = control.pageOffset.get();
                         int pageCount = control.pageCount.get();
 
-                        boolean disablePrevious = pageOffset == 0;
+                        boolean disableAll = pageCount >= -1 && pageCount <= 1;
+
+                        boolean disablePrevious = disableAll || pageOffset == 0;
                         firstPageButton.setDisable(disablePrevious);
                         previousPageButton.setDisable(disablePrevious);
 
-                        boolean disableNext = pageOffset == pageCount - 1;
+                        boolean disableNext = disableAll || pageOffset == pageCount - 1;
                         nextPageButton.setDisable(disableNext);
-                        lastPageButton.setDisable(disableNext || pageCount == -1);
+                        lastPageButton.setDisable(disableNext);
+
+                        listView.scrollTo(0);
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
@@ -494,7 +512,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                 });
 
-                JFXListView<RemoteMod> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
                 FXUtils.onClicked(listView, () -> {
@@ -530,7 +547,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .collect(Collectors.toList()));
 
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.setImage(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true, true));
+                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
                         }
                     }
                 });

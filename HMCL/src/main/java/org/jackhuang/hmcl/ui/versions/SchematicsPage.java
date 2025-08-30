@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -206,6 +207,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
                 }
             }
+        } catch (NoSuchFileException ignored) {
         } catch (IOException e) {
             LOG.warning("Failed to load schematics in " + dir, e);
         }
@@ -579,7 +581,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 right.setAlignment(Pos.CENTER_RIGHT);
 
                 JFXButton btnReveal = new JFXButton();
-                FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_explorer"));
+                FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.getStyleClass().add("toggle-icon4");
                 btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
                 btnReveal.setOnAction(event -> item.onReveal());

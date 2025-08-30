@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.download;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -58,6 +59,8 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
                 reload();
             });
         }
+
+        installable.bind(Bindings.createBooleanBinding(() -> compatible.get() && txtName.validate(), txtName.textProperty(), compatible));
     }
 
     @Override

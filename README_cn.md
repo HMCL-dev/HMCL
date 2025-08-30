@@ -41,7 +41,7 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS �
 如果你想提交一个 Pull Request，必须遵守如下要求：
 
 * IDE：IntelliJ IDEA
-* 编译器：Java 11+
+* 编译器：Java 17+
 * **不要**修改 `gradle` 相关文件
 
 ### 编译
@@ -52,7 +52,7 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS �
 ./gradlew clean build
 ```
 
-请确保你至少安装了 JDK 11 或更高版本。
+请确保你至少安装了 JDK 17 或更高版本。
 
 ## JVM 选项 (用于调试)
 
@@ -69,3 +69,4 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS �
 | `-Dhmcl.native.encoding=<encoding>`          | 覆盖原生编码                                                         |
 | `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆盖 Microsoft OAuth App ID                                          |
 | `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆盖 Microsoft OAuth App 密钥                                        |
+| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆盖 CurseForge API 密钥                                        |

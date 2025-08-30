@@ -21,10 +21,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
@@ -56,6 +53,8 @@ public final class GlobalConfig implements Observable {
     private final IntegerProperty logRetention = new SimpleIntegerProperty();
 
     private final BooleanProperty enableOfflineAccount = new SimpleBooleanProperty(false);
+
+    private final StringProperty fontAntiAliasing = new SimpleStringProperty();
 
     private final ObservableSet<String> userJava = FXCollections.observableSet(new LinkedHashSet<>());
 
@@ -131,6 +130,18 @@ public final class GlobalConfig implements Observable {
         enableOfflineAccount.set(value);
     }
 
+    public StringProperty fontAntiAliasingProperty() {
+        return fontAntiAliasing;
+    }
+
+    public String getFontAntiAliasing() {
+        return fontAntiAliasing.get();
+    }
+
+    public void setFontAntiAliasing(String value) {
+        this.fontAntiAliasing.set(value);
+    }
+
     public ObservableSet<String> getUserJava() {
         return userJava;
     }
@@ -146,7 +157,8 @@ public final class GlobalConfig implements Observable {
                 "logRetention",
                 "userJava",
                 "disabledJava",
-                "enableOfflineAccount"
+                "enableOfflineAccount",
+                "fontAntiAliasing"
         ));
 
         @Override
@@ -159,6 +171,7 @@ public final class GlobalConfig implements Observable {
             jsonObject.add("agreementVersion", context.serialize(src.getAgreementVersion()));
             jsonObject.add("platformPromptVersion", context.serialize(src.getPlatformPromptVersion()));
             jsonObject.add("logRetention", context.serialize(src.getLogRetention()));
+            jsonObject.add("fontAntiAliasing", context.serialize(src.getFontAntiAliasing()));
             if (src.enableOfflineAccount.get())
                 jsonObject.addProperty("enableOfflineAccount", true);
 
@@ -186,6 +199,7 @@ public final class GlobalConfig implements Observable {
             config.setPlatformPromptVersion(Optional.ofNullable(obj.get("platformPromptVersion")).map(JsonElement::getAsInt).orElse(0));
             config.setLogRetention(Optional.ofNullable(obj.get("logRetention")).map(JsonElement::getAsInt).orElse(20));
             config.setEnableOfflineAccount(Optional.ofNullable(obj.get("enableOfflineAccount")).map(JsonElement::getAsBoolean).orElse(false));
+            config.setFontAntiAliasing(Optional.ofNullable(obj.get("fontAntiAliasing")).map(JsonElement::getAsString).orElse(null));
 
             JsonElement userJava = obj.get("userJava");
             if (userJava != null && userJava.isJsonArray()) {

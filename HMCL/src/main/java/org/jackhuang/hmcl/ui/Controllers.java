@@ -63,7 +63,6 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.File;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -177,6 +176,18 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
+        if (System.getProperty("prism.lcdtext") == null) {
+            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+            if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                LOG.info("Enable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "true");
+            } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
+                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                LOG.info("Disable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "false");
+            }
+        }
+
         Controllers.stage = stage;
 
         stageSizeChangeListener = o -> {
@@ -206,7 +217,11 @@ public final class Controllers {
 
             if (targetProperty != null
                     && Controllers.stage != null
-                    && !Controllers.stage.isIconified()) {
+                    && !Controllers.stage.isIconified()
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
+                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
+            ) {
                 targetProperty.set(sourceProperty.get());
             }
         };
@@ -311,48 +326,23 @@ public final class Controllers {
             }
         }
 
-        if (JavaRuntime.CURRENT_VERSION < 10) {
-            Integer shownTipVersion = null;
-
+        if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
+            Number shownTipVersion = null;
             try {
-                shownTipVersion = (Integer) config().getShownTips().get(JAVA_VERSION_TIP);
+                shownTipVersion = (Number) config().getShownTips().get(JAVA_VERSION_TIP);
             } catch (ClassCastException e) {
                 LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
             }
-
-            if (shownTipVersion == null || shownTipVersion < 11) {
-                String downloadLink = null;
-
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW)
-                    downloadLink = "https://www.loongnix.cn/zh/api/java/downloads-jdk21/index.html";
-                else {
-
-                    EnumSet<Architecture> supportedArchitectures;
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-                        supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.X86, Architecture.ARM64);
-                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
-                        supportedArchitectures = EnumSet.of(
-                                Architecture.X86_64, Architecture.X86,
-                                Architecture.ARM64, Architecture.ARM32,
-                                Architecture.RISCV64, Architecture.LOONGARCH64
-                        );
-                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
-                        supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.ARM64);
-                    else
-                        supportedArchitectures = EnumSet.noneOf(Architecture.class);
-
-                    if (supportedArchitectures.contains(Architecture.SYSTEM_ARCH))
-                        downloadLink = String.format("https://docs.hmcl.net/downloads/%s/%s.html",
-                                OperatingSystem.CURRENT_OS.getCheckedName(),
-                                Architecture.SYSTEM_ARCH.getCheckedName()
-                        );
-                }
-
+            if (shownTipVersion == null || shownTipVersion.intValue() < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
                 MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
+                String downloadLink = Metadata.getSuggestedJavaDownloadLink();
                 if (downloadLink != null)
-                    builder.addHyperLink(i18n("fatal.deprecated_java_version.download_link", 21), downloadLink);
+                    builder.addHyperLink(
+                            i18n("fatal.deprecated_java_version.download_link", Metadata.RECOMMENDED_JAVA_VERSION),
+                            downloadLink
+                    );
                 Controllers.dialog(builder
-                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, 11))
+                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
                         .build());
             }
         }

@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -76,6 +77,10 @@ public final class ExportWizardProvider implements WizardProvider {
             File tempModpack;
             Task<?> exportTask;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public boolean doPreExecute() {
                 return true;
@@ -99,6 +104,9 @@ public final class ExportWizardProvider implements WizardProvider {
                         break;
                     case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
                         exportTask = exportAsServer(exportInfo, dest);
+                        break;
+                    case ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH:
+                        exportTask = exportAsModrinth(exportInfo, dest);
                         break;
                     default:
                         throw new IllegalStateException("Unrecognized modpack type " + modpackType);
@@ -161,6 +169,10 @@ public final class ExportWizardProvider implements WizardProvider {
         return new Task<Void>() {
             Task<?> dependency = null;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public void execute() {
                 dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
@@ -176,6 +188,10 @@ public final class ExportWizardProvider implements WizardProvider {
     private Task<?> exportAsMultiMC(ModpackExportInfo exportInfo, File modpackFile) {
         return new Task<Void>() {
             Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public void execute() {
@@ -221,9 +237,38 @@ public final class ExportWizardProvider implements WizardProvider {
         return new Task<Void>() {
             Task<?> dependency;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public void execute() {
                 dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+            }
+
+            @Override
+            public Collection<Task<?>> getDependencies() {
+                return Collections.singleton(dependency);
+            }
+        };
+    }
+
+    private Task<?> exportAsModrinth(ModpackExportInfo exportInfo, File modpackFile) {
+        return new Task<Void>() {
+            Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
+            @Override
+            public void execute() {
+                dependency = new ModrinthModpackExportTask(
+                    profile.getRepository(),
+                    version,
+                    exportInfo,
+                    modpackFile
+                );
             }
 
             @Override

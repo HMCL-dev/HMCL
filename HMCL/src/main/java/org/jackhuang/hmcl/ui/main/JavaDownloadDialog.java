@@ -363,7 +363,7 @@ public final class JavaDownloadDialog extends StackPane {
                         return getIntegrityCheck
                                 .thenComposeAsync(integrityCheck ->
                                         new FileDownloadTask(downloadProvider.injectURLWithCandidates(fileInfo.getDirectDownloadUri()),
-                                                targetFile, integrityCheck).setName(fileInfo.getFileName()))
+                                                targetFile.toPath(), integrityCheck).setName(fileInfo.getFileName()))
                                 .thenSupplyAsync(targetFile::toPath);
                     })
                     .whenComplete(Schedulers.javafx(), ((result, exception) -> {

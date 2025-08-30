@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -157,6 +158,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
             blackList.add("saves");
 
         if (Files.exists(dstDir)) throw new IOException("Version exists");
+
+        Files.createDirectories(dstDir);
         FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
 
         Path fromJson = srcDir.resolve(srcId + ".json");
@@ -169,7 +172,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        FileUtils.writeText(toJson.toFile(), JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
@@ -193,7 +196,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         File file = getLocalVersionSettingFile(id);
         if (file.exists())
             try {
-                VersionSetting versionSetting = GSON.fromJson(FileUtils.readText(file), VersionSetting.class);
+                VersionSetting versionSetting = GSON.fromJson(Files.readString(file.toPath()), VersionSetting.class);
                 initLocalVersionSetting(id, versionSetting);
             } catch (Exception ex) {
                 // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
@@ -329,22 +332,17 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public boolean saveVersionSetting(String id) {
+    public void saveVersionSetting(String id) {
         if (!localVersionSettings.containsKey(id))
-            return false;
-        File file = getLocalVersionSettingFile(id);
-        if (!FileUtils.makeDirectory(file.getAbsoluteFile().getParentFile()))
-            return false;
-
-        LOG.info("Saving version setting: " + id);
-
+            return;
+        Path file = getLocalVersionSettingFile(id).toPath().toAbsolutePath().normalize();
         try {
-            FileUtils.writeText(file, GSON.toJson(localVersionSettings.get(id)));
-            return true;
+            Files.createDirectories(file.getParent());
         } catch (IOException e) {
-            LOG.error("Unable to save version setting of " + id, e);
-            return false;
+            LOG.warning("Failed to create directory: " + file.getParent(), e);
         }
+
+        FileSaver.save(file, GSON.toJson(localVersionSettings.get(id)));
     }
 
     /**
@@ -431,7 +429,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         File json = getModpackConfiguration(version);
         if (json.exists()) {
             try {
-                String jsonText = FileUtils.readText(json);
+                String jsonText = Files.readString(json.toPath());
                 ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
                 ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
                 if (provider != null) provider.injectLaunchOptions(jsonText, builder);
