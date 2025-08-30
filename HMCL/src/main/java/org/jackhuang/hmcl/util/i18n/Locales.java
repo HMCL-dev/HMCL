@@ -179,7 +179,7 @@ public final class Locales {
             ResourceBundle bundle = resourceBundle;
 
             if (resourceBundle == null) {
-                bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
+                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
                     @Override
                     public List<Locale> getCandidateLocales(String baseName, Locale locale) {
                         if (isSimplifiedChinese(locale)) {
@@ -205,7 +205,6 @@ public final class Locales {
                         return super.getCandidateLocales(baseName, locale);
                     }
                 });
-                resourceBundle = bundle;
             }
 
             return bundle;
