@@ -64,7 +64,7 @@ public final class WenyanUtils {
 
     private static int mod(int a, int b) {
         int r = a % b;
-        return r < 0 ? r + b : r;
+        return r >= 0 ? r : r + b;
     }
 
     static void appendYear(StringBuilder builder, int year) {
