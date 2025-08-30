@@ -85,7 +85,7 @@ public final class Locales {
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
             if (inLocale.locale.getLanguage().equals("en"))
-                return "Traditional Chinese";
+                return "Simplified Chinese";
             else if (inLocale.locale.getLanguage().equals("zh"))
                 return "简体中文";
             else
@@ -100,7 +100,7 @@ public final class Locales {
 
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
-            if (inLocale.locale.getLanguage().equals("zh"))
+            if (isChinese(inLocale.locale))
                 return "文言";
 
             String name = super.getDisplayName(inLocale);
@@ -134,6 +134,10 @@ public final class Locales {
         return DEFAULT;
     }
 
+    public static boolean isChinese(Locale locale) {
+        return locale.getLanguage().equals("zh") || locale.getLanguage().equals("lzh");
+    }
+
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
     public static class SupportedLocale {
         private final String name;
@@ -155,6 +159,8 @@ public final class Locales {
         }
 
         public String getDisplayName(SupportedLocale inLocale) {
+            if (inLocale.locale.getLanguage().equals("lzh"))
+                inLocale = ZH_HANT;
             return locale.getDisplayName(inLocale.getLocale());
         }
 
@@ -217,9 +223,7 @@ public final class Locales {
             return version.getSelfVersion();
         }
 
-        private static boolean isChinese(Locale locale) {
-            return locale.getLanguage().equals("zh") || locale.getLanguage().equals("lzh");
-        }
+
 
         public boolean isSameLanguage(SupportedLocale other) {
             return this.getLocale().getLanguage().equals(other.getLocale().getLanguage())
