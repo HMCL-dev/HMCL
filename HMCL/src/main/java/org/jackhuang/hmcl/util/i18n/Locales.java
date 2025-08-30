@@ -94,7 +94,7 @@ public final class Locales {
     };
 
     /**
-     * Wenyan (Classical Chinese)
+     * Wenyan (Literary Chinese)
      */
     public static final SupportedLocale WENYAN = new SupportedLocale("lzh", Locale.forLanguageTag("lzh")) {
 
@@ -104,6 +104,8 @@ public final class Locales {
                 return "文言";
 
             String name = super.getDisplayName(inLocale);
+
+            // Many languages don't have a translated display name for Literary Chinese, for which we should fall back to "Literary Chinese"
             return name.equals("lzh") ? "Literary Chinese" : name;
         }
 
