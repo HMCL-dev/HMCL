@@ -184,7 +184,7 @@ public abstract class SettingsView extends StackPane {
                         if (locale.isSameLanguage(currentLocale) || locale == Locales.DEFAULT)
                             return locale.getDisplayName(currentLocale);
                         else
-                            return locale.getDisplayName(currentLocale) + " (" + locale.getDisplayName(locale) + ")";
+                            return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
                     }));
 
                     FXUtils.setLimitWidth(cboLanguage, 300);

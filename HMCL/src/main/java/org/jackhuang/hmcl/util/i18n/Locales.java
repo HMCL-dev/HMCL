@@ -66,32 +66,12 @@ public final class Locales {
     /**
      * Traditional Chinese
      */
-    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant")) {
-        @Override
-        public String getDisplayName(SupportedLocale inLocale) {
-            if (isEnglish(inLocale.locale))
-                return "Traditional Chinese";
-            else if (isChinese(inLocale.locale))
-                return "繁體中文";
-            else
-                return super.getDisplayName(inLocale);
-        }
-    };
+    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
 
     /**
      * Simplified Chinese
      */
-    public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans")) {
-        @Override
-        public String getDisplayName(SupportedLocale inLocale) {
-            if (isEnglish(inLocale.locale))
-                return "Simplified Chinese";
-            else if (isChinese(inLocale.locale))
-                return "简体中文";
-            else
-                return super.getDisplayName(inLocale);
-        }
-    };
+    public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans"));
 
     /**
      * Wenyan (Literary Chinese)
