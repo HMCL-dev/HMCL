@@ -24,6 +24,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Glavo
@@ -178,6 +180,31 @@ public final class WenyanUtils {
         } else {
             return gameVersion.toString();
         }
+    }
+
+    private static final Pattern GENERIC_VERSION_PATTERN =
+            Pattern.compile("^[0-9]+(\\.[0-9]+)*");
+
+    public static String translateGenericVersion(String version) {
+        Matcher matcher = GENERIC_VERSION_PATTERN.matcher(version);
+        if (matcher.find()) {
+            String prefix = matcher.group();
+            StringBuilder builder = new StringBuilder(version.length());
+
+            for (int i = 0; i < prefix.length(); i++) {
+                char ch = prefix.charAt(i);
+                if (ch >= '0' && ch <= '9')
+                    builder.append(digitToString(ch));
+                else if (ch == '.')
+                    builder.append(DOT);
+                else
+                    builder.append(ch);
+            }
+            builder.append(version, prefix.length(), version.length());
+            return builder.toString();
+        }
+
+        return version;
     }
 
     private WenyanUtils() {

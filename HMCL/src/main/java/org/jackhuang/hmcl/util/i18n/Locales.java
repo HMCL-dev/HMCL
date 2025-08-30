@@ -78,10 +78,11 @@ public final class Locales {
         }
 
         @Override
-        public String getDisplayVersion(RemoteVersion version) {
+        public String getDisplaySelfVersion(RemoteVersion version) {
             if (version instanceof GameRemoteVersion)
                 return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
-            return super.getDisplayVersion(version);
+            else
+                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
         }
     };
 
@@ -189,7 +190,7 @@ public final class Locales {
             return formatter.format(time);
         }
 
-        public String getDisplayVersion(RemoteVersion version) {
+        public String getDisplaySelfVersion(RemoteVersion version) {
             return version.getSelfVersion();
         }
 

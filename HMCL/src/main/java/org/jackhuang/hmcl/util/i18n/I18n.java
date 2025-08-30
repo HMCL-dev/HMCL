@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
@@ -78,7 +76,7 @@ public final class I18n {
     }
 
     public static String getDisplayVersion(RemoteVersion version) {
-        return locale.getDisplayVersion(version);
+        return locale.getDisplaySelfVersion(version);
     }
 
     public static boolean hasKey(String key) {
