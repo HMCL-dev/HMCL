@@ -33,12 +33,10 @@ public final class I18n {
 
     private static volatile SupportedLocale locale = Locales.DEFAULT;
     private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
-    private static volatile DateTimeFormatter dateTimeFormatter;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
         resourceBundle = locale.getResourceBundle();
-        dateTimeFormatter = null;
     }
 
     public static boolean isUseChinese() {
@@ -75,12 +73,7 @@ public final class I18n {
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        DateTimeFormatter formatter = dateTimeFormatter;
-        if (formatter == null) {
-            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format")).withZone(ZoneId.systemDefault());
-        }
-
-        return formatter.format(time);
+        return locale.formatDateTime(time);
     }
 
     public static boolean hasKey(String key) {
