@@ -36,42 +36,42 @@ public final class Locales {
     private Locales() {
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault());
+    public static final SupportedLocale DEFAULT = new SupportedLocale("def", Locale.getDefault());
 
     /**
      * English
      */
-    public static final SupportedLocale EN = new SupportedLocale(Locale.ROOT);
+    public static final SupportedLocale EN = new SupportedLocale("en", Locale.ROOT);
 
     /**
      * Spanish
      */
-    public static final SupportedLocale ES = new SupportedLocale(Locale.forLanguageTag("es"));
+    public static final SupportedLocale ES = new SupportedLocale("es", Locale.forLanguageTag("es"));
 
     /**
      * Russian
      */
-    public static final SupportedLocale RU = new SupportedLocale(Locale.forLanguageTag("ru"));
+    public static final SupportedLocale RU = new SupportedLocale("ru", Locale.forLanguageTag("ru"));
 
     /**
      * Japanese
      */
-    public static final SupportedLocale JA = new SupportedLocale(Locale.JAPANESE);
+    public static final SupportedLocale JA = new SupportedLocale("ja", Locale.JAPANESE);
 
     /**
      * Traditional Chinese
      */
-    public static final SupportedLocale ZH = new SupportedLocale(Locale.TRADITIONAL_CHINESE);
+    public static final SupportedLocale ZH = new SupportedLocale("zh", Locale.TRADITIONAL_CHINESE);
 
     /**
      * Simplified Chinese
      */
-    public static final SupportedLocale ZH_CN = new SupportedLocale(Locale.SIMPLIFIED_CHINESE);
+    public static final SupportedLocale ZH_CN = new SupportedLocale("zh_CN", Locale.SIMPLIFIED_CHINESE);
 
     /**
      * Wenyan (Classical Chinese)
      */
-    public static final SupportedLocale WENYAN = new SupportedLocale(Locale.forLanguageTag("lzh")) {
+    public static final SupportedLocale WENYAN = new SupportedLocale("lzh", Locale.forLanguageTag("lzh")) {
         @Override
         public String formatDateTime(TemporalAccessor time) {
             return WenyanUtils.formatDateTime(time);
@@ -90,46 +90,29 @@ public final class Locales {
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
-        switch (name.toLowerCase(Locale.ROOT)) {
-            case "en":
-                return EN;
-            case "es":
-                return ES;
-            case "ja":
-                return JA;
-            case "ru":
-                return RU;
-            case "zh":
-                return ZH;
-            case "zh_cn":
-                return ZH_CN;
-            case "lzh":
-                return WENYAN;
-            default:
-                return DEFAULT;
-        }
-    }
 
-    public static String getNameByLocale(SupportedLocale locale) {
-        if (locale == EN) return "en";
-        else if (locale == ES) return "es";
-        else if (locale == RU) return "ru";
-        else if (locale == JA) return "ja";
-        else if (locale == ZH) return "zh";
-        else if (locale == ZH_CN) return "zh_CN";
-        else if (locale == WENYAN) return "lzh";
-        else if (locale == DEFAULT) return "def";
-        else throw new IllegalArgumentException("Unknown locale: " + locale);
+        for (SupportedLocale locale : LOCALES) {
+            if (locale.getName().equalsIgnoreCase(name))
+                return locale;
+        }
+
+        return DEFAULT;
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
     public static class SupportedLocale {
+        private final String name;
         private final Locale locale;
         private ResourceBundle resourceBundle;
         private DateTimeFormatter dateTimeFormatter;
 
-        SupportedLocale(Locale locale) {
+        SupportedLocale(String name, Locale locale) {
+            this.name = name;
             this.locale = locale;
+        }
+
+        public String getName() {
+            return name;
         }
 
         public Locale getLocale() {
@@ -197,7 +180,7 @@ public final class Locales {
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
             @Override
             public void write(JsonWriter out, SupportedLocale value) throws IOException {
-                out.value(getNameByLocale(value));
+                out.value(value.getName());
             }
 
             @Override
