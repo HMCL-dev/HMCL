@@ -70,11 +70,11 @@ public final class WenyanUtils {
 
         builder.append(' ');
 
-        builder.append(numberToString(localDateTime.getHour()));
+        appendDigitByDigit(builder, String.valueOf(localDateTime.getHour()));
         builder.append('时');
-        builder.append(numberToString(localDateTime.getMinute()));
+        appendDigitByDigit(builder, String.valueOf(localDateTime.getMinute()));
         builder.append('分');
-        builder.append(numberToString(localDateTime.getSecond()));
+        appendDigitByDigit(builder, String.valueOf(localDateTime.getSecond()));
         builder.append('秒');
 
         return builder.toString();
