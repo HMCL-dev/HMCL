@@ -39,6 +39,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
+import org.jackhuang.hmcl.setting.EnumColorMode;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -51,6 +52,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -99,6 +101,27 @@ public class PersonalizationPage extends StackPane {
                     config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
+        }
+        {
+            BorderPane colorModePane = new BorderPane();
+            themeList.getContent().add(colorModePane);
+
+            Label left = new Label(i18n("settings.launcher.colormode"));
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+            colorModePane.setLeft(left);
+
+            StackPane colorModeComboboxPane = new StackPane();
+            colorModeComboboxPane.setMinHeight(30);
+            colorModePane.setRight(colorModeComboboxPane);
+
+            JFXComboBox<EnumColorMode> colorModeComboBox = new JFXComboBox<>();
+            selectedItemPropertyFor(colorModeComboBox).bindBidirectional(config().colorModeProperty());
+            colorModeComboBox.getItems().addAll(EnumColorMode.values());
+            colorModeComboBox.setConverter(FXUtils.stringConverter(value -> i18n("settings.launcher.colormode." + value.name().toLowerCase(Locale.ROOT))));
+            colorModeComboBox.setOnAction(e -> {
+                config().setColorMode(colorModeComboBox.getValue());
+            });
+            colorModeComboboxPane.getChildren().setAll(colorModeComboBox);
         }
         {
             OptionToggleButton titleTransparentButton = new OptionToggleButton();

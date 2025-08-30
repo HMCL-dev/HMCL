@@ -94,13 +94,11 @@ public final class SettingsPage extends SettingsView {
                 lblUpdateSub.getStyleClass().setAll("subtitle-label");
 
                 lblUpdate.setText(i18n("update"));
-                lblUpdate.getStyleClass().setAll();
             } else {
                 lblUpdateSub.setText(i18n("update.latest"));
                 lblUpdateSub.getStyleClass().setAll("subtitle-label");
 
                 lblUpdate.setText(i18n("update"));
-                lblUpdate.getStyleClass().setAll();
             }
         };
         UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));

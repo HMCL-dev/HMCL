@@ -78,7 +78,6 @@ public class MenuUpDownButton extends Control {
             HBox content = new HBox(8);
             content.setAlignment(Pos.CENTER);
             Label label = new Label();
-            label.setStyle("-fx-text-fill: black;");
             label.textProperty().bind(control.text);
 
             Node up = SVG.ARROW_DROP_UP.createIcon(Theme.blackFill(), 16);
