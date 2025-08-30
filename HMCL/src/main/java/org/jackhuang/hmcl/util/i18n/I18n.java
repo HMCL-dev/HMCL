@@ -17,10 +17,9 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
@@ -33,12 +32,10 @@ public final class I18n {
 
     private static volatile SupportedLocale locale = Locales.DEFAULT;
     private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
-    private static volatile DateTimeFormatter dateTimeFormatter;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
         resourceBundle = locale.getResourceBundle();
-        dateTimeFormatter = null;
     }
 
     public static boolean isUseChinese() {
@@ -75,12 +72,11 @@ public final class I18n {
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        DateTimeFormatter formatter = dateTimeFormatter;
-        if (formatter == null) {
-            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format")).withZone(ZoneId.systemDefault());
-        }
+        return locale.formatDateTime(time);
+    }
 
-        return formatter.format(time);
+    public static String getDisplaySelfVersion(RemoteVersion version) {
+        return locale.getDisplaySelfVersion(version);
     }
 
     public static boolean hasKey(String key) {

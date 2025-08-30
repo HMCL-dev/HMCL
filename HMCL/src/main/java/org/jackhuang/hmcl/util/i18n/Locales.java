@@ -20,8 +20,14 @@ package org.jackhuang.hmcl.util.i18n;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -65,7 +71,20 @@ public final class Locales {
     /**
      * Wenyan (Classical Chinese)
      */
-    public static final SupportedLocale WENYAN = new SupportedLocale(Locale.forLanguageTag("lzh"));
+    public static final SupportedLocale WENYAN = new SupportedLocale(Locale.forLanguageTag("lzh")) {
+        @Override
+        public String formatDateTime(TemporalAccessor time) {
+            return WenyanUtils.formatDateTime(time);
+        }
+
+        @Override
+        public String getDisplaySelfVersion(RemoteVersion version) {
+            if (version instanceof GameRemoteVersion)
+                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
+            else
+                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
+        }
+    };
 
     public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, ZH_CN, ZH, WENYAN);
 
@@ -104,9 +123,10 @@ public final class Locales {
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
-    public static final class SupportedLocale {
+    public static class SupportedLocale {
         private final Locale locale;
         private ResourceBundle resourceBundle;
+        private DateTimeFormatter dateTimeFormatter;
 
         SupportedLocale(Locale locale) {
             this.locale = locale;
@@ -160,6 +180,18 @@ public final class Locales {
             }
 
             return bundle;
+        }
+
+        public String formatDateTime(TemporalAccessor time) {
+            DateTimeFormatter formatter = dateTimeFormatter;
+            if (formatter == null)
+                formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
+                        .withZone(ZoneId.systemDefault());
+            return formatter.format(time);
+        }
+
+        public String getDisplaySelfVersion(RemoteVersion version) {
+            return version.getSelfVersion();
         }
 
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
