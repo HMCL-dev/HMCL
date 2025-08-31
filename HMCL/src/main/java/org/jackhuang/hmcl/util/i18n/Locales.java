@@ -140,7 +140,7 @@ public final class Locales {
     }
 
     public static boolean isSimplifiedChinese(Locale locale) {
-        if (locale.getLanguage().equals("zh")) {
+        if (locale.getLanguage().equals("zh") || locale.getLanguage().equals("cmn")) {
             String script = locale.getScript();
             if (script.isEmpty()) {
                 String region = locale.getCountry();
