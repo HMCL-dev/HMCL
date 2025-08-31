@@ -27,8 +27,8 @@ import java.util.Collections;
 
 public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersion> {
     private final DownloadProvider downloadProvider;
-    private static final String LOADER_LIST_URL = "https://api.github.com/repos/CleanroomMC/Cleanroom/releases";
-    private static final String INSTALLER_URL = "https://github.com/CleanroomMC/Cleanroom/releases/download/%s/cleanroom-%s-installer.jar";
+    private static final String LOADER_LIST_URL = "https://hmcl-dev.github.io/metadata/cleanroom/";
+    private static final String INSTALLER_URL = "https://hmcl-dev.github.io/metadata/cleanroom/files/cleanroom-%s-installer.jar";
 
     public CleanroomVersionList(DownloadProvider downloadProvider) {
         this.downloadProvider = downloadProvider;
