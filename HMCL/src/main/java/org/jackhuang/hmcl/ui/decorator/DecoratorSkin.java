@@ -53,7 +53,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
     private final StackPane titleContainer;
     private final Stage primaryStage;
-    private final TransitionPane navBarPane;
+    private TransitionPane navBarPane = null;
 
     private final InvalidationListener onWindowsStatusChange;
 
@@ -192,6 +192,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             titleBar.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
                 if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                    Node backButton = navBarPane.lookup("#backNavButton");
+                    if (backButton.contains(event.getSceneX(), event.getSceneY())) {
+                        event.consume();
+                        return;
+                    }
+
                     primaryStage.setMaximized(!primaryStage.isMaximized());
                     event.consume();
                 }
@@ -271,6 +277,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
             if (canBack) {
                 JFXButton backNavButton = new JFXButton();
+                backNavButton.setId("backNavButton");
                 backNavButton.setFocusTraversable(false);
                 backNavButton.setGraphic(SVG.ARROW_BACK.createIcon(Theme.foregroundFillBinding(), -1));
                 backNavButton.getStyleClass().add("jfx-decorator-button");
