@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -43,6 +44,19 @@ public final class NetworkUtils {
     public static final int TIME_OUT = 8000;
 
     private NetworkUtils() {
+    }
+
+    public static boolean isLoopbackAddress(URI uri) {
+        String host = uri.getHost();
+        if (StringUtils.isBlank(host))
+            return false;
+
+        try {
+            InetAddress addr = InetAddress.getByName(host);
+            return addr.isLoopbackAddress();
+        } catch (UnknownHostException e) {
+            return false;
+        }
     }
 
     public static boolean isHttpUri(URI uri) {
@@ -186,8 +200,8 @@ public final class NetworkUtils {
                         }
                     }
 
-                    // Invalid surrogate pair, encode as '?'
-                    builder.append("%3F");
+                    // Invalid surrogate pair, encode as U+FFFD (replacement character)
+                    encodeCodePoint(builder, 0xfffd);
                     continue;
                 }
 

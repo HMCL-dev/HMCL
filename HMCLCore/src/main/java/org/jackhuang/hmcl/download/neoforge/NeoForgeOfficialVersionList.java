@@ -20,7 +20,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
 
     @Override
     public boolean hasType() {
-        return false;
+        return true;
     }
 
     private static final String OLD_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge";

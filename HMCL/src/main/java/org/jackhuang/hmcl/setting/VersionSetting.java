@@ -797,14 +797,6 @@ public final class VersionSetting implements Cloneable, Observable {
             return obj;
         }
 
-        private static <T> T getOrDefault(T[] values, JsonElement index, T defaultValue) {
-            if (index == null)
-                return defaultValue;
-
-            int idx = index.getAsInt();
-            return idx >= 0 && idx < values.length ? values[idx] : defaultValue;
-        }
-
         @Override
         public VersionSetting deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject))
@@ -839,14 +831,14 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
-            vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
+            vs.setLauncherVisibility(parseJsonPrimitive(obj.getAsJsonPrimitive("launcherVisibility"), LauncherVisibility.class, LauncherVisibility.HIDE));
+            vs.setProcessPriority(parseJsonPrimitive(obj.getAsJsonPrimitive("processPriority"), ProcessPriority.class, ProcessPriority.NORMAL));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
+            vs.setGameDirType(parseJsonPrimitive(obj.getAsJsonPrimitive("gameDirType"), GameDirectoryType.class, GameDirectoryType.ROOT_FOLDER));
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
-            vs.setNativesDirType(getOrDefault(NativesDirectoryType.values(), obj.get("nativesDirType"), NativesDirectoryType.VERSION_FOLDER));
-            vs.setVersionIcon(getOrDefault(VersionIconType.values(), obj.get("versionIcon"), VersionIconType.DEFAULT));
+            vs.setNativesDirType(parseJsonPrimitive(obj.getAsJsonPrimitive("nativesDirType"), NativesDirectoryType.class, NativesDirectoryType.VERSION_FOLDER));
+            vs.setVersionIcon(parseJsonPrimitive(obj.getAsJsonPrimitive("versionIcon"), VersionIconType.class, VersionIconType.DEFAULT));
 
             if (obj.get("javaVersionType") != null) {
                 JavaVersionType javaVersionType = parseJsonPrimitive(obj.getAsJsonPrimitive("javaVersionType"), JavaVersionType.class, JavaVersionType.AUTO);

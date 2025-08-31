@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -217,8 +218,10 @@ public final class Controllers {
             if (targetProperty != null
                     && Controllers.stage != null
                     && !Controllers.stage.isIconified()
-                    && !Controllers.stage.isFullScreen()
-                    && !Controllers.stage.isMaximized()) {
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
+                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
+            ) {
                 targetProperty.set(sourceProperty.get());
             }
         };
@@ -320,6 +323,27 @@ public final class Controllers {
                 Controllers.dialog(i18n("fatal.unsupported_platform.loongarch"), null, MessageType.INFO, continueAction);
             } else {
                 Controllers.dialog(i18n("fatal.unsupported_platform"), null, MessageType.WARNING, continueAction);
+            }
+        }
+
+        if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
+            Number shownTipVersion = null;
+            try {
+                shownTipVersion = (Number) config().getShownTips().get(JAVA_VERSION_TIP);
+            } catch (ClassCastException e) {
+                LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
+            }
+            if (shownTipVersion == null || shownTipVersion.intValue() < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
+                MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
+                String downloadLink = Metadata.getSuggestedJavaDownloadLink();
+                if (downloadLink != null)
+                    builder.addHyperLink(
+                            i18n("fatal.deprecated_java_version.download_link", Metadata.RECOMMENDED_JAVA_VERSION),
+                            downloadLink
+                    );
+                Controllers.dialog(builder
+                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
+                        .build());
             }
         }
 

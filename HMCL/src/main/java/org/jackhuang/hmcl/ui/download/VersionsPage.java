@@ -182,7 +182,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             setGraphic(pane);
 
-            content.setTitle(remoteVersion.getSelfVersion());
+            content.setTitle(I18n.getDisplaySelfVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 content.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
@@ -190,8 +190,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
 
             if (remoteVersion instanceof GameRemoteVersion) {
+                RemoteVersion.Type versionType = remoteVersion.getVersionType();
                 String wikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
-                switch (remoteVersion.getVersionType()) {
+                switch (versionType) {
                     case RELEASE:
                         content.getTags().setAll(i18n("version.game.release"));
                         content.setImage(VersionIconType.GRASS.getIcon());
@@ -199,7 +200,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         break;
                     case PENDING:
                     case SNAPSHOT:
-                        if (GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isSpecial()) {
+                        if (versionType == RemoteVersion.Type.SNAPSHOT
+                                && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
                             content.getTags().setAll(i18n("version.game.april_fools"));
                             content.setImage(VersionIconType.APRIL_FOOLS.getIcon());
                         } else {
@@ -493,7 +495,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                                     || versionType == RemoteVersion.Type.PENDING;
                         case APRIL_FOOLS:
                             return versionType == RemoteVersion.Type.SNAPSHOT
-                                    && GameVersionNumber.asGameVersion(it.getGameVersion()).isSpecial();
+                                    && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
                         case OLD:
                             return versionType == RemoteVersion.Type.OLD;
                         case ALL:
