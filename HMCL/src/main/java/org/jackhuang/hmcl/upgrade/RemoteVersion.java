@@ -36,8 +36,9 @@ public final class RemoteVersion {
             String jarUrl = Optional.ofNullable(response.get("jar")).map(JsonElement::getAsString).orElse(null);
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
             boolean force = Optional.ofNullable(response.get("force")).map(JsonElement::getAsBoolean).orElse(false);
+            boolean preview = Optional.ofNullable(response.get("preview")).map(JsonElement::getAsBoolean).orElse(false);
             if (jarUrl != null && jarHash != null) {
-                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), force);
+                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), preview, force);
             } else {
                 throw new IOException("No download url is available");
             }
@@ -51,14 +52,16 @@ public final class RemoteVersion {
     private final String url;
     private final Type type;
     private final IntegrityCheck integrityCheck;
+    private final boolean preview;
     private final boolean force;
 
-    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck, boolean force) {
+    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck, boolean preview, boolean force) {
         this.channel = channel;
         this.version = version;
         this.url = url;
         this.type = type;
         this.integrityCheck = integrityCheck;
+        this.preview = preview;
         this.force = force;
     }
 
@@ -80,6 +83,10 @@ public final class RemoteVersion {
 
     public IntegrityCheck getIntegrityCheck() {
         return integrityCheck;
+    }
+
+    public boolean isPreview() {
+        return preview;
     }
 
     public boolean isForce() {
