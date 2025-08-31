@@ -133,10 +133,15 @@ public final class Locales {
         return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
     }
 
-    private static final Set<String> CHINESE_LANGUAGES = Set.of("zh", "lzh", "cmn");
-
     public static boolean isChinese(Locale locale) {
-        return CHINESE_LANGUAGES.contains(locale.getLanguage());
+        switch (locale.getLanguage()) {
+            case "zh":
+            case "lzh":
+            case "cmn":
+                return true;
+            default:
+                return false;
+        }
     }
 
     public static boolean isSimplifiedChinese(Locale locale) {
