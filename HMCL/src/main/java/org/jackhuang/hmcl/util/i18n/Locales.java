@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -184,35 +185,8 @@ public final class Locales {
 
         public ResourceBundle getResourceBundle() {
             ResourceBundle bundle = resourceBundle;
-
-            if (resourceBundle == null) {
-                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
-                    @Override
-                    public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-                        if (isSimplifiedChinese(locale)) {
-                            return List.of(
-                                    Locale.SIMPLIFIED_CHINESE,
-                                    Locale.CHINESE,
-                                    Locale.ROOT
-                            );
-                        }
-
-                        if (locale.getLanguage().equals("lzh")) {
-                            return List.of(
-                                    locale,
-                                    Locale.CHINESE,
-                                    Locale.ROOT
-                            );
-                        }
-
-                        if (locale.getLanguage().equals("en")) {
-                            return List.of(Locale.ROOT);
-                        }
-
-                        return super.getCandidateLocales(baseName, locale);
-                    }
-                });
-            }
+            if (resourceBundle == null)
+                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, ResourceBundleControl.INSTANCE);
 
             return bundle;
         }
@@ -245,5 +219,42 @@ public final class Locales {
                 return getLocaleByName(in.nextString());
             }
         }
+    }
+
+    public static final class ResourceBundleControl extends ResourceBundle.Control {
+        public static final ResourceBundleControl INSTANCE = new ResourceBundleControl();
+
+        @Override
+        public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+            List<Locale> candidateLocales = super.getCandidateLocales(baseName, locale);
+            if (isChinese(locale)) {
+                int idx = candidateLocales.indexOf(Locale.CHINESE);
+                if (idx < 0) {
+                    if (!(candidateLocales instanceof ArrayList))
+                        candidateLocales = new ArrayList<>(candidateLocales);
+
+                    int i = candidateLocales.size() - 1;
+                    while (i >= 0) {
+                        Locale l = candidateLocales.get(i);
+                        if (!isEnglish(l))
+                            break;
+                        i--;
+                    }
+                    candidateLocales.add(i + 1, locale);
+                }
+            }
+
+            if (isSimplifiedChinese(locale)) {
+                int idx = candidateLocales.indexOf(Locale.SIMPLIFIED_CHINESE);
+                if (idx < 0) {
+                    if (!(candidateLocales instanceof ArrayList))
+                        candidateLocales = new ArrayList<>(candidateLocales);
+                    candidateLocales.add(0, Locale.SIMPLIFIED_CHINESE);
+                }
+            }
+
+            return candidateLocales;
+        }
+
     }
 }
