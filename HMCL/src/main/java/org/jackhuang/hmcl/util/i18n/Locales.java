@@ -186,7 +186,7 @@ public final class Locales {
         public ResourceBundle getResourceBundle() {
             ResourceBundle bundle = resourceBundle;
             if (resourceBundle == null)
-                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, ResourceBundleControl.INSTANCE);
+                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, Control.INSTANCE);
 
             return bundle;
         }
@@ -221,8 +221,8 @@ public final class Locales {
         }
     }
 
-    public static final class ResourceBundleControl extends ResourceBundle.Control {
-        public static final ResourceBundleControl INSTANCE = new ResourceBundleControl();
+    public static final class Control extends ResourceBundle.Control {
+        public static final Control INSTANCE = new Control();
 
         @Override
         public List<Locale> getCandidateLocales(String baseName, Locale locale) {
@@ -240,7 +240,7 @@ public final class Locales {
                             break;
                         i--;
                     }
-                    candidateLocales.add(i + 1, locale);
+                    candidateLocales.add(i + 1, Locale.CHINESE);
                 }
             }
 
