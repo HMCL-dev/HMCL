@@ -141,7 +141,7 @@ public final class Locales {
             String script = locale.getScript();
             if (script.isEmpty()) {
                 String region = locale.getCountry();
-                return region.equals("CN") || region.equals("SG") || region.equals("MY");
+                return region.isEmpty() || region.equals("CN") || region.equals("SG") || region.equals("MY");
             } else
                 return script.equals("Hans");
         } else {
