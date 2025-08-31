@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public final class LocalesTest {
 
     private static void printCandidateLocales(String languageTag) {
-        System.out.println("Locale " + languageTag + ": " +
+        System.out.println("Candidate Locales for " + languageTag + ": " +
                 Locales.Control.INSTANCE.getCandidateLocales("", Locale.forLanguageTag(languageTag))
                         .stream()
                         .map(Locale::toLanguageTag)
@@ -45,9 +45,14 @@ public final class LocalesTest {
         printCandidateLocales("zh-CN");
         printCandidateLocales("zh-Hans");
         printCandidateLocales("zh-Hant");
-        printCandidateLocales("zh-JP-Hans");
+        printCandidateLocales("zh-Hans-JP");
+        printCandidateLocales("zh-JP");
+        printCandidateLocales("zh-TW");
+        printCandidateLocales("zh-SG");
         printCandidateLocales("lzh");
         printCandidateLocales("cmn");
         printCandidateLocales("cmn-Hans");
+        printCandidateLocales("und");
+        printCandidateLocales("en");
     }
 }

@@ -229,6 +229,8 @@ public final class Locales {
             List<Locale> candidateLocales = super.getCandidateLocales(baseName, locale);
             if (isChinese(locale)) {
                 int idx = candidateLocales.indexOf(Locale.CHINESE);
+
+                // For "lzh" and "cmn"
                 if (idx < 0) {
                     if (!(candidateLocales instanceof ArrayList))
                         candidateLocales = new ArrayList<>(candidateLocales);
