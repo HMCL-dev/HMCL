@@ -77,14 +77,14 @@ public final class Locales {
     public static final SupportedLocale JA = new SupportedLocale("ja", Locale.JAPANESE);
 
     /**
-     * Traditional Chinese
-     */
-    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
-
-    /**
-     * Simplified Chinese
+     * Chinese (Simplified)
      */
     public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans"));
+
+    /**
+     * Chinese (Traditional)
+     */
+    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
 
     /**
      * Wenyan (Classical Chinese)
