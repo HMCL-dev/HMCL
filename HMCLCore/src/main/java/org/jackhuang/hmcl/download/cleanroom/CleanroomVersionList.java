@@ -52,7 +52,7 @@ public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersi
                     versions.put("1.12.2", new CleanroomRemoteVersion(
                             "1.12.2", version.name, Instant.parse(version.created_at),
                             Collections.singletonList(
-                                    String.format(INSTALLER_URL, version.name, version.name)
+                                    String.format(INSTALLER_URL, version.name)
                             )
                     ));
                 }
