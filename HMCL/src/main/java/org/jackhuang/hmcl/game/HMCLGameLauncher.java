@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
@@ -72,8 +73,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
         if (Files.isDirectory(configFolder)) {
             try (Stream<Path> stream = Files.walk(configFolder, 2, FileVisitOption.FOLLOW_LINKS)) {
-                if (stream.anyMatch(file ->
-                        Files.isRegularFile(file) && "options.txt".equals(file.getFileName().toString())))
+                if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file))))
                     return;
             } catch (IOException e) {
                 LOG.warning("Failed to visit config folder", e);
