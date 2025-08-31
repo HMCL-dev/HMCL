@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Glavo
@@ -29,11 +31,10 @@ import java.util.stream.Collectors;
 public final class LocalesTest {
 
     private static void printCandidateLocales(String languageTag) {
-        System.out.println("Candidate Locales for " + languageTag + ": " +
+        System.out.println("Bundles for " + languageTag + ": " +
                 Locales.Control.INSTANCE.getCandidateLocales("", Locale.forLanguageTag(languageTag))
                         .stream()
-                        .map(Locale::toLanguageTag)
-                        .map(it -> '"' + it + '"')
+                        .map(locale -> Locales.Control.INSTANCE.toBundleName("I18N", locale))
                         .collect(Collectors.toList())
         );
     }
@@ -54,5 +55,34 @@ public final class LocalesTest {
         printCandidateLocales("cmn-Hans");
         printCandidateLocales("und");
         printCandidateLocales("en");
+    }
+
+    @Test
+    public void testIsChinese() {
+        assertTrue(Locales.isChinese(Locale.CHINESE));
+        assertTrue(Locales.isChinese(Locale.SIMPLIFIED_CHINESE));
+        assertTrue(Locales.isChinese(Locale.TRADITIONAL_CHINESE));
+        assertTrue(Locales.isChinese(Locale.forLanguageTag("lzh")));
+        assertTrue(Locales.isChinese(Locale.forLanguageTag("cmn")));
+        assertTrue(Locales.isChinese(Locale.forLanguageTag("cmn-Hans")));
+    }
+
+    @Test
+    public void testIsSimplifiedChinese() {
+        assertTrue(Locales.isSimplifiedChinese(Locale.CHINESE));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-Hans")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-Hans-JP")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-SG")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-MY")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("cmn")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("cmn-Hans")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("cmn-CN")));
+
+        assertFalse(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-Hant")));
+        assertFalse(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-TW")));
+        assertFalse(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-HK")));
+        assertFalse(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-MO")));
+        assertFalse(Locales.isSimplifiedChinese(Locale.forLanguageTag("cmn-Hant")));
     }
 }
