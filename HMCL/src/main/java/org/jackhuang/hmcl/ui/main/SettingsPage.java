@@ -71,7 +71,7 @@ public final class SettingsPage extends SettingsView {
         cboLanguage.getItems().setAll(Locales.LOCALES);
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
 
-        noAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
+        disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
         // ====
 
         fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());

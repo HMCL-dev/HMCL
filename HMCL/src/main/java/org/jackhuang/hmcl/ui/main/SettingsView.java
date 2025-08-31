@@ -51,7 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class SettingsView extends StackPane {
     protected final JFXComboBox<SupportedLocale> cboLanguage;
-    protected final OptionToggleButton noAutoGameOptionsPane;
+    protected final OptionToggleButton disableAutoGameOptionsPane;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
     protected final ComponentSublist fileCommonLocationSublist;
     protected final Label lblUpdate;
@@ -196,10 +196,10 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
-                    noAutoGameOptionsPane = new OptionToggleButton();
-                    noAutoGameOptionsPane.setTitle(i18n("settings.launcher.no_auto_game_options"));
+                    disableAutoGameOptionsPane = new OptionToggleButton();
+                    disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
 
-                    settingsPane.getContent().add(noAutoGameOptionsPane);
+                    settingsPane.getContent().add(disableAutoGameOptionsPane);
                 }
 
                 {
