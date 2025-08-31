@@ -76,14 +76,14 @@ public final class Locales {
     public static final SupportedLocale JA = new SupportedLocale("ja", Locale.JAPANESE);
 
     /**
-     * Traditional Chinese
-     */
-    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
-
-    /**
-     * Simplified Chinese
+     * Chinese (Simplified)
      */
     public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans"));
+
+    /**
+     * Chinese (Traditional)
+     */
+    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
 
     /**
      * Wenyan (Classical Chinese)
@@ -133,7 +133,27 @@ public final class Locales {
     }
 
     public static boolean isChinese(Locale locale) {
-        return locale.getLanguage().equals("zh") || locale.getLanguage().equals("lzh");
+        switch (locale.getLanguage()) {
+            case "zh":
+            case "lzh":
+            case "cmn":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isSimplifiedChinese(Locale locale) {
+        if (locale.getLanguage().equals("zh") || locale.getLanguage().equals("cmn")) {
+            String script = locale.getScript();
+            if (script.isEmpty()) {
+                String region = locale.getCountry();
+                return region.isEmpty() || region.equals("CN") || region.equals("SG") || region.equals("MY");
+            } else
+                return script.equals("Hans");
+        } else {
+            return false;
+        }
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
@@ -166,26 +186,15 @@ public final class Locales {
             ResourceBundle bundle = resourceBundle;
 
             if (resourceBundle == null) {
-                bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
+                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, new ResourceBundle.Control() {
                     @Override
                     public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-                        if (locale.getLanguage().equals("zh")) {
-                            boolean simplified;
-
-                            String script = locale.getScript();
-                            String region = locale.getCountry();
-                            if (script.isEmpty())
-                                simplified = region.equals("CN") || region.equals("SG");
-                            else
-                                simplified = script.equals("Hans");
-
-                            if (simplified) {
-                                return List.of(
-                                        Locale.SIMPLIFIED_CHINESE,
-                                        Locale.CHINESE,
-                                        Locale.ROOT
-                                );
-                            }
+                        if (isSimplifiedChinese(locale)) {
+                            return List.of(
+                                    Locale.SIMPLIFIED_CHINESE,
+                                    Locale.CHINESE,
+                                    Locale.ROOT
+                            );
                         }
 
                         if (locale.getLanguage().equals("lzh")) {
@@ -203,7 +212,6 @@ public final class Locales {
                         return super.getCandidateLocales(baseName, locale);
                     }
                 });
-                resourceBundle = bundle;
             }
 
             return bundle;
