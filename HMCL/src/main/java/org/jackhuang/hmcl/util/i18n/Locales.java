@@ -31,6 +31,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -132,8 +133,10 @@ public final class Locales {
         return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
     }
 
+    private static final Set<String> CHINESE_LANGUAGES = Set.of("zh", "lzh", "cmn");
+
     public static boolean isChinese(Locale locale) {
-        return locale.getLanguage().equals("zh") || locale.getLanguage().equals("lzh");
+        return CHINESE_LANGUAGES.contains(locale.getLanguage());
     }
 
     public static boolean isSimplifiedChinese(Locale locale) {
