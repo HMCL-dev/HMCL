@@ -116,9 +116,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
         switch (language) {
             case "zh":
-                if (Locales.isSimplifiedChinese(locale)) {
+            case "cmn":
+                if (Locales.isSimplifiedChinese(locale))
                     return "zh_CN";
-                } else {
+                else {
                     if (gameVersion.compareTo("1.16") >= 0
                             && (region.equals("HK") || region.equals("MO")))
                         return "zh_HK";
