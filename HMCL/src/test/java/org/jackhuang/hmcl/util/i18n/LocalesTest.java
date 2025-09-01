@@ -37,7 +37,6 @@ public final class LocalesTest {
                         .collect(Collectors.toList()));
     }
 
-    // Just for Manual Test
     @Test
     public void testGetCandidateLocales() {
         assertCandidateLocales("zh", List.of("zh-CN", "zh", "und"));
