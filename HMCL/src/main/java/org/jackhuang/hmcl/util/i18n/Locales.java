@@ -226,7 +226,7 @@ public final class Locales {
                 return ":lang=" + lang + ":charset=" + charset;
             }
 
-            return country.isEmpty() ? country : language + "-" + country;
+            return country.isEmpty() ? language : language + "-" + country;
         }
 
         public boolean isSameLanguage(SupportedLocale other) {
