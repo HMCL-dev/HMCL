@@ -21,10 +21,34 @@ import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 public final class MinecraftWiki {
 
+    private static final Pattern SNAPSHOT_PATTERN = Pattern.compile("^[0-9]{2}w[0-9]{2}.+$");
+
     public static String getWikiLink(Locales.SupportedLocale locale, GameRemoteVersion version) {
+        String wikiVersion = version.getSelfVersion();
+        var gameVersion = GameVersionNumber.asGameVersion(wikiVersion);
+
+        if (locale.getLocale().getLanguage().equals("lzh")) {
+            String translatedVersion;
+            if (wikiVersion.startsWith("2.0"))
+                translatedVersion = "二點〇";
+            else if (wikiVersion.startsWith("1.0.0-rc2"))
+                translatedVersion = WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion("1.0.0-rc2"));
+            else
+                translatedVersion = WenyanUtils.translateGameVersion(gameVersion);
+
+            if (translatedVersion.equals(gameVersion.toString()) || gameVersion instanceof GameVersionNumber.Old) {
+                return getWikiLink(Locales.ZH_HANT, version);
+            } else if (SNAPSHOT_PATTERN.matcher(wikiVersion).matches()) {
+                return locale.i18n("wiki.version.game.snapshot", translatedVersion);
+            } else {
+                return locale.i18n("wiki.version.game", translatedVersion);
+            }
+        }
+
         String variantSuffix;
         if (Locales.isChinese(locale.getLocale())) {
             if (Locales.isSimplifiedChinese(locale.getLocale()))
@@ -35,9 +59,6 @@ public final class MinecraftWiki {
                 variantSuffix = "?variant=zh-tw";
         } else
             variantSuffix = "";
-
-        String wikiVersion = version.getSelfVersion();
-        var gameVersion = GameVersionNumber.asGameVersion(wikiVersion);
 
         replace:
         if (gameVersion instanceof GameVersionNumber.Release) {
@@ -52,7 +73,7 @@ public final class MinecraftWiki {
         } else {
             if (wikiVersion.length() >= 6 && wikiVersion.charAt(2) == 'w') {
                 // Starting from 2020, all April Fools' versions follow this pattern
-                if (wikiVersion.matches("[0-9]{2}w[0-9]{2}.+")) {
+                if (SNAPSHOT_PATTERN.matcher(wikiVersion).matches()) {
                     if (wikiVersion.equals("22w13oneblockatatime"))
                         wikiVersion = "22w13oneBlockAtATime";
                     return locale.i18n("wiki.version.game.snapshot", wikiVersion) + variantSuffix;
@@ -155,5 +176,8 @@ public final class MinecraftWiki {
         }
 
         return locale.i18n("wiki.version.game", wikiVersion) + variantSuffix;
+    }
+
+    private MinecraftWiki() {
     }
 }

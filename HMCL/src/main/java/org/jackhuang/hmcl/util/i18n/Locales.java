@@ -22,7 +22,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.game.ReleaseType;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -250,8 +249,6 @@ public final class Locales {
 
             return region.isEmpty() ? language : language + "-" + region;
         }
-
-
 
         public boolean isSameLanguage(SupportedLocale other) {
             return this.getLocale().getLanguage().equals(other.getLocale().getLanguage())
