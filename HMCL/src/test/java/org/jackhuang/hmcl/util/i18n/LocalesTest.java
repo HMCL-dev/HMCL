@@ -19,43 +19,43 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Glavo
  */
 public final class LocalesTest {
-
-    private static void printCandidateLocales(String languageTag) {
-        System.out.println("Bundles for " + languageTag + ": " +
+    private static void assertCandidateLocales(String languageTag, List<String> candidateLocales) {
+        assertEquals(candidateLocales,
                 Locales.Control.INSTANCE.getCandidateLocales("", Locale.forLanguageTag(languageTag))
                         .stream()
-                        .map(locale -> Locales.Control.INSTANCE.toBundleName("I18N", locale))
-                        .collect(Collectors.toList())
-        );
+                        .map(Locale::toLanguageTag)
+                        .collect(Collectors.toList()));
     }
 
     // Just for Manual Test
     @Test
     public void testGetCandidateLocales() {
-        printCandidateLocales("zh");
-        printCandidateLocales("zh-CN");
-        printCandidateLocales("zh-Hans");
-        printCandidateLocales("zh-Hant");
-        printCandidateLocales("zh-Hans-JP");
-        printCandidateLocales("zh-JP");
-        printCandidateLocales("zh-TW");
-        printCandidateLocales("zh-SG");
-        printCandidateLocales("lzh");
-        printCandidateLocales("cmn");
-        printCandidateLocales("cmn-Hans");
-        printCandidateLocales("und");
-        printCandidateLocales("en");
+        assertCandidateLocales("zh", List.of("zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-CN", List.of("zh-Hans-CN", "zh-Hans", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-Hans", List.of("zh-Hans", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-Hant", List.of("zh-Hant", "zh-TW", "zh", "und"));
+        assertCandidateLocales("zh-Hans-JP", List.of("zh-Hans-JP", "zh-Hans", "zh-JP", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-JP", List.of("zh-JP", "zh", "und"));
+        assertCandidateLocales("zh-TW", List.of("zh-Hant-TW", "zh-Hant", "zh-TW", "zh", "und"));
+        assertCandidateLocales("zh-SG", List.of("zh-Hans-SG", "zh-Hans", "zh-SG", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-MY", List.of("zh-MY", "zh-CN", "zh", "und"));
+        assertCandidateLocales("lzh", List.of("lzh", "zh", "und"));
+        assertCandidateLocales("cmn", List.of("cmn", "zh-CN", "zh", "und"));
+        assertCandidateLocales("cmn-Hans", List.of("cmn-Hans", "cmn", "zh-CN", "zh", "und"));
+        assertCandidateLocales("en", List.of("en", "und"));
+        assertCandidateLocales("und", List.of("en", "und"));
     }
+
 
     @Test
     public void testIsChinese() {

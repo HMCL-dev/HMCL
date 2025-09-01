@@ -254,10 +254,10 @@ public final class Locales {
         public List<Locale> getCandidateLocales(String baseName, Locale locale) {
             List<Locale> candidateLocales = super.getCandidateLocales(baseName, locale);
             if (isChinese(locale)) {
-                int idx = candidateLocales.indexOf(Locale.CHINESE);
+                int chineseIndex = candidateLocales.indexOf(Locale.CHINESE);
 
                 // For "lzh" and "cmn"
-                if (idx < 0) {
+                if (chineseIndex < 0) {
                     if (!(candidateLocales instanceof ArrayList))
                         candidateLocales = new ArrayList<>(candidateLocales);
 
@@ -268,17 +268,25 @@ public final class Locales {
                             break;
                         i--;
                     }
-                    candidateLocales.add(i + 1, Locale.CHINESE);
+
+                    chineseIndex = i + 1;
+                    candidateLocales.add(chineseIndex, Locale.CHINESE);
+                }
+
+                if (isSimplifiedChinese(locale)) {
+                    if (!candidateLocales.contains(Locale.SIMPLIFIED_CHINESE)) {
+                        if (!(candidateLocales instanceof ArrayList))
+                            candidateLocales = new ArrayList<>(candidateLocales);
+                        candidateLocales.add(chineseIndex, Locale.SIMPLIFIED_CHINESE);
+                    }
                 }
             }
 
-            if (isSimplifiedChinese(locale)) {
-                int idx = candidateLocales.indexOf(Locale.SIMPLIFIED_CHINESE);
-                if (idx < 0) {
-                    if (!(candidateLocales instanceof ArrayList))
-                        candidateLocales = new ArrayList<>(candidateLocales);
-                    candidateLocales.add(0, Locale.SIMPLIFIED_CHINESE);
-                }
+            if (candidateLocales.size() == 1 && candidateLocales.get(0).getLanguage().isEmpty()) {
+                if (!(candidateLocales instanceof ArrayList))
+                    candidateLocales = new ArrayList<>(candidateLocales);
+
+                candidateLocales.add(0, Locale.ENGLISH);
             }
 
             return candidateLocales;
