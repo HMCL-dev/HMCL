@@ -43,7 +43,7 @@ public final class I18n {
     }
 
     public static boolean isUseChinese() {
-        return locale.getLocale().getLanguage().equals("zh");
+        return Locales.isChinese(locale.getLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
