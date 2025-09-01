@@ -44,14 +44,18 @@ public final class LocalesTest {
         assertCandidateLocales("zh-CN", List.of("zh-Hans-CN", "zh-Hans", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-Hans", List.of("zh-Hans", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-Hant", List.of("zh-Hant", "zh-TW", "zh", "und"));
-        assertCandidateLocales("zh-Hans-JP", List.of("zh-Hans-JP", "zh-Hans", "zh-JP", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-JP", List.of("zh-JP", "zh", "und"));
+        assertCandidateLocales("zh-Hans-US", List.of("zh-Hans-US", "zh-Hans", "zh-US", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-US", List.of("zh-US", "zh", "und"));
         assertCandidateLocales("zh-TW", List.of("zh-Hant-TW", "zh-Hant", "zh-TW", "zh", "und"));
         assertCandidateLocales("zh-SG", List.of("zh-Hans-SG", "zh-Hans", "zh-SG", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-MY", List.of("zh-MY", "zh-CN", "zh", "und"));
         assertCandidateLocales("lzh", List.of("lzh", "zh", "und"));
         assertCandidateLocales("cmn", List.of("cmn", "zh-CN", "zh", "und"));
         assertCandidateLocales("cmn-Hans", List.of("cmn-Hans", "cmn", "zh-CN", "zh", "und"));
+
+        assertCandidateLocales("ja", List.of("ja", "und"));
+        assertCandidateLocales("ja-JP", List.of("ja-JP", "ja", "und"));
+
         assertCandidateLocales("en", List.of("en", "und"));
         assertCandidateLocales("und", List.of("en", "und"));
     }
@@ -71,7 +75,7 @@ public final class LocalesTest {
         assertTrue(Locales.isSimplifiedChinese(Locale.CHINESE));
         assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh")));
         assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-Hans")));
-        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-Hans-JP")));
+        assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-Hans-US")));
         assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-SG")));
         assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("zh-MY")));
         assertTrue(Locales.isSimplifiedChinese(Locale.forLanguageTag("cmn")));
