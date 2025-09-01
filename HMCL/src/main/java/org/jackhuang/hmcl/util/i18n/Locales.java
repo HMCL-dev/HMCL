@@ -188,6 +188,27 @@ public final class Locales {
             return bundle;
         }
 
+        public String i18n(String key, Object... formatArgs) {
+            try {
+                return String.format(getResourceBundle().getString(key), formatArgs);
+            } catch (MissingResourceException e) {
+                LOG.error("Cannot find key " + key + " in resource bundle", e);
+            } catch (IllegalFormatException e) {
+                LOG.error("Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
+            }
+
+            return key + Arrays.toString(formatArgs);
+        }
+
+        public String i18n(String key) {
+            try {
+                return getResourceBundle().getString(key);
+            } catch (MissingResourceException e) {
+                LOG.error("Cannot find key " + key + " in resource bundle", e);
+                return key;
+            }
+        }
+
         public String formatDateTime(TemporalAccessor time) {
             DateTimeFormatter formatter = dateTimeFormatter;
             if (formatter == null)
@@ -202,7 +223,7 @@ public final class Locales {
 
         public String getFcMatchPattern() {
             String language = locale.getLanguage();
-            String country = locale.getCountry();
+            String region = locale.getCountry();
 
             if (isEnglish(locale))
                 return "";
@@ -212,13 +233,13 @@ public final class Locales {
                 String charset;
 
                 if (isSimplifiedChinese(locale)) {
-                    lang = country.equals("SG") || country.equals("MY")
-                            ? "zh-" + country
+                    lang = region.equals("SG") || region.equals("MY")
+                            ? "zh-" + region
                             : "zh-CN";
                     charset = "0x6e38,0x620f";
                 } else {
-                    lang = country.equals("HK") || country.equals("MO")
-                            ? "zh-" + country
+                    lang = region.equals("HK") || region.equals("MO")
+                            ? "zh-" + region
                             : "zh-TW";
                     charset = "0x904a,0x6232";
                 }
@@ -226,7 +247,7 @@ public final class Locales {
                 return ":lang=" + lang + ":charset=" + charset;
             }
 
-            return country.isEmpty() ? language : language + "-" + country;
+            return region.isEmpty() ? language : language + "-" + region;
         }
 
         public boolean isSameLanguage(SupportedLocale other) {
