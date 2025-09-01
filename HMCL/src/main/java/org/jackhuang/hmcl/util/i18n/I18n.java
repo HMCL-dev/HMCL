@@ -23,8 +23,6 @@ import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 public final class I18n {
 
     private I18n() {
@@ -51,24 +49,11 @@ public final class I18n {
     }
 
     public static String i18n(String key, Object... formatArgs) {
-        try {
-            return String.format(getResourceBundle().getString(key), formatArgs);
-        } catch (MissingResourceException e) {
-            LOG.error("Cannot find key " + key + " in resource bundle", e);
-        } catch (IllegalFormatException e) {
-            LOG.error("Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
-        }
-
-        return key + Arrays.toString(formatArgs);
+        return locale.i18n(key, formatArgs);
     }
 
     public static String i18n(String key) {
-        try {
-            return getResourceBundle().getString(key);
-        } catch (MissingResourceException e) {
-            LOG.error("Cannot find key " + key + " in resource bundle", e);
-            return key;
-        }
+        return locale.i18n(key);
     }
 
     public static String formatDateTime(TemporalAccessor time) {
