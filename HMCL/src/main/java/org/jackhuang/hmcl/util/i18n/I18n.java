@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
 import java.time.temporal.TemporalAccessor;
@@ -62,6 +63,10 @@ public final class I18n {
 
     public static String getDisplaySelfVersion(RemoteVersion version) {
         return locale.getDisplaySelfVersion(version);
+    }
+
+    public static String getWikiLink(GameRemoteVersion remoteVersion) {
+        return MinecraftWiki.getWikiLink(locale, remoteVersion);
     }
 
     public static boolean hasKey(String key) {

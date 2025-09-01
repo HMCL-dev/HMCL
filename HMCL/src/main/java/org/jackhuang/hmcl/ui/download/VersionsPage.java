@@ -211,7 +211,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         break;
                 }
-                content.setExternalLink(I18n.getLocale().getWikiLink(GameVersionNumber.asGameVersion(remoteVersion.getSelfVersion())));
+                content.setExternalLink(I18n.getWikiLink((GameRemoteVersion) remoteVersion));
             } else {
                 VersionIconType iconType;
                 if (remoteVersion instanceof LiteLoaderRemoteVersion)
