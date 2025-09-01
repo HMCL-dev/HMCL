@@ -56,7 +56,6 @@ public final class LocalesTest {
         assertCandidateLocales("und", List.of("en", "und"));
     }
 
-
     @Test
     public void testIsChinese() {
         assertTrue(Locales.isChinese(Locale.CHINESE));
