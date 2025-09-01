@@ -22,6 +22,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
@@ -69,10 +71,10 @@ public final class FontManager {
                 return font;
         }
 
+        String fcMatchPattern;
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
-                && Locale.getDefault() != Locale.ROOT
-                && !"en".equals(Locale.getDefault().getLanguage()))
-            return findByFcMatch();
+                && !(fcMatchPattern = I18n.getLocale().getFcMatchPattern()).isEmpty())
+            return findByFcMatch(fcMatchPattern);
         else
             return null;
     });
@@ -123,20 +125,15 @@ public final class FontManager {
         return null;
     }
 
-    public static Font findByFcMatch() {
+    public static Font findByFcMatch(String pattern) {
         Path fcMatch = SystemUtils.which("fc-match");
         if (fcMatch == null)
             return null;
 
         try {
-            Locale locale = Locale.getDefault();
-            if (locale.getLanguage().equals("lzh"))
-                locale = Locale.TRADITIONAL_CHINESE;
-
             String result = SystemUtils.run(fcMatch.toString(),
-                    ":lang=" + locale.toLanguageTag(),
+                    pattern,
                     "--format", "%{family}\\n%{file}").trim();
-
             String[] results = result.split("\\n");
             if (results.length != 2 || results[0].isEmpty() || results[1].isEmpty()) {
                 LOG.warning("Unexpected output from fc-match: " + result);

@@ -28,10 +28,7 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -201,6 +198,35 @@ public final class Locales {
 
         public String getDisplaySelfVersion(RemoteVersion version) {
             return version.getSelfVersion();
+        }
+
+        public String getFcMatchPattern() {
+            String language = locale.getLanguage();
+            String country = locale.getCountry();
+
+            if (isEnglish(locale))
+                return "";
+
+            if (isChinese(locale)) {
+                String lang;
+                String charset;
+
+                if (isSimplifiedChinese(locale)) {
+                    lang = country.equals("SG") || country.equals("MY")
+                            ? "zh-" + country
+                            : "zh-CN";
+                    charset = "0x6e38,0x620f";
+                } else {
+                    lang = country.equals("HK") || country.equals("MO")
+                            ? "zh-" + country
+                            : "zh-TW";
+                    charset = "0x904a,0x6232";
+                }
+
+                return ":lang=" + lang + ":charset=" + charset;
+            }
+
+            return country.isEmpty() ? country : language + "-" + country;
         }
 
         public boolean isSameLanguage(SupportedLocale other) {
