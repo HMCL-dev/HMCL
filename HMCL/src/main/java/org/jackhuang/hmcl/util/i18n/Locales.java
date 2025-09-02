@@ -37,16 +37,15 @@ public final class Locales {
     private Locales() {
     }
 
-    private static final Locale DEFAULT_LOCALE;
-    static {
+    private static Locale getDefaultLocale() {
         String language = System.getenv("HMCL_LANGUAGE");
         if (StringUtils.isNotBlank(language))
-            DEFAULT_LOCALE = Locale.forLanguageTag(language);
+            return Locale.forLanguageTag(language);
         else
-            DEFAULT_LOCALE = Locale.getDefault();
+            return LocaleUtils.SYSTEM_DEFAULT;
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale("def", DEFAULT_LOCALE) {
+    public static final SupportedLocale DEFAULT = new SupportedLocale("def", getDefaultLocale()) {
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
             try {

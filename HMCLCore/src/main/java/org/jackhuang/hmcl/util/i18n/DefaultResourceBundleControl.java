@@ -22,9 +22,25 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-public final class DefaultResourceBundleControl extends ResourceBundle.Control {
+/// Overrides the default behavior of [ResourceBundle.Control], optimizing the candidate list generation logic.
+///
+/// Compared to the default implementation, [DefaultResourceBundleControl] optimizes the following scenarios:
+///
+/// - If no language is specified (such as [Locale#ROOT]), `en` is used instead.
+/// - For all Chinese locales, if no script is specified, the script (`Hans`/`Hant`/`Latn`) is always inferred based on region and variant.
+/// - For all Chinese locales, `zh-CN` is always added to the candidate list. If `zh-Hans` already exists in the candidate list,
+///   `zh-CN` is inserted before `zh`; otherwise, it is inserted after `zh`.
+/// - For all Traditional Chinese locales, `zh-TW` is always added to the candidate list (after `zh-Hant`).
+/// - For all Chinese variants (such as `lzh`, `cmn`, `yue`, etc.), a candidate with the language code replaced by `zh`
+///   is added to the end of the candidate list.
+///
+/// @author Glavo
+public class DefaultResourceBundleControl extends ResourceBundle.Control {
 
     public static final DefaultResourceBundleControl INSTANCE = new DefaultResourceBundleControl();
+
+    public DefaultResourceBundleControl() {
+    }
 
     private static List<Locale> ensureEditable(List<Locale> list) {
         return list instanceof ArrayList<?>
@@ -91,8 +107,5 @@ public final class DefaultResourceBundleControl extends ResourceBundle.Control {
         }
 
         return super.getCandidateLocales(baseName, locale);
-    }
-
-    private DefaultResourceBundleControl() {
     }
 }

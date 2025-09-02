@@ -28,6 +28,8 @@ import java.util.Set;
  */
 public class LocaleUtils {
 
+    public static final Locale SYSTEM_DEFAULT = Locale.getDefault();
+
     public static final Locale LOCALE_ZH_HANS = Locale.forLanguageTag("zh-Hans");
     public static final Locale LOCALE_ZH_HANT = Locale.forLanguageTag("zh-Hant");
 
