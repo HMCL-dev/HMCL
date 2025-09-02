@@ -22,6 +22,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -36,7 +37,16 @@ public final class Locales {
     private Locales() {
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale("def", Locale.getDefault()) {
+    private static final Locale DEFAULT_LOCALE;
+    static {
+        String language = System.getenv("HMCL_LANGUAGE");
+        if (StringUtils.isNotBlank(language))
+            DEFAULT_LOCALE = Locale.forLanguageTag(language);
+        else
+            DEFAULT_LOCALE = Locale.getDefault();
+    }
+
+    public static final SupportedLocale DEFAULT = new SupportedLocale("def", DEFAULT_LOCALE) {
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
             try {
