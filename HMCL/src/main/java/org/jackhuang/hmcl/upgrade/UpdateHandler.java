@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.Restarter;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -187,10 +188,11 @@ public final class UpdateHandler {
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
         LOG.info("Starting process: " + commandline);
-        new ProcessBuilder(commandline)
-                .directory(Paths.get("").toAbsolutePath().toFile())
-                .inheritIO()
-                .start();
+
+        Restarter.builder()
+                .setJarPath(jar)
+                .addProgramArguments(Arrays.asList(appArgs))
+                .restart();
     }
 
     private static Optional<Path> tryRename(Path path, String newVersion) {
