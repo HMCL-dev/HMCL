@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
@@ -32,9 +34,11 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.util.Restarter;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.logging.Level;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.File;
@@ -64,12 +68,48 @@ public final class SettingsPage extends SettingsView {
 
     private InvalidationListener updateListener;
 
+    private boolean ignoreLanguageChange = false;
+
     public SettingsPage() {
         FXUtils.smoothScrolling(scroll);
 
         // ==== Languages ====
         cboLanguage.getItems().setAll(Locales.LOCALES);
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+
+        cboLanguage.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (ignoreLanguageChange) return;
+
+            if (oldValue != null && newValue != null && !oldValue.equals(newValue)) {
+                JFXButton restartButton = new JFXButton(i18n("button.restart"));
+                restartButton.getStyleClass().add("dialog-success");
+                restartButton.setOnAction(e -> {
+                    try {
+                        config().setLocalization(newValue);
+                        Restarter.restartWithLocale(newValue);
+                    } catch (IOException ex) {
+                        LOG.log(Level.WARNING, "Failed to restart", ex);
+                        ignoreLanguageChange = true;
+                        cboLanguage.getSelectionModel().select(oldValue);
+                        ignoreLanguageChange = false;
+                    }
+                });
+
+                Runnable cancelAction = () -> {
+                    ignoreLanguageChange = true;
+                    cboLanguage.getSelectionModel().select(newValue);
+                    ignoreLanguageChange = false;
+                };
+
+                Controllers.confirmAction(
+                        i18n("settings.launcher.language.restart_message"),
+                        i18n("settings.launcher.language.restart_title"),
+                        MessageType.INFO,
+                        restartButton,
+                        cancelAction
+                );
+            }
+        });
 
         disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
         // ====
