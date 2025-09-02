@@ -95,7 +95,7 @@ public final class Locales {
 
             String name = super.getDisplayName(inLocale);
             return name.equals("lzh") || name.equals("Literary Chinese")
-                    ? "Classical Chinese"
+                    ? "Chinese (Classical)"
                     : name;
         }
     };
