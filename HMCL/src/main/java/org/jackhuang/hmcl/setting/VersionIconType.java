@@ -31,11 +31,11 @@ public enum VersionIconType {
     CRAFT_TABLE("/assets/img/craft_table.png"),
     FABRIC("/assets/img/fabric.png"),
     FORGE("/assets/img/forge.png"),
-    CLEANROOM("/assets/img/cleanroom.png"),
     NEO_FORGE("/assets/img/neoforge.png"),
     FURNACE("/assets/img/furnace.png"),
     QUILT("/assets/img/quilt.png"),
-    APRIL_FOOLS("/assets/img/april_fools.png");
+    APRIL_FOOLS("/assets/img/april_fools.png"),
+    CLEANROOM("/assets/img/cleanroom.png");
 
     // Please append new items at last
 
