@@ -41,6 +41,10 @@ public class LocaleUtils {
             "TW", "HK", "MO"
     );
 
+    static final Set<String> CHINESE_LATN_VARIANTS = Set.of(
+            "pinyin", "wadegile"
+    );
+
     private static final Set<String> CHINESE_LANGUAGES = Set.of(
             "zh",
             "zho", "cmn", "lzh", "cdo", "cjy", "cpx", "czh",

@@ -56,9 +56,10 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
         if (LocaleUtils.isChinese(locale)) {
             String language = locale.getLanguage();
             String script = locale.getScript();
+            String variant = locale.getVariant();
 
             if (script.isEmpty()) {
-                if (locale.getVariant().equals("pinyin"))
+                if (!variant.isEmpty() && LocaleUtils.CHINESE_LATN_VARIANTS.contains(variant))
                     script = "Latn";
                 else if (LocaleUtils.isSimplifiedChinese(locale))
                     script = "Hans";
