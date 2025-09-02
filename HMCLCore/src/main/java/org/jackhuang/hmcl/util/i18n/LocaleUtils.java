@@ -42,7 +42,7 @@ public class LocaleUtils {
     );
 
     static final Set<String> CHINESE_LATN_VARIANTS = Set.of(
-            "pinyin", "wadegile"
+            "pinyin", "wadegile", "tongyong"
     );
 
     private static final Set<String> CHINESE_LANGUAGES = Set.of(
