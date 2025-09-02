@@ -98,19 +98,6 @@ public final class Locales {
                     ? "Classical Chinese"
                     : name;
         }
-
-        @Override
-        public String formatDateTime(TemporalAccessor time) {
-            return WenyanUtils.formatDateTime(time);
-        }
-
-        @Override
-        public String getDisplaySelfVersion(RemoteVersion version) {
-            if (version instanceof GameRemoteVersion)
-                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
-            else
-                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
-        }
     };
 
     public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
@@ -184,13 +171,23 @@ public final class Locales {
 
         public String formatDateTime(TemporalAccessor time) {
             DateTimeFormatter formatter = dateTimeFormatter;
-            if (formatter == null)
+            if (formatter == null) {
+                if (locale.getLanguage().equals("lzh"))
+                    return WenyanUtils.formatDateTime(time);
+
                 formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
                         .withZone(ZoneId.systemDefault());
+            }
             return formatter.format(time);
         }
 
         public String getDisplaySelfVersion(RemoteVersion version) {
+            if (locale.getLanguage().equals("lzh")) {
+                if (version instanceof GameRemoteVersion)
+                    return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
+                else
+                    return WenyanUtils.translateGenericVersion(version.getSelfVersion());
+            }
             return version.getSelfVersion();
         }
 

@@ -93,7 +93,6 @@ public final class DefaultResourceBundleControl extends ResourceBundle.Control {
         return super.getCandidateLocales(baseName, locale);
     }
 
-
     private DefaultResourceBundleControl() {
     }
 }
