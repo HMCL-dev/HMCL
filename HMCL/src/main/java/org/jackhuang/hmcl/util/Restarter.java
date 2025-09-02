@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.setLocale;
 
 /**
@@ -118,7 +119,7 @@ public final class Restarter {
      * 切换界面语言后重启
      */
     public static void restartWithLocale(Locales.SupportedLocale locale) throws IOException {
-        setLocale(locale);
+        config().setLocalization(locale);
         builder().restart();
     }
 
