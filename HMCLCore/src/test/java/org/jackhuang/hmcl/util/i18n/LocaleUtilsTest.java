@@ -71,6 +71,7 @@ public final class LocaleUtilsTest {
         assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("lzh")));
         assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("cmn")));
         assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("cmn-Hans")));
+        assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("yue")));
     }
 
     @Test
@@ -84,11 +85,15 @@ public final class LocaleUtilsTest {
         assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn")));
         assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn-Hans")));
         assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn-CN")));
+        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh-Hans")));
 
         assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-Hant")));
         assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-TW")));
         assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-HK")));
         assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-MO")));
         assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn-Hant")));
+        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh")));
+        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh-Hant")));
+        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh-CN")));
     }
 }
