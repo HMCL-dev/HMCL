@@ -59,7 +59,7 @@ public class LocaleUtils {
         if (isChinese(locale)) {
             String script = locale.getScript();
             if (script.isEmpty()) {
-                if (locale.getLanguage().equals("lzh") || locale.getVariant().equals("pinyin"))
+                if (locale.getLanguage().equals("lzh") || LocaleUtils.CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
                     return false;
                 else
                     return !CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry());
