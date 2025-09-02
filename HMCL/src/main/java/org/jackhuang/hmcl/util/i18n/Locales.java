@@ -119,6 +119,7 @@ public final class Locales {
         private final Locale locale;
         private ResourceBundle resourceBundle;
         private DateTimeFormatter dateTimeFormatter;
+        private List<Locale> candidateLocales;
 
         SupportedLocale(String name, Locale locale) {
             this.name = name;
@@ -146,6 +147,12 @@ public final class Locales {
                         DefaultResourceBundleControl.INSTANCE);
 
             return bundle;
+        }
+
+        public List<Locale> getCandidateLocales() {
+            if (candidateLocales == null)
+                candidateLocales = List.copyOf(LocaleUtils.getCandidateLocales(locale));
+            return candidateLocales;
         }
 
         public String i18n(String key, Object... formatArgs) {

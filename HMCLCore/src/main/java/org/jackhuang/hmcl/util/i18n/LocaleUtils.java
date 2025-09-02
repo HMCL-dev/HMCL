@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -62,7 +64,7 @@ public class LocaleUtils {
         }
     }
 
-    public static List<Locale> getCandidateLocales(Locale locale) {
+    public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
         return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
     }
 
