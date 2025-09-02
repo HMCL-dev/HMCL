@@ -50,8 +50,8 @@ public final class MinecraftWiki {
         }
 
         String variantSuffix;
-        if (Locales.isChinese(locale.getLocale())) {
-            if (Locales.isSimplifiedChinese(locale.getLocale()))
+        if (LocaleUtils.isChinese(locale.getLocale())) {
+            if (LocaleUtils.isSimplifiedChinese(locale.getLocale()))
                 variantSuffix = "?variant=zh-cn";
             else if (locale.getLocale().getCountry().equals("HK") || locale.getLocale().getCountry().equals("MO"))
                 variantSuffix = "?variant=zh-hk";
