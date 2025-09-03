@@ -259,9 +259,10 @@ public final class Locales {
         /// if none of the above resources exist, it returns `null`.
         public @Nullable InputStream findBuiltinResource(String name, String suffix) {
             var control = DefaultResourceBundleControl.INSTANCE;
+            var classLoader = Locales.class.getClassLoader();
             for (Locale locale : getCandidateLocales()) {
                 String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
-                InputStream input = Locales.class.getResourceAsStream(resourceName);
+                InputStream input = classLoader.getResourceAsStream(resourceName);
                 if (input != null)
                     return input;
             }
