@@ -246,7 +246,7 @@ public class DefaultLauncher extends Launcher {
 
         Set<String> classpath = repository.getClasspath(version);
 
-        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM.getPatchId())) {
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
             classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 

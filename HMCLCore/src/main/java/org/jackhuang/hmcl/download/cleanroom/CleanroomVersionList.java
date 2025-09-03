@@ -42,7 +42,7 @@ public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersi
     @Override
     public Task<?> refreshAsync() {
         return Task.allOf(
-                new GetTask(downloadProvider.injectURL(LOADER_LIST_URL)).thenGetJsonAsync(ReleaseResult[].class)
+                new GetTask(downloadProvider.injectURLWithCandidates(LOADER_LIST_URL)).thenGetJsonAsync(ReleaseResult[].class)
         ).thenAcceptAsync(results -> {
             lock.writeLock().lock();
 
