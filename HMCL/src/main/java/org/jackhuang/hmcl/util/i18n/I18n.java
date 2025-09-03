@@ -17,14 +17,12 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class I18n {
 
@@ -33,54 +31,42 @@ public final class I18n {
 
     private static volatile SupportedLocale locale = Locales.DEFAULT;
     private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
-    private static volatile DateTimeFormatter dateTimeFormatter;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
         resourceBundle = locale.getResourceBundle();
-        dateTimeFormatter = null;
+    }
+
+    public static SupportedLocale getLocale() {
+        return locale;
     }
 
     public static boolean isUseChinese() {
-        return locale.getLocale() == Locale.CHINA;
+        return Locales.isChinese(locale.getLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
         return resourceBundle;
     }
 
-    public static String getName(SupportedLocale locale) {
-        return locale == Locales.DEFAULT ? resourceBundle.getString("lang.default") : locale.getResourceBundle().getString("lang");
-    }
-
     public static String i18n(String key, Object... formatArgs) {
-        try {
-            return String.format(getResourceBundle().getString(key), formatArgs);
-        } catch (MissingResourceException e) {
-            LOG.error("Cannot find key " + key + " in resource bundle", e);
-        } catch (IllegalFormatException e) {
-            LOG.error("Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
-        }
-
-        return key + Arrays.toString(formatArgs);
+        return locale.i18n(key, formatArgs);
     }
 
     public static String i18n(String key) {
-        try {
-            return getResourceBundle().getString(key);
-        } catch (MissingResourceException e) {
-            LOG.error("Cannot find key " + key + " in resource bundle", e);
-            return key;
-        }
+        return locale.i18n(key);
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        DateTimeFormatter formatter = dateTimeFormatter;
-        if (formatter == null) {
-            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format")).withZone(ZoneId.systemDefault());
-        }
+        return locale.formatDateTime(time);
+    }
 
-        return formatter.format(time);
+    public static String getDisplaySelfVersion(RemoteVersion version) {
+        return locale.getDisplaySelfVersion(version);
+    }
+
+    public static String getWikiLink(GameRemoteVersion remoteVersion) {
+        return MinecraftWiki.getWikiLink(locale, remoteVersion);
     }
 
     public static boolean hasKey(String key) {

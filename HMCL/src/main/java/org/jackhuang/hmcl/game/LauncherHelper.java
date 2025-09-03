@@ -160,8 +160,10 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
-                                if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getMesaLoader(java);
+                                if (renderer != Renderer.DEFAULT
+                                        && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                                        && OperatingSystem.WINDOWS_VERSION != null) {
+                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.WINDOWS_VERSION);
                                     if (lib == null)
                                         return null;
                                     File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
@@ -450,7 +452,9 @@ public final class LauncherHelper {
                         return result;
                     } else {
                         GameJavaVersion gameJavaVersion;
-                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
+                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.CLEANROOM_JAVA_21))
+                            gameJavaVersion = GameJavaVersion.JAVA_21;
+                        else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
                             gameJavaVersion = version.getJavaVersion();
                         else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA))
                             gameJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
@@ -539,6 +543,9 @@ public final class LauncherHelper {
                             break;
                         case MODDED_JAVA_21:
                             suggestions.add(i18n("launch.advice.modded_java", 21, gameVersion));
+                            break;
+                        case CLEANROOM_JAVA_21:
+                            suggestions.add(i18n("launch.advice.cleanroom"));
                             break;
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));

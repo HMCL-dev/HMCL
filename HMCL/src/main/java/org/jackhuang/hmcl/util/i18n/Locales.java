@@ -20,115 +20,245 @@ package org.jackhuang.hmcl.util.i18n;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.util.*;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Locales {
     private Locales() {
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale(Locale.getDefault());
+    public static final SupportedLocale DEFAULT = new SupportedLocale("def", Locale.getDefault()) {
+        @Override
+        public String getDisplayName(SupportedLocale inLocale) {
+            try {
+                return inLocale.getResourceBundle().getString("lang.default");
+            } catch (Throwable e) {
+                LOG.warning("Failed to get localized name for default locale", e);
+                return "Default";
+            }
+        }
+    };
 
     /**
      * English
      */
-    public static final SupportedLocale EN = new SupportedLocale(Locale.ROOT);
+    public static final SupportedLocale EN = new SupportedLocale("en", Locale.ENGLISH);
 
     /**
      * Spanish
      */
-    public static final SupportedLocale ES = new SupportedLocale(Locale.forLanguageTag("es"));
+    public static final SupportedLocale ES = new SupportedLocale("es", Locale.forLanguageTag("es"));
 
     /**
      * Russian
      */
-    public static final SupportedLocale RU = new SupportedLocale(Locale.forLanguageTag("ru"));
+    public static final SupportedLocale RU = new SupportedLocale("ru", Locale.forLanguageTag("ru"));
+
+    /**
+     * Ukrainian
+     */
+    public static final SupportedLocale UK = new SupportedLocale("uk", Locale.forLanguageTag("uk"));
 
     /**
      * Japanese
      */
-    public static final SupportedLocale JA = new SupportedLocale(Locale.JAPANESE);
+    public static final SupportedLocale JA = new SupportedLocale("ja", Locale.JAPANESE);
 
     /**
-     * Traditional Chinese
+     * Chinese (Simplified)
      */
-    public static final SupportedLocale ZH = new SupportedLocale(Locale.TRADITIONAL_CHINESE);
+    public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans"));
 
     /**
-     * Simplified Chinese
+     * Chinese (Traditional)
      */
-    public static final SupportedLocale ZH_CN = new SupportedLocale(Locale.SIMPLIFIED_CHINESE);
+    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
 
-    public static final List<SupportedLocale> LOCALES = Lang.immutableListOf(DEFAULT, EN, ES, JA, RU, ZH_CN, ZH);
+    /**
+     * Wenyan (Classical Chinese)
+     */
+    public static final SupportedLocale WENYAN = new SupportedLocale("lzh", Locale.forLanguageTag("lzh")) {
+
+        @Override
+        public String getDisplayName(SupportedLocale inLocale) {
+            if (isChinese(inLocale.locale))
+                return "文言";
+
+            String name = super.getDisplayName(inLocale);
+            return name.equals("lzh") || name.equals("Literary Chinese")
+                    ? "Classical Chinese"
+                    : name;
+        }
+
+        @Override
+        public String formatDateTime(TemporalAccessor time) {
+            return WenyanUtils.formatDateTime(time);
+        }
+
+        @Override
+        public String getDisplaySelfVersion(RemoteVersion version) {
+            if (version instanceof GameRemoteVersion)
+                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
+            else
+                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
+        }
+    };
+
+    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
-        switch (name.toLowerCase(Locale.ROOT)) {
-            case "en":
-                return EN;
-            case "es":
-                return ES;
-            case "ja":
-                return JA;
-            case "ru":
-                return RU;
+
+        for (SupportedLocale locale : LOCALES) {
+            if (locale.getName().equalsIgnoreCase(name))
+                return locale;
+        }
+
+        return DEFAULT;
+    }
+
+    public static boolean isEnglish(Locale locale) {
+        return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
+    }
+
+    public static boolean isChinese(Locale locale) {
+        switch (locale.getLanguage()) {
             case "zh":
-                return ZH;
-            case "zh_cn":
-                return ZH_CN;
+            case "lzh":
+            case "cmn":
+                return true;
             default:
-                return DEFAULT;
+                return false;
         }
     }
 
-    public static String getNameByLocale(SupportedLocale locale) {
-        if (locale == EN) return "en";
-        else if (locale == ES) return "es";
-        else if (locale == RU) return "ru";
-        else if (locale == JA) return "ja";
-        else if (locale == ZH) return "zh";
-        else if (locale == ZH_CN) return "zh_CN";
-        else if (locale == DEFAULT) return "def";
-        else throw new IllegalArgumentException("Unknown locale: " + locale);
+    public static boolean isSimplifiedChinese(Locale locale) {
+        if (locale.getLanguage().equals("zh") || locale.getLanguage().equals("cmn")) {
+            String script = locale.getScript();
+            if (script.isEmpty()) {
+                String region = locale.getCountry();
+                return region.isEmpty() || region.equals("CN") || region.equals("SG") || region.equals("MY");
+            } else
+                return script.equals("Hans");
+        } else {
+            return false;
+        }
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
-    public static final class SupportedLocale {
+    public static class SupportedLocale {
+        private final String name;
         private final Locale locale;
         private ResourceBundle resourceBundle;
+        private DateTimeFormatter dateTimeFormatter;
 
-        SupportedLocale(Locale locale) {
+        SupportedLocale(String name, Locale locale) {
+            this.name = name;
             this.locale = locale;
+        }
+
+        public String getName() {
+            return name;
         }
 
         public Locale getLocale() {
             return locale;
         }
 
+        public String getDisplayName(SupportedLocale inLocale) {
+            if (inLocale.locale.getLanguage().equals("lzh"))
+                inLocale = ZH_HANT;
+            return locale.getDisplayName(inLocale.getLocale());
+        }
+
         public ResourceBundle getResourceBundle() {
             ResourceBundle bundle = resourceBundle;
-
-            if (resourceBundle == null) {
-                if (this != DEFAULT && this.locale == DEFAULT.locale) {
-                    bundle = DEFAULT.getResourceBundle();
-                } else {
-                    bundle = ResourceBundle.getBundle("assets.lang.I18N", locale);
-                }
-
-                resourceBundle = bundle;
-            }
+            if (resourceBundle == null)
+                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, Control.INSTANCE);
 
             return bundle;
+        }
+
+        public String i18n(String key, Object... formatArgs) {
+            try {
+                return String.format(getResourceBundle().getString(key), formatArgs);
+            } catch (MissingResourceException e) {
+                LOG.error("Cannot find key " + key + " in resource bundle", e);
+            } catch (IllegalFormatException e) {
+                LOG.error("Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
+            }
+
+            return key + Arrays.toString(formatArgs);
+        }
+
+        public String i18n(String key) {
+            try {
+                return getResourceBundle().getString(key);
+            } catch (MissingResourceException e) {
+                LOG.error("Cannot find key " + key + " in resource bundle", e);
+                return key;
+            }
+        }
+
+        public String formatDateTime(TemporalAccessor time) {
+            DateTimeFormatter formatter = dateTimeFormatter;
+            if (formatter == null)
+                formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
+                        .withZone(ZoneId.systemDefault());
+            return formatter.format(time);
+        }
+
+        public String getDisplaySelfVersion(RemoteVersion version) {
+            return version.getSelfVersion();
+        }
+
+        public String getFcMatchPattern() {
+            String language = locale.getLanguage();
+            String region = locale.getCountry();
+
+            if (isEnglish(locale))
+                return "";
+
+            if (isChinese(locale)) {
+                String lang;
+                String charset;
+
+                if (isSimplifiedChinese(locale)) {
+                    lang = region.equals("SG") || region.equals("MY")
+                            ? "zh-" + region
+                            : "zh-CN";
+                    charset = "0x6e38,0x620f";
+                } else {
+                    lang = region.equals("HK") || region.equals("MO")
+                            ? "zh-" + region
+                            : "zh-TW";
+                    charset = "0x904a,0x6232";
+                }
+
+                return ":lang=" + lang + ":charset=" + charset;
+            }
+
+            return region.isEmpty() ? language : language + "-" + region;
+        }
+
+        public boolean isSameLanguage(SupportedLocale other) {
+            return this.getLocale().getLanguage().equals(other.getLocale().getLanguage())
+                    || isChinese(this.getLocale()) && isChinese(other.getLocale());
         }
 
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
             @Override
             public void write(JsonWriter out, SupportedLocale value) throws IOException {
-                out.value(getNameByLocale(value));
+                out.value(value.getName());
             }
 
             @Override
@@ -136,5 +266,52 @@ public final class Locales {
                 return getLocaleByName(in.nextString());
             }
         }
+    }
+
+    public static final class Control extends ResourceBundle.Control {
+        public static final Control INSTANCE = new Control();
+
+        @Override
+        public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+            List<Locale> candidateLocales = super.getCandidateLocales(baseName, locale);
+            if (isChinese(locale)) {
+                int chineseIndex = candidateLocales.indexOf(Locale.CHINESE);
+
+                // For "lzh" and "cmn"
+                if (chineseIndex < 0) {
+                    if (!(candidateLocales instanceof ArrayList))
+                        candidateLocales = new ArrayList<>(candidateLocales);
+
+                    int i = candidateLocales.size() - 1;
+                    while (i >= 0) {
+                        Locale l = candidateLocales.get(i);
+                        if (!isEnglish(l))
+                            break;
+                        i--;
+                    }
+
+                    chineseIndex = i + 1;
+                    candidateLocales.add(chineseIndex, Locale.CHINESE);
+                }
+
+                if (isSimplifiedChinese(locale)) {
+                    if (!candidateLocales.contains(Locale.SIMPLIFIED_CHINESE)) {
+                        if (!(candidateLocales instanceof ArrayList))
+                            candidateLocales = new ArrayList<>(candidateLocales);
+                        candidateLocales.add(chineseIndex, Locale.SIMPLIFIED_CHINESE);
+                    }
+                }
+            }
+
+            if (candidateLocales.size() == 1 && candidateLocales.get(0).getLanguage().isEmpty()) {
+                if (!(candidateLocales instanceof ArrayList))
+                    candidateLocales = new ArrayList<>(candidateLocales);
+
+                candidateLocales.add(0, Locale.ENGLISH);
+            }
+
+            return candidateLocales;
+        }
+
     }
 }

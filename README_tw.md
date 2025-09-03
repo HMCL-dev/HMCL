@@ -52,7 +52,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS �
 ./gradlew clean build
 ```
 
-請確保你至少安裝了 JDK 11 或更高版本。
+請確保你至少安裝了 JDK 17 或更高版本。
 
 ## JVM 選項 (用於除錯)
 

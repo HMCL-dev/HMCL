@@ -19,11 +19,12 @@ package org.jackhuang.hmcl.util.io;
 
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
-import static org.jackhuang.hmcl.util.io.NetworkUtils.getCharsetFromContentType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.jackhuang.hmcl.util.io.NetworkUtils.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Glavo
@@ -31,21 +32,37 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class NetworkUtilsTest {
 
     @Test
+    public void testIsLoopbackAddress() {
+        assertTrue(isLoopbackAddress(URI.create("https://127.0.0.1/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://127.0.0.1:8080/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://localhost/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://localhost:8080/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://[::1]/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://[::1]:8080/test")));
+
+        assertFalse(isLoopbackAddress(URI.create("https://www.example.com/test")));
+        assertFalse(isLoopbackAddress(URI.create("https://www.example.com:8080/test")));
+    }
+
+    @Test
     public void testEncodeLocation() {
         assertEquals("https://github.com", encodeLocation("https://github.com"));
         assertEquals("https://github.com/HMCL-dev/HMCL/commits?author=Glavo", encodeLocation("https://github.com/HMCL-dev/HMCL/commits?author=Glavo"));
         assertEquals("https://www.example.com/file%20with%20space", encodeLocation("https://www.example.com/file with space"));
         assertEquals("https://www.example.com/file%20with%20space", encodeLocation("https://www.example.com/file%20with%20space"));
+        assertEquals("https://www.example.com/%5Bfile%5D", encodeLocation("https://www.example.com/[file]"));
+        assertEquals("https://www.example.com/%7Bfile%7D", encodeLocation("https://www.example.com/{file}"));
         assertEquals("https://www.example.com/%E6%B5%8B%E8%AF%95", encodeLocation("https://www.example.com/测试"));
         assertEquals("https://www.example.com/%F0%9F%98%87", encodeLocation("https://www.example.com/\uD83D\uDE07"));
         assertEquals("https://www.example.com/test?a=10+20", encodeLocation("https://www.example.com/test?a=10 20"));
+        assertEquals("https://www.example.com/test?a=10+20&b=[30]&c={40}", encodeLocation("https://www.example.com/test?a=10 20&b=[30]&c={40}"));
         assertEquals("https://www.example.com/%E6%B5%8B%E8%AF%95?a=10+20", encodeLocation("https://www.example.com/测试?a=10 20"));
 
         // Invalid surrogate pair
-        assertEquals("https://www.example.com/%3F", encodeLocation("https://www.example.com/\uD83D"));
-        assertEquals("https://www.example.com/%3F", encodeLocation("https://www.example.com/\uDE07"));
-        assertEquals("https://www.example.com/%3Ftest", encodeLocation("https://www.example.com/\uD83Dtest"));
-        assertEquals("https://www.example.com/%3Ftest", encodeLocation("https://www.example.com/\uDE07test"));
+        assertEquals("https://www.example.com/%EF%BF%BD", encodeLocation("https://www.example.com/\uD83D"));
+        assertEquals("https://www.example.com/%EF%BF%BD", encodeLocation("https://www.example.com/\uDE07"));
+        assertEquals("https://www.example.com/%EF%BF%BDtest", encodeLocation("https://www.example.com/\uD83Dtest"));
+        assertEquals("https://www.example.com/%EF%BF%BDtest", encodeLocation("https://www.example.com/\uDE07test"));
     }
 
     @Test
