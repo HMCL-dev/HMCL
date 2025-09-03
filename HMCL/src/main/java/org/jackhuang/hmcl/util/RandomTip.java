@@ -21,7 +21,6 @@ import java.util.*;
 
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -31,7 +30,6 @@ public final class RandomTip {
     private static final int maxTipNumber = 30;
 
     private static final FakeRandomIndex indexGenerator;
-
     static {
         // Initialization tips list
         tips = IntStream.rangeClosed(1, maxTipNumber)
@@ -44,10 +42,6 @@ public final class RandomTip {
     public static String getRandomTip() {
         String tip = tips.get(indexGenerator.next());
         return formatTip(tip);
-    }
-
-    public static String getRandomTip(String previous) {
-        return getRandomTip();
     }
 
     private static String formatTip(String tip) {

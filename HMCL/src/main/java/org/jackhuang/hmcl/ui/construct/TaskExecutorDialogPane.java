@@ -167,8 +167,7 @@ public class TaskExecutorDialogPane extends BorderPane {
     }
 
     private void nextTip() {
-        String old = lblBottomTip.getText();
-        String next = RandomTip.getRandomTip(old);
+        String next = RandomTip.getRandomTip();     // It's certain that there will be no duplication
         Platform.runLater(() -> lblBottomTip.setText(next));
     }
 }
