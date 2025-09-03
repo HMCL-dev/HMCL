@@ -37,15 +37,10 @@ public class LocaleUtils {
         return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
     }
 
-    static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of(
-            "TW", "HK", "MO"
-    );
-
-    static final Set<String> CHINESE_LATN_VARIANTS = Set.of(
-            "pinyin", "wadegile", "tongyong"
-    );
-
-    private static final Set<String> CHINESE_LANGUAGES = Set.of(
+    public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
+    public static final Set<String> CHINESE_HK_TRADITIONAL_REGIONS = Set.of("HK", "MO");
+    public static final Set<String> CHINESE_LATN_VARIANTS = Set.of("pinyin", "wadegile", "tongyong");
+    public static final Set<String> CHINESE_LANGUAGES = Set.of(
             "zh",
             "zho", "cmn", "lzh", "cdo", "cjy", "cpx", "czh",
             "gan", "hak", "hsn", "mnp", "nan", "wuu", "yue"
@@ -55,18 +50,20 @@ public class LocaleUtils {
         return CHINESE_LANGUAGES.contains(locale.getLanguage());
     }
 
-    public static boolean isSimplifiedChinese(Locale locale) {
+    public static String detectChineseScript(Locale locale) {
         if (isChinese(locale)) {
-            String script = locale.getScript();
-            if (script.isEmpty()) {
-                if (locale.getLanguage().equals("lzh") || LocaleUtils.CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
-                    return false;
+            if (locale.getScript().isEmpty()) {
+                if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
+                    return "Latn";
+                if (locale.getLanguage().equals("lzh") || CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry()))
+                    return "Hant";
                 else
-                    return !CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry());
-            } else
-                return script.equals("Hans");
+                    return "Hans";
+            } else {
+                return locale.getScript();
+            }
         } else {
-            return false;
+            return "";
         }
     }
 

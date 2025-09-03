@@ -115,14 +115,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         String region = locale.getCountry();
 
         switch (language) {
-            case "zh":
-            case "cmn":
-                if (LocaleUtils.isSimplifiedChinese(locale))
-                    return "zh_CN";
-                if (gameVersion.compareTo("1.16") >= 0
-                        && (region.equals("HK") || region.equals("MO")))
-                    return "zh_HK";
-                return "zh_TW";
             case "ru":
                 return "ru_RU";
             case "uk":
@@ -135,7 +127,18 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 return gameVersion.compareTo("1.16") >= 0
                         ? "lzh"
                         : "";
+            case "zh":
             default:
+                if (LocaleUtils.isChinese(locale)) {
+                    String script = LocaleUtils.detectChineseScript(locale);
+                    if ("Hant".equals(script)) {
+                        if ((region.equals("HK") || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
+                            return "zh_HK";
+                        return "zh_TW";
+                    }
+                    return "zh_CN";
+                }
+
                 return "";
         }
     }

@@ -58,13 +58,7 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
             String script = locale.getScript();
 
             if (script.isEmpty()) {
-                if (LocaleUtils.CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
-                    script = "Latn";
-                else if (LocaleUtils.isSimplifiedChinese(locale))
-                    script = "Hans";
-                else
-                    script = "Hant";
-
+                script = LocaleUtils.detectChineseScript(locale);
                 locale = new Locale.Builder()
                         .setLocale(locale)
                         .setScript(script)

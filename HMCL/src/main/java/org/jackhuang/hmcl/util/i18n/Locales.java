@@ -218,16 +218,22 @@ public final class Locales {
                 String lang;
                 String charset;
 
-                if (LocaleUtils.isSimplifiedChinese(locale)) {
-                    lang = region.equals("SG") || region.equals("MY")
-                            ? "zh-" + region
-                            : "zh-CN";
-                    charset = "0x6e38,0x620f";
-                } else {
-                    lang = region.equals("HK") || region.equals("MO")
-                            ? "zh-" + region
-                            : "zh-TW";
-                    charset = "0x904a,0x6232";
+                String script = LocaleUtils.detectChineseScript(locale);
+                switch (script) {
+                    case "Hans":
+                        lang = region.equals("SG") || region.equals("MY")
+                                ? "zh-" + region
+                                : "zh-CN";
+                        charset = "0x6e38,0x620f";
+                        break;
+                    case "Hant":
+                        lang = region.equals("HK") || region.equals("MO")
+                                ? "zh-" + region
+                                : "zh-TW";
+                        charset = "0x904a,0x6232";
+                        break;
+                    default:
+                        return "";
                 }
 
                 return ":lang=" + lang + ":charset=" + charset;

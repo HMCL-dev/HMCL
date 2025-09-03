@@ -76,24 +76,26 @@ public final class LocaleUtilsTest {
 
     @Test
     public void testIsSimplifiedChinese() {
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.CHINESE));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-Hans")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-Hans-US")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-SG")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-MY")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn-Hans")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn-CN")));
-        assertTrue(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh-Hans")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.CHINESE));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-Hans")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-Hans-US")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-SG")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-MY")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn-Hans")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn-CN")));
+        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh-Hans")));
 
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-Hant")));
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-TW")));
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-HK")));
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("zh-MO")));
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("cmn-Hant")));
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh")));
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh-Hant")));
-        assertFalse(LocaleUtils.isSimplifiedChinese(Locale.forLanguageTag("lzh-CN")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-Hant")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-TW")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-HK")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-MO")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn-Hant")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh-Hant")));
+        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh-CN")));
+
+        assertEquals("Latn", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-pinyin")));
     }
 }
