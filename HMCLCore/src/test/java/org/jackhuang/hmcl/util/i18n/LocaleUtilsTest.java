@@ -68,10 +68,19 @@ public final class LocaleUtilsTest {
         assertTrue(LocaleUtils.isChinese(Locale.CHINESE));
         assertTrue(LocaleUtils.isChinese(Locale.SIMPLIFIED_CHINESE));
         assertTrue(LocaleUtils.isChinese(Locale.TRADITIONAL_CHINESE));
+        assertTrue(LocaleUtils.isChinese(LocaleUtils.LOCALE_ZH_HANS));
+        assertTrue(LocaleUtils.isChinese(LocaleUtils.LOCALE_ZH_HANT));
         assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("lzh")));
         assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("cmn")));
         assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("cmn-Hans")));
         assertTrue(LocaleUtils.isChinese(Locale.forLanguageTag("yue")));
+
+        assertFalse(LocaleUtils.isChinese(Locale.ROOT));
+        assertFalse(LocaleUtils.isChinese(Locale.ENGLISH));
+        assertFalse(LocaleUtils.isChinese(Locale.JAPANESE));
+        assertFalse(LocaleUtils.isChinese(Locale.forLanguageTag("es")));
+        assertFalse(LocaleUtils.isChinese(Locale.forLanguageTag("ru")));
+        assertFalse(LocaleUtils.isChinese(Locale.forLanguageTag("uk")));
     }
 
     @Test

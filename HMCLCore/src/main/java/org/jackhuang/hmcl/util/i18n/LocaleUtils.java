@@ -38,7 +38,6 @@ public class LocaleUtils {
     }
 
     public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
-    public static final Set<String> CHINESE_HK_TRADITIONAL_REGIONS = Set.of("HK", "MO");
     public static final Set<String> CHINESE_LATN_VARIANTS = Set.of("pinyin", "wadegile", "tongyong");
     public static final Set<String> CHINESE_LANGUAGES = Set.of(
             "zh",
