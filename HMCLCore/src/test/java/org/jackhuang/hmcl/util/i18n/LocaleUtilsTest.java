@@ -46,6 +46,7 @@ public final class LocaleUtilsTest {
         assertCandidateLocales("zh-Hans-US", List.of("zh-Hans-US", "zh-Hans", "zh-US", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-US", List.of("zh-Hans-US", "zh-Hans", "zh-US", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-TW", List.of("zh-Hant-TW", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
+        assertCandidateLocales("zh-HK", List.of("zh-Hant-HK", "zh-Hant", "zh-HK", "zh-TW", "zh", "zh-CN", "und"));
         assertCandidateLocales("zh-SG", List.of("zh-Hans-SG", "zh-Hans", "zh-SG", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-MY", List.of("zh-Hans-MY", "zh-Hans", "zh-MY", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-pinyin", List.of("zh-Latn-pinyin", "zh-Latn", "zh-pinyin", "zh", "zh-CN", "und"));

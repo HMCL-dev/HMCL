@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 /// - For all Chinese locales, if no script is specified, the script (`Hans`/`Hant`/`Latn`) is always inferred based on region and variant.
 /// - For all Chinese locales, `zh-CN` is always added to the candidate list. If `zh-Hans` already exists in the candidate list,
 ///   `zh-CN` is inserted before `zh`; otherwise, it is inserted after `zh`.
-/// - For all Traditional Chinese locales, `zh-TW` is always added to the candidate list (after `zh-Hant`).
+/// - For all Traditional Chinese locales, `zh-TW` is always added to the candidate list (before `zh`).
 /// - For all Chinese variants (such as `lzh`, `cmn`, `yue`, etc.), a candidate with the language code replaced by `zh`
 ///   is added to the end of the candidate list.
 ///
@@ -77,12 +77,11 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
                         .build()));
             }
 
-            if (!locales.contains(Locale.TRADITIONAL_CHINESE)) {
-                int hantIdx = locales.indexOf(LocaleUtils.LOCALE_ZH_HANT);
-                if (hantIdx >= 0) {
-                    locales = ensureEditable(locales);
-                    locales.add(hantIdx + 1, Locale.TRADITIONAL_CHINESE);
-                }
+            if (locales.contains(LocaleUtils.LOCALE_ZH_HANT) && !locales.contains(Locale.TRADITIONAL_CHINESE)) {
+                locales = ensureEditable(locales);
+                int chineseIdx = locales.indexOf(Locale.CHINESE);
+                if (chineseIdx >= 0)
+                    locales.add(chineseIdx, Locale.TRADITIONAL_CHINESE);
             }
 
             if (!locales.contains(Locale.SIMPLIFIED_CHINESE)) {
