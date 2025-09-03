@@ -80,7 +80,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         {
             lblProgress = new Label("0.0 B/s");  // Prevent sudden changes in layout
             bottom.setLeft(lblProgress);
-            BorderPane.setMargin(lblProgress, new Insets(4, 0, 0, 20));
+            BorderPane.setMargin(lblProgress, new Insets(0, 0, 4, 14));
 
             lblBottomTip = new Label(getRandomTip());
             lblBottomTip.setStyle("-fx-text-fill: rgba(100, 100, 100, 0.9)");

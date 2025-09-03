@@ -67,7 +67,14 @@ public final class RandomTip {
             lineLength += charLength;
         }
 
-        return formattedTip.toString();
+        String result = formattedTip.toString();
+
+        // it's just a single line
+        if (!result.contains("\n")) {
+            result += "\n\t";
+        }
+
+        return result.toString();
     }
 
     private static final class FakeRandomIndex {
