@@ -134,7 +134,6 @@ public final class LocaleUtils {
                         if (!fileName.startsWith(baseName))
                             return;
 
-
                         String ext = StringUtils.substringAfterLast(fileName, '.');
                         if (!exts.contains(ext))
                             return;
