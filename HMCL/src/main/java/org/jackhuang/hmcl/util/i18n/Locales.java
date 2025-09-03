@@ -271,8 +271,7 @@ public final class Locales {
 
         public boolean isSameLanguage(SupportedLocale other) {
             if (this.getLocale().getLanguage().equals(other.getLocale().getLanguage())) return true;
-            if (!LocaleUtils.isChinese(this.getLocale())) return false;
-            return LocaleUtils.isChinese(other.getLocale());
+            return LocaleUtils.isChinese(this.getLocale()) && LocaleUtils.isChinese(other.getLocale());
         }
 
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
