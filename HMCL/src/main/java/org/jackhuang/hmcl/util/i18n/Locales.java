@@ -24,8 +24,10 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -240,6 +242,23 @@ public final class Locales {
             }
 
             return region.isEmpty() ? language : language + "-" + region;
+        }
+
+        /// Find the builtin localized resource with given name and suffix.
+        ///
+        /// For example, if the current locale is `zh-CN`, when calling `findBuiltinResource("assets.lang.foo", "json")`,
+        /// this method will look for the following built-in resources in order:
+        ///
+        ///  - `assets/lang/foo_zh_Hans_CN.json`
+        ///  - `assets/lang/foo_zh_Hans.json`
+        ///  - `assets/lang/foo_zh_CN.json`
+        ///  - `assets/lang/foo_zh.json`
+        ///  - `assets/lang/foo.json`
+        ///
+        /// This method will open and return the first found resource;
+        /// if none of the above resources exist, it returns `null`.
+        public @Nullable InputStream findBuiltinResource(String name, String suffix) {
+            return LocaleUtils.findBuiltinResource(name, suffix, getCandidateLocales());
         }
 
         public boolean isSameLanguage(SupportedLocale other) {

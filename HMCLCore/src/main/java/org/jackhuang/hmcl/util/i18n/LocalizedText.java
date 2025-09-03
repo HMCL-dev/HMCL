@@ -47,9 +47,7 @@ public final class LocalizedText {
     public String getText(@NotNull List<Locale> candidates) {
         if (localizedValues != null) {
             for (Locale locale : candidates) {
-                String value = localizedValues.get(locale.getLanguage().isEmpty()
-                        ? "default"
-                        : locale.toLanguageTag());
+                String value = localizedValues.get(LocaleUtils.toLanguageKey(locale));
                 if (value != null)
                     return value;
             }

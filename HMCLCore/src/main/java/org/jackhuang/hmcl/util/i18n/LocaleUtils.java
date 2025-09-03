@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -32,6 +34,33 @@ public class LocaleUtils {
 
     public static final Locale LOCALE_ZH_HANS = Locale.forLanguageTag("zh-Hans");
     public static final Locale LOCALE_ZH_HANT = Locale.forLanguageTag("zh-Hant");
+
+    public static String toLanguageKey(Locale locale) {
+        if (locale.getLanguage().isEmpty())
+            return "default";
+        else
+            return locale.toLanguageTag();
+    }
+
+    public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
+        return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
+    }
+
+    public static @Nullable InputStream findBuiltinResource(String name, String suffix,
+                                                            List<Locale> candidates) {
+
+        var control = DefaultResourceBundleControl.INSTANCE;
+        for (Locale locale : candidates) {
+            String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
+            InputStream input = LocaleUtils.class.getResourceAsStream(resourceName);
+            if (input != null)
+                return input;
+        }
+
+        return null;
+    }
+
+    // ---
 
     public static boolean isEnglish(Locale locale) {
         return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
@@ -64,10 +93,6 @@ public class LocaleUtils {
         } else {
             return "";
         }
-    }
-
-    public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
-        return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
     }
 
     private LocaleUtils() {
