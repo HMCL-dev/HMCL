@@ -98,7 +98,7 @@ public final class LocalizedText {
                 }
                 jsonWriter.endObject();
             } else {
-                jsonWriter.jsonValue(localizedText.value);
+                jsonWriter.value(localizedText.value);
             }
         }
     }
