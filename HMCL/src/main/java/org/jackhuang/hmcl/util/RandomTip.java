@@ -13,40 +13,41 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/ >.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.List;
+import java.util.*;
+
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class RandomTip {
+public final class RandomTip {
 
     private static final List<String> tips;
     private static final int maxTipNumber = 30;
+
+    private static final GuaranteedRandomIndex indexGenerator;
 
     static {
         // Initialization tips list
         tips = IntStream.rangeClosed(1, maxTipNumber)
                 .mapToObj(i -> i18n(String.format("message.tips_%s", i)))
                 .collect(Collectors.toList());
+
+        indexGenerator = new GuaranteedRandomIndex(tips.size());
     }
 
     public static String getRandomTip() {
-        String tip = tips.get(getRandomTipIndex());
+        String tip = tips.get(indexGenerator.next());
         return formatTip(tip);
     }
 
     public static String getRandomTip(String previous) {
-        String tip;
-        do {
-            tip = tips.get(getRandomTipIndex());
-        } while (tips.size() > 1 && tip.equals(previous));
-        return formatTip(tip);
+        return getRandomTip();
     }
 
     private static String formatTip(String tip) {
@@ -75,7 +76,35 @@ public class RandomTip {
         return formattedTip.toString();
     }
 
-    private static int getRandomTipIndex() {
-        return ThreadLocalRandom.current().nextInt(tips.size());
+    private static final class GuaranteedRandomIndex {
+        private final List<Integer> indices;
+        private final Random random;
+        private int cursor;
+
+        GuaranteedRandomIndex(int size) {
+            this.indices = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                indices.add(i);
+            }
+            this.random = new Random();
+            shuffle();
+            this.cursor = 0;
+        }
+
+        private void shuffle() {
+            for (int i = indices.size() - 1; i > 0; i--) {
+                int j = random.nextInt(i + 1);
+                Collections.swap(indices, i, j);
+            }
+        }
+
+        int next() {
+            if (cursor >= indices.size()) {
+                shuffle();
+                cursor = 0;
+            }
+            return indices.get(cursor++);
+        }
     }
+    private RandomTip() {}
 }

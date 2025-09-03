@@ -121,7 +121,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         FileDownloadTask.speedEvent.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
 
         onEscPressed(this, btnCancel::fire);
-        
+
         tipTimeline = new Timeline(new KeyFrame(Duration.seconds(2), e -> nextTip()));
         tipTimeline.setCycleCount(Animation.INDEFINITE);
         tipTimeline.play();
