@@ -31,7 +31,7 @@ import java.util.ResourceBundle;
 /// - For all Chinese locales, `zh-CN` is always added to the candidate list. If `zh-Hans` already exists in the candidate list,
 ///   `zh-CN` is inserted before `zh`; otherwise, it is inserted after `zh`.
 /// - For all Traditional Chinese locales, `zh-TW` is always added to the candidate list (before `zh`).
-/// - For all Chinese variants (such as `lzh`, `cmn`, `yue`, etc.), a candidate with the language code replaced by `zh`
+/// - For all Chinese variants (such as `lzh`, `cmn`, `yue`, etc.), a candidate list with the language code replaced by `zh`
 ///   is added to the end of the candidate list.
 ///
 /// @author Glavo
