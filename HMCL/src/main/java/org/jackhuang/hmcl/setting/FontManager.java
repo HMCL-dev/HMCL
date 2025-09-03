@@ -22,6 +22,8 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.DefaultResourceBundleControl;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -29,11 +31,13 @@ import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -50,7 +54,21 @@ public final class FontManager {
     public static final double DEFAULT_FONT_SIZE = 12.0f;
 
     private static final Lazy<Font> DEFAULT_FONT = new Lazy<>(() -> {
-        Font font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
+        Font font;
+
+        // Recommended
+
+        font = tryLoadLocalizedFont(Metadata.HMCL_CURRENT_DIRECTORY.resolve("font"));
+        if (font != null)
+            return font;
+
+        font = tryLoadLocalizedFont(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("font"));
+        if (font != null)
+            return font;
+
+        // Legacy
+
+        font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
         if (font != null)
             return font;
 
@@ -68,6 +86,8 @@ public final class FontManager {
             if (font != null)
                 return font;
         }
+
+        // Default
 
         String fcMatchPattern;
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
@@ -108,6 +128,7 @@ public final class FontManager {
         for (String extension : FONT_EXTENSIONS) {
             Path path = dir.resolve("font." + extension);
             if (Files.isRegularFile(path)) {
+                LOG.info("Load font file: " + path);
                 try {
                     Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
                     if (font != null) {
@@ -118,6 +139,53 @@ public final class FontManager {
 
                 LOG.warning("Failed to load font " + path);
             }
+        }
+
+        return null;
+    }
+
+    private static Font tryLoadLocalizedFont(Path dir) {
+        if (!Files.isDirectory(dir))
+            return null;
+
+        try (Stream<Path> list = Files.list(dir)) {
+            Map<String, Path> map = new HashMap<>();
+
+            Set<String> extensions = Set.of(FONT_EXTENSIONS);
+            list.forEach(file -> {
+                if (Files.isRegularFile(file)) {
+                    String fileName = file.getFileName().toString();
+                    String extension = StringUtils.substringAfterLast(fileName, '.');
+
+                    if (fileName.startsWith("font") && extensions.contains(extension)) {
+                        map.put(fileName.substring(0, fileName.length() - extension.length() - 1), file);
+                    }
+                }
+            });
+
+            List<Locale> candidateLocales = I18n.getLocale().getCandidateLocales();
+
+            for (Locale locale : candidateLocales) {
+                String key = DefaultResourceBundleControl.INSTANCE.toBundleName("font", locale);
+
+                Path path = map.get(key);
+                if (path != null) {
+                    LOG.info("Load font file: " + path);
+                    try {
+                        Font font = Font.loadFont(
+                                path.toAbsolutePath().normalize().toUri().toURL().toExternalForm(),
+                                DEFAULT_FONT_SIZE);
+                        if (font != null)
+                            return font;
+                    } catch (MalformedURLException ignored) {
+                    }
+
+                    LOG.warning("Failed to load font " + path);
+                }
+            }
+
+        } catch (IOException e) {
+            LOG.warning("Failed to load font " + dir, e);
         }
 
         return null;
@@ -147,6 +215,7 @@ public final class FontManager {
                 return null;
             }
 
+            LOG.info("Load font file: " + path);
             Font[] fonts = Font.loadFonts(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
             if (fonts == null) {
                 LOG.warning("Failed to load font from " + path);

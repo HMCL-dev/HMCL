@@ -30,11 +30,9 @@ public final class I18n {
     }
 
     private static volatile SupportedLocale locale = Locales.DEFAULT;
-    private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
-        resourceBundle = locale.getResourceBundle();
     }
 
     public static SupportedLocale getLocale() {
@@ -42,11 +40,11 @@ public final class I18n {
     }
 
     public static boolean isUseChinese() {
-        return Locales.isChinese(locale.getLocale());
+        return LocaleUtils.isChinese(locale.getLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
-        return resourceBundle;
+        return locale.getResourceBundle();
     }
 
     public static String i18n(String key, Object... formatArgs) {
