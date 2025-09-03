@@ -131,24 +131,26 @@ public final class LocaleUtils {
                 list.forEach(file -> {
                     if (Files.isRegularFile(file)) {
                         String fileName = file.getFileName().toString();
-                        if (fileName.startsWith(baseName)) {
-                            String ext = StringUtils.substringAfterLast(fileName, '.');
-                            if (exts.contains(ext)) {
-                                int defaultFileNameLength = baseName.length() + ext.length() + 1;
+                        if (!fileName.startsWith(baseName))
+                            return;
 
-                                String languageKey;
-                                if (fileName.length() == defaultFileNameLength)
-                                    languageKey = DEFAULT_LANGUAGE_KEY;
-                                else if (fileName.length() > defaultFileNameLength + 1 && fileName.charAt(baseName.length()) == '_')
-                                    languageKey = fileName.substring(baseName.length() + 1, fileName.length() - ext.length() - 1)
-                                            .replace('_', '-');
-                                else
-                                    return;
 
-                                result.computeIfAbsent(languageKey, key -> new HashMap<>())
-                                        .put(ext, file);
-                            }
-                        }
+                        String ext = StringUtils.substringAfterLast(fileName, '.');
+                        if (!exts.contains(ext))
+                            return;
+
+                        String languageKey;
+                        int defaultFileNameLength = baseName.length() + ext.length() + 1;
+                        if (fileName.length() == defaultFileNameLength)
+                            languageKey = DEFAULT_LANGUAGE_KEY;
+                        else if (fileName.length() > defaultFileNameLength + 1 && fileName.charAt(baseName.length()) == '_')
+                            languageKey = fileName.substring(baseName.length() + 1, fileName.length() - ext.length() - 1)
+                                    .replace('_', '-');
+                        else
+                            return;
+
+                        result.computeIfAbsent(languageKey, key -> new HashMap<>())
+                                .put(ext, file);
                     }
                 });
 
