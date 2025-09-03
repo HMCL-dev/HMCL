@@ -20,7 +20,11 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
@@ -61,6 +65,41 @@ public final class I18n {
 
     public static String getDisplaySelfVersion(RemoteVersion version) {
         return locale.getDisplaySelfVersion(version);
+    }
+
+    /// Find the builtin localized resource with given name and suffix.
+    ///
+    /// For example, if the current locale is `zh-CN`, when calling `getBuiltinResource("assets.lang.foo", "json")`,
+    /// this method will look for the following built-in resources in order:
+    ///
+    ///  - `assets/lang/foo_zh_Hans_CN.json`
+    ///  - `assets/lang/foo_zh_Hans.json`
+    ///  - `assets/lang/foo_zh_CN.json`
+    ///  - `assets/lang/foo_zh.json`
+    ///  - `assets/lang/foo.json`
+    ///
+    /// This method will return the first found resource;
+    /// if none of the above resources exist, it returns `null`.
+    public static @Nullable URL getBuiltinResource(String name, String suffix) {
+        var control = DefaultResourceBundleControl.INSTANCE;
+        var classLoader = I18n.class.getClassLoader();
+        for (Locale locale : locale.getCandidateLocales()) {
+            String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
+            URL input = classLoader.getResource(resourceName);
+            if (input != null)
+                return input;
+        }
+        return null;
+    }
+
+    /// @see [#getBuiltinResource(String, String) ]
+    public static @Nullable InputStream getBuiltinResourceAsStream(String name, String suffix) {
+        URL resource = getBuiltinResource(name, suffix);
+        try {
+            return resource != null ? resource.openStream() : null;
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     public static String getWikiLink(GameRemoteVersion remoteVersion) {
