@@ -41,6 +41,14 @@ public class RandomTip {
         return formatTip(tip);
     }
 
+    public static String getRandomTip(String previous) {
+        String tip;
+        do {
+            tip = tips.get(getRandomTipIndex());
+        } while (tips.size() > 1 && tip.equals(previous));
+        return formatTip(tip);
+    }
+
     private static String formatTip(String tip) {
         StringBuilder formattedTip = new StringBuilder();
         int lineLength = 0;
@@ -53,9 +61,10 @@ public class RandomTip {
                 charLength = 2;     // One Chinese character is considered as two characters
             }
 
-            if (lineLength + charLength > 50) {
-                // 49 characters per line
-                formattedTip.append("\n");
+            // avoid leaving a single punctuation on the new line
+            if (lineLength + charLength > 51 &&
+                    !(Character.toString(c).matches("\\p{P}") && lineLength + charLength == 52)) {
+                formattedTip.append('\n');
                 lineLength = 0;
             }
 

@@ -18,16 +18,22 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.RandomTip;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +54,7 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final Label lblProgress;
     private final JFXButton btnCancel;
     private final Label lblBottomTip;
+    private final Timeline tipTimeline;
     private final TaskListPane taskListPane;
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
@@ -78,8 +85,10 @@ public class TaskExecutorDialogPane extends BorderPane {
             lblBottomTip = new Label(getRandomTip());
             lblBottomTip.setStyle("-fx-text-fill: rgba(100, 100, 100, 0.9)");
             lblBottomTip.setPadding(new Insets(0, 8, 0, 0));
-            BorderPane.setAlignment(lblBottomTip, Pos.CENTER);
-            bottom.setCenter(lblBottomTip);
+
+            HBox centerBox = new HBox(lblBottomTip);
+            centerBox.setAlignment(Pos.CENTER);
+            bottom.setCenter(centerBox);
 
             btnCancel = new JFXButton(i18n("button.cancel"));
             bottom.setRight(btnCancel);
@@ -112,6 +121,10 @@ public class TaskExecutorDialogPane extends BorderPane {
         FileDownloadTask.speedEvent.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
 
         onEscPressed(this, btnCancel::fire);
+        
+        tipTimeline = new Timeline(new KeyFrame(Duration.seconds(2), e -> nextTip()));
+        tipTimeline.setCycleCount(Animation.INDEFINITE);
+        tipTimeline.play();
     }
 
     public void setExecutor(TaskExecutor executor) {
@@ -128,6 +141,7 @@ public class TaskExecutorDialogPane extends BorderPane {
                 executor.addTaskListener(new TaskListener() {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
+                        tipTimeline.stop();
                         Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
                     }
                 });
@@ -150,5 +164,11 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.onCancel = onCancel;
 
         runInFX(() -> btnCancel.setDisable(onCancel == null));
+    }
+
+    private void nextTip() {
+        String old = lblBottomTip.getText();
+        String next = RandomTip.getRandomTip(old);
+        Platform.runLater(() -> lblBottomTip.setText(next));
     }
 }
