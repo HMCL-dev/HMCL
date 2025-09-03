@@ -51,7 +51,7 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
     @Override
     public List<Locale> getCandidateLocales(String baseName, Locale locale) {
         if (locale.getLanguage().isEmpty())
-            return super.getCandidateLocales(baseName, Locale.ENGLISH);
+            return getCandidateLocales(baseName, Locale.ENGLISH);
 
         if (LocaleUtils.isChinese(locale)) {
             String language = locale.getLanguage();
@@ -67,33 +67,33 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
 
             List<Locale> locales = super.getCandidateLocales("", locale);
 
-            if (!language.equals("zh")) {
+            if (language.equals("zh")) {
+                if (locales.contains(LocaleUtils.LOCALE_ZH_HANT) && !locales.contains(Locale.TRADITIONAL_CHINESE)) {
+                    locales = ensureEditable(locales);
+                    int chineseIdx = locales.indexOf(Locale.CHINESE);
+                    if (chineseIdx >= 0)
+                        locales.add(chineseIdx, Locale.TRADITIONAL_CHINESE);
+                }
+
+                if (!locales.contains(Locale.SIMPLIFIED_CHINESE)) {
+                    int chineseIdx = locales.indexOf(Locale.CHINESE);
+
+                    if (chineseIdx >= 0) {
+                        locales = ensureEditable(locales);
+                        if (locales.contains(LocaleUtils.LOCALE_ZH_HANS))
+                            locales.add(chineseIdx, Locale.SIMPLIFIED_CHINESE);
+                        else
+                            locales.add(chineseIdx + 1, Locale.SIMPLIFIED_CHINESE);
+                    }
+                }
+            } else {
                 locales = ensureEditable(locales);
                 locales.removeIf(it -> !it.getLanguage().equals(language));
 
-                locales.addAll(super.getCandidateLocales("", new Locale.Builder()
+                locales.addAll(getCandidateLocales("", new Locale.Builder()
                         .setLocale(locale)
                         .setLanguage("zh")
                         .build()));
-            }
-
-            if (locales.contains(LocaleUtils.LOCALE_ZH_HANT) && !locales.contains(Locale.TRADITIONAL_CHINESE)) {
-                locales = ensureEditable(locales);
-                int chineseIdx = locales.indexOf(Locale.CHINESE);
-                if (chineseIdx >= 0)
-                    locales.add(chineseIdx, Locale.TRADITIONAL_CHINESE);
-            }
-
-            if (!locales.contains(Locale.SIMPLIFIED_CHINESE)) {
-                int chineseIdx = locales.indexOf(Locale.CHINESE);
-
-                if (chineseIdx >= 0) {
-                    locales = ensureEditable(locales);
-                    if (locales.contains(LocaleUtils.LOCALE_ZH_HANS))
-                        locales.add(chineseIdx, Locale.SIMPLIFIED_CHINESE);
-                    else
-                        locales.add(chineseIdx + 1, Locale.SIMPLIFIED_CHINESE);
-                }
             }
 
             return locales;
