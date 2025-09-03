@@ -126,7 +126,12 @@ public final class NetworkUtils {
     }
 
     public static URLConnection createConnection(URI uri) throws IOException {
-        URLConnection connection = uri.toURL().openConnection();
+        URLConnection connection;
+        try {
+            connection = uri.toURL().openConnection();
+        } catch (IllegalArgumentException | MalformedURLException e) {
+            throw new IOException(e);
+        }
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
         if (connection instanceof HttpURLConnection) {
