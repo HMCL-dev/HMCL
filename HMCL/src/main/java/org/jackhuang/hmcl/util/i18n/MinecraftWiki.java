@@ -51,13 +51,13 @@ public final class MinecraftWiki {
 
         String variantSuffix;
         if (LocaleUtils.isChinese(locale.getLocale())) {
-            if ("Hant".equals(LocaleUtils.detectChineseScript(locale.getLocale()))) {
+            if (!"Hant".equals(LocaleUtils.detectChineseScript(locale.getLocale()))) {
+                variantSuffix = "?variant=zh-cn";
+            } else {
                 String region = locale.getLocale().getCountry();
                 variantSuffix = region.equals("HK") || region.equals("MO")
                         ? "?variant=zh-hk"
                         : "?variant=zh-tw";
-            } else {
-                variantSuffix = "?variant=zh-cn";
             }
         } else
             variantSuffix = "";
