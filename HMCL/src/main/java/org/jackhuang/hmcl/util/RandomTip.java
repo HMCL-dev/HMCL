@@ -30,7 +30,7 @@ public final class RandomTip {
     private static final List<String> tips;
     private static final int maxTipNumber = 30;
 
-    private static final GuaranteedRandomIndex indexGenerator;
+    private static final FakeRandomIndex indexGenerator;
 
     static {
         // Initialization tips list
@@ -38,7 +38,7 @@ public final class RandomTip {
                 .mapToObj(i -> i18n(String.format("message.tips_%s", i)))
                 .collect(Collectors.toList());
 
-        indexGenerator = new GuaranteedRandomIndex(tips.size());
+        indexGenerator = new FakeRandomIndex(tips.size());
     }
 
     public static String getRandomTip() {
@@ -76,12 +76,12 @@ public final class RandomTip {
         return formattedTip.toString();
     }
 
-    private static final class GuaranteedRandomIndex {
+    private static final class FakeRandomIndex {
         private final List<Integer> indices;
         private final Random random;
         private int cursor;
 
-        GuaranteedRandomIndex(int size) {
+        FakeRandomIndex(int size) {
             this.indices = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 indices.add(i);
