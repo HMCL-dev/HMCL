@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -64,7 +65,13 @@ public final class I18n {
     }
 
     public static String getDisplaySelfVersion(RemoteVersion version) {
-        return locale.getDisplaySelfVersion(version);
+        if (locale.getLocale().getLanguage().equals("lzh")) {
+            if (version instanceof GameRemoteVersion)
+                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
+            else
+                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
+        }
+        return version.getSelfVersion();
     }
 
     /// Find the builtin localized resource with given name and suffix.

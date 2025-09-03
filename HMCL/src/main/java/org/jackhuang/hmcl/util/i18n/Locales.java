@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.util.i18n;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.time.ZoneId;
@@ -195,16 +192,6 @@ public final class Locales {
                         .withZone(ZoneId.systemDefault());
             }
             return formatter.format(time);
-        }
-
-        public String getDisplaySelfVersion(RemoteVersion version) {
-            if (locale.getLanguage().equals("lzh")) {
-                if (version instanceof GameRemoteVersion)
-                    return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
-                else
-                    return WenyanUtils.translateGenericVersion(version.getSelfVersion());
-            }
-            return version.getSelfVersion();
         }
 
         public String getFcMatchPattern() {
