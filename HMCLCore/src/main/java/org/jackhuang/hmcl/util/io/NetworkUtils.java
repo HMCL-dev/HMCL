@@ -69,8 +69,7 @@ public final class NetworkUtils {
 
         if (url.startsWith("//"))
             return "https:" + url;
-        else if (url.startsWith("/"))
-            return "https:/" + url;
+            return "https://" + url;
         else
             return "https://" + url;
     }
