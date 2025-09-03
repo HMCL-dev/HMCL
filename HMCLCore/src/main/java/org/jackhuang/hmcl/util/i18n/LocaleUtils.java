@@ -44,6 +44,21 @@ public class LocaleUtils {
         return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
     }
 
+    public static String getScript(Locale locale) {
+        if (locale.getScript().isEmpty()) {
+            if (isChinese(locale)) {
+                if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
+                    return "Latn";
+                if (locale.getLanguage().equals("lzh") || CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry()))
+                    return "Hant";
+                else
+                    return "Hans";
+            }
+        }
+
+        return locale.getScript();
+    }
+
     // ---
 
     public static boolean isEnglish(Locale locale) {
@@ -60,21 +75,6 @@ public class LocaleUtils {
 
     public static boolean isChinese(Locale locale) {
         return CHINESE_LANGUAGES.contains(locale.getLanguage());
-    }
-
-    public static String getScript(Locale locale) {
-        if (locale.getScript().isEmpty()) {
-            if (isChinese(locale)) {
-                if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
-                    return "Latn";
-                if (locale.getLanguage().equals("lzh") || CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry()))
-                    return "Hant";
-                else
-                    return "Hans";
-            }
-        }
-
-        return locale.getScript();
     }
 
     private LocaleUtils() {

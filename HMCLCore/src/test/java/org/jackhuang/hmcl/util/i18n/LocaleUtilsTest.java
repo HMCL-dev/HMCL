@@ -84,7 +84,7 @@ public final class LocaleUtilsTest {
     }
 
     @Test
-    public void testIsSimplifiedChinese() {
+    public void testGetScript() {
         assertEquals("Hans", LocaleUtils.getScript(Locale.CHINESE));
         assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("zh")));
         assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("zh-Hans")));
