@@ -128,6 +128,7 @@ public final class FontManager {
         for (String extension : FONT_EXTENSIONS) {
             Path path = dir.resolve("font." + extension);
             if (Files.isRegularFile(path)) {
+                LOG.info("Load font file: " + path);
                 try {
                     Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
                     if (font != null) {
@@ -169,6 +170,7 @@ public final class FontManager {
 
                 Path path = map.get(key);
                 if (path != null) {
+                    LOG.info("Load font file: " + path);
                     try {
                         Font font = Font.loadFont(
                                 path.toAbsolutePath().normalize().toUri().toURL().toExternalForm(),
@@ -213,6 +215,7 @@ public final class FontManager {
                 return null;
             }
 
+            LOG.info("Load font file: " + path);
             Font[] fonts = Font.loadFonts(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
             if (fonts == null) {
                 LOG.warning("Failed to load font from " + path);
