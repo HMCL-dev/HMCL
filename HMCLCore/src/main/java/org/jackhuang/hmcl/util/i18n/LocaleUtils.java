@@ -18,9 +18,7 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -44,20 +42,6 @@ public class LocaleUtils {
 
     public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
         return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
-    }
-
-    public static @Nullable InputStream findBuiltinResource(String name, String suffix,
-                                                            List<Locale> candidates) {
-
-        var control = DefaultResourceBundleControl.INSTANCE;
-        for (Locale locale : candidates) {
-            String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
-            InputStream input = LocaleUtils.class.getResourceAsStream(resourceName);
-            if (input != null)
-                return input;
-        }
-
-        return null;
     }
 
     // ---

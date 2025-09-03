@@ -258,7 +258,14 @@ public final class Locales {
         /// This method will open and return the first found resource;
         /// if none of the above resources exist, it returns `null`.
         public @Nullable InputStream findBuiltinResource(String name, String suffix) {
-            return LocaleUtils.findBuiltinResource(name, suffix, getCandidateLocales());
+            var control = DefaultResourceBundleControl.INSTANCE;
+            for (Locale locale : getCandidateLocales()) {
+                String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
+                InputStream input = Locales.class.getResourceAsStream(resourceName);
+                if (input != null)
+                    return input;
+            }
+            return null;
         }
 
         public boolean isSameLanguage(SupportedLocale other) {
