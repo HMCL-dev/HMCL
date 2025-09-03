@@ -63,6 +63,18 @@ public final class NetworkUtils {
         return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
     }
 
+    public static String addHttpsIfMissing(String url) {
+        if (Pattern.compile("^(?<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://").matcher(url).find())
+            return url;
+
+        if (url.startsWith("//"))
+            return "https:" + url;
+        else if (url.startsWith("/"))
+            return "https:/" + url;
+        else
+            return "https://" + url;
+    }
+
     public static String withQuery(String baseUrl, Map<String, String> params) {
         StringBuilder sb = new StringBuilder(baseUrl);
         boolean first = true;
