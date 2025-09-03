@@ -130,7 +130,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             case "zh":
             default:
                 if (LocaleUtils.isChinese(locale)) {
-                    String script = LocaleUtils.detectChineseScript(locale);
+                    String script = LocaleUtils.getScript(locale);
                     if ("Hant".equals(script)) {
                         if ((region.equals("HK") || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
                             return "zh_HK";

@@ -62,21 +62,19 @@ public class LocaleUtils {
         return CHINESE_LANGUAGES.contains(locale.getLanguage());
     }
 
-    public static String detectChineseScript(Locale locale) {
-        if (isChinese(locale)) {
-            if (locale.getScript().isEmpty()) {
+    public static String getScript(Locale locale) {
+        if (locale.getScript().isEmpty()) {
+            if (isChinese(locale)) {
                 if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
                     return "Latn";
                 if (locale.getLanguage().equals("lzh") || CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry()))
                     return "Hant";
                 else
                     return "Hans";
-            } else {
-                return locale.getScript();
             }
-        } else {
-            return "";
         }
+
+        return locale.getScript();
     }
 
     private LocaleUtils() {

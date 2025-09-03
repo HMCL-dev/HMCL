@@ -85,26 +85,26 @@ public final class LocaleUtilsTest {
 
     @Test
     public void testIsSimplifiedChinese() {
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.CHINESE));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-Hans")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-Hans-US")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-SG")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-MY")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn-Hans")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn-CN")));
-        assertEquals("Hans", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh-Hans")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.CHINESE));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("zh")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("zh-Hans")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("zh-Hans-US")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("zh-SG")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("zh-MY")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("cmn")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("cmn-Hans")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("cmn-CN")));
+        assertEquals("Hans", LocaleUtils.getScript(Locale.forLanguageTag("lzh-Hans")));
 
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-Hant")));
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-TW")));
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-HK")));
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-MO")));
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("cmn-Hant")));
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh")));
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh-Hant")));
-        assertEquals("Hant", LocaleUtils.detectChineseScript(Locale.forLanguageTag("lzh-CN")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("zh-Hant")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("zh-TW")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("zh-HK")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("zh-MO")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("cmn-Hant")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("lzh")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("lzh-Hant")));
+        assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("lzh-CN")));
 
-        assertEquals("Latn", LocaleUtils.detectChineseScript(Locale.forLanguageTag("zh-pinyin")));
+        assertEquals("Latn", LocaleUtils.getScript(Locale.forLanguageTag("zh-pinyin")));
     }
 }

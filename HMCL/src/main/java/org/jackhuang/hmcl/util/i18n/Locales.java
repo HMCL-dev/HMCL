@@ -220,7 +220,7 @@ public final class Locales {
                 String lang;
                 String charset;
 
-                String script = LocaleUtils.detectChineseScript(locale);
+                String script = LocaleUtils.getScript(locale);
                 switch (script) {
                     case "Hans":
                         lang = region.equals("SG") || region.equals("MY")
