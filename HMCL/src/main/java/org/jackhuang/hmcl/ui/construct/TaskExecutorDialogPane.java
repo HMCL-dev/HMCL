@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
@@ -35,6 +36,7 @@ import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.util.RandomTip.getRandomTip;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TaskExecutorDialogPane extends BorderPane {
@@ -45,6 +47,7 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final Label lblTitle;
     private final Label lblProgress;
     private final JFXButton btnCancel;
+    private final Label lblBottomTip;
     private final TaskListPane taskListPane;
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
@@ -68,8 +71,15 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.setBottom(bottom);
         bottom.setPadding(new Insets(0, 8, 8, 8));
         {
-            lblProgress = new Label();
+            lblProgress = new Label("0.0B/s");  // Prevent sudden changes in layout
             bottom.setLeft(lblProgress);
+            BorderPane.setMargin(lblProgress, new Insets(4, 0, 0, 20));
+
+            lblBottomTip = new Label(getRandomTip());
+            lblBottomTip.setStyle("-fx-text-fill: rgba(100, 100, 100, 0.9)");
+            lblBottomTip.setPadding(new Insets(0, 8, 0, 0));
+            BorderPane.setAlignment(lblBottomTip, Pos.CENTER);
+            bottom.setCenter(lblBottomTip);
 
             btnCancel = new JFXButton(i18n("button.cancel"));
             bottom.setRight(btnCancel);
