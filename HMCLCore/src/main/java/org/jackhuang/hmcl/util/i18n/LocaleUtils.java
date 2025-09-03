@@ -17,34 +17,47 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Stream;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
  */
-public class LocaleUtils {
+public final class LocaleUtils {
 
     public static final Locale SYSTEM_DEFAULT = Locale.getDefault();
 
     public static final Locale LOCALE_ZH_HANS = Locale.forLanguageTag("zh-Hans");
     public static final Locale LOCALE_ZH_HANT = Locale.forLanguageTag("zh-Hant");
 
+    public static final String DEFAULT_LANGUAGE_KEY = "default";
+
+    /// Convert a locale to the language key.
+    ///
+    /// The language key is in the format of BCP 47 language tag.
+    /// If the locale is the default locale (language is empty), "default" will be returned.
     public static String toLanguageKey(Locale locale) {
-        if (locale.getLanguage().isEmpty())
-            return "default";
-        else
-            return locale.toLanguageTag();
+        return locale.getLanguage().isEmpty()
+                ? DEFAULT_LANGUAGE_KEY
+                : locale.stripExtensions().toLanguageTag();
     }
 
     public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
         return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
     }
 
-    public static String getScript(Locale locale) {
+    /// Get the script of the locale. If the script is empty and the language is Chinese,
+    /// the script will be inferred based on the language, the region and the variant.
+    public static @NotNull String getScript(Locale locale) {
         if (locale.getScript().isEmpty()) {
             if (isChinese(locale)) {
                 if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
@@ -57,6 +70,85 @@ public class LocaleUtils {
         }
 
         return locale.getScript();
+    }
+
+    /// Find all localized files in the given directory with the given base name and extension.
+    /// The file name should be in the format of `baseName[_languageTag].ext`.
+    ///
+    /// @return A map of language key to file path.
+    public static @NotNull @Unmodifiable Map<String, Path> findAllLocalizedFiles(Path dir, String baseName, String ext) {
+        if (Files.isDirectory(dir)) {
+            String suffix = "." + ext;
+            String defaultName = baseName + suffix;
+            String noDefaultPrefix = baseName + "_";
+
+            try (Stream<Path> list = Files.list(dir)) {
+                var result = new LinkedHashMap<String, Path>();
+
+                list.forEach(file -> {
+                    if (Files.isRegularFile(file)) {
+                        String fileName = file.getFileName().toString();
+                        if (fileName.equals(defaultName)) {
+                            result.put(DEFAULT_LANGUAGE_KEY, file);
+                        } else if (fileName.startsWith(noDefaultPrefix) && fileName.endsWith(suffix)) {
+                            String languageKey = fileName.substring(noDefaultPrefix.length(), fileName.length() - suffix.length())
+                                    .replace('_', '-');
+
+                            if (!languageKey.isEmpty())
+                                result.put(languageKey, file);
+                        }
+                    }
+                });
+
+                return result;
+            } catch (IOException e) {
+                LOG.warning("Failed to list files in directory " + dir, e);
+            }
+        }
+
+        return Map.of();
+    }
+
+    /// Find all localized files in the given directory with the given base name and extensions.
+    /// The file name should be in the format of `baseName[_languageTag].ext`.
+    ///
+    /// @return A map of language key to a map of extension to file path.
+    public static @NotNull @Unmodifiable Map<String, Map<String, Path>> findAllLocalizedFiles(Path dir, String baseName, Collection<String> exts) {
+        if (Files.isDirectory(dir)) {
+            try (Stream<Path> list = Files.list(dir)) {
+                var result = new LinkedHashMap<String, Map<String, Path>>();
+
+                list.forEach(file -> {
+                    if (Files.isRegularFile(file)) {
+                        String fileName = file.getFileName().toString();
+                        if (fileName.startsWith(baseName)) {
+                            String ext = StringUtils.substringAfterLast(fileName, '.');
+                            if (exts.contains(ext)) {
+                                int defaultFileNameLength = baseName.length() + ext.length() + 1;
+
+                                String languageKey;
+                                if (fileName.length() == defaultFileNameLength)
+                                    languageKey = DEFAULT_LANGUAGE_KEY;
+                                else if (fileName.length() > defaultFileNameLength + 1 && fileName.charAt(baseName.length()) == '_')
+                                    languageKey = fileName.substring(baseName.length() + 1, fileName.length() - ext.length() - 1)
+                                            .replace('_', '-');
+                                else
+                                    return;
+
+                                result.computeIfAbsent(languageKey, key -> new HashMap<>())
+                                        .put(ext, file);
+                            }
+                        }
+                    }
+                });
+
+                return result;
+            } catch (IOException e) {
+                LOG.warning("Failed to list files in directory " + dir, e);
+            }
+        }
+
+        return Map.of();
     }
 
     // ---

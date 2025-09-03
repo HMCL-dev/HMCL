@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -40,7 +41,7 @@ public final class Locales {
     }
 
     private static Locale getDefaultLocale() {
-        String language = System.getenv("HMCL_LANGUAGE");
+        String language = System.getenv("HMCL_LOCALE");
         if (StringUtils.isNotBlank(language))
             return Locale.forLanguageTag(language);
         else
@@ -246,7 +247,7 @@ public final class Locales {
 
         /// Find the builtin localized resource with given name and suffix.
         ///
-        /// For example, if the current locale is `zh-CN`, when calling `findBuiltinResource("assets.lang.foo", "json")`,
+        /// For example, if the current locale is `zh-CN`, when calling `getBuiltinResource("assets.lang.foo", "json")`,
         /// this method will look for the following built-in resources in order:
         ///
         ///  - `assets/lang/foo_zh_Hans_CN.json`
@@ -255,18 +256,28 @@ public final class Locales {
         ///  - `assets/lang/foo_zh.json`
         ///  - `assets/lang/foo.json`
         ///
-        /// This method will open and return the first found resource;
+        /// This method will return the first found resource;
         /// if none of the above resources exist, it returns `null`.
-        public @Nullable InputStream findBuiltinResource(String name, String suffix) {
+        public @Nullable URL getBuiltinResource(String name, String suffix) {
             var control = DefaultResourceBundleControl.INSTANCE;
             var classLoader = Locales.class.getClassLoader();
             for (Locale locale : getCandidateLocales()) {
                 String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
-                InputStream input = classLoader.getResourceAsStream(resourceName);
+                URL input = classLoader.getResource(resourceName);
                 if (input != null)
                     return input;
             }
             return null;
+        }
+
+        /// @see [#getBuiltinResource(String, String) ]
+        public @Nullable InputStream getBuiltinResourceAsStream(String name, String suffix) {
+            URL resource = getBuiltinResource(name, suffix);
+            try {
+                return resource != null ? resource.openStream() : null;
+            } catch (IOException e) {
+                return null;
+            }
         }
 
         public boolean isSameLanguage(SupportedLocale other) {
