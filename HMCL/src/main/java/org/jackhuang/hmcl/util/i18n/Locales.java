@@ -41,7 +41,7 @@ public final class Locales {
     }
 
     private static Locale getDefaultLocale() {
-        String language = System.getenv("HMCL_LOCALE");
+        String language = System.getenv("HMCL_LANGUAGE");
         if (StringUtils.isNotBlank(language))
             return Locale.forLanguageTag(language);
         else

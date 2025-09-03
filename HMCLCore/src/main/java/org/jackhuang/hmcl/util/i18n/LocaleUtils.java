@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -51,10 +52,6 @@ public final class LocaleUtils {
                 : locale.stripExtensions().toLanguageTag();
     }
 
-    public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
-        return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
-    }
-
     /// Get the script of the locale. If the script is empty and the language is Chinese,
     /// the script will be inferred based on the language, the region and the variant.
     public static @NotNull String getScript(Locale locale) {
@@ -70,6 +67,19 @@ public final class LocaleUtils {
         }
 
         return locale.getScript();
+    }
+
+    public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
+        return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
+    }
+
+    public static <T> @Nullable T getByCandidateLocales(Map<String, T> map, List<Locale> candidateLocales) {
+        for (Locale locale : candidateLocales) {
+            String key = toLanguageKey(locale);
+            if (map.containsKey(key))
+                return map.get(key);
+        }
+        return null;
     }
 
     /// Find all localized files in the given directory with the given base name and extension.

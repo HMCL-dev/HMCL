@@ -22,22 +22,19 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.DefaultResourceBundleControl;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -145,47 +142,32 @@ public final class FontManager {
     }
 
     private static Font tryLoadLocalizedFont(Path dir) {
-        if (!Files.isDirectory(dir))
+        Map<String, Map<String, Path>> fontFiles = LocaleUtils.findAllLocalizedFiles(dir, "font", Set.of(FONT_EXTENSIONS));
+        if (fontFiles.isEmpty())
             return null;
 
-        try (Stream<Path> list = Files.list(dir)) {
-            Map<String, Path> map = new HashMap<>();
+        List<Locale> candidateLocales = I18n.getLocale().getCandidateLocales();
 
-            Set<String> extensions = Set.of(FONT_EXTENSIONS);
-            list.forEach(file -> {
-                if (Files.isRegularFile(file)) {
-                    String fileName = file.getFileName().toString();
-                    String extension = StringUtils.substringAfterLast(fileName, '.');
+        for (Locale locale : candidateLocales) {
+            Map<String, Path> extToFiles = fontFiles.get(LocaleUtils.toLanguageKey(locale));
+            if (extToFiles != null) {
+                for (String ext : FONT_EXTENSIONS) {
+                    Path fontFile = extToFiles.get(ext);
+                    if (fontFile != null) {
+                        LOG.info("Load font file: " + fontFile);
+                        try {
+                            Font font = Font.loadFont(
+                                    fontFile.toAbsolutePath().normalize().toUri().toURL().toExternalForm(),
+                                    DEFAULT_FONT_SIZE);
+                            if (font != null)
+                                return font;
+                        } catch (MalformedURLException ignored) {
+                        }
 
-                    if (fileName.startsWith("font") && extensions.contains(extension)) {
-                        map.put(fileName.substring(0, fileName.length() - extension.length() - 1), file);
+                        LOG.warning("Failed to load font " + fontFile);
                     }
-                }
-            });
-
-            List<Locale> candidateLocales = I18n.getLocale().getCandidateLocales();
-
-            for (Locale locale : candidateLocales) {
-                String key = DefaultResourceBundleControl.INSTANCE.toBundleName("font", locale);
-
-                Path path = map.get(key);
-                if (path != null) {
-                    LOG.info("Load font file: " + path);
-                    try {
-                        Font font = Font.loadFont(
-                                path.toAbsolutePath().normalize().toUri().toURL().toExternalForm(),
-                                DEFAULT_FONT_SIZE);
-                        if (font != null)
-                            return font;
-                    } catch (MalformedURLException ignored) {
-                    }
-
-                    LOG.warning("Failed to load font " + path);
                 }
             }
-
-        } catch (IOException e) {
-            LOG.warning("Failed to load font " + dir, e);
         }
 
         return null;
