@@ -30,13 +30,12 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.i18n.I18n.setLocale;
 
 /**
- * 通用重启工具类，用于：
- *   - 更新后重启
- *   - 切换界面语言后重启
- *   - 任何"必须重新启动才能生效"的场景
+ * Common restart tool class, used for:
+ *  - Restart after update
+ *  - Restart after switching interface language
+ *  - Any scenario that requires a restart to take effect
  */
 public final class Restarter {
 
@@ -61,17 +60,14 @@ public final class Restarter {
     }
 
     /**
-     * 设置要启动的JAR路径
-     * 如果不设置，则使用当前运行的JAR
+     * Set the JAR path to start
+     * If not, the current running JAR will be used by default
      */
     public Restarter setJarPath(Path jarPath) {
         this.jarPath = jarPath;
         return this;
     }
 
-    /**
-     * 立即重启
-     */
     public void restart() throws IOException {
         Path jar = this.jarPath;
         if (jar == null) {
@@ -91,13 +87,11 @@ public final class Restarter {
             }
         }
 
-        // 额外JVM选项
         command.addAll(jvmOptions);
 
         command.add("-jar");
         command.add(jar.toAbsolutePath().toString());
 
-        // 程序参数
         command.addAll(programArgs);
 
         new ProcessBuilder(command)
@@ -108,16 +102,10 @@ public final class Restarter {
         EntryPoint.exit(0);
     }
 
-    /**
-     * 立刻用完全相同的环境重启
-     */
     public static void restartWithSameArgs() throws IOException {
         builder().restart();
     }
 
-    /**
-     * 切换界面语言后重启
-     */
     public static void restartWithLocale(Locales.SupportedLocale locale) throws IOException {
         config().setLocalization(locale);
         builder().restart();
