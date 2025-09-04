@@ -128,7 +128,7 @@ public final class LocaleUtilsTest {
             Files.createDirectories(testDir);
 
             Files.createFile(testDir.resolve("meow.json"));
-            Files.createFile(testDir.resolve("meow_.json")); //
+            Files.createFile(testDir.resolve("meow_.json")); // Should be ignored
             Files.createFile(testDir.resolve("meow_zh.json"));
             Files.createFile(testDir.resolve("meow_zh_CN.json"));
             Files.createFile(testDir.resolve("meow_zh_Hans.json"));
