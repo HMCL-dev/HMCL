@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.ToNumberPolicy;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -36,6 +33,7 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.util.TypeUtils;
 import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
 import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
 import org.jackhuang.hmcl.util.gson.PaintAdapter;
@@ -49,14 +47,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public final class Config implements Observable {
 
@@ -75,8 +68,6 @@ public final class Config implements Observable {
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
-    private static final ConfigField[] FIELDS;
-
     @Nullable
     public static Config fromJson(String json) throws JsonParseException {
         Config loaded = CONFIG_GSON.fromJson(json, Config.class);
@@ -88,64 +79,12 @@ public final class Config implements Observable {
         return instance;
     }
 
-    private static final class ConfigField {
-        private final String serializedName;
-        private final List<String> alternateNames;
-        private final Type type;
-        private final VarHandle varHandle;
-
-        private ConfigField(String serializedName, List<String> alternateNames, Type type, VarHandle varHandle) {
-            this.serializedName = serializedName;
-            this.alternateNames = alternateNames;
-            this.type = type;
-            this.varHandle = varHandle;
-        }
-
-        Observable get(Config config) {
-            return (Observable) varHandle.get(config);
-        }
-    }
-
-    static {
-        final MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Field[] fields = Config.class.getDeclaredFields();
-
-        var configFields = new ArrayList<ConfigField>();
-
-        for (Field field : fields) {
-            if (Modifier.isTransient(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
-                continue;
-
-            SerializedName serializedName = field.getAnnotation(SerializedName.class);
-            if (serializedName == null)
-                throw new AssertionError("Field " + field.getName() + " is missing @SerializedName annotation");
-
-            if (!Observable.class.isAssignableFrom(field.getType()))
-                throw new AssertionError("Field " + field.getName() + " is not an Observable");
-
-            VarHandle varHandle;
-            try {
-                varHandle = lookup.unreflectVarHandle(field);
-            } catch (IllegalAccessException e) {
-                throw new AssertionError(e);
-            }
-
-            configFields.add(new ConfigField(
-                    serializedName.value(),
-                    List.of(serializedName.alternate()),
-                    field.getGenericType(),
-                    varHandle
-            ));
-        }
-
-        FIELDS = configFields.toArray(new ConfigField[0]);
-    }
-
     private transient final ObservableHelper helper = new ObservableHelper(this);
     private transient final DirtyTracker tracker = new DirtyTracker();
+    private transient final Map<String, JsonElement> unknownFields = new HashMap<>();
 
     public Config() {
-        for (ConfigField field : FIELDS) {
+        for (ConfigField field : ConfigField.FIELDS) {
             Observable observable = field.get(this);
             observable.addListener(helper);
             observable.addListener(tracker);
@@ -787,5 +726,188 @@ public final class Config implements Observable {
 
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
+    }
+
+    private static abstract class ConfigField {
+        private static final ConfigField[] FIELDS;
+
+        static {
+            final MethodHandles.Lookup lookup = MethodHandles.lookup();
+            Field[] fields = Config.class.getDeclaredFields();
+
+            var configFields = new ArrayList<ConfigField>();
+
+            for (Field field : fields) {
+                if (Modifier.isTransient(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
+                    continue;
+
+                SerializedName serializedName = field.getAnnotation(SerializedName.class);
+                if (serializedName == null)
+                    throw new AssertionError("Field " + field.getName() + " is missing @SerializedName annotation");
+
+                VarHandle varHandle;
+                try {
+                    varHandle = lookup.unreflectVarHandle(field);
+                } catch (IllegalAccessException e) {
+                    throw new AssertionError(e);
+                }
+
+                if (ObservableList.class.isAssignableFrom(field.getType())) {
+                    Type listType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), List.class);
+                    if (!(listType instanceof ParameterizedType))
+                        throw new AssertionError("Cannot resolve the list type of " + field.getName());
+                    configFields.add(new ConfigListField(serializedName.value(), varHandle, listType));
+                } else if (ObservableMap.class.isAssignableFrom(field.getType())) {
+                    Type mapType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Map.class);
+                    if (!(mapType instanceof ParameterizedType))
+                        throw new AssertionError("Cannot resolve the list map of " + field.getName());
+                    configFields.add(new ConfigMapField(serializedName.value(), varHandle, mapType));
+                } else if (Property.class.isAssignableFrom(field.getType())) {
+                    Type propertyType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Property.class);
+                    if (!(propertyType instanceof ParameterizedType))
+                        throw new AssertionError("Cannot resolve the element type of " + field.getName());
+                    Type elementType = ((ParameterizedType) propertyType).getActualTypeArguments()[0];
+                    configFields.add(new ConfigPropertyField(serializedName.value(), varHandle, elementType));
+                } else {
+                    throw new AssertionError("Field " + field.getName() + " is not a property");
+                }
+            }
+
+            FIELDS = configFields.toArray(new ConfigField[0]);
+        }
+
+        private final String serializedName;
+        private final VarHandle varHandle;
+
+        private ConfigField(String serializedName, VarHandle varHandle) {
+            this.serializedName = serializedName;
+            this.varHandle = varHandle;
+        }
+
+        Observable get(Config config) {
+            return (Observable) varHandle.get(config);
+        }
+
+        abstract JsonElement serialize(Config config, JsonSerializationContext context);
+
+        abstract void deserialize(Config config, JsonElement element, JsonDeserializationContext context);
+    }
+
+    private static final class ConfigPropertyField extends ConfigField {
+        private final Type elementType;
+
+        public ConfigPropertyField(String serializedName, VarHandle varHandle, Type elementType) {
+            super(serializedName, varHandle);
+            this.elementType = elementType;
+        }
+
+        @Override
+        JsonElement serialize(Config config, JsonSerializationContext context) {
+            return context.serialize(((Property<?>) get(config)).getValue());
+        }
+
+        @Override
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        void deserialize(Config config, JsonElement element, JsonDeserializationContext context) {
+            ((Property) get(config)).setValue(context.deserialize(element, elementType));
+        }
+    }
+
+    private static final class ConfigListField extends ConfigField {
+        private final Type listType;
+
+        private ConfigListField(String serializedName, VarHandle varHandle,
+                                Type listType) {
+            super(serializedName, varHandle);
+            this.listType = listType;
+        }
+
+        @Override
+        JsonElement serialize(Config config, JsonSerializationContext context) {
+            ObservableList<?> list = (ObservableList<?>) get(config);
+            return context.serialize(list, listType);
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        void deserialize(Config config, JsonElement element, JsonDeserializationContext context) {
+            ArrayList<Object> deserialized = context.deserialize(element, listType);
+            ObservableList<Object> list = (ObservableList<Object>) get(config);
+            if (list instanceof ListProperty<?>)
+                ((ListProperty) list).set(FXCollections.observableList(deserialized));
+            else
+                list.setAll(deserialized);
+        }
+    }
+
+    private static final class ConfigMapField extends ConfigField {
+        private final Type mapType;
+
+        private ConfigMapField(String serializedName, VarHandle varHandle,
+                               Type mapType) {
+            super(serializedName, varHandle);
+            this.mapType = mapType;
+        }
+
+        @Override
+        JsonElement serialize(Config config, JsonSerializationContext context) {
+            ObservableMap<?, ?> map = (ObservableMap<?, ?>) get(config);
+            return context.serialize(map, mapType);
+        }
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override
+        void deserialize(Config config, JsonElement element, JsonDeserializationContext context) {
+            Map<Object, Object> deserialized = context.deserialize(element, mapType);
+            ObservableMap<Object, Object> map = (ObservableMap<Object, Object>) get(config);
+            if (map instanceof MapProperty<?, ?>)
+                ((MapProperty) map).set(FXCollections.observableMap(deserialized));
+            else {
+                map.clear();
+                map.putAll(deserialized);
+            }
+        }
+    }
+
+    public static final class Adapter implements JsonSerializer<Config>, JsonDeserializer<Config> {
+
+        @Override
+        public JsonElement serialize(Config config, Type typeOfSrc, JsonSerializationContext context) {
+            if (config == null)
+                return JsonNull.INSTANCE;
+
+            JsonObject result = new JsonObject();
+            for (ConfigField field : ConfigField.FIELDS) {
+                Observable observable = field.get(config);
+                if (config.tracker.isDirty(observable)) {
+                    JsonElement serialized = field.serialize(config, context);
+                    if (serialized != null && !serialized.isJsonNull())
+                        result.add(field.serializedName, serialized);
+                }
+            }
+            config.unknownFields.forEach(result::add);
+            return result;
+        }
+
+        @Override
+        public Config deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (json == null || json.isJsonNull())
+                return null;
+
+            if (!json.isJsonObject())
+                throw new JsonParseException("Config is not an object: " + json);
+
+            Config config = new Config();
+
+            var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
+            for (ConfigField field : ConfigField.FIELDS) {
+                JsonElement value = values.remove(field.serializedName);
+                if (value != null)
+                    field.deserialize(config, value, context);
+            }
+
+            config.unknownFields.putAll(values);
+            return config;
+        }
     }
 }
