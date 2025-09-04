@@ -47,7 +47,14 @@ import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -68,6 +75,8 @@ public final class Config implements Observable {
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
+    private static final ConfigField[] FIELDS;
+
     @Nullable
     public static Config fromJson(String json) throws JsonParseException {
         Config loaded = CONFIG_GSON.fromJson(json, Config.class);
@@ -79,11 +88,68 @@ public final class Config implements Observable {
         return instance;
     }
 
+    private static final class ConfigField {
+        private final String serializedName;
+        private final List<String> alternateNames;
+        private final Type type;
+        private final VarHandle varHandle;
+
+        private ConfigField(String serializedName, List<String> alternateNames, Type type, VarHandle varHandle) {
+            this.serializedName = serializedName;
+            this.alternateNames = alternateNames;
+            this.type = type;
+            this.varHandle = varHandle;
+        }
+
+        Observable get(Config config) {
+            return (Observable) varHandle.get(config);
+        }
+    }
+
+    static {
+        final MethodHandles.Lookup lookup = MethodHandles.lookup();
+        Field[] fields = Config.class.getDeclaredFields();
+
+        var configFields = new ArrayList<ConfigField>();
+
+        for (Field field : fields) {
+            if (Modifier.isTransient(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
+                continue;
+
+            SerializedName serializedName = field.getAnnotation(SerializedName.class);
+            if (serializedName == null)
+                throw new AssertionError("Field " + field.getName() + " is missing @SerializedName annotation");
+
+            if (!Observable.class.isAssignableFrom(field.getType()))
+                throw new AssertionError("Field " + field.getName() + " is not an Observable");
+
+            VarHandle varHandle;
+            try {
+                varHandle = lookup.unreflectVarHandle(field);
+            } catch (IllegalAccessException e) {
+                throw new AssertionError(e);
+            }
+
+            configFields.add(new ConfigField(
+                    serializedName.value(),
+                    List.of(serializedName.alternate()),
+                    field.getGenericType(),
+                    varHandle
+            ));
+        }
+
+        FIELDS = configFields.toArray(new ConfigField[0]);
+    }
+
     private transient final ObservableHelper helper = new ObservableHelper(this);
     private transient final DirtyTracker tracker = new DirtyTracker();
 
     public Config() {
-        PropertyUtils.attachListener(this, helper, tracker);
+        for (ConfigField field : FIELDS) {
+            Observable observable = field.get(this);
+            observable.addListener(helper);
+            observable.addListener(tracker);
+        }
     }
 
     @Override
