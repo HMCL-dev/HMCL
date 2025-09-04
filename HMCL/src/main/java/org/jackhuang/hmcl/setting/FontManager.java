@@ -21,23 +21,20 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -54,7 +51,21 @@ public final class FontManager {
     public static final double DEFAULT_FONT_SIZE = 12.0f;
 
     private static final Lazy<Font> DEFAULT_FONT = new Lazy<>(() -> {
-        Font font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
+        Font font;
+
+        // Recommended
+
+        font = tryLoadLocalizedFont(Metadata.HMCL_CURRENT_DIRECTORY.resolve("font"));
+        if (font != null)
+            return font;
+
+        font = tryLoadLocalizedFont(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("font"));
+        if (font != null)
+            return font;
+
+        // Legacy
+
+        font = tryLoadDefaultFont(Metadata.HMCL_CURRENT_DIRECTORY);
         if (font != null)
             return font;
 
@@ -73,10 +84,12 @@ public final class FontManager {
                 return font;
         }
 
+        // Default
+
+        String fcMatchPattern;
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
-                && Locale.getDefault() != Locale.ROOT
-                && !"en".equals(Locale.getDefault().getLanguage()))
-            return findByFcMatch();
+                && !(fcMatchPattern = I18n.getLocale().getFcMatchPattern()).isEmpty())
+            return findByFcMatch(fcMatchPattern);
         else
             return null;
     });
@@ -112,6 +125,7 @@ public final class FontManager {
         for (String extension : FONT_EXTENSIONS) {
             Path path = dir.resolve("font." + extension);
             if (Files.isRegularFile(path)) {
+                LOG.info("Load font file: " + path);
                 try {
                     Font font = Font.loadFont(path.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
                     if (font != null) {
@@ -127,16 +141,47 @@ public final class FontManager {
         return null;
     }
 
-    public static Font findByFcMatch() {
+    private static Font tryLoadLocalizedFont(Path dir) {
+        Map<String, Map<String, Path>> fontFiles = LocaleUtils.findAllLocalizedFiles(dir, "font", Set.of(FONT_EXTENSIONS));
+        if (fontFiles.isEmpty())
+            return null;
+
+        List<Locale> candidateLocales = I18n.getLocale().getCandidateLocales();
+
+        for (Locale locale : candidateLocales) {
+            Map<String, Path> extToFiles = fontFiles.get(LocaleUtils.toLanguageKey(locale));
+            if (extToFiles != null) {
+                for (String ext : FONT_EXTENSIONS) {
+                    Path fontFile = extToFiles.get(ext);
+                    if (fontFile != null) {
+                        LOG.info("Load font file: " + fontFile);
+                        try {
+                            Font font = Font.loadFont(
+                                    fontFile.toAbsolutePath().normalize().toUri().toURL().toExternalForm(),
+                                    DEFAULT_FONT_SIZE);
+                            if (font != null)
+                                return font;
+                        } catch (MalformedURLException ignored) {
+                        }
+
+                        LOG.warning("Failed to load font " + fontFile);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static Font findByFcMatch(String pattern) {
         Path fcMatch = SystemUtils.which("fc-match");
         if (fcMatch == null)
             return null;
 
         try {
             String result = SystemUtils.run(fcMatch.toString(),
-                    ":lang=" + Locale.getDefault().toLanguageTag(),
+                    pattern,
                     "--format", "%{family}\\n%{file}").trim();
-
             String[] results = result.split("\\n");
             if (results.length != 2 || results[0].isEmpty() || results[1].isEmpty()) {
                 LOG.warning("Unexpected output from fc-match: " + result);
@@ -152,46 +197,34 @@ public final class FontManager {
                 return null;
             }
 
-            if (JavaRuntime.CURRENT_VERSION >= 9) {
-                try {
-                    MethodHandle methodHandle = MethodHandles.publicLookup().findStatic(Font.class, "loadFonts",
-                            MethodType.methodType(Font[].class, String.class, double.class));
+            LOG.info("Load font file: " + path);
+            Font[] fonts = Font.loadFonts(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
+            if (fonts == null) {
+                LOG.warning("Failed to load font from " + path);
+                return null;
+            } else if (fonts.length == 0) {
+                LOG.warning("No fonts loaded from " + path);
+                return null;
+            }
 
-                    Font[] fonts = (Font[]) methodHandle.invokeExact(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
-                    if (fonts == null) {
-                        LOG.warning("Failed to load font from " + path);
-                        return null;
-                    } else if (fonts.length == 0) {
-                        LOG.warning("No fonts loaded from " + path);
-                        return null;
-                    }
-
-                    for (Font font : fonts) {
-                        if (font.getFamily().equalsIgnoreCase(family)) {
-                            return font;
-                        }
-                    }
-
-                    if (family.indexOf(',') >= 0) {
-                        for (String candidateFamily : family.split(",")) {
-                            for (Font font : fonts) {
-                                if (font.getFamily().equalsIgnoreCase(candidateFamily)) {
-                                    return font;
-                                }
-                            }
-                        }
-                    }
-
-                    LOG.warning(String.format("Family '%s' not found in font file '%s'", family, path));
-                    return fonts[0];
-                } catch (NoSuchMethodException | IllegalAccessException ignored) {
+            for (Font font : fonts) {
+                if (font.getFamily().equalsIgnoreCase(family)) {
+                    return font;
                 }
             }
 
-            Font font = Font.loadFont(file.toUri().toURL().toExternalForm(), DEFAULT_FONT_SIZE);
-            if (font == null)
-                LOG.warning("Failed to load font from " + path);
-            return font;
+            if (family.indexOf(',') >= 0) {
+                for (String candidateFamily : family.split(",")) {
+                    for (Font font : fonts) {
+                        if (font.getFamily().equalsIgnoreCase(candidateFamily)) {
+                            return font;
+                        }
+                    }
+                }
+            }
+
+            LOG.warning(String.format("Family '%s' not found in font file '%s'", family, path));
+            return fonts[0];
         } catch (Throwable e) {
             LOG.warning("Failed to get default font with fc-match", e);
             return null;

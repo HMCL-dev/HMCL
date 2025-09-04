@@ -108,6 +108,14 @@ public enum JavaVersionConstraint {
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
         }
     },
+    CLEANROOM_JAVA_21(true, GameVersionNumber.between("1.12.2", "1.12.999"), VersionNumber.atLeast("21")) {
+        @Override
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
+            return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)
+                    && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
+        }
+    },
     // LaunchWrapper<=1.12 will crash because LaunchWrapper assumes the system class loader is an instance of URLClassLoader (Java 8)
     LAUNCH_WRAPPER(true, GameVersionNumber.atMost("1.12.999"), VersionNumber.atMost("1.8.999")) {
         @Override
@@ -130,7 +138,8 @@ public enum JavaVersionConstraint {
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
                     && Architecture.SYSTEM_ARCH == Architecture.X86_64
-                    && (java == null || java.getArchitecture() == Architecture.X86_64);
+                    && (java == null || java.getArchitecture() == Architecture.X86_64)
+                    && (analyzer == null || !analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM));
         }
 
         @Override

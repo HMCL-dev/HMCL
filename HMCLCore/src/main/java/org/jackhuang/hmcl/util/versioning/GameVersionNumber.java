@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.versioning;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -98,8 +99,20 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         this.value = value;
     }
 
+    public boolean isAprilFools() {
+        if (this instanceof Special)
+            return true;
+
+        if (this instanceof Snapshot) {
+            Snapshot snapshot = (Snapshot) this;
+            return snapshot.intValue == Snapshot.toInt(15, 14, 'a');
+        }
+
+        return false;
+    }
+
     enum Type {
-        PRE_CLASSIC, CLASSIC, INFDEV, ALPHA, BETA, NEW
+        PRE_CLASSIC, CLASSIC, INDEV, INFDEV, ALPHA, BETA, NEW
     }
 
     abstract Type getType();
@@ -123,7 +136,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         return value;
     }
 
-    static final class Old extends GameVersionNumber {
+    public static final class Old extends GameVersionNumber {
         static Old parse(String value) {
             Type type;
             int prefixLength = 1;
@@ -137,11 +150,15 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     prefixLength = "rd-".length();
                     break;
                 case 'i':
-                    if (!value.startsWith("inf-")) {
+                    if (value.startsWith("inf-")) {
+                        type = Type.INFDEV;
+                        prefixLength = "inf-".length();
+                    } else if (value.startsWith("in-")) {
+                        type = Type.INDEV;
+                        prefixLength = "in-".length();
+                    } else {
                         throw new IllegalArgumentException(value);
                     }
-                    type = Type.INFDEV;
-                    prefixLength = "inf-".length();
                     break;
                 case 'a':
                     type = Type.ALPHA;
@@ -195,16 +212,16 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
     }
 
-    static final class Release extends GameVersionNumber {
+    public static final class Release extends GameVersionNumber {
 
         private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>.+))?");
 
-        static final int TYPE_GA = Integer.MAX_VALUE;
+        public static final int TYPE_GA = Integer.MAX_VALUE;
 
-        static final int TYPE_UNKNOWN = 0;
-        static final int TYPE_EXP = 1;
-        static final int TYPE_PRE = 2;
-        static final int TYPE_RC = 3;
+        public static final int TYPE_UNKNOWN = 0;
+        public static final int TYPE_EXP = 1;
+        public static final int TYPE_PRE = 2;
+        public static final int TYPE_RC = 3;
 
         static final Release ZERO = new Release("0.0", 0, 0, 0, TYPE_GA, VersionNumber.ZERO);
 
@@ -243,6 +260,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         private final int minor;
         private final int patch;
 
+        @MagicConstant(intValues = {TYPE_GA, TYPE_UNKNOWN, TYPE_EXP, TYPE_PRE, TYPE_RC})
         private final int eaType;
         private final VersionNumber eaVersion;
 
@@ -310,6 +328,26 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             throw new AssertionError(other.getClass());
         }
 
+        public int getMajor() {
+            return major;
+        }
+
+        public int getMinor() {
+            return minor;
+        }
+
+        public int getPatch() {
+            return patch;
+        }
+
+        public int getEaType() {
+            return eaType;
+        }
+
+        public VersionNumber getEaVersion() {
+            return eaVersion;
+        }
+
         @Override
         public int hashCode() {
             return Objects.hash(major, minor, patch, eaType, eaVersion);
@@ -324,7 +362,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
     }
 
-    static final class Snapshot extends GameVersionNumber {
+    public static final class Snapshot extends GameVersionNumber {
         static Snapshot parse(String value) {
             if (value.length() != 6 || value.charAt(2) != 'w')
                 throw new IllegalArgumentException(value);
@@ -375,6 +413,18 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             throw new AssertionError(other.getClass());
         }
 
+        public int getYear() {
+            return (intValue >> 16) & 0xff;
+        }
+
+        public int getWeek() {
+            return (intValue >> 8) & 0xff;
+        }
+
+        public char getSuffix() {
+            return (char) (intValue & 0xff);
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -389,7 +439,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         }
     }
 
-    static final class Special extends GameVersionNumber {
+    public static final class Special extends GameVersionNumber {
         private VersionNumber versionNumber;
 
         private GameVersionNumber prev;

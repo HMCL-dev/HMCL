@@ -6,7 +6,7 @@
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 
-**English** | [简体中文](README_cn.md) | [繁體中文](README_tw.md)
+**English** | [简体中文](README_zh.md) | [繁體中文](README_zh_Hant.md)
 
 ## Introduction
 
@@ -14,7 +14,7 @@ HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Mana
 
 HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, and macOS, but it also supports various CPU architectures such as x86, ARM, RISC-V, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
 
-For systems and CPU architectures supported by HMCL, please refer to [this table](PLATFORM.md).
+For systems and CPU architectures supported by HMCL, please refer to [this table](docs/PLATFORM.md).
 
 ## Download
 
@@ -41,7 +41,7 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 If you want to submit a pull request, here are some requirements:
 
 * IDE: IntelliJ IDEA
-* Compiler: Java 11+
+* Compiler: Java 17+
 * Do NOT modify `gradle` files
 
 ### Compilation
@@ -52,7 +52,7 @@ Simply execute the following command in the project root directory:
 ./gradlew clean build
 ```
 
-Make sure you have Java 11 or later installed.
+Make sure you have Java 17 or later installed.
 
 ## JVM Options (for debugging)
 
@@ -69,3 +69,4 @@ Make sure you have Java 11 or later installed.
 | `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding                                                                  |
 | `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID                                                               |
 | `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App Secret                                                           |
+| `-Dhmcl.curseforge.apikey=<Api Key>`         | Override CurseForge API Key                                                                   |

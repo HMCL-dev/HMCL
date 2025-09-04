@@ -176,6 +176,18 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
+        if (System.getProperty("prism.lcdtext") == null) {
+            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+            if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                LOG.info("Enable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "true");
+            } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
+                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                LOG.info("Disable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "false");
+            }
+        }
+
         Controllers.stage = stage;
 
         stageSizeChangeListener = o -> {
@@ -205,7 +217,11 @@ public final class Controllers {
 
             if (targetProperty != null
                     && Controllers.stage != null
-                    && !Controllers.stage.isIconified()) {
+                    && !Controllers.stage.isIconified()
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
+                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
+            ) {
                 targetProperty.set(sourceProperty.get());
             }
         };
@@ -310,20 +326,21 @@ public final class Controllers {
             }
         }
 
-        if (JavaRuntime.CURRENT_VERSION < 10) {
+        if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
             Number shownTipVersion = null;
-
             try {
                 shownTipVersion = (Number) config().getShownTips().get(JAVA_VERSION_TIP);
             } catch (ClassCastException e) {
                 LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
             }
-
             if (shownTipVersion == null || shownTipVersion.intValue() < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
                 MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
                 String downloadLink = Metadata.getSuggestedJavaDownloadLink();
                 if (downloadLink != null)
-                    builder.addHyperLink(i18n("fatal.deprecated_java_version.download_link", 21), downloadLink);
+                    builder.addHyperLink(
+                            i18n("fatal.deprecated_java_version.download_link", Metadata.RECOMMENDED_JAVA_VERSION),
+                            downloadLink
+                    );
                 Controllers.dialog(builder
                         .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
                         .build());

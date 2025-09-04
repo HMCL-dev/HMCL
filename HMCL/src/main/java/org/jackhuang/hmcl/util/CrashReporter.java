@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -122,7 +123,7 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
             map.put("version", Metadata.VERSION);
             map.put("log", LOG.getLogs());
             try {
-                String response = NetworkUtils.doPost(NetworkUtils.toURL(Metadata.PUBLISH_URL + "/hmcl/crash.php"), map);
+                String response = NetworkUtils.doPost(URI.create(Metadata.PUBLISH_URL + "/hmcl/crash.php"), map);
                 if (StringUtils.isNotBlank(response))
                     LOG.error("Crash server response: " + response);
             } catch (IOException ex) {

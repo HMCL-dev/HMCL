@@ -48,6 +48,7 @@ public class DefaultGameBuilder extends GameBuilder {
         Task<Version> libraryTask = Task.supplyAsync(() -> new Version(name));
         libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
         stages.add("hmcl.install.game:" + gameVersion);
+        stages.add("hmcl.install.libraries");
         stages.add("hmcl.install.assets");
 
         for (Map.Entry<String, String> entry : toolVersions.entrySet()) {

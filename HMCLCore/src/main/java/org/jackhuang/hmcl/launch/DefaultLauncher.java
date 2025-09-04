@@ -25,9 +25,7 @@ import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
-import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
@@ -42,8 +40,8 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -169,7 +167,7 @@ public class DefaultLauncher extends Launcher {
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
-                res.addDefault("-Duser.home=", options.getGameDir().getParent());
+                res.addDefault("-Duser.home=", options.getGameDir().getAbsoluteFile().getParent());
 
             Proxy.Type proxyType = options.getProxyType();
             if (proxyType == null) {
@@ -247,6 +245,10 @@ public class DefaultLauncher extends Launcher {
         }
 
         Set<String> classpath = repository.getClasspath(version);
+
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+            classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
+        }
 
         File jar = repository.getVersionJar(version);
         if (!jar.exists() || !jar.isFile())
@@ -420,7 +422,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
-            IOUtils.copyTo(input, output);
+            input.transferTo(output);
         }
     }
 
@@ -443,7 +445,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
                 pair("${classpath_separator}", File.pathSeparator),
                 pair("${primary_jar}", repository.getVersionJar(version).getAbsolutePath()),
-                pair("${language}", Locale.getDefault().toString()),
+                pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
                 // libraries_directory stands for historical reasons here. We don't know the official launcher
@@ -551,6 +553,9 @@ public class DefaultLauncher extends Launcher {
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+            env.put("INST_CLEANROOM", "1");
         }
         if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
             env.put("INST_NEOFORGE", "1");

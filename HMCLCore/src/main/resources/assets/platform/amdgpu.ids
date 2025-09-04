@@ -1,4 +1,4 @@
-# https://gitlab.freedesktop.org/mesa/drm/-/blob/b65d6ede3ebe64dbde5805007ddef22f390f8050/data/amdgpu.ids
+# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/7d43d9b6fe5df4b234937fce9e51adb1b327ded1/data/amdgpu.ids
 #
 # List of AMDGPU IDs
 #
@@ -591,7 +591,9 @@
 74B6,	00,	AMD Instinct MI308X
 74BD,	00,	AMD Instinct MI300X HF
 7550,	C0,	AMD Radeon RX 9070 XT
+7550,	C2,	AMD Radeon RX 9070 GRE
 7550,	C3,	AMD Radeon RX 9070
+7551,	C0,	AMD Radeon AI PRO R9700
 9830,	00,	AMD Radeon HD 8400 / R3 Series
 9831,	00,	AMD Radeon HD 8400E
 9832,	00,	AMD Radeon HD 8330

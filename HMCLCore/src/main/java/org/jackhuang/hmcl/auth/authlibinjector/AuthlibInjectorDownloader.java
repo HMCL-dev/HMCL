@@ -25,7 +25,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -96,7 +96,7 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
         }
 
         try {
-            new FileDownloadTask(downloadProvider.get().injectURLWithCandidates(latest.downloadUrl), artifactLocation.toFile(),
+            new FileDownloadTask(downloadProvider.get().injectURLWithCandidates(latest.downloadUrl), artifactLocation,
                     Optional.ofNullable(latest.checksums.get("sha256"))
                             .map(checksum -> new IntegrityCheck("SHA-256", checksum))
                             .orElse(null))
@@ -110,9 +110,9 @@ public class AuthlibInjectorDownloader implements AuthlibInjectorArtifactProvide
 
     private AuthlibInjectorVersionInfo getLatestArtifactInfo() throws IOException {
         IOException exception = null;
-        for (URL url : downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL)) {
+        for (URI url : downloadProvider.get().injectURLWithCandidates(LATEST_BUILD_URL)) {
             try {
-                return HttpRequest.GET(url.toExternalForm()).getJson(AuthlibInjectorVersionInfo.class);
+                return HttpRequest.GET(url.toString()).getJson(AuthlibInjectorVersionInfo.class);
             } catch (IOException | JsonParseException e) {
                 if (exception == null) {
                     exception = new IOException("Failed to fetch authlib-injector artifact info");
