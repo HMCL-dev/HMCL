@@ -139,6 +139,8 @@ public final class LocaleUtilsTest {
             Files.createFile(testDir.resolve("meowmeow.json"));
             Files.createFile(testDir.resolve("woem.json"));
             Files.createFile(testDir.resolve("meow.txt"));
+            Files.createDirectories(testDir.resolve("subdir"));
+            Files.createDirectories(testDir.resolve("meow_en_US.json"));
 
             Path notExistsDir = testFs.getPath("/not-exists");
             Path emptyDir = testFs.getPath("/empty");
