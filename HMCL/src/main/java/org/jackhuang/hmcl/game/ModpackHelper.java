@@ -238,7 +238,7 @@ public final class ModpackHelper {
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
-                    .thenComposeAsync(() -> createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
+                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
         else
             return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
     }
@@ -278,6 +278,24 @@ public final class ModpackHelper {
             if (c.getHeight() != null)
                 vs.setHeight(c.getHeight());
         }
+    }
+
+    public static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
+        if (c.isOverrideCommands()) {
+            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
+            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+        }
+
+        if (c.isOverrideJavaArgs()) {
+            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+        }
+    }
+
+    private static Task<Void> createMultiMCPostUpdateTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
+        return Task.runAsync(Schedulers.javafx(), () -> {
+            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
+            ModpackHelper.applyCommandAndJvmSettings(manifest, vs);
+        });
     }
 
     private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
