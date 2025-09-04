@@ -142,11 +142,11 @@ public final class Theme {
     }
 
     public static Color blackFill() {
-        return BLACK;
+        return config().getColorMode() == EnumColorMode.LIGHT ? BLACK : Color.WHITE;
     }
 
     public static Color whiteFill() {
-        return Color.WHITE;
+        return config().getColorMode() == EnumColorMode.LIGHT ? Color.WHITE : BLACK;
     }
 
     public static class TypeAdapter extends com.google.gson.TypeAdapter<Theme> {
