@@ -17,10 +17,18 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -112,5 +120,53 @@ public final class LocaleUtilsTest {
         assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("lzh-CN")));
 
         assertEquals("Latn", LocaleUtils.getScript(Locale.forLanguageTag("zh-pinyin")));
+    }
+
+    @Test
+    public void testFindAllLocalizedFiles() throws IOException {
+        try (var testFs = Jimfs.newFileSystem(Configuration.unix())) {
+            Path testDir = testFs.getPath("/test-dir");
+            Files.createDirectories(testDir);
+
+            Files.createFile(testDir.resolve("meow.json"));
+            Files.createFile(testDir.resolve("meow_.json")); //
+            Files.createFile(testDir.resolve("meow_zh.json"));
+            Files.createFile(testDir.resolve("meow_zh_CN.json"));
+            Files.createFile(testDir.resolve("meow_zh_Hans.json"));
+            Files.createFile(testDir.resolve("meow_zh_Hans_CN.json"));
+            Files.createFile(testDir.resolve("meow_en.json"));
+            Files.createFile(testDir.resolve("meow_en.toml"));
+
+            Path notExistsDir = testFs.getPath("/not-exists");
+            Path emptyDir = testFs.getPath("/empty");
+            Files.createDirectories(emptyDir);
+
+            assertEquals(Map.of(), LocaleUtils.findAllLocalizedFiles(emptyDir, "meow", "json"));
+            assertEquals(Map.of(), LocaleUtils.findAllLocalizedFiles(emptyDir, "meow", Set.of("json", "toml")));
+            assertEquals(Map.of(), LocaleUtils.findAllLocalizedFiles(notExistsDir, "meow", "json"));
+            assertEquals(Map.of(), LocaleUtils.findAllLocalizedFiles(notExistsDir, "meow", Set.of("json", "toml")));
+
+            assertEquals(Map.of(
+                            "default", testDir.resolve("meow.json"),
+                            "zh", testDir.resolve("meow_zh.json"),
+                            "zh-CN", testDir.resolve("meow_zh_CN.json"),
+                            "zh-Hans", testDir.resolve("meow_zh_Hans.json"),
+                            "zh-Hans-CN", testDir.resolve("meow_zh_Hans_CN.json"),
+                            "en", testDir.resolve("meow_en.json")
+                    ),
+                    LocaleUtils.findAllLocalizedFiles(testDir, "meow", "json"));
+            assertEquals(Map.of(
+                            "default", Map.of("json", testDir.resolve("meow.json")),
+                            "zh", Map.of("json", testDir.resolve("meow_zh.json")),
+                            "zh-CN", Map.of("json", testDir.resolve("meow_zh_CN.json")),
+                            "zh-Hans", Map.of("json", testDir.resolve("meow_zh_Hans.json")),
+                            "zh-Hans-CN", Map.of("json", testDir.resolve("meow_zh_Hans_CN.json")),
+                            "en", Map.of(
+                                    "json", testDir.resolve("meow_en.json"),
+                                    "toml", testDir.resolve("meow_en.toml")
+                            )
+                    ),
+                    LocaleUtils.findAllLocalizedFiles(testDir, "meow", Set.of("json", "toml")));
+        }
     }
 }
