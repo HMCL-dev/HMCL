@@ -17,7 +17,8 @@ public final class MultiMCComponents {
     private static final Map<String, String> INSTALLER_PROFILE = new ConcurrentHashMap<>();
 
     static {
-        INSTALLER_PROFILE.put("Patches", "reclusive install, fabric & quit intermediary");
+        // Please append a phrase below while fixing bugs or implementing new features for Instance Format transformer
+        INSTALLER_PROFILE.put("Patches", "recursive install, fabric & quilt intermediary");
 
         if (new String(
                 // Base64 of 'org.jackhuang.hmcl.mod.multimc.MultiMCComponents'
