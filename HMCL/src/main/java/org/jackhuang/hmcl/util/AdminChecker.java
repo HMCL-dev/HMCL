@@ -5,6 +5,9 @@ import org.jackhuang.hmcl.util.platform.windows.WinReg;
 
 public class AdminChecker {
 
+    private AdminChecker() {
+    }
+
     public static boolean isAdmin() {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             return isWindowsAdmin();
