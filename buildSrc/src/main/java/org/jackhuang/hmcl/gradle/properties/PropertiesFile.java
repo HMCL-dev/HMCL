@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/// @author Glavo
 public record PropertiesFile(Map<String, Item> items) {
 
     private static final Pattern PATTERN = Pattern.compile("^\\s*(?<key>[^\\s:=]+)\\s*[=:]");
