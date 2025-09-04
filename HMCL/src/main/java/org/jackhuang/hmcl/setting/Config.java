@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.internal.bind.TypeAdapters;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
@@ -41,7 +43,6 @@ import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.DirtyTracker;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
-import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -51,6 +52,7 @@ import java.lang.reflect.*;
 import java.net.Proxy;
 import java.util.*;
 
+@JsonAdapter(value = Config.Adapter.class)
 public final class Config implements Observable {
 
     public static final int CURRENT_UI_VERSION = 0;
@@ -70,13 +72,7 @@ public final class Config implements Observable {
 
     @Nullable
     public static Config fromJson(String json) throws JsonParseException {
-        Config loaded = CONFIG_GSON.fromJson(json, Config.class);
-        if (loaded == null) {
-            return null;
-        }
-        Config instance = new Config();
-        PropertyUtils.copyProperties(loaded, instance);
-        return instance;
+        return CONFIG_GSON.fromJson(json, Config.class);
     }
 
     private transient final ObservableHelper helper = new ObservableHelper(this);
@@ -89,6 +85,8 @@ public final class Config implements Observable {
             observable.addListener(helper);
             observable.addListener(tracker);
         }
+
+        tracker.markDirty(this.configVersion);
     }
 
     @Override
