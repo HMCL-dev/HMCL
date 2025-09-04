@@ -174,8 +174,13 @@ public final class PropertyUtils {
                 });
     }
 
-    public static void attachListener(Object instance, InvalidationListener listener) {
+    public static void attachListener(Object instance, InvalidationListener... listeners) {
         getPropertyHandleFactories(instance.getClass())
-                .forEach((name, factory) -> factory.apply(instance).observable.addListener(listener));
+                .forEach((name, factory) -> {
+                    Observable observable = factory.apply(instance).observable;
+                    for (InvalidationListener listener : listeners) {
+                        observable.addListener(listener);
+                    }
+                });
     }
 }
