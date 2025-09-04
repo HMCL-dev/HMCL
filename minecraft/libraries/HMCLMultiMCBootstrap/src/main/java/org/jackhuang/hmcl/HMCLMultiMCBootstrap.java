@@ -45,8 +45,11 @@ public final class HMCLMultiMCBootstrap {
                     method.getParameters()[0].getType() == String[].class
             ) {
                 method.invoke(null, (Object) args);
+                return;
             }
         }
+
+        throw new IllegalArgumentException("Cannot find method 'main(String[])' in " + mainClass);
     }
 
     private static String read(String key) {

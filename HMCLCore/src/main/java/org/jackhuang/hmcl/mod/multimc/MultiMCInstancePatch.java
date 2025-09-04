@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
  */
 @Immutable
 public final class MultiMCInstancePatch {
-    public static final Library BOOTSTRAP_LIBRARY = new Library(new Artifact("org.jackhuang.hmcl", "mmc-boostrap", "1.0"));
+    public static final Library BOOTSTRAP_LIBRARY = new Library(new Artifact("org.jackhuang.hmcl", "mmc-bootstrap", "1.0"));
 
     private final int formatVersion;
 

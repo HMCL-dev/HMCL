@@ -36,11 +36,11 @@ tasks.processResources {
     listOf(
         "HMCLTransformerDiscoveryService",
         "HMCLMultiMCBootstrap"
-    ).map { project(":$it").tasks["jar"] as Jar }.forEach { p ->
-        dependsOn(p)
+    ).map { project(":$it").tasks["jar"] as Jar }.forEach { task ->
+        dependsOn(task)
 
         into("assets/game") {
-            from(p.outputs.files)
+            from(task.outputs.files)
         }
     }
 }
