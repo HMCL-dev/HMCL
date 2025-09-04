@@ -23,10 +23,11 @@ import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedHashMap;
 
 /// @author Glavo
@@ -44,15 +45,14 @@ public abstract class PropertiesFormatTask extends DefaultTask {
         PropertiesFile targetFile = PropertiesFile.load(getTargetFile().getAsFile().get().toPath());
         var targetProperties = new LinkedHashMap<>(targetFile.items());
 
-        Path tempFile = Files.createTempFile("hmcl-", ".properties");
-
-        try (BufferedWriter writer = Files.newBufferedWriter(tempFile)) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream(256 * 1024);
+        try (OutputStreamWriter writer = new OutputStreamWriter(buffer)) {
             for (String key : referencedFile.items().keySet()) {
                 PropertiesFile.Item item = targetProperties.remove(key);
                 if (item != null) {
                     for (String line : item.lines()) {
                         writer.write(line);
-                        writer.newLine();
+                        writer.write('\n');
                     }
                 }
             }
@@ -62,12 +62,16 @@ public abstract class PropertiesFormatTask extends DefaultTask {
                 for (PropertiesFile.Item item : targetProperties.values()) {
                     for (String line : item.lines()) {
                         writer.write(line);
-                        writer.newLine();
+                        writer.write('\n');
                     }
                 }
             }
-        } finally {
-            Files.deleteIfExists(tempFile);
+        }
+
+        try (var output = Files.newOutputStream(getTargetFile().getAsFile().get().toPath(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING)) {
+            buffer.writeTo(output);
         }
     }
 }
