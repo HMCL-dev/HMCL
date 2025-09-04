@@ -103,6 +103,45 @@ public final class Config implements Observable {
         return CONFIG_GSON.toJson(this);
     }
 
+    // Properties
+
+    @SerializedName("_version")
+    private final IntegerProperty configVersion = new SimpleIntegerProperty(0);
+
+    public IntegerProperty configVersionProperty() {
+        return configVersion;
+    }
+
+    public int getConfigVersion() {
+        return configVersion.get();
+    }
+
+    public void setConfigVersion(int configVersion) {
+        this.configVersion.set(configVersion);
+    }
+
+    /**
+     * The version of UI that the user have last used.
+     * If there is a major change in UI, {@link Config#CURRENT_UI_VERSION} should be increased.
+     * When {@link #CURRENT_UI_VERSION} is higher than the property, the user guide should be shown,
+     * then this property is set to the same value as {@link #CURRENT_UI_VERSION}.
+     * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
+     */
+    @SerializedName("uiVersion")
+    private final IntegerProperty uiVersion = new SimpleIntegerProperty(0);
+
+    public IntegerProperty uiVersionProperty() {
+        return uiVersion;
+    }
+
+    public int getUiVersion() {
+        return uiVersion.get();
+    }
+
+    public void setUiVersion(int uiVersion) {
+        this.uiVersion.set(uiVersion);
+    }
+
     @SerializedName("last")
     private final StringProperty selectedProfile = new SimpleStringProperty("");
 
@@ -617,43 +656,6 @@ public final class Config implements Observable {
 
     public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
-    }
-
-    @SerializedName("_version")
-    private final IntegerProperty configVersion = new SimpleIntegerProperty(0);
-
-    public IntegerProperty configVersionProperty() {
-        return configVersion;
-    }
-
-    public int getConfigVersion() {
-        return configVersion.get();
-    }
-
-    public void setConfigVersion(int configVersion) {
-        this.configVersion.set(configVersion);
-    }
-
-    /**
-     * The version of UI that the user have last used.
-     * If there is a major change in UI, {@link Config#CURRENT_UI_VERSION} should be increased.
-     * When {@link #CURRENT_UI_VERSION} is higher than the property, the user guide should be shown,
-     * then this property is set to the same value as {@link #CURRENT_UI_VERSION}.
-     * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
-     */
-    @SerializedName("uiVersion")
-    private final IntegerProperty uiVersion = new SimpleIntegerProperty(0);
-
-    public IntegerProperty uiVersionProperty() {
-        return uiVersion;
-    }
-
-    public int getUiVersion() {
-        return uiVersion.get();
-    }
-
-    public void setUiVersion(int uiVersion) {
-        this.uiVersion.set(uiVersion);
     }
 
     /**
