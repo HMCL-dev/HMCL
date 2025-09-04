@@ -146,7 +146,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("bgurl")
-    private StringProperty backgroundImageUrl = new SimpleStringProperty();
+    private final StringProperty backgroundImageUrl = new SimpleStringProperty();
 
     public StringProperty backgroundImageUrlProperty() {
         return backgroundImageUrl;
@@ -176,7 +176,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("bgImageOpacity")
-    private IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
+    private final IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
 
     public IntegerProperty backgroundImageOpacityProperty() {
         return backgroundImageOpacity;
@@ -206,7 +206,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("commonpath")
-    private StringProperty commonDirectory = new SimpleStringProperty(Metadata.MINECRAFT_DIRECTORY.toString());
+    private final StringProperty commonDirectory = new SimpleStringProperty(Metadata.MINECRAFT_DIRECTORY.toString());
 
     public StringProperty commonDirectoryProperty() {
         return commonDirectory;
