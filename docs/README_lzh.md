@@ -16,7 +16,7 @@ HMCL 者，開源之礦藝啟者也。能理改囊，善於遊戲之自定，且
 HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，抑或 x86、ARM、RISC-V、MIPS、LoongArch 諸大構處理器，皆可運行。
 君可憑此，於諸算機間自如遊戲。
 
-若欲詳知 HMCL 於諸算機之支援，請觀[此表](docs/PLATFORM_zh_Hant.md)。
+若欲詳知 HMCL 於諸算機之支援，請觀[此表](PLATFORM_zh_Hant.md)。
 
 ## 下載
 

@@ -15,7 +15,7 @@ HMCL es un lanzador de Minecraft de código abierto y multiplataforma que admite
 
 HMCL tiene increíbles capacidades multiplataforma. No solo funciona en diferentes sistemas operativos como Windows, Linux, macOS y FreeBSD, sino que también es compatible con varias arquitecturas de CPU como x86, ARM, RISC-V, MIPS y LoongArch. Puedes disfrutar fácilmente de Minecraft en diferentes plataformas a través de HMCL.
 
-Para los sistemas y arquitecturas de CPU compatibles con HMCL, consulta [esta tabla](docs/PLATFORM.md).
+Para los sistemas y arquitecturas de CPU compatibles con HMCL, consulta [esta tabla](PLATFORM.md).
 
 ## Descarga
 

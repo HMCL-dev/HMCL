@@ -15,7 +15,7 @@ HMCLはオープンソースでクロスプラットフォーム対応のMinecra
 
 HMCLは優れたクロスプラットフォーム性能を持っています。Windows、Linux、macOS、FreeBSDなどの異なるオペレーティングシステムだけでなく、x86、ARM、RISC-V、MIPS、LoongArchなどのさまざまなCPUアーキテクチャにも対応しています。HMCLを使えば、さまざまなプラットフォームでMinecraftを簡単に楽しむことができます。
 
-HMCLが対応しているシステムやCPUアーキテクチャについては、[この表](docs/PLATFORM.md)をご参照ください。
+HMCLが対応しているシステムやCPUアーキテクチャについては、[この表](PLATFORM.md)をご参照ください。
 
 ## ダウンロード
 
