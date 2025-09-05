@@ -100,34 +100,34 @@ public abstract class CheckTranslations extends DefaultTask {
 
     private static final class Checker {
 
-        private final Map<PropertiesFile, Set<Problem>> problems = new LinkedHashMap<>();
+        private final Map<PropertiesFile, Map<Class<?>, Set<Problem>>> problems = new LinkedHashMap<>();
         private int problemsCount;
 
         public void checkKeyExists(PropertiesFile file, String key) {
             if (!file.properties.containsKey(key)) {
-                onFailure(new Problem.MissingKey(file, key));
+                onFailure(file, new Problem.MissingKey(file, key));
             }
         }
 
         public void checkMisspelled(PropertiesFile file, String key, String value,
                                     String correct, String misspelled) {
             if (value.contains(misspelled)) {
-                onFailure(new Problem.Misspelled(file, key, value, correct, misspelled));
+                onFailure(file, new Problem.Misspelled(file, correct, misspelled));
             }
         }
 
-        public void onFailure(Problem problem) {
+        public void onFailure(PropertiesFile file, Problem problem) {
             problemsCount++;
-            problems.computeIfAbsent(problem.file, ignored -> new LinkedHashSet<>())
+            problems.computeIfAbsent(file, ignored -> new HashMap<>())
+                    .computeIfAbsent(problem.getClass(), ignored -> new LinkedHashSet<>())
                     .add(problem);
         }
 
         public void check() {
             if (problemsCount > 0) {
-                problems.forEach((key, problems) -> {
-                    problems.forEach(problem -> {
-                        LOGGER.warn("{}: {}", key.getFileName(), problem.getMessage());
-                    });
+                problems.forEach((file, problems) -> {
+                    problems.values().stream().flatMap(Collection::stream).forEach(problem ->
+                            LOGGER.warn("{}: {}", file.getFileName(), problem.getMessage()));
                 });
 
                 throw new GradleException("Failed to check translations, " + problemsCount + " found problems.");
@@ -136,19 +136,13 @@ public abstract class CheckTranslations extends DefaultTask {
     }
 
     private static abstract sealed class Problem {
-        final PropertiesFile file;
-
-        Problem(PropertiesFile file) {
-            this.file = file;
-        }
-
         public abstract String getMessage();
 
         private static final class MissingKey extends Problem {
             private final String key;
 
             MissingKey(PropertiesFile file, String key) {
-                super(file);
+                super();
                 this.key = key;
             }
 
@@ -159,15 +153,11 @@ public abstract class CheckTranslations extends DefaultTask {
         }
 
         private static final class Misspelled extends Problem {
-            private final String key;
-            private final String value;
             private final String correct;
             private final String misspelled;
 
-            Misspelled(PropertiesFile file, String key, String value, String correct, String misspelled) {
-                super(file);
-                this.key = key;
-                this.value = value;
+            Misspelled(PropertiesFile file, String correct, String misspelled) {
+                super();
                 this.correct = correct;
                 this.misspelled = misspelled;
             }
@@ -179,14 +169,12 @@ public abstract class CheckTranslations extends DefaultTask {
 
             @Override
             public int hashCode() {
-                return Objects.hash(file, misspelled);
+                return misspelled.hashCode();
             }
 
             @Override
             public boolean equals(Object obj) {
-                return obj instanceof Misspelled that
-                        && this.file.equals(that.file)
-                        && this.misspelled.equals(that.misspelled);
+                return obj instanceof Misspelled that && this.misspelled.equals(that.misspelled);
             }
         }
 
