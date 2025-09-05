@@ -78,11 +78,15 @@ public final class Config implements Observable {
     private transient final Map<String, JsonElement> unknownFields = new HashMap<>();
 
     public Config() {
+        var shouldBeWrite = Collections.<Observable>newSetFromMap(new IdentityHashMap<>());
+        Collections.addAll(shouldBeWrite, configVersion, uiVersion);
+
         for (var field : FIELDS) {
             Observable observable = field.get(this);
-            if (observable != configVersion) {
+            if (shouldBeWrite.contains(observable))
+                tracker.markDirty(observable);
+            else
                 tracker.track(observable);
-            }
             observable.addListener(helper);
         }
     }
@@ -126,7 +130,7 @@ public final class Config implements Observable {
      * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
      */
     @SerializedName("uiVersion")
-    private final IntegerProperty uiVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty uiVersion = new SimpleIntegerProperty(CURRENT_UI_VERSION);
 
     public IntegerProperty uiVersionProperty() {
         return uiVersion;
