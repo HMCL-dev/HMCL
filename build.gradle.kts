@@ -1,5 +1,3 @@
-import org.jackhuang.hmcl.gradle.CheckTranslations
-
 plugins {
     id("checkstyle")
 }
@@ -57,15 +55,6 @@ subprojects {
     tasks.register("checkstyle") {
         dependsOn(tasks["checkstyleMain"], tasks["checkstyleTest"])
     }
-}
-
-tasks.register<CheckTranslations>("checkTranslations") {
-    val hmclLangDir = layout.projectDirectory.dir("HMCL/src/main/resources/assets/lang")
-
-    englishFile.set(hmclLangDir.file("I18N.properties"))
-    simplifiedChineseFile.set(hmclLangDir.file("I18N_zh_CN.properties"))
-    traditionalChineseFile.set(hmclLangDir.file("I18N_zh.properties"))
-    classicalChineseFile.set(hmclLangDir.file("I18N_lzh.properties"))
 }
 
 org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
