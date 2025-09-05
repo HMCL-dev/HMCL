@@ -76,8 +76,7 @@ public abstract class ObservableField<T> {
             return new CollectionField<>(name, alternate, varHandle, setType);
         } else if (ObservableMap.class.isAssignableFrom(field.getType())) {
             Type mapType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Map.class);
-            if (!(mapType instanceof ParameterizedType))
-                throw new IllegalArgumentException("Cannot resolve the list map of " + field.getName());
+                throw new IllegalArgumentException("Cannot resolve the map type of " + field.getName());
             return new MapField<>(name, alternate, varHandle, mapType);
         } else if (Property.class.isAssignableFrom(field.getType())) {
             Type propertyType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Property.class);
