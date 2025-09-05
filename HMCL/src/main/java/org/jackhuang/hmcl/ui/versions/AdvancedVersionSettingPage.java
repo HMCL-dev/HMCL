@@ -47,7 +47,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final OptionToggleButton noJVMCheckPane;
     private final OptionToggleButton noNativesPatchPane;
     private final OptionToggleButton useNativeGLFWPane;
-    private final OptionToggleButton useDebugLog4j2CongigPane;
     private final OptionToggleButton useNativeOpenALPane;
     private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
@@ -193,9 +192,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             noNativesPatchPane = new OptionToggleButton();
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
-            useDebugLog4j2CongigPane = new OptionToggleButton();
-            useDebugLog4j2CongigPane.setTitle(i18n("settings.advanced.use_debug_log42j_config"));
-
             useNativeGLFWPane = new OptionToggleButton();
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
 
@@ -204,7 +200,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
 
             workaroundPane.getContent().setAll(
                     nativesDirSublist, rendererPane, noJVMArgsPane, noGameCheckPane,
-                    noJVMCheckPane, noNativesPatchPane, useDebugLog4j2CongigPane
+                    noJVMCheckPane, noNativesPatchPane
             );
 
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
@@ -241,7 +237,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
         noNativesPatchPane.selectedProperty().bindBidirectional(versionSetting.notPatchNativesProperty());
         useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());
-        useDebugLog4j2CongigPane.selectedProperty().bindBidirectional(versionSetting.useDebugLog4j2ConfigProperty());
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
 
         nativesDirItem.selectedDataProperty().bindBidirectional(versionSetting.nativesDirTypeProperty());
@@ -282,7 +277,6 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());
         noNativesPatchPane.selectedProperty().unbindBidirectional(versionSetting.notPatchNativesProperty());
-        useDebugLog4j2CongigPane.selectedProperty().unbindBidirectional(versionSetting.useDebugLog4j2ConfigProperty());
         useNativeGLFWPane.selectedProperty().unbindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().unbindBidirectional(versionSetting.useNativeOpenALProperty());
 

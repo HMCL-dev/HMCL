@@ -589,18 +589,18 @@ public final class VersionSetting implements Cloneable, Observable {
         this.rendererProperty.set(renderer);
     }
 
-    private final BooleanProperty useDebugLog4j2ConfigProperty = new SimpleBooleanProperty(this, "useDebugLog4j2Config", false);
+    private final BooleanProperty useDebugLogOutputProperty = new SimpleBooleanProperty(this, "useDebugLogOutput", false);
 
-    public boolean isUseDebugLog4j2Config() {
-        return useDebugLog4j2ConfigProperty.get();
+    public boolean isUseDebugDebugLogOutput() {
+        return useDebugLogOutputProperty.get();
     }
 
-    public BooleanProperty useDebugLog4j2ConfigProperty() {
-        return useDebugLog4j2ConfigProperty;
+    public BooleanProperty useDebugLogOutputProperty() {
+        return useDebugLogOutputProperty;
     }
 
-    public void setUseDebugLog4j2Config(boolean u) {
-        this.useDebugLog4j2ConfigProperty.set(u);
+    public void setUseDebugLogOutput(boolean u) {
+        this.useDebugLogOutputProperty.set(u);
     }
 
     private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
@@ -778,7 +778,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
-            obj.addProperty("useDebugLog4j2Config", src.isUseDebugLog4j2Config());
+            obj.addProperty("useDebugLogOutput", src.isUseDebugDebugLogOutput());
             obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
             obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
@@ -846,7 +846,7 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setUseDebugLog4j2Config(Optional.ofNullable(obj.get("useDebugLog4j2Config")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setUseDebugLogOutput(Optional.ofNullable(obj.get("useDebugLogOutput")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(parseJsonPrimitive(obj.getAsJsonPrimitive("launcherVisibility"), LauncherVisibility.class, LauncherVisibility.HIDE));
             vs.setProcessPriority(parseJsonPrimitive(obj.getAsJsonPrimitive("processPriority"), ProcessPriority.class, ProcessPriority.NORMAL));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));

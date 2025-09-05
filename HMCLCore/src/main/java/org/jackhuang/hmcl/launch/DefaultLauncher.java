@@ -147,7 +147,7 @@ public class DefaultLauncher extends Launcher {
         res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
         res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
 
-        if (options.isUseDebugLog4j2Config()) {
+        if (options.isUseDebugLogOutput()) {
             res.addDefault("-Dlog4j2.formatMsgNoLookups=", "false");
             res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
         } else {
@@ -421,7 +421,7 @@ public class DefaultLauncher extends Launcher {
     public void extractLog4jConfigurationFile() throws IOException {
         File targetFile = getLog4jConfigurationFile();
         InputStream source;
-        if (options.isUseDebugLog4j2Config()) {
+        if (options.isUseDebugLogOutput()) {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-debug.xml");
         } else if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
