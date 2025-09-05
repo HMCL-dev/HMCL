@@ -6,7 +6,7 @@
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 
-[English](README.md) | [简体中文](README_zh.md) | [繁體中文](README_zh_Hant.md) | [文言文](README_lzh.md) | [日本語](README_ja.md) |
+[English](README.md) | [简体中文](README_zh.md) | [繁體中文](README_zh_Hant.md) | [文言](README_lzh.md) | [日本語](README_ja.md) |
 [español](README_es.md) | [русский](README_ru.md) | **українська**
 
 ## Вступ
