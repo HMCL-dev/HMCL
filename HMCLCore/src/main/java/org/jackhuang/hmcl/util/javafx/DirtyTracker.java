@@ -61,8 +61,9 @@ public final class DirtyTracker {
 
         @Override
         public void invalidated(Observable observable) {
-            DirtyTracker tracker = trackerReference.get();
             observable.removeListener(this);
+
+            DirtyTracker tracker = trackerReference.get();
             if (tracker != null)
                 tracker.markDirty(observable);
         }
