@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/// @author Glavo
 public abstract class ObservableField<T> {
 
     public static <T> ObservableField<T> of(MethodHandles.Lookup lookup, Field field) {
