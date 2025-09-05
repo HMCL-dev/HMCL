@@ -27,15 +27,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
 
 ## 開源協議
 
-該程式在 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 開源協議下發布，同時附有以下附加條款。
-
-### 附加條款 (依據 GPLv3 開源協議第七條)
-
-1. 當你分發該程式的修改版本時，你必須以一種合理的方式修改該程式的名稱或版本號，以示其與原始版本不同。(依據 [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
-
-   該程式的名稱及版本號可在 [此處](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35) 修改。
-
-2. 你不得移除該程式所顯示的版權宣告。(依據 [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
+請參見 [README_zh_Hant.md](README_zh_Hant.md#開源協議)。
 
 ## 貢獻
 
