@@ -43,7 +43,6 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 
 * IDE：IntelliJ IDEA
 * 编译器：Java 17+
-* **不要**修改 `gradle` 相关文件
 
 ### 编译
 

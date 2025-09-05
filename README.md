@@ -43,7 +43,6 @@ If you want to submit a pull request, here are some requirements:
 
 * IDE: IntelliJ IDEA
 * Compiler: Java 17+
-* Do NOT modify `gradle` files
 
 ### Compilation
 

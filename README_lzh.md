@@ -9,57 +9,57 @@
 [English](README.md) | **中文** ([简体](README_zh.md), [繁體](README_zh_Hant.md), **文言**) | [日本語](README_ja.md) |
 [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 
-## 簡介
+### 概說
 
-HMCL 是一款開源、跨平臺的 Minecraft 啟動器，支援模組管理、遊戲客製化、遊戲自動安裝 (Forge、NeoForge、Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面客製化等功能。
+HMCL 者，開源之礦藝啟者也。能理改囊，善於遊戲之自定，且自動安裝諸如Forge、NeoForge、Fabric、Quilt、LiteLoader、OptiFine諸改囊，亦可製作改囊集，界面亦可隨意更易。
 
-HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、FreeBSD 等常見的作業系統，同時也支援 x86、ARM、RISC-V、MIPS、LoongArch 等不同的 CPU 架構。你可以使用 HMCL 在不同平臺上輕鬆地遊玩 Minecraft。
+HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，抑或 x86、ARM、RISC-V、MIPS、LoongArch 諸大構處理器，皆可運行。
+君可憑此，於諸算機間自如遊戲。
 
-如果你想要了解 HMCL 對不同平臺的支援程度，請參見 [此表格](docs/PLATFORM_zh_Hant.md)。
+若欲詳知 HMCL 於諸算機之支援，請觀[此表](docs/PLATFORM_zh_Hant.md)。
 
 ## 下載
 
-請從 [HMCL 官網](https://hmcl.huangyuhui.net/download) 下載最新版本的 HMCL。
+請自 [HMCL 官網](https://hmcl.huangyuhui.net/download) 取其最新版。
 
-你也可以在 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 中下載最新版本的 HMCL。
+亦可於 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 得其新者。
 
-雖然並不強制，但仍建議透過 HMCL 官網下載啟動器。
+雖非強制，然猶勸自官網取之。
 
-## 開源協議
+## 開源之約
 
-請參見 [README_zh_Hant.md](README_zh_Hant.md#開源協議)。
+詳見 [README_zh_Hant.md](README_zh_Hant.md#開源協議)。
 
 ## 貢獻
 
-如果你想提交一個 Pull Request，必須遵守如下要求：
+若欲獻 Pull Request，須遵下列：
 
-* IDE：IntelliJ IDEA
-* 編譯器：Java 17+
-* **不要**修改 `gradle` 相關文件
+* IDE 用 IntelliJ IDEA
+* 編譯器用爪哇十七以上
 
-### 編譯
+### 編造
 
-於項目根目錄執行以下指令：
+於項目之根目錄，執下列令：
 
 ```bash
 ./gradlew clean build
 ```
 
-請確保你至少安裝了 JDK 17 或更高版本。
+務必保汝已安裝爪哇十七或更高者。
 
-## JVM 選項 (用於除錯)
+## JVM 之選項（以資除謬）
 
-| 參數                                         | 簡介                                                                 |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | 覆蓋 HMCL 使用者目錄                                                 |
-| `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不檢查本體完整性                                           |
-| `-Dhmcl.bmclapi.override=<url>`              | 覆蓋 BMCLAPI 的 API Root，預設值為 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 覆蓋字族                                                             |
-| `-Dhmcl.version.override=<version>`          | 覆蓋版本號                                                           |
-| `-Dhmcl.update_source.override=<url>`        | 覆蓋 HMCL 更新來源                                                   |
-| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下載一個)                           |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用於下載 OpenJFX 的自訂 Maven 倉庫                               |
-| `-Dhmcl.native.encoding=<encoding>`          | 覆蓋原生編碼                                                         |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆蓋 Microsoft OAuth App ID                                          |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆蓋 Microsoft OAuth App 金鑰                                        |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆蓋 CurseForge API 金鑰                                        |
+| 參數                                           | 解釋                                                      |
+|----------------------------------------------|---------------------------------------------------------|
+| `-Dhmcl.home=<path>`                         | 易 HMCL 之用戶目錄                                            |
+| `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不驗本體之全                                             |
+| `-Dhmcl.bmclapi.override=<url>`              | 易 BMCLAPI 之 API 根，預設為 `https://bmclapi2.bangbang93.com` |
+| `-Dhmcl.font.override=<font family>`         | 易字族                                                     |
+| `-Dhmcl.version.override=<version>`          | 易版本號                                                    |
+| `-Dhmcl.update_source.override=<url>`        | 易 HMCL 之更新所                                             |
+| `-Dhmcl.authlibinjector.location=<path>`     | 用所指之 authlib-injector，毋需下載                              |
+| `-Dhmcl.openjfx.repo=<maven repository url>` | 增 OpenJFX 下載之自定 Maven 庫                                 |
+| `-Dhmcl.native.encoding=<encoding>`          | 易本地編碼                                                   |
+| `-Dhmcl.microsoft.auth.id=<App ID>`          | 易 Microsoft OAuth 之 App ID                              |
+| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 易 Microsoft OAuth 之金鑰                                   |
+| `-Dhmcl.curseforge.apikey=<Api Key>`         | 易 CurseForge 之 API 金鑰                                   |

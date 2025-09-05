@@ -35,7 +35,6 @@ Si deseas enviar un pull request, aquí tienes algunos requisitos:
 
 * IDE: IntelliJ IDEA
 * Compilador: Java 17+
-* NO modifiques los archivos de `gradle`
 
 ### Compilación
 
