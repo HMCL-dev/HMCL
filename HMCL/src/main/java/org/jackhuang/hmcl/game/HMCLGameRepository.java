@@ -158,6 +158,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
             blackList.add("saves");
 
         if (Files.exists(dstDir)) throw new IOException("Version exists");
+
+        Files.createDirectories(dstDir);
         FileUtils.copyDirectory(srcDir, dstDir, path -> Modpack.acceptFile(path, blackList, null));
 
         Path fromJson = srcDir.resolve(srcId + ".json");
@@ -170,7 +172,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(dstId)));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
@@ -312,6 +314,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                     return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
                     return VersionIconType.FORGE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                    return VersionIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
                     return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))

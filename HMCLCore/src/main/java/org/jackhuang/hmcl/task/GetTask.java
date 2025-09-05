@@ -17,46 +17,35 @@
  */
 package org.jackhuang.hmcl.task;
 
+import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.List;
 
 /**
- *
  * @author huangyuhui
  */
 public final class GetTask extends FetchTask<String> {
 
-    private final Charset charset;
-
-    public GetTask(URL url) {
-        this(url, UTF_8);
+    public GetTask(String uri) {
+        this(NetworkUtils.toURI(uri));
     }
 
-    public GetTask(URL url, Charset charset) {
-        this(url, charset, 3);
+    public GetTask(URI url) {
+        this(List.of(url));
+        setName(url.toString());
     }
 
-    public GetTask(URL url, Charset charset, int retry) {
-        this(Collections.singletonList(url), charset, retry);
-    }
-
-    public GetTask(List<URL> url) {
-        this(url, UTF_8, 3);
-    }
-
-    public GetTask(List<URL> urls, Charset charset, int retry) {
-        super(urls, retry);
-        this.charset = charset;
-
-        setName(urls.get(0).toString());
+    public GetTask(List<URI> url) {
+        super(url);
+        setName(url.get(0).toString());
     }
 
     @Override
@@ -70,10 +59,11 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(URLConnection conn, boolean checkETag) {
-        return new Context() {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) {
+        int length = connection.getContentLength();
+        final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : length);
 
+        return new Context() {
             @Override
             public void write(byte[] buffer, int offset, int len) {
                 baos.write(buffer, offset, len);
@@ -83,14 +73,21 @@ public final class GetTask extends FetchTask<String> {
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(charset);
+                String result = baos.toString(NetworkUtils.getCharsetFromContentType(connection.getContentType()));
                 setResult(result);
 
                 if (checkETag) {
-                    repository.cacheText(result, conn);
+                    repository.cacheText(connection, result);
                 }
             }
         };
     }
 
+    public <T> Task<T> thenGetJsonAsync(Class<T> type) {
+        return thenGetJsonAsync(TypeToken.get(type));
+    }
+
+    public <T> Task<T> thenGetJsonAsync(TypeToken<T> type) {
+        return thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, type));
+    }
 }

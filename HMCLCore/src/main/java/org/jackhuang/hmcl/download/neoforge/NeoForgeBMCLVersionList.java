@@ -20,15 +20,14 @@ package org.jackhuang.hmcl.download.neoforge;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.HttpRequest;
 
 import java.util.Collections;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVersion> {
@@ -43,16 +42,16 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
 
     @Override
     public boolean hasType() {
-        return false;
+        return true;
     }
 
     @Override
-    public CompletableFuture<?> loadAsync() {
+    public Task<?> loadAsync() {
         throw new UnsupportedOperationException("NeoForgeBMCLVersionList does not support loading the entire NeoForge remote version list.");
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
+    public Task<?> refreshAsync() {
         throw new UnsupportedOperationException("NeoForgeBMCLVersionList does not support loading the entire NeoForge remote version list.");
     }
 
@@ -65,9 +64,8 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync(String gameVersion) {
-        return CompletableFuture.completedFuture((Void) null)
-                .thenApplyAsync(wrap(unused -> HttpRequest.GET(apiRoot + "/neoforge/list/" + gameVersion).getJson(listTypeOf(NeoForgeVersion.class))))
+    public Task<?> refreshAsync(String gameVersion) {
+        return new GetTask(apiRoot + "/neoforge/list/" + gameVersion).thenGetJsonAsync(listTypeOf(NeoForgeVersion.class))
                 .thenAcceptAsync(neoForgeVersions -> {
                     lock.writeLock().lock();
 

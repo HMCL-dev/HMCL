@@ -47,6 +47,21 @@ public final class EntryPoint {
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
+        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU")))
+            System.getProperties().putIfAbsent("prism.forceGPU", "true");
+
+        String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
+        if (animationFrameRate != null) {
+            try {
+                if (Integer.parseInt(animationFrameRate) <= 0)
+                    throw new NumberFormatException(animationFrameRate);
+
+                System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+            } catch (NumberFormatException e) {
+                LOG.warning("Invalid animation frame rate: " + animationFrameRate);
+            }
+        }
+
         checkDirectoryPath();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)

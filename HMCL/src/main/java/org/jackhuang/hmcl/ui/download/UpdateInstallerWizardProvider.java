@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.SocketTimeoutException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +85,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 ret = ret.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
                 stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
                 if ("game".equals(remoteVersion.getLibraryId())) {
+                    stages.add("hmcl.install.libraries");
                     stages.add("hmcl.install.assets");
                 }
             } else if (value instanceof RemoveVersionAction) {
@@ -133,28 +134,28 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException rce = (ResponseCodeException) exception.getCause();
                 int responseCode = rce.getResponseCode();
-                URL url = rce.getUrl();
+                String uri = rce.getUri();
                 if (responseCode == 404)
-                    message += i18n("download.code.404", url);
+                    message += i18n("download.code.404", uri);
                 else
-                    message += i18n("download.failed", url, responseCode);
+                    message += i18n("download.failed", uri, responseCode);
             } else {
                 message += StringUtils.getStackTrace(exception.getCause());
             }
             Controllers.dialog(message, i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof DownloadException) {
-            URL url = ((DownloadException) exception).getUrl();
+            URI uri = ((DownloadException) exception).getUri();
             if (exception.getCause() instanceof SocketTimeoutException) {
-                Controllers.dialog(i18n("install.failed.downloading.timeout", url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.timeout", uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             } else if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
                 if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 } else {
-                    Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 }
             } else {
-                Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof UnsupportedInstallationException) {
             switch (((UnsupportedInstallationException) exception).getReason()) {

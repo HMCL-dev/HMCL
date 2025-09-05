@@ -85,7 +85,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     else
                         return null;
                 }).thenComposeAsync(checkPatchCompletionAsync(version, integrityCheck)),
-                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck),
+                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
+                        .setSignificance(Task.TaskSignificance.MODERATE),
                 new GameLibrariesTask(this, version, integrityCheck)
         );
     }
@@ -148,7 +149,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         if (baseVersion.isResolved()) throw new IllegalArgumentException("Version should not be resolved");
 
         VersionList<?> versionList = getVersionList(libraryId);
-        return Task.fromCompletableFuture(versionList.loadAsync(gameVersion))
+        return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installLibraryAsync(baseVersion, versionList.getVersion(gameVersion, libraryVersion)
                         .orElseThrow(() -> new IOException("Remote library " + libraryId + " has no version " + libraryVersion))))
                 .withStage(String.format("hmcl.install.%s:%s", libraryId, libraryVersion));

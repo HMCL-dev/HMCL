@@ -30,4 +30,5 @@ dependencies {
     compileOnlyApi(libs.jetbrains.annotations)
 
     testImplementation(libs.jna.platform)
+    testImplementation(libs.jimfs)
 }

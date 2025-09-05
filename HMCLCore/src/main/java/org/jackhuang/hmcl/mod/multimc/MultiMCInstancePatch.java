@@ -254,7 +254,7 @@ public final class MultiMCInstancePatch {
     /**
      * <p>Core methods transforming MultiMCModpack to Official Version Scheme.</p>
      *
-     * <p>Mose of the information can be transformed in a lossless manner, except for some inputs.
+     * <p>Most of the information can be transformed in a lossless manner, except for some inputs.
      * See to do marks below for more information</p>
      *
      * @param patches   List of all Json-Patch.

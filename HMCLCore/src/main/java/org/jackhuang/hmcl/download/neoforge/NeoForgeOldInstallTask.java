@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -44,7 +43,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -342,12 +341,12 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                         throw new Exception("client_mappings download info not found");
                     }
 
-                    List<URL> mappingsUrl = dependencyManager.getDownloadProvider()
+                    List<URI> mappingsUri = dependencyManager.getDownloadProvider()
                             .injectURLWithCandidates(mappings.getUrl());
-                    FileDownloadTask mappingsTask = new FileDownloadTask(
-                            mappingsUrl,
-                            new File(output),
-                            IntegrityCheck.of("SHA-1", mappings.getSha1()));
+                    var mappingsTask = new FileDownloadTask(
+                            mappingsUri,
+                            Path.of(output),
+                            FileDownloadTask.IntegrityCheck.of("SHA-1", mappings.getSha1()));
                     mappingsTask.setCaching(true);
                     mappingsTask.setCacheRepository(dependencyManager.getCacheRepository());
                     return mappingsTask;

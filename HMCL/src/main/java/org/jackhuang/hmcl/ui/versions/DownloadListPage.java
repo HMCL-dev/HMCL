@@ -39,10 +39,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -89,6 +91,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private int searchID = 0;
     protected RemoteModRepository repository;
+    private final DownloadProvider downloadProvider;
 
     private Runnable retrySearch;
 
@@ -100,6 +103,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         this.repository = repository;
         this.callback = callback;
         this.versionSelection = versionSelection;
+        this.downloadProvider = DownloadProviders.getDownloadProvider();
     }
 
     public ObservableList<Node> getActions() {
@@ -170,7 +174,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         : "";
             }
         }).thenApplyAsync(
-                gameVersion -> repository.search(gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
+                gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteModRepository.SortOrder.DESC)
         ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (searchID != currentSearchID) {
                 return;
@@ -229,6 +233,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
+        private final JFXListView<RemoteMod> listView = new JFXListView<>();
+
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
@@ -449,6 +455,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         boolean disableNext = disableAll || pageOffset == pageCount - 1;
                         nextPageButton.setDisable(disableNext);
                         lastPageButton.setDisable(disableNext);
+
+                        listView.scrollTo(0);
                     };
 
                     FXUtils.onChange(control.pageCount, pageCountN -> {
@@ -504,7 +512,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
                 });
 
-                JFXListView<RemoteMod> listView = new JFXListView<>();
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
                 FXUtils.onClicked(listView, () -> {
@@ -540,7 +547,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .collect(Collectors.toList()));
 
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.setImage(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true, true));
+                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
                         }
                     }
                 });

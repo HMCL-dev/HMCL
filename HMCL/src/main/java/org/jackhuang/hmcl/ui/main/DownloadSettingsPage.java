@@ -124,6 +124,7 @@ public class DownloadSettingsPage extends StackPane {
 
                 {
                     HBox hbox = new HBox(8);
+                    hbox.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the hint
                     hbox.setAlignment(Pos.CENTER);
                     hbox.setPadding(new Insets(0, 0, 0, 30));
                     hbox.disableProperty().bind(config().autoDownloadThreadsProperty());
