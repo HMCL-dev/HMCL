@@ -33,6 +33,7 @@ public final class HMCLMultiMCBootstrap {
         System.out.println("This version is installed by HMCLCore's MultiMC combat layer.");
         System.out.println("Installer Properties:");
         System.out.println(installerInfo);
+        System.out.println("Main Class: " + mainClass);
         System.out.println("GAME MAY CRASH DUE TO BUGS. TEST YOUR GAME ON OFFICIAL MMC BEFORE REPORTING BUGS TO AUTHORS.");
 
         Method[] methods = Class.forName(mainClass).getMethods();
