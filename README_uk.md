@@ -25,7 +25,7 @@ HMCL має чудові кросплатформні можливості. Ві
 
 Хоча це не обовʼязково, рекомендується завантажувати релізи лише з офіційних сайтів, зазначених вище.
 
-### Ліцензія
+## Ліцензія
 
 The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license with the following additional terms:
 
