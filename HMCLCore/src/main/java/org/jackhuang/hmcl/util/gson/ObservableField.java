@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.annotations.SerializedName;
+import javafx.beans.Observable;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.MapProperty;
 import javafx.beans.property.Property;
@@ -29,7 +30,6 @@ import javafx.beans.property.SetProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.util.TypeUtils;
 
 import java.lang.invoke.MethodHandles;
@@ -60,7 +60,7 @@ public abstract class ObservableField<T> {
             if (!(listType instanceof ParameterizedType))
                 throw new AssertionError("Cannot resolve the list type of " + field.getName());
             return new CollectionField<>(serializedName.value(), varHandle, listType);
-        } else if (ObservableSet.class.isAssignableFrom(field.getType())) {
+        } else if (SetProperty.class.isAssignableFrom(field.getType())) {
             Type setType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Set.class);
             if (!(setType instanceof ParameterizedType))
                 throw new AssertionError("Cannot resolve the set type of " + field.getName());
@@ -89,9 +89,17 @@ public abstract class ObservableField<T> {
         this.varHandle = varHandle;
     }
 
-    abstract JsonElement serialize(T value, JsonSerializationContext context);
+    public String getSerializedName() {
+        return serializedName;
+    }
 
-    abstract void deserialize(T value, JsonElement element, JsonDeserializationContext context);
+    public Observable get(T value) {
+        return (Observable) varHandle.get(value);
+    }
+
+    public abstract JsonElement serialize(T value, JsonSerializationContext context);
+
+    public abstract void deserialize(T value, JsonElement element, JsonDeserializationContext context);
 
     private static final class PropertyField<T> extends ObservableField<T> {
         private final Type elementType;
@@ -102,14 +110,14 @@ public abstract class ObservableField<T> {
         }
 
         @Override
-        JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(((Property<?>) varHandle.get(value)).getValue());
+        public JsonElement serialize(T value, JsonSerializationContext context) {
+            return context.serialize(((Property<?>) get(value)).getValue());
         }
 
         @Override
         @SuppressWarnings({"unchecked", "rawtypes"})
-        void deserialize(T value, JsonElement element, JsonDeserializationContext context) {
-            ((Property) varHandle.get(value)).setValue(context.deserialize(element, elementType));
+        public void deserialize(T value, JsonElement element, JsonDeserializationContext context) {
+            ((Property) get(value)).setValue(context.deserialize(element, elementType));
         }
     }
 
@@ -122,15 +130,15 @@ public abstract class ObservableField<T> {
         }
 
         @Override
-        JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(varHandle.get(value), collectionType);
+        public JsonElement serialize(T value, JsonSerializationContext context) {
+            return context.serialize(get(value), collectionType);
         }
 
         @SuppressWarnings({"unchecked"})
         @Override
-        void deserialize(T value, JsonElement element, JsonDeserializationContext context) {
+        public void deserialize(T value, JsonElement element, JsonDeserializationContext context) {
             Object deserialized = context.deserialize(element, collectionType);
-            Object fieldValue = varHandle.get(value);
+            Object fieldValue = get(value);
 
             if (fieldValue instanceof ListProperty) {
                 ((ListProperty<Object>) fieldValue).set(FXCollections.observableList((List<Object>) deserialized));
@@ -153,13 +161,13 @@ public abstract class ObservableField<T> {
         }
 
         @Override
-        JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(varHandle.get(value), mapType);
+        public JsonElement serialize(T value, JsonSerializationContext context) {
+            return context.serialize(get(value), mapType);
         }
 
         @SuppressWarnings({"unchecked"})
         @Override
-        void deserialize(T config, JsonElement element, JsonDeserializationContext context) {
+        public void deserialize(T config, JsonElement element, JsonDeserializationContext context) {
             Map<Object, Object> deserialized = context.deserialize(element, mapType);
             ObservableMap<Object, Object> map = (ObservableMap<Object, Object>) varHandle.get(config);
             if (map instanceof MapProperty<?, ?>)
