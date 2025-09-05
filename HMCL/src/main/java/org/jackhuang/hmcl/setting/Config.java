@@ -82,7 +82,9 @@ public final class Config implements Observable {
         for (ConfigField field : ConfigField.FIELDS) {
             Observable observable = field.get(this);
             observable.addListener(helper);
-            observable.addListener(tracker);
+            if (observable != configVersion) {
+                tracker.track(observable);
+            }
         }
 
         tracker.markDirty(this.configVersion);
@@ -901,6 +903,7 @@ public final class Config implements Observable {
             var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
             for (ConfigField field : ConfigField.FIELDS) {
                 JsonElement value = values.remove(field.serializedName);
+                config.tracker.markDirty(field.get(config));
                 if (value != null)
                     field.deserialize(config, value, context);
             }
