@@ -21,9 +21,14 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.WorldLockedException;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -33,10 +38,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class WorldListItem extends Control {
     private final World world;
     private final Path backupsDir;
+    private Runnable onDelete;
 
     public WorldListItem(World world, Path backupsDir) {
         this.world = world;
         this.backupsDir = backupsDir;
+    }
+
+    public void setOnDelete(Runnable onDelete) {
+        this.onDelete = onDelete;
     }
 
     @Override
@@ -59,6 +69,24 @@ public final class WorldListItem extends Control {
         }
 
         Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file.toPath(), controller::onFinish)));
+    }
+
+    public void delete() {
+        Controllers.confirm(
+                i18n("button.remove.confirm"),
+                i18n("world.delete"),
+                () -> Task.runAsync(world::delete).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null && onDelete != null) {
+                        onDelete.run();
+                    } else if (exception instanceof WorldLockedException) {
+                        Controllers.dialog(i18n("world.backup.create.locked"), null, MessageDialogPane.MessageType.WARNING);
+                    } else {
+                        assert exception != null;
+                        Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                    }
+                }).start(),
+                null
+        );
     }
 
     public void reveal() {
