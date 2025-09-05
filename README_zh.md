@@ -27,8 +27,6 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 
 ## 开源协议
 
-请参见 [README.md](README.md#license)。
-
 该程序在 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 开源协议下发布，同时附有以下附加条款。
 
 ### 附加条款 (依据 GPLv3 开源协议第七条)
